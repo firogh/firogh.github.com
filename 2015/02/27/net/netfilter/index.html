@@ -1,0 +1,458 @@
+
+ <!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>netfilter | Hot sexy girls</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Firo Yang">
+    
+    <meta name="description" content="iptables
+iptables -I INPUT -p tcp —dport 22 -j ACCEPT
+netfilter hooks priorities
+NF_IP_PRI_RAW = -300,
+NF_IP_PRI_SELINUX_FIRST = -225,
+NF_IP_PRI_CONNT">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Hot sexy girls" title="Hot sexy girls"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Hot sexy girls">Hot sexy girls</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:firoyang.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/02/27/net/netfilter/" title="netfilter" itemprop="url">netfilter</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://firoyang.org" title="Firo Yang">Firo Yang</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
+    Updated:<time datetime="2015-03-01T14:09:49.000Z" itemprop="dateModified">Mar 1 2015</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number">1.</span> <span class="toc-text">iptables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_hooks_priorities"><span class="toc-number">2.</span> <span class="toc-text">netfilter hooks priorities</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_framwork"><span class="toc-number">3.</span> <span class="toc-text">netfilter framwork</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Connection_tracking"><span class="toc-number">4.</span> <span class="toc-text">Connection tracking</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAT"><span class="toc-number">5.</span> <span class="toc-text">NAT</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filter"><span class="toc-number">6.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a></li></ol>
+		</div>
+		
+		<h1 id="iptables">iptables</h1>
+<p>iptables -I INPUT -p tcp —dport 22 -j ACCEPT</p>
+<h1 id="netfilter_hooks_priorities">netfilter hooks priorities</h1>
+<pre><code><span class="constant">NF_IP_PRI_RAW</span> = -<span class="number">300</span>,
+<span class="constant">NF_IP_PRI_SELINUX_FIRST</span> = -<span class="number">225</span>,
+<span class="constant">NF_IP_PRI_CONNTRACK</span> = -<span class="number">200</span>,
+<span class="constant">NF_IP_PRI_MANGLE</span> = -<span class="number">150</span>,
+<span class="constant">NF_IP_PRI_NAT_DST</span> = -<span class="number">100</span>,
+<span class="constant">NF_IP_PRI_FILTER</span> = <span class="number">0</span>,
+<span class="constant">NF_IP_PRI_SECURITY</span> = <span class="number">50</span>,
+<span class="constant">NF_IP_PRI_NAT_SRC</span> = <span class="number">100</span>,
+</code></pre><p>=Answer<br><a href="http://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO-9.html" target="_blank" rel="external">http://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO-9.html</a></p>
+<ol>
+<li>Mixing NAT and Packet Filtering</li>
+</ol>
+<h1 id="netfilter_framwork">netfilter framwork</h1>
+<p>=Hook point<br>local_in local_out<br>pre_routing post_routing</p>
+<p>=Files higherach<br>net/ipv4/netfilter<br>net/netfilter<br>net/ipv6/netfilter<br>=Init<br>~/linux/net/netfilter/core.c<br>netfilter_init()</p>
+<p>=Build function<br>nf_register_hooks<br>nf_ct_l4proto_register<br>nf_ct_l3proto_register</p>
+<h1 id="Connection_tracking">Connection tracking</h1>
+<p>=Init Build ipv4<br>nf_conntrack_l3proto_ipv4_init()<br>struct ipv4_conntrack_ops<br>ipv4_conntrack_in<br>ipv4_conntrack_local,<br>ipv4_helper,<br>ipv4_confirm,</p>
+<h1 id="NAT">NAT</h1>
+<p><a href="https://www.ietf.org/rfc/rfc3489.txt" target="_blank" rel="external">https://www.ietf.org/rfc/rfc3489.txt</a><br>symmetric nat, 端口不复用, 访问同一个服务器.</p>
+<p>=Init Build<br>~/linux/net/ipv4/netfilter/iptable_nat.c<br>iptable_nat_init()<br>struct nf_nat_ipv4_ops<br>nf_nat_ipv4_in,<br>nf_nat_ipv4_out,<br>nf_nat_ipv4_local_fn, local_out<br>nf_nat_ipv4_fn, local_in</p>
+<p>=Drop ICMP redict in NAT<br><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html" target="_blank" rel="external">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></p>
+<p>=SNAT iptables  POST_ROUTING<br>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;<br>{<br>nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info<br>    {<br>        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.<br>        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&gt; new_original找到后再revert,成new_reply在改到ct里面去.<br>        orig_orignal-&gt;skb<br>        nf_ct_invert_tuplepr(inverse, orig_relply)<br>        {<br>            ipv4_invert_tuple<br>            tcp_invert_tuple<br>            For example, orig tuple:<br>            original: 192.168.199.132 -&gt; google.com<br>            reply: google.com -&gt; 192.168.199.132 //this is orig_relpy</p>
+<pre><code>        inverse tuple:
+        original(inverse-&gt;dst.dir = !orig-&gt;dst.dir;):
+        <span class="number">192.168</span><span class="number">.199</span><span class="number">.132</span> -&gt; google.com (!!!reverse orig_reply <span class="keyword">in</span> ipv4_inver_tuple())
+         这个函数的用途可能是担心, orig被人改了, 不能用了.
+        except <span class="keyword">for</span> prior manipulations
+    }        
+
+    get_unique_tuple
+    {
+        <span class="number">1.</span> 如果snat, 且前后可以一致就直接new=orig, 合理.
+        <span class="number">2.</span> find_appropriate_src 费点力<span class="keyword">...</span> 貌似找到已经用到的, 复用
+        <span class="number">3.</span> find_best_ips_proto, 找一个 the least-used IP/proto combination <span class="keyword">in</span> the given range
+        <span class="number">4.</span> nf_nat_used_tuple 保证唯一
+    }        
+
+    bysoruce 里面存的应该是new_original, hash -&gt; &amp;net-&gt;ct.nat_bysource[srchash]
+
+
+}
+</code></pre><p>//上面ct改完了该改skb了.<br>    nf_nat_packet -&gt; nf_nat_ipv4_manip_pkt,<br>}</p>
+<p>=SNAT nftables<br>nf_nat_prerouting …-&gt; nft_do_chain </p>
+<p>=Tips</p>
+<ul>
+<li>One kind of NAT, just set one flag bit in ct-&gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DOWN!</li>
+</ul>
+<p>=De-NAT<br>最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？<br>我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。</p>
+<p>*答案3.17的代码和原来没多大变化就是函数名字变了<br>发包-POSTROUTING -&gt;SNAT -&gt;修改ct: nf_nat_setup_info-&gt;　ct-&gt;status |= IPS_SRC_NAT;-&gt;修改skb:nf_nat_packet</p>
+<p>收报-PREOUTING-&gt; DNAT-&gt;修改skb:nf_nat_packet<br>{<br>    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);   //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的. </p>
+<pre><code><span class="keyword">if</span> (mtype == NF_NAT_MANIP_SRC)          
+    statusbit = IPS_SRC_NAT;             
+<span class="keyword">else</span>                                      
+    statusbit = IPS_DST_NAT;        <span class="comment">//到这里</span>
+
+<span class="comment">/* Invert if this is reply dir. */</span>            
+<span class="keyword">if</span> (dir == IP_CT_DIR_REPLY) 
+    statusbit ^= IPS_NAT_MASK;        <span class="comment">//翻转一下变成SNAT </span>
+<span class="comment">/* Non-atomic: these bits don't change. */</span>                                                                                                    
+<span class="keyword">if</span> (ct-&gt;status &amp; statusbit) {                 <span class="comment">//正好和发包是的   ct-&gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    </span>
+    <span class="keyword">struct</span> nf_conntrack_tuple target;
+    ...
+</code></pre><p>}</p>
+<h1 id="Filter">Filter</h1>
+<p>=Init Build iptables<br>~/linux/net/ipv4/netfilter/iptable_filter.c<br>iptable_filter_init()<br>struct xt_table packet_filter + iptable_filter_hook</p>
+<h1 id="FAQ">FAQ</h1>
+<p>=Why not use nat_bysource;</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/net/">net</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/net/">net</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://firoyang.org/2015/02/27/net/netfilter/" data-title="netfilter | Hot sexy girls" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/02/27/net/bridging/" title="bridging">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  bridging</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/02/27/net/pptp/"  title="pptp">
+ <strong>NEXT:</strong><br/> 
+ <span>pptp
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments">
+  <div id="disqus_thread">
+   <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number">1.</span> <span class="toc-text">iptables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_hooks_priorities"><span class="toc-number">2.</span> <span class="toc-text">netfilter hooks priorities</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_framwork"><span class="toc-number">3.</span> <span class="toc-text">netfilter framwork</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Connection_tracking"><span class="toc-number">4.</span> <span class="toc-text">Connection tracking</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAT"><span class="toc-number">5.</span> <span class="toc-text">NAT</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filter"><span class="toc-number">6.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/akasha/" title="akasha">akasha<sup>4</sup></a></li>
+		
+			<li><a href="/categories/cogito/" title="cogito">cogito<sup>1</sup></a></li>
+		
+			<li><a href="/categories/cs/" title="cs">cs<sup>10</sup></a></li>
+		
+			<li><a href="/categories/fedora/" title="fedora">fedora<sup>1</sup></a></li>
+		
+			<li><a href="/categories/firo/" title="firo">firo<sup>2</sup></a></li>
+		
+			<li><a href="/categories/golden-time/" title="golden-time">golden-time<sup>2</sup></a></li>
+		
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>24</sup></a></li>
+		
+			<li><a href="/categories/laughing-man/" title="laughing-man">laughing-man<sup>1</sup></a></li>
+		
+			<li><a href="/categories/literature/" title="literature">literature<sup>1</sup></a></li>
+		
+			<li><a href="/categories/net/" title="net">net<sup>8</sup></a></li>
+		
+			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/akasha/" title="akasha">akasha<sup>3</sup></a></li>
+		
+			<li><a href="/tags/cs/" title="cs">cs<sup>9</sup></a></li>
+		
+			<li><a href="/tags/fedora/" title="fedora">fedora<sup>1</sup></a></li>
+		
+			<li><a href="/tags/firo/" title="firo">firo<sup>1</sup></a></li>
+		
+			<li><a href="/tags/golden-time/" title="golden-time">golden-time<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kernel/" title="kernel">kernel<sup>17</sup></a></li>
+		
+			<li><a href="/tags/laughing-man/" title="laughing-man">laughing-man<sup>1</sup></a></li>
+		
+			<li><a href="/tags/net/" title="net">net<sup>7</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://ifind.cc" target="_blank" title="Jiangchang shun">江长顺</a></li>
+      <li><a href="http://lisuyong.com" target="_blank" title="Li su yong">李素颙</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2015 
+		
+		<a href="http://firoyang.org" target="_blank" title="Firo Yang">Firo Yang</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+<script>
+  var disqus_shortname = 'firoyang';
+  
+  var disqus_url = 'http://firoyang.org/2015/02/27/net/netfilter/';
+  
+  (function(){
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+
+
+  </body>
+</html>

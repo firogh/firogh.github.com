@@ -1,0 +1,449 @@
+
+ <!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>rcu | Hot sexy girls</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Firo Yang">
+    
+    <meta name="description" content="History
+brlock
+Common concepts
+
+RCU supports concurrency between a single updater and multiple readers.
+
+The basic idea behind RCU (read-copy update) ">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Hot sexy girls" title="Hot sexy girls"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Hot sexy girls">Hot sexy girls</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:firoyang.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/02/27/kernel/RCU/" title="rcu" itemprop="url">rcu</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://firoyang.org" title="Firo Yang">Firo Yang</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+    Updated:<time datetime="2015-02-28T08:40:54.000Z" itemprop="dateModified">Feb 28 2015</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#History"><span class="toc-number">1.</span> <span class="toc-text">History</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_concepts"><span class="toc-number">2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_rcu"><span class="toc-number">3.</span> <span class="toc-text">What is rcu</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#type-variants-sd-al_(extension)"><span class="toc-number">4.</span> <span class="toc-text">type-variants-sd-al (extension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al_(intension)"><span class="toc-number">5.</span> <span class="toc-text">parts-variants-sd-al (intension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use?"><span class="toc-number">6.</span> <span class="toc-text">How to use?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Classic_RCU"><span class="toc-number">7.</span> <span class="toc-text">Classic RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al"><span class="toc-number">8.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Preemtible_RCU"><span class="toc-number">9.</span> <span class="toc-text">Preemtible RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al-1"><span class="toc-number">10.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tree_RCU"><span class="toc-number">11.</span> <span class="toc-text">Tree RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">12.</span> <span class="toc-text">FAQ</span></a></li></ol>
+		</div>
+		
+		<h1 id="History">History</h1>
+<p>brlock</p>
+<h1 id="Common_concepts">Common concepts</h1>
+<ul>
+<li><p>RCU supports concurrency between a single updater and multiple readers.</p>
+</li>
+<li><p>The basic idea behind RCU (read-copy update) is to split destructive<br>operations into two parts, one that prevents anyone from seeing the data<br>item being destroyed, and one that actually carries out the destruction.<br>A “grace period” must elapse between the two parts, and this grace period<br>must be long enough that any readers accessing the item being deleted have<br>since dropped their references.</p>
+</li>
+</ul>
+<h1 id="What_is_rcu">What is rcu</h1>
+<h1 id="type-variants-sd-al_(extension)">type-variants-sd-al (extension)</h1>
+<p>=type<br>a synchronization mechanism<br>=other implement</p>
+<ul>
+<li><p>rw-lock similitudes<br>  read-side critical sections that can execute in parallel</p>
+</li>
+<li><p>difference</p>
+</li>
+</ul>
+<p>=advantages<br>Advantages of RCU include performance, deadlock immunity, and realtime latency.<br>=limitation<br>latencies</p>
+<h1 id="parts-variants-sd-al_(intension)">parts-variants-sd-al (intension)</h1>
+<p>=parts</p>
+<ul>
+<li><p>perspective<br>  if any statement in a given RCU read-side critical section precedes a grace period, then all statements in that RCU read-side critical section must complete before that grace period ends.<br>  state flow:<br>  Removal  list_del_rcu, rcu_assignment<br>  Grace period, synchronize_rcu(some like call_rcu)<br>  Recalmmation, kfree</p>
+</li>
+<li><p>read-side primitives<br>  In RCU’s case, the things waited on are called “RCU read-side critical sections”.<br>  does not explicitly block or sleep<br>  quiesecent state<br>  grace period<br>  rcu_tasklet<br>  rcu_data,rcu_bh_data</p>
+<p>  __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().</p>
+<p>  rcu_read_lock/unlock</p>
+<p>  rcu_dereference<br>  rcu_assign_pointer</p>
+</li>
+<li><p>rcu_update<br>  these old versions must be reclaimed after all pre-existing readers complete<br>  call_rcu<br>  synchronize_rcu, spin_lock for syncing updaters.</p>
+</li>
+</ul>
+<p>=variants</p>
+<ul>
+<li>Classic RCU<br>  <a href="http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html" target="_blank" rel="external">http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html</a></li>
+<li><p>Preemtible RCU<br>  priority inheritance(priority inversion)<br>  non-blocking in non-preemt kernel</p>
+</li>
+<li><p>SRCU</p>
+</li>
+<li>RCU-tiny</li>
+<li>Tree RCU</li>
+<li>RCU-task</li>
+</ul>
+<h1 id="How_to_use?">How to use?</h1>
+<p>a replacement of rw-lock<br>a Restricted Reference-Counting Mechanism<br>a Bulk Reference-Counting Mechanism<br>a Poor Man’s Garbage Collector<br>a Way of Providing Existence Guarantees<br>a Way of Waiting for Things to Finish</p>
+<h1 id="Classic_RCU">Classic RCU</h1>
+<h1 id="parts-variants-sd-al">parts-variants-sd-al</h1>
+<p>=Perspective</p>
+<pre><code>* Classic RCU requires that <span class="built_in">read</span>-side critical sections obey <span class="operator">the</span> same rules obeyed <span class="keyword">by</span> <span class="operator">the</span> critical sections <span class="operator">of</span> pure spinlocks: blocking <span class="operator">or</span> sleeping <span class="operator">of</span> <span class="keyword">any</span> <span class="built_in">sort</span> is strictly prohibited.
+* cpumask
+</code></pre><h1 id="Preemtible_RCU">Preemtible RCU</h1>
+<h1 id="parts-variants-sd-al-1">parts-variants-sd-al</h1>
+<p>=Parts<br><em>Perspetctive<br>    block only in priority inheritance non-blocking in non-preemt kernel
+</em>softirq<br>    two stages grace period<br>    wait queues<br>    rcu_process_callbacks<br>    rcu_flipctr: a per-CPU two-element<br>        [a]:tracks critical sections that started before the current gp stage.<br>        [b]:tracks new rcu read-side critical sections, namely those starting during the current gp stage.<br>    rcu_ctrlblk.completed &amp; 0x1<br>    rcu_flip_flag: synchronize the start of each grace-period stage: once a given CPU has responded to its rcu_flip_flag, it must refrain from incrementing the old grace-period stage.<br>    rcu_mb_flag: rcu_flipped  force each CPU to execute a memory barrier at the end of each grace-period stage.<br>                rcu_mb_needed by the CPU that detects that the sum of the old counters is zero<br>                 rcu_mb_done only by the corresponding CPU, and even then only after executing a memory barrier.</p>
+<h1 id="Tree_RCU">Tree RCU</h1>
+<ul>
+<li>Downside of classical RCU in update<br>The update-side primitives which determine when pre-existing read-side critical sections have finished,<br>  were designed with only a few tens of CPUs in mind.<br>Their scalability is limited by a global lock that must be acquired by each CPU at least once during each grace period.</li>
+</ul>
+<h1 id="FAQ">FAQ</h1>
+<p>=Limitations of RCU-rt?<br>=In contrast to SRCU, preemptible RCU only permits blocking within primitives that are both subject to prikority inheritance and non-blocking in a non-CONFIG_PREEMPT kernel.<br>=No need of mb in preempt read-side?<br>=irq in rcu_sched_qs<br>=However, note that RCU read-side critical sections that begin after the beginning of a given grace period can and will extend beyond the end of that grace period.?<br>=RCU read-side critical sections must be permitted in NMI handlers as well as irq handlers?<br>=classic RCU will happily awaken each and every sleeping CPU at least once per grace period in some cases?</p>
+<p>=rcu_deference</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/kernel/">kernel</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/kernel/">kernel</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://firoyang.org/2015/02/27/kernel/RCU/" data-title="rcu | Hot sexy girls" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/02/27/kernel/build/" title="build">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  build</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/02/27/kernel/device_driver/"  title="Linux device driver">
+ <strong>NEXT:</strong><br/> 
+ <span>Linux device driver
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments">
+  <div id="disqus_thread">
+   <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#History"><span class="toc-number">1.</span> <span class="toc-text">History</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_concepts"><span class="toc-number">2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_rcu"><span class="toc-number">3.</span> <span class="toc-text">What is rcu</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#type-variants-sd-al_(extension)"><span class="toc-number">4.</span> <span class="toc-text">type-variants-sd-al (extension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al_(intension)"><span class="toc-number">5.</span> <span class="toc-text">parts-variants-sd-al (intension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use?"><span class="toc-number">6.</span> <span class="toc-text">How to use?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Classic_RCU"><span class="toc-number">7.</span> <span class="toc-text">Classic RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al"><span class="toc-number">8.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Preemtible_RCU"><span class="toc-number">9.</span> <span class="toc-text">Preemtible RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al-1"><span class="toc-number">10.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tree_RCU"><span class="toc-number">11.</span> <span class="toc-text">Tree RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">12.</span> <span class="toc-text">FAQ</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/akasha/" title="akasha">akasha<sup>4</sup></a></li>
+		
+			<li><a href="/categories/cogito/" title="cogito">cogito<sup>1</sup></a></li>
+		
+			<li><a href="/categories/cs/" title="cs">cs<sup>10</sup></a></li>
+		
+			<li><a href="/categories/fedora/" title="fedora">fedora<sup>1</sup></a></li>
+		
+			<li><a href="/categories/firo/" title="firo">firo<sup>2</sup></a></li>
+		
+			<li><a href="/categories/golden-time/" title="golden-time">golden-time<sup>2</sup></a></li>
+		
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>24</sup></a></li>
+		
+			<li><a href="/categories/laughing-man/" title="laughing-man">laughing-man<sup>1</sup></a></li>
+		
+			<li><a href="/categories/literature/" title="literature">literature<sup>1</sup></a></li>
+		
+			<li><a href="/categories/net/" title="net">net<sup>8</sup></a></li>
+		
+			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/akasha/" title="akasha">akasha<sup>3</sup></a></li>
+		
+			<li><a href="/tags/cs/" title="cs">cs<sup>9</sup></a></li>
+		
+			<li><a href="/tags/fedora/" title="fedora">fedora<sup>1</sup></a></li>
+		
+			<li><a href="/tags/firo/" title="firo">firo<sup>1</sup></a></li>
+		
+			<li><a href="/tags/golden-time/" title="golden-time">golden-time<sup>2</sup></a></li>
+		
+			<li><a href="/tags/kernel/" title="kernel">kernel<sup>17</sup></a></li>
+		
+			<li><a href="/tags/laughing-man/" title="laughing-man">laughing-man<sup>1</sup></a></li>
+		
+			<li><a href="/tags/net/" title="net">net<sup>7</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://ifind.cc" target="_blank" title="Jiangchang shun">江长顺</a></li>
+      <li><a href="http://lisuyong.com" target="_blank" title="Li su yong">李素颙</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2015 
+		
+		<a href="http://firoyang.org" target="_blank" title="Firo Yang">Firo Yang</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+<script>
+  var disqus_shortname = 'firoyang';
+  
+  var disqus_url = 'http://firoyang.org/2015/02/27/kernel/RCU/';
+  
+  (function(){
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+
+
+  </body>
+</html>
