@@ -80,7 +80,7 @@ VPN is created by establishing a virtual point-to">
     </p>
   <p class="article-time">
     <time datetime="2014-12-27T16:00:00.000Z" itemprop="datePublished">Dec 28 2014</time>
-    Updated:<time datetime="2015-03-05T09:52:17.000Z" itemprop="dateModified">Mar 5 2015</time>
+    Updated:<time datetime="2015-03-07T10:50:14.000Z" itemprop="dateModified">Mar 7 2015</time>
     
   </p>
 </header>
@@ -120,9 +120,9 @@ VPN is created by establishing a virtual point-to">
 </ul>
 <p>ssh redsocks<br>user -&gt; iptables -&gt; redsocks -&gt; ssh -&gt; server</p>
 <ul>
-<li>pppoe<br><a href="http://blog.csdn.net/osnetdev/article/details/8958058" target="_blank" rel="external">http://blog.csdn.net/osnetdev/article/details/8958058</a><br>&amp;pppoe_chan_ops;</li>
+<li>pppoe<br>pppoe 的sk-&gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket<br>pppoe_rcv_core -&gt;　netif_rx<br>从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!<br>对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!<br>pppoe报文会经过两次sk_filter()<br><a href="http://blog.csdn.net/osnetdev/article/details/8958058" target="_blank" rel="external">http://blog.csdn.net/osnetdev/article/details/8958058</a><br>&amp;pppoe_chan_ops;</li>
 </ul>
-<p>+ppp header<br>is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!<br>ppp-wan-&gt;ndo_start_xmit()=ppp_start_xmit()-&gt;ppp_xmit_process()-&gt;ppp_send_frame()<br>-&gt;<br>{<br>    __skb_push(skb, sizeof(*ph));<br>    skb_reset_network_header(skb);<br>    //add pppoe_hdr<br>    dev_queue_xmit(skb);<br>}</p>
+<p>+ppp header<br>is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!<br>ppp-wan-&gt;ndo_start_xmit()=ppp_start_xmit()-&gt;ppp_xmit_process()-&gt;ppp_send_frame()<br>-&gt;<br>{<br>    __skb_push(skb, sizeof(*ph));<br>    skb_reset_network_header(skb);<br>    //add pppoe_hdr no header???<br>    dev_queue_xmit(skb);<br>}</p>
 <h1 id="PPP">PPP</h1>
 <p><a href="http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html" target="_blank" rel="external">http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html</a></p>
 <h1 id="GRE">GRE</h1>
@@ -169,9 +169,9 @@ VPN is created by establishing a virtual point-to">
 
 
 <div class="next">
-<a href="/2014/12/28/kernel/interrupts/"  title="Interrupts of linux kernel">
+<a href="/2014/12/28/physical/"  title="Physical life">
  <strong>NEXT:</strong><br/> 
- <span>Interrupts of linux kernel
+ <span>Physical life
 </span>
 </a>
 </div>

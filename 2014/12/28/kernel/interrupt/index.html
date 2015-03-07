@@ -9,7 +9,11 @@
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="#">
+    <meta name="description" content="Context terminology
+
+in_irqin __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!+irq disable 部设计preempt_cout
+
+insoftirqshould rename ">
     
     
     
@@ -68,7 +72,7 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2014/12/28/kernel/interrupts/" title="Interrupts of linux kernel" itemprop="url">Interrupts of linux kernel</a>
+      <a href="/2014/12/28/kernel/interrupt/" title="Interrupts of linux kernel" itemprop="url">Interrupts of linux kernel</a>
   </h1>
   <p class="article-author">By
     
@@ -76,7 +80,7 @@
     </p>
   <p class="article-time">
     <time datetime="2014-12-27T16:00:00.000Z" itemprop="datePublished">Dec 28 2014</time>
-    Updated:<time datetime="2015-02-28T08:40:54.000Z" itemprop="dateModified">Feb 28 2015</time>
+    Updated:<time datetime="2015-03-07T17:47:27.000Z" itemprop="dateModified">Mar 8 2015</time>
     
   </p>
 </header>
@@ -85,10 +89,19 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Context_terminology"><span class="toc-number">1.</span> <span class="toc-text">Context terminology</span></a></li></ol>
 		</div>
 		
-		<p>#</p>
+		<h1 id="Context_terminology">Context terminology</h1>
+<ul>
+<li><p>in_irq<br>in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!<br>+irq disable 部设计preempt_cout</p>
+</li>
+<li><p>in<em>softirq<br>should rename to in_softirq_or_bh_disable()<br>local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)<br><strong>do_softirq use </strong>local_bh_disable_ip(_RET_IP</em>, SOFTIRQ_OFFSET), damn it!</p>
+</li>
+<li><p>in_interrupt<br>一种是irq路径上的do_softirq, 即in_serving_softirq<br>+local_bh_disbale()<br>//not in softirq context!!!<br>+local_bh_enable()<br>硬中断呢?<br>do_IRQ,肯定是.<br>local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check<br><a href="">Question about in_interrupt() semantics with regard to softirqs</a></p>
+</li>
+</ul>
+<p><a href="http://thread.gmane.org/gmane.linux.kernel/1152658" target="_blank" rel="external">Deal PF_MEMALLOC in softirq</a></p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -103,7 +116,7 @@
 
 <div class="article-share" id="share">
 
-  <div data-url="http://firoyang.org/2014/12/28/kernel/interrupts/" data-title="Interrupts of linux kernel | Hot sexy girls" data-tsina="null" class="share clearfix">
+  <div data-url="http://firoyang.org/2014/12/28/kernel/interrupt/" data-title="Interrupts of linux kernel | Hot sexy girls" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -113,18 +126,18 @@
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2014/12/28/net/tunnel/" title="tunnel">
+ <a href="/2014/12/28/physical/" title="Physical life">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  tunnel</span>
+  Physical life</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2014/12/28/kernel/process_schedule/"  title="the process scheduling of linux kernel">
+<a href="/2014/12/28/kernel/signal/"  title="Kernel siganl">
  <strong>NEXT:</strong><br/> 
- <span>the process scheduling of linux kernel
+ <span>Kernel siganl
 </span>
 </a>
 </div>
@@ -146,7 +159,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Context_terminology"><span class="toc-number">1.</span> <span class="toc-text">Context terminology</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -362,7 +375,7 @@ $(document).ready(function(){
 <script>
   var disqus_shortname = 'firoyang';
   
-  var disqus_url = 'http://firoyang.org/2014/12/28/kernel/interrupts/';
+  var disqus_url = 'http://firoyang.org/2014/12/28/kernel/interrupt/';
   
   (function(){
     var dsq = document.createElement('script');
