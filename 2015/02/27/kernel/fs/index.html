@@ -9,12 +9,10 @@
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="How many parts does procfs has?
-=4 parts
+    <meta name="description" content="VFS
+Common concepts
 
-process-specific read only /proc//
-process tuneable interface. /proc//
-kernel sysctl, importanta kernel tune">
+VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions: file, directory entries, inodes, and mount point">
     
     
     
@@ -81,7 +79,7 @@ kernel sysctl, importanta kernel tune">
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-03-01T03:55:41.000Z" itemprop="dateModified">Mar 1 2015</time>
+    Updated:<time datetime="2015-03-14T15:24:12.000Z" itemprop="dateModified">Mar 14 2015</time>
     
   </p>
 </header>
@@ -90,18 +88,55 @@ kernel sysctl, importanta kernel tune">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#VFS"><span class="toc-number">1.</span> <span class="toc-text">VFS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-"><span class="toc-number">1.2.</span> <span class="toc-text">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VFS_primary_objects:_superblock,_inode,_dentry,_file-"><span class="toc-number">1.3.</span> <span class="toc-text">VFS primary objects: superblock, inode, dentry, file.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step_of_how_to_use_ext2_fs"><span class="toc-number">1.4.</span> <span class="toc-text">Step of how to use ext2 fs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_make_dentry"><span class="toc-number">1.5.</span> <span class="toc-text">How make dentry</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Procfs"><span class="toc-number">2.</span> <span class="toc-text">Procfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">2.1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#I_think,_important_directory_need_to_know-"><span class="toc-number">2.2.</span> <span class="toc-text">I think, important directory need to know.</span></a></li></ol></li></ol>
 		</div>
 		
-		<h1 id="How_many_parts_does_procfs_has?">How many parts does procfs has?</h1>
-<p>=4 parts</p>
+		<h1 id="VFS">VFS</h1>
+<h2 id="Common_concepts">Common concepts</h2>
+<ul>
+<li>VFS:Common fs interface plus fs anstraction layer! <h2 id="Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</h2>
+</li>
+<li>Filesytem: a hierarchial storage of data adhering to a specific structure.<br>In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.</li>
+<li>file: and ordered string of bytes.</li>
+<li>directory: analogous to a folder and usally contains related files.</li>
+<li>dentry: Each component of a path is called a directory entry.</li>
+<li>inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!</li>
+<li>supreblock: a data structure containing information about the filesystem as a whole.</li>
+</ul>
+<h2 id="VFS_primary_objects:_superblock,_inode,_dentry,_file-">VFS primary objects: superblock, inode, dentry, file.</h2>
+<ul>
+<li>supreblock: a specific mounted filesystem.</li>
+<li>inode: unit for fs. all the information needed by the kernel to manipulate a file or directory. </li>
+<li>dentry: accelerate access fs, dcache! a single component of a path, certainly include <em>regular</em> file.<br>VFS treats directory as non-exist <em>normal</em> file. directory and dentry is not the same at all, different congitive level!<br>In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!</li>
+<li>file: an open normal file as associated with a process.</li>
+</ul>
+<h2 id="Step_of_how_to_use_ext2_fs">Step of how to use ext2 fs</h2>
+<ul>
+<li><p>Register a fs type in kernel.<br>struct file_system_type: basic fs driver codes!</p>
+</li>
+<li><p>mkfs.ext2</p>
+</li>
+<li>shell mount -&gt; sys_mount -&gt; file_system_type-&gt;mount =&gt; root dentry and dentry-&gt;d_sb!</li>
+<li>sys_open -&gt;<br>  path_init()<ol>
+<li>get start point current-&gt;fs{root, pwd}</li>
+<li>link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)<br>do_last()</li>
+<li>dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&gt;s_dentry_op</li>
+<li>file, if not open, file-&gt;f_op = inode-&gt;i_fop</li>
+</ol>
+</li>
+<li>sys_write -&gt;<br>  file-&gt;f_op-&gt;write()…</li>
+</ul>
+<h2 id="How_make_dentry">How make dentry</h2>
+<p>d_alloc() alloc new dentry<br>parent_entry-&gt;d_inode-&gt;i_op-&gt;lookup=ext2_lookup()-&gt; ext2_iget() -&gt; use raw_inode make inode-&gt;<br>set inode to dentry</p>
+<h1 id="Procfs">Procfs</h1>
+<h2 id="How_many_parts_does_procfs_has?">How many parts does procfs has?</h2>
 <ul>
 <li>process-specific read only /proc/<pid>/</pid></li>
 <li>process tuneable interface. /proc/<pid>/</pid></li>
 <li>kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs…</li>
-<li>Read only kernel infomation. /proc</li>
+<li>Read only kernel infomation. /proc<h2 id="I_think,_important_directory_need_to_know-">I think, important directory need to know.</h2>
+/proc/sys/kernel</li>
 </ul>
-<p>I think, important directory need to know.<br>/proc/sys/kernel</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -131,18 +166,18 @@ kernel sysctl, importanta kernel tune">
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/kernel/file/" title="file">
+ <a href="/2015/02/27/kernel/kernel/" title="kernel">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  file</span>
+  kernel</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/chronobiology/"  title="chronobiology">
+<a href="/2015/02/27/kernel/device_driver/"  title="Linux device driver">
  <strong>NEXT:</strong><br/> 
- <span>chronobiology
+ <span>Linux device driver
 </span>
 </a>
 </div>
@@ -164,7 +199,7 @@ kernel sysctl, importanta kernel tune">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#VFS"><span class="toc-number">1.</span> <span class="toc-text">VFS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-"><span class="toc-number">1.2.</span> <span class="toc-text">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VFS_primary_objects:_superblock,_inode,_dentry,_file-"><span class="toc-number">1.3.</span> <span class="toc-text">VFS primary objects: superblock, inode, dentry, file.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step_of_how_to_use_ext2_fs"><span class="toc-number">1.4.</span> <span class="toc-text">Step of how to use ext2 fs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_make_dentry"><span class="toc-number">1.5.</span> <span class="toc-text">How make dentry</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Procfs"><span class="toc-number">2.</span> <span class="toc-text">Procfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">2.1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#I_think,_important_directory_need_to_know-"><span class="toc-number">2.2.</span> <span class="toc-text">I think, important directory need to know.</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
@@ -188,7 +223,7 @@ kernel sysctl, importanta kernel tune">
 		
 			<li><a href="/categories/golden-time/" title="golden-time">golden-time<sup>0</sup></a></li>
 		
-			<li><a href="/categories/kernel/" title="kernel">kernel<sup>16</sup></a></li>
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>12</sup></a></li>
 		
 			<li><a href="/categories/laughing-man/" title="laughing-man">laughing-man<sup>0</sup></a></li>
 		
@@ -217,7 +252,7 @@ kernel sysctl, importanta kernel tune">
 		
 			<li><a href="/tags/golden-time/" title="golden-time">golden-time<sup>0</sup></a></li>
 		
-			<li><a href="/tags/kernel/" title="kernel">kernel<sup>10</sup></a></li>
+			<li><a href="/tags/kernel/" title="kernel">kernel<sup>7</sup></a></li>
 		
 			<li><a href="/tags/laughing-man/" title="laughing-man">laughing-man<sup>0</sup></a></li>
 		

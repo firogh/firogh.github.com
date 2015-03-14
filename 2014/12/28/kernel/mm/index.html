@@ -80,7 +80,7 @@ NUMA/UMA pg_da">
     </p>
   <p class="article-time">
     <time datetime="2014-12-27T16:00:00.000Z" itemprop="datePublished">Dec 28 2014</time>
-    Updated:<time datetime="2015-03-06T03:25:15.000Z" itemprop="dateModified">Mar 6 2015</time>
+    Updated:<time datetime="2015-03-14T15:30:53.000Z" itemprop="dateModified">Mar 14 2015</time>
     
   </p>
 </header>
@@ -89,7 +89,7 @@ NUMA/UMA pg_da">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Overview_of_linux_memory_managerment"><span class="toc-number">1.</span> <span class="toc-text">Overview of linux memory managerment</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">2.</span> <span class="toc-text">Physical memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kernel_space_Virtual_memory"><span class="toc-number">3.</span> <span class="toc-text">Kernel space Virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))"><span class="toc-number">4.</span> <span class="toc-text">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">5.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_userspace_virtual_memory"><span class="toc-number">6.</span> <span class="toc-text">Process userspace virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_cache_buffer_cache"><span class="toc-number">7.</span> <span class="toc-text">Page cache buffer cache</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_writeback"><span class="toc-number">8.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">9.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_swap"><span class="toc-number">10.</span> <span class="toc-text">Page swap</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Overview_of_linux_memory_managerment"><span class="toc-number">1.</span> <span class="toc-text">Overview of linux memory managerment</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">2.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">2.1.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">2.2.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">2.3.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kernel_space_Virtual_memory"><span class="toc-number">3.</span> <span class="toc-text">Kernel space Virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))"><span class="toc-number">4.</span> <span class="toc-text">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#User_space_virtual_memory"><span class="toc-number">5.</span> <span class="toc-text">User space virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#get_user_pages"><span class="toc-number">5.1.</span> <span class="toc-text">get_user_pages</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">6.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a></li></ol>
 		</div>
 		
 		<h1 id="Overview_of_linux_memory_managerment">Overview of linux memory managerment</h1>
@@ -107,6 +107,13 @@ NUMA/UMA pg_da">
 <ul>
 <li>Simplicity!!! Physical address is connected to Virtual address by pfn = page - mem_map;</li>
 </ul>
+<h2 id="Page/buffer_cache">Page/buffer cache</h2>
+<ul>
+<li>struct address_space<br>  page_tree<h2 id="Page_writeback">Page writeback</h2>
+  data synchronization, the flush threads, pdflush<br>  swap</li>
+</ul>
+<h2 id="Page_swap">Page swap</h2>
+<p>The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.</p>
 <h1 id="Kernel_space_Virtual_memory">Kernel space Virtual memory</h1>
 <ul>
 <li><p>GFP flags<br><strong>GFP_IO: allow disk IO
@@ -133,6 +140,19 @@ NUMA/UMA pg_da">
 <li><p>Copying Data between Kernel and Userspace<br>access_ok() is in vain, just check whteher is pointer is in user space!<br>get_user_pages() used in get_cmdline();</p>
 </li>
 </ul>
+<h1 id="User_space_virtual_memory">User space virtual memory</h1>
+<ul>
+<li>struct vm_area_struct: The intervals of legal address are called <em>memory areas</em> is permitted to access.</li>
+<li>struct address_space: To establish an association between the regions of the vm and the places where the related data are located.<br>  i_mmap: how many processes opened this file.<br>  <a href="https://lkml.org/lkml/2012/8/7/46" target="_blank" rel="external">https://lkml.org/lkml/2012/8/7/46</a></li>
+<li><p>sturct mm_struct: how many files(vm_area_struct) does this process opened.</p>
+</li>
+<li><p>Memory mappings<br>  syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16</p>
+</li>
+<li><p>link<br>a virtual address and physical address. —page tale<br>a memory region of a process and its virtual page addresses. —vm_area_struct<br>a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&gt;i_mmap.<br>a physical page and the processes that share the page(used in swap case) </p>
+</li>
+</ul>
+<h2 id="get_user_pages">get_user_pages</h2>
+<p>get vma by addr then</p>
 <h1 id="Page_faults">Page faults</h1>
 <p>Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory</p>
 <ul>
@@ -152,22 +172,6 @@ NUMA/UMA pg_da">
 </li>
 <li>Where is Per-CPU variable?<br>  static Per-CPU in .data(?) below high_memory!<br>  runtime Per-CPU, it’s GFP_KERNEL in pcpu_create_chunk()</li>
 </ul>
-<h1 id="Process_userspace_virtual_memory">Process userspace virtual memory</h1>
-<ul>
-<li>struct vm_area_struct: The intervals of legal address are called <em>memory areas</em> is permitted to access.</li>
-<li>struct address_space: To establish an association between the regions of the vm and the places where the related data are located.<br>  i_mmap: how many processes opened this file.<br>  <a href="https://lkml.org/lkml/2012/8/7/46" target="_blank" rel="external">https://lkml.org/lkml/2012/8/7/46</a></li>
-<li><p>sturct mm_struct: how many files(vm_area_struct) does this process opened.</p>
-</li>
-<li><p>Memory mappings<br>  syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16</p>
-</li>
-<li><p>link<br>a virtual address and physical address. —page tale<br>a memory region of a process and its virtual page addresses. —vm_area_struct<br>a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&gt;i_mmap.<br>a physical page and the processes that share the page(used in swap case) </p>
-</li>
-</ul>
-<h1 id="Page_cache_buffer_cache">Page cache buffer cache</h1>
-<ul>
-<li>struct address_space<br>  page_tree<h1 id="Page_writeback">Page writeback</h1>
-  data synchronization, the flush threads, pdflush<br>  swap</li>
-</ul>
 <h1 id="FAQ">FAQ</h1>
 <ul>
 <li><p>Memory mode<br>flat mem -&gt; uma<br>discontig -&gt; NUMA<br>sparse -&gt; Hotplug + NUMA<br>mm/Kconfig<br>LDD3</p>
@@ -181,9 +185,7 @@ NUMA/UMA pg_da">
 <li><p>How to deal with useless page? : &gt; /home/firo/bigdata</p>
 </li>
 </ul>
-<h1 id="Page_swap">Page swap</h1>
-<p>The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.</p>
-<p>*pfmemalloc<br>page free</p>
+<p>*pfmemalloc — skb 表示申请了紧急内存!<br>page free</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -208,13 +210,21 @@ NUMA/UMA pg_da">
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2014/12/28/physical/" title="Physical life">
+ <a href="/2015/01/03/kernel/debug/" title="Kernel debug method">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  Physical life</span>
+  Kernel debug method</span>
 </a>
 </div>
 
+
+<div class="next">
+<a href="/2014/12/28/kernel/memory_barrier/"  title="Memory barrier">
+ <strong>NEXT:</strong><br/> 
+ <span>Memory barrier
+</span>
+</a>
+</div>
 
 </nav>
 
@@ -233,7 +243,7 @@ NUMA/UMA pg_da">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Overview_of_linux_memory_managerment"><span class="toc-number">1.</span> <span class="toc-text">Overview of linux memory managerment</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">2.</span> <span class="toc-text">Physical memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kernel_space_Virtual_memory"><span class="toc-number">3.</span> <span class="toc-text">Kernel space Virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))"><span class="toc-number">4.</span> <span class="toc-text">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">5.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_userspace_virtual_memory"><span class="toc-number">6.</span> <span class="toc-text">Process userspace virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_cache_buffer_cache"><span class="toc-number">7.</span> <span class="toc-text">Page cache buffer cache</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_writeback"><span class="toc-number">8.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">9.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_swap"><span class="toc-number">10.</span> <span class="toc-text">Page swap</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Overview_of_linux_memory_managerment"><span class="toc-number">1.</span> <span class="toc-text">Overview of linux memory managerment</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">2.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">2.1.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">2.2.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">2.3.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kernel_space_Virtual_memory"><span class="toc-number">3.</span> <span class="toc-text">Kernel space Virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))"><span class="toc-number">4.</span> <span class="toc-text">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#User_space_virtual_memory"><span class="toc-number">5.</span> <span class="toc-text">User space virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#get_user_pages"><span class="toc-number">5.1.</span> <span class="toc-text">get_user_pages</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">6.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -257,7 +267,7 @@ NUMA/UMA pg_da">
 		
 			<li><a href="/categories/golden-time/" title="golden-time">golden-time<sup>0</sup></a></li>
 		
-			<li><a href="/categories/kernel/" title="kernel">kernel<sup>16</sup></a></li>
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>12</sup></a></li>
 		
 			<li><a href="/categories/laughing-man/" title="laughing-man">laughing-man<sup>0</sup></a></li>
 		
@@ -286,7 +296,7 @@ NUMA/UMA pg_da">
 		
 			<li><a href="/tags/golden-time/" title="golden-time">golden-time<sup>0</sup></a></li>
 		
-			<li><a href="/tags/kernel/" title="kernel">kernel<sup>10</sup></a></li>
+			<li><a href="/tags/kernel/" title="kernel">kernel<sup>7</sup></a></li>
 		
 			<li><a href="/tags/laughing-man/" title="laughing-man">laughing-man<sup>0</sup></a></li>
 		
