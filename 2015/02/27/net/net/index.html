@@ -79,7 +79,7 @@ An implementation of the TCP/IP protocol suite for t">
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-03-07T17:47:34.000Z" itemprop="dateModified">Mar 8 2015</time>
+    Updated:<time datetime="2015-03-09T04:37:33.000Z" itemprop="dateModified">Mar 9 2015</time>
     
   </p>
 </header>
@@ -104,6 +104,7 @@ An implementation of the TCP/IP protocol suite for t">
 <li>GSO<br><a href="http://thread.gmane.org/gmane.linux.network/37287" target="_blank" rel="external">GSO: Generic Segmentation Offload</a><br>TSO = GSO_TCPV4</li>
 </ul>
 <p>frags = sg I/O<br>frag_list</p>
+<p>*GRO<br>napi -&gt; dev -&gt;inet-&gt;skb</p>
 <h1 id="package_name_in_different_layer">package name in different layer</h1>
 <p>An individual package of transmitted data is commonly called a frame on the link layer, L2;<br>a packet on the network layer; a segment on the transport layer; and a message on the application layer.</p>
 <h1 id="apple_talk_in_linux_network_stack">apple talk in linux network stack</h1>
@@ -136,14 +137,14 @@ An implementation of the TCP/IP protocol suite for t">
 <h1 id="sock-&gt;pfmemealloc">sock-&gt;pfmemealloc</h1>
 <p>Yes, I only wanted to drop the packet if we were under pressure<br>when skb was allocated. If we hit pressure between when skb was<br>allocated and when __netdev_alloc_page is called,<br>+in sk_filter<br><a href="https://groups.google.com/forum/#!msg/linux_net/-YtWB66adxY/Qqm_y4U09IAJ" target="_blank" rel="external">netvm: Allow skb allocation to use PFMEMALLOC reserves</a><br><a href="http://thread.gmane.org/gmane.linux.kernel/1152658" target="_blank" rel="external">netvm: Allow skb allocation to use PFMEMALLOC reserves - gmane 08/14</a></p>
 <ul>
-<li><p>sk_set_memalloc<br>SOCK_MEMALLOC, sock has feature mem alloc for free memory.</p>
+<li><p>sk_set_memalloc<br>SOCK_MEMALLOC, sock has feature mem alloc for free memory.<br>只有到了sock层才能分辨, sock是否是memalloc的.<br>sk_filter</p>
 </li>
 <li><p>control buffer skb-cb<br>tcp_skb_cb</p>
 </li>
 </ul>
 <h1 id="socket">socket</h1>
 <ul>
-<li><p>What is socket?<br>A socket is one endpoint of a two-way communication link between two programs running on the network.<br>An Internet socket is characterized by at least the following :<br>Local socket address: Local IP address and port number<br>Protocol: A transport protocol (e.g., TCP, UDP, raw IP, or others).<br>Remote socket address, if connected to another socket.<br>struct sockaddr</p>
+<li><p>What is socket?<br>A socket is one endpoint of a two-way communication link between two programs running on the network.<br>An Internet socket is characterized by at least the following :<br>Local socket address: Local IP address and port number<br>Protocol: A transport protocol (e.g., TCP, UDP, raw IP, or others).<br>Remote socket address, if connected to another socket.<br>struct sockaddr<br>socket是跟协议族绑定的概念, 所以要用inet_create, netlink_create</p>
 </li>
 <li><p>Abstruction Concepts of socket<br>sock_common: 5 tuples, the essence of sock<br>inet_timewait_sock: deal heavily loaded servers without violating the protocol specification<br>sock: network sock<br>atalk_sock: apple talk<br>unix_sock: unix_address<br>netlink_sock:portid<br>socket: BSD socket with VFS stuff<br>inet_sock: INET sock, sock_common inet-nise!ip addr, Multicast, TTL<br>inet_connection_sock: INET connection oriented sock, Pluggable congestion control hook, Delayed ACK control data<br>tcp_sock: tcp sock, snd_cwnd, tcp_options_received, reordering, keepalive_probes</p>
 </li>
@@ -301,7 +302,7 @@ An implementation of the TCP/IP protocol suite for t">
 </ul>
 <ul>
 <li><p>netdev_queue-&gt;state<br><a href="http://thread.gmane.org/gmane.linux.kernel/709444/focus=714632" target="_blank" rel="external">Understand __QUEUE_STATE_FROZEN</a><br>  <strong>QUEUE_STATE_DRV_XOFF,     netif_tx_stop_queue
-  </strong>QUEUE_STATE_STACK_XOFF,<br>  __QUEUE_STATE_FROZEN,</p>
+  </strong>QUEUE_STATE_STACK_XOFF,<br>  __QUEUE_STATE_FROZEN,<br>可以确定这个frozen这个标志位就是为了dev_watchdog服务, 从所有内核态代码调用的位置得出的.</p>
 </li>
 <li><p>dev_watchdog,</p>
 </li>
@@ -361,9 +362,9 @@ dev_hard_start_xmit()
 <p>softirq:net_tx_action()-&gt;qdisc_run()</p>
 <h3 id="in_&amp;_forward">in &amp; forward</h3>
 <ul>
-<li><p>NAPI poll_list net_device<br>driver intr e100_intr()-&gt;<strong>netif_rx_schedule()-&gt;</strong>napi_schedule(netdev,nic-&gt;napi)-&gt;:add napi to poll_list and __raise_softirq_irqoff()<br>do_softirq-&gt;net_rx_action()-&gt;netdev-&gt;poll()=e100_poll()-&gt;e100_rx_clean()…netif_receive_skb()-&gt;</p>
+<li><p>NAPI poll_list net_device<br>driver intr add skb to private queue -&gt; e100_intr()-&gt;<strong>netif_rx_schedule()-&gt;</strong>napi_schedule(netdev,nic-&gt;napi)-&gt;:<br>add napi to poll_list and __raise_softirq_irqoff()<br>do_softirq-&gt;net_rx_action()-&gt;<br>+netdev-&gt;poll()=e100_poll()private function-&gt;e100_rx_clean()…-&gt;<br>netif_receive_skb()-&gt;deliver_skb-&gt;<br>private queue and private function</p>
 </li>
-<li><p>Non-NAPI input_pkt_queue skb<br>driver intr vortex_rx()-&gt;netif_rx()-&gt;napi_schedule(backlog)-&gt;add napi to poll_list and__raise_softirq_irqoff()<br>async:net_rx_action()-&gt;backlog-&gt;poll()=process_backlog()-&gt;netif_receive_skb()-&gt;deliver_skb-&gt;</p>
+<li><p>Non-NAPI input_pkt_queue skb<br>driver intr vortex_rx()-&gt;netif_rx()-&gt;add skb to SD input_pkt_queue-&gt;napi_schedule(backlog)-&gt;add backlog to SD poll_list __raise_softirq_irqoff()<br>async:net_rx_action()-&gt;<br>+backlog-&gt;poll()=process_backlog()<br>-&gt;netif_receive_skb()-&gt;deliver_skb-&gt;<br>skb to sd input_pkt_queue process</p>
 </li>
 <li><p>common path<br>pt_prev-&gt;func=ip_rcv()-&gt;NF_INET_PRE_ROUTING-&gt;ip_rcv_finish()-&gt;<br>ip_route_input()-&gt;ip_route_input_slow()<br>{<br>  local_input dst.input??=ip_local_deliver()<br>  or<br>  ip_mkroute_input()-&gt;__mkroute_input():dst.input=ip_forward() 紧接着dst.output??=ip_output()<br>}<br>dst_input()-&gt;<br>{<br>  ip_local_deliver()-&gt;NF_INET_LOCAL_IN-&gt;ip_local_deliver_finish()-&gt;inet_protos.tcp_v4_rcv()<br>  or<br>  ip_forward()-&gt;NF_INET_FORWARD-&gt;ip_forward_finish()-&gt;dst_output()见上。<br>}</p>
 </li>

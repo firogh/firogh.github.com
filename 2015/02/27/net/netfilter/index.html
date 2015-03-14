@@ -9,12 +9,9 @@
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="iptables
-iptables -I INPUT -p tcp —dport 22 -j ACCEPT
-netfilter hooks priorities
-NF_IP_PRI_RAW = -300,
-NF_IP_PRI_SELINUX_FIRST = -225,
-NF_IP_PRI_CONNT">
+    <meta name="description" content="Common concepts
+
+Netfilteris a framework inside the Linux kernel which offers flexibility for various networking-related operations to be implemented ">
     
     
     
@@ -81,7 +78,7 @@ NF_IP_PRI_CONNT">
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-03-01T14:09:49.000Z" itemprop="dateModified">Mar 1 2015</time>
+    Updated:<time datetime="2015-03-08T14:37:24.000Z" itemprop="dateModified">Mar 8 2015</time>
     
   </p>
 </header>
@@ -90,35 +87,59 @@ NF_IP_PRI_CONNT">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number">1.</span> <span class="toc-text">iptables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_hooks_priorities"><span class="toc-number">2.</span> <span class="toc-text">netfilter hooks priorities</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_framwork"><span class="toc-number">3.</span> <span class="toc-text">netfilter framwork</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Connection_tracking"><span class="toc-number">4.</span> <span class="toc-text">Connection tracking</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAT"><span class="toc-number">5.</span> <span class="toc-text">NAT</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filter"><span class="toc-number">6.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Init"><span class="toc-number">2.</span> <span class="toc-text">Init</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Connection_tracking"><span class="toc-number">3.</span> <span class="toc-text">Connection tracking</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#init"><span class="toc-number">3.1.</span> <span class="toc-text">init</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#struct"><span class="toc-number">3.2.</span> <span class="toc-text">struct</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HOOK_functon_—_xuchen"><span class="toc-number">3.3.</span> <span class="toc-text">HOOK functon — xuchen</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAT"><span class="toc-number">4.</span> <span class="toc-text">NAT</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#init-1"><span class="toc-number">4.1.</span> <span class="toc-text">init</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook_function"><span class="toc-number">4.2.</span> <span class="toc-text">Hook function</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SNAT_iptables_POST_ROUTING"><span class="toc-number">4.3.</span> <span class="toc-text">SNAT iptables  POST_ROUTING</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ipset"><span class="toc-number">5.</span> <span class="toc-text">ipset</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SYN_proxy"><span class="toc-number">6.</span> <span class="toc-text">SYN proxy</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filter"><span class="toc-number">7.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number">8.</span> <span class="toc-text">iptables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#nftables"><span class="toc-number">9.</span> <span class="toc-text">nftables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">10.</span> <span class="toc-text">FAQ</span></a></li></ol>
 		</div>
 		
-		<h1 id="iptables">iptables</h1>
-<p>iptables -I INPUT -p tcp —dport 22 -j ACCEPT</p>
-<h1 id="netfilter_hooks_priorities">netfilter hooks priorities</h1>
-<pre><code><span class="constant">NF_IP_PRI_RAW</span> = -<span class="number">300</span>,
-<span class="constant">NF_IP_PRI_SELINUX_FIRST</span> = -<span class="number">225</span>,
-<span class="constant">NF_IP_PRI_CONNTRACK</span> = -<span class="number">200</span>,
-<span class="constant">NF_IP_PRI_MANGLE</span> = -<span class="number">150</span>,
-<span class="constant">NF_IP_PRI_NAT_DST</span> = -<span class="number">100</span>,
-<span class="constant">NF_IP_PRI_FILTER</span> = <span class="number">0</span>,
-<span class="constant">NF_IP_PRI_SECURITY</span> = <span class="number">50</span>,
-<span class="constant">NF_IP_PRI_NAT_SRC</span> = <span class="number">100</span>,
-</code></pre><p>=Answer<br><a href="http://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO-9.html" target="_blank" rel="external">http://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO-9.html</a></p>
-<ol>
-<li>Mixing NAT and Packet Filtering</li>
-</ol>
-<h1 id="netfilter_framwork">netfilter framwork</h1>
-<p>=Hook point<br>local_in local_out<br>pre_routing post_routing</p>
-<p>=Files higherach<br>net/ipv4/netfilter<br>net/netfilter<br>net/ipv6/netfilter<br>=Init<br>~/linux/net/netfilter/core.c<br>netfilter_init()</p>
-<p>=Build function<br>nf_register_hooks<br>nf_ct_l4proto_register<br>nf_ct_l3proto_register</p>
+		<h1 id="Common_concepts">Common concepts</h1>
+<ul>
+<li><p>Netfilter<br>is a framework inside the Linux kernel which offers flexibility for various networking-related operations to be implemented in form of customized handlers. </p>
+</li>
+<li><p>Hook point<br>local_in local_out pre_routing post_routing</p>
+</li>
+<li><p>Files higherach<br>net/ipv4/netfilter<br>net/netfilter<br>net/ipv6/netfilter</p>
+</li>
+<li><p>netfilter hooks priorities<br>NF_IP_PRI_RAW = -300,<br>NF_IP_PRI_SELINUX_FIRST = -225,<br>NF_IP_PRI_CONNTRACK = -200,<br>NF_IP_PRI_MANGLE = -150,<br>NF_IP_PRI_NAT_DST = -100,<br>NF_IP_PRI_FILTER = 0,<br>NF_IP_PRI_SECURITY = 50,<br>NF_IP_PRI_NAT_SRC = 100,<br><a href="http://www.netfilter.org/documentation/HOWTO/packet-filtering-HOWTO-9.html" target="_blank" rel="external">Mixing NAT and Packet Filtering</a></p>
+</li>
+</ul>
+<h1 id="Init">Init</h1>
+<p>~/linux/net/netfilter/core.c<br>netfilter_init()</p>
 <h1 id="Connection_tracking">Connection tracking</h1>
-<p>=Init Build ipv4<br>nf_conntrack_l3proto_ipv4_init()<br>struct ipv4_conntrack_ops<br>ipv4_conntrack_in<br>ipv4_conntrack_local,<br>ipv4_helper,<br>ipv4_confirm,</p>
+<p>*conntrack — user-land tools<br> obsolete /proc/net/nf_conntrack</p>
+<p>*tuple — link a socket 5-arry tuple<br>Each Netfilter connection is uniquely identified by a<br>(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple</p>
+<ul>
+<li><p>Connection tracking helper<br>connection tracking can be given knowledge of application-layer protocols</p>
+</li>
+<li><p>template<br>netfilter: nf_conntrack: support conntrack templates</p>
+</li>
+</ul>
+<h2 id="init">init</h2>
+<p>nf_conntrack_l3proto_ipv4_init()<br>struct ipv4_conntrack_ops</p>
+<h2 id="struct">struct</h2>
+<p>nf_conntrack_tuple nf_conn<br>sock_common        tcp_sock</p>
+<h2 id="HOOK_functon_—_xuchen">HOOK functon — xuchen</h2>
+<ul>
+<li><p>ipv4_conntrack_in() — pre routing, -200<br>in -&gt; nf_conntrack_in()</p>
+</li>
+<li><p>ipv4_conntrack_local() —  local out , -200<br>out -&gt; nf_conntrack_in()</p>
+</li>
+<li><p>ipv4_helper() — local in, post routing, 300</p>
+</li>
+<li><p>ipv4_confirm() — local in, post routing, INT_MAX which is 2^31-1<br>以上的工作事实上都很简单，基本思路是：<br>一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。<br>这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。</p>
+</li>
+</ul>
+<p>徐琛,也这么说!</p>
 <h1 id="NAT">NAT</h1>
 <p><a href="https://www.ietf.org/rfc/rfc3489.txt" target="_blank" rel="external">https://www.ietf.org/rfc/rfc3489.txt</a><br>symmetric nat, 端口不复用, 访问同一个服务器.</p>
-<p>=Init Build<br>~/linux/net/ipv4/netfilter/iptable_nat.c<br>iptable_nat_init()<br>struct nf_nat_ipv4_ops<br>nf_nat_ipv4_in,<br>nf_nat_ipv4_out,<br>nf_nat_ipv4_local_fn, local_out<br>nf_nat_ipv4_fn, local_in</p>
-<p>=Drop ICMP redict in NAT<br><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html" target="_blank" rel="external">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></p>
-<p>=SNAT iptables  POST_ROUTING<br>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;<br>{<br>nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info<br>    {<br>        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.<br>        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&gt; new_original找到后再revert,成new_reply在改到ct里面去.<br>        orig_orignal-&gt;skb<br>        nf_ct_invert_tuplepr(inverse, orig_relply)<br>        {<br>            ipv4_invert_tuple<br>            tcp_invert_tuple<br>            For example, orig tuple:<br>            original: 192.168.199.132 -&gt; google.com<br>            reply: google.com -&gt; 192.168.199.132 //this is orig_relpy</p>
+<h2 id="init-1">init</h2>
+<p>iptable_nat_init</p>
+<h2 id="Hook_function">Hook function</h2>
+<p>nf_nat_ipv4_in,<br>nf_nat_ipv4_out,<br>nf_nat_ipv4_local_fn, local_out<br>nf_nat_ipv4_fn, local_in</p>
+<p>*NAT helper<br>Similar to connection tracking helpers, NAT helpers will do a packet inspection<br>and substitute original addresses by reply addresses in the payload.</p>
+<ul>
+<li>Drop ICMP redict in NAT<br><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html" target="_blank" rel="external">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></li>
+</ul>
+<h2 id="SNAT_iptables_POST_ROUTING">SNAT iptables  POST_ROUTING</h2>
+<p>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;<br>{<br>nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info<br>    {<br>        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.<br>        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&gt; new_original找到后再revert,成new_reply在改到ct里面去.<br>        orig_orignal-&gt;skb<br>        nf_ct_invert_tuplepr(inverse, orig_relply)<br>        {<br>            ipv4_invert_tuple<br>            tcp_invert_tuple<br>            For example, orig tuple:<br>            original: 192.168.199.132 -&gt; google.com<br>            reply: google.com -&gt; 192.168.199.132 //this is orig_relpy</p>
 <pre><code>        inverse tuple:
         original(inverse-&gt;dst.dir = !orig-&gt;dst.dir;):
         <span class="number">192.168</span><span class="number">.199</span><span class="number">.132</span> -&gt; google.com (!!!reverse orig_reply <span class="keyword">in</span> ipv4_inver_tuple())
@@ -139,12 +160,15 @@ NF_IP_PRI_CONNT">
 
 }
 </code></pre><p>//上面ct改完了该改skb了.<br>    nf_nat_packet -&gt; nf_nat_ipv4_manip_pkt,<br>}</p>
-<p>=SNAT nftables<br>nf_nat_prerouting …-&gt; nft_do_chain </p>
-<p>=Tips</p>
 <ul>
-<li>One kind of NAT, just set one flag bit in ct-&gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DOWN!</li>
+<li>SNAT nftables<br>nf_nat_prerouting …-&gt; nft_do_chain </li>
 </ul>
-<p>=De-NAT<br>最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？<br>我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。</p>
+<ul>
+<li>One kind of NAT, just set one flag bit in ct-&gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!</li>
+</ul>
+<ul>
+<li>De-NAT<br>最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？<br>我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。</li>
+</ul>
 <p>*答案3.17的代码和原来没多大变化就是函数名字变了<br>发包-POSTROUTING -&gt;SNAT -&gt;修改ct: nf_nat_setup_info-&gt;　ct-&gt;status |= IPS_SRC_NAT;-&gt;修改skb:nf_nat_packet</p>
 <p>收报-PREOUTING-&gt; DNAT-&gt;修改skb:nf_nat_packet<br>{<br>    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);   //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的. </p>
 <pre><code><span class="keyword">if</span> (mtype == NF_NAT_MANIP_SRC)          
@@ -160,10 +184,21 @@ NF_IP_PRI_CONNT">
     <span class="keyword">struct</span> nf_conntrack_tuple target;
     ...
 </code></pre><p>}</p>
+<h1 id="ipset">ipset</h1>
+<p>salist for iptables</p>
+<h1 id="SYN_proxy">SYN proxy</h1>
+<p>SYNPROXY target makes handling of large SYN floods possible without the large performance penalties imposed by the connection tracking in such cases.<br>On 3 November 2013, SYN proxy functionality was merged into the Netfilter, with the release of version 3.12 of the Linux kernel mainline</p>
 <h1 id="Filter">Filter</h1>
-<p>=Init Build iptables<br>~/linux/net/ipv4/netfilter/iptable_filter.c<br>iptable_filter_init()<br>struct xt_table packet_filter + iptable_filter_hook</p>
+<ul>
+<li>Init Build iptables<br>~/linux/net/ipv4/netfilter/iptable_filter.c<br>iptable_filter_init()<br>struct xt_table packet_filter + iptable_filter_hook</li>
+</ul>
+<h1 id="iptables">iptables</h1>
+<p>iptables -I INPUT -p tcp —dport 22 -j ACCEPT</p>
+<h1 id="nftables">nftables</h1>
 <h1 id="FAQ">FAQ</h1>
-<p>=Why not use nat_bysource;</p>
+<ul>
+<li>Why not use nat_bysource;</li>
+</ul>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -226,7 +261,7 @@ NF_IP_PRI_CONNT">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number">1.</span> <span class="toc-text">iptables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_hooks_priorities"><span class="toc-number">2.</span> <span class="toc-text">netfilter hooks priorities</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#netfilter_framwork"><span class="toc-number">3.</span> <span class="toc-text">netfilter framwork</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Connection_tracking"><span class="toc-number">4.</span> <span class="toc-text">Connection tracking</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAT"><span class="toc-number">5.</span> <span class="toc-text">NAT</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filter"><span class="toc-number">6.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Init"><span class="toc-number">2.</span> <span class="toc-text">Init</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Connection_tracking"><span class="toc-number">3.</span> <span class="toc-text">Connection tracking</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#init"><span class="toc-number">3.1.</span> <span class="toc-text">init</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#struct"><span class="toc-number">3.2.</span> <span class="toc-text">struct</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HOOK_functon_—_xuchen"><span class="toc-number">3.3.</span> <span class="toc-text">HOOK functon — xuchen</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAT"><span class="toc-number">4.</span> <span class="toc-text">NAT</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#init-1"><span class="toc-number">4.1.</span> <span class="toc-text">init</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook_function"><span class="toc-number">4.2.</span> <span class="toc-text">Hook function</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SNAT_iptables_POST_ROUTING"><span class="toc-number">4.3.</span> <span class="toc-text">SNAT iptables  POST_ROUTING</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ipset"><span class="toc-number">5.</span> <span class="toc-text">ipset</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SYN_proxy"><span class="toc-number">6.</span> <span class="toc-text">SYN proxy</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filter"><span class="toc-number">7.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number">8.</span> <span class="toc-text">iptables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#nftables"><span class="toc-number">9.</span> <span class="toc-text">nftables</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">10.</span> <span class="toc-text">FAQ</span></a></li></ol>
   </div>
 
 <div id="asidepart">
