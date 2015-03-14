@@ -9,11 +9,8 @@
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="how to get from bug report to the source of bug
-
-Debugging support in the kernel
-Debugging by Printing
-Marcoratelimitconsole levelPrint by qurey:proc ">
+    <meta name="description" content="BUG
+drivers/net/wireless/libertas/cfg.c:1115 lbs_associate() error: potential null dereference ‘cmd’.  (kzalloc returns null)drivers/net/wireless/rtlw">
     
     
     
@@ -80,7 +77,7 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
     </p>
   <p class="article-time">
     <time datetime="2015-01-02T16:00:00.000Z" itemprop="datePublished">Jan 3 2015</time>
-    Updated:<time datetime="2015-03-01T03:36:30.000Z" itemprop="dateModified">Mar 1 2015</time>
+    Updated:<time datetime="2015-03-14T13:16:00.000Z" itemprop="dateModified">Mar 14 2015</time>
     
   </p>
 </header>
@@ -89,22 +86,35 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">1.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debugging_by_Printing"><span class="toc-number">2.</span> <span class="toc-text">Debugging by Printing</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debugging_by_Watching"><span class="toc-number">3.</span> <span class="toc-text">Debugging by Watching</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_tools_and"><span class="toc-number">4.</span> <span class="toc-text">Debug tools and</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Skill"><span class="toc-number">5.</span> <span class="toc-text">Skill</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#If_an_page_oops_close_to_zero,_for_example_0xfffffff4"><span class="toc-number">6.</span> <span class="toc-text">If an page oops close to zero, for example 0xfffffff4</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ASM"><span class="toc-number">7.</span> <span class="toc-text">ASM</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">8.</span> <span class="toc-text">From ASM to c language</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG"><span class="toc-number">1.</span> <span class="toc-text">BUG</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_type"><span class="toc-number">1.1.</span> <span class="toc-text">BUG type</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">1.2.</span> <span class="toc-text">BUG made by me</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug"><span class="toc-number">2.</span> <span class="toc-text">Debug</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">2.1.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Printing"><span class="toc-number">2.2.</span> <span class="toc-text">Debugging by Printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Watching"><span class="toc-number">2.3.</span> <span class="toc-text">Debugging by Watching</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug_tools_and"><span class="toc-number">2.4.</span> <span class="toc-text">Debug tools and</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill"><span class="toc-number">2.5.</span> <span class="toc-text">Skill</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#If_an_page_oops_close_to_zero,_for_example_0xfffffff4"><span class="toc-number">2.6.</span> <span class="toc-text">If an page oops close to zero, for example 0xfffffff4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ASM"><span class="toc-number">2.7.</span> <span class="toc-text">ASM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">2.8.</span> <span class="toc-text">From ASM to c language</span></a></li></ol></li></ol>
 		</div>
 		
-		<ul>
+		<h1 id="BUG">BUG</h1>
+<p>drivers/net/wireless/libertas/cfg.c:1115 lbs_associate() error: potential null dereference ‘cmd’.  (kzalloc returns null)<br>drivers/net/wireless/rtlwifi/efuse.c:378 read_efuse() error: potential null dereference ‘efuse_word’.  (kmalloc returns null)<br>drivers/staging/rtl8192e/rtllib_rx.c:1496 rtllib_rx() error: we previously assumed ‘ieee’ could be null (see line 1464)<br>vers/media/media-device.c:146 <strong>media_device_enum_links() warn: check that ‘pad’ doesn’t leak information (struct has a hole after ‘index’)<br>drivers/media/media-device.c:167 </strong>media_device_enum_links() warn: check that ‘link’ doesn’t leak information (struct has a hole after ‘index’)</p>
+<h2 id="BUG_type">BUG type</h2>
+<p>oops</p>
+<h2 id="BUG_made_by_me">BUG made by me</h2>
+<p>=print_signal_info wrong pritk parameters position<br>        printk(KERN_NOTICE “K %d : %d -&gt; %s %d %s %d\n”, sig, q-&gt;info.si_code,<br>                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));</p>
+<ul>
+<li>Watch compile warning info can be avoid of this bug.<br>kernel/signal.c: In function ‘__print_signal_info’:<br>kernel/signal.c:1207:5: warning: format ‘%d’ expects argument of type ‘int’, but argument 5 has type ‘char <em>‘ [-Wformat]<br>kernel/signal.c:1207:5: warning: format ‘%s’ expects argument of type ‘char </em>‘, but argument 6 has type ‘pid_t’ [-Wformat]</li>
+</ul>
+<p>=spin_lock(sighand) invoke down_sem and cond_resched…<br>    __send_signal()<br>{<br>    get_cmdline -&gt; get_user_pages<br>}</p>
+<ul>
+<li>Carefully, investgate th invoke path.</li>
+<li>config CONFIG_DEBUG_ATOMIC_SLEEP on</li>
 <li>how to get from bug report to the source of bug</li>
 </ul>
-<h1 id="Debugging_support_in_the_kernel">Debugging support in the kernel</h1>
-<h1 id="Debugging_by_Printing">Debugging by Printing</h1>
+<h1 id="Debug">Debug</h1>
+<h2 id="Debugging_support_in_the_kernel">Debugging support in the kernel</h2>
+<h2 id="Debugging_by_Printing">Debugging by Printing</h2>
 <p>Marco<br>ratelimit<br>console level<br>Print by qurey:proc ioctl</p>
-<h1 id="Debugging_by_Watching">Debugging by Watching</h1>
+<h2 id="Debugging_by_Watching">Debugging by Watching</h2>
 <p>strace</p>
-<h1 id="Debug_tools_and">Debug tools and</h1>
+<h2 id="Debug_tools_and">Debug tools and</h2>
 <p>gdb /usr/src/linux/vmlinux /proc/kcore<br>objdump -s vmlinux<br>kdb<br>./scripts/decodecode &lt; Oops.txt</p>
-<h1 id="Skill">Skill</h1>
+<h2 id="Skill">Skill</h2>
 <p>=Generating signl assembly source file!<br>make kernel/sched.s V=1</p>
-<h1 id="If_an_page_oops_close_to_zero,_for_example_0xfffffff4">If an page oops close to zero, for example 0xfffffff4</h1>
+<h2 id="If_an_page_oops_close_to_zero,_for_example_0xfffffff4">If an page oops close to zero, for example 0xfffffff4</h2>
 <p>It maybe ERR_PTR(-12);</p>
 <ol>
 <li><p>踩内存</p>
@@ -116,9 +126,9 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
 <li><p>NULL poniter reference, functions adn varibles</p>
 </li>
 </ol>
-<h1 id="ASM">ASM</h1>
+<h2 id="ASM">ASM</h2>
 <p>move &lt;-<br>j long jump<br>b short jump<br>a0, a1…99% is parameters.</p>
-<h1 id="From_ASM_to_c_language">From ASM to c language</h1>
+<h2 id="From_ASM_to_c_language">From ASM to c language</h2>
 <ul>
 <li>expand inline function</li>
 <li>locate <strong>asm</strong>() 内嵌汇编, 能快速定位代码! 但很少! slhc_uncompress()</li>
@@ -149,10 +159,10 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/kernel/module/" title="modules">
+ <a href="/2015/02/27/firo/firo/" title="Firo">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  modules</span>
+  Firo</span>
 </a>
 </div>
 
@@ -182,7 +192,7 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">1.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debugging_by_Printing"><span class="toc-number">2.</span> <span class="toc-text">Debugging by Printing</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debugging_by_Watching"><span class="toc-number">3.</span> <span class="toc-text">Debugging by Watching</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_tools_and"><span class="toc-number">4.</span> <span class="toc-text">Debug tools and</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Skill"><span class="toc-number">5.</span> <span class="toc-text">Skill</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#If_an_page_oops_close_to_zero,_for_example_0xfffffff4"><span class="toc-number">6.</span> <span class="toc-text">If an page oops close to zero, for example 0xfffffff4</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ASM"><span class="toc-number">7.</span> <span class="toc-text">ASM</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">8.</span> <span class="toc-text">From ASM to c language</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG"><span class="toc-number">1.</span> <span class="toc-text">BUG</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_type"><span class="toc-number">1.1.</span> <span class="toc-text">BUG type</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">1.2.</span> <span class="toc-text">BUG made by me</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug"><span class="toc-number">2.</span> <span class="toc-text">Debug</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">2.1.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Printing"><span class="toc-number">2.2.</span> <span class="toc-text">Debugging by Printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Watching"><span class="toc-number">2.3.</span> <span class="toc-text">Debugging by Watching</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug_tools_and"><span class="toc-number">2.4.</span> <span class="toc-text">Debug tools and</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill"><span class="toc-number">2.5.</span> <span class="toc-text">Skill</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#If_an_page_oops_close_to_zero,_for_example_0xfffffff4"><span class="toc-number">2.6.</span> <span class="toc-text">If an page oops close to zero, for example 0xfffffff4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ASM"><span class="toc-number">2.7.</span> <span class="toc-text">ASM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">2.8.</span> <span class="toc-text">From ASM to c language</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
@@ -194,27 +204,27 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
 	<p class="asidetitle">Categories</p>
 		<ul>
 		
-			<li><a href="/categories/akasha/" title="akasha">akasha<sup>4</sup></a></li>
+			<li><a href="/categories/akasha/" title="akasha">akasha<sup>2</sup></a></li>
 		
 			<li><a href="/categories/cogito/" title="cogito">cogito<sup>1</sup></a></li>
 		
-			<li><a href="/categories/cs/" title="cs">cs<sup>10</sup></a></li>
+			<li><a href="/categories/cs/" title="cs">cs<sup>6</sup></a></li>
 		
-			<li><a href="/categories/fedora/" title="fedora">fedora<sup>1</sup></a></li>
+			<li><a href="/categories/fedora/" title="fedora">fedora<sup>0</sup></a></li>
 		
-			<li><a href="/categories/firo/" title="firo">firo<sup>1</sup></a></li>
+			<li><a href="/categories/firo/" title="firo">firo<sup>3</sup></a></li>
 		
-			<li><a href="/categories/golden-time/" title="golden-time">golden-time<sup>2</sup></a></li>
+			<li><a href="/categories/golden-time/" title="golden-time">golden-time<sup>0</sup></a></li>
 		
-			<li><a href="/categories/kernel/" title="kernel">kernel<sup>24</sup></a></li>
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>16</sup></a></li>
 		
 			<li><a href="/categories/laughing-man/" title="laughing-man">laughing-man<sup>0</sup></a></li>
 		
 			<li><a href="/categories/literature/" title="literature">literature<sup>1</sup></a></li>
 		
-			<li><a href="/categories/net/" title="net">net<sup>8</sup></a></li>
+			<li><a href="/categories/net/" title="net">net<sup>6</sup></a></li>
 		
-			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>1</sup></a></li>
+			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>0</sup></a></li>
 		
 		</ul>
 </div>
@@ -225,21 +235,21 @@ Marcoratelimitconsole levelPrint by qurey:proc ">
 	<p class="asidetitle">Tags</p>
 		<ul class="clearfix">
 		
-			<li><a href="/tags/akasha/" title="akasha">akasha<sup>3</sup></a></li>
+			<li><a href="/tags/akasha/" title="akasha">akasha<sup>1</sup></a></li>
 		
-			<li><a href="/tags/cs/" title="cs">cs<sup>9</sup></a></li>
+			<li><a href="/tags/cs/" title="cs">cs<sup>6</sup></a></li>
 		
-			<li><a href="/tags/fedora/" title="fedora">fedora<sup>1</sup></a></li>
+			<li><a href="/tags/fedora/" title="fedora">fedora<sup>0</sup></a></li>
 		
 			<li><a href="/tags/firo/" title="firo">firo<sup>1</sup></a></li>
 		
-			<li><a href="/tags/golden-time/" title="golden-time">golden-time<sup>2</sup></a></li>
+			<li><a href="/tags/golden-time/" title="golden-time">golden-time<sup>0</sup></a></li>
 		
-			<li><a href="/tags/kernel/" title="kernel">kernel<sup>17</sup></a></li>
+			<li><a href="/tags/kernel/" title="kernel">kernel<sup>10</sup></a></li>
 		
 			<li><a href="/tags/laughing-man/" title="laughing-man">laughing-man<sup>0</sup></a></li>
 		
-			<li><a href="/tags/net/" title="net">net<sup>7</sup></a></li>
+			<li><a href="/tags/net/" title="net">net<sup>5</sup></a></li>
 		
 		</ul>
 </div>
