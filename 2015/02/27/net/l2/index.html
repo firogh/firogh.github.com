@@ -1,0 +1,505 @@
+
+ <!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Data link layer | Hot sexy girls</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Firo Yang">
+    
+    <meta name="description" content="data link layer
+Reference
+
+IEEE 802 suiteIEEE 802.1—概述、体系结构和网络互连，以及网络管理和性能测量。IEEE 802.2—逻辑链路控制LLC。最高层协议与任何一种局域网MAC子层的接口。IEEE 802.3—CSMA/CD网络，定义CSMA/CD">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="Hot sexy girls" title="Hot sexy girls"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="Hot sexy girls">Hot sexy girls</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:firoyang.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/02/27/net/l2/" title="Data link layer" itemprop="url">Data link layer</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://firoyang.org" title="Firo Yang">Firo Yang</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
+    Updated:<time datetime="2015-03-14T17:31:39.000Z" itemprop="dateModified">Mar 15 2015</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#data_link_layer"><span class="toc-number">1.</span> <span class="toc-text">data link layer</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">1.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Frame"><span class="toc-number">1.3.</span> <span class="toc-text">Frame</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#net_device"><span class="toc-number">2.</span> <span class="toc-text">net_device</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Neighbor"><span class="toc-number">3.</span> <span class="toc-text">Neighbor</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PPP_SLIP"><span class="toc-number">4.</span> <span class="toc-text">PPP SLIP</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Data_Framing"><span class="toc-number">5.</span> <span class="toc-text">Data Framing</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TC_Qdisc"><span class="toc-number">6.</span> <span class="toc-text">TC Qdisc</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Bibliography"><span class="toc-number">6.1.</span> <span class="toc-text">Bibliography</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts-1"><span class="toc-number">6.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Add_new_qdisc"><span class="toc-number">6.3.</span> <span class="toc-text">Add new qdisc</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_execution_of_u32_tc_rule"><span class="toc-number">6.4.</span> <span class="toc-text">The execution of u32 tc rule</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#user_space_tc_qidsc_add"><span class="toc-number">6.4.1.</span> <span class="toc-text">user space tc qidsc add</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#kernel_space"><span class="toc-number">6.4.2.</span> <span class="toc-text">kernel space</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">6.5.</span> <span class="toc-text">FAQ</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LLC_(TCP/IP_rarely_use_this_sub_layer)"><span class="toc-number">7.</span> <span class="toc-text">LLC (TCP/IP rarely use this sub layer)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAPI"><span class="toc-number">8.</span> <span class="toc-text">NAPI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Driver"><span class="toc-number">9.</span> <span class="toc-text">Driver</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MAC"><span class="toc-number">10.</span> <span class="toc-text">MAC</span></a></li></ol>
+		</div>
+		
+		<h1 id="data_link_layer">data link layer</h1>
+<h2 id="Reference">Reference</h2>
+<ul>
+<li>IEEE 802 suite<br>IEEE 802.1—概述、体系结构和网络互连，以及网络管理和性能测量。<br>IEEE 802.2—逻辑链路控制LLC。最高层协议与任何一种局域网MAC子层的接口。<br>IEEE 802.3—CSMA/CD网络，定义CSMA/CD总线网的MAC子层和物理层的规范。<br>IEEE 802.4—令牌总线网。定义令牌传递总线网的MAC子层和物理层的规范。<br>IEEE 802.5—令牌环形网。定义令牌传递环形网的MAC子层和物理层的规范。<br>IEEE 802.6—城域网。<br>IEEE 802.7—宽带技术。<br>IEEE 802.8—光纤技术。<br>IEEE 802.9—综合话音数据局域网。<br>IEEE 802.10—可互操作的局域网的安全。<br>IEEE 802.11—无线局域网。<br>IEEE 802.12—优先高速局域网(100Mb/s)。<br>IEEE 802.13—有线电视(Cable-TV)。 </li>
+</ul>
+<h2 id="Common_concepts">Common concepts</h2>
+<ul>
+<li><p>The link layer<br>is the group of methods and communications protocols that only operate on the link that a host is physically connected to. </p>
+</li>
+<li><p>The link<br>is the physical and logical network component used to interconnect hosts or nodes in the network </p>
+</li>
+<li><p>a link protocol<br>is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment<br>or a wide area network connection.</p>
+</li>
+<li><p>MTU<br>This limits the number of bytes of data to 1500(Ethernet II) and 1492(IEEE 802), respectively.<br>This characteristic of the link layer is called the MTU, its maximum transmission unit.</p>
+</li>
+<li><p>PMTU<br>/proc/sys/net/ipv4/ip_no_pmtu_disc<br>0 enable, 1 disable</p>
+</li>
+</ul>
+<p>cat /proc/sys/net/core/warnings</p>
+<p>/proc/sys/net/ipv4/tcp_mtu_probing<br>!0 enable tcp_mtu_probing()<br>If you are using Jumbo Frames, we recommend setting tcp_mtu_probing = 1 to<br>help avoid the problem of MTU black holes. Setting it to 2 sometimes causes performance problems.</p>
+<p>net/ipv4/icmp.c<br>icmp_unreach(<br>type 3, code 4<br>icmph-&gt;type == ICMP_DEST_UNREACH //3<br>case ICMP_FRAG_NEEDED //4<br>icmp_err,</p>
+<h2 id="Frame">Frame</h2>
+<p><a href="http://www.infocellar.com/networks/ethernet/frame.htm" target="_blank" rel="external">Ethernet Frame</a></p>
+<ul>
+<li>一种不太确定的非严格的真实划分<br>TCP/IP -&gt; Ethenet II frame<br>IPX/APPLETALK -&gt; 802.3/LLC(802.2), SNAP, mac 发来的包走这条路.</li>
+</ul>
+<ul>
+<li>jumbo frame?</li>
+</ul>
+<h1 id="net_device">net_device</h1>
+<p>link -&gt; net<em>device -&gt; if<br>driver -&gt; manipulate dev-&gt;state through netif</em>*_on/off -&gt; dev-&gt;flags<br>+rfc2863</p>
+<ul>
+<li><a href="https://www.kernel.org/doc/Documentation/networking/operstates.txt" target="_blank" rel="external">operational state</a></li>
+<li><a href="https://support.cumulusnetworks.com/hc/en-us/articles/202693826-Monitoring-Interface-Administrative-State-and-Physical-State-on-Cumulus-Linux" target="_blank" rel="external">Monitoring Interface Administrative State and Physical State on Cumulus Linux</a></li>
+</ul>
+<ul>
+<li><p>dev-&gt;operstate<br>admin state is if flag<br>operate state is link_state<br>Administrative state is the result of “ip link set dev<br><dev> up or down” and reflects whether the administrator wants to use<br>the device for traffic.<br>enp9s0: <no-carrier,broadcast,multicast,up> mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000<br>operate is DOWN, amdin is UP&gt;<br>Operational state<br>shows the ability of an interface to transmit this user data.<br>  “UNKNOWN”, “NOTPRESENT”, “DOWN”, “LOWERLAYERDOWN”,<br>  “TESTING”, “DORMANT”,    “UP”<br>IF_OPER_UNKNOWN,<br>see rfc2863</no-carrier,broadcast,multicast,up></dev></p>
+</li>
+<li><p>dev-&gt;link_mode<br>IF_LINK_MODE_DORMANT wifi<br>IF_LINK_MODE_DEFAULT wire<br>对应dev-&gt;operstate in 转化方法rfc2863_policy()</p>
+</li>
+<li><p>dev-&gt;state<br><strong>LINK_STATE_START,     这是内核自身的标记位</strong>dev_open init_dummy_netdev <strong>dev_close_many      
+</strong>LINK_STATE_PRESENT,         也是内核自己的, 用的比 START早<br><strong>LINK_STATE_NOCARRIER,        
+</strong>LINK_STATE_LINKWATCH_PENDING, 也是辅助状态不明, nocarrier和dormant都可接收的<br>__LINK_STATE_DORMANT</p>
+</li>
+<li><p>dev-&gt;flags dev_get_flags()</p>
+</li>
+</ul>
+<ul>
+<li><p>if flags form man netdevice or or kernel src codes<br>/sys/class/net/<dev>/flags</dev></p>
+<pre><code>        IFF_UP            Interface is running.
+        IFF_BROADCAST     Valid broadcast address <span class="operator"><span class="keyword">set</span>.
+        IFF_DEBUG         Internal debugging flag.
+        IFF_LOOPBACK      Interface <span class="keyword">is</span> a loopback interface.
+        IFF_POINTOPOINT   Interface <span class="keyword">is</span> a point-<span class="keyword">to</span>-point link.
+        IFF_RUNNING       Resources allocated.
+        IFF_NOARP         <span class="keyword">No</span> arp protocol, L2 destination address <span class="keyword">not</span> <span class="keyword">set</span>.
+        IFF_PROMISC       Interface <span class="keyword">is</span> <span class="keyword">in</span> promiscuous <span class="keyword">mode</span>.
+        IFF_NOTRAILERS    Avoid <span class="keyword">use</span> <span class="keyword">of</span> trailers.
+        IFF_ALLMULTI      Receive <span class="keyword">all</span> multicast packets.
+        IFF_MASTER        <span class="keyword">Master</span> <span class="keyword">of</span> a <span class="keyword">load</span> balancing bundle.
+        IFF_SLAVE         <span class="keyword">Slave</span> <span class="keyword">of</span> a <span class="keyword">load</span> balancing bundle.
+
+        IFF_MULTICAST     Supports multicast
+        IFF_PORTSEL       <span class="keyword">Is</span> able <span class="keyword">to</span> <span class="keyword">select</span> media type via ifmap.
+        IFF_AUTOMEDIA     Auto media selection active.
+        IFF_DYNAMIC       The addresses <span class="keyword">are</span> lost <span class="keyword">when</span> the interface goes
+                          down.
+        IFF_LOWER_UP      Driver signals L1 up (since Linux <span class="number">2.6</span><span class="number">.17</span>)
+        IFF_DORMANT       Driver signals dormant (since Linux <span class="number">2.6</span><span class="number">.17</span>)
+        IFF_ECHO          Echo sent packets (since Linux <span class="number">2.6</span><span class="number">.25</span>)</span>
+</code></pre></li>
+</ul>
+<ul>
+<li><p>netdev_queue-&gt;state<br><a href="http://thread.gmane.org/gmane.linux.kernel/709444/focus=714632" target="_blank" rel="external">Understand __QUEUE_STATE_FROZEN</a><br>  <strong>QUEUE_STATE_DRV_XOFF,     netif_tx_stop_queue
+  </strong>QUEUE_STATE_STACK_XOFF,<br>  __QUEUE_STATE_FROZEN,<br>可以确定这个frozen这个标志位就是为了dev_watchdog服务, 从所有内核态代码调用的位置得出的.</p>
+</li>
+<li><p>dev_watchdog,</p>
+</li>
+</ul>
+<h1 id="Neighbor">Neighbor</h1>
+<ul>
+<li>ip_output_finish2 -&gt; __neigh_create -&gt; tbl-&gt;constructor -&gt; arp_constructor{<br>if !dev-&gt;header_ops   //slip is the case, see sl_setup<br>  neigh-&gt;ops = &amp;arp_direct_ops<br>  neigh-&gt;output = neigh_direct_output<br>else if ARPHRD_ROSE/AX25/NETROM<br>  arp_broken_ops<br>  neigh-&gt;ops-&gt;output<br>else if dev-&gt;header_ops-&gt;cache<br>  neigh-&gt;ops = &amp;arp_hh_ops<br>else<br>  arp_generic_ops</li>
+</ul>
+<p>if (neigh-&gt;nud_state &amp; NUD_VALID)<br>    neigh-&gt;output = neigh-&gt;ops-&gt;connected_output;<br>else<br>    neigh-&gt;output = neigh-&gt;ops-&gt;output;<br>}</p>
+<ul>
+<li><p>ip_output_finish2 -&gt; dst_neigh_output -&gt; neigh_resolve_output</p>
+</li>
+<li><p>ipv4 Neighbor output instance of ethernet<br>see alloc_etherdev_mqs-&gt; ether_setup{<br>dev-&gt;header_ops = &amp;eth_header_ops;<br>dev-&gt;type       = ARPHRD_ETHER;<br>eth_header_ops.cache = eth_header_cache<br>}<br>so neigh-&gt;ops = &amp;arp_hh_ops; neigh-&gt;output = neigh_resolve_output in arp_hh_ops</p>
+<p> //tg3_init_one<br> dev-&gt;netdev_ops = &amp;tg3_netdev_ops;<br> dev-&gt;ethtool_ops = &amp;tg3_ethtool_ops;<br> dev-&gt;watchdog_timeo = TG3_TX_TIMEOUT;</p>
+<p> //In ppp<br>static void ppp_setup(struct nethernetet_device *dev)<br>{<br> dev-&gt;netdev_ops = &amp;ppp_netdev_ops;<br> dev-&gt;hard_header_len = PPP_HDRLEN;<br> dev-&gt;mtu = PPP_MRU;<br> dev-&gt;addr_len = 0;<br> dev-&gt;tx_queue_len = 3<br> dev-&gt;type = ARPHRD_PPP<br>}</p>
+</li>
+</ul>
+<h1 id="PPP_SLIP">PPP SLIP</h1>
+<h1 id="Data_Framing">Data Framing</h1>
+<p>dst_neigh_output-&gt;dev_hard_header -&gt;  eth_header</p>
+<h1 id="TC_Qdisc">TC Qdisc</h1>
+<h2 id="Bibliography">Bibliography</h2>
+<p><a href="http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html" target="_blank" rel="external">http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html</a><br>lartc.rog<br><a href="http://ace-host.stuart.id.au/russell/files/tc/" target="_blank" rel="external">http://ace-host.stuart.id.au/russell/files/tc/</a></p>
+<h2 id="Common_concepts-1">Common concepts</h2>
+<p>Shaping: Shapers delay packets to meet a desired rate.<br>Scheduling: Schedulers arrange and/or rearrange packets for output.<br>Classifying: Classifiers sort or separate traffic into queues.<br>Policing: Policers measure and limit traffic in a particular queue.<br>Dropping: Dropping discards an entire packet, flow or classification.<br>Marking: Marking is a mechanism by which the packet is altered.</p>
+<h2 id="Add_new_qdisc">Add new qdisc</h2>
+<p>RTM_NEWQDISC -&gt; tc_modify_qdisc</p>
+<h2 id="The_execution_of_u32_tc_rule">The execution of u32 tc rule</h2>
+<h3 id="user_space_tc_qidsc_add">user space tc qidsc add</h3>
+<p> u32_parse_opt<br>{<br>    -&gt; parse_selector -&gt;…-&gt; parse_ip<br>    struct nlmsghdr *n<br>    rta = NLMSG_TAIL(n)<br>    rta-&gt;type = TCA_U32_SEL</p>
+<p>}</p>
+<h3 id="kernel_space">kernel space</h3>
+<p>NETLINK_ROUTE -&gt; RTM_NEWTFILTER: see tc_filter_init -&gt; tc_ctl_tfilter-&gt;(tp-&gt;ops-&gt;change = u32_change in net/sched/cls_u32.c)<br>tcf_exts_validate: init police and action of this shel tc command,<br>put sel in tc_u_knode;<br>tc_u_knode insert in tc_u_hnode<br>root is tcf_proto 入殓 by prior.<br>tcf_proto -&gt; tc_u_hnode -&gt; tc_u_knode -&gt; sel<br>也就是用户太的selector没变存到内核中了.<br>enqueue -&gt; filter_list -&gt;u32-&gt;classify() this classify is implement by u32!<br>tcf_proto_ops-&gt;.kind = “u32”, .classify   =   u32_classify,<br>police and action invoke in tcf_action_exec , act register by tcf_register_action.</p>
+<ul>
+<li>TCA_U32_CLASSID in u32_set_parms<br>filter classid and flowid is the same meaning in russell tc doc</li>
+<li>TCA_KIND in filter is u32…register_tcf_proto_ops</li>
+</ul>
+<h2 id="FAQ">FAQ</h2>
+<ul>
+<li>conflict tc qidsc del with softnet_data-&gt;softnet_data<br>[PATCH] pkt_sched: Destroy gen estimators under rtnl_lock().<br><a href="http://thread.gmane.org/gmane.linux.network/102444/focus=102592" target="_blank" rel="external">http://thread.gmane.org/gmane.linux.network/102444/focus=102592</a><br>After synchronize_rcu() in dev_deactivate() we are sure any qdisc_run(),<br>from dev_queue_xmit() or net_tx_action() can only see and lock noop_qdisc.<br>This was happened in dev_deactivate_many()</li>
+<li>difference between synchronize_net and  synchronize_rcu?<br><a href="http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle" target="_blank" rel="external">http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle</a><br>In this patch, we replace synchronize_rcu with synchronize_net().</li>
+</ul>
+<h1 id="LLC_(TCP/IP_rarely_use_this_sub_layer)">LLC (TCP/IP rarely use this sub layer)</h1>
+<ul>
+<li>ptype MAC layer 之上, 可能是data link(llc) or network layer(ip)<br>定义了所有从驱动上来的packet接收函数, 这里有ip_rcv 还有pppoe_rcv,llc_rcv, NO snap_rcv<br>dev_add_pack<br>llc_rcv{snap_rcv}<br>netif_receive_skb -&gt;ip/llc_rcv</li>
+</ul>
+<h1 id="NAPI">NAPI</h1>
+<h1 id="Driver">Driver</h1>
+<ul>
+<li>skb-&gt;protocol</li>
+</ul>
+<ul>
+<li>assignment in ip_output by = htons(ETH_P_IP)</li>
+<li>assignment in driver by = eth_type_trans() </li>
+</ul>
+<h1 id="MAC">MAC</h1>
+<ul>
+<li>Addressing,LAN switching</li>
+</ul>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/net/">net</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/net/">net</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://firoyang.org/2015/02/27/net/l2/" data-title="Data link layer | Hot sexy girls" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/02/27/cs/utility/" title="Programming Utility">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Programming Utility</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/02/27/net/netfilter/"  title="netfilter">
+ <strong>NEXT:</strong><br/> 
+ <span>netfilter
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+
+<section id="comments">
+  <div id="disqus_thread">
+   <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#data_link_layer"><span class="toc-number">1.</span> <span class="toc-text">data link layer</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">1.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Frame"><span class="toc-number">1.3.</span> <span class="toc-text">Frame</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#net_device"><span class="toc-number">2.</span> <span class="toc-text">net_device</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Neighbor"><span class="toc-number">3.</span> <span class="toc-text">Neighbor</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PPP_SLIP"><span class="toc-number">4.</span> <span class="toc-text">PPP SLIP</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Data_Framing"><span class="toc-number">5.</span> <span class="toc-text">Data Framing</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TC_Qdisc"><span class="toc-number">6.</span> <span class="toc-text">TC Qdisc</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Bibliography"><span class="toc-number">6.1.</span> <span class="toc-text">Bibliography</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts-1"><span class="toc-number">6.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Add_new_qdisc"><span class="toc-number">6.3.</span> <span class="toc-text">Add new qdisc</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_execution_of_u32_tc_rule"><span class="toc-number">6.4.</span> <span class="toc-text">The execution of u32 tc rule</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#user_space_tc_qidsc_add"><span class="toc-number">6.4.1.</span> <span class="toc-text">user space tc qidsc add</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#kernel_space"><span class="toc-number">6.4.2.</span> <span class="toc-text">kernel space</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">6.5.</span> <span class="toc-text">FAQ</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LLC_(TCP/IP_rarely_use_this_sub_layer)"><span class="toc-number">7.</span> <span class="toc-text">LLC (TCP/IP rarely use this sub layer)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NAPI"><span class="toc-number">8.</span> <span class="toc-text">NAPI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Driver"><span class="toc-number">9.</span> <span class="toc-text">Driver</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MAC"><span class="toc-number">10.</span> <span class="toc-text">MAC</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/akasha/" title="akasha">akasha<sup>2</sup></a></li>
+		
+			<li><a href="/categories/cogito/" title="cogito">cogito<sup>1</sup></a></li>
+		
+			<li><a href="/categories/cs/" title="cs">cs<sup>6</sup></a></li>
+		
+			<li><a href="/categories/firo/" title="firo">firo<sup>3</sup></a></li>
+		
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>9</sup></a></li>
+		
+			<li><a href="/categories/literature/" title="literature">literature<sup>1</sup></a></li>
+		
+			<li><a href="/categories/net/" title="net">net<sup>5</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/akasha/" title="akasha">akasha<sup>1</sup></a></li>
+		
+			<li><a href="/tags/cs/" title="cs">cs<sup>6</sup></a></li>
+		
+			<li><a href="/tags/firo/" title="firo">firo<sup>1</sup></a></li>
+		
+			<li><a href="/tags/kernel/" title="kernel">kernel<sup>7</sup></a></li>
+		
+			<li><a href="/tags/net/" title="net">net<sup>4</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+      <li><a href="http://ifind.cc" target="_blank" title="Jiangchang shun">江长顺</a></li>
+      <li><a href="http://lisuyong.com" target="_blank" title="Li su yong">李素颙</a></li>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+    </ul>
+</div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2015 
+		
+		<a href="http://firoyang.org" target="_blank" title="Firo Yang">Firo Yang</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+<script>
+  var disqus_shortname = 'firoyang';
+  
+  var disqus_url = 'http://firoyang.org/2015/02/27/net/l2/';
+  
+  (function(){
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+
+
+  </body>
+</html>
