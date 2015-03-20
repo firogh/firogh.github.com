@@ -9,10 +9,12 @@
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="VFS
+    <meta name="description" content="Hacks
+I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.
+VFS
 Common concepts
 
-VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions: file, directory entries, inodes, and mount point">
+V">
     
     
     
@@ -79,7 +81,7 @@ VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions:
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-03-14T15:24:12.000Z" itemprop="dateModified">Mar 14 2015</time>
+    Updated:<time datetime="2015-03-19T12:45:09.000Z" itemprop="dateModified">Mar 19 2015</time>
     
   </p>
 </header>
@@ -88,10 +90,12 @@ VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions:
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#VFS"><span class="toc-number">1.</span> <span class="toc-text">VFS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-"><span class="toc-number">1.2.</span> <span class="toc-text">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VFS_primary_objects:_superblock,_inode,_dentry,_file-"><span class="toc-number">1.3.</span> <span class="toc-text">VFS primary objects: superblock, inode, dentry, file.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step_of_how_to_use_ext2_fs"><span class="toc-number">1.4.</span> <span class="toc-text">Step of how to use ext2 fs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_make_dentry"><span class="toc-number">1.5.</span> <span class="toc-text">How make dentry</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Procfs"><span class="toc-number">2.</span> <span class="toc-text">Procfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">2.1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#I_think,_important_directory_need_to_know-"><span class="toc-number">2.2.</span> <span class="toc-text">I think, important directory need to know.</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Hacks"><span class="toc-number">1.</span> <span class="toc-text">Hacks</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#VFS"><span class="toc-number">2.</span> <span class="toc-text">VFS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">2.1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-"><span class="toc-number">2.2.</span> <span class="toc-text">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VFS_primary_objects:_superblock,_inode,_dentry,_file-"><span class="toc-number">2.3.</span> <span class="toc-text">VFS primary objects: superblock, inode, dentry, file.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step_of_how_to_use_ext2_fs"><span class="toc-number">2.4.</span> <span class="toc-text">Step of how to use ext2 fs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_make_dentry"><span class="toc-number">2.5.</span> <span class="toc-text">How make dentry</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Procfs"><span class="toc-number">3.</span> <span class="toc-text">Procfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">3.1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#I_think,_important_directory_need_to_know-"><span class="toc-number">3.2.</span> <span class="toc-text">I think, important directory need to know.</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Sysfs"><span class="toc-number">4.</span> <span class="toc-text">Sysfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ramfs"><span class="toc-number">5.</span> <span class="toc-text">Ramfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#reference"><span class="toc-number">5.1.</span> <span class="toc-text">reference</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tmpfs"><span class="toc-number">6.</span> <span class="toc-text">tmpfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rootfs"><span class="toc-number">7.</span> <span class="toc-text">rootfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#initramfs"><span class="toc-number">8.</span> <span class="toc-text">initramfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Difference_with_initrd"><span class="toc-number">8.1.</span> <span class="toc-text">Difference with initrd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#request_driver"><span class="toc-number">8.2.</span> <span class="toc-text">request driver</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mount_fs"><span class="toc-number">8.3.</span> <span class="toc-text">mount fs</span></a></li></ol></li></ol>
 		</div>
 		
-		<h1 id="VFS">VFS</h1>
+		<h1 id="Hacks">Hacks</h1>
+<p>I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.</p>
+<h1 id="VFS">VFS</h1>
 <h2 id="Common_concepts">Common concepts</h2>
 <ul>
 <li>VFS:Common fs interface plus fs anstraction layer! <h2 id="Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</h2>
@@ -137,6 +141,26 @@ VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions:
 <li>Read only kernel infomation. /proc<h2 id="I_think,_important_directory_need_to_know-">I think, important directory need to know.</h2>
 /proc/sys/kernel</li>
 </ul>
+<h1 id="Sysfs">Sysfs</h1>
+<p>sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!</p>
+<h1 id="Ramfs">Ramfs</h1>
+<p>fs/ramfs</p>
+<h2 id="reference">reference</h2>
+<p><a href="http://www.thegeekstuff.com/2008/11/overview-of-ramfs-and-tmpfs-on-linux/" target="_blank" rel="external">Overview of RAMFS and TMPFS on Linux</a></p>
+<h1 id="tmpfs">tmpfs</h1>
+<p>mm/shmem.c<br><a href="http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/" target="_blank" rel="external">关于 tmpfs</a></p>
+<h1 id="rootfs">rootfs</h1>
+<p>init/do_mounts.c<br>init_rootfs()<br>init_mount_tree<br>rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs<br>但是在do_basic_setup才初始化.<br>rootfs_initcall(populate_rootfs);</p>
+<h1 id="initramfs">initramfs</h1>
+<p>init/initramfs.c</p>
+<h2 id="Difference_with_initrd">Difference with initrd</h2>
+<p>initrd is image with specific fs type, like ext2, need driver built-in kernel.<br>initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs</p>
+<h2 id="request_driver">request driver</h2>
+<p>ata_host_register-&gt;ata_scsi_scan_host-&gt;__scsi_add_device-&gt;scsi_probe_and_add_lun -&gt;scsi_add_lun</p>
+<p>subsys_initcall(genhd_device_init);-&gt;kobj_map_init{bdev_map.probe.get = base_probe}</p>
+<p>subsys_initcall(init_scsi);4-&gt;scsi_sysfs_register{autoprobe = 1;}<br>rootfs_initcall(populate_rootfs);-&gt;{unpack_to_rootfs; 解压initramfs到rootfs}<br>module_initinit_sd;6-&gt;scsi_register_driver -&gt;driver_register-&gt;bus_add_driver -&gt;driver_attach -&gt;driver_probe_device-&gt; drv-&gt;probe(dev)=sd_probe_async-&gt;add_disk -&gt; register_disk -&gt; get_gendisk -&gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}</p>
+<h2 id="mount_fs">mount fs</h2>
+<p>kernel_init_freeable-&gt; if  /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd<br>如果/init不可以访问 prepare_namespace{挂在真正的文件系统}</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -166,18 +190,18 @@ VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions:
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/kernel/kernel/" title="kernel">
+ <a href="/2015/02/27/kernel/driver/" title="Linux device driver">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  kernel</span>
+  Linux device driver</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/kernel/process/"  title="process-management">
+<a href="/2015/02/27/kernel/build/"  title="build">
  <strong>NEXT:</strong><br/> 
- <span>process-management
+ <span>build
 </span>
 </a>
 </div>
@@ -199,7 +223,7 @@ VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions:
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#VFS"><span class="toc-number">1.</span> <span class="toc-text">VFS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">1.1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-"><span class="toc-number">1.2.</span> <span class="toc-text">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VFS_primary_objects:_superblock,_inode,_dentry,_file-"><span class="toc-number">1.3.</span> <span class="toc-text">VFS primary objects: superblock, inode, dentry, file.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step_of_how_to_use_ext2_fs"><span class="toc-number">1.4.</span> <span class="toc-text">Step of how to use ext2 fs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_make_dentry"><span class="toc-number">1.5.</span> <span class="toc-text">How make dentry</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Procfs"><span class="toc-number">2.</span> <span class="toc-text">Procfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">2.1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#I_think,_important_directory_need_to_know-"><span class="toc-number">2.2.</span> <span class="toc-text">I think, important directory need to know.</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Hacks"><span class="toc-number">1.</span> <span class="toc-text">Hacks</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#VFS"><span class="toc-number">2.</span> <span class="toc-text">VFS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">2.1.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-"><span class="toc-number">2.2.</span> <span class="toc-text">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VFS_primary_objects:_superblock,_inode,_dentry,_file-"><span class="toc-number">2.3.</span> <span class="toc-text">VFS primary objects: superblock, inode, dentry, file.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Step_of_how_to_use_ext2_fs"><span class="toc-number">2.4.</span> <span class="toc-text">Step of how to use ext2 fs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_make_dentry"><span class="toc-number">2.5.</span> <span class="toc-text">How make dentry</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Procfs"><span class="toc-number">3.</span> <span class="toc-text">Procfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#How_many_parts_does_procfs_has?"><span class="toc-number">3.1.</span> <span class="toc-text">How many parts does procfs has?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#I_think,_important_directory_need_to_know-"><span class="toc-number">3.2.</span> <span class="toc-text">I think, important directory need to know.</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Sysfs"><span class="toc-number">4.</span> <span class="toc-text">Sysfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ramfs"><span class="toc-number">5.</span> <span class="toc-text">Ramfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#reference"><span class="toc-number">5.1.</span> <span class="toc-text">reference</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tmpfs"><span class="toc-number">6.</span> <span class="toc-text">tmpfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rootfs"><span class="toc-number">7.</span> <span class="toc-text">rootfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#initramfs"><span class="toc-number">8.</span> <span class="toc-text">initramfs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Difference_with_initrd"><span class="toc-number">8.1.</span> <span class="toc-text">Difference with initrd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#request_driver"><span class="toc-number">8.2.</span> <span class="toc-text">request driver</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mount_fs"><span class="toc-number">8.3.</span> <span class="toc-text">mount fs</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
@@ -215,11 +239,13 @@ VFS:Common fs interface plus fs anstraction layer! Unix fs-related abstractions:
 		
 			<li><a href="/categories/firo/" title="firo">firo<sup>4</sup></a></li>
 		
-			<li><a href="/categories/kernel/" title="kernel">kernel<sup>9</sup></a></li>
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>10</sup></a></li>
 		
-			<li><a href="/categories/literature/" title="literature">literature<sup>1</sup></a></li>
+			<li><a href="/categories/literature/" title="literature">literature<sup>0</sup></a></li>
 		
 			<li><a href="/categories/net/" title="net">net<sup>5</sup></a></li>
+		
+			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>2</sup></a></li>
 		
 		</ul>
 </div>
