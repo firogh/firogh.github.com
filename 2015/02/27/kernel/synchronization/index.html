@@ -9,13 +9,11 @@
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="History
-brlock
-Common concepts
-
-RCU supports concurrency between a single updater and multiple readers.
-
-The basic idea behind RCU (read-copy update) ">
+    <meta name="description" content="Etymology
+Synchronizesynchronization means be of the same time.
+Synchronization in computer science
+Process syncrhonization
+It means “make synchronous">
     
     
     
@@ -82,7 +80,7 @@ The basic idea behind RCU (read-copy update) ">
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-03-14T15:59:47.000Z" itemprop="dateModified">Mar 14 2015</time>
+    Updated:<time datetime="2015-04-01T15:16:37.000Z" itemprop="dateModified">Apr 1 2015</time>
     
   </p>
 </header>
@@ -91,70 +89,91 @@ The basic idea behind RCU (read-copy update) ">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#History"><span class="toc-number">1.</span> <span class="toc-text">History</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_concepts"><span class="toc-number">2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_rcu"><span class="toc-number">3.</span> <span class="toc-text">What is rcu</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#type-variants-sd-al_(extension)"><span class="toc-number">4.</span> <span class="toc-text">type-variants-sd-al (extension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al_(intension)"><span class="toc-number">5.</span> <span class="toc-text">parts-variants-sd-al (intension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use?"><span class="toc-number">6.</span> <span class="toc-text">How to use?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Classic_RCU"><span class="toc-number">7.</span> <span class="toc-text">Classic RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al"><span class="toc-number">8.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Preemtible_RCU"><span class="toc-number">9.</span> <span class="toc-text">Preemtible RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al-1"><span class="toc-number">10.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tree_RCU"><span class="toc-number">11.</span> <span class="toc-text">Tree RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">12.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memory_barrier"><span class="toc-number">13.</span> <span class="toc-text">Memory barrier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Refernce"><span class="toc-number">13.1.</span> <span class="toc-text">Refernce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common"><span class="toc-number">13.2.</span> <span class="toc-text">Common</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different"><span class="toc-number">13.3.</span> <span class="toc-text">The Linux kernel has a variety of different barriers that act at different</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACCESS_ONCE"><span class="toc-number">13.4.</span> <span class="toc-text">ACCESS_ONCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#For_volatile"><span class="toc-number">13.5.</span> <span class="toc-text">For volatile</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Etymology"><span class="toc-number">1.</span> <span class="toc-text">Etymology</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Synchronization_in_computer_science"><span class="toc-number">2.</span> <span class="toc-text">Synchronization in computer science</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_syncrhonization"><span class="toc-number">2.1.</span> <span class="toc-text">Process syncrhonization</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Mutual_exclusion"><span class="toc-number">3.</span> <span class="toc-text">Mutual exclusion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RCU_-_Read_-_copy_update"><span class="toc-number">4.</span> <span class="toc-text">RCU - Read - copy update</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Why_RCU"><span class="toc-number">4.1.</span> <span class="toc-text">Why RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#What’s_bad"><span class="toc-number">4.2.</span> <span class="toc-text">What’s bad</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_rcu_work"><span class="toc-number">4.3.</span> <span class="toc-text">How rcu work</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.4.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Implemention"><span class="toc-number">4.5.</span> <span class="toc-text">Implemention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Class"><span class="toc-number">4.6.</span> <span class="toc-text">Class</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Classic_RCU_-_maybe_RCU_tiny"><span class="toc-number">4.6.1.</span> <span class="toc-text">Classic RCU  - maybe RCU tiny</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Preemtible_RCU_-"><span class="toc-number">4.6.2.</span> <span class="toc-text">Preemtible RCU -</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Tree_RCU_for_hundreds_and_thounds_CPU_cores"><span class="toc-number">4.6.3.</span> <span class="toc-text">Tree RCU for hundreds and thounds CPU cores</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SRCU"><span class="toc-number">4.6.4.</span> <span class="toc-text">SRCU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RCU-task"><span class="toc-number">4.6.5.</span> <span class="toc-text">RCU-task</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_to_use?"><span class="toc-number">4.7.</span> <span class="toc-text">How to use?</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memory_barrier"><span class="toc-number">5.</span> <span class="toc-text">Memory barrier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Refernce"><span class="toc-number">5.1.</span> <span class="toc-text">Refernce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common"><span class="toc-number">5.2.</span> <span class="toc-text">Common</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different"><span class="toc-number">5.3.</span> <span class="toc-text">The Linux kernel has a variety of different barriers that act at different</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACCESS_ONCE"><span class="toc-number">5.4.</span> <span class="toc-text">ACCESS_ONCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#For_volatile"><span class="toc-number">5.5.</span> <span class="toc-text">For volatile</span></a></li></ol></li></ol>
 		</div>
 		
-		<h1 id="History">History</h1>
-<p>brlock</p>
-<h1 id="Common_concepts">Common concepts</h1>
+		<h1 id="Etymology">Etymology</h1>
+<p><a href="http://www.etymonline.com/index.php?term=synchronize" target="_blank" rel="external">Synchronize</a><br>synchronization means be of the same time.</p>
+<h1 id="Synchronization_in_computer_science">Synchronization in computer science</h1>
+<h2 id="Process_syncrhonization">Process syncrhonization</h2>
+<p>It means “make synchronous”, something like coexistence.</p>
+<p>Process synchronization refers to the idea that multiple processes are to join up or handshake at a certain point,<br>in order to reach an agreement or commit to a certain sequence of action.</p>
+<p>I think Process syncrhonization is more geneanl concepts stands of a set of actions.<br>It can be classfiy in two kinds:</p>
 <ul>
-<li><p>RCU supports concurrency between a single updater and multiple readers.</p>
+<li><p>Mutual exclusion — only one excution routine in  critical section<br>Readers–writers problem<br>The Producer-Consumer Problem </p>
 </li>
-<li><p>The basic idea behind RCU (read-copy update) is to split destructive<br>operations into two parts, one that prevents anyone from seeing the data<br>item being destroyed, and one that actually carries out the destruction.<br>A “grace period” must elapse between the two parts, and this grace period<br>must be long enough that any readers accessing the item being deleted have<br>since dropped their references.</p>
+<li><p>Cooperative<br>TCP Handshake </p>
+</li>
+<li><p>Deadlock<br>Dining philosophers problem</p>
+</li>
+<li><p>Starvation</p>
+</li>
+<li><p>Prioirty inversion</p>
+</li>
+<li><p>Busy waiting</p>
 </li>
 </ul>
-<h1 id="What_is_rcu">What is rcu</h1>
-<h1 id="type-variants-sd-al_(extension)">type-variants-sd-al (extension)</h1>
-<p>=type<br>a synchronization mechanism<br>=other implement</p>
+<h1 id="Mutual_exclusion">Mutual exclusion</h1>
+<p>a critical section is a piece of code that accesses a shared resource<br>(data structure or device) that must not be concurrently accessed by more than one thread of execution.</p>
 <ul>
-<li><p>rw-lock similitudes<br>  read-side critical sections that can execute in parallel</p>
+<li><p>semaphore - mutlti-mutex</p>
 </li>
-<li><p>difference</p>
+<li><p>mutex</p>
+</li>
+<li><p>spinlock - unsleepable mutex</p>
+</li>
+<li><p>rw_lock - r/w spinlock</p>
+</li>
+<li><p>rcu - low read-side overhead, beyond rw_lock</p>
 </li>
 </ul>
-<p>=advantages<br>Advantages of RCU include performance, deadlock immunity, and realtime latency.<br>=limitation<br>latencies</p>
-<h1 id="parts-variants-sd-al_(intension)">parts-variants-sd-al (intension)</h1>
-<p>=parts</p>
+<h1 id="RCU_-_Read_-_copy_update">RCU - Read - copy update</h1>
+<h2 id="Why_RCU">Why RCU</h2>
+<p>1 RCU supports concurrency between a single updater and multiple readers is the  essential of RCU!</p>
+<ol>
+<li>dealcok immunity</li>
+</ol>
+<h2 id="What’s_bad">What’s bad</h2>
+<p>less applicable to update-only workloads</p>
+<h2 id="How_rcu_work">How rcu work</h2>
 <ul>
-<li><p>perspective<br>  if any statement in a given RCU read-side critical section precedes a grace period, then all statements in that RCU read-side critical section must complete before that grace period ends.<br>  state flow:<br>  Removal  list_del_rcu, rcu_assignment<br>  Grace period, synchronize_rcu(some like call_rcu)<br>  Recalmmation, kfree</p>
+<li><p>Reader<br>RCU ensures that reads are coherent by maintaining multiple versions of objects and ensuring that they are not freed up until all pre-existing read-side critical sections complete.</p>
 </li>
-<li><p>read-side primitives<br>  In RCU’s case, the things waited on are called “RCU read-side critical sections”.<br>  does not explicitly block or sleep<br>  quiesecent state<br>  grace period<br>  rcu_tasklet<br>  rcu_data,rcu_bh_data</p>
-<p>  __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().</p>
-<p>  rcu_read_lock/unlock</p>
-<p>  rcu_dereference<br>  rcu_assign_pointer</p>
-</li>
-<li><p>rcu_update<br>  these old versions must be reclaimed after all pre-existing readers complete<br>  call_rcu<br>  synchronize_rcu, spin_lock for syncing updaters.</p>
+<li><p>Copy updater<br>The basic idea behind RCU (read-copy update) is to split destructive<br>operations into two parts, one that prevents anyone from seeing the data<br>item being destroyed, and one that actually carries out the destruction.<br>A “grace period” must elapse between the two parts, and this grace period<br>must be long enough that any readers accessing the item being deleted have<br>since dropped their references.<br>If any statement in a given RCU read-side critical section precedes a grace period,<br>then all statements in that RCU read-side critical section must complete before that grace period ends.</p>
 </li>
 </ul>
-<p>=variants</p>
+<h2 id="FAQ">FAQ</h2>
 <ul>
-<li>Classic RCU<br>  <a href="http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html" target="_blank" rel="external">http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html</a></li>
-<li><p>Preemtible RCU<br>  priority inheritance(priority inversion)<br>  non-blocking in non-preemt kernel</p>
+<li><p>Difference with primitive and atomic</p>
 </li>
-<li><p>SRCU</p>
+<li><p>Grace period is synchroinze_rcu or a softirq justment</p>
 </li>
-<li>RCU-tiny</li>
-<li>Tree RCU</li>
-<li>RCU-task</li>
+<li><p>__rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().</p>
+</li>
 </ul>
-<h1 id="How_to_use?">How to use?</h1>
-<p>a replacement of rw-lock<br>a Restricted Reference-Counting Mechanism<br>a Bulk Reference-Counting Mechanism<br>a Poor Man’s Garbage Collector<br>a Way of Providing Existence Guarantees<br>a Way of Waiting for Things to Finish</p>
-<h1 id="Classic_RCU">Classic RCU</h1>
-<h1 id="parts-variants-sd-al">parts-variants-sd-al</h1>
-<p>=Perspective</p>
-<pre><code>* Classic RCU requires that <span class="built_in">read</span>-side critical sections obey <span class="operator">the</span> same rules obeyed <span class="keyword">by</span> <span class="operator">the</span> critical sections <span class="operator">of</span> pure spinlocks: blocking <span class="operator">or</span> sleeping <span class="operator">of</span> <span class="keyword">any</span> <span class="built_in">sort</span> is strictly prohibited.
-* cpumask
-</code></pre><h1 id="Preemtible_RCU">Preemtible RCU</h1>
-<h1 id="parts-variants-sd-al-1">parts-variants-sd-al</h1>
-<p>=Parts<br><em>Perspetctive<br>    block only in priority inheritance non-blocking in non-preemt kernel
-</em>softirq<br>    two stages grace period<br>    wait queues<br>    rcu_process_callbacks<br>    rcu_flipctr: a per-CPU two-element<br>        [a]:tracks critical sections that started before the current gp stage.<br>        [b]:tracks new rcu read-side critical sections, namely those starting during the current gp stage.<br>    rcu_ctrlblk.completed &amp; 0x1<br>    rcu_flip_flag: synchronize the start of each grace-period stage: once a given CPU has responded to its rcu_flip_flag, it must refrain from incrementing the old grace-period stage.<br>    rcu_mb_flag: rcu_flipped  force each CPU to execute a memory barrier at the end of each grace-period stage.<br>                rcu_mb_needed by the CPU that detects that the sum of the old counters is zero<br>                 rcu_mb_done only by the corresponding CPU, and even then only after executing a memory barrier.</p>
-<h1 id="Tree_RCU">Tree RCU</h1>
+<p>=Limitations of RCU-rt?<br>=In contrast to SRCU, preemptible RCU only permits blocking within primitives that are both subject to prikority inheritance and non-blocking in a non-CONFIG_PREEMPT kernel.<br>=No need of mb in preempt read-side?<br>=irq in rcu_sched_qs<br>=However, note that RCU read-side critical sections that begin after the beginning of a given grace period can and will extend beyond the end of that grace period.?<br>=RCU read-side critical sections must be permitted in NMI handlers as well as irq handlers?<br>=classic RCU will happily awaken each and every sleeping CPU at least once per grace period in some cases?</p>
+<h2 id="Implemention">Implemention</h2>
+<p>In process switch, marker a  flag that will not use old data.<br>For SMP, Softirq callback release old data;<br>For UP, free after synchronize_rcu.</p>
+<p>Softirq rcu_data,rcu_bh_data</p>
+<h2 id="Class">Class</h2>
+<h3 id="Classic_RCU_-_maybe_RCU_tiny">Classic RCU  - maybe RCU tiny</h3>
+<pre><code><span class="symbol">http:</span>/<span class="regexp">/www.rdrop.com/users</span><span class="regexp">/paulmck/</span><span class="constant">RCU</span>/whatisRCU.html
+</code></pre><p>Classic RCU requires that read-side critical sections obey the same rules obeyed by the critical sections of pure spinlocks: blocking or sleeping of any sort is strictly prohibited.<br>CPUmask</p>
+<h3 id="Preemtible_RCU_-">Preemtible RCU -</h3>
+<p><a href="http://lwn.net/Articles/253651/" target="_blank" rel="external">The design of preemptible read-copy-update</a><br> a multi-stage grace-period detection algorithm<br>call callback when wailist[old] == 0;<br>    block only in priority inheritance non-blocking in non-preemt kernel</p>
 <ul>
+<li>softirq<br>  two stages grace period<br>  wait queues<br>  rcu_process_callbacks<br>  rcu_flipctr: a per-CPU two-element<pre><code>  [<span class="operator">a</span>]:tracks critical sections that started <span class="keyword">before</span> <span class="operator">the</span> current gp stage.
+  [b]:tracks <span class="built_in">new</span> rcu <span class="built_in">read</span>-side critical sections, namely those starting during <span class="operator">the</span> current gp stage.
+</code></pre>  rcu_ctrlblk.completed &amp; 0x1<br>  rcu_flip_flag: synchronize the start of each grace-period stage: once a given CPU has responded to its rcu_flip_flag, it must refrain from incrementing the old grace-period stage.<br>  rcu_mb_flag: rcu_flipped  force each CPU to execute a memory barrier at the end of each grace-period stage.<pre><code>          rcu_mb_needed <span class="keyword">by</span> <span class="operator">the</span> CPU that detects that <span class="operator">the</span> <span class="built_in">sum</span> <span class="operator">of</span> <span class="operator">the</span> old counters is <span class="constant">zero</span>
+           rcu_mb_done only <span class="keyword">by</span> <span class="operator">the</span> corresponding CPU, <span class="operator">and</span> even <span class="keyword">then</span> only <span class="keyword">after</span> executing <span class="operator">a</span> memory barrier.
+</code></pre><h3 id="Tree_RCU_for_hundreds_and_thounds_CPU_cores">Tree RCU for hundreds and thounds CPU cores</h3>
+</li>
 <li>Downside of classical RCU in update<br>The update-side primitives which determine when pre-existing read-side critical sections have finished,<br>  were designed with only a few tens of CPUs in mind.<br>Their scalability is limited by a global lock that must be acquired by each CPU at least once during each grace period.</li>
 </ul>
-<h1 id="FAQ">FAQ</h1>
-<p>=Limitations of RCU-rt?<br>=In contrast to SRCU, preemptible RCU only permits blocking within primitives that are both subject to prikority inheritance and non-blocking in a non-CONFIG_PREEMPT kernel.<br>=No need of mb in preempt read-side?<br>=irq in rcu_sched_qs<br>=However, note that RCU read-side critical sections that begin after the beginning of a given grace period can and will extend beyond the end of that grace period.?<br>=RCU read-side critical sections must be permitted in NMI handlers as well as irq handlers?<br>=classic RCU will happily awaken each and every sleeping CPU at least once per grace period in some cases?</p>
-<p>=rcu_deference</p>
+<h3 id="SRCU">SRCU</h3>
+<h3 id="RCU-task">RCU-task</h3>
+<h2 id="How_to_use?">How to use?</h2>
+<p>a replacement of rw-lock<br>a Restricted Reference-Counting Mechanism<br>a Bulk Reference-Counting Mechanism<br>a Poor Man’s Garbage Collector<br>a Way of Providing Existence Guarantees<br>a Way of Waiting for Things to Finish</p>
 <h1 id="Memory_barrier">Memory barrier</h1>
 <h2 id="Refernce">Refernce</h2>
 <p><a href="http://en.wikipedia.org/wiki/Memory_barrier" target="_blank" rel="external">http://en.wikipedia.org/wiki/Memory_barrier</a><br>Documentation/memory-barriers.txt</p>
@@ -231,7 +250,7 @@ The basic idea behind RCU (read-copy update) ">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#History"><span class="toc-number">1.</span> <span class="toc-text">History</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_concepts"><span class="toc-number">2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_rcu"><span class="toc-number">3.</span> <span class="toc-text">What is rcu</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#type-variants-sd-al_(extension)"><span class="toc-number">4.</span> <span class="toc-text">type-variants-sd-al (extension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al_(intension)"><span class="toc-number">5.</span> <span class="toc-text">parts-variants-sd-al (intension)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use?"><span class="toc-number">6.</span> <span class="toc-text">How to use?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Classic_RCU"><span class="toc-number">7.</span> <span class="toc-text">Classic RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al"><span class="toc-number">8.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Preemtible_RCU"><span class="toc-number">9.</span> <span class="toc-text">Preemtible RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#parts-variants-sd-al-1"><span class="toc-number">10.</span> <span class="toc-text">parts-variants-sd-al</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tree_RCU"><span class="toc-number">11.</span> <span class="toc-text">Tree RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">12.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memory_barrier"><span class="toc-number">13.</span> <span class="toc-text">Memory barrier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Refernce"><span class="toc-number">13.1.</span> <span class="toc-text">Refernce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common"><span class="toc-number">13.2.</span> <span class="toc-text">Common</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different"><span class="toc-number">13.3.</span> <span class="toc-text">The Linux kernel has a variety of different barriers that act at different</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACCESS_ONCE"><span class="toc-number">13.4.</span> <span class="toc-text">ACCESS_ONCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#For_volatile"><span class="toc-number">13.5.</span> <span class="toc-text">For volatile</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Etymology"><span class="toc-number">1.</span> <span class="toc-text">Etymology</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Synchronization_in_computer_science"><span class="toc-number">2.</span> <span class="toc-text">Synchronization in computer science</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_syncrhonization"><span class="toc-number">2.1.</span> <span class="toc-text">Process syncrhonization</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Mutual_exclusion"><span class="toc-number">3.</span> <span class="toc-text">Mutual exclusion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RCU_-_Read_-_copy_update"><span class="toc-number">4.</span> <span class="toc-text">RCU - Read - copy update</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Why_RCU"><span class="toc-number">4.1.</span> <span class="toc-text">Why RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#What’s_bad"><span class="toc-number">4.2.</span> <span class="toc-text">What’s bad</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_rcu_work"><span class="toc-number">4.3.</span> <span class="toc-text">How rcu work</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.4.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Implemention"><span class="toc-number">4.5.</span> <span class="toc-text">Implemention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Class"><span class="toc-number">4.6.</span> <span class="toc-text">Class</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Classic_RCU_-_maybe_RCU_tiny"><span class="toc-number">4.6.1.</span> <span class="toc-text">Classic RCU  - maybe RCU tiny</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Preemtible_RCU_-"><span class="toc-number">4.6.2.</span> <span class="toc-text">Preemtible RCU -</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Tree_RCU_for_hundreds_and_thounds_CPU_cores"><span class="toc-number">4.6.3.</span> <span class="toc-text">Tree RCU for hundreds and thounds CPU cores</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SRCU"><span class="toc-number">4.6.4.</span> <span class="toc-text">SRCU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RCU-task"><span class="toc-number">4.6.5.</span> <span class="toc-text">RCU-task</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_to_use?"><span class="toc-number">4.7.</span> <span class="toc-text">How to use?</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memory_barrier"><span class="toc-number">5.</span> <span class="toc-text">Memory barrier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Refernce"><span class="toc-number">5.1.</span> <span class="toc-text">Refernce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common"><span class="toc-number">5.2.</span> <span class="toc-text">Common</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different"><span class="toc-number">5.3.</span> <span class="toc-text">The Linux kernel has a variety of different barriers that act at different</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACCESS_ONCE"><span class="toc-number">5.4.</span> <span class="toc-text">ACCESS_ONCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#For_volatile"><span class="toc-number">5.5.</span> <span class="toc-text">For volatile</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
