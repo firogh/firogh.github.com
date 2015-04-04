@@ -79,7 +79,7 @@ An implementation of the TCP/IP protocol suite for t">
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-04-02T16:05:40.000Z" itemprop="dateModified">Apr 3 2015</time>
+    Updated:<time datetime="2015-04-03T06:39:38.000Z" itemprop="dateModified">Apr 3 2015</time>
     
   </p>
 </header>
@@ -242,9 +242,11 @@ dev_hard_start_xmit()
 </li>
 <li><p>common path<br>pt_prev-&gt;func=ip_rcv()-&gt;NF_INET_PRE_ROUTING-&gt;ip_rcv_finish()-&gt;<br>ip_route_input()-&gt;ip_route_input_slow()<br>{<br>  local_input dst.input??=ip_local_deliver()<br>  or<br>  ip_mkroute_input()-&gt;__mkroute_input():dst.input=ip_forward() 紧接着dst.output??=ip_output()<br>}<br>dst_input()-&gt;<br>{<br>  ip_local_deliver()-&gt;NF_INET_LOCAL_IN-&gt;ip_local_deliver_finish()-&gt;inet_protos.tcp_v4_rcv()<br>  or<br>  ip_forward()-&gt;NF_INET_FORWARD-&gt;ip_forward_finish()-&gt;dst_output()见上。<br>}</p>
 </li>
-<li>Differences<br>1 NAPI has not netif_rx():input_pkt_queue.<br>2 NAPI and Non-NAPI used different napi-&gt;poll 决定本质上的区别。<br>3 vortex_rx() 多，e100_rx_clean()多！这点可以看出不同优势来。</li>
-<li>Need clean<br>net_tx_action-&gt;output_queue/每个设备的qdisc and  clear_bit<strong>QDISC_STATE_SCHED qdisc_run add back
-</strong>QDISC_STATE_SCHED是否加入softdata<br>qdisc_restart: 如果队列有数据就返回大于零 继续减小weight_p<br><strong>qdisc_run queue no data </strong>QDISC_STATE_SCHED not set, only in this case!<br>driver tx, stack xmit</li>
+<li><p>Differences<br>1 NAPI has not netif_rx():input_pkt_queue.<br>2 NAPI and Non-NAPI used different napi-&gt;poll 决定本质上的区别。<br>3 vortex_rx() 多，e100_rx_clean()多！这点可以看出不同优势来。</p>
+</li>
+<li><p>Need clean<br>net_tx_action-&gt;output_queue/每个设备的qdisc and  clear_bit<strong>QDISC_STATE_SCHED qdisc_run add back
+</strong>QDISC_STATE_SCHED是否加入softdata<br>qdisc_restart: 如果队列有数据就返回大于零 继续减小weight_p<br><strong>qdisc_run queue no data </strong>QDISC_STATE_SCHED not set, only in this case!<br>driver tx, stack xmit</p>
+</li>
 </ul>
 <h1 id="System_initialization">System initialization</h1>
 <p>start_kernel-&gt; parse_early_param irq timers softirq -&gt; rest_init(): kthread<br>{<br>    do_basic_setup()<br>    {<br>        driver_init<br>        sock_init<br>        do_initcalls()<br>        {<br>            net_dev_init: Initializing the Device Handling Layer<br>            {<br>                per-CPU<br>                proc<br>                sysfs<br>                ptype_base<br>                dst_init<br>                softirq: net_rx/tx_action<br>                dev_cpu_callback: CPU hotplug.<br>            }<br>        }<br>    }<br>    free_init_mem()<br>    run_init_process()<br>}</p>
