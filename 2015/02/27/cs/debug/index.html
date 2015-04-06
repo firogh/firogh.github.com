@@ -4,20 +4,13 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>debug | Hot sexy girls</title>
+    <title>General debug method | Hot sexy girls</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="How to debug segmention fault
-
-coredump + gdb  bt  x/100a
-
-Gdb usage
-=x/100a
-=thread apply all bt full
-Collect debug assist info, reference source
-/pr">
+    <meta name="description" content="BUG
+drivers/net/wireless/libertas/cfg.c:1115 lbs_associate() error: potential null dereference ‘cmd’.  (kzalloc returns null)drivers/net/wireless/rtlw">
     
     
     
@@ -76,7 +69,7 @@ Collect debug assist info, reference source
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/cs/debug/" title="debug" itemprop="url">debug</a>
+      <a href="/2015/02/27/cs/debug/" title="General debug method" itemprop="url">General debug method</a>
   </h1>
   <p class="article-author">By
     
@@ -84,7 +77,7 @@ Collect debug assist info, reference source
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:14.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-03-01T04:33:06.000Z" itemprop="dateModified">Mar 1 2015</time>
+    Updated:<time datetime="2015-04-06T14:08:24.000Z" itemprop="dateModified">Apr 6 2015</time>
     
   </p>
 </header>
@@ -93,10 +86,76 @@ Collect debug assist info, reference source
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_debug_segmention_fault"><span class="toc-number">1.</span> <span class="toc-text">How to debug segmention fault</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gdb_usage"><span class="toc-number">2.</span> <span class="toc-text">Gdb usage</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_debug_assist_info,_reference_source"><span class="toc-number">3.</span> <span class="toc-text">Collect debug assist info, reference source</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_know_library_dependencies_of_a_bin"><span class="toc-number">4.</span> <span class="toc-text">How to know library dependencies of a bin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ldd_code_tools"><span class="toc-number">5.</span> <span class="toc-text">ldd code tools</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backtrace_or_stacktrace"><span class="toc-number">6.</span> <span class="toc-text">Backtrace or stacktrace</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_c++"><span class="toc-number">7.</span> <span class="toc-text">Debug c++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#tips"><span class="toc-number">7.1.</span> <span class="toc-text">tips</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#signal"><span class="toc-number">8.</span> <span class="toc-text">signal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#demagling"><span class="toc-number">9.</span> <span class="toc-text">demagling</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do_{FILE_*fdebug=fopen(“/d-log”,_“a+”);_timet_tdebug;_time(&tdebug);fprintf(fdebug,”%s”,_asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”,_FUNCTION,__LINE);fprintf(fdebug,_fmt,_##args);fclose(fdebug);}_while(0)"><span class="toc-number">10.</span> <span class="toc-text">define debugme(fmt, args…) do {FILE *fdebug=fopen(“/d.log”, “a+”); timet tdebug; time(&tdebug);fprintf(fdebug,”%s”, asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”, FUNCTION, _LINE);fprintf(fdebug, fmt, ##args);fclose(fdebug);} while(0)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ssgoagbroad-start"><span class="toc-number">11.</span> <span class="toc-text">ssgoagbroad-start</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#smartqos_custom_qdisc_-_self_inferrence"><span class="toc-number">12.</span> <span class="toc-text">smartqos custom qdisc - self inferrence</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#find_the_key_ponit"><span class="toc-number">13.</span> <span class="toc-text">find the key ponit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_signal_info_for_debug"><span class="toc-number">14.</span> <span class="toc-text">Collect signal info for debug</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_\"><span class="toc-number">15.</span> <span class="toc-text">define debugme(fmt, args…) \</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do{FILE_fdebug=fopen(“/d-log”,”a+”);time_t_tdebug;time(&tdebug);char_s=_asctime(localtime(&tdebug));fprintf(fdebug_,”%-*s,%s,%d:”,_strlen(s)_-_1,_s,_FUNCTION,_LINE);fprintf(fdebug,fmt,##args);fclose(fdebug);}while(0)"><span class="toc-number">16.</span> <span class="toc-text">define debugme(fmt, args…) do{FILE fdebug=fopen(“/d.log”,”a+”);time_t tdebug;time(&tdebug);char s= asctime(localtime(&tdebug));fprintf(fdebug    ,”%.*s,%s,%d:”, strlen(s) - 1, s, FUNCTION, LINE);fprintf(fdebug,fmt,##args);fclose(fdebug);}while(0)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#locate_codes"><span class="toc-number">17.</span> <span class="toc-text">locate codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#trouble_shooting"><span class="toc-number">18.</span> <span class="toc-text">trouble shooting</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG"><span class="toc-number">1.</span> <span class="toc-text">BUG</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_types_of_computer_bugs"><span class="toc-number">2.</span> <span class="toc-text">Common types of computer bugs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Arithmetic_bugs"><span class="toc-number">2.1.</span> <span class="toc-text">Arithmetic bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#syntax_error"><span class="toc-number">2.2.</span> <span class="toc-text">syntax error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logic_error"><span class="toc-number">2.3.</span> <span class="toc-text">Logic error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Resource_bugs"><span class="toc-number">2.4.</span> <span class="toc-text">Resource bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Race_condition_bug"><span class="toc-number">2.5.</span> <span class="toc-text">Race condition bug</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Interfacing_bugs"><span class="toc-number">2.6.</span> <span class="toc-text">Interfacing bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Performance_bugs"><span class="toc-number">2.7.</span> <span class="toc-text">Performance bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Teamworking_bugs"><span class="toc-number">2.8.</span> <span class="toc-text">Teamworking bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vulnerable_bugs"><span class="toc-number">2.9.</span> <span class="toc-text">Vulnerable bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Taxonomy_of_Kernel_BUG"><span class="toc-number">2.10.</span> <span class="toc-text">Taxonomy of Kernel BUG</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">2.11.</span> <span class="toc-text">BUG made by me</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug"><span class="toc-number">3.</span> <span class="toc-text">Debug</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">3.1.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Printing"><span class="toc-number">3.2.</span> <span class="toc-text">Debugging by Printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Watching"><span class="toc-number">3.3.</span> <span class="toc-text">Debugging by Watching</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug_tools_and"><span class="toc-number">3.4.</span> <span class="toc-text">Debug tools and</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill"><span class="toc-number">3.5.</span> <span class="toc-text">Skill</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#If_an_page_oops_close_to_zero,_for_example_0xfffffff4"><span class="toc-number">3.6.</span> <span class="toc-text">If an page oops close to zero, for example 0xfffffff4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ASM"><span class="toc-number">3.7.</span> <span class="toc-text">ASM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">3.8.</span> <span class="toc-text">From ASM to c language</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_debug_segmention_fault"><span class="toc-number">4.</span> <span class="toc-text">How to debug segmention fault</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gdb_usage"><span class="toc-number">5.</span> <span class="toc-text">Gdb usage</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_debug_assist_info,_reference_source"><span class="toc-number">6.</span> <span class="toc-text">Collect debug assist info, reference source</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_know_library_dependencies_of_a_bin"><span class="toc-number">7.</span> <span class="toc-text">How to know library dependencies of a bin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ldd_code_tools"><span class="toc-number">8.</span> <span class="toc-text">ldd code tools</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backtrace_or_stacktrace"><span class="toc-number">9.</span> <span class="toc-text">Backtrace or stacktrace</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_c++"><span class="toc-number">10.</span> <span class="toc-text">Debug c++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#tips"><span class="toc-number">10.1.</span> <span class="toc-text">tips</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#signal"><span class="toc-number">11.</span> <span class="toc-text">signal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#demagling"><span class="toc-number">12.</span> <span class="toc-text">demagling</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do_{FILE_*fdebug=fopen(“/d-log”,_“a+”);_timet_tdebug;_time(&tdebug);fprintf(fdebug,”%s”,_asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”,_FUNCTION,__LINE);fprintf(fdebug,_fmt,_##args);fclose(fdebug);}_while(0)"><span class="toc-number">13.</span> <span class="toc-text">define debugme(fmt, args…) do {FILE *fdebug=fopen(“/d.log”, “a+”); timet tdebug; time(&tdebug);fprintf(fdebug,”%s”, asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”, FUNCTION, _LINE);fprintf(fdebug, fmt, ##args);fclose(fdebug);} while(0)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ssgoagbroad-start"><span class="toc-number">14.</span> <span class="toc-text">ssgoagbroad-start</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#smartqos_custom_qdisc_-_self_inferrence"><span class="toc-number">15.</span> <span class="toc-text">smartqos custom qdisc - self inferrence</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#find_the_key_ponit"><span class="toc-number">16.</span> <span class="toc-text">find the key ponit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_signal_info_for_debug"><span class="toc-number">17.</span> <span class="toc-text">Collect signal info for debug</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#locate_codes"><span class="toc-number">18.</span> <span class="toc-text">locate codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#trouble_shooting"><span class="toc-number">19.</span> <span class="toc-text">trouble shooting</span></a></li></ol>
 		</div>
 		
-		<h1 id="How_to_debug_segmention_fault">How to debug segmention fault</h1>
+		<h1 id="BUG">BUG</h1>
+<p>drivers/net/wireless/libertas/cfg.c:1115 lbs_associate() error: potential null dereference ‘cmd’.  (kzalloc returns null)<br>drivers/net/wireless/rtlwifi/efuse.c:378 read_efuse() error: potential null dereference ‘efuse_word’.  (kmalloc returns null)<br>drivers/staging/rtl8192e/rtllib_rx.c:1496 rtllib_rx() error: we previously assumed ‘ieee’ could be null (see line 1464)<br>vers/media/media-device.c:146 <strong>media_device_enum_links() warn: check that ‘pad’ doesn’t leak information (struct has a hole after ‘index’)<br>drivers/media/media-device.c:167 </strong>media_device_enum_links() warn: check that ‘link’ doesn’t leak information (struct has a hole after ‘index’)</p>
+<h1 id="Common_types_of_computer_bugs"><a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs" target="_blank" rel="external">Common types of computer bugs</a></h1>
+<h2 id="Arithmetic_bugs">Arithmetic bugs</h2>
+<h2 id="syntax_error">syntax error</h2>
+<h2 id="Logic_error">Logic error</h2>
+<p>Incorrect Bounds-Checking<br>off-by-one bug<br>Skipping Null-Termination Issues</p>
+<h2 id="Resource_bugs">Resource bugs</h2>
+<p>uninitialized/nonvalidated/corrupted pointer dereference.<br>Segmentation fault</p>
+<ul>
+<li>deadlock<h2 id="Race_condition_bug">Race condition bug</h2>
+Multi-threading programming bugs(parallel problems)<h2 id="Interfacing_bugs">Interfacing bugs</h2>
+<h2 id="Performance_bugs">Performance bugs</h2>
+<h2 id="Teamworking_bugs">Teamworking bugs</h2>
+<h2 id="Vulnerable_bugs">Vulnerable bugs</h2>
+*unbounded memory manipulation functions<br>strcpy</li>
+<li>Non-Null Termination Issues<br>non terminaed string<br>*Formate string<br><a href="https://www.owasp.org/index.php/Format_string_attack" target="_blank" rel="external">Format Strings attacker</a> or <a href="https://en.wikipedia.org/wiki/Uncontrolled_format_string" target="_blank" rel="external">Uncontrolled format string</a></li>
+<li>integer issues<br>integer overflow<br>Signed Comparison Vulnerabilities</li>
+</ul>
+<h2 id="Taxonomy_of_Kernel_BUG">Taxonomy of Kernel BUG</h2>
+<ul>
+<li><a href="http://fedoraproject.org/wiki/KernelBugClassification" target="_blank" rel="external">oops, WARN_ON, or kernel panic</a></li>
+<li><a href="http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification" target="_blank" rel="external">Source of BUG</a>, driver or subsystem and so on.</li>
+</ul>
+<h2 id="BUG_made_by_me">BUG made by me</h2>
+<p>=print_signal_info wrong pritk parameters position<br>        printk(KERN_NOTICE “K %d : %d -&gt; %s %d %s %d\n”, sig, q-&gt;info.si_code,<br>                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));</p>
+<ul>
+<li>Watch compile warning info can be avoid of this bug.<br>kernel/signal.c: In function ‘__print_signal_info’:<br>kernel/signal.c:1207:5: warning: format ‘%d’ expects argument of type ‘int’, but argument 5 has type ‘char <em>‘ [-Wformat]<br>kernel/signal.c:1207:5: warning: format ‘%s’ expects argument of type ‘char </em>‘, but argument 6 has type ‘pid_t’ [-Wformat]</li>
+</ul>
+<p>=spin_lock(sighand) invoke down_sem and cond_resched…<br>    __send_signal()<br>{<br>    get_cmdline -&gt; get_user_pages<br>}</p>
+<ul>
+<li>Carefully, investgate th invoke path.</li>
+<li>config CONFIG_DEBUG_ATOMIC_SLEEP on</li>
+<li>how to get from bug report to the source of bug</li>
+</ul>
+<h1 id="Debug">Debug</h1>
+<h2 id="Debugging_support_in_the_kernel">Debugging support in the kernel</h2>
+<h2 id="Debugging_by_Printing">Debugging by Printing</h2>
+<p>Marco<br>ratelimit<br>console level<br>Print by qurey:proc ioctl</p>
+<h2 id="Debugging_by_Watching">Debugging by Watching</h2>
+<p>strace</p>
+<h2 id="Debug_tools_and">Debug tools and</h2>
+<p>gdb /usr/src/linux/vmlinux /proc/kcore<br>objdump -s vmlinux<br>kdb<br>./scripts/decodecode &lt; Oops.txt</p>
+<h2 id="Skill">Skill</h2>
+<p>=Generating signl assembly source file!<br>make kernel/sched.s V=1</p>
+<h2 id="If_an_page_oops_close_to_zero,_for_example_0xfffffff4">If an page oops close to zero, for example 0xfffffff4</h2>
+<p>It maybe ERR_PTR(-12);</p>
+<ol>
+<li><p>踩内存</p>
+</li>
+<li><p>recursive stack,PC_MEMLOCK </p>
+</li>
+<li><p>deadlock, __GFP_FS</p>
+</li>
+<li><p>NULL poniter reference, functions adn varibles</p>
+</li>
+</ol>
+<h2 id="ASM">ASM</h2>
+<p>move &lt;-<br>j long jump<br>b short jump<br>a0, a1…99% is parameters.</p>
+<h2 id="From_ASM_to_c_language">From ASM to c language</h2>
+<ul>
+<li>expand inline function</li>
+<li>locate <strong>asm</strong>() 内嵌汇编, 能快速定位代码! 但很少! slhc_uncompress()</li>
+<li>找常量!</li>
+<li>loop codes formate!<br>+ef8:   00a01021    move    v0,a1<br>efc:   88440003    lwl a0,3(v0)<br>f00:   24450004    addiu   a1,v0,4<br>f04:   98440000    lwr a0,0(v0)<br>f08:   00641821    addu    v1,v1,a0<br>f0c:   0064202b    sltu    a0,v1,a0<br>+f10:   14a7fff9    bne a1,a3,ef8 <slhc_uncompress+0x444><br>f14:   00831821    addu    v1,a0,v1</slhc_uncompress+0x444></li>
+</ul>
+<h1 id="How_to_debug_segmention_fault">How to debug segmention fault</h1>
 <ul>
 <li>coredump + gdb<br>  bt<br>  x/100a</li>
 </ul>
@@ -172,15 +231,6 @@ Collect debug assist info, reference source
 <ul>
 <li>Ignore should be ommitted.</li>
 </ul>
-<h1 id="define_debugme(fmt,_args…)_\">define debugme(fmt, args…) \</h1>
-<pre><code><span class="keyword">do</span> { \
-    FILE *fdebug = fopen(<span class="string">"/d.log"</span>, <span class="string">"a+"</span>); \
-    time_t tdebug; <span class="keyword">time</span>(&amp;tdebug); \
-    fprintf(fdebug,<span class="string">"<span class="variable">%s</span>"</span>, asctime(<span class="keyword">localtime</span>(&amp;tdebug))); \
-    fprintf(fdebug,<span class="string">"<span class="variable">%s</span>,<span class="variable">%d</span>:"</span>, __FUNCTION_<span class="number">_</span>, __LINE_<span class="number">_</span>); \
-    fprintf(fdebug, fmt, <span class="comment">##args);fclose(fdebug); \</span>
-} <span class="keyword">while</span>(<span class="number">0</span>)
-</code></pre><h1 id="define_debugme(fmt,_args…)_do{FILE_fdebug=fopen(“/d-log”,”a+”);time_t_tdebug;time(&amp;tdebug);char_s=_asctime(localtime(&amp;tdebug));fprintf(fdebug_,”%-*s,%s,%d:”,_strlen(s)_-_1,_s,_FUNCTION,_LINE);fprintf(fdebug,fmt,##args);fclose(fdebug);}while(0)">define debugme(fmt, args…) do{FILE <em>fdebug=fopen(“/d.log”,”a+”);time_t tdebug;time(&amp;tdebug);char </em>s= asctime(localtime(&amp;tdebug));fprintf(fdebug    ,”%.*s,%s,%d:”, strlen(s) - 1, s, <strong>FUNCTION</strong>, <strong>LINE</strong>);fprintf(fdebug,fmt,##args);fclose(fdebug);}while(0)</h1>
 <h1 id="locate_codes">locate codes</h1>
 <ul>
 <li>Bubble locate, begin with the fundermental system api for example socket(), bind(), connect()…then raise</li>
@@ -208,7 +258,7 @@ Collect debug assist info, reference source
 
 <div class="article-share" id="share">
 
-  <div data-url="http://firoyang.org/2015/02/27/cs/debug/" data-title="debug | Hot sexy girls" data-tsina="null" class="share clearfix">
+  <div data-url="http://firoyang.org/2015/02/27/cs/debug/" data-title="General debug method | Hot sexy girls" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -251,7 +301,7 @@ Collect debug assist info, reference source
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_debug_segmention_fault"><span class="toc-number">1.</span> <span class="toc-text">How to debug segmention fault</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gdb_usage"><span class="toc-number">2.</span> <span class="toc-text">Gdb usage</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_debug_assist_info,_reference_source"><span class="toc-number">3.</span> <span class="toc-text">Collect debug assist info, reference source</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_know_library_dependencies_of_a_bin"><span class="toc-number">4.</span> <span class="toc-text">How to know library dependencies of a bin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ldd_code_tools"><span class="toc-number">5.</span> <span class="toc-text">ldd code tools</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backtrace_or_stacktrace"><span class="toc-number">6.</span> <span class="toc-text">Backtrace or stacktrace</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_c++"><span class="toc-number">7.</span> <span class="toc-text">Debug c++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#tips"><span class="toc-number">7.1.</span> <span class="toc-text">tips</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#signal"><span class="toc-number">8.</span> <span class="toc-text">signal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#demagling"><span class="toc-number">9.</span> <span class="toc-text">demagling</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do_{FILE_*fdebug=fopen(“/d-log”,_“a+”);_timet_tdebug;_time(&tdebug);fprintf(fdebug,”%s”,_asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”,_FUNCTION,__LINE);fprintf(fdebug,_fmt,_##args);fclose(fdebug);}_while(0)"><span class="toc-number">10.</span> <span class="toc-text">define debugme(fmt, args…) do {FILE *fdebug=fopen(“/d.log”, “a+”); timet tdebug; time(&tdebug);fprintf(fdebug,”%s”, asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”, FUNCTION, _LINE);fprintf(fdebug, fmt, ##args);fclose(fdebug);} while(0)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ssgoagbroad-start"><span class="toc-number">11.</span> <span class="toc-text">ssgoagbroad-start</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#smartqos_custom_qdisc_-_self_inferrence"><span class="toc-number">12.</span> <span class="toc-text">smartqos custom qdisc - self inferrence</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#find_the_key_ponit"><span class="toc-number">13.</span> <span class="toc-text">find the key ponit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_signal_info_for_debug"><span class="toc-number">14.</span> <span class="toc-text">Collect signal info for debug</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_\"><span class="toc-number">15.</span> <span class="toc-text">define debugme(fmt, args…) \</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do{FILE_fdebug=fopen(“/d-log”,”a+”);time_t_tdebug;time(&tdebug);char_s=_asctime(localtime(&tdebug));fprintf(fdebug_,”%-*s,%s,%d:”,_strlen(s)_-_1,_s,_FUNCTION,_LINE);fprintf(fdebug,fmt,##args);fclose(fdebug);}while(0)"><span class="toc-number">16.</span> <span class="toc-text">define debugme(fmt, args…) do{FILE fdebug=fopen(“/d.log”,”a+”);time_t tdebug;time(&tdebug);char s= asctime(localtime(&tdebug));fprintf(fdebug    ,”%.*s,%s,%d:”, strlen(s) - 1, s, FUNCTION, LINE);fprintf(fdebug,fmt,##args);fclose(fdebug);}while(0)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#locate_codes"><span class="toc-number">17.</span> <span class="toc-text">locate codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#trouble_shooting"><span class="toc-number">18.</span> <span class="toc-text">trouble shooting</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG"><span class="toc-number">1.</span> <span class="toc-text">BUG</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_types_of_computer_bugs"><span class="toc-number">2.</span> <span class="toc-text">Common types of computer bugs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Arithmetic_bugs"><span class="toc-number">2.1.</span> <span class="toc-text">Arithmetic bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#syntax_error"><span class="toc-number">2.2.</span> <span class="toc-text">syntax error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logic_error"><span class="toc-number">2.3.</span> <span class="toc-text">Logic error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Resource_bugs"><span class="toc-number">2.4.</span> <span class="toc-text">Resource bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Race_condition_bug"><span class="toc-number">2.5.</span> <span class="toc-text">Race condition bug</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Interfacing_bugs"><span class="toc-number">2.6.</span> <span class="toc-text">Interfacing bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Performance_bugs"><span class="toc-number">2.7.</span> <span class="toc-text">Performance bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Teamworking_bugs"><span class="toc-number">2.8.</span> <span class="toc-text">Teamworking bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vulnerable_bugs"><span class="toc-number">2.9.</span> <span class="toc-text">Vulnerable bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Taxonomy_of_Kernel_BUG"><span class="toc-number">2.10.</span> <span class="toc-text">Taxonomy of Kernel BUG</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">2.11.</span> <span class="toc-text">BUG made by me</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug"><span class="toc-number">3.</span> <span class="toc-text">Debug</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">3.1.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Printing"><span class="toc-number">3.2.</span> <span class="toc-text">Debugging by Printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_by_Watching"><span class="toc-number">3.3.</span> <span class="toc-text">Debugging by Watching</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug_tools_and"><span class="toc-number">3.4.</span> <span class="toc-text">Debug tools and</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Skill"><span class="toc-number">3.5.</span> <span class="toc-text">Skill</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#If_an_page_oops_close_to_zero,_for_example_0xfffffff4"><span class="toc-number">3.6.</span> <span class="toc-text">If an page oops close to zero, for example 0xfffffff4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ASM"><span class="toc-number">3.7.</span> <span class="toc-text">ASM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">3.8.</span> <span class="toc-text">From ASM to c language</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_debug_segmention_fault"><span class="toc-number">4.</span> <span class="toc-text">How to debug segmention fault</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gdb_usage"><span class="toc-number">5.</span> <span class="toc-text">Gdb usage</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_debug_assist_info,_reference_source"><span class="toc-number">6.</span> <span class="toc-text">Collect debug assist info, reference source</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_know_library_dependencies_of_a_bin"><span class="toc-number">7.</span> <span class="toc-text">How to know library dependencies of a bin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ldd_code_tools"><span class="toc-number">8.</span> <span class="toc-text">ldd code tools</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backtrace_or_stacktrace"><span class="toc-number">9.</span> <span class="toc-text">Backtrace or stacktrace</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_c++"><span class="toc-number">10.</span> <span class="toc-text">Debug c++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#tips"><span class="toc-number">10.1.</span> <span class="toc-text">tips</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#signal"><span class="toc-number">11.</span> <span class="toc-text">signal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#demagling"><span class="toc-number">12.</span> <span class="toc-text">demagling</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do_{FILE_*fdebug=fopen(“/d-log”,_“a+”);_timet_tdebug;_time(&tdebug);fprintf(fdebug,”%s”,_asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”,_FUNCTION,__LINE);fprintf(fdebug,_fmt,_##args);fclose(fdebug);}_while(0)"><span class="toc-number">13.</span> <span class="toc-text">define debugme(fmt, args…) do {FILE *fdebug=fopen(“/d.log”, “a+”); timet tdebug; time(&tdebug);fprintf(fdebug,”%s”, asctime(localtime(&tdebug)));fprintf(fdebug,”%s,%d:”, FUNCTION, _LINE);fprintf(fdebug, fmt, ##args);fclose(fdebug);} while(0)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ssgoagbroad-start"><span class="toc-number">14.</span> <span class="toc-text">ssgoagbroad-start</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#smartqos_custom_qdisc_-_self_inferrence"><span class="toc-number">15.</span> <span class="toc-text">smartqos custom qdisc - self inferrence</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#find_the_key_ponit"><span class="toc-number">16.</span> <span class="toc-text">find the key ponit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Collect_signal_info_for_debug"><span class="toc-number">17.</span> <span class="toc-text">Collect signal info for debug</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#locate_codes"><span class="toc-number">18.</span> <span class="toc-text">locate codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#trouble_shooting"><span class="toc-number">19.</span> <span class="toc-text">trouble shooting</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -267,7 +317,7 @@ Collect debug assist info, reference source
 		
 			<li><a href="/categories/firo/" title="firo">firo<sup>4</sup></a></li>
 		
-			<li><a href="/categories/kernel/" title="kernel">kernel<sup>10</sup></a></li>
+			<li><a href="/categories/kernel/" title="kernel">kernel<sup>9</sup></a></li>
 		
 			<li><a href="/categories/net/" title="net">net<sup>5</sup></a></li>
 		
