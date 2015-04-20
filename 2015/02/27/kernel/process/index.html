@@ -77,7 +77,7 @@
     </p>
   <p class="article-time">
     <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-04-11T05:57:52.000Z" itemprop="dateModified">Apr 11 2015</time>
+    Updated:<time datetime="2015-04-14T15:49:12.000Z" itemprop="dateModified">Apr 14 2015</time>
     
   </p>
 </header>
@@ -86,11 +86,28 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#进程的栈顶指针esp"><span class="toc-number">1.</span> <span class="toc-text">进程的栈顶指针esp</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_flag"><span class="toc-number">2.</span> <span class="toc-text">Process flag</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_schedule"><span class="toc-number">3.</span> <span class="toc-text">Process schedule</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">3.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">3.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TIF_NEED_RESCHED"><span class="toc-number">3.3.</span> <span class="toc-text">TIF_NEED_RESCHED</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">3.4.</span> <span class="toc-text">FAQ</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#进程的栈顶指针esp"><span class="toc-number">1.</span> <span class="toc-text">进程的栈顶指针esp</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Context_switch"><span class="toc-number">2.</span> <span class="toc-text">Context switch</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#User_to_kernel_mode_switch"><span class="toc-number">2.1.</span> <span class="toc-text">User to kernel mode switch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Multitasking"><span class="toc-number">2.2.</span> <span class="toc-text">Multitasking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Interrupt"><span class="toc-number">2.3.</span> <span class="toc-text">Interrupt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#type_of_Context_switch"><span class="toc-number">2.4.</span> <span class="toc-text">type of Context switch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_flag"><span class="toc-number">3.</span> <span class="toc-text">Process flag</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_schedule"><span class="toc-number">4.</span> <span class="toc-text">Process schedule</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">4.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">4.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TIF_NEED_RESCHED"><span class="toc-number">4.3.</span> <span class="toc-text">TIF_NEED_RESCHED</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.4.</span> <span class="toc-text">FAQ</span></a></li></ol></li></ol>
 		</div>
 		
 		<h1 id="进程的栈顶指针esp">进程的栈顶指针esp</h1>
 <p>一个进程有两个栈，用户态和内核态各一个。所以就有两个栈顶指针。这两个栈顶指针，同一时刻只能存在一个，因为进程要不处于用户态要不就是内核态，别无其他。esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。当进程由用户态切换到内核态时，把用户态SS和esp指针保存在进程的内核栈上，再读去TSS段中进程的内核态指针付给ss和esp。从内核态返回时，弹出进程内核栈上用户态ss和esp值。那么TSS段中进程的内核态指针是从哪里来的呢？进程切换process switch也叫上下文切换context switch只发生在内核态，必须理解而不是记住。一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，新的培养液进来，旧的培养液也需要保存，以备稍后使用。当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。我们所关心的换出的进程的esp指针也保存在thread_struct当中了。当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。That’s all。</p>
+<h1 id="Context_switch">Context switch</h1>
+<p>task_struct.stack tong thread_info</p>
+<h2 id="User_to_kernel_mode_switch">User to kernel mode switch</h2>
+<p>cpu -&gt; tr -&gt; tss -&gt; esp0 =&gt; 内核栈-&gt;保存用户态cs eip esp等.</p>
+<ul>
+<li>syscall</li>
+<li>exception<br>page fault</li>
+<li>interrupt</li>
+</ul>
+<h2 id="Multitasking">Multitasking</h2>
+<p>进程切换只发生在内核态<br>/<em>将next进程的内核栈指针(next-&gt;thread-&gt;sp0)值更新到当前CPU的TSS中</em>/<br>load_sp0(tss, next);<br>task_struct.thread.sp0<br>thread_struct</p>
+<h2 id="Interrupt">Interrupt</h2>
+<h2 id="type_of_Context_switch">type of Context switch</h2>
+<ul>
+<li>Hardware context switch<br>Old linux kernel</li>
+<li>Software context switch<br>kernel 2.6</li>
+</ul>
 <h1 id="Process_flag">Process flag</h1>
 <p>PF_MEMALLOC <a href="http://thread.gmane.org/gmane.linux.kernel/914878" target="_blank" rel="external">Kill PF_MEMALLOC abuse</a></p>
 <h1 id="Process_schedule">Process schedule</h1>
@@ -181,7 +198,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#进程的栈顶指针esp"><span class="toc-number">1.</span> <span class="toc-text">进程的栈顶指针esp</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_flag"><span class="toc-number">2.</span> <span class="toc-text">Process flag</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_schedule"><span class="toc-number">3.</span> <span class="toc-text">Process schedule</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">3.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">3.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TIF_NEED_RESCHED"><span class="toc-number">3.3.</span> <span class="toc-text">TIF_NEED_RESCHED</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">3.4.</span> <span class="toc-text">FAQ</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#进程的栈顶指针esp"><span class="toc-number">1.</span> <span class="toc-text">进程的栈顶指针esp</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Context_switch"><span class="toc-number">2.</span> <span class="toc-text">Context switch</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#User_to_kernel_mode_switch"><span class="toc-number">2.1.</span> <span class="toc-text">User to kernel mode switch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Multitasking"><span class="toc-number">2.2.</span> <span class="toc-text">Multitasking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Interrupt"><span class="toc-number">2.3.</span> <span class="toc-text">Interrupt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#type_of_Context_switch"><span class="toc-number">2.4.</span> <span class="toc-text">type of Context switch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_flag"><span class="toc-number">3.</span> <span class="toc-text">Process flag</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Process_schedule"><span class="toc-number">4.</span> <span class="toc-text">Process schedule</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">4.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_concepts"><span class="toc-number">4.2.</span> <span class="toc-text">Common concepts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TIF_NEED_RESCHED"><span class="toc-number">4.3.</span> <span class="toc-text">TIF_NEED_RESCHED</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.4.</span> <span class="toc-text">FAQ</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
