@@ -4,15 +4,15 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Linux device driver | Hot sexy girls</title>
+    <title>Transport layer | Hot sexy girls</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="Bibilography
-Driver porting: Device model overview: http://lwn.net/Articles/31185//Documentation/driver-modelThe Linux Kernel Driver Model
-Why DDM?
-Th">
+    <meta name="description" content="Transport layer — common
+
+Multiplexing —  Ports can provide multiple endpoints on a single node.inet_hash_connect()
+Encapuslation to segment in skb  t">
     
     
     
@@ -71,15 +71,15 @@ Th">
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/kernel/driver/" title="Linux device driver" itemprop="url">Linux device driver</a>
+      <a href="/2015/02/27/net/l4/" title="Transport layer" itemprop="url">Transport layer</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://firoyang.org" title="Firo Yang">Firo Yang</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-04-26T07:24:08.000Z" itemprop="dateModified">Apr 26 2015</time>
+    <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
+    Updated:<time datetime="2015-05-05T03:52:46.000Z" itemprop="dateModified">May 5 2015</time>
     
   </p>
 </header>
@@ -88,39 +88,47 @@ Th">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Bibilography"><span class="toc-number">1.</span> <span class="toc-text">Bibilography</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_DDM?"><span class="toc-number">2.</span> <span class="toc-text">Why DDM?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_设备驱动模型"><span class="toc-number">3.</span> <span class="toc-text">linux 设备驱动模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Sys_文件系统"><span class="toc-number">4.</span> <span class="toc-text">Sys 文件系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kobject"><span class="toc-number">5.</span> <span class="toc-text">Kobject</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kobj_type"><span class="toc-number">6.</span> <span class="toc-text">kobj_type</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kset"><span class="toc-number">7.</span> <span class="toc-text">Kset</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Bus,_device,_driver-"><span class="toc-number">8.</span> <span class="toc-text">Bus, device, driver.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#devres"><span class="toc-number">9.</span> <span class="toc-text">devres</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Transport_layer_—_common"><span class="toc-number">1.</span> <span class="toc-text">Transport layer — common</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TCP_—_or_some_connetion_scok"><span class="toc-number">2.</span> <span class="toc-text">TCP — or some connetion scok</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Componets"><span class="toc-number">2.1.</span> <span class="toc-text">Componets</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Handshak"><span class="toc-number">2.1.1.</span> <span class="toc-text">Handshak</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sliding_window_protocol"><span class="toc-number">2.1.2.</span> <span class="toc-text">Sliding window protocol</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ARQ"><span class="toc-number">2.1.3.</span> <span class="toc-text">ARQ</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Congestion_control"><span class="toc-number">2.1.4.</span> <span class="toc-text">Congestion control</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Services"><span class="toc-number">2.2.</span> <span class="toc-text">Services</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">2.3.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timer"><span class="toc-number">2.4.</span> <span class="toc-text">Timer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FIXME"><span class="toc-number">2.5.</span> <span class="toc-text">FIXME</span></a></li></ol></li></ol>
 		</div>
 		
-		<h1 id="Bibilography">Bibilography</h1>
-<p>Driver porting: Device model overview: <a href="http://lwn.net/Articles/31185/" target="_blank" rel="external">http://lwn.net/Articles/31185/</a><br>/Documentation/driver-model<br>The Linux Kernel Driver Model</p>
-<h1 id="Why_DDM?">Why DDM?</h1>
-<p>The device model was originally intended to make power management tasks easier </p>
+		<h1 id="Transport_layer_—_common">Transport layer — common</h1>
 <ul>
-<li>I/o Architecture<br>1 Expansion hardware.<br>Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).<br>2 Communication with peripherals<br>I/O ports<br>I/O memory mapping<br>Interrupts<br>hrough the maintenance of a representation of the host system’s hardware structure.</li>
+<li>Multiplexing —  Ports can provide multiple endpoints on a single node.<br>inet_hash_connect()</li>
+<li>Encapuslation to segment in skb<br>  tcp_sendmsg-&gt;skb_add_data_nocache()</li>
 </ul>
-<h1 id="linux_设备驱动模型">linux 设备驱动模型</h1>
-<p>分为三层：<br>从结构上看，每一层都有对应的数据结构。<br>1 设备驱动层，驱动开发工程师，也就是码农们，设计的akashadevice  akashadriver 结构体。<br>2 驱动程序核心层 ，是一个通用层，内核中的标准结构，device device_driver bus_type.<br>3 Kobject核心层，也是一个通用层， kobject kobj_type kset 组成。<br>其实下面还有一个sys文件系统层。</p>
-<p>从操作上看，也是分为三类，初始化 注册 注销<br>1 初始化，是局限于每一层的。<br>2 注册和注销就是贯穿三层的。</p>
-<p>，我们知道其实总线就是铁轨，而各种设备就是北京东站，大连站。<br>我们人呢，就是铁轨上跑的数据。driver还用说就是火车了呗。<br>Bus总线这类设备比较特殊,需要内核对总线支持，即总线的核心层；<br>另一部分在外设的驱动程序中，负责把驱动挂接到总线，如pci_driver, usb_driver, i2c_driver。记住，这是说的总线的驱动。和挂接在总线上的设备驱动不同。<br>就好像open系统调用和驱动程序中file_operations中xxx_open的关系一样。<br>作为中间传输用途的总线设备的驱动是在内核当中，已经写好了，不用像各种总线上的设备一样，再写什么专门服务pci，i2c，spi等<br>总线设备的驱动，这里感谢下内核，又轻松了不少。pci之类的总线的，驱动就是match probe remove的函数，<br>不用专门封装成一个结构体，像我们遇到的block char设备，他们才是真中的外设。总之总线要单独看。<br>作为一个外设的驱动是很不容易除了要完成外设本身功能的部分还要处理好和总线的关系。对于pci总线上设备驱动就是由pci_driver来调和的。</p>
-<p>kobject核心层的注册有点小技巧，他是先在作为参数kobj结构体中指定了，这个结构体属于哪里kset，之后在注册函数里，在kset里把kobj链入。<br>PS：设备注册和驱动注册是分开的。当设备注册后通过udev开始寻找驱动的过程。驱动是通过pci_device_id和相应设备建立关联的，不是major 和minor设备号。<br>可别高乱了。</p>
-<h1 id="Sys_文件系统">Sys 文件系统</h1>
-<p>bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。<br>class, 类树按功能分类设备。<br>device，干货，其他的目录都指向这里。</p>
-<h1 id="Kobject">Kobject</h1>
-<p>清0，init，set name，get，put<br>在sys中是dir，attr 是文件</p>
-<h1 id="kobj_type">kobj_type</h1>
-<p>release(),</p>
-<h1 id="Kset">Kset</h1>
-<p>添加kobject到kset（指针，add）</p>
-<h1 id="Bus,_device,_driver-">Bus, device, driver.</h1>
-<h1 id="devres">devres</h1>
+<h1 id="TCP_—_or_some_connetion_scok">TCP — or some connetion scok</h1>
+<h2 id="Componets">Componets</h2>
+<h3 id="Handshak">Handshak</h3>
 <ul>
-<li><p>devm_kfree<br><a href="http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html" target="_blank" rel="external">devm_kfree does not need for fail case of probe function and for remove function.</a><br>__device_release_driver<br>really_probe</p>
+<li>kproxy reorder<br>chome -&gt;syn(kproxy reocrd syn) -&gt; firoyang.org<br>firoyang.org -&gt;sync ack -&gt; chrome<br>chrome -&gt; ack -&gt; firoyang.org<br>chrome -&gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&gt;nginx<br>nginx -&gt; tcp send fake syn ack-&gt;chrome<br>chrome -&gt; ack -&gt; nginx(then -&gt; firoyang.org)<br>tcp_v4_do_rcv{<br>  sk-&gt;sk_state == TCP_ESTABLISHED<br>  tcp_rcv_established{<br>  len &lt;= tcp_header_len =&gt;<br>  tcp_ack -&gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&gt; nginx<br>  }<br>}<br>nginx-&gt;GET -&gt;firoyang.org<br>firoyang.org-&gt;nginx-&gt;chrome</li>
+</ul>
+<h3 id="Sliding_window_protocol">Sliding window protocol</h3>
+<p>Sliding window protocols are used where reliable in-order delivery of packets is required.<br>For every ack packet received, the window slides by one packet (logically) to transmit one new packet.</p>
+<h3 id="ARQ">ARQ</h3>
+<p>ack and timeout<br>Sliding window protocol is based on automatic repeat request/ARQ<br>My conclusion: in practice TCP is a mixture between both GBN and SR.<br>*Go-Back-N</p>
+<ul>
+<li>Selective repeat<h3 id="Congestion_control">Congestion control</h3>
+icsk_ca_ops;<br>tcp_ack {<br>tcp_cong_avoid<br>tcp_fastretrans_alert<br>tcp_slow_start}<br>TCP send queue len /proc/sys/net/core/wmem_default</li>
+</ul>
+<h2 id="Services">Services</h2>
+<ul>
+<li>Connection-oriented communication — Session and virtual circuits<br>Connection-oriented (CO-mode[1]) communication is a network communication mode in telecommunications and computer networking, where a communication session or a semi-permanent connection is established before any useful data can be transferred, and where a stream of data is delivered in the same order as it was sent<br>Connection-oriented communication may be a circuit switched connection, or a packet-mode virtual circuit connection.<br>Layer 4 virtual circuits uses segment number fix routed reorder delivery. Same order delivery.</li>
+<li>In-order</li>
+<li>Flow control</li>
+<li>Congestion avoidence</li>
+<li>Reliability — assured,Error detection and correction<br>Error —  checksum, the transport protocol may check that the data is not corrupted<br>ACK is an indiction of segments lost.<br>correction — Retransmission, ARQ, Automatic repeat request schemes may be used to retransmit lost or corrupted data.<br>verify correct receipt by sending an ACK or NACK message to the sender.<h2 id="FAQ">FAQ</h2>
 </li>
-<li><p>a must use devm_kfree Julia Lawall<br>The function at91_dt_node_to_map is ultimately called by the function</p>
-<blockquote>
-<p>pinctrl_get, which is an exported function.  Since it is possible that this<br>function is not called from within a probe function, for safety, the kfree<br>is converted to a devm_kfree, to both free the data and remove it from the<br>device in a failure situation.</p>
-</blockquote>
-</li>
+<li>What about TCP sequence number warp around<br>PAWS use timestamp and RTT to solve this problem.<h2 id="Timer">Timer</h2>
+*sk_timer<br>listen: synack<br>estblished: keepalive<br>timewait:</li>
+</ul>
+<h2 id="FIXME">FIXME</h2>
+<ul>
+<li>Create TCP options<br>tcp_syn_build_options()</li>
+<li>Receive ack<br>tcp_ack()<br>记录ack的数据大小mss or tcp abc<br>update snd_wl1 and snd_una<br>slow path update mtu mss tcp_skb_cb.sacked</li>
+<li>Active send data<br>tcp_sendpage()/tcp_sendmsg()-&gt;tcp_write_xmit()/tcp_push_one()-&gt;tcp_transmit_skb</li>
+<li>Timer expiring retransmiter<br>tcp_retransmiter_timer()…-&gt;tcp_transmit_skb()</li>
+<li>reponse for receiving an ACK<br>tcp_data_snd_check()-&gt;tcp_write_xmit()</li>
+<li>tcp_v4_rcv<br><a href="http://thread.gmane.org/gmane.linux.network/85613/focus=85614" target="_blank" rel="external">skb-&gt;dev = NULL;</a></li>
 </ul>
   
 	</div>
@@ -128,20 +136,20 @@ Th">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
+  <span></span> <a href="/tags/net/">net</a>
   </div>
 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
+  <a class="article-category-link" href="/categories/net/">net</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://firoyang.org/2015/02/27/kernel/driver/" data-title="Linux device driver | Hot sexy girls" data-tsina="null" class="share clearfix">
+  <div data-url="http://firoyang.org/2015/02/27/net/l4/" data-title="Transport layer | Hot sexy girls" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -151,18 +159,18 @@ Th">
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/net/net/" title="Linux Network Stack">
+ <a href="/2015/02/27/cs/cs/" title="Computer science a kernel programmer&#39;s perspective">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  Linux Network Stack</span>
+  Computer science a kernel programmer&#39;s perspective</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/kernel/activities/"  title="Kernel activities">
+<a href="/2015/02/27/net/interface/"  title="interface">
  <strong>NEXT:</strong><br/> 
- <span>Kernel activities
+ <span>interface
 </span>
 </a>
 </div>
@@ -184,7 +192,7 @@ Th">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Bibilography"><span class="toc-number">1.</span> <span class="toc-text">Bibilography</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_DDM?"><span class="toc-number">2.</span> <span class="toc-text">Why DDM?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_设备驱动模型"><span class="toc-number">3.</span> <span class="toc-text">linux 设备驱动模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Sys_文件系统"><span class="toc-number">4.</span> <span class="toc-text">Sys 文件系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kobject"><span class="toc-number">5.</span> <span class="toc-text">Kobject</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kobj_type"><span class="toc-number">6.</span> <span class="toc-text">kobj_type</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kset"><span class="toc-number">7.</span> <span class="toc-text">Kset</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Bus,_device,_driver-"><span class="toc-number">8.</span> <span class="toc-text">Bus, device, driver.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#devres"><span class="toc-number">9.</span> <span class="toc-text">devres</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Transport_layer_—_common"><span class="toc-number">1.</span> <span class="toc-text">Transport layer — common</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TCP_—_or_some_connetion_scok"><span class="toc-number">2.</span> <span class="toc-text">TCP — or some connetion scok</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Componets"><span class="toc-number">2.1.</span> <span class="toc-text">Componets</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Handshak"><span class="toc-number">2.1.1.</span> <span class="toc-text">Handshak</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sliding_window_protocol"><span class="toc-number">2.1.2.</span> <span class="toc-text">Sliding window protocol</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ARQ"><span class="toc-number">2.1.3.</span> <span class="toc-text">ARQ</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Congestion_control"><span class="toc-number">2.1.4.</span> <span class="toc-text">Congestion control</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Services"><span class="toc-number">2.2.</span> <span class="toc-text">Services</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">2.3.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timer"><span class="toc-number">2.4.</span> <span class="toc-text">Timer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FIXME"><span class="toc-number">2.5.</span> <span class="toc-text">FIXME</span></a></li></ol></li></ol>
   </div>
 
 <div id="asidepart">
@@ -390,7 +398,7 @@ $(document).ready(function(){
 <script>
   var disqus_shortname = 'firoyang';
   
-  var disqus_url = 'http://firoyang.org/2015/02/27/kernel/driver/';
+  var disqus_url = 'http://firoyang.org/2015/02/27/net/l4/';
   
   (function(){
     var dsq = document.createElement('script');
