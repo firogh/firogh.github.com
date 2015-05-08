@@ -4,16 +4,17 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Linux kernel memory managerment | Hot sexy girls</title>
+    <title>Linux kernel memory management | Hot sexy girls</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="Physical memory
-
-NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl
-ZONE(DMA/NORMAL/HIGHMEM) struct zone:
-struct page is the basic unit of k">
+    <meta name="description" content="Memroy mangement
+GFP flags
+GFP_IO: allow disk IO
+GFP_FS: allow fs operations, depend on io.more details in lwn, lkd
+Virtual memory
+What is virtual mem">
     
     
     
@@ -72,7 +73,7 @@ struct page is the basic unit of k">
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2014/12/28/kernel/mm/" title="Linux kernel memory managerment" itemprop="url">Linux kernel memory managerment</a>
+      <a href="/2014/12/28/kernel/mm/" title="Linux kernel memory management" itemprop="url">Linux kernel memory management</a>
   </h1>
   <p class="article-author">By
     
@@ -80,7 +81,7 @@ struct page is the basic unit of k">
     </p>
   <p class="article-time">
     <time datetime="2014-12-27T16:00:00.000Z" itemprop="datePublished">Dec 28 2014</time>
-    Updated:<time datetime="2015-05-08T13:59:42.000Z" itemprop="dateModified">May 8 2015</time>
+    Updated:<time datetime="2015-05-08T14:18:46.000Z" itemprop="dateModified">May 8 2015</time>
     
   </p>
 </header>
@@ -89,61 +90,38 @@ struct page is the basic unit of k">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">1.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Allocator"><span class="toc-number">1.1.</span> <span class="toc-text">Allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">1.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">1.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">1.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">2.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">2.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_to_make_a_pte"><span class="toc-number">2.2.</span> <span class="toc-text">How to make a pte</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))"><span class="toc-number">3.</span> <span class="toc-text">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">3.1.</span> <span class="toc-text">copy_to_user</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kernel_space_virtual_memory"><span class="toc-number">4.</span> <span class="toc-text">Kernel space virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">4.1.</span> <span class="toc-text">GFP flags</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">4.2.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">4.3.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">4.3.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">4.3.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">4.4.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">4.5.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Userspace_virtual_memory"><span class="toc-number">5.</span> <span class="toc-text">Userspace virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">6.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#OOM"><span class="toc-number">7.1.</span> <span class="toc-text">OOM</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Memroy_mangement"><span class="toc-number">1.</span> <span class="toc-text">Memroy mangement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">1.1.</span> <span class="toc-text">GFP flags</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">2.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">2.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_table"><span class="toc-number">2.2.</span> <span class="toc-text">Page table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">2.3.</span> <span class="toc-text">copy_to_user</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">2.4.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">2.5.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">2.5.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">2.5.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">2.6.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">2.7.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_virtual_memory"><span class="toc-number">2.8.</span> <span class="toc-text">Process virtual memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">3.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">4.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#page_allocator"><span class="toc-number">4.1.</span> <span class="toc-text">page allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">4.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">4.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">4.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">5.</span> <span class="toc-text">FAQ</span></a></li></ol>
 		</div>
 		
-		<h1 id="Physical_memory">Physical memory</h1>
-<ul>
-<li>NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl</li>
-<li>ZONE(DMA/NORMAL/HIGHMEM) struct zone:</li>
-<li>struct page is the basic unit of kernel mm knowns as page frame.<br>  The goal of strcut page is to describe physical memory, not the data contained therein.</li>
-<li>The buddy system is per-zone struct free_area</li>
-<li>Physical address is connected to Virtual address by pfn = page - mem_map;</li>
-</ul>
-<h2 id="Allocator">Allocator</h2>
-<pre><code><span class="function"><span class="title">alloc_pages</span><span class="params">()</span></span>
-</code></pre><h2 id="Page/buffer_cache">Page/buffer cache</h2>
-<ul>
-<li>struct address_space<br>  page_tree<h2 id="Page_writeback">Page writeback</h2>
-  data synchronization, the flush threads, pdflush<br>  swap<h2 id="Page_swap">Page swap</h2>
-The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.</li>
-</ul>
-<h1 id="Virtual_memory">Virtual memory</h1>
-<h2 id="What_is_virtual_memory?">What is virtual memory?</h2>
-<p>In computing, virtual memory is a memory management technique<br>that is implemented using both hardware and software.<br>It maps memory addresses used by a program, called virtual addresses,<br>into physical addresses in computer memory.</p>
-<h2 id="How_to_make_a_pte">How to make a pte</h2>
-<h1 id="define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</h1>
-<p>原来低12位里面存了flag啊!<br>    __pte(((phys_addr_t)page_nr &lt;&lt; PAGE_SHIFT) | massage_pgprot(pgprot));</p>
-<p>For vmalloc(), chechk here vmap_page_range_noflush()<br>For kmap(), check kmap_init()<br>How to emulate the process of translate va to pa?<br>    <a href="http://edsionte.com/techblog/archives/1966" target="_blank" rel="external">http://edsionte.com/techblog/archives/1966</a></p>
-<h2 id="copy_to_user">copy_to_user</h2>
-<p>not in kernel?<br>read only?</p>
-<h1 id="Kernel_space_virtual_memory">Kernel space virtual memory</h1>
+		<h1 id="Memroy_mangement">Memroy mangement</h1>
 <h2 id="GFP_flags">GFP flags</h2>
 <p><strong>GFP_IO: allow disk IO
 </strong>GFP_FS: allow fs operations, depend on io.<br>more details in lwn, lkd</p>
+<h1 id="Virtual_memory">Virtual memory</h1>
+<h2 id="What_is_virtual_memory?">What is virtual memory?</h2>
+<p>In computing, virtual memory is a memory management technique<br>that is implemented using both hardware and software.<br>It maps memory addresses used by a program, called virtual addresses,<br>into physical addresses in computer memory.</p>
+<h2 id="Page_table">Page table</h2>
+<p>mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))<br>原来低12位里面存了flag啊!<br>__pte(((phys_addr_t)page_nr &lt;&lt; PAGE_SHIFT) | massage_pgprot(pgprot));<br>For vmalloc(), chechk here vmap_page_range_noflush()<br>For kmap(), check kmap_init()<br><a href="http://edsionte.com/techblog/archives/1966" target="_blank" rel="external">How to emulate the process of translate va to pa?</a></p>
+<h2 id="copy_to_user">copy_to_user</h2>
+<p>not in kernel?<br>read only?</p>
 <h2 id="Direct_mapping_area">Direct mapping area</h2>
 <p>high_memory (-128UL &lt;&lt; 20)<br>__get_free_pages()<br>kmalloc()<br>kmem_cache_alloc()/slab</p>
 <h2 id="Vmalloc">Vmalloc</h2>
 <h3 id="Hwo_Vmalloc_works?">Hwo Vmalloc works?</h3>
-<pre><code>Work <span class="keyword">in</span> HIGHMEM <span class="keyword">and</span> NORMALMEM
-The skeleton is rbtree, root is <span class="keyword">global</span> variable vmap_area_root.rb_node.
-<span class="keyword">struct</span> vm_struct likes <span class="keyword">struct</span> address_space, functionlly;
-<span class="keyword">struct</span> vmap_area likes <span class="keyword">struct</span> vm_area_struct.
-map_vm_area 页表映射
-the page <span class="keyword">in</span> ZONE_NORMAL will not <span class="keyword">use</span> directly mapping pfn address! It <span class="keyword">use</span> VMALLOC address! 
-</code></pre><h3 id="Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one">Vmalloc coherence with vfree() after vmalloc_sync_one</h3>
+<p>Work in HIGHMEM and NORMALMEM<br>The skeleton is rbtree, root is global variable vmap_area_root.rb_node.<br>struct vm_struct likes struct address_space, functionlly;<br>struct vmap_area likes struct vm_area_struct.<br>map_vm_area 页表映射<br>the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address! </p>
+<h3 id="Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one">Vmalloc coherence with vfree() after vmalloc_sync_one</h3>
 <p>在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。<br>deatils in vmalloc_sync_one() and vunmap_pte_range()<br>只释放pte</p>
 <h2 id="Persistent_Kernel_Mappings">Persistent Kernel Mappings</h2>
 <p>kmap(struct page *)<br>How kmap works?<br>    Check kmap_init(), later!</p>
 <h2 id="Temporay_Mappings(Fixmaps)">Temporay Mappings(Fixmaps)</h2>
 <p>kmap_atomic()</p>
-<h1 id="Userspace_virtual_memory">Userspace virtual memory</h1>
+<h2 id="Process_virtual_memory">Process virtual memory</h2>
 <ul>
 <li>struct vm_area_struct: The intervals of legal address are called <em>memory areas</em> is permitted to access.</li>
-<li>struct address_space: To establish an association between the regions of the vm and the places where the related data are located.<br>  i_mmap: how many processes opened this file.<br>  <a href="https://lkml.org/lkml/2012/8/7/46" target="_blank" rel="external">https://lkml.org/lkml/2012/8/7/46</a></li>
+<li>struct address_space: To establish an association between the regions of the vm and the places where the related data are located.<br>i_mmap: how many processes opened this file.<br><a href="https://lkml.org/lkml/2012/8/7/46" target="_blank" rel="external">https://lkml.org/lkml/2012/8/7/46</a></li>
 <li><p>sturct mm_struct: how many files(vm_area_struct) does this process opened.</p>
 </li>
-<li><p>Memory mappings<br>  syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16</p>
+<li><p>Memory mappings<br>syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16</p>
 </li>
 <li><p>link<br>a virtual address and physical address. —page tale<br>a memory region of a process and its virtual page addresses. —vm_area_struct<br>a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&gt;i_mmap.<br>a physical page and the processes that share the page(used in swap case) </p>
 </li>
@@ -153,22 +131,28 @@ the page <span class="keyword">in</span> ZONE_NORMAL will not <span class="keywo
 <ul>
 <li><p>Segemnt fault<br>Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.<br><a href="https://www.kernel.org/doc/Documentation/x86/exception-tables.txt" target="_blank" rel="external">https://www.kernel.org/doc/Documentation/x86/exception-tables.txt</a><br>Null pointer: probably, mostly catched in below 0x08048000.</p>
 </li>
-<li><p>Oops<br>kernel access invalid address, in __print_signal_info() task-&gt;sighand and  task-&gt;nsproxy is null.</p>
-</li>
 <li><p>Demanding page<br>vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!<br>expand_stack()/handle_mm_fault()</p>
 </li>
-</ul>
-<ul>
 <li><p>vmalloc fault</p>
 </li>
-<li><p>userspace page fault</p>
+<li><p>Oops<br>kernel access invalid address, in __print_signal_info() task-&gt;sighand and  task-&gt;nsproxy is null.</p>
 </li>
-<li><p>kernel invalid adress<br>kernel oops </p>
-</li>
+</ul>
+<h1 id="Physical_memory">Physical memory</h1>
+<ul>
+<li>NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl</li>
+<li>ZONE(DMA/NORMAL/HIGHMEM) struct zone:</li>
+<li>struct page is the basic unit of kernel mm knowns as page frame.<br>  The goal of strcut page is to describe physical memory, not the data contained therein.</li>
+<li>The buddy system is per-zone struct free_area</li>
+<li>Physical address is connected to Virtual address by pfn = page - mem_map;<h2 id="page_allocator">page allocator</h2>
+alloc_pages()<h2 id="Page/buffer_cache">Page/buffer cache</h2>
+struct address_space-&gt;page_tree<h2 id="Page_writeback">Page writeback</h2>
+data synchronization, the flush threads, pdflush<h2 id="Page_swap">Page swap</h2>
+The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.</li>
 </ul>
 <h1 id="FAQ">FAQ</h1>
 <ul>
-<li><p>Where is Per-CPU variable?<br>  static Per-CPU in .data(?) below high_memory!<br>  runtime Per-CPU, it’s GFP_KERNEL in pcpu_create_chunk()</p>
+<li><p>Where is Per-CPU variable?<br>static Per-CPU in .data(?) below high_memory!<br>runtime Per-CPU, it’s GFP_KERNEL in pcpu_create_chunk()</p>
 </li>
 <li><p>Memory mode<br>flat mem -&gt; uma<br>discontig -&gt; NUMA<br>sparse -&gt; Hotplug + NUMA</p>
 </li>
@@ -182,8 +166,6 @@ the page <span class="keyword">in</span> ZONE_NORMAL will not <span class="keywo
 </li>
 </ul>
 <p>*pfmemalloc — skb 表示申请了紧急内存!<br>page free</p>
-<h2 id="OOM">OOM</h2>
-<p>Taming the OOM killer</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -198,7 +180,7 @@ the page <span class="keyword">in</span> ZONE_NORMAL will not <span class="keywo
 
 <div class="article-share" id="share">
 
-  <div data-url="http://firoyang.org/2014/12/28/kernel/mm/" data-title="Linux kernel memory managerment | Hot sexy girls" data-tsina="null" class="share clearfix">
+  <div data-url="http://firoyang.org/2014/12/28/kernel/mm/" data-title="Linux kernel memory management | Hot sexy girls" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -241,7 +223,7 @@ the page <span class="keyword">in</span> ZONE_NORMAL will not <span class="keywo
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">1.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Allocator"><span class="toc-number">1.1.</span> <span class="toc-text">Allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">1.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">1.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">1.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">2.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">2.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_to_make_a_pte"><span class="toc-number">2.2.</span> <span class="toc-text">How to make a pte</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_mk_pte(page,_pgprot)_pfn_pte(page_to_pfn(page),_(pgprot))"><span class="toc-number">3.</span> <span class="toc-text">define mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">3.1.</span> <span class="toc-text">copy_to_user</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kernel_space_virtual_memory"><span class="toc-number">4.</span> <span class="toc-text">Kernel space virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">4.1.</span> <span class="toc-text">GFP flags</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">4.2.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">4.3.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">4.3.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">4.3.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">4.4.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">4.5.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Userspace_virtual_memory"><span class="toc-number">5.</span> <span class="toc-text">Userspace virtual memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">6.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">7.</span> <span class="toc-text">FAQ</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#OOM"><span class="toc-number">7.1.</span> <span class="toc-text">OOM</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Memroy_mangement"><span class="toc-number">1.</span> <span class="toc-text">Memroy mangement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">1.1.</span> <span class="toc-text">GFP flags</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">2.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">2.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_table"><span class="toc-number">2.2.</span> <span class="toc-text">Page table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">2.3.</span> <span class="toc-text">copy_to_user</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">2.4.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">2.5.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">2.5.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">2.5.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">2.6.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">2.7.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_virtual_memory"><span class="toc-number">2.8.</span> <span class="toc-text">Process virtual memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">3.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">4.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#page_allocator"><span class="toc-number">4.1.</span> <span class="toc-text">page allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">4.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">4.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">4.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">5.</span> <span class="toc-text">FAQ</span></a></li></ol>
   </div>
 
 <div id="asidepart">
