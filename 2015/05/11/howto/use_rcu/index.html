@@ -4,17 +4,15 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Firo Notes</title>
+    <title>如何使用RCU in linux kernel | Firo Notes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="date: 2015-04-25title: [知识搬运]如何使用RCU in linux kernel
-category: howto
-Reference
+    <meta name="description" content="Reference
 RCU Usage In the Linux Kernel: One Decade Later
 Introduction
-本文内容并非我原创,">
+本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.本文不关心RC">
     
     
     
@@ -73,15 +71,15 @@ Introduction
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/05/11/howto/use_rcu/" title="" itemprop="url"></a>
+      <a href="/2015/05/11/howto/use_rcu/" title="如何使用RCU in linux kernel" itemprop="url">如何使用RCU in linux kernel</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://firoyang.org" title="Firo Yang">Firo Yang</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-05-11T13:44:39.000Z" itemprop="datePublished">May 11 2015</time>
-    Updated:<time datetime="2015-05-11T13:44:39.000Z" itemprop="dateModified">May 11 2015</time>
+    <time datetime="2015-05-10T16:00:00.000Z" itemprop="datePublished">May 11 2015</time>
+    Updated:<time datetime="2015-05-11T13:46:15.000Z" itemprop="dateModified">May 11 2015</time>
     
   </p>
 </header>
@@ -90,13 +88,10 @@ Introduction
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#category:_howto"><span class="toc-number">1.</span> <span class="toc-text">category: howto</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number"></span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-number"></span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Wait_for_Completion"><span class="toc-number"></span> <span class="toc-text">Wait for Completion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference_Counting"><span class="toc-number"></span> <span class="toc-text">Reference Counting</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Type_Safe_Memory"><span class="toc-number"></span> <span class="toc-text">Type Safe Memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Publish-Subscribe"><span class="toc-number"></span> <span class="toc-text">Publish-Subscribe</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Read-Write_Lock_Alternative"><span class="toc-number"></span> <span class="toc-text">Read-Write Lock Alternative</span></a>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-number">2.</span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Wait_for_Completion"><span class="toc-number">3.</span> <span class="toc-text">Wait for Completion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference_Counting"><span class="toc-number">4.</span> <span class="toc-text">Reference Counting</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Type_Safe_Memory"><span class="toc-number">5.</span> <span class="toc-text">Type Safe Memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Publish-Subscribe"><span class="toc-number">6.</span> <span class="toc-text">Publish-Subscribe</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Read-Write_Lock_Alternative"><span class="toc-number">7.</span> <span class="toc-text">Read-Write Lock Alternative</span></a></li></ol>
 		</div>
 		
-		<hr>
-<p>date: 2015-04-25<br>title: [知识搬运]如何使用RCU in linux kernel</p>
-<h2 id="category:_howto">category: howto</h2>
-<h1 id="Reference">Reference</h1>
+		<h1 id="Reference">Reference</h1>
 <p><a href="http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf" target="_blank" rel="external">RCU Usage In the Linux Kernel: One Decade Later</a></p>
 <h1 id="Introduction">Introduction</h1>
 <p>本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.<br>本文不关心RCU的实现.<br>本文的核心目标就是了解如何使用RCU.</p>
@@ -113,11 +108,16 @@ Introduction
 		<footer class="article-footer clearfix">
 
 
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/howto/">howto</a>
+</div>
+
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://firoyang.org/2015/05/11/howto/use_rcu/" data-title="Firo Notes" data-tsina="null" class="share clearfix">
+  <div data-url="http://firoyang.org/2015/05/11/howto/use_rcu/" data-title="如何使用RCU in linux kernel | Firo Notes" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -160,7 +160,7 @@ Introduction
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#category:_howto"><span class="toc-number">1.</span> <span class="toc-text">category: howto</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number"></span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-number"></span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Wait_for_Completion"><span class="toc-number"></span> <span class="toc-text">Wait for Completion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference_Counting"><span class="toc-number"></span> <span class="toc-text">Reference Counting</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Type_Safe_Memory"><span class="toc-number"></span> <span class="toc-text">Type Safe Memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Publish-Subscribe"><span class="toc-number"></span> <span class="toc-text">Publish-Subscribe</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Read-Write_Lock_Alternative"><span class="toc-number"></span> <span class="toc-text">Read-Write Lock Alternative</span></a>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-number">2.</span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Wait_for_Completion"><span class="toc-number">3.</span> <span class="toc-text">Wait for Completion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference_Counting"><span class="toc-number">4.</span> <span class="toc-text">Reference Counting</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Type_Safe_Memory"><span class="toc-number">5.</span> <span class="toc-text">Type Safe Memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Publish-Subscribe"><span class="toc-number">6.</span> <span class="toc-text">Publish-Subscribe</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Read-Write_Lock_Alternative"><span class="toc-number">7.</span> <span class="toc-text">Read-Write Lock Alternative</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -176,7 +176,7 @@ Introduction
 		
 			<li><a href="/categories/firo/" title="firo">firo<sup>4</sup></a></li>
 		
-			<li><a href="/categories/howto/" title="howto">howto<sup>3</sup></a></li>
+			<li><a href="/categories/howto/" title="howto">howto<sup>4</sup></a></li>
 		
 			<li><a href="/categories/kernel/" title="kernel">kernel<sup>8</sup></a></li>
 		
