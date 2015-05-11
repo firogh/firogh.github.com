@@ -4,15 +4,17 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Transport layer | Firo Notes</title>
+    <title>Firo Notes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="Firo Yang">
     
-    <meta name="description" content="Transport layer — common
-
-Multiplexing —  Ports can provide multiple endpoints on a single node.inet_hash_connect()
-Encapuslation to segment in skb  t">
+    <meta name="description" content="date: 2015-04-25title: [知识搬运]如何使用RCU in linux kernel
+category: howto
+Reference
+RCU Usage In the Linux Kernel: One Decade Later
+Introduction
+本文内容并非我原创,">
     
     
     
@@ -71,15 +73,15 @@ Encapuslation to segment in skb  t">
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/net/l4/" title="Transport layer" itemprop="url">Transport layer</a>
+      <a href="/2015/05/11/howto/use_rcu/" title="" itemprop="url"></a>
   </h1>
   <p class="article-author">By
     
       <a href="http://firoyang.org" title="Firo Yang">Firo Yang</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished">Feb 27 2015</time>
-    Updated:<time datetime="2015-05-05T03:52:46.000Z" itemprop="dateModified">May 5 2015</time>
+    <time datetime="2015-05-11T13:44:39.000Z" itemprop="datePublished">May 11 2015</time>
+    Updated:<time datetime="2015-05-11T13:44:39.000Z" itemprop="dateModified">May 11 2015</time>
     
   </p>
 </header>
@@ -88,68 +90,34 @@ Encapuslation to segment in skb  t">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Transport_layer_—_common"><span class="toc-number">1.</span> <span class="toc-text">Transport layer — common</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TCP_—_or_some_connetion_scok"><span class="toc-number">2.</span> <span class="toc-text">TCP — or some connetion scok</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Componets"><span class="toc-number">2.1.</span> <span class="toc-text">Componets</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Handshak"><span class="toc-number">2.1.1.</span> <span class="toc-text">Handshak</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sliding_window_protocol"><span class="toc-number">2.1.2.</span> <span class="toc-text">Sliding window protocol</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ARQ"><span class="toc-number">2.1.3.</span> <span class="toc-text">ARQ</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Congestion_control"><span class="toc-number">2.1.4.</span> <span class="toc-text">Congestion control</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Services"><span class="toc-number">2.2.</span> <span class="toc-text">Services</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">2.3.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timer"><span class="toc-number">2.4.</span> <span class="toc-text">Timer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FIXME"><span class="toc-number">2.5.</span> <span class="toc-text">FIXME</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#category:_howto"><span class="toc-number">1.</span> <span class="toc-text">category: howto</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number"></span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-number"></span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Wait_for_Completion"><span class="toc-number"></span> <span class="toc-text">Wait for Completion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference_Counting"><span class="toc-number"></span> <span class="toc-text">Reference Counting</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Type_Safe_Memory"><span class="toc-number"></span> <span class="toc-text">Type Safe Memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Publish-Subscribe"><span class="toc-number"></span> <span class="toc-text">Publish-Subscribe</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Read-Write_Lock_Alternative"><span class="toc-number"></span> <span class="toc-text">Read-Write Lock Alternative</span></a>
 		</div>
 		
-		<h1 id="Transport_layer_—_common">Transport layer — common</h1>
-<ul>
-<li>Multiplexing —  Ports can provide multiple endpoints on a single node.<br>inet_hash_connect()</li>
-<li>Encapuslation to segment in skb<br>  tcp_sendmsg-&gt;skb_add_data_nocache()</li>
-</ul>
-<h1 id="TCP_—_or_some_connetion_scok">TCP — or some connetion scok</h1>
-<h2 id="Componets">Componets</h2>
-<h3 id="Handshak">Handshak</h3>
-<ul>
-<li>kproxy reorder<br>chome -&gt;syn(kproxy reocrd syn) -&gt; firoyang.org<br>firoyang.org -&gt;sync ack -&gt; chrome<br>chrome -&gt; ack -&gt; firoyang.org<br>chrome -&gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&gt;nginx<br>nginx -&gt; tcp send fake syn ack-&gt;chrome<br>chrome -&gt; ack -&gt; nginx(then -&gt; firoyang.org)<br>tcp_v4_do_rcv{<br>  sk-&gt;sk_state == TCP_ESTABLISHED<br>  tcp_rcv_established{<br>  len &lt;= tcp_header_len =&gt;<br>  tcp_ack -&gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&gt; nginx<br>  }<br>}<br>nginx-&gt;GET -&gt;firoyang.org<br>firoyang.org-&gt;nginx-&gt;chrome</li>
-</ul>
-<h3 id="Sliding_window_protocol">Sliding window protocol</h3>
-<p>Sliding window protocols are used where reliable in-order delivery of packets is required.<br>For every ack packet received, the window slides by one packet (logically) to transmit one new packet.</p>
-<h3 id="ARQ">ARQ</h3>
-<p>ack and timeout<br>Sliding window protocol is based on automatic repeat request/ARQ<br>My conclusion: in practice TCP is a mixture between both GBN and SR.<br>*Go-Back-N</p>
-<ul>
-<li>Selective repeat<h3 id="Congestion_control">Congestion control</h3>
-icsk_ca_ops;<br>tcp_ack {<br>tcp_cong_avoid<br>tcp_fastretrans_alert<br>tcp_slow_start}<br>TCP send queue len /proc/sys/net/core/wmem_default</li>
-</ul>
-<h2 id="Services">Services</h2>
-<ul>
-<li>Connection-oriented communication — Session and virtual circuits<br>Connection-oriented (CO-mode[1]) communication is a network communication mode in telecommunications and computer networking, where a communication session or a semi-permanent connection is established before any useful data can be transferred, and where a stream of data is delivered in the same order as it was sent<br>Connection-oriented communication may be a circuit switched connection, or a packet-mode virtual circuit connection.<br>Layer 4 virtual circuits uses segment number fix routed reorder delivery. Same order delivery.</li>
-<li>In-order</li>
-<li>Flow control</li>
-<li>Congestion avoidence</li>
-<li>Reliability — assured,Error detection and correction<br>Error —  checksum, the transport protocol may check that the data is not corrupted<br>ACK is an indiction of segments lost.<br>correction — Retransmission, ARQ, Automatic repeat request schemes may be used to retransmit lost or corrupted data.<br>verify correct receipt by sending an ACK or NACK message to the sender.<h2 id="FAQ">FAQ</h2>
-</li>
-<li>What about TCP sequence number warp around<br>PAWS use timestamp and RTT to solve this problem.<h2 id="Timer">Timer</h2>
-*sk_timer<br>listen: synack<br>estblished: keepalive<br>timewait:</li>
-</ul>
-<h2 id="FIXME">FIXME</h2>
-<ul>
-<li>Create TCP options<br>tcp_syn_build_options()</li>
-<li>Receive ack<br>tcp_ack()<br>记录ack的数据大小mss or tcp abc<br>update snd_wl1 and snd_una<br>slow path update mtu mss tcp_skb_cb.sacked</li>
-<li>Active send data<br>tcp_sendpage()/tcp_sendmsg()-&gt;tcp_write_xmit()/tcp_push_one()-&gt;tcp_transmit_skb</li>
-<li>Timer expiring retransmiter<br>tcp_retransmiter_timer()…-&gt;tcp_transmit_skb()</li>
-<li>reponse for receiving an ACK<br>tcp_data_snd_check()-&gt;tcp_write_xmit()</li>
-<li>tcp_v4_rcv<br><a href="http://thread.gmane.org/gmane.linux.network/85613/focus=85614" target="_blank" rel="external">skb-&gt;dev = NULL;</a></li>
-</ul>
+		<hr>
+<p>date: 2015-04-25<br>title: [知识搬运]如何使用RCU in linux kernel</p>
+<h2 id="category:_howto">category: howto</h2>
+<h1 id="Reference">Reference</h1>
+<p><a href="http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf" target="_blank" rel="external">RCU Usage In the Linux Kernel: One Decade Later</a></p>
+<h1 id="Introduction">Introduction</h1>
+<p>本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.<br>本文不关心RCU的实现.<br>本文的核心目标就是了解如何使用RCU.</p>
+<p>所有使用RCU代码, 都可以分为4部分:<br>RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.<br>update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;<br>synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.<br>free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.<br>Paul的paper总结了5种用法, 并且附上了代码, 便于理解.<br>理解的过程实质上是用RCU的外衣再次理解这个5种方法!</p>
+<h1 id="Wait_for_Completion">Wait for Completion</h1>
+<p>内核中有<a href="https://lwn.net/Articles/23993/" target="_blank" rel="external">完成量completion</a>的基础设施<br>上面的RCU read critical section和synchronize可以构成completion的语义.<br>为什么要用RCU而不是内核自身提供的completion函数呢?<br>Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.<br>所以这里的RCU, 应该叫做Completion RCU-version.</p>
+<h1 id="Reference_Counting">Reference Counting</h1>
+<p>传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.<br>但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.<br>Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多<br>同样也会带来性能的损耗,而不是almost zero in his paper.<br>引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.</p>
+<h1 id="Type_Safe_Memory">Type Safe Memory</h1>
+<h1 id="Publish-Subscribe">Publish-Subscribe</h1>
+<h1 id="Read-Write_Lock_Alternative">Read-Write Lock Alternative</h1>
   
 	</div>
 		<footer class="article-footer clearfix">
 
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/net/">net</a>
-  </div>
-
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/net/">net</a>
-</div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://firoyang.org/2015/02/27/net/l4/" data-title="Transport layer | Firo Notes" data-tsina="null" class="share clearfix">
+  <div data-url="http://firoyang.org/2015/05/11/howto/use_rcu/" data-title="Firo Notes" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -159,18 +127,18 @@ icsk_ca_ops;<br>tcp_ack {<br>tcp_cong_avoid<br>tcp_fastretrans_alert<br>tcp_slow
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/net/l3/" title="Network layer">
+ <a href="/2015/05/27/net/netfilter/" title="Understanding linux netfilter">
   <strong>PREVIOUS:</strong><br/>
   <span>
-  Network layer</span>
+  Understanding linux netfilter</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/net/net/"  title="Linux Network Stack">
+<a href="/2015/05/01/list/animation_and_comic_list/"  title="动画与漫画列表">
  <strong>NEXT:</strong><br/> 
- <span>Linux Network Stack
+ <span>动画与漫画列表
 </span>
 </a>
 </div>
@@ -192,7 +160,7 @@ icsk_ca_ops;<br>tcp_ack {<br>tcp_cong_avoid<br>tcp_fastretrans_alert<br>tcp_slow
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Transport_layer_—_common"><span class="toc-number">1.</span> <span class="toc-text">Transport layer — common</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TCP_—_or_some_connetion_scok"><span class="toc-number">2.</span> <span class="toc-text">TCP — or some connetion scok</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Componets"><span class="toc-number">2.1.</span> <span class="toc-text">Componets</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Handshak"><span class="toc-number">2.1.1.</span> <span class="toc-text">Handshak</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sliding_window_protocol"><span class="toc-number">2.1.2.</span> <span class="toc-text">Sliding window protocol</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ARQ"><span class="toc-number">2.1.3.</span> <span class="toc-text">ARQ</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Congestion_control"><span class="toc-number">2.1.4.</span> <span class="toc-text">Congestion control</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Services"><span class="toc-number">2.2.</span> <span class="toc-text">Services</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">2.3.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timer"><span class="toc-number">2.4.</span> <span class="toc-text">Timer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FIXME"><span class="toc-number">2.5.</span> <span class="toc-text">FIXME</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#category:_howto"><span class="toc-number">1.</span> <span class="toc-text">category: howto</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number"></span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introduction"><span class="toc-number"></span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Wait_for_Completion"><span class="toc-number"></span> <span class="toc-text">Wait for Completion</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference_Counting"><span class="toc-number"></span> <span class="toc-text">Reference Counting</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Type_Safe_Memory"><span class="toc-number"></span> <span class="toc-text">Type Safe Memory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Publish-Subscribe"><span class="toc-number"></span> <span class="toc-text">Publish-Subscribe</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Read-Write_Lock_Alternative"><span class="toc-number"></span> <span class="toc-text">Read-Write Lock Alternative</span></a>
   </div>
 
 <div id="asidepart">
@@ -398,7 +366,7 @@ $(document).ready(function(){
 <script>
   var disqus_shortname = 'firoyang';
   
-  var disqus_url = 'http://firoyang.org/2015/02/27/net/l4/';
+  var disqus_url = 'http://firoyang.org/2015/05/11/howto/use_rcu/';
   
   (function(){
     var dsq = document.createElement('script');
