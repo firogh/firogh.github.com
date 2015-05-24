@@ -10,8 +10,7 @@
     <meta name="author" content="Firo Yang">
     
     <meta name="description" content="Reference
-Read Copy Update HOWTORead-Copy Update Mutual-Exclusion in LinuxThanh Do’s notes Read-copy update. In Ottawa Linux Symposium, July 2001
-Why ">
+官网Read-Copy Update Mutual ExclusionRead Copy Update HOWTORead-Copy Update Mutual-Exclusion in LinuxThanh Do’s notes Read-copy update. In Ott">
     
     
     
@@ -78,7 +77,7 @@ Why ">
     </p>
   <p class="article-time">
     <time datetime="2015-05-24T01:52:12.000Z" itemprop="datePublished">May 24 2015</time>
-    Updated:<time datetime="2015-05-24T02:47:40.000Z" itemprop="dateModified">May 24 2015</time>
+    Updated:<time datetime="2015-05-24T12:59:02.000Z" itemprop="dateModified">May 24 2015</time>
     
   </p>
 </header>
@@ -87,54 +86,39 @@ Why ">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_do_need_RCU"><span class="toc-number">2.</span> <span class="toc-text">Why do need RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use_RCU"><span class="toc-number">3.</span> <span class="toc-text">How to use RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_RCU"><span class="toc-number">4.</span> <span class="toc-text">What is RCU</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#requirements"><span class="toc-number">4.1.</span> <span class="toc-text">requirements</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rdvantages_of_RCU"><span class="toc-number">4.2.</span> <span class="toc-text">Rdvantages of RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#What’s_bad"><span class="toc-number">4.3.</span> <span class="toc-text">What’s bad</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_rcu_work"><span class="toc-number">4.4.</span> <span class="toc-text">How rcu work</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.5.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Implemention"><span class="toc-number">4.6.</span> <span class="toc-text">Implemention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Classic_RCU_-_maybe_RCU_tiny"><span class="toc-number">4.6.1.</span> <span class="toc-text">Classic RCU  - maybe RCU tiny</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Preemtible_RCU_-"><span class="toc-number">4.6.2.</span> <span class="toc-text">Preemtible RCU -</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Tree_RCU_for_hundreds_and_thounds_CPU_cores"><span class="toc-number">4.6.3.</span> <span class="toc-text">Tree RCU for hundreds and thounds CPU cores</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_to_use?"><span class="toc-number">4.7.</span> <span class="toc-text">How to use?</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_do_need_RCU"><span class="toc-number">2.</span> <span class="toc-text">Why do need RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use_RCU"><span class="toc-number">3.</span> <span class="toc-text">How to use RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_RCU"><span class="toc-number">4.</span> <span class="toc-text">What is RCU</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Design_pattern"><span class="toc-number">4.1.</span> <span class="toc-text">Design pattern</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Positivism_Implementions"><span class="toc-number">5.</span> <span class="toc-text">Positivism Implementions</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Classic_RCU"><span class="toc-number">5.1.</span> <span class="toc-text">Classic RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Preemtible_RCU"><span class="toc-number">5.2.</span> <span class="toc-text">Preemtible RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tree_RCU"><span class="toc-number">5.3.</span> <span class="toc-text">Tree RCU</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">6.</span> <span class="toc-text">FAQ</span></a></li></ol>
 		</div>
 		
 		<h1 id="Reference">Reference</h1>
-<p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="http://music.163.com/outchain/player?type=2&id=444737&auto=1&height=66"></iframe><br><a href="http://lse.sourceforge.net/locking/rcu/HOWTO/index.html" target="_blank" rel="external">Read Copy Update HOWTO</a><br><a href="http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html" target="_blank" rel="external">Read-Copy Update Mutual-Exclusion in Linux</a><br><a href="http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt" target="_blank" rel="external">Thanh Do’s notes Read-copy update. In Ottawa Linux Symposium, July 2001</a></p>
+<p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="http://music.163.com/outchain/player?type=2&id=444737&auto=1&height=66"></iframe><br><a href="http://lse.sourceforge.net/locking/rcupdate.html" target="_blank" rel="external">官网Read-Copy Update Mutual Exclusion</a><br><a href="http://lse.sourceforge.net/locking/rcu/HOWTO/index.html" target="_blank" rel="external">Read Copy Update HOWTO</a><br><a href="http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html" target="_blank" rel="external">Read-Copy Update Mutual-Exclusion in Linux</a><br><a href="http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt" target="_blank" rel="external">Thanh Do’s notes Read-copy update. In Ottawa Linux Symposium, July 2001</a></p>
 <h1 id="Why_do_need_RCU">Why do need RCU</h1>
-<p>For <a href="http://en.wikipedia.org/wiki/Scalability" target="_blank" rel="external">scalable</a> mutual exclusion.<br>scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.<br>scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.<br>另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.<br>From wikipedia,  A system whose performance improves after adding hardware,<br>proportionally to the capacity added, is said to be a scalable system.<br><a href="https://www.ibm.com/developerworks/cn/linux/l-rcu/" target="_blank" rel="external">因为rwlock, brlock在多核性能下降.需要个高性能的锁</a><br>言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.</p>
-<h1 id="How_to_use_RCU">How to use RCU</h1>
-<p>list rcu</p>
-<h1 id="What_is_RCU">What is RCU</h1>
-<p>RCU is a library for the Linux kernel that allows kernel subsystems to<br>synchronize access to shared data in an efficient manner.</p>
-<h2 id="requirements">requirements</h2>
-<p>(1) support for concurrent readers, even during updates;<br>(2) low computation and storage overhead; and<br>(3) deterministic completion time.</p>
-<h2 id="Rdvantages_of_RCU">Rdvantages of RCU</h2>
-<p>1 RCU supports concurrency between a single updater and multiple readers is the  essential of RCU!</p>
-<ol>
-<li>dealcok immunity<h2 id="What’s_bad">What’s bad</h2>
-less applicable to update-only workloads<h2 id="How_rcu_work">How rcu work</h2>
-</li>
-</ol>
+<p>For <a href="http://en.wikipedia.org/wiki/Scalability" target="_blank" rel="external">scalable</a> mutual exclusion.<br>scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.<br>scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.<br>另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.<br>From wikipedia,  A system whose performance improves after adding hardware,<br>proportionally to the capacity added, is said to be a scalable system.<br><a href="https://www.ibm.com/developerworks/cn/linux/l-rcu/" target="_blank" rel="external">因为rwlock, brlock在多核性能下降.需要个高性能的锁</a><br>言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.<br>Read Copy Update HOWTO介绍了当初RCU开发的动机:</p>
 <ul>
-<li>Reader<br>RCU ensures that reads are coherent by maintaining multiple versions of objects and ensuring that they are not freed up until all pre-existing read-side critical sections complete.</li>
-<li>Copy updater<br>The basic idea behind RCU (read-copy update) is to split destructive<br>operations into two parts, one that prevents anyone from seeing the data<br>item being destroyed, and one that actually carries out the destruction.<br>A “grace period” must elapse between the two parts, and this grace period<br>must be long enough that any readers accessing the item being deleted have<br>since dropped their references.<br>If any statement in a given RCU read-side critical section precedes a grace period,<br>then all statements in that RCU read-side critical section must complete before that grace period ends.</li>
+<li>Increase in cost of conventional locks<br>第一个原因也是最重要的, 最根本原因.<br>传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的<em>越来越</em>巨大差异;<br>一种新的锁机制减少访问内存,就成了强烈的需求.</li>
+<li>Cache benefits of lock-free reads<br>传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致<a href="http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently" target="_blank" rel="external">cache line bouncing</a>.<br>3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的<br>spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,<br>之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.<br>在不同cpu之间同步数据, 会耗费很多cpu 指令周期.<br>像<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/" target="_blank" rel="external">x86的spinlock的实现用lock指令前缀锁住总线</a>,<br>其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.</li>
+<li>Avoiding complicated races<br>No deadlock, 减少了开发维护.</li>
 </ul>
-<p>A thread uses RCU synchronization by calling synchronize_rcu,<br>which guarantees not to return until all the RCU critical sections executing<br>when synchronize_rcu was called have completed.</p>
-<h2 id="FAQ">FAQ</h2>
+<h1 id="How_to_use_RCU">How to use RCU</h1>
+<p>list rcu<br><a href="https://lwn.net/Articles/263130/" target="_blank" rel="external">What is RCU? Part 2: Usage</a><br><a href="http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf" target="_blank" rel="external">RCU Usage In the Linux Kernel: One Decade Later</a></p>
+<h1 id="What_is_RCU">What is RCU</h1>
+<p><a href="http://www.rdrop.com/~paulmck/RCU/whatisRCU.html" target="_blank" rel="external">What is RCU, Really?</a><br><a href="https://lwn.net/Articles/262464/" target="_blank" rel="external">What is RCU, Fundamentally?</a><br><a href="http://lwn.net/Articles/264090/" target="_blank" rel="external">RCU part 3: the RCU API</a><br>RCU supports concurrency between a single updater and multiple readers!</p>
+<h2 id="Design_pattern">Design pattern</h2>
+<ul>
+<li>Publish-Subscribe<br>For updater before synchnization_rcu(); similar to softirq rcu</li>
+<li>Observer<br>For updater to wait For Pre-Existing RCU Readers to Complete<br>Maintain Multiple Versions of Recently Updated Objects</li>
+</ul>
+<h1 id="Positivism_Implementions">Positivism Implementions</h1>
+<h2 id="Classic_RCU">Classic RCU</h2>
+<p>Classic RCU requires that read-side critical sections obey the same rules<br>obeyed by the critical sections of pure spinlocks:<br>blocking or sleeping of any sort is strictly prohibited.</p>
+<h2 id="Preemtible_RCU">Preemtible RCU</h2>
+<p><a href="http://lwn.net/Articles/253651/" target="_blank" rel="external">The design of preemptible read-copy-update</a><br>stage 的切换是由rcu_read_unlock 推动的!</p>
+<h2 id="Tree_RCU">Tree RCU</h2>
+<p>For hundreds and thounds CPU cores</p>
+<h1 id="FAQ">FAQ</h1>
 <ul>
 <li>Difference with primitive and atomic</li>
 <li>Grace period is synchroinze_rcu or a softirq justment</li>
 <li>__rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().</li>
-</ul>
-<p>=Limitations of RCU-rt?<br>=In contrast to SRCU, preemptible RCU only permits blocking within primitives that are both subject to prikority inheritance and non-blocking in a non-CONFIG_PREEMPT kernel.<br>=No need of mb in preempt read-side?<br>=irq in rcu_sched_qs<br>=However, note that RCU read-side critical sections that begin after the beginning of a given grace period can and will extend beyond the end of that grace period.?<br>=RCU read-side critical sections must be permitted in NMI handlers as well as irq handlers?<br>=classic RCU will happily awaken each and every sleeping CPU at least once per grace period in some cases?</p>
-<h2 id="Implemention">Implemention</h2>
-<p>In process switch, marker a  flag that will not use old data.<br>For SMP, Softirq callback release old data;<br>For UP, free after synchronize_rcu.<br>Softirq rcu_data,rcu_bh_data</p>
-<h3 id="Classic_RCU_-_maybe_RCU_tiny">Classic RCU  - maybe RCU tiny</h3>
-<pre><code><span class="symbol">http:</span>/<span class="regexp">/www.rdrop.com/users</span><span class="regexp">/paulmck/</span><span class="constant">RCU</span>/whatisRCU.html
-</code></pre><p>Classic RCU requires that read-side critical sections obey the same rules obeyed by the critical sections of pure spinlocks: blocking or sleeping of any sort is strictly prohibited.<br>CPUmask</p>
-<h3 id="Preemtible_RCU_-">Preemtible RCU -</h3>
-<p><a href="http://lwn.net/Articles/253651/" target="_blank" rel="external">The design of preemptible read-copy-update</a><br> a multi-stage grace-period detection algorithm<br>call callback when wailist[old] == 0;<br>    block only in priority inheritance non-blocking in non-preemt kernel</p>
-<ul>
-<li>softirq<br>  two stages grace period<br>  wait queues<br>  rcu_process_callbacks<br>  rcu_flipctr: a per-CPU two-element<pre><code>  [<span class="operator">a</span>]:tracks critical sections that started <span class="keyword">before</span> <span class="operator">the</span> current gp stage.
-  [b]:tracks <span class="built_in">new</span> rcu <span class="built_in">read</span>-side critical sections, namely those starting during <span class="operator">the</span> current gp stage.
-</code></pre>  rcu_ctrlblk.completed &amp; 0x1<br>  rcu_flip_flag: synchronize the start of each grace-period stage: once a given CPU has responded to its rcu_flip_flag, it must refrain from incrementing the old grace-period stage.<br>  rcu_mb_flag: rcu_flipped  force each CPU to execute a memory barrier at the end of each grace-period stage.<pre><code>          rcu_mb_needed <span class="keyword">by</span> <span class="operator">the</span> CPU that detects that <span class="operator">the</span> <span class="built_in">sum</span> <span class="operator">of</span> <span class="operator">the</span> old counters is <span class="constant">zero</span>
-           rcu_mb_done only <span class="keyword">by</span> <span class="operator">the</span> corresponding CPU, <span class="operator">and</span> even <span class="keyword">then</span> only <span class="keyword">after</span> executing <span class="operator">a</span> memory barrier.
-</code></pre><h3 id="Tree_RCU_for_hundreds_and_thounds_CPU_cores">Tree RCU for hundreds and thounds CPU cores</h3>
-</li>
-<li>Downside of classical RCU in update<br>The update-side primitives which determine when pre-existing read-side critical sections have finished,<br>  were designed with only a few tens of CPUs in mind.<br>Their scalability is limited by a global lock that must be acquired by each CPU at least once during each grace period.<h2 id="How_to_use?">How to use?</h2>
-Developers can use RCU critical sections and RCU synchronization to<br>build data structures that allow concurrent reading, even during updates.<br><a href="http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf" target="_blank" rel="external">RCU Usage In the Linux Kernel: One Decade Later</a><br>a replacement of rw-lock<br>a Restricted Reference-Counting Mechanism<br>a Bulk Reference-Counting Mechanism<br>a Poor Man’s Garbage Collector<br>a Way of Providing Existence Guarantees<br>a Way of Waiting for Things to Finish</li>
 </ul>
   
 	</div>
@@ -190,7 +174,7 @@ Developers can use RCU critical sections and RCU synchronization to<br>build dat
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_do_need_RCU"><span class="toc-number">2.</span> <span class="toc-text">Why do need RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use_RCU"><span class="toc-number">3.</span> <span class="toc-text">How to use RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_RCU"><span class="toc-number">4.</span> <span class="toc-text">What is RCU</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#requirements"><span class="toc-number">4.1.</span> <span class="toc-text">requirements</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rdvantages_of_RCU"><span class="toc-number">4.2.</span> <span class="toc-text">Rdvantages of RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#What’s_bad"><span class="toc-number">4.3.</span> <span class="toc-text">What’s bad</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_rcu_work"><span class="toc-number">4.4.</span> <span class="toc-text">How rcu work</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.5.</span> <span class="toc-text">FAQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Implemention"><span class="toc-number">4.6.</span> <span class="toc-text">Implemention</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Classic_RCU_-_maybe_RCU_tiny"><span class="toc-number">4.6.1.</span> <span class="toc-text">Classic RCU  - maybe RCU tiny</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Preemtible_RCU_-"><span class="toc-number">4.6.2.</span> <span class="toc-text">Preemtible RCU -</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Tree_RCU_for_hundreds_and_thounds_CPU_cores"><span class="toc-number">4.6.3.</span> <span class="toc-text">Tree RCU for hundreds and thounds CPU cores</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#How_to_use?"><span class="toc-number">4.7.</span> <span class="toc-text">How to use?</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_do_need_RCU"><span class="toc-number">2.</span> <span class="toc-text">Why do need RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use_RCU"><span class="toc-number">3.</span> <span class="toc-text">How to use RCU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_RCU"><span class="toc-number">4.</span> <span class="toc-text">What is RCU</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Design_pattern"><span class="toc-number">4.1.</span> <span class="toc-text">Design pattern</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Positivism_Implementions"><span class="toc-number">5.</span> <span class="toc-text">Positivism Implementions</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Classic_RCU"><span class="toc-number">5.1.</span> <span class="toc-text">Classic RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Preemtible_RCU"><span class="toc-number">5.2.</span> <span class="toc-text">Preemtible RCU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tree_RCU"><span class="toc-number">5.3.</span> <span class="toc-text">Tree RCU</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">6.</span> <span class="toc-text">FAQ</span></a></li></ol>
   </div>
 
 <div id="asidepart">
