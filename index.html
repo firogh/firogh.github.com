@@ -79,901 +79,227 @@
     <div id="container">
       <div id="main">
 
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/05/24/kernel/rcu/" title="The Journey to RCU" itemprop="url">The Journey to RCU</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-05-24T01:52:12.000Z" itemprop="datePublished"> Published May 24 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Reference">Reference</h1>
-<p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="http://music.163.com/outchain/player?type=2&id=444737&auto=1&height=66"></iframe><br><a href="http://lse.sourceforge.net/locking/rcupdate.html" target="_blank" rel="external">官网Read-Copy Update Mutual Exclusion</a><br><a href="http://lse.sourceforge.net/locking/rcu/HOWTO/index.html" target="_blank" rel="external">Read Copy Update HOWTO</a><br><a href="http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html" target="_blank" rel="external">Read-Copy Update Mutual-Exclusion in Linux</a><br><a href="http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt" target="_blank" rel="external">Thanh Do’s notes Read-copy update. In Ottawa Linux Symposium, July 2001</a></p>
-<h1 id="Why_do_need_RCU">Why do need RCU</h1>
-<p>For <a href="http://en.wikipedia.org/wiki/Scalability" target="_blank" rel="external">scalable</a> mutual exclusion.<br>scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.<br>scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.<br>另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.<br>From wikipedia,  A system whose performance improves after adding hardware,<br>proportionally to the capacity added, is said to be a scalable system.<br><a href="https://www.ibm.com/developerworks/cn/linux/l-rcu/" target="_blank" rel="external">因为rwlock, brlock在多核性能下降.需要个高性能的锁</a><br>言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.<br>Read Copy Update HOWTO介绍了当初RCU开发的动机:</p>
-<ul>
-<li>Increase in cost of conventional locks<br>第一个原因也是最重要的, 最根本原因.<br>传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的<em>越来越</em>巨大差异;<br>一种新的锁机制减少访问内存,就成了强烈的需求.</li>
-<li>Cache benefits of lock-free reads<br>传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致<a href="http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently" target="_blank" rel="external">cache line bouncing</a>.<br>3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的<br>spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,<br>之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.<br>在不同cpu之间同步数据, 会耗费很多cpu 指令周期.<br>像<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/" target="_blank" rel="external">x86的spinlock的实现用lock指令前缀锁住总线</a>,<br>其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.</li>
-<li>Avoiding complicated races<br>No deadlock, 减少了开发维护.</li>
-</ul>
-<h1 id="How_to_use_RCU">How to use RCU</h1>
-<p>list rcu<br><a href="https://lwn.net/Articles/263130/" target="_blank" rel="external">What is RCU? Part 2: Usage</a><br><a href="http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf" target="_blank" rel="external">RCU Usage In the Linux Kernel: One Decade Later</a></p>
-<h1 id="What_is_RCU">What is RCU</h1>
-<p><a href="http://www.rdrop.com/~paulmck/RCU/whatisRCU.html" target="_blank" rel="external">What is RCU, Really?</a><br><a href="https://lwn.net/Articles/262464/" target="_blank" rel="external">What is RCU, Fundamentally?</a><br><a href="http://lwn.net/Articles/264090/" target="_blank" rel="external">RCU part 3: the RCU API</a><br>RCU supports concurrency between a single updater and multiple readers!</p>
-<h2 id="Design_pattern">Design pattern</h2>
-<ul>
-<li>Publish-Subscribe<br>For updater before synchnization_rcu(); similar to softirq rcu</li>
-<li>Observer<br>For updater to wait For Pre-Existing RCU Readers to Complete<br>Maintain Multiple Versions of Recently Updated Objects</li>
-</ul>
-<h1 id="Positivism_Implementions">Positivism Implementions</h1>
-<h2 id="Classic_RCU">Classic RCU</h2>
-<p>Classic RCU requires that read-side critical sections obey the same rules<br>obeyed by the critical sections of pure spinlocks:<br>blocking or sleeping of any sort is strictly prohibited.</p>
-<h2 id="Preemtible_RCU">Preemtible RCU</h2>
-<p><a href="http://lwn.net/Articles/253651/" target="_blank" rel="external">The design of preemptible read-copy-update</a><br>stage 的切换是由rcu_read_unlock 推动的!</p>
-<h2 id="Tree_RCU">Tree RCU</h2>
-<p>For hundreds and thounds CPU cores</p>
-<h1 id="FAQ">FAQ</h1>
-<ul>
-<li>Difference with primitive and atomic</li>
-<li>Grace period is synchroinze_rcu or a softirq justment</li>
-<li>__rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().</li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
-
-
-  <div class="article-tags">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/05/24/kernel/rcu/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/05/19/howto/learning/" title="如何学习" itemprop="url">如何学习</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-05-18T16:00:00.000Z" itemprop="datePublished"> Published May 19 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <p>我在The perspective of thinking, 记录了我多年来关于认知的积累, 内容<br>多是来自于哲学, 以及部分生活经历. 这些诶荣对我来说非常珍贵, 可以说是<br>我这几年来智慧的结晶. 由于缺少良好的条理性, 不适合理解与应用; 本文即是<br>对此不足的弥补.<br>当我们去学习某个事物时最初也是最为重要的原则是什么?<br>我认为是:</p>
-<pre><code>独立思考<span class="exclamation_mark">!</span>
-</code></pre><p>我们是从自我的原始思考开始, 还是直接去理解人的思维结果开始呢?<br>两种不同的行为, 将导致思维能力的根本差异.</p>
-<h3 id="自我认知">自我认知</h3>
-<p>非常重要, 却被忽视的一点是, 自我! 也就是说, 我们将过多的精力放在学习对象上,<br>而忽视了自身. 到底学习过后, 我们能得到什么? 少有人问津.<br>如果将这个问题放到一段时间看, 这就是成长.<br>人的苦难, 往往来自于自身认识的不足, 对自身有足够的认识之后, 成长本身就成了<br>填空题. 我们需要自身评估, 发现自我.</p>
-<pre><code>你是入门, 还是要干事, 还是一个expert, 是什么水平?
-我需要什么, 更注重什么, 轻视什么, 忽略什么? 目标是什么?
-</code></pre><h3 id="认识知识">认识知识</h3>
-<p><a href="http://book.douban.com/subject/1443472/" target="_blank" rel="external">M 石里克 普通认识论</a><br>我们思考,学习的对象是知识,那么什么是知识,石里克认为:</p>
-<pre><code>知识就是把一种东西(现象)归结位另一种东西(原则).
-</code></pre><p>现实生活中知识要复杂得多, 从知识涉及的内容角度,我们还可以非严格划分:<br>道德, 技术, 娱乐等等.每一类知识都有自己特定的目的, 道德要我们明辨是非,<br>技术要我们学以致用, 娱乐让我们感到乐趣.<br>科学技术知识的学习, 核心是使用, 是创造, 我们接收多年的教育目的也是这个目标, 我们<br>要成为会创造, 实践的人, 参与到社会的生产生活中去.<br>这也是科学技术知识和<a href="http://www.bilibili.com/sp/%E5%8D%97%E6%96%B9%E5%85%AC%E5%9B%AD" target="_blank" rel="external">道德</a>以及娱乐<br>的根本区别! 认识到这点非常重要, 他能验证我们学习到了什么程度, 是否误入歧途浪费了<br>很多时间在用不到事情上了. 一切偏离了<em>学以致用</em>的科学技术学习都是浪费自己<br>的大好青春华年!<br>最基础的知识是什么样的呢? 知识是一套概念系统.<br>概念是作为知识最为基础的组成单元,<br>接下来, 我将科学技术知识分类, 这实际上涵盖了绝大多数知识, 根据我们:</p>
-<pre><code><span class="title">why</span> 为什么产生?好坏?那个时间点?产生问题生活场景什么样? 
-how 谁干什么用? 不同的场景,如何用?
-what 谁如何产生解决办法, 产生成什么?
-</code></pre><p>这些都是最基础的概念, 也许你指导很多, 但是, 没有思考(稍微差点, 理解) 这些概念.<br>你的学习就是在浪费时间.在这些概念中, 对于科学技术知识而言, 使用的知识概念最为重要.<br>从使用的角度去看知识,是说思考理解的核心是用; 当然这是在认知层面更为重要的是用Positivism.<br>上面这些问题, 就是一个知识的挂架skeleton了.<br>这里回答了, 认知对象的选择, 其他问题:</p>
-<pre><code>什么重要(我们甚至需要了解背后的实现); 
-什么不重要(简单了解就够了);
-什么不需要了解, 在浪费时间.
-那些知识甚至骨架类的知识你都不需要了解.
-</code></pre><p>这都需要你自己思考<br>知识的性质, 如:</p>
-<pre><code>一一性, 有时需要实践的验证, 
-必须要知道所有认知都有改口的余地.
-问题总是复杂的, 解决办法却很简单!
-太阳下没新鲜事.
-</code></pre><h3 id="学习的方法">学习的方法</h3>
-<p>或许叫认知的方法更好一些.<br>从学的角度将, 我们的目的就是结合自身的需求完成对不同类知识的认知.<br>我们可以通过很多方法, 去了解一个概念, 比如自己独立思考, 与他人交流,<br>上网搜索别人的答案, 等等. 对一个人成长帮助效果最好的是独立思考.<br>然而一个人的独立认知总是有局限的, 不是所有的问题都能在时间和收获上<br>达成良好的平衡.我们必须决定什么问题要暂时打上问号?而不是抓住不放!<br>你也可以向外界寻求帮助, 有时也无法避免打上问号的命运.</p>
-<pre><code>自己思考, 实践, 验证.
-向外界寻找帮助与答案.
-?
-</code></pre><p>这是最为通用的学习形式了.<br>无论是why how what那个层面你都要清楚:</p>
-<pre><code>什么需要打上问号?留下疑问!待日后解决 这是一个人高效的重要原因,也是成长的关键.
-什么需要多一些思考
-劲量理解减少机械记忆.
-不要盈篇累牍
-</code></pre><p>打问号, 非常重要, 这是成长.<br>更为具体的, 使用方法:</p>
-<pre><code>胡适历史的方法, 注重起源
-Abstruction <span class="function"><span class="keyword">method</span>:</span> 构建知识之间的联系, 概念系统, 以及同现有的知识连接.
-实验的方法, 注重实践验证
-</code></pre><h3 id="学以致用">学以致用</h3>
-<p>学习了那么多, 使用才是目的:</p>
-<pre><code>实践的方法也是认知的方法, 独立思考, 模仿他人, 还是放下不做.
-这里的实践, 不仅仅是验证, 而是真正的投入到有用的事情上来.
-</code></pre><h3 id="结束语">结束语</h3>
-<p>学习本身就是找到看世界的角度. </p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/howto/">howto</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/05/19/howto/learning/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/05/11/howto/use_rcu/" title="如何使用RCU in linux kernel" itemprop="url">如何使用RCU in linux kernel</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-05-10T16:00:00.000Z" itemprop="datePublished"> Published May 11 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Reference">Reference</h1>
-<p><a href="http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf" target="_blank" rel="external">RCU Usage In the Linux Kernel: One Decade Later</a></p>
-<h1 id="Introduction">Introduction</h1>
-<p>本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.<br>本文不关心RCU的实现.<br>本文的核心目标就是了解如何使用RCU.</p>
-<p>所有使用RCU代码, 都可以分为4部分:<br>RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.<br>update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;<br>synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.<br>free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.<br>Paul的paper总结了5种用法, 并且附上了代码, 便于理解.<br>理解的过程实质上是用RCU的外衣再次理解这个5种方法!</p>
-<h1 id="Wait_for_Completion">Wait for Completion</h1>
-<p>内核中有<a href="https://lwn.net/Articles/23993/" target="_blank" rel="external">完成量completion</a>的基础设施<br>上面的RCU read critical section和synchronize可以构成completion的语义.<br>为什么要用RCU而不是内核自身提供的completion函数呢?<br>Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.<br>所以这里的RCU, 应该叫做Completion RCU-version.</p>
-<h1 id="Reference_Counting">Reference Counting</h1>
-<p>传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.<br>但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.<br>Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多<br>同样也会带来性能的损耗,而不是almost zero in his paper.<br>引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.</p>
-<h1 id="Type_Safe_Memory">Type Safe Memory</h1>
-<h1 id="Publish-Subscribe">Publish-Subscribe</h1>
-<h1 id="Read-Write_Lock_Alternative">Read-Write Lock Alternative</h1>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/howto/">howto</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/05/11/howto/use_rcu/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/05/10/net/netfilter/" title="Understanding linux netfilter" itemprop="url">Understanding linux netfilter</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-05-10T07:46:13.000Z" itemprop="datePublished"> Published May 10 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Reference">Reference</h1>
-<p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html" target="_blank" rel="external">Linux netfilter Hacking HOWTO</a><br><a href="http://www.karlrupp.net/en/computer/nat_tutorial" target="_blank" rel="external">NAT - Network Address Translation</a><br>man iptables and man iptables-extension</p>
-<h1 id="Introduction_to_netfilter">Introduction to netfilter</h1>
-<p>Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.<br>Netfilter的本质就是内核协议栈上的Hook的集合.<br>对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言</p>
-<blockquote>
-<p>Firstly, each protocol defines “hooks” (IPv4 defines 5) which are well-defined points in a packet’s traversal of that protocol stack.</p>
-</blockquote>
-<p>到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.<br>与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.<br>Netfilter的历史请查阅wikipedia.<br>内核基于netfilter构建了 iptables 和 connection track两套系统.<br>从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.<br>netfilter<br>ct| |iptables<br>nat,filter,mangle,kproxy,smartqos<br>当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.</p>
-<h1 id="netfilter">netfilter</h1>
-<h2 id="source">source</h2>
-<p>netfilter 公共: net/netfilter<br>ipv4协议的netfilter细节在: net/ipv4/netfilter/</p>
-<h2 id="Init">Init</h2>
-<p>~/linux/net/netfilter/core.c<br>netfilter_init()</p>
-<h2 id="Hook_point">Hook point</h2>
-<p>local_in local_out forward pre_routing post_routing</p>
-<h1 id="Iptables">Iptables</h1>
-<p>Iptables is a packet selecttion system (包括内核和用户态两部分).<br>iptables 的ip是IP(Internet Protocol).<br>xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.<br><a href="http://en.wikipedia.org/wiki/Iptables#Overview" target="_blank" rel="external">Overview of xtables in wikipedia</a></p>
-<h2 id="Details_of_iptables">Details of iptables</h2>
-<ul>
-<li><p>iptables command<br>直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target<br>如:iptables -t filter -I INPUT -p tcp —dport 22 -j ACCEPT<br>特别: 从-p开始到-j 之前这是一个 match!<br>更多的match 和 target, please, man iptables-extension<br>一个table的内置chain,就是他所在的hook点.</p>
-</li>
-<li><p>kernel code<br>ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.</p>
-</li>
-</ul>
-<h2 id="Step_of_exution">Step of exution</h2>
-<h3 id="Init-1">Init</h3>
-<ul>
-<li>如mangle表的初始化见iptable_mangle_init<br>xt_table: ipt_register_table<pre><code>  <span class="keyword">struct</span> xt_table         *iptable_filter;
-  <span class="keyword">struct</span> xt_table         *iptable_mangle;
-  <span class="keyword">struct</span> xt_table         *iptable_raw;
-  <span class="keyword">struct</span> xt_table         *arptable_filter;
-  <span class="keyword">struct</span> xt_table         *iptable_security;
-  <span class="keyword">struct</span> xt_table         *nat_table;
-</code></pre></li>
-<li><p>如mark match的初始化 mark_mt_init<br>xt_match: xt_register_match</p>
-</li>
-<li><p>如MARK target 的初始化 也在 mark_mt_init<br>xt_target: xt_register_target</p>
-</li>
-</ul>
-<h3 id="The_mangle_journal">The mangle journal</h3>
-<p>netfilter hook -&gt;  iptable_mangle_hook -&gt; ipt_do_table -&gt;…</p>
-<h1 id="Connection_tracking">Connection tracking</h1>
-<p>Conntrack 的实现不依赖iptables, 很独立.</p>
-<h2 id="init">init</h2>
-<p>nf_conntrack_standalone_init()<br>nf_conntrack_l3proto_ipv4_init()</p>
-<h2 id="conntrack_—_user-land_tools">conntrack — user-land tools</h2>
-<p>obsolete /proc/net/nf_conntrack</p>
-<h2 id="tuple_—_link_a_socket_5-arry_tuple">tuple — link a socket 5-arry tuple</h2>
-<p>Each Netfilter connection is uniquely identified by a<br>(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple<br>nf_conntrack_tuple nf_conn</p>
-<h2 id="Connection_tracking_helper">Connection tracking helper</h2>
-<p>connection tracking can be given knowledge of application-layer protocols<br>ALG</p>
-<h2 id="template">template</h2>
-<p>netfilter: nf_conntrack: support conntrack templates</p>
-<h2 id="Details">Details</h2>
-<p>以上的工作事实上都很简单，基本思路是：<br>一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。<br>这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。<br>徐琛,也这么说!</p>
-<h1 id="NAT">NAT</h1>
-<p><a href="https://www.ietf.org/rfc/rfc3489.txt" target="_blank" rel="external">https://www.ietf.org/rfc/rfc3489.txt</a><br>symmetric nat, 端口不复用, 访问同一个服务器.<br>linux 内核的NAT是基于iptables 和 conntrack实现的.</p>
-<h2 id="init-1">init</h2>
-<p>iptable_nat_init</p>
-<h2 id="NAT_helper">NAT helper</h2>
-<p>Similar to connection tracking helpers, NAT helpers will do a packet inspection<br>and substitute original addresses by reply addresses in the payload.</p>
-<h2 id="Drop_ICMP_redict_in_NAT">Drop ICMP redict in NAT</h2>
-<p><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html" target="_blank" rel="external">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></p>
-<h2 id="SNAT">SNAT</h2>
-<p>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;<br>{<br>nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info<br>    {<br>        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.<br>        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&gt; new_original找到后再revert,成new_reply在改到ct里面去.<br>        orig_orignal-&gt;skb<br>        nf_ct_invert_tuplepr(inverse, orig_relply)<br>        {<br>            ipv4_invert_tuple<br>            tcp_invert_tuple<br>            For example, orig tuple:<br>            original: 192.168.199.132 -&gt; google.com<br>            reply: google.com -&gt; 192.168.199.132 //this is orig_relpy</p>
-<pre><code>        inverse tuple:
-        original(inverse-&gt;dst.dir = !orig-&gt;dst.dir;):
-        <span class="number">192.168</span><span class="number">.199</span><span class="number">.132</span> -&gt; google.com (!!!reverse orig_reply <span class="keyword">in</span> ipv4_inver_tuple())
-         这个函数的用途可能是担心, orig被人改了, 不能用了.
-        except <span class="keyword">for</span> prior manipulations
-    }        
-
-    get_unique_tuple
-    {
-        <span class="number">1.</span> 如果snat, 且前后可以一致就直接new=orig, 合理.
-        <span class="number">2.</span> find_appropriate_src 费点力<span class="keyword">...</span> 貌似找到已经用到的, 复用
-        <span class="number">3.</span> find_best_ips_proto, 找一个 the least-used IP/proto combination <span class="keyword">in</span> the given range
-        <span class="number">4.</span> nf_nat_used_tuple 保证唯一
-    }        
-
-    bysoruce 里面存的应该是new_original, hash -&gt; &amp;net-&gt;ct.nat_bysource[srchash]
-
-
-}
-</code></pre><p>//上面ct改完了该改skb了.<br>    nf_nat_packet -&gt; nf_nat_ipv4_manip_pkt,<br>}</p>
-<ul>
-<li>SNAT nftables<br>nf_nat_prerouting …-&gt; nft_do_chain </li>
-</ul>
-<ul>
-<li>One kind of NAT, just set one flag bit in ct-&gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!</li>
-</ul>
-<ul>
-<li>De-NAT<br>最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？<br>我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。</li>
-</ul>
-<p>*答案3.17的代码和原来没多大变化就是函数名字变了<br>发包-POSTROUTING -&gt;SNAT -&gt;修改ct: nf_nat_setup_info-&gt;　ct-&gt;status |= IPS_SRC_NAT;-&gt;修改skb:nf_nat_packet</p>
-<p>收报-PREOUTING-&gt; DNAT-&gt;修改skb:nf_nat_packet<br>{<br>    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);<br>    //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的. </p>
-<pre><code><span class="keyword">if</span> (mtype == NF_NAT_MANIP_SRC)          
-    statusbit = IPS_SRC_NAT;             
-<span class="keyword">else</span>                                      
-    statusbit = IPS_DST_NAT;        <span class="comment">//到这里</span>
-
-<span class="comment">/* Invert if this is reply dir. */</span>            
-<span class="keyword">if</span> (dir == IP_CT_DIR_REPLY) 
-    statusbit ^= IPS_NAT_MASK;        <span class="comment">//翻转一下变成SNAT </span>
-<span class="comment">/* Non-atomic: these bits don't change. */</span>                                                                                                    
-<span class="keyword">if</span> (ct-&gt;status &amp; statusbit) {                 
-<span class="comment">//正好和发包是的   ct-&gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    </span>
-    <span class="keyword">struct</span> nf_conntrack_tuple target;
-    ...
-</code></pre><p>}</p>
-<h1 id="ipset">ipset</h1>
-<p>salist for iptables</p>
-<h1 id="SYN_proxy">SYN proxy</h1>
-<p>SYNPROXY target makes handling of large SYN floods possible without<br>the large performance penalties imposed by the connection tracking in such cases.<br>On 3 November 2013, SYN proxy functionality was merged into the Netfilter,<br>with the release of version 3.12 of the Linux kernel mainline</p>
-<h1 id="nftables">nftables</h1>
-<h1 id="FAQ">FAQ</h1>
-<ul>
-<li>如何查看某个table 具体在那几个hook点.<br>去看内核代码 or iptables -L -t “table 名”</li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/net/">net</a>
-</div>
-
-
-  <div class="article-tags">
+<section class="post" itemscope itemprop="blogitem">
   
-  <span></span> <a href="/tags/net/">net</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/05/10/net/netfilter/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/05/01/list/animation_and_comic_list/" title="动画与漫画列表" itemprop="url">动画与漫画列表</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-05-01T07:46:14.000Z" itemprop="datePublished"> Published May 1 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <p><img src="http://www.it.com.cn/f/games/0511/8/1108zeta001.jpg" alt="z"></p>
-<p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="http://music.163.com/outchain/player?type=2&id=28182362&auto=1&height=66"></iframe><br>推荐一些我看过且觉得值得一看的动画与漫画:<br>南方公园<br>攻壳机动队<br>Trigun/枪神<br>星际牛仔<br>今敏的作品(千年女优)<br>大友克洋作品<br>机动战士高达UC三部曲 以及 The origin<br>机动警察<br>Ghibli 系列(哈尔的移动城堡 侧耳倾听 岁月点滴 幽灵公主重点推荐)<br>Ergo proxy/死亡代理人<br>剑豪生死斗<br>Jojo的奇妙冒险<br>永生之酒<br>猎人/Hunter x hunter<br>乒乓(松本大洋)<br>星空清理者<br>EVA<br>银魂<br>钢之炼金术师<br>剑风传奇<br>新海诚的作品<br>丁丁历险记<br>细田守的作品<br>异邦人：无皇刃谭<br>恶童</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/list/">list</a>
-</div>
-
-
-  <div class="article-tags">
+    <a href="/2015/05/24/kernel/rcu/" title="The Journey to RCU" itemprop="url">
   
-  <span></span> <a href="/tags/animation/">animation</a><a href="/tags/comic/">comic</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/05/01/list/animation_and_comic_list/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
+    <h1 itemprop="name">The Journey to RCU</h1>
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+     
+           <p itemprop="description" >Reference
+官网Read-Copy Update Mutual ExclusionRead Copy Update HOWTORead-Copy Update Mutual-Exclusion in LinuxThanh Do’s notes Read-copy upda</p>
+        
     
-      <a href="/2015/04/27/howto/bias_and_fallcy_in_daliy_life/" title="日常生活中的偏见与谬误" itemprop="url">日常生活中的偏见与谬误</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-04-27T07:46:14.000Z" itemprop="datePublished"> Published Apr 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="现代人的堕落,_毫无建树">现代人的堕落, 毫无建树</h1>
-<p>商业文化极端的引诱着人们的种种欲望, 人们沉溺在现代文明的娱乐文化中不能自拔;<br>犹如吸食大麻一般, 一味索取却毫无建树.这正是商业文化的真正目的, 永恒的消费者!<br>我将更多的从消费者转变成生产者. 人应该与自己气质, 期望相匹配, 否则便会痛苦.<br>远离现有的娱乐文化, 更多的输出和自我关心.</p>
-<h1 id="被忽视的语言">被忽视的语言</h1>
-<p>事物被还原到语言, 语言有概念构成.<br>设计从语言开始, 语言衍生各种创造的事物.</p>
-<h1 id="offsenive_bias_and_causality">offsenive bias and causality</h1>
-<p>代码是由用户需求而产生的.<br>之前学习内核的时候都是关注, 内核代码的组织实现,<br>没有想过为什么代码, 为什么产生, 着产生有什么好.<br>所谓因果律, 实乃胡适的历史的方法.</p>
-<h1 id="不能看透">不能看透</h1>
-<p>今天看机动战士z, 每个人物都在执着自己的理念, 不能一概而论,好与坏.<br>而相反, one piece, naruto一类人物的爱恨, 正邪分明.更确切的说,性格很单一.<br>我惊讶于自己, 觉察到这一点.<br>我开始思考事物的多样性了, 更多的可能.</p>
-<h1 id="时间管理">时间管理</h1>
-<p>时间管理的目标是事情不是时间.<br>关注点转换后, 更多关注todo, 而不是time consuming.</p>
-<h1 id="生命中的永恒">生命中的永恒</h1>
-<p>知识不会因为时间过期, 时间不能等效标注知识的有效性. 真正的道理是不随时间改变过时.</p>
-<h1 id="发现存在">发现存在</h1>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/howto/">howto</a>
-</div>
+    <time datetime="2015-05-24T01:52:12.000Z" itemprop="datePublished">May 24 2015</time>
+  </a>
+</section>
 
 
-  <div class="article-tags">
+
+
+
+
   
-  <span></span> <a href="/tags/howto/">howto</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/04/27/howto/bias_and_fallcy_in_daliy_life/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/05/19/howto/learning/" title="如何学习" itemprop="url">
+  
+    <h1 itemprop="name">如何学习</h1>
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+     
+           <p itemprop="description" >我在The perspective of thinking, 记录了我多年来关于认知的积累, 内容多是来自于哲学, 以及部分生活经历. 这些诶荣对我来说非常珍贵, 可以说是我这几年来智慧的结晶. 由于缺少良好的条理性, 不适合理解与应用; 本文即是对此不足的弥补.当我们去学习某个</p>
+        
     
-      <a href="/2015/04/25/howto/howto_mutt/" title="使用mutt收发邮件" itemprop="url">使用mutt收发邮件</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-04-24T16:00:00.000Z" itemprop="datePublished"> Published Apr 25 2015</time>
+    <time datetime="2015-05-18T16:00:00.000Z" itemprop="datePublished">May 19 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/05/11/howto/use_rcu/" title="如何使用RCU in linux kernel" itemprop="url">
+  
+    <h1 itemprop="name">如何使用RCU in linux kernel</h1>
     
-  </p>
-</header>
-    <div class="article-content">
+     
+           <p itemprop="description" >Reference
+RCU Usage In the Linux Kernel: One Decade Later
+Introduction
+本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and othe</p>
         
-        <p><img src="http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg" alt="Trigun"></p>
-<h3 id="Reference">Reference</h3>
-<p>昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.<br>这才想起来社区的mailist只接收:</p>
-<blockquote>
-<p>No MIME, no links, no compression, no attachments.  Just plain text</p>
-</blockquote>
-<p>我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.<br>有点不方便, 今天决定使用mutt.<br>需要mutt, fetchmail, procmail, msmtp, proxychains(天朝专用), vim/emacs<br>发一个邮件, 需要这么多程序啊, 以前一直以为一个mutt就够了, 还Gmail方便啊.<br>mutt的作用类似于胶水, 把其他程序联系起来.<br>fetchmail收, procmail过滤spam mail, msmtp 用来发送, proxychains 翻x墙,<br>vim/emacs用来编辑邮件.</p>
-<h3 id="收邮件">收邮件</h3>
-<p>其实, 并不像网上博客中说的那样, fetchmail 和procmail并不是必须的.<br>参考mutt官网的<a href="http://dev.mutt.org/trac/wiki/UseCases/Gmail" target="_blank" rel="external">UserStory/GMailOverIMAP</a><br>你就可以想Web gmail一样实时推送邮件到你mutt了.<br>之后在.muttrc中加入:</p>
-<pre><code>bind <span class="built_in">index</span> G <span class="keyword">imap</span>-fetch-mail
-</code></pre><p>这样你就可以用G这个命令在mutt中主动同步gmail了.<br>此时翻墙用户启动mutt, proxychains会输出代理信息过滤到/dev/null</p>
-<pre><code><span class="input"><span class="prompt">proxychains mutt 2&gt;</span> /dev/null</span>
-</code></pre><h3 id="mutt_与发邮件">mutt 与发邮件</h3>
-<p>具体的配置看wangcong的<a href="http://wangcong.org/2007/03/09/-e4-bd-bf-e7-94-a8mutt-e5-a4-84-e7-90-86-e7-94-b5-e5-ad-90-e9-82-ae-e4-bb-b6-2/" target="_blank" rel="external">使用mutt处理电子邮件</a></p>
-<h3 id="删邮件">删邮件</h3>
-<p>在.muttrc配置如下，你在mutt中delete的mail在gmail的web上看不到了.<br><code>set delete=yes</code><br>可能需要在mutt中配置gamil trash, 求反馈.</p>
-<h3 id="其他">其他</h3>
-<ul>
-<li><p>国内gmail用户要用proxychains 做下代理, 这样就能使用gmail了:<br><code>set sendmail=&quot;proxychains /usr/bin/msmtp&quot;</code></p>
-</li>
-<li><p>wangcong的blog中的配置&lt;不太符合习惯, 按着习惯和美感应该是:<br><code>set indent_str=&quot;&gt;&quot;</code></p>
-</li>
-<li><p>mutt取消当前命令用ctrl g</p>
-</li>
-<li><p>靠gmail 存了两份发送邮件, 把这句注释掉, gmail自己本身会缓存的:<br>  <code>set record = &quot;+[Gmail]/Sent Mail&quot;</code></p>
-</li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/howto/">howto</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/04/25/howto/howto_mutt/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+    <time datetime="2015-05-10T16:00:00.000Z" itemprop="datePublished">May 11 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/05/10/net/netfilter/" title="Understanding linux netfilter" itemprop="url">
+  
+    <h1 itemprop="name">Understanding linux netfilter</h1>
     
-      <a href="/2015/04/25/howto/kernel_hacking/" title="Linux kernel hacking 攻略" itemprop="url">Linux kernel hacking 攻略</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-04-24T16:00:00.000Z" itemprop="datePublished"> Published Apr 25 2015</time>
+     
+           <p itemprop="description" >Reference
+Linux netfilter Hacking HOWTONAT - Network Address Translationman iptables and man iptables-extension
+Introduction to netfilter
+Ne</p>
+        
     
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="git">git</h1>
-<p><a href="http://git-scm.com/docs/gittutorial" target="_blank" rel="external">gittutorial - A tutorial introduction to Git</a></p>
-<h1 id="linux_source_code">linux source code</h1>
-<p><a href="https://www.kernel.org/doc/man-pages/linux-next.html" target="_blank" rel="external">Working with linux-next</a><br>要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.</p>
-<p>我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.</p>
-<p>我的linux next remote 就叫next, 基于其创建开发分支.</p>
-<pre><code>git branch <span class="built_in">now</span> <span class="keyword">next</span>/master
-git pull <span class="keyword">next</span> master:<span class="built_in">now</span>
-</code></pre><h1 id="kernel_hacking_tips">kernel hacking tips</h1>
-<p>kernel patch<br>manuplation of page table<br>add new system_call<br>workqueue</p>
-<h1 id="consideration_of_kernel_hacking">consideration of kernel hacking</h1>
-<h2 id="memory_alloction">memory alloction</h2>
-<h2 id="The_player_—_the_context_of_ruuning">The player — the context of ruuning</h2>
-<h2 id="synchroniation">synchroniation</h2>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/howto/">howto</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/04/25/howto/kernel_hacking/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
+    <time datetime="2015-05-10T07:46:13.000Z" itemprop="datePublished">May 10 2015</time>
+  </a>
+</section>
 
 
 
 
 
 
-   
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/05/01/list/animation_and_comic_list/" title="动画与漫画列表" itemprop="url">
+  
+    <h1 itemprop="name">动画与漫画列表</h1>
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+     
+           <p itemprop="description" >推荐一些我看过且觉得值得一看的动画与漫画:南方公园攻壳机动队Trigun/枪神星际牛仔今敏的作品(千年女优)大友克洋作品机动战士高达UC三部曲 以及 The origin机动警察Ghibli 系列(哈尔的移动城堡 侧耳倾听 岁月点滴 幽灵公主重点推荐)Ergo proxy/死亡代</p>
+        
     
-      <a href="/2015/03/20/howto/english/" title="The English Language" itemprop="url">The English Language</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-03-19T16:00:00.000Z" itemprop="datePublished"> Published Mar 20 2015</time>
+    <time datetime="2015-05-01T07:46:14.000Z" itemprop="datePublished">May 1 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/04/27/howto/bias_and_fallcy_in_daliy_life/" title="日常生活中的偏见与谬误" itemprop="url">
+  
+    <h1 itemprop="name">日常生活中的偏见与谬误</h1>
     
-  </p>
-</header>
-    <div class="article-content">
+     
+           <p itemprop="description" >现代人的堕落, 毫无建树
+商业文化极端的引诱着人们的种种欲望, 人们沉溺在现代文明的娱乐文化中不能自拔;犹如吸食大麻一般, 一味索取却毫无建树.这正是商业文化的真正目的, 永恒的消费者!我将更多的从消费者转变成生产者. 人应该与自己气质, 期望相匹配, 否则便会痛苦.远离现有的娱</p>
         
-        <h1 id="Method_of_english">Method of english</h1>
-<p><a href="http://daily.zhihu.com/story/2471810" target="_blank" rel="external">选择英语学习材料有原则，别在不靠谱的材料上浪费时间</a><br><a href="http://site.douban.com/195274/widget/notes/11672161/note/323335577/" target="_blank" rel="external">真正的初级教程</a><br>漏屋<br><a href="http://www.douban.com/group/topic/16946115/" target="_blank" rel="external">为什么要听ESL Pod和English Pod</a><br><a href="http://www.zhihu.com/question/20274480" target="_blank" rel="external">二语习得理论靠谱吗？</a><br><a href="http://site.douban.com/195274/widget/notes/11672256/note/249929892/" target="_blank" rel="external">奶爸的英语教室</a></p>
-<h2 id="听力is_first">听力is first</h2>
-<p>赖世雄美语音标<br><a href="http://www.youku.com/playlist_show/id_5241166.html" target="_blank" rel="external">Pronunciation workshop</a><br><a href="https://www.eslpod.com/website/show_all.php?cat_id=-59456&amp;low_rec=1600" target="_blank" rel="external">English as a Second Language Podcast</a><br>AAT<br><a href="http://www.uiowa.edu/~acadtech/phonetics/english/english.html" target="_blank" rel="external">Sounds of Speech in Iowa</a><br>Englishpod<br><a href="http://www.jlrtvu.jl.cn/xb/file.asp?fileid=20101040001" target="_blank" rel="external">我为什么能读懂却听不懂英语</a><br>每天听ep esl</p>
-<h2 id="单词">单词</h2>
-<p>词源分析学单词.<br>etymonline.com</p>
-<h2 id="语法">语法</h2>
-<p>通过语法学句子.<br><a href="http://book.douban.com/subject/1014914/" target="_blank" rel="external">英语魔法师之语法俱乐部</a></p>
-<h1 id="Speaking_English">Speaking English</h1>
-<p>我阅读英文没有问题, 很多计算机paper 拿过来就读, 可是听力和说就是个问题.<br>我一直觉得英语国际音标有问题, 他不能有效的帮助英语学习者改善挺说的问题.<br>我的思路是:听音拼字、见字读音</p>
-<ol>
-<li>看到单词, 能反映出音标.这样我的说就没问题了.因为积累了一些错误的单词发音,<br>所以看到单词就能知道相应的音标对我来说用处很大.</li>
-<li>听到读音, 就能反映出单词. 这样我的听力, 也没问题了.<br>在网上找到了<a href="http://en.wikipedia.org/wiki/Phonics" target="_blank" rel="external">Phonics 自然拼读法</a><br>基本上和我的思路一直.</li>
-</ol>
-<h2 id="Self_diagnose">Self diagnose</h2>
-<p>我并不是全部听不懂, 只是部分内容.<br>听不懂的句子分析</p>
-<ol>
-<li>单词不认识, 如prenup</li>
-<li>认识的单词, 挺清楚了音, 但联想到错误的词了.如我听到san这个音但是想到send,而不是sign</li>
-<li>音没听到 Im not actually pregnant里面的not没听出来.<h1 id="Phonetic_Alphabet">Phonetic Alphabet</h1>
-<a href="http://teflpedia.com/IPA_phoneme_/i%CB%90/" target="_blank" rel="external">Most American dictionaries dont write the triangular colon at all: fleece /flis/</a><br>British iː -&gt; American i<br>British ɪə -&gt; American ɪ -&gt; strict IPA ɪə ̯<br><a href="http://www.internationalphoneticalphabet.org/ipa-sounds/ipa-chart-with-sounds/" target="_blank" rel="external">IPA table with sounds</a></li>
-</ol>
-<h3 id="Vowels">Vowels</h3>
-<p>Short vowel<a href="https://blog.udemy.com/american-english-pronunciation-2/" target="_blank" rel="external">It is important to remember that the term short does not refer to the length of time a vowel sound is held or said aloud.  Rather, it is a label used to differentiate these sounds from long vowel sounds.</a><br><a href="https://blog.udemy.com/short-and-long-vowel-differences/" target="_blank" rel="external">Short and Long Vowels Differences and Examples</a><br><a href="https://www.youtube.com/watch?v=4TjcT7Gto3U" target="_blank" rel="external">The Long &amp; Short Vowels Song ♫♪♫</a></p>
-<h3 id="Neutral">Neutral</h3>
-<p>I ɛ ə/ʌ ʊ<br>i: ee ea ie ei<br>I: i y</p>
-<h1 id="Syntax_造句法则">Syntax 造句法则</h1>
-<h2 id="Common_concept">Common concept</h2>
-<p>Object/Subject complement<br>Linking verb</p>
-<h2 id="English_determiners">English determiners</h2>
-<h3 id="article:_the_逻辑上的">article: the 逻辑上的</h3>
-<p>An article (abbreviated art) is a word (or prefix or suffix) that is used with<br>a noun to indicate the type of reference being made by the noun.<br>Articles specify grammatical definiteness of the noun,<br>in some languages extending to volume or numerical scope.<br>a/an some 值不确定, the 是确定后面可以跟复数.<br>Zero article:复数和不可数名词没有冠词,貌似代表全部 reference to a general class of things. </p>
-<ul>
-<li>为什么冠词叫article 和文章是同一个词?<br>article的词源是separate parts of anything written 符合文章的涵义,<br>而冠词表示后面的名词之前是否提及过, 也有separate的涵义.<h3 id="demonstrative:_that/this_空间上">demonstrative: that/this 空间上</h3>
-</li>
-</ul>
-<h2 id="时态">时态</h2>
-<p>ing表示持续, 对应一段时间; 表示正在, 对应另一event</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/howto/">howto</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/03/20/howto/english/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+    <time datetime="2015-04-27T07:46:14.000Z" itemprop="datePublished">Apr 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/04/25/howto/howto_mutt/" title="使用mutt收发邮件" itemprop="url">
+  
+    <h1 itemprop="name">使用mutt收发邮件</h1>
     
-      <a href="/2015/03/16/kernel/interface/" title="Linux kernel interfaces" itemprop="url">Linux kernel interfaces</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-03-16T14:16:32.000Z" itemprop="datePublished"> Published Mar 16 2015</time>
+     
+           <p itemprop="description" >Reference
+昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.这才想起来社区的mailist只接收:
+
+No MIME, no links, no compression, no attachments.  Just</p>
+        
     
-  </p>
-</header>
-    <div class="article-content">
+    <time datetime="2015-04-24T16:00:00.000Z" itemprop="datePublished">Apr 25 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/04/25/howto/kernel_hacking/" title="Linux kernel hacking 攻略" itemprop="url">
+  
+    <h1 itemprop="name">Linux kernel hacking 攻略</h1>
+    
+     
+           <p itemprop="description" >git
+gittutorial - A tutorial introduction to Git
+linux source code
+Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git</p>
         
-        <h1 id="Linux_kernel_interfaces">Linux kernel interfaces</h1>
-<h2 id="API">API</h2>
-<p>system call</p>
-<ul>
-<li>procfs are ultimately accessed via system calls</li>
-</ul>
-<h2 id="ABI">ABI</h2>
-<p>elf, cpu specific</p>
-<h3 id="x32_ABI">x32 ABI</h3>
-<p>ILP32<br>LP64</p>
-<h1 id="System_call">System call</h1>
+    
+    <time datetime="2015-04-24T16:00:00.000Z" itemprop="datePublished">Apr 25 2015</time>
+  </a>
+</section>
 
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/03/20/howto/english/" title="The English Language" itemprop="url">
+  
+    <h1 itemprop="name">The English Language</h1>
+    
+     
+           <p itemprop="description" >Method of english
+选择英语学习材料有原则，别在不靠谱的材料上浪费时间真正的初级教程漏屋为什么要听ESL Pod和English Pod二语习得理论靠谱吗？奶爸的英语教室
+听力is first
+赖世雄美语音标Pronunciation workshopEnglis</p>
         
+    
+    <time datetime="2015-03-19T16:00:00.000Z" itemprop="datePublished">Mar 20 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/03/16/kernel/interface/" title="Linux kernel interfaces" itemprop="url">
+  
+    <h1 itemprop="name">Linux kernel interfaces</h1>
+    
+     
+           <p itemprop="description" >Linux kernel interfaces
+API
+system call
+
+procfs are ultimately accessed via system calls
+
+ABI
+elf, cpu specific
+x32 ABI
+ILP32LP64
+System cal</p>
         
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/03/16/kernel/interface/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
+    
+    <time datetime="2015-03-16T14:16:32.000Z" itemprop="datePublished">Mar 16 2015</time>
+  </a>
+</section>
 
 
 
@@ -981,7 +307,7 @@ git pull <span class="keyword">next</span> master:<span class="built_in">now</sp
 
 
 
-  <nav id="page-nav" class="clearfix">
+  <nav id="page-nav" class="clearfix unexpand">
     <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">Next<span></span></a>
   </nav>
 

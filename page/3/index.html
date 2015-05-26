@@ -79,1317 +79,249 @@
     <div id="container">
       <div id="main">
 
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/kernel/kernel/" title="kernel" itemprop="url">kernel</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Reference">Reference</h1>
-<ul>
-<li>Book</li>
-<li>Website<br><a href="http://lwn.net/" target="_blank" rel="external">http://lwn.net/</a><br><a href="http://elinux.org/Kernel_Debugging_Tips" target="_blank" rel="external">http://elinux.org/Kernel_Debugging_Tips</a><br><a href="https://www.kernel.org/doc/" target="_blank" rel="external">https://www.kernel.org/doc/</a><br><a href="http://kernelnewbies.org/KernelJanitors/Todo" target="_blank" rel="external">http://kernelnewbies.org/KernelJanitors/Todo</a><br><a href="http://eudyptula-challenge.org/" target="_blank" rel="external">http://eudyptula-challenge.org/</a></li>
-</ul>
-<h1 id="Find_bug">Find bug</h1>
-<ul>
-<li>Considered fault types<br>Block “To avoid deadlock, do not call blocking functions with interrupts disabled or a spinlock held.”<br>Null “Check potentially NULL pointers returned from routines”<br>Var “Do not allocate large stack variables (&gt;1K) on the fixed-size kernel stack.”<br>INull “Do not make inconsistent assumptions about whether a pointer is NULL.”<br>Range “Always check bounds of array indices and loop bounds derived from user data.”<br>Lock “Release acquired locks; do not double-acquire locks.”<br>Intr “Restore disabled interrupts.”<br>Free “Do not use freed memory.”<br>Float “Do not use floating point in the kernel.”<br>Size “Allocate enough memory to hold the type for which you are allocating.”<h2 id="Sparse">Sparse</h2>
-<h2 id="Coccinelle">Coccinelle</h2>
-Documentation/coccinelle.txt<br><a href="http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf" target="_blank" rel="external">http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf</a></li>
-</ul>
-<h2 id="BUG_list">BUG list</h2>
-<p>./drivers/pcmcia/sa11xx_base.c need clk_put</p>
-<h2 id="patch_formate">patch formate</h2>
-<ul>
-<li><p>Julia Lawall Sorry to be picky,<br>but normally people put a space after the colon.  Also,<br>the subject line could be shorter: Remove unneeded cast.<br>The description part of the subject doesnt have to be unique,<br>just the whole thing, asfter the [PATCH] part.</p>
-</li>
-<li><p>Dan Carpenter<br>Otherwise your patch was fine, btw.  Other improvements.<br>Don’t put “Drivers:” in the subject.<br>On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:</p>
-<blockquote>
-<p>From: Firo Yang <a href="&#109;&#97;&#x69;&#x6c;&#116;&#111;&#58;&#x66;&#x69;&#x72;&#x6f;&#103;&#x6d;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#x63;&#111;&#109;">&#x66;&#x69;&#x72;&#x6f;&#103;&#x6d;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#x63;&#111;&#109;</a><br>Don’t include this line.  We can get it from you email address.</p>
-</blockquote>
-</li>
-</ul>
-<p>Include everyone from the ./scripts/get_maintainer.pl output except<br>don’t include linux-kernel@vger.kernel.org if there is another mailing<br>list there already.</p>
-<ul>
-<li><p>To find  patch prefix<br>git log —oneline  path/to/file.c</p>
-</li>
-<li><p>upgrad patch<br>git format-patch —subject-prefix=”PATCH v2” master..firo2</p>
-</li>
-<li><p>example mail in thread<br>proxychains git send-email —subject “[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values” —thread —compose —confirm=compose —to firogm@gmail.com *.patch</p>
-</li>
-<li><p>[PATCH 0/N] manully<br>see above</p>
-</li>
-<li><p>Patch kind<br>Style fix in</p>
-</li>
-</ul>
-<ul>
-<li>remove_wait_queue(entry-&gt;wait_address,&amp;entry-&gt;wait);</li>
-</ul>
-<ul>
-<li>remove_wait_queue(entry-&gt;wait_address, &amp;entry-&gt;wait);</li>
-</ul>
-<h1 id="KVM">KVM</h1>
-<ul>
-<li>KVM architecture</li>
-<li>Kernel running flow<br>svm.ko -&gt; svm_init(svm.c) -&gt; kvm_init(kvm_main.c) -&gt; </li>
-<li>File<br>svm.c vmx.c kvm_main.c kvm_svm.h </li>
-<li>Function  </li>
-<li>Struct<br>kvm_x86_ops x86.h<br>vcpu_svm    kvm_svm.h  <h2 id="KSM">KSM</h2>
-</li>
-</ul>
-<h1 id="Signal">Signal</h1>
-<ul>
-<li>struct signal_sturct:<br>The “struct signal_struct” is the random <em>leftovers</em> from all the other stuff.<br><a href="http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990" target="_blank" rel="external">http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990</a></li>
-<li>sigpending<br>Store blocked signal info</li>
-<li>Non-mask signal<br>SIGKILL, SIGSTOP<h2 id="Generate_signal">Generate signal</h2>
-__send_signal();<h2 id="Process_siganl">Process siganl</h2>
-</li>
-<li>SIGKILL (may be some other)<br>process in _send_signal()-&gt; complete_signal() tsk-&gt;state |= TASK_WAKEKILL<br><a href="http://lwn.net/Articles/288056/" target="_blank" rel="external">http://lwn.net/Articles/288056/</a><br><a href="http://www.ibm.com/developerworks/library/l-task-killable/" target="_blank" rel="external">http://www.ibm.com/developerworks/library/l-task-killable/</a></li>
-<li><p>others<br>each time a switch is made from kernel mode to user mode,<br>arch-specific: entry.S -&gt; do_siganl()<br>{<br>  get_signal_deliver()<br>  {</p>
-<pre><code>  <span class="keyword">if</span> fatal<span class="function"> -&gt;</span> do_greoup_exit<span class="function"><span class="params">()</span>-&gt;</span>...__cleanup_sighand()
-</code></pre><p>  }</p>
-<p>  handle_signal() -&gt; k-&gt;u(hanle)-sigreturn-&gt;k<br>}</p>
-</li>
-</ul>
-<h1 id="Netlink">Netlink</h1>
-<ul>
-<li>Group<br>enum rtnetlink_groups<h2 id="What_is_netlink">What is netlink</h2>
-Networking related kernel configuration and monitoring interfaces.</li>
-<li>IPC between kernel and user spacess process.<br>ioctl</li>
-<li><p>prarts<br>  libnl<br>  libnl-route<br>  libnl-genl<br>  libnl-nf</p>
-</li>
-<li><p>How many parts does libnl-route has?<br>Address,  links, neighboring, routing, TC</p>
-</li>
-</ul>
-<h2 id="Need_patch">Need patch</h2>
-<p>skbedit action<br>cgroup classifier<br>tun/tap dev<br>gre tunnel dev<br>tc classifier/action</p>
-<h1 id="Namespace">Namespace</h1>
-<h1 id="Module">Module</h1>
-<h2 id="pre-require">pre-require</h2>
-<p>modules.alias<br><a href="http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html" target="_blank" rel="external">http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html</a></p>
-<p><a href="http://blog.chinaunix.net/uid-22954220-id-4380202.html" target="_blank" rel="external">http://blog.chinaunix.net/uid-22954220-id-4380202.html</a><br>运行时, 插入u盘也是这样.</p>
-<ol>
-<li>内核自己加载比如缺少模块的时候 网络协议, fs<br><a href="https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037" target="_blank" rel="external">https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037</a></li>
-</ol>
-<p>3 rc 里面smartqos之类的.</p>
-<h2 id="Load_module_into_kernel">Load module into kernel</h2>
-<p>vmlinux.lds.h linker scipts include helper macros.</p>
-<h1 id="Data_structures">Data structures</h1>
-<ul>
-<li>u32 <strong>u32
-</strong>u32 is used for user-space. declare a variabe used by icotl. qosmark.<br>u32 is used for kernel.<br>deatils in ldd3e chapter 10</li>
-</ul>
-<h1 id="Panic">Panic</h1>
-<p>kernel/kernel/panic.c</p>
-<h1 id="init">init</h1>
-<h2 id="initcall">initcall</h2>
-<h2 id="disk">disk</h2>
-<p>subsys_initcall 4 genhd_device_init with base_probe{ request_module()}<br>module_init 6 -&gt;init_sd-&gt;sync_schedule_domain(sd_probe_async</p>
-<h2 id="cmdline">cmdline</h2>
-<p>root= name_to_dev_t, mount_root in prepare_namespace<br>如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.<br>systemd负责挂在文件系统, 切换.</p>
-<h1 id="src-tree">src-tree</h1>
-<p>include/linux: share with userspace<br>include/net: kernel stuff</p>
-<h1 id="Assembly_in_kernel">Assembly in kernel</h1>
-<p>为了简单! 内核修改特权寄存器和指令, 用汇编实现简单.<br>尽可能加速. c到汇编, 编译器相对保守, </p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
-
-
-  <div class="article-tags">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/kernel/kernel/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/kernel/driver/" title="Linux device driver" itemprop="url">Linux device driver</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Bibilography">Bibilography</h1>
-<p>Driver porting: Device model overview: <a href="http://lwn.net/Articles/31185/" target="_blank" rel="external">http://lwn.net/Articles/31185/</a><br>/Documentation/driver-model<br>The Linux Kernel Driver Model</p>
-<h1 id="Why_DDM?">Why DDM?</h1>
-<p>The device model was originally intended to make power management tasks easier </p>
-<ul>
-<li>I/o Architecture<br>1 Expansion hardware.<br>Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).<br>2 Communication with peripherals<br>I/O ports<br>I/O memory mapping<br>Interrupts<br>hrough the maintenance of a representation of the host system’s hardware structure.</li>
-</ul>
-<h1 id="linux_设备驱动模型">linux 设备驱动模型</h1>
-<p>分为三层：<br>从结构上看，每一层都有对应的数据结构。<br>1 设备驱动层，驱动开发工程师，也就是码农们，设计的akashadevice  akashadriver 结构体。<br>2 驱动程序核心层 ，是一个通用层，内核中的标准结构，device device_driver bus_type.<br>3 Kobject核心层，也是一个通用层， kobject kobj_type kset 组成。<br>其实下面还有一个sys文件系统层。</p>
-<p>从操作上看，也是分为三类，初始化 注册 注销<br>1 初始化，是局限于每一层的。<br>2 注册和注销就是贯穿三层的。</p>
-<p>，我们知道其实总线就是铁轨，而各种设备就是北京东站，大连站。<br>我们人呢，就是铁轨上跑的数据。driver还用说就是火车了呗。<br>Bus总线这类设备比较特殊,需要内核对总线支持，即总线的核心层；<br>另一部分在外设的驱动程序中，负责把驱动挂接到总线，如pci_driver, usb_driver, i2c_driver。记住，这是说的总线的驱动。和挂接在总线上的设备驱动不同。<br>就好像open系统调用和驱动程序中file_operations中xxx_open的关系一样。<br>作为中间传输用途的总线设备的驱动是在内核当中，已经写好了，不用像各种总线上的设备一样，再写什么专门服务pci，i2c，spi等<br>总线设备的驱动，这里感谢下内核，又轻松了不少。pci之类的总线的，驱动就是match probe remove的函数，<br>不用专门封装成一个结构体，像我们遇到的block char设备，他们才是真中的外设。总之总线要单独看。<br>作为一个外设的驱动是很不容易除了要完成外设本身功能的部分还要处理好和总线的关系。对于pci总线上设备驱动就是由pci_driver来调和的。</p>
-<p>kobject核心层的注册有点小技巧，他是先在作为参数kobj结构体中指定了，这个结构体属于哪里kset，之后在注册函数里，在kset里把kobj链入。<br>PS：设备注册和驱动注册是分开的。当设备注册后通过udev开始寻找驱动的过程。驱动是通过pci_device_id和相应设备建立关联的，不是major 和minor设备号。<br>可别高乱了。</p>
-<h1 id="Sys_文件系统">Sys 文件系统</h1>
-<p>bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。<br>class, 类树按功能分类设备。<br>device，干货，其他的目录都指向这里。</p>
-<h1 id="Kobject">Kobject</h1>
-<p>清0，init，set name，get，put<br>在sys中是dir，attr 是文件</p>
-<h1 id="kobj_type">kobj_type</h1>
-<p>release(),</p>
-<h1 id="Kset">Kset</h1>
-<p>添加kobject到kset（指针，add）</p>
-<h1 id="Bus,_device,_driver-">Bus, device, driver.</h1>
-<h1 id="devres">devres</h1>
-<ul>
-<li><p>devm_kfree<br><a href="http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html" target="_blank" rel="external">devm_kfree does not need for fail case of probe function and for remove function.</a><br>__device_release_driver<br>really_probe</p>
-</li>
-<li><p>a must use devm_kfree Julia Lawall<br>The function at91_dt_node_to_map is ultimately called by the function</p>
-<blockquote>
-<p>pinctrl_get, which is an exported function.  Since it is possible that this<br>function is not called from within a probe function, for safety, the kfree<br>is converted to a devm_kfree, to both free the data and remove it from the<br>device in a failure situation.</p>
-</blockquote>
-</li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
-
-
-  <div class="article-tags">
+<section class="post" itemscope itemprop="blogitem">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/kernel/driver/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/cs/development_environment/" title="The linux development environment" itemprop="url">The linux development environment</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Reference">Reference</h1>
-<p><a href="https://en.wikipedia.org/wiki/Programming_tool" target="_blank" rel="external">Programming tool</a><br><a href="https://en.wikipedia.org/wiki/Utility_software" target="_blank" rel="external">Utility software</a></p>
-<h1 id="Development_environment">Development environment</h1>
-<h2 id="Source_code_editor">Source code editor</h2>
-<ul>
-<li>vim<br>easymotion</li>
-</ul>
-<h2 id="Code_navigation_tools">Code navigation tools</h2>
-<ul>
-<li>ctags<br>ctags -R —regex-c=”/^SYSCALL<em>DEFINE[0-9]?(([a-zA-Z0-9</em>]<em>).</em>/sys_\1/“</li>
-<li>cscope</li>
-<li>GNU global</li>
-<li>LXR Cross Referencer</li>
-<li>Google code search</li>
-<li>How to find hook functions of a struct ops<br>For example, all start_xmit of ppp_channel_ops,<br>pppol2tp_chan_ops, pppol2tp_xmit,<br>pptp_chan_ops pptp_xmit<br>pppoe_chan_ops pppoe_xmit<br>or grep -nr ‘ppp_channel_ops’ /path/to/{l2tp, pptp, pppoe}</li>
-<li>locate codes in complex program source files .<br>Bubble locate, begin with the fundermental system api for example socket(), bind(), connect()…then raise</li>
-</ul>
-<h2 id="Revision_control">Revision control</h2>
-<ul>
-<li><a href="http://git-scm.com/docs" target="_blank" rel="external">git</a></li>
-<li>diff patch</li>
-</ul>
-<h2 id="Build">Build</h2>
-<h3 id="Build_automation">Build automation</h3>
-<ul>
-<li>Make</li>
-</ul>
-<h3 id="Compiler">Compiler</h3>
-<ul>
-<li>gcc</li>
-</ul>
-<h3 id="Linker">Linker</h3>
-<ul>
-<li>GNU ld</li>
-<li>gold<h3 id="Kernel_build">Kernel build</h3>
-</li>
-<li>build arm on x86<br>make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o</li>
-</ul>
-<h2 id="Reverse_engineering">Reverse engineering</h2>
-<ul>
-<li>readelf</li>
-<li>objdump</li>
-<li>tcpdump<h3 id="Manipulate_ELF">Manipulate ELF</h3>
-ELF header, readelf -h<br>Program header table, readelf -l<br>Segments, readelf —segments<br>Sections, readelf —sections<br>Section header table, readelf -S<br>.symtab, Symbol table store index of string<br>.strtab, String table is a array of all strings split by \0<br>.hash, utiliy for quire symbols<br>.shstrtab, Section header string table store section name for ELF,like .text, .data…</li>
-</ul>
-<h2 id="Mail">Mail</h2>
-<p>mutt<br>fetchmail<br>fetchmail -d0 -vk pop.gmail.com<br>msmtp<br>/home/firo/.msmtprc<br>procmail</p>
-<h2 id="Test">Test</h2>
-<ul>
-<li>kvm </li>
-<li>supermin</li>
-</ul>
-<h3 id="Kernel_modification_test">Kernel modification test</h3>
-<p>git status  | grep ‘modified:’ | while read line; do file=$(echo $line | awk ‘{print $2}’); echo $file; make ${file/%.c/.o};done</p>
-<h2 id="Debug">Debug</h2>
-<p>More details in debugging note</p>
-<h1 id="Git">Git</h1>
-<p>git ls-files -d |xargs -i git checkout {}</p>
-<p>git log -S “RTN_UNSPEC” —source —all</p>
-<ul>
-<li><p>reverse find all the blame from start commit id to now<br>  git blame —reverse 9e734775f7c22d2f89943ad6c745571f1930105f..   include/linux/netlink.h</p>
-</li>
-<li><p>find kernel version of path<br>  git describe —contains<br>  git tag —contains <id></id></p>
-</li>
-<li><p>find commit id of a tag<br>  git rev-parse v2.6.12-rc2</p>
-<h1 id="git_pull">git pull</h1>
-<p>git pull {repo} {remotebranchname}:{localbranchname}<br>git pull origin xyz:xyz<br>git pull next master:now</p>
-</li>
-</ul>
-<h1 id="git_sendmail">git sendmail</h1>
-<p>shadowsocks<br>/etc/proxychains.conf<br>/home/firo/.gitconfig<br>proxychains git send-email —to dbaryshkov@gmail.com —cc rmk+kernel@arm.linux.org.uk —cc linux-pcmcia@lists.infradead.org  0001-Drivers-pcmcia-Fix-memroy-leak-in-sa11xx<em>drv_pcmcia</em>.patch</p>
-<p>git send-email —smtp-encryption=tls —smtp-server=smtp.gmail.com —smtp-user=firogm@gmail.com —smtp-server-port=587 —to “kernel-janitors@vger.kernel.org” 0001-x86-Remove-unnecessary-void-pointer-casts.patch</p>
-<h1 id="git_diff">git diff</h1>
-<p>git -c core.whitespace=tab-in-indent diff —check</p>
-<h1 id="Make">Make</h1>
-<h2 id="useful_usage">useful usage</h2>
-<p>make cynthia<br>make -q : need rebuild?</p>
-<h2 id="debug">debug</h2>
-<ul>
-<li>Just print echo<br>make -s </li>
-<li>Print shell command<br>make -n</li>
-<li>Print all variables. not really execute. Wired-name variable is useful to debug<br>make -p</li>
-<li>Pirnt a message<br>$(warning …)</li>
-<li>Etc<br>—warn-undefined-variables</li>
-</ul>
-<h2 id="menuconfig">menuconfig</h2>
-<ul>
-<li><p>if no .config, every config tools make a .config from scrach!</p>
-</li>
-<li><p>oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z</p>
-</li>
-<li><p>make localmodconfig will reduce many unused kernel config.</p>
-</li>
-<li><p>make bzImage  #kmods will not build that configured with M! </p>
-</li>
-<li>make modules_install INSTALL_MOD_PATH=/home/firo/kmods<h3 id="make_ARCH=arm_menuconfig">make ARCH=arm menuconfig</h3>
-</li>
-</ul>
-<h2 id="build_signle_kernel_module">build signle kernel module</h2>
-<p>make menuconfig<br>make oldconfig &amp;&amp; make prepare<br>make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1</p>
-<h1 id="GCC">GCC</h1>
-<h2 id="useful_various_options">useful various options</h2>
-<p>-E -S -c<br>-I -L -l<br>-ansi<br>-fsyntax-only<br>-Werror<br>-save-temps<br>-H: show all header used<br>-v<br>-Wall<br>-fPIC: for shared library<br>-Q: print function and statisc?<br>-Wextra: 用处不大.<br>-U: undefine a preprocessor macro.<br>-pipe: make compilation faster, replace xx.S with |<br>-Wpadded: we can rearrange the fields of structure to make the structure smaller<br>-time<br>-x c: c language<br>-: stdin</p>
-<h2 id="asmlinkage">asmlinkage</h2>
-<p>However, for C functions invoked from assembly code,<br>we should explicitly declare the function’s calling convention,<br>because the parameter passing code in assembly side has been fixed. </p>
-<h2 id="Generating_optimized_code"><a href="http://www.stlinux.com/devel/debug/jtag/build?q=node/82" target="_blank" rel="external">Generating optimized code</a></h2>
-<h2 id="Symbol_table">Symbol table</h2>
-<ul>
-<li>System.map less<br>When you compile the kernel<br>nm vmlinux<br>readelf -s </li>
-<li>/proc/kallsyms</li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/cs/">cs</a>
-</div>
-
-
-  <div class="article-tags">
+    <a href="/2015/02/27/kernel/kernel/" title="kernel" itemprop="url">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/cs/development_environment/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
+    <h1 itemprop="name">kernel</h1>
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+     
+           <p itemprop="description" >Reference
+
+Book
+Websitehttp://lwn.net/http://elinux.org/Kernel_Debugging_Tipshttps://www.kernel.org/doc/http://kernelnewbies.org/KernelJanit</p>
+        
     
-      <a href="/2015/02/27/kernel/activities/" title="Kernel activities" itemprop="url">Kernel activities</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="The_player">The player</h1>
-<ul>
-<li>Interrupt — irq,softirq</li>
-<li>Process — user process, kernel thread(workqueue)</li>
-</ul>
-<h1 id="Common_concpets">Common concpets</h1>
-<p>userspace: A process executing its own code outside the kernel.</p>
-<h2 id="What_is_context?">What is context?</h2>
-<h3 id="process_context/user_context:">process context/user context:</h3>
-<p>The kernel executing on behalf of a particular process<br>(ie. a system call or trap) or kernel thread.<br>You can tell which process with the current macro.)<br>Not to be confused with userspace.<br>Can be interrupted by software or hardware interrupts.</p>
-<ul>
-<li>register, kernel task_struct, stack. user text stack heap<h3 id="interrupt_context:">interrupt context:</h3>
-</li>
-<li>Firo thinks the key point is interrupt context is irrelevant to process context!</li>
-<li>Can not schedule!</li>
-<li>register, maybe interrupt/process stack.<h3 id="softirq_context">softirq context</h3>
-in the context of whichever process happens to be running at the wrong time;<br>that is the “randomly chosen victim” aspect that Thomas was talking about.</li>
-</ul>
-<h2 id="Preemption">Preemption</h2>
-<ul>
-<li>Linux kernel user mode is always User preemption.<br>When returning to user-space from a system call.<br>When returning to user-space from an interrupt hander.</li>
-<li>Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.<br>If a task in the kernel explicitly calls schedule()<br>If a task in the kernel blocked (which results in a all to schedule())</li>
-<li>Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.<br>schedule + blcoked<br>When an interrupt handler exits, before returning to kernel-space.<br>When kernel code becomes preemptible again.</li>
-</ul>
-<h3 id="Entries_of_preempt_schdule,_FIXME">Entries of preempt schdule, FIXME</h3>
-<p>1 After Interrupt return,preempt_count_irq.<br>2 cond_resched<br>3 preempt_count</p>
-<h3 id="What_is_the_PREEMPT_ACTIVE">What is the PREEMPT_ACTIVE</h3>
-<ul>
-<li><p>This sets a flag bit in the preemption counter that has such a large value<br>  that it is never affected by the regular preemption counter increments</p>
-</li>
-<li><p>It indicates to the schedule function that scheduling was not<br>  invoked in the normal way but as a result of a kernel preemption.</p>
-</li>
-<li><p>This ensures that the next task is selected as quickly as possible without<br>  the hassle of deactivating the current one. If a high-priority task is waiting<br>  to be scheduled, it will be picked by the scheduler class and will be allowed to run.</p>
-</li>
-</ul>
-<h3 id="preempt_count">preempt_count</h3>
-<ul>
-<li>preempt 8</li>
-<li>softirq 8</li>
-<li>irq    4</li>
-<li>preempt active 1</li>
-<li>nmi 1</li>
-</ul>
-<h1 id="Interrupt">Interrupt</h1>
-<h2 id="init">init</h2>
-<p>native_init_IRQ()-&gt;  set_intr_gate(i, irq_entries_start…<br>irq_entries_start define in arch/x86/kernel/entry_32.S</p>
-<h2 id="Interrupt_Context_terminology">Interrupt Context terminology</h2>
-<ul>
-<li><p>in_irq<br>in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!<br>+irq disable 部设计preempt_cout</p>
-</li>
-<li><p>in<em>softirq<br>should rename to in_softirq_or_bh_disable()<br>local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)<br><strong>do_softirq use </strong>local_bh_disable_ip(_RET_IP</em>, SOFTIRQ_OFFSET), damn it!</p>
-</li>
-<li><p>in_interrupt<br>一种是irq路径上的do_softirq, 即in_serving_softirq<br>+local_bh_disbale()<br>//not in softirq context!!!<br>+local_bh_enable()<br>硬中断呢?<br>do_IRQ,肯定是.<br>local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check<br><a href="">Question about in_interrupt() semantics with regard to softirqs</a></p>
-</li>
-</ul>
-<p><a href="http://thread.gmane.org/gmane.linux.kernel/1152658" target="_blank" rel="external">Deal PF_MEMALLOC in softirq</a></p>
-<h2 id="softirq">softirq</h2>
-<p>同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。</p>
-<ul>
-<li>not allow execute nest but can recusive lock:local_bh_disable<br>current-&gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.</li>
-<li>hardirq on, can’t sleep</li>
-<li>not percpu<h2 id="tasklet_and_kernel_timer_is_based_on_softirq">tasklet and kernel timer is based on softirq</h2>
-新增softirq, 是要重新编译内核的, 试试tasklet也不错.<br>.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上</li>
-<li>First of all, it’s a conglomerate of mostly unrelated jobs,<br>which run in the context of a randomly chosen victim<br>w/o the ability to put any control on them. —Thomas Gleixner</li>
-</ul>
-<p>tasklet different with other softirq is run  signal cpu core<br>spinlock_bh wider then spinlock </p>
-<h3 id="time_of_softirq">time of softirq</h3>
-<ul>
-<li>follow hardirq, irq_exit()</li>
-<li>re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.</li>
-<li>ksoftirqd</li>
-</ul>
-<h3 id="tasklet">tasklet</h3>
-<p>tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?<br>tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了<br>只有一个cpu执行同一时刻.</p>
-<h1 id="Process">Process</h1>
-<h2 id="kthread_and_workqueue">kthread and workqueue</h2>
-<p>kthread do specific func onshot<br>workqueue can dynamic set different specific work<br>workqueue is just a coat of kthread</p>
-<h2 id="Differences_between_softirq_and_workqueue">Differences between softirq and workqueue</h2>
-<p>Softirq(tasklet)<br>init static:    DECLARE_TASKLET(), DECLARE_TASKLET_DISABLED()<br>init dynamic:    tasklet_init()<br>schedule:    tasklet_schedule()<br>exit:        tasklet_kill()<br>pros and cons:    execute in interrupt context, serialization, tasklet blonged to the cpu which tasklet_schedule() it, oneshot</p>
-<p>Workqueue<br>init static:    DECLARE_WORK()<br>init dynamic:    kzalloc() INIT_WORK(), kzalloc() PREPARE_WORK()<br>schedule1:    create_singlethread_workqueue(), create_workqueue()<br>        queue_work()<br>exit1:        flush_workqueue(), destroy_workqueue()<br>schedule2:    schedule_work()<br>exit2:        (none)<br>pros and cons:    execute in process context, workqueue has two type, driver can create workqueue or use system workqueue, oneshot</p>
-<h1 id="FAQ">FAQ</h1>
-<h2 id="When_to_save_irq_rather_than_just_disable_irq">When to save irq rather than just disable irq</h2>
-<p>local_irq_disable() used in the code path that never disabled interrupts.<br>local_irq_save(flags) used in the code path that already disabled interrupts.</p>
-<h2 id="what_about_irq_nested?">what about irq nested?</h2>
-<p><a href="http://lwn.net/Articles/380937/" target="_blank" rel="external">http://lwn.net/Articles/380937/</a></p>
-<h2 id="irq_and_lock">irq and lock</h2>
-<p>irq and lock are complete different things!<br>when need to disable irq just get rid of mess of shared data.</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
 
 
-  <div class="article-tags">
+
+
+
+
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/kernel/activities/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/kernel/fs/" title="filesystem" itemprop="url">filesystem</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Hacks">Hacks</h1>
-<p>I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.</p>
-<h1 id="VFS">VFS</h1>
-<h2 id="Common_concepts">Common concepts</h2>
-<ul>
-<li>VFS:Common fs interface plus fs anstraction layer! <h2 id="Unix_fs-related_abstractions:_file,_directory_entries,_inodes,_and_mount_points-">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</h2>
-</li>
-<li>Filesytem: a hierarchial storage of data adhering to a specific structure.<br>In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.</li>
-<li>file: and ordered string of bytes.</li>
-<li>directory: analogous to a folder and usally contains related files.</li>
-<li>dentry: Each component of a path is called a directory entry.</li>
-<li>inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!</li>
-<li>supreblock: a data structure containing information about the filesystem as a whole.</li>
-</ul>
-<h2 id="VFS_primary_objects:_superblock,_inode,_dentry,_file-">VFS primary objects: superblock, inode, dentry, file.</h2>
-<ul>
-<li>supreblock: a specific mounted filesystem.</li>
-<li>inode: unit for fs. all the information needed by the kernel to manipulate a file or directory. </li>
-<li>dentry: accelerate access fs, dcache! a single component of a path, certainly include <em>regular</em> file.<br>VFS treats directory as non-exist <em>normal</em> file. directory and dentry is not the same at all, different congitive level!<br>In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!</li>
-<li>file: an open normal file as associated with a process.</li>
-</ul>
-<h2 id="Step_of_how_to_use_ext2_fs">Step of how to use ext2 fs</h2>
-<ul>
-<li><p>Register a fs type in kernel.<br>struct file_system_type: basic fs driver codes!</p>
-</li>
-<li><p>mkfs.ext2</p>
-</li>
-<li>shell mount -&gt; sys_mount -&gt; file_system_type-&gt;mount =&gt; root dentry and dentry-&gt;d_sb!</li>
-<li>sys_open -&gt;<br>  path_init()<ol>
-<li>get start point current-&gt;fs{root, pwd}</li>
-<li>link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)<br>do_last()</li>
-<li>dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&gt;s_dentry_op</li>
-<li>file, if not open, file-&gt;f_op = inode-&gt;i_fop</li>
-</ol>
-</li>
-<li>sys_write -&gt;<br>  file-&gt;f_op-&gt;write()…</li>
-</ul>
-<h2 id="How_make_dentry">How make dentry</h2>
-<p>d_alloc() alloc new dentry<br>parent_entry-&gt;d_inode-&gt;i_op-&gt;lookup=ext2_lookup()-&gt; ext2_iget() -&gt; use raw_inode make inode-&gt;<br>set inode to dentry</p>
-<h1 id="Procfs">Procfs</h1>
-<h2 id="How_many_parts_does_procfs_has?">How many parts does procfs has?</h2>
-<ul>
-<li>process-specific read only /proc/<pid>/</pid></li>
-<li>process tuneable interface. /proc/<pid>/</pid></li>
-<li>kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs…</li>
-<li>Read only kernel infomation. /proc<h2 id="I_think,_important_directory_need_to_know-">I think, important directory need to know.</h2>
-/proc/sys/kernel</li>
-</ul>
-<h1 id="Sysfs">Sysfs</h1>
-<p>sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!</p>
-<h1 id="Ramfs">Ramfs</h1>
-<p>fs/ramfs</p>
-<h2 id="reference">reference</h2>
-<p><a href="http://www.thegeekstuff.com/2008/11/overview-of-ramfs-and-tmpfs-on-linux/" target="_blank" rel="external">Overview of RAMFS and TMPFS on Linux</a></p>
-<h1 id="tmpfs">tmpfs</h1>
-<p>mm/shmem.c<br><a href="http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/" target="_blank" rel="external">关于 tmpfs</a></p>
-<h1 id="rootfs">rootfs</h1>
-<p>init/do_mounts.c<br>init_rootfs()<br>init_mount_tree<br>rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs<br>但是在do_basic_setup才初始化.<br>rootfs_initcall(populate_rootfs);</p>
-<h1 id="initramfs">initramfs</h1>
-<p>init/initramfs.c</p>
-<p>initrd-&gt;initramfs<br>{<br>    linus’ ramfs -&gt; /tmpfs<br>}</p>
-<h2 id="Difference_with_initrd">Difference with initrd</h2>
-<p>initrd is image with specific fs type, like ext2, need driver built-in kernel.<br>initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs</p>
-<h2 id="request_hard_drive_driver_maybe_fs_driver">request hard drive driver maybe fs driver</h2>
-<p>ata_host_register-&gt;ata_scsi_scan_host-&gt;__scsi_add_device-&gt;scsi_probe_and_add_lun -&gt;scsi_add_lun</p>
-<p>subsys_initcall(genhd_device_init);-&gt;kobj_map_init{bdev_map.probe.get = base_probe}</p>
-<p>subsys_initcall(init_scsi);4-&gt;scsi_sysfs_register{autoprobe = 1;}<br>rootfs_initcall(populate_rootfs);-&gt;{unpack_to_rootfs; 解压initramfs到rootfs}<br>module_initinit_sd;6-&gt;scsi_register_driver -&gt;driver_register-&gt;bus_add_driver -&gt;driver_attach -&gt;driver_probe_device-&gt; drv-&gt;probe(dev)=sd_probe_async-&gt;add_disk -&gt; register_disk -&gt; get_gendisk -&gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}</p>
-<h2 id="mount_fs">mount fs</h2>
-<p>kernel_init_freeable-&gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd<br>如果/init不可以访问 prepare_namespace{挂在真正的文件系统}</p>
-<h1 id="FAQ">FAQ</h1>
-<h2 id="forbid_ln">forbid ln</h2>
-<p>hard link to directory, recursive<br>hard link to file accross partitions, may led confilict with inode number.</p>
-<h2 id="stick_bit">stick bit</h2>
-<p>chmod +t<br>1777<br>只有owner 和root才能删除这个文件, 用于/tmp</p>
-<h2 id="time_of_file">time of file</h2>
-<h3 id="atime">atime</h3>
-<p>perhaps the most stupid Unix design idea of all times,” adding: “[T]hink about this a bit: ‘For every file that is read from the disk, lets do a … write to the disk! And, for every file that is already cached and which we read from the cache … do a write to the disk!’” He further emphasized the performance impact thus:</p>
-<h4 id="find_relatime_options">find relatime options</h4>
-<p>cat /proc/mounts<br>man mount </p>
-<h3 id="chang_time">chang time</h3>
-<p>meta data</p>
-<h3 id="modification_time">modification time</h3>
-<p>content of file</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
-
-
-  <div class="article-tags">
+<section class="post" itemscope itemprop="blogitem">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/kernel/fs/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/kernel/process/" title="Linux process management" itemprop="url">Linux process management</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Protection_ring">Protection ring</h1>
-<h2 id="Kernel_mode:">Kernel mode:</h2>
-<h2 id="User_mode">User mode</h2>
-<p>限制访问地址空间, 内核数据结构, I/O 指令, 中断代码等.</p>
-<h2 id="Mode_switch">Mode switch</h2>
-<p>esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。<br>读TSS段中进程的内核态指针付给ss和esp。<br>把用户态SS和esp指针保存在进程的内核栈上，<br>从内核态返回时，弹出进程内核栈上用户态ss和esp值。<br>那么TSS段中进程的内核态指针是从哪里来的呢？</p>
-<p>cpu -&gt; tr -&gt; tss -&gt; esp0 =&gt; 内核栈-&gt;保存用户态cs eip esp等.<br>Hardware context switch.<br>pt_regs</p>
-<h2 id="kernel_stack">kernel stack</h2>
-<p>从system_call中, 我们可以发现:<br>GET_THREAD_INFO(%ebp)</p>
-<p>master idle进程的kernel stack在init/init_task.c:init_thread_union<br>其他进程的kernel stack是fork产生.<br>this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);<br>this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);</p>
-<h1 id="Idle">Idle</h1>
-<p>主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0<br>init_idle.</p>
-<h1 id="Porcess_context">Porcess context</h1>
-<h2 id="Userspace_context">Userspace context</h2>
-<p>.txt, .data, .bss, userspace stack, heap, library.</p>
-<h2 id="Kernespace_context">Kernespace context</h2>
-<p>task_struct, mm_struct, pgd, kernelspace stack.</p>
-<h2 id="Hardware_context">Hardware context</h2>
-<p>Registers</p>
-<h2 id="Context_switch">Context switch</h2>
-<p>A context switch (also sometimes referred to as a process switch or a task switch)<br>is the switching of the CPU (central processing unit) from one process or thread to another.</p>
-<h2 id="进程切换process_switch">进程切换process switch</h2>
-<p>也叫上下文切换context switch只发生在内核态，必须理解而不是记住。<br>一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，<br>如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，<br>新的培养液进来，旧的培养液也需要保存，以备稍后使用。<br>当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。<br>应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？<br>在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。<br>我们所关心的换出的进程的esp指针也保存在thread_struct当中了。<br>当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，<br>也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。</p>
-<h2 id="switch_to">switch_to</h2>
-<p>__schedule()-&gt;swtich_to</p>
-<h3 id="load_TSS">load TSS</h3>
-<p>进程切换只发生在内核态<br>/<em>将next进程的内核栈指针(next-&gt;thread-&gt;sp0)值更新到当前CPU的TSS中</em>/<br>load_sp0(tss, next);<br>task_struct.thread.sp0<br>thread_struct</p>
-<h2 id="type_of_Context_switch">type of Context switch</h2>
-<ul>
-<li>context switch by hardware<br>Old linux kernel</li>
-<li>context switch by software<br>kernel 2.6</li>
-</ul>
-<h1 id="Common_concepts">Common concepts</h1>
-<p>Multiprocessing for SMP</p>
-<h1 id="Process_flag">Process flag</h1>
-<p>PF_MEMALLOC <a href="http://thread.gmane.org/gmane.linux.kernel/914878" target="_blank" rel="external">Kill PF_MEMALLOC abuse</a></p>
-<h1 id="Process_user_ID">Process user ID</h1>
-<h2 id="Effective_user/group_ID">Effective user/group ID</h2>
-<p>euid:4777<br>egid:2777<br>chmod u+s cynthia<br>root进程执行cynthia后euid变为firo, saved user id变为root</p>
-<h2 id="Example">Example</h2>
-<p>u+s 就可以<br>firo@firo tmp$ iptables -L<br>iptables v1.4.21: can’t initialize iptables table `filter’: Permission denied (you must be root)<br>Perhaps iptables or your kernel needs to be upgraded.</p>
-<p>chmod +s /usr/sbin/iptables</p>
-<p>firo@firo tmp$ iptables -L<br>Chain INPUT (policy ACCEPT)<br>target     prot opt source               destination         </p>
-<p>Chain FORWARD (policy ACCEPT)<br>target     prot opt source               destination         </p>
-<p>Chain OUTPUT (policy ACCEPT)<br>target     prot opt source               destination </p>
-<p>chmod -s /usr/sbin/iptables</p>
-<p>iptables -L<br>iptables v1.4.21: can’t initialize iptables table `filter’: Permission denied (you must be root)<br>Perhaps iptables or your kernel needs to be upgraded.</p>
-<h1 id="Scheduling_strategies">Scheduling strategies</h1>
-<p>multiprogramming<br>time-sharing(multi tasking)<br>real-time</p>
-<h1 id="Multitasking">Multitasking</h1>
-<h2 id="Reference">Reference</h2>
-<p>codes: comments of __schedule()<br>Book: Linux kernel development </p>
-<h2 id="Common_concepts-1">Common concepts</h2>
-<ul>
-<li>The process scheduler decides which process runs, when, and for how long.</li>
-<li>Multitasking: cooperative and preemptive.</li>
-<li>Preemption:Involuntarily suspending a running process.</li>
-<li>Timeslice: a slice of cpu’s time.</li>
-<li>Yielding: The act of a process voluntarily suspending itself.</li>
-<li>Cooperative multitasking: a process does not stop running until it voluntary decides to do so.</li>
-<li>Time sharing: is cooperative mutitasking, </li>
-<li>the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!<br>so if !CONFIG_PREEMPT* is cooperative!</li>
-<li>CFS: Pick the task with the smallest vruntime. That’s it!</li>
-</ul>
-<h2 id="TIF_NEED_RESCHED">TIF_NEED_RESCHED</h2>
-<ul>
-<li>The situation of set task need resched<br>scheduler_tick()<br>try_to_wake_up() when a process that has a higher priority than <em>current</em> is awakened.<br>Other?</li>
-</ul>
-<h2 id="SAVE_ALL">SAVE_ALL</h2>
-<p>no include cs ss ip sp eflag why?</p>
-<h1 id="Deamonize">Deamonize</h1>
-<h2 id="fork,_oraphan">fork, oraphan</h2>
-<p>similar &amp;<br>not a goup leader inherit with parent pgid for setsid</p>
-<h2 id="setsid">setsid</h2>
-<ul>
-<li>session leader</li>
-<li>process group leader<br>A signal directed to a process group is delivered individually to<br>all of the processes that are members of the group. </li>
-<li><p>deatch controlling terminals(confusing)</p>
-<h2 id="chdir">chdir</h2>
-<h2 id="umask">umask</h2>
-<h2 id="deal_with_fd">deal with fd</h2>
-<p>below both output<br>守护进程继承了shell的屏幕和键盘输入.<br>pid_t pid= fork();<br>if (pid != 0) {<br>  system(“sleep 3”);<br>  printf(“parent exit\n”);<br>} else {<br>  printf(“child start\n”);<br>  setsid();<br>  fprintf(stdout, “out child\n”);<br>  fprintf(stderr, “err child\n”);</p>
-<p>  system(“sleep 7”);</p>
-<p>  fprintf(stdout, “after out child\n”);<br>  fprintf(stderr, “after err child\n”);<br>  printf(“child exit\n”);<br>}</p>
-<h1 id="Zombie_process">Zombie process</h1>
-<h2><defunct></defunct></h2>
-<p>forked child not reaped by parent will hooked in process list.<br>if parent was killed and exit <defunct> will repaped.<br><defunct>表明父活着, 但不收尸.</defunct></defunct></p>
-<h2 id="Double_fork_for_parent_long_live">Double fork for parent long live</h2>
-<p>mirgate subchild to init, parent just reap child.</p>
-</li>
-</ul>
-<h1 id="FAQ">FAQ</h1>
-<ul>
-<li><p>thread_info<br>可以快速访问task_struct.</p>
-</li>
-<li><p>swtch_stack<br>线程切换</p>
-</li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
-
-
-  <div class="article-tags">
+    <a href="/2015/02/27/kernel/driver/" title="Linux device driver" itemprop="url">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/kernel/process/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
+    <h1 itemprop="name">Linux device driver</h1>
     
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
+     
+           <p itemprop="description" >Bibilography
+Driver porting: Device model overview: http://lwn.net/Articles/31185//Documentation/driver-modelThe Linux Kernel Driver Model
+W</p>
+        
     
-      <a href="/2015/02/27/kernel/synchronization/" title="Synchronization" itemprop="url">Synchronization</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Reference">Reference</h1>
-<p>Perfbook</p>
-<h1 id="Why_we_need_synchronization">Why we need synchronization</h1>
-<p>a critical section is a piece of code that accesses a shared resource<br>(data structure or device) that must not be concurrently accessed by more than one thread of execution.</p>
-<p>This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition. </p>
-<h1 id="How_to_use_synchronization_mechanism">How to use synchronization mechanism</h1>
-<p>A must read book<a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html" target="_blank" rel="external">Unreliable Guide To Locking — Rusty Russell</a></p>
-<h2 id="Common_usage">Common usage</h2>
-<p>Protect from interruption by hardware interrupts:<br>        local_irq_disable(int irq) &amp; local_irq_enable(int irq)<br>Protection from software interrupts:<br>        local_bh_disable(void) &amp; local_bh_enable(void)<br>Protection from other CPUs:<br>        spin_lock(spinlock_t <em>) &amp; spin_unlock(spinlock_t </em>)<br>Preemption by other user contexts:<br>        preempt_disable(void) &amp; preempt_enable(void) </p>
-<h1 id="What_is_synchronization_in_computer_science">What is synchronization in computer science</h1>
-<p><a href="http://www.etymonline.com/index.php?term=synchronize" target="_blank" rel="external">Synchronize</a><br>synchronization means be of the same time.<br>It means “make it synchronous”, something like coexistence.</p>
-<p>Process synchronization refers to the idea that multiple processes are<br>to join up or handshake at a certain point, in order to reach an<br>agreement or commit to a certain sequence of action.</p>
-<ul>
-<li>Mutual exclusion — only one excution routine in  critical section<br>Readers–writers problem<br>The Producer-Consumer Problem </li>
-<li>Cooperative<br>TCP Handshake </li>
-<li>Deadlock<br>Dining philosophers problem</li>
-<li>Starvation</li>
-<li>Prioirty inversion</li>
-<li>Busy waiting</li>
-</ul>
-<h1 id="Mutual_exclusion">Mutual exclusion</h1>
-<h2 id="spinlock_-_unsleepable_mutex">spinlock - unsleepable mutex</h2>
-<p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/" target="_blank" rel="external">Linux 内核的排队自旋锁FIFO Ticket Spinlock</a><br>spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了<br>context switch, 相对semaphore效率高.<br>显然对于little critical section 使用semaphore而不是spinlock,将带来性能<br>上的巨大损耗.</p>
-<ul>
-<li>rw_lock</li>
-</ul>
-<h2 id="semaphore">semaphore</h2>
-<p>it was implement based on spinlock.<br>it can have more than one holder at any time (the number decided at initialization time),<br>although it is most commonly used as a single-holder lock (a mutex).<br>if you can not get a semaphore, your task will put itself on the wait queue, and be woken<br>up the semaphore is released.<br>sleepable<br>preemptable</p>
-<h2 id="Mutex">Mutex</h2>
-<p>Monitor lock before sleep.</p>
-<h2 id="RCU_—_lockless">RCU — lockless</h2>
-<p>Check The Journey to RCU for more details</p>
-<h2 id="Per-cpu">Per-cpu</h2>
-<h1 id="Memory_barrier">Memory barrier</h1>
-<h2 id="Refernce">Refernce</h2>
-<p><a href="http://en.wikipedia.org/wiki/Memory_barrier" target="_blank" rel="external">http://en.wikipedia.org/wiki/Memory_barrier</a><br>Documentation/memory-barriers.txt</p>
-<h2 id="Common">Common</h2>
-<ul>
-<li>When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping<br>to ensure that the program executes as if all memory operations were performed in the order<br>specified by the programmer (program order), so memory barriers are not necessary.<br>However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor<br>system, or memory mapped peripherals, out-of-order access may affect program behavior.<br>For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.</li>
-<li>Compiler and cpu do the same optimization: reorder of instructions<h2 id="The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different">The Linux kernel has a variety of different barriers that act at different</h2>
-levels:<br>(<em>) Compiler barrier.<br>(</em>) CPU memory barriers.<br>(*) MMIO write barrier.<h2 id="ACCESS_ONCE">ACCESS_ONCE</h2>
-</li>
-<li>Does it work cast a variable to volatile?<br>No, there is no efects on cast a variable to volatile.<br>Because, access variable is before volatile cast! That means you<br>still get a register value. What you do is just conversion a temporary<br>variable<br>Rationale for International Standard—Programming Languages—C<br>6.7.3 <h2 id="For_volatile">For volatile</h2>
-<a href="http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/" target="_blank" rel="external">http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/</a></li>
-</ul>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
-</div>
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
 
 
-  <div class="article-tags">
+
+
+
+
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/kernel/synchronization/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/chronobiology/" title="Chronobiology" itemprop="url">Chronobiology</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Chronobiology">Chronobiology</h1>
-<p>Principle: health, effective</p>
-<ul>
-<li><p>Develop good eating babits.<br>Avoid eating junk food as much as possible.</p>
-</li>
-<li><p>Drink a lot of water everyday.</p>
-</li>
-<li><p>Rest 10 minutes/hour</p>
-</li>
-<li><p>Maintain Mental fitness and Be happy.<br>Talking with family</p>
-</li>
-<li><p>Physical execise 21:30, 45 minutes<br>有氧和无氧隔天锻炼.<br>Aerobic exercise: 跑步<br>Anaerobic exercise </p>
-</li>
-<li><p>Take a bath 22:15</p>
-</li>
-<li><p>Better sleep, 8 hours<br>Sleep about 22:30 and get up at 6:30.<br>躺在床上不玩手机</p>
-</li>
-<li><p>Writing, before 22:40, 10 minutes<br>Lyubishchev<br>Keep diary</p>
-</li>
-</ul>
-<h1 id="TODO">TODO</h1>
-<p>Go to a place to live comfortably, grow up, meet up more and more.<br>Job hopping Redhat or some other place<br>English write and spoke.<br>American kernel job.<br>Cognition in philosophy<br>Live style<br>Dressing</p>
-<h1 id="FAQ">FAQ</h1>
-<h2 id="philosophy">philosophy</h2>
-<p>现象学分析方法?<br>什么是观念, 概念?</p>
-<h2 id="CS">CS</h2>
-<p>libev 变量的生存周期</p>
-<h2 id="kernel">kernel</h2>
-<p>find source code of config</p>
-<p>How to print backtrace by kernel oops, and why it’s not exact?</p>
-<p>What is .byte in oops<br> 3f:   31                      .byte 0x31<br> Nevermind that .byte 0x31 - it’s just a truncated instruction (we have one<br> starting with 31 just several lines above). </p>
-<p>What is abi</p>
-<p>why get<em>unaligned_be16?<br> _THIS_IP</em> vs <strong>FUNCTIONS</strong></p>
-<h2 id="net">net</h2>
-<p>*first_device 用途？<br>subsys 在前, device在后.</p>
-<ul>
-<li>What is bridge?</li>
-</ul>
-<p>linux bridge<br>netdev_rx_handler_register(dev, br_handle_frame, p);<br>__netif_receive_skb -&gt; rx_handler=br_handle_frame<br>and generic concept: hub, switch?<br>hub: layer 1, bradcast, exclusive share, 报文可被侦听.<br>switch: layer 2,  mac port route, CAM table in linux bridge module!<br>switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以是layer层技术.</p>
-<p>*What is the type in ip link?<br>net_poll<br>napi</p>
-<ul>
-<li>What is Head-of-line blocking</li>
-</ul>
-<h2 id="Linguistic">Linguistic</h2>
-<ul>
-<li>西方哲人眼中的文字观</li>
-</ul>
-<h1 id="Sat_Apr_18_10:04:59">Sat Apr 18 10:04:59</h1>
-<ul>
-<li>Clean house</li>
-<li>Learn how-to rest</li>
-<li>Interview questions</li>
-</ul>
-<h1 id="Fri_May_1_CST_2015">Fri May  1 CST 2015</h1>
-<h2 id="Watching_AV_and_Masturbation">Watching AV and Masturbation</h2>
-<p>Fri May  1 10:17:02 CST 2015<br>1 hour</p>
-<h2 id="整理看过动画列表">整理看过动画列表</h2>
-<p>11:17 1 hr</p>
-<h2 id="午餐">午餐</h2>
-<p>12:20 4 hr 40 minute<br>去吃番茄鸡蛋面, 胃口来了.<br>吃完饭决定去打lol, 打了4个小时.<br>还是女警用着习惯.</p>
-<h2 id="规划下面试个找房子">规划下面试个找房子</h2>
-<p>18:00 5 minutes<br>房东回来谈续租的事<br>今天整理下一下开发的项目<br>重点是smartqos 和kproxy.<br>重新修订下简历, 有点太简单了.<br>明后天再向内核提交补丁.</p>
-<h2 id="Kproxy">Kproxy</h2>
-<p>18:10</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/firo/">firo</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/chronobiology/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/firo/firo/" title="Firo" itemprop="url">Firo</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Birthday">Birthday</h1>
-<p>Mama<br>06 25 1963<br>09 24 1963 Household register<br>Present:</p>
-<p>Baba<br>02 28 1968<br>02 29 1968 Household register<br>Present:</p>
-<p>Brother<br>01 06 1991<br>Present:</p>
-<p>Firo<br>09 13 1989<br>Present: Skateboard: Redhat.</p>
-<p>Miss xxx<br>06 06 1994<br>Present:</p>
-<h1 id="Job_hooping">Job hooping</h1>
-<p>*15 March +Dimisson and resignation</p>
-<p>*25 Apr Share option</p>
-<p>*target job<br>Kernel(especially netdev)</p>
-<p>*Hopping plan<br>Share love, Join kernel community, submit patches<br>Imporve kernel problem resolving abilites<br>More codes in kernel netdev.<br>Know more essential generic kernel knowledge.</p>
-<h1 id="Japanes">Japanes</h1>
-<p>*Money Monthly<br>100YEN            5.83RMB</p>
-<p>*Month consume:<br>150KYEN</p>
-<p>*Year Financial affairs<br>340K</p>
-<ul>
-<li>N2 Japanese Language Proficiency Test<br>Time 1.1 ~ 7.6                180days<br>Words 4000 ~ 6000            22 ~ 33/perdays<br>Grammars                    5/perdays</li>
-</ul>
-<h1 id="Skateboard">Skateboard</h1>
-<h2 id="The_class">The class</h2>
-<p>Completed Skateboard: 整板.<br>Do it yourself.</p>
-<h2 id="The_structure_of_skateboard">The structure of skateboard</h2>
-<p>Bones的轮子，Independent 支架，Swiss 轴承，mob砂纸，Baker的板面<br>=Deck<br>Plan B: Too expensive<br>Zero<br>Enjoi<br>DGK<br>Girl<br>Zoo York</p>
-<p>=Truck</p>
-<ul>
-<li>Independent<br>Thunder<br>Venture</li>
-</ul>
-<p>=Wheel<br>Bones</p>
-<p>=Bering<br>Bones</p>
-<p>=Grip tape<br>Mob<br>Grizzly Bear</p>
-<p>I am glad to join in the interview. My name is yang yongming,<br>I am 25 years old. I came frome Dalian. I am a outgoing man.<br>I like philosohy and kernel hacking. I get a bachelor degree of<br>computer science of Dalian Nationalities University in 2012<br>I have 2 years working experiences on linux and kernel hacking.<br>I have used linux for 5 years. Linux is the only one operating system<br>in my computer. I am very familar with linux.</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/firo/">firo</a>
-</div>
-
-
-  <div class="article-tags">
+<section class="post" itemscope itemprop="blogitem">
   
-  <span></span> <a href="/tags/firo/">firo</a>
-  </div>
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/firo/firo/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
-      <a href="/2015/02/27/cs/fedora/" title="Fedora distro 物语" itemprop="url">Fedora distro 物语</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
-		
-  <p class="article-time">
-    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <h1 id="Goagent">Goagent</h1>
-<p>139.175.107.84|139.175.107.89|139.175.107.94|139.175.107.99|139.175.107.103|139.175.107.104|139.175.107.108|139.175.107.109|139.175.107.113|139.175.107.118|139.175.107.119|139.175.107.123</p>
-<h1 id="Nautilus">Nautilus</h1>
-<ul>
-<li>Sidebar<br>Edit below file to rename dir in place menu of sidebar.<br>vim ~/.config/user-dirs.dirs</li>
-</ul>
-<h1 id="xdg">xdg</h1>
-<ul>
-<li>Specification<br><a href="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html" target="_blank" rel="external">http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html</a></li>
-</ul>
-<h1 id="Raspberry_pi">Raspberry pi</h1>
-<ul>
-<li>Remote viewer<br>vinagre</li>
-</ul>
-<h1 id="fedora_22">fedora 22</h1>
-<ul>
-<li><p>Check dup and error<br>yum check</p>
-</li>
-<li><p>after distro-sync 22 yum/dnf still recognize 21<br>yum check must output fedor-relase/repos-21 something like, remove it.</p>
-</li>
-<li><p>tty loop login<br>disable selinux<br>authconfig update all</p>
-</li>
-<li><p>kernel parameter<br>audit=0 selinux=0<br>rhgb  redaht graphical boot, show picture<br>quiet: show little message<br>init=/bin/bash</p>
-</li>
-<li><p>boot stop at update UTMP<br>disable NetworkManager</p>
-</li>
-</ul>
-<h1 id="dropbear">dropbear</h1>
-<p>=generate private key<br>dropbearkey -t rsa -f ~/.ssh/id_rsa.db<br>=yank public key<br>dropbearkey -y -f ~/.ssh/id_rsa.db<br>=login in<br>dbclient -y -i ~/.ssh/id_rsa.db user@ip<br>=trans file<br>scp -S dbclient -i ~/.ssh/id_rsa fileName user@ip:/dir</p>
-<h1 id="gpg">gpg</h1>
-<p>6A6608B8</p>
-<h1 id="id3tag">id3tag</h1>
-<p>id3tag -2 <em>.mp3<br>for file in </em>.mp3;do f=$(echo “$file” |awk -F ‘ ‘ ‘{print $2}’ | awk -F ‘.’ ‘{print $1}’); id3tag -s “$f” “$file”;  done<br>exiftool -json Baccano!\ 永生之酒(バッカーノ！)\ ORIGINAL\ SOUNDTRACK\ SPIRAL\ MELODIES/12.緩みきった官能のダンス.mp3</p>
-<h1 id="indent">indent</h1>
-<p>indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs <em>.c </em>.h</p>
-<h1 id="qemu">qemu</h1>
-<p>qemu -m 512 -kernel bzImage -append “root=/dev/sda” -boot c -hda busybox.img -k en-us</p>
-<h1 id="rdesktop">rdesktop</h1>
-<p>rdesktop -K -g 1366x700 -r clipboard:PRIMARYCLIPBOARD 192.168.10.200 -r sound:local -u firo -p “”<br>rdesktop -K -g 1366x700 -r clipboard:CLIPBOAD 192.168.10.200<br>nmap  -sP 192.168.10.0/24  | grep ‘Nmap scan’ | awk ‘{print$5}’ | while read line; do echo “connect to $line”;  timeout -s 9 2 rdesktop -K -g 1366x700 -r clipboard:CLIPBOARD $line; done</p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/cs/">cs</a>
-</div>
-
-
-  <div class="article-tags">
+    <a href="/2015/02/27/cs/development_environment/" title="The linux development environment" itemprop="url">
   
-  <span></span> <a href="/tags/cs/">cs</a>
-  </div>
+    <h1 itemprop="name">The linux development environment</h1>
+    
+     
+           <p itemprop="description" >Reference
+Programming toolUtility software
+Development environment
+Source code editor
 
-</div>
+vimeasymotion
 
+Code navigation tools
 
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/02/27/cs/fedora/#disqus_thread" class="comments-count-link">Comments</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
+ctagsctags -R —</p>
+        
+    
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
 
 
 
 
 
 
-  <nav id="page-nav" class="clearfix">
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/kernel/activities/" title="Kernel activities" itemprop="url">
+  
+    <h1 itemprop="name">Kernel activities</h1>
+    
+     
+           <p itemprop="description" >The player
+
+Interrupt — irq,softirq
+Process — user process, kernel thread(workqueue)
+
+Common concpets
+userspace: A process executing its own</p>
+        
+    
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/kernel/fs/" title="filesystem" itemprop="url">
+  
+    <h1 itemprop="name">filesystem</h1>
+    
+     
+           <p itemprop="description" >Hacks
+I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.
+VFS
+Common c</p>
+        
+    
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/kernel/process/" title="Linux process management" itemprop="url">
+  
+    <h1 itemprop="name">Linux process management</h1>
+    
+     
+           <p itemprop="description" >Protection ring
+Kernel mode:
+User mode
+限制访问地址空间, 内核数据结构, I/O 指令, 中断代码等.
+Mode switch
+esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。读TSS段中进程的内核态指针付给ss和</p>
+        
+    
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/kernel/synchronization/" title="Synchronization" itemprop="url">
+  
+    <h1 itemprop="name">Synchronization</h1>
+    
+     
+           <p itemprop="description" >Reference
+Perfbook
+Why we need synchronization
+a critical section is a piece of code that accesses a shared resource(data structure or devic</p>
+        
+    
+    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/chronobiology/" title="Chronobiology" itemprop="url">
+  
+    <h1 itemprop="name">Chronobiology</h1>
+    
+     
+           <p itemprop="description" >Chronobiology
+Principle: health, effective
+
+Develop good eating babits.Avoid eating junk food as much as possible.
+
+Drink a lot of water eve</p>
+        
+    
+    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/firo/firo/" title="Firo" itemprop="url">
+  
+    <h1 itemprop="name">Firo</h1>
+    
+     
+           <p itemprop="description" >Birthday
+Mama06 25 196309 24 1963 Household registerPresent:
+Baba02 28 196802 29 1968 Household registerPresent:
+Brother01 06 1991Present:
+F</p>
+        
+    
+    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+  
+<section class="post" itemscope itemprop="blogitem">
+  
+    <a href="/2015/02/27/cs/fedora/" title="Fedora distro 物语" itemprop="url">
+  
+    <h1 itemprop="name">Fedora distro 物语</h1>
+    
+     
+           <p itemprop="description" >Goagent
+139.175.107.84|139.175.107.89|139.175.107.94|139.175.107.99|139.175.107.103|139.175.107.104|139.175.107.108|139.175.107.109|139.175.</p>
+        
+    
+    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished">Feb 27 2015</time>
+  </a>
+</section>
+
+
+
+
+
+
+
+  <nav id="page-nav" class="clearfix unexpand">
     <a class="extend prev" rel="prev" href="/page/2/"><span></span>Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/">Next<span></span></a>
   </nav>
 
