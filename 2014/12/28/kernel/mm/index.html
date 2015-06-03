@@ -4,46 +4,52 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Linux kernel memory management | Firo Notes</title>
+    <title>Linux kernel memory management | Firo的世界</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="Firo Yang">
     
 
     
-    <meta name="description" content="Memroy mangement
+    <meta name="description" content="page
+An introduction to compound pages
+Memroy mangement
 GFP flags
 GFP_IO: allow disk IO
 GFP_FS: allow fs operations, depend on io.more details in lwn, lkd
 Virtual memory
 What is virtual memory?
-In computing, virtual memory is a memory mana">
+In com">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux kernel memory management">
 <meta property="og:url" content="http://firoyang.org/2014/12/28/kernel/mm/">
-<meta property="og:site_name" content="Firo Notes">
-<meta property="og:description" content="Memroy mangement
+<meta property="og:site_name" content="Firo的世界">
+<meta property="og:description" content="page
+An introduction to compound pages
+Memroy mangement
 GFP flags
 GFP_IO: allow disk IO
 GFP_FS: allow fs operations, depend on io.more details in lwn, lkd
 Virtual memory
 What is virtual memory?
-In computing, virtual memory is a memory mana">
+In com">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux kernel memory management">
-<meta name="twitter:description" content="Memroy mangement
+<meta name="twitter:description" content="page
+An introduction to compound pages
+Memroy mangement
 GFP flags
 GFP_IO: allow disk IO
 GFP_FS: allow fs operations, depend on io.more details in lwn, lkd
 Virtual memory
 What is virtual memory?
-In computing, virtual memory is a memory mana">
+In com">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
 
     
-    <link rel="alternative" href="/atom.xml" title="Firo Notes" type="application/atom+xml">
+    <link rel="alternative" href="/atom.xml" title="Firo的世界" type="application/atom+xml">
     
     
     <link rel="icon" href="/img/favicon.ico">
@@ -62,12 +68,12 @@ In computing, virtual memory is a memory mana">
 <div>
 		
 			<div id="imglogo">
-				<a href="/"><img src="/img/logo.svg" alt="Firo Notes" title="Firo Notes"/></a>
+				<a href="/"><img src="/img/logo.svg" alt="Firo的世界" title="Firo的世界"/></a>
 			</div>
 			
 			<div id="textlogo">
-				<h1 class="site-name"><a href="/" title="Firo Notes">Firo Notes</a></h1>
-				<h2 class="blog-motto">kernel, philosophy, the beautiful, the bad, what the fuck</h2>
+				<h1 class="site-name"><a href="/" title="Firo的世界">Firo的世界</a></h1>
+				<h2 class="blog-motto">时间过得久一点, 以前生活过的地方就记不清了.</h2>
 			</div>
 			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
 			</a></div>
@@ -117,11 +123,13 @@ In computing, virtual memory is a memory mana">
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Memroy_mangement"><span class="toc-number">1.</span> <span class="toc-text">Memroy mangement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">1.1.</span> <span class="toc-text">GFP flags</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">2.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">2.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_table"><span class="toc-number">2.2.</span> <span class="toc-text">Page table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">2.3.</span> <span class="toc-text">copy_to_user</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#flush_tlb_after_page_table_modification-"><span class="toc-number">2.4.</span> <span class="toc-text">flush tlb after page table modification.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">2.5.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">2.6.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">2.6.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">2.6.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">2.7.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">2.8.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_virtual_memory"><span class="toc-number">2.9.</span> <span class="toc-text">Process virtual memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">3.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">4.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#page_allocator"><span class="toc-number">4.1.</span> <span class="toc-text">page allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">4.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">4.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">4.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">5.</span> <span class="toc-text">FAQ</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#page"><span class="toc-number">1.</span> <span class="toc-text">page</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memroy_mangement"><span class="toc-number">2.</span> <span class="toc-text">Memroy mangement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">2.1.</span> <span class="toc-text">GFP flags</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">3.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">3.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_table"><span class="toc-number">3.2.</span> <span class="toc-text">Page table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">3.3.</span> <span class="toc-text">copy_to_user</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#flush_tlb_after_page_table_modification-"><span class="toc-number">3.4.</span> <span class="toc-text">flush tlb after page table modification.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">3.5.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">3.6.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">3.6.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">3.6.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">3.7.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">3.8.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_virtual_memory"><span class="toc-number">3.9.</span> <span class="toc-text">Process virtual memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">4.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">5.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#page_allocator"><span class="toc-number">5.1.</span> <span class="toc-text">page allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">5.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">5.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">5.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">6.</span> <span class="toc-text">FAQ</span></a></li></ol>
 		
 		</div>
 		
-		<h1 id="Memroy_mangement">Memroy mangement</h1>
+		<h1 id="page">page</h1>
+<p><a href="https://lwn.net/Articles/619514/" target="_blank" rel="external">An introduction to compound pages</a></p>
+<h1 id="Memroy_mangement">Memroy mangement</h1>
 <h2 id="GFP_flags">GFP flags</h2>
 <p><strong>GFP_IO: allow disk IO
 </strong>GFP_FS: allow fs operations, depend on io.<br>more details in lwn, lkd</p>
@@ -216,7 +224,7 @@ The available RAM memory in a computer is never enough to meet user needs or to 
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://firoyang.org/2014/12/28/kernel/mm/" data-title="Linux kernel memory management | Firo Notes" data-tsina="null" class="share clearfix">
+	  <div data-url="http://firoyang.org/2014/12/28/kernel/mm/" data-title="Linux kernel memory management | Firo的世界" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -262,7 +270,7 @@ The available RAM memory in a computer is never enough to meet user needs or to 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Memroy_mangement"><span class="toc-number">1.</span> <span class="toc-text">Memroy mangement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">1.1.</span> <span class="toc-text">GFP flags</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">2.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">2.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_table"><span class="toc-number">2.2.</span> <span class="toc-text">Page table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">2.3.</span> <span class="toc-text">copy_to_user</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#flush_tlb_after_page_table_modification-"><span class="toc-number">2.4.</span> <span class="toc-text">flush tlb after page table modification.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">2.5.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">2.6.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">2.6.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">2.6.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">2.7.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">2.8.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_virtual_memory"><span class="toc-number">2.9.</span> <span class="toc-text">Process virtual memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">3.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">4.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#page_allocator"><span class="toc-number">4.1.</span> <span class="toc-text">page allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">4.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">4.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">4.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">5.</span> <span class="toc-text">FAQ</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#page"><span class="toc-number">1.</span> <span class="toc-text">page</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memroy_mangement"><span class="toc-number">2.</span> <span class="toc-text">Memroy mangement</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GFP_flags"><span class="toc-number">2.1.</span> <span class="toc-text">GFP flags</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Virtual_memory"><span class="toc-number">3.</span> <span class="toc-text">Virtual memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#What_is_virtual_memory?"><span class="toc-number">3.1.</span> <span class="toc-text">What is virtual memory?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_table"><span class="toc-number">3.2.</span> <span class="toc-text">Page table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#copy_to_user"><span class="toc-number">3.3.</span> <span class="toc-text">copy_to_user</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#flush_tlb_after_page_table_modification-"><span class="toc-number">3.4.</span> <span class="toc-text">flush tlb after page table modification.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct_mapping_area"><span class="toc-number">3.5.</span> <span class="toc-text">Direct mapping area</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vmalloc"><span class="toc-number">3.6.</span> <span class="toc-text">Vmalloc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Hwo_Vmalloc_works?"><span class="toc-number">3.6.1.</span> <span class="toc-text">Hwo Vmalloc works?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vmalloc_coherence_with_vfree()_after_vmalloc_sync_one"><span class="toc-number">3.6.2.</span> <span class="toc-text">Vmalloc coherence with vfree() after vmalloc_sync_one</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Persistent_Kernel_Mappings"><span class="toc-number">3.7.</span> <span class="toc-text">Persistent Kernel Mappings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Temporay_Mappings(Fixmaps)"><span class="toc-number">3.8.</span> <span class="toc-text">Temporay Mappings(Fixmaps)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Process_virtual_memory"><span class="toc-number">3.9.</span> <span class="toc-text">Process virtual memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Page_faults"><span class="toc-number">4.</span> <span class="toc-text">Page faults</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Physical_memory"><span class="toc-number">5.</span> <span class="toc-text">Physical memory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#page_allocator"><span class="toc-number">5.1.</span> <span class="toc-text">page allocator</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page/buffer_cache"><span class="toc-number">5.2.</span> <span class="toc-text">Page/buffer cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_writeback"><span class="toc-number">5.3.</span> <span class="toc-text">Page writeback</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page_swap"><span class="toc-number">5.4.</span> <span class="toc-text">Page swap</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-number">6.</span> <span class="toc-text">FAQ</span></a></li></ol>
  
   </div>
 
