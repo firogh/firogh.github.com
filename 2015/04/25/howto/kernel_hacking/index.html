@@ -111,7 +111,7 @@ Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_hacking_tips"><span class="toc-number">3.</span> <span class="toc-text">kernel hacking tips</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#consideration_of_kernel_hacking"><span class="toc-number">4.</span> <span class="toc-text">consideration of kernel hacking</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#memory_alloction"><span class="toc-number">4.1.</span> <span class="toc-text">memory alloction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_player_—_the_context_of_ruuning"><span class="toc-number">4.2.</span> <span class="toc-text">The player — the context of ruuning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchroniation"><span class="toc-number">4.3.</span> <span class="toc-text">synchroniation</span></a></li></ol></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">3.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TODO"><span class="toc-number">3.1.</span> <span class="toc-text">TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">3.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">3.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">3.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">3.5.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">4.</span> <span class="toc-text">Deeply involved</span></a></li></ol>
 		
 		</div>
 		
@@ -123,12 +123,38 @@ Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next
 <p>我的linux next remote 就叫next, 基于其创建开发分支.</p>
 <pre><code>git branch <span class="built_in">now</span> <span class="keyword">next</span>/master
 git pull <span class="keyword">next</span> master:<span class="built_in">now</span>
-</code></pre><h1 id="kernel_hacking_tips">kernel hacking tips</h1>
-<p>kernel patch<br>manuplation of page table<br>add new system_call<br>workqueue</p>
-<h1 id="consideration_of_kernel_hacking">consideration of kernel hacking</h1>
-<h2 id="memory_alloction">memory alloction</h2>
-<h2 id="The_player_—_the_context_of_ruuning">The player — the context of ruuning</h2>
-<h2 id="synchroniation">synchroniation</h2>
+</code></pre><h1 id="Fix_kernel_mistakes">Fix kernel mistakes</h1>
+<p>内核至今如此优秀就是因为, 成千上万前赴后继的开发者笔耕不缀的结果.<br>别当豆包不当干粮, 虽然, 你不能设计出很牛的算法, or 什么子系统,<br>但是内核还有很多问题有待解决, 正所谓老虎也要打, 苍蝇也要拍; 千里之堤毁于蚁穴.<br>我提过好些这种patch Dan Carpenter都告诉我Linus已经改了.</p>
+<h2 id="TODO">TODO</h2>
+<p><a href="http://kernelnewbies.org/KernelJanitors/Todo" target="_blank" rel="external">KernelJanitors/Todo</a></p>
+<h2 id="Smatch">Smatch</h2>
+<p>smatch这个工具是Dan写的主要就是为了找到内核的小问题, 基本用法:</p>
+<pre><code>    make <span class="variable">CHECK=</span><span class="string">"~/path/to/smatch/smatch -p=kernel"</span> <span class="variable">C=</span><span class="number">1</span> \
+            bzImage modules | tee warns.txt
+</code></pre><p>smatch 会产生好多可以的问题, 细心寻找吧.<br>你找到了, 那么就是修改了.<br>记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.</p>
+<h2 id="Coccinelle">Coccinelle</h2>
+<p>Coccinelle是 Julia Lawall 写的静态检测工具.very nice.<br>自己研究吧</p>
+<h2 id="生成patch">生成patch</h2>
+<p>先修改.<br>之后git add<br>在commit 之前你要 git log —online path/to/modification/file<br>看下提交的titile:</p>
+<pre><code>git <span class="command">log</span>  <span class="comment">--oneline drivers/base/firmware_class.c</span>
+<span class="number">5455</span>c8c firmware: Fix memory leak <span class="keyword">in</span> <span class="keyword">error</span> path
+e0fd9b1 firmware: use const <span class="keyword">for</span> remaining firmware names
+f9692b2 firmware: fix possible use <span class="keyword">after</span> free <span class="function_start"><span class="keyword">on</span></span> <span class="property">name</span> <span class="function_start"><span class="keyword">on</span></span> a
+</code></pre><p>你会还是看下Document下的submitting的文档.<br>之后commit:<br>先是类似上面的一行oneline 简要说明<br>空一行.<br>之后具体描述下.<br>commit后, 生成patch<br>如果你只提交了一次:</p>
+<pre><code>git format-<span class="keyword">patch</span> HEAD^..HEAD
+</code></pre><p>这个命令就ok了.<br>如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.<br>这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的<br>如我这个, 已被接收:</p>
+<pre><code><span class="number">0001</span>-firmware-Fix-<span class="keyword">memory</span>-leak-<span class="keyword">in</span>-<span class="keyword">error</span>-path.patch
+</code></pre><p>commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9</p>
+<h2 id="发送patch">发送patch</h2>
+<p>天朝用户自己打梯子吧proxychains shadowsocks.<br>基本步骤是<br>先编译一下:<br>make path/to/modification/file.o<br>之后<br>./scripts/checkpatch.pl<br>之后 get maintainer<br>./scripts/get_maintainer.pl</p>
+<p>发送的时候, 发给维护者 —cc其他人, 还有cc 一个mailist, 如果没有合适的list的话,<br>就cc到linux-kernel@vger.kernel.org, 这是个开放的list, 有合适的list了, 就不要cc它了.</p>
+<pre><code>proxychains git send-email --to ming.lei<span class="variable">@canonical</span>.com --cc gregkh<span class="variable">@linuxfoundation</span>.org --cc kernel-janitors<span class="variable">@vger</span>.kernel.org <span class="number">0001</span>-firmware-Fix-<span class="keyword">memory</span>-leak-<span class="keyword">in</span>-<span class="keyword">error</span>-path.patch
+</code></pre><p>免不了你要返工重新修改.这时候, 新生成的patch这样:</p>
+<pre><code>git <span class="built_in">format</span>-patch --subject-prefix=<span class="string">"PATCH v2"</span> HEAD^..HEAD
+</code></pre><p>改几次就v几.<br>和社区交流的时候, 要注意礼貌, 而且要感谢别人对你的patch做出的建议,<br>没有人的时间是被猪拱来的.</p>
+<p>这些都是比较简单(代码量上)的patch, 要想提交深度的还需要对某方面的深度.</p>
+<h1 id="Deeply_involved">Deeply involved</h1>
+<p><a href="http://vger.kernel.org/~davem/net_todo.html" target="_blank" rel="external">http://vger.kernel.org/~davem/net_todo.html</a><br>这个列表上的基本都过期了….哎</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -192,7 +218,7 @@ git pull <span class="keyword">next</span> master:<span class="built_in">now</sp
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_hacking_tips"><span class="toc-number">3.</span> <span class="toc-text">kernel hacking tips</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#consideration_of_kernel_hacking"><span class="toc-number">4.</span> <span class="toc-text">consideration of kernel hacking</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#memory_alloction"><span class="toc-number">4.1.</span> <span class="toc-text">memory alloction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_player_—_the_context_of_ruuning"><span class="toc-number">4.2.</span> <span class="toc-text">The player — the context of ruuning</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchroniation"><span class="toc-number">4.3.</span> <span class="toc-text">synchroniation</span></a></li></ol></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">3.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TODO"><span class="toc-number">3.1.</span> <span class="toc-text">TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">3.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">3.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">3.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">3.5.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">4.</span> <span class="toc-text">Deeply involved</span></a></li></ol>
  
   </div>
 
