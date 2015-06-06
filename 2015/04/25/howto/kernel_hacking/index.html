@@ -111,7 +111,7 @@ Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">3.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TODO"><span class="toc-number">3.1.</span> <span class="toc-text">TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">3.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">3.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">3.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">3.5.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">4.</span> <span class="toc-text">Deeply involved</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">3.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TODO"><span class="toc-number">3.1.</span> <span class="toc-text">TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">3.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">3.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">3.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">3.5.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">4.</span> <span class="toc-text">Deeply involved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FIXME"><span class="toc-number">5.</span> <span class="toc-text">FIXME</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#patch_formate"><span class="toc-number">5.1.</span> <span class="toc-text">patch formate</span></a></li></ol></li></ol>
 		
 		</div>
 		
@@ -133,7 +133,7 @@ git pull <span class="keyword">next</span> master:<span class="built_in">now</sp
             bzImage modules | tee warns.txt
 </code></pre><p>smatch 会产生好多可以的问题, 细心寻找吧.<br>你找到了, 那么就是修改了.<br>记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.</p>
 <h2 id="Coccinelle">Coccinelle</h2>
-<p>Coccinelle是 Julia Lawall 写的静态检测工具.very nice.<br>自己研究吧</p>
+<p>Coccinelle是 Julia Lawall 写的静态检测工具.very nice.<br>自己研究吧<br>Documentation/coccinelle.txt<br><a href="http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf" target="_blank" rel="external">http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf</a></p>
 <h2 id="生成patch">生成patch</h2>
 <p>先修改.<br>之后git add<br>在commit 之前你要 git log —online path/to/modification/file<br>看下提交的titile:</p>
 <pre><code>git <span class="command">log</span>  <span class="comment">--oneline drivers/base/firmware_class.c</span>
@@ -155,6 +155,37 @@ f9692b2 firmware: fix possible use <span class="keyword">after</span> free <span
 <p>这些都是比较简单(代码量上)的patch, 要想提交深度的还需要对某方面的深度.</p>
 <h1 id="Deeply_involved">Deeply involved</h1>
 <p><a href="http://vger.kernel.org/~davem/net_todo.html" target="_blank" rel="external">http://vger.kernel.org/~davem/net_todo.html</a><br>这个列表上的基本都过期了….哎</p>
+<h1 id="FIXME">FIXME</h1>
+<p>很乱 之前的旧文档, 待整理.</p>
+<h2 id="patch_formate">patch formate</h2>
+<ul>
+<li><p>Julia Lawall Sorry to be picky,<br>but normally people put a space after the colon.  Also,<br>the subject line could be shorter: Remove unneeded cast.<br>The description part of the subject doesnt have to be unique,<br>just the whole thing, asfter the [PATCH] part.</p>
+</li>
+<li><p>Dan Carpenter<br>Otherwise your patch was fine, btw.  Other improvements.<br>Don’t put “Drivers:” in the subject.<br>On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:</p>
+<blockquote>
+<p>From: Firo Yang <a href="&#x6d;&#97;&#105;&#108;&#x74;&#111;&#58;&#102;&#x69;&#x72;&#x6f;&#103;&#109;&#64;&#x67;&#x6d;&#97;&#105;&#108;&#46;&#99;&#x6f;&#109;">&#102;&#x69;&#x72;&#x6f;&#103;&#109;&#64;&#x67;&#x6d;&#97;&#105;&#108;&#46;&#99;&#x6f;&#109;</a><br>Don’t include this line.  We can get it from you email address.</p>
+</blockquote>
+</li>
+</ul>
+<p>Include everyone from the ./scripts/get_maintainer.pl output except<br>don’t include linux-kernel@vger.kernel.org if there is another mailing<br>list there already.</p>
+<ul>
+<li><p>To find  patch prefix<br>git log —oneline  path/to/file.c</p>
+</li>
+<li><p>upgrad patch<br>git format-patch —subject-prefix=”PATCH v2” master..firo2</p>
+</li>
+<li><p>example mail in thread<br>proxychains git send-email —subject “[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values” —thread —compose —confirm=compose —to firogm@gmail.com *.patch</p>
+</li>
+<li><p>[PATCH 0/N] manully<br>see above</p>
+</li>
+<li><p>Patch kind<br>Style fix in</p>
+</li>
+</ul>
+<ul>
+<li>remove_wait_queue(entry-&gt;wait_address,&amp;entry-&gt;wait);</li>
+</ul>
+<ul>
+<li>remove_wait_queue(entry-&gt;wait_address, &amp;entry-&gt;wait);</li>
+</ul>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -218,7 +249,7 @@ f9692b2 firmware: fix possible use <span class="keyword">after</span> free <span
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">3.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TODO"><span class="toc-number">3.1.</span> <span class="toc-text">TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">3.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">3.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">3.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">3.5.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">4.</span> <span class="toc-text">Deeply involved</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">3.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TODO"><span class="toc-number">3.1.</span> <span class="toc-text">TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">3.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">3.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">3.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">3.5.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">4.</span> <span class="toc-text">Deeply involved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FIXME"><span class="toc-number">5.</span> <span class="toc-text">FIXME</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#patch_formate"><span class="toc-number">5.1.</span> <span class="toc-text">patch formate</span></a></li></ol></li></ol>
  
   </div>
 
