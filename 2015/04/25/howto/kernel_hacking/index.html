@@ -11,24 +11,18 @@
     
 
     
-    <meta name="description" content="git
-gittutorial - A tutorial introduction to Git
-linux source code
-Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.我之前改了好多bug基于linus的分支, 提交后被告知别人已改">
+    <meta name="description" content="kernel hacker之路
+我实在太想聊这个话题 — 内核hacker的成长之路!不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为内核的中坚力量, 甚至是maintainer.作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.起始我在12年的11月份曾经给社区, 提过">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux kernel hacking 攻略">
 <meta property="og:url" content="http://firoyang.org/2015/04/25/howto/kernel_hacking/">
 <meta property="og:site_name" content="Firo的世界">
-<meta property="og:description" content="git
-gittutorial - A tutorial introduction to Git
-linux source code
-Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.我之前改了好多bug基于linus的分支, 提交后被告知别人已改">
+<meta property="og:description" content="kernel hacker之路
+我实在太想聊这个话题 — 内核hacker的成长之路!不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为内核的中坚力量, 甚至是maintainer.作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.起始我在12年的11月份曾经给社区, 提过">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux kernel hacking 攻略">
-<meta name="twitter:description" content="git
-gittutorial - A tutorial introduction to Git
-linux source code
-Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.我之前改了好多bug基于linus的分支, 提交后被告知别人已改">
+<meta name="twitter:description" content="kernel hacker之路
+我实在太想聊这个话题 — 内核hacker的成长之路!不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为内核的中坚力量, 甚至是maintainer.作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.起始我在12年的11月份曾经给社区, 提过">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -108,19 +102,27 @@ Working with linux-next要add git://git.kernel.org/pub/scm/linux/kernel/git/next
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#为什么你要提patch,_社区的困惑是什么?"><span class="toc-number">3.</span> <span class="toc-text">为什么你要提patch, 社区的困惑是什么?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">4.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kernel_newbie上有个list"><span class="toc-number">4.1.</span> <span class="toc-text">kernel newbie上有个list</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">4.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">4.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">4.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试patch"><span class="toc-number">4.5.</span> <span class="toc-text">测试patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">4.6.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#进阶decent"><span class="toc-number">5.</span> <span class="toc-text">进阶decent</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">6.</span> <span class="toc-text">Deeply involved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#patch_formate_advices"><span class="toc-number">7.</span> <span class="toc-text">patch formate advices</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_hacker之路"><span class="toc-number">1.</span> <span class="toc-text">kernel hacker之路</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#内核我现在认为可以给新人做得事"><span class="toc-number">1.1.</span> <span class="toc-text">内核我现在认为可以给新人做得事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#适合内核hacker的成长-"><span class="toc-number">1.2.</span> <span class="toc-text">适合内核hacker的成长.</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">2.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">3.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#你提patch,_社区的困惑是什么?"><span class="toc-number">4.</span> <span class="toc-text">你提patch, 社区的困惑是什么?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">5.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kernel_newbie上有个list"><span class="toc-number">5.1.</span> <span class="toc-text">kernel newbie上有个list</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">5.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">5.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">5.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试patch"><span class="toc-number">5.5.</span> <span class="toc-text">测试patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">5.6.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#进阶decent"><span class="toc-number">6.</span> <span class="toc-text">进阶decent</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">7.</span> <span class="toc-text">Deeply involved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#patch_formate_advices"><span class="toc-number">8.</span> <span class="toc-text">patch formate advices</span></a></li></ol>
 		
 		</div>
 		
-		<h1 id="git">git</h1>
+		<h1 id="kernel_hacker之路">kernel hacker之路</h1>
+<p>我实在太想聊这个话题 — 内核hacker的成长之路!<br>不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为<br>内核的中坚力量, 甚至是maintainer.<br>作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.<br>因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.<br>起始我在12年的11月份曾经给社区, 提过几次补丁. 后来有那么两三次, 想帮着修复<br>kernel panic 和oops的问题, 基本上个人感觉难度非常太大就无极而终了.<br>5月份这次, 我是因为实在不想在看书籍了, 市面上稍微有点名的书籍, 我都看过.<br>实在太厌烦再看书了, 我把自己和另外一个内核hacker 王聪做了对比, 得出结论:</p>
+<pre><code>赶快滚去给社区提<span class="keyword">patch</span>! 
+</code></pre><p>我挨个看了王聪给社区提的前50个patch. 都是很简单的修改.<br>我几次挫败都是, 因为没能找到合适内核事情去做, 最终没有下文了.<br>今天, 我在给社区提了20个左右的patch 10几个被接收了. 我现在找到了一条成长路.</p>
+<h2 id="内核我现在认为可以给新人做得事">内核我现在认为可以给新人做得事</h2>
+<p>smatch coccinelle的分析结果.<br>源码中标注的FIXME和TODO.<br>内核bugzilla kerneloops上问题, 这个很难.<br>找一个和内核相关的工作驱动啊, 网络开发, 虚拟化, 存储都非常赞.<br>自己搞个feature, 感觉更难, 这个需要需求驱动.<br>作为新人, 我觉得前两个就可以获取很多成长.</p>
+<h2 id="适合内核hacker的成长-">适合内核hacker的成长.</h2>
+<p>兴趣<br>要不断提升提的patch难度, 不能一直搞smatch的警告, 有梯度.<br>持续的坚持.<br>良好的学习方法.</p>
+<p>无论如何, 我要开始这么干了!</p>
+<h1 id="git">git</h1>
 <p><a href="http://git-scm.com/docs/gittutorial" target="_blank" rel="external">gittutorial - A tutorial introduction to Git</a></p>
 <h1 id="linux_source_code">linux source code</h1>
 <p><a href="https://www.kernel.org/doc/man-pages/linux-next.html" target="_blank" rel="external">Working with linux-next</a><br>要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.<br>我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.<br>我的linux next remote 就叫next, 基于其创建开发分支.</p>
 <pre><code>git branch <span class="built_in">now</span> <span class="keyword">next</span>/master
 git pull <span class="keyword">next</span> master:<span class="built_in">now</span>
-</code></pre><h1 id="为什么你要提patch,_社区的困惑是什么?">为什么你要提patch, 社区的困惑是什么?</h1>
-<p>每个kernel newbie 都应该完整看完这个mail list<br><a href="http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297" target="_blank" rel="external">http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297</a><br>你能看到鹰派的Al还有温和派Andrew Morton.<br>至少把这个看完:<br><a href="https://lwn.net/Articles/284099/" target="_blank" rel="external">https://lwn.net/Articles/284099/</a></p>
-<p>为什么<a href="http://kernelnewbies.org/这么重要网站" target="_blank" rel="external">http://kernelnewbies.org/这么重要网站</a>, 不做的好一点, 至少界面友好点.<br>应该找个机会, 整一下.</p>
+</code></pre><h1 id="你提patch,_社区的困惑是什么?">你提patch, 社区的困惑是什么?</h1>
+<p>每个kernel newbie 都应该完整看完这个mail list<br><a href="http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297" target="_blank" rel="external">http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297</a><br>你能看到鹰派的Al还有温和派Andrew Morton.<br>至少把这个看完:<br><a href="https://lwn.net/Articles/284099/" target="_blank" rel="external">https://lwn.net/Articles/284099/</a><br>为什么<a href="http://kernelnewbies.org/这么重要网站" target="_blank" rel="external">http://kernelnewbies.org/这么重要网站</a>, 不做的好一点, 至少界面友好点.<br>应该找个机会, 整一下.</p>
 <h1 id="Fix_kernel_mistakes">Fix kernel mistakes</h1>
 <p>内核至今如此优秀就是因为, 成千上万前赴后继的开发者笔耕不缀的结果.<br>别当豆包不当干粮, 虽然, 你不能设计出很牛的算法, or 什么子系统,<br>但是内核还有很多问题有待解决, 正所谓老虎也要打, 苍蝇也要拍; 千里之堤毁于蚁穴.<br>我提过好些这种patch Dan Carpenter都告诉我Linus已经改了.</p>
 <h2 id="kernel_newbie上有个list">kernel newbie上有个list</h2>
@@ -134,23 +136,17 @@ git pull <span class="keyword">next</span> master:<span class="built_in">now</sp
 </code></pre><p>smatch 会产生好多可疑的问题, 细心寻找吧.<br>你找到了, 那么就是修改了.<br>记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.</p>
 <h2 id="Coccinelle">Coccinelle</h2>
 <p>Coccinelle是 Julia Lawall 写的静态检测工具.very nice.<br>自己研究吧<br>Documentation/coccinelle.txt<br><a href="http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf" target="_blank" rel="external">http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf</a></p>
-</li>
-</ul>
 <h2 id="生成patch">生成patch</h2>
 <p>先修改.<br>之后git add<br>在commit 之前你要 git log —online path/to/modification/file<br>看下提交的titile:</p>
-<pre><code>git <span class="command">log</span>  <span class="comment">--oneline drivers/base/firmware_class.c</span>
-<span class="number">5455</span>c8c firmware: Fix memory leak <span class="keyword">in</span> <span class="keyword">error</span> path
-e0fd9b1 firmware: use const <span class="keyword">for</span> remaining firmware names
-f9692b2 firmware: fix possible use <span class="keyword">after</span> free <span class="function_start"><span class="keyword">on</span></span> <span class="property">name</span> <span class="function_start"><span class="keyword">on</span></span> a
-</code></pre><p>主义冒号:后一定要有一个空格!<br>你会还是看下Document下的submitting的文档.<br>之后commit:<br>先是类似上面的一行oneline 简要说明<br>空一行.<br>之后具体描述下.<br>commit后, 生成patch<br>如果你只提交了一次:</p>
-<pre><code>git format-<span class="keyword">patch</span> HEAD^..HEAD
-</code></pre><p>这个命令就ok了.<br>如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.<br>这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的<br>如我这个, 已被接收:</p>
-<pre><code><span class="number">0001</span>-firmware-Fix-<span class="keyword">memory</span>-leak-<span class="keyword">in</span>-<span class="keyword">error</span>-path.patch
-</code></pre><p>commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9</p>
+<p>  git log  —oneline drivers/base/firmware_class.c<br>  5455c8c firmware: Fix memory leak in error path<br>  e0fd9b1 firmware: use const for remaining firmware names<br>  f9692b2 firmware: fix possible use after free on name on a<br>主义冒号:后一定要有一个空格!<br>你会还是看下Document下的submitting的文档.<br>之后commit:<br>先是类似上面的一行oneline 简要说明<br>空一行.<br>之后具体描述下.<br>commit后, 生成patch<br>如果你只提交了一次:</p>
+<p>  git format-patch HEAD^..HEAD<br>这个命令就ok了.<br>如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.<br>这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的<br>如我这个, 已被接收:</p>
+<p>  0001-firmware-Fix-memory-leak-in-error-path.patch<br>commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9</p>
 <h2 id="测试patch">测试patch</h2>
-<p>curl: (60) Peer’s certificate issuer has been marked as not trusted by the user.<br>More details here: <a href="http://curl.haxx.se/docs/sslcerts.html" target="_blank" rel="external">http://curl.haxx.se/docs/sslcerts.html</a><br>这个边界问题, 改了好一会, 这么解决:<br>mv ~/.pki ~/.pki.sav</p>
+<p>复杂的patch要编译内核, 安装的机器上跑一下.</p>
 <h2 id="发送patch">发送patch</h2>
 <p>天朝用户自己打梯子吧proxychains shadowsocks.<br>基本步骤是<br>先编译一下:<br>make path/to/modification/file.o<br>之后<br>./scripts/checkpatch.pl<br>之后 get maintainer<br>./scripts/get_maintainer.pl</p>
+</li>
+</ul>
 <p>发送的时候, 发给维护者 —cc其他人, 还有cc 一个mailist, 如果没有合适的list的话,<br>就cc到linux-kernel@vger.kernel.org, 这是个开放的list, 有合适的list了, 就不要cc它了.</p>
 <pre><code>proxychains git send-email --to ming.lei<span class="variable">@canonical</span>.com --cc gregkh<span class="variable">@linuxfoundation</span>.org --cc kernel-janitors<span class="variable">@vger</span>.kernel.org <span class="number">0001</span>-firmware-Fix-<span class="keyword">memory</span>-leak-<span class="keyword">in</span>-<span class="keyword">error</span>-path.patch
 </code></pre><p>免不了你要返工重新修改.这时候, 新生成的patch这样:</p>
@@ -169,7 +165,7 @@ wc -<span class="keyword">l</span> fixmek.<span class="built_in">log</span>
 <ul>
 <li>Julia Lawall Sorry to be picky,<br>but normally people put a space after the colon.  Also,<br>the subject line could be shorter: Remove unneeded cast.<br>The description part of the subject doesnt have to be unique,<br>just the whole thing, asfter the [PATCH] part.</li>
 <li>Dan Carpenter<br>Otherwise your patch was fine, btw.  Other improvements.<br>Don’t put “Drivers:” in the subject.<br>On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:<blockquote>
-<p>From: Firo Yang <a href="&#109;&#x61;&#105;&#x6c;&#x74;&#x6f;&#x3a;&#102;&#x69;&#x72;&#111;&#x67;&#109;&#64;&#103;&#x6d;&#97;&#x69;&#108;&#x2e;&#x63;&#111;&#x6d;">&#102;&#x69;&#x72;&#111;&#x67;&#109;&#64;&#103;&#x6d;&#97;&#x69;&#108;&#x2e;&#x63;&#111;&#x6d;</a><br>Don’t include this line.  We can get it from you email address.</p>
+<p>From: Firo Yang <a href="&#109;&#97;&#105;&#108;&#x74;&#111;&#58;&#102;&#105;&#114;&#111;&#103;&#x6d;&#x40;&#x67;&#x6d;&#x61;&#105;&#108;&#x2e;&#99;&#111;&#x6d;">&#102;&#105;&#114;&#111;&#103;&#x6d;&#x40;&#x67;&#x6d;&#x61;&#105;&#108;&#x2e;&#99;&#111;&#x6d;</a><br>Don’t include this line.  We can get it from you email address.</p>
 </blockquote>
 </li>
 </ul>
@@ -257,7 +253,7 @@ wc -<span class="keyword">l</span> fixmek.<span class="built_in">log</span>
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">1.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">2.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#为什么你要提patch,_社区的困惑是什么?"><span class="toc-number">3.</span> <span class="toc-text">为什么你要提patch, 社区的困惑是什么?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">4.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kernel_newbie上有个list"><span class="toc-number">4.1.</span> <span class="toc-text">kernel newbie上有个list</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">4.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">4.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">4.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试patch"><span class="toc-number">4.5.</span> <span class="toc-text">测试patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">4.6.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#进阶decent"><span class="toc-number">5.</span> <span class="toc-text">进阶decent</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">6.</span> <span class="toc-text">Deeply involved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#patch_formate_advices"><span class="toc-number">7.</span> <span class="toc-text">patch formate advices</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_hacker之路"><span class="toc-number">1.</span> <span class="toc-text">kernel hacker之路</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#内核我现在认为可以给新人做得事"><span class="toc-number">1.1.</span> <span class="toc-text">内核我现在认为可以给新人做得事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#适合内核hacker的成长-"><span class="toc-number">1.2.</span> <span class="toc-text">适合内核hacker的成长.</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git"><span class="toc-number">2.</span> <span class="toc-text">git</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#linux_source_code"><span class="toc-number">3.</span> <span class="toc-text">linux source code</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#你提patch,_社区的困惑是什么?"><span class="toc-number">4.</span> <span class="toc-text">你提patch, 社区的困惑是什么?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Fix_kernel_mistakes"><span class="toc-number">5.</span> <span class="toc-text">Fix kernel mistakes</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kernel_newbie上有个list"><span class="toc-number">5.1.</span> <span class="toc-text">kernel newbie上有个list</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Smatch"><span class="toc-number">5.2.</span> <span class="toc-text">Smatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coccinelle"><span class="toc-number">5.3.</span> <span class="toc-text">Coccinelle</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成patch"><span class="toc-number">5.4.</span> <span class="toc-text">生成patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试patch"><span class="toc-number">5.5.</span> <span class="toc-text">测试patch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#发送patch"><span class="toc-number">5.6.</span> <span class="toc-text">发送patch</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#进阶decent"><span class="toc-number">6.</span> <span class="toc-text">进阶decent</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Deeply_involved"><span class="toc-number">7.</span> <span class="toc-text">Deeply involved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#patch_formate_advices"><span class="toc-number">8.</span> <span class="toc-text">patch formate advices</span></a></li></ol>
  
   </div>
 
