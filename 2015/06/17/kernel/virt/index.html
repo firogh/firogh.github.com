@@ -102,7 +102,7 @@
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#KVM"><span class="toc-number"></span> <span class="toc-text">KVM</span></a>
 		
 		</div>
 		
@@ -114,7 +114,9 @@ adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效�
 虚；虚拟艺术；虚拟的；模拟帐户
 </code></pre><p>这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!<br>话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.<br>很多事情, 在我们出生前就决定了, 我是89年9月出生的.<br>我们搞懂了所谓”虚拟化”的实质, 之后就可以继续探索了.<br>如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.<br>没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.<br>好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?<br>没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?<br>所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.<br>那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!<br>我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.<br>终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora<br>之上.</p>
 <h2 id="FKVM">FKVM</h2>
-<p>没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo’s KVM!<br>首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel<br>运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!<br>因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!<br>你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.<br>怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行<br>start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的<br>cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.<br>也就是要虚拟化一块内存.</p>
+<p>没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo’s KVM!<br>首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel<br>运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!<br>因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!<br>你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.<br>怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行<br>start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的<br>cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.<br>也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.<br>在内核初始化的时候, 会用调用bios的中断来获取内存信息.<br>也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.<br>开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.<br>现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是<br>高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.<br>只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?<br>我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.<br>就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.<br>也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.<br>如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.<br>这里需要很多底层的知识. 先看点资料再回来.<br>看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.<br>访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.<br>探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.<br>无论别人说的多么好, 我们必须要有自己的思路.<br>总结下所得:<br>控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.<br>虚拟化一块内存.<br>我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.</p>
+<h1 id="KVM">KVM</h1>
+<p>现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成…<br>探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.<br>千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然<br>是我们自己, 别人的知识只是辅助. 那好我们开始.<br>首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析</p>
 <p>核心的目的是提高硬件的利用率.<br>没错就是节省开销, 榨干硬件. 人的天性一想如此. 榨干别人, 也榨干自己.<br>反过来看这也是对资源的合理利用.虚拟化的另外一个结果就是资源的可控性.<br>就像西朝鲜人民一样, 每天都要接收新闻联播的洗礼一样.</p>
   
 	</div>
@@ -179,7 +181,7 @@ adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效�
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#KVM"><span class="toc-number"></span> <span class="toc-text">KVM</span></a>
  
   </div>
 
