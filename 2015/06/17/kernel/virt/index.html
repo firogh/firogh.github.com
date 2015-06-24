@@ -102,7 +102,7 @@
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#KVM_QEMU"><span class="toc-number"></span> <span class="toc-text">KVM QEMU</span></a>
+			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#KVM_QEMU"><span class="toc-number"></span> <span class="toc-text">KVM QEMU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#代码实现"><span class="toc-number"></span> <span class="toc-text">代码实现</span></a>
 		
 		</div>
 		
@@ -120,6 +120,14 @@ adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效�
 <pre><code>QEMU <span class="keyword">is</span> <span class="keyword">a</span> generic <span class="built_in">and</span> <span class="keyword">open</span> <span class="keyword">source</span> machine emulator <span class="built_in">and</span> virtualizer.
 </code></pre><p>qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.<br>qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.<br>我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.<br>那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.<br>毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的<br>虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.<br>据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情<br>补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.<br>不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂<br>肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.<br>内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.<br>下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.<br>我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.</p>
 <p>下面是设备的虚拟化, 这个还是看书去吧.</p>
+<h1 id="代码实现">代码实现</h1>
+<ul>
+<li>KVM architecture</li>
+<li>Kernel running flow<br>svm.ko -&gt; svm_init(svm.c) -&gt; kvm_init(kvm_main.c) -&gt;</li>
+<li>File<br>svm.c vmx.c kvm_main.c kvm_svm.h</li>
+<li>Function</li>
+<li>Struct<br>kvm_x86_ops x86.h<br>vcpu_svm    kvm_svm.h</li>
+</ul>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -151,10 +159,10 @@ adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效�
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/12/19/howto/learning/" title="如何学习">
+ <a href="/2015/06/24/history/china_a_century_of_revolution/" title="有一段历史离我们如此近记忆却模糊">
   <strong>上一篇：</strong><br/>
   <span>
-  如何学习</span>
+  有一段历史离我们如此近记忆却模糊</span>
 </a>
 </div>
 
@@ -183,7 +191,7 @@ adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效�
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#KVM_QEMU"><span class="toc-number"></span> <span class="toc-text">KVM QEMU</span></a>
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#FKVM"><span class="toc-number">1.</span> <span class="toc-text">FKVM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#KVM_QEMU"><span class="toc-number"></span> <span class="toc-text">KVM QEMU</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#代码实现"><span class="toc-number"></span> <span class="toc-text">代码实现</span></a>
  
   </div>
 
@@ -202,6 +210,10 @@ adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效�
 		
 		  
 			<li><a href="/categories/firo/" title="firo">firo<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/history/" title="history">history<sup>1</sup></a></li>
 		  
 		
 		  
