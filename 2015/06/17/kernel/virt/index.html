@@ -11,18 +11,15 @@
     
 
     
-    <meta name="description" content="本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和他的朋友们, 以及他们精彩的历程.人的想象">
+    <meta name="description" content="本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和他的朋友们, 以及他们精彩的历程.人的想象力">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux virtualization">
 <meta property="og:url" content="http://firoyang.org/2015/06/17/kernel/virt/">
 <meta property="og:site_name" content="Firo的世界">
-<meta property="og:description" content="本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和他的朋友们, 以及他们精彩的历程.人的想象">
+<meta property="og:description" content="本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和他的朋友们, 以及他们精彩的历程.人的想象力">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux virtualization">
-<meta name="twitter:description" content="本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和他的朋友们, 以及他们精彩的历程.人的想象">
+<meta name="twitter:description" content="本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和他的朋友们, 以及他们精彩的历程.人的想象力">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -106,8 +103,7 @@
 		
 		</div>
 		
-		<p>本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.<br>已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!<br>现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.</p>
-<p><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="http://music.163.com/outchain/player?type=2&id=1872802&auto=1&height=66"></iframe><br>看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和<br>他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与<br>空间去体验到不同生命历程.<br>今天, 我们来探索一下<a href="https://en.wikipedia.org/wiki/Virtualization" target="_blank" rel="external">虚拟化</a><br>如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.<br>显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.<br>法国哲学家福柯一生都在从事”知识考古学”, 而我也喜欢在研究问题时, 从语言学特别是<br>词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是<br>influencing by physical virtues or capabilities,<br>effective with respect to inherent natural qualities<br>受某种实在的长处能力影响, 源自本质的效用.<br>这里从两种角度理解virtual, 受影响者, 影响者本身.<br>所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.<br>这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:</p>
+		<p>本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.<br>已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!<br>现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.<br>看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和<br>他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与<br>空间去体验到不同生命历程.<br>今天, 我们来探索一下<a href="https://en.wikipedia.org/wiki/Virtualization" target="_blank" rel="external">虚拟化</a><br>如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.<br>显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.<br>法国哲学家福柯一生都在从事”知识考古学”, 而我也喜欢在研究问题时, 从语言学特别是<br>词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是<br>influencing by physical virtues or capabilities,<br>effective with respect to inherent natural qualities<br>受某种实在的长处能力影响, 源自本质的效用.<br>这里从两种角度理解virtual, 受影响者, 影响者本身.<br>所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.<br>这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:</p>
 <pre><code>virtual 音节划分：vir▪tual
 英 [ˈvɜ<span class="symbol">:t</span>ʃuəl] 美 [ˈvɜ<span class="symbol">:rt</span>ʃuəl]
 adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效的，虚像的；（粒子）实际存在的
