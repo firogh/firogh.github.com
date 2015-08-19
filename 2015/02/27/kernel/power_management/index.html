@@ -12,17 +12,17 @@
 
     
     <meta name="description" content="Reference
-MV78460 Hardware Specifications - 9.4 SoC Power Dissipation for Power Management Unit Low Power ModesMV78230/78x60 Functional Specifications - 37 Power ManagementDocumentation/powerThe cpuid">
+The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functiona">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Power management">
 <meta property="og:url" content="http://firoyang.org/2015/02/27/kernel/power_management/">
 <meta property="og:site_name" content="Firo的世界">
 <meta property="og:description" content="Reference
-MV78460 Hardware Specifications - 9.4 SoC Power Dissipation for Power Management Unit Low Power ModesMV78230/78x60 Functional Specifications - 37 Power ManagementDocumentation/powerThe cpuid">
+The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functiona">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Power management">
 <meta name="twitter:description" content="Reference
-MV78460 Hardware Specifications - 9.4 SoC Power Dissipation for Power Management Unit Low Power ModesMV78230/78x60 Functional Specifications - 37 Power ManagementDocumentation/powerThe cpuid">
+The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functiona">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -102,12 +102,18 @@ MV78460 Hardware Specifications - 9.4 SoC Power Dissipation for Power Management
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">2.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">3.</span> <span class="toc-text">kernel cpuidle subsystem</span></a></li></ol>
 		
 		</div>
 		
 		<h1 id="Reference">Reference</h1>
-<p>MV78460 Hardware Specifications - 9.4 SoC Power Dissipation for Power Management Unit Low Power Modes<br>MV78230/78x60 Functional Specifications - 37 Power Management<br>Documentation/power<br><a href="https://lwn.net/Articles/384146/" target="_blank" rel="external">The cpuidle subsystem</a></p>
+<p><a href="https://lwn.net/Articles/384146/" target="_blank" rel="external">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently<br><a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF" target="_blank" rel="external">Hardware Specifications 9.4</a><br>[Functional Specifications 34] (<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf" target="_blank" rel="external">http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf</a>)<br>Documentation/power<br>Controlling Processor C-State Usage in Linux<br><a href="http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html" target="_blank" rel="external">Chapter 11. Power Management</a></p>
+<p>C-states: idle core power state</p>
+<h1 id="Introdution">Introdution</h1>
+<p>电源管理都涉及到那些内容?<br>PMU, CPU,<br>In hardware layer, we need <a href="https://en.wikipedia.org/wiki/Power_Management_Unit" target="_blank" rel="external">PMU</a> to complete power management.<br>What is the relation of PMU and CPU?<br>armadaxp的PMU与CPU物理上与逻辑上是独立的.<br>The Power Management functions are provided by two power manager units:<br>The Device Power Management Unit (DEV_PMU)<br>The Multiprocessor Power Management Service Unit (MP_PMU).<br>PMU省电模式:</p>
+<h1 id="kernel_cpuidle_subsystem">kernel cpuidle subsystem</h1>
+<p>include/linux/cpuidle.h<br>struct cpuidle_driver<br>struct cpuidle_state<br>struct cpuidle_device used by ladder or menu</p>
+<p>device_initcall -&gt; armadaxp_init_cpuidle -&gt; cpuidle_register_driver  cpuidle_register_device<br>cpu_idle -&gt; cpuidle_idle_call</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -176,7 +182,7 @@ MV78460 Hardware Specifications - 9.4 SoC Power Dissipation for Power Management
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">2.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">3.</span> <span class="toc-text">kernel cpuidle subsystem</span></a></li></ol>
  
   </div>
 
