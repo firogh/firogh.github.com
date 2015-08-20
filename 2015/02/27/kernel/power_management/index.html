@@ -110,7 +110,12 @@ The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.
 <p><a href="https://lwn.net/Articles/384146/" target="_blank" rel="external">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently<br><a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF" target="_blank" rel="external">Hardware Specifications 9.4</a><br>[Functional Specifications 34] (<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf" target="_blank" rel="external">http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf</a>)<br>Documentation/power<br>Controlling Processor C-State Usage in Linux<br><a href="http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html" target="_blank" rel="external">Chapter 11. Power Management</a></p>
 <p>C-states: idle core power state</p>
 <h1 id="Introdution">Introdution</h1>
-<p>电源管理都涉及到那些内容?<br>PMU, CPU,<br>In hardware layer, we need <a href="https://en.wikipedia.org/wiki/Power_Management_Unit" target="_blank" rel="external">PMU</a> to complete power management.<br>What is the relation of PMU and CPU?<br>armadaxp的PMU与CPU物理上与逻辑上是独立的.<br>The Power Management functions are provided by two power manager units:<br>The Device Power Management Unit (DEV_PMU)<br>The Multiprocessor Power Management Service Unit (MP_PMU).<br>PMU省电模式:</p>
+<p>电源管理都涉及到那些内容?<br>PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices<br>Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down</p>
+<ul>
+<li>WFI: core power down except snoop and interrupt cache working<br>disable clocks of the CPU<br>snoop other Cores and io agent.<br>only snoop block are temporarily woken up and the block back to WFI mode after complete snoop.<br>can recognize interrupt.</li>
+<li>Power down: core power down, l1 flush, cache not mantained/snoop stoped, but l2 &amp; fabric<br>can not recognize interrupt, recovery is fully depended on MP_PMU</li>
+</ul>
+<p>In hardware layer, we need <a href="https://en.wikipedia.org/wiki/Power_Management_Unit" target="_blank" rel="external">PMU</a> to complete power management.<br>What is the relation of PMU and CPU?<br>armadaxp的PMU与CPU物理上与逻辑上是独立的.<br>The Power Management functions are provided by two power manager units:<br>The Device Power Management Unit (DEV_PMU)<br>The Multiprocessor Power Management Service Unit (MP_PMU).<br>PMU省电模式:</p>
 <h1 id="kernel_cpuidle_subsystem">kernel cpuidle subsystem</h1>
 <p>include/linux/cpuidle.h<br>struct cpuidle_driver<br>struct cpuidle_state<br>struct cpuidle_device used by ladder or menu</p>
 <p>device_initcall -&gt; armadaxp_init_cpuidle -&gt; cpuidle_register_driver  cpuidle_register_device<br>cpu_idle -&gt; cpuidle_idle_call</p>
@@ -150,18 +155,18 @@ The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/kernel/synchronization/" title="Synchronization">
+ <a href="/2015/02/27/kernel/process/" title="Linux process management">
   <strong>上一篇：</strong><br/>
   <span>
-  Synchronization</span>
+  Linux process management</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/firo/firo/"  title="Firo">
+<a href="/2015/02/27/kernel/kernel/"  title="kernel">
  <strong>下一篇：</strong><br/> 
- <span>Firo
+ <span>kernel
 </span>
 </a>
 </div>
@@ -216,8 +221,6 @@ The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.
 		  
 		
 		  
-			<li><a href="/categories/list/" title="list">list<sup>1</sup></a></li>
-		  
 		
 		  
 			<li><a href="/categories/net/" title="net">net<sup>7</sup></a></li>
@@ -225,6 +228,10 @@ The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.
 		
 		  
 			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>2</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/review/" title="review">review<sup>1</sup></a></li>
 		  
 		
 		</ul>
