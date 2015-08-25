@@ -4,31 +4,22 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Synchronization | Firo的世界</title>
+    <title>Firo | Firo的世界</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="Firo Yang">
     
 
     
-    <meta name="description" content="Reference
-Perfbook
-Why we need synchronization
-a critical section is a piece of code that accesses a shared resource(data structure or device) that must not be concurrently accessed by more than one t">
+    <meta name="description" content="人与世界最主要的两个方面: 生存 与 成全自己人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.Career, Finance, Physical exercise, Closing, Hygiene, DietLanguage, C">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Synchronization">
-<meta property="og:url" content="http://firoyang.org/2015/02/27/kernel/synchronization/">
+<meta property="og:title" content="Firo">
+<meta property="og:url" content="http://firoyang.org/2015/02/27/firo/firo/">
 <meta property="og:site_name" content="Firo的世界">
-<meta property="og:description" content="Reference
-Perfbook
-Why we need synchronization
-a critical section is a piece of code that accesses a shared resource(data structure or device) that must not be concurrently accessed by more than one t">
+<meta property="og:description" content="人与世界最主要的两个方面: 生存 与 成全自己人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.Career, Finance, Physical exercise, Closing, Hygiene, DietLanguage, C">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Synchronization">
-<meta name="twitter:description" content="Reference
-Perfbook
-Why we need synchronization
-a critical section is a piece of code that accesses a shared resource(data structure or device) that must not be concurrently accessed by more than one t">
+<meta name="twitter:title" content="Firo">
+<meta name="twitter:description" content="人与世界最主要的两个方面: 生存 与 成全自己人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.Career, Finance, Physical exercise, Closing, Hygiene, DietLanguage, C">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -92,14 +83,14 @@ a critical section is a piece of code that accesses a shared resource(data struc
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/kernel/synchronization/" title="Synchronization" itemprop="url">Synchronization</a>
+      <a href="/2015/02/27/firo/firo/" title="Firo" itemprop="url">Firo</a>
   </h1>
   <p class="article-author">By
        
 		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
 		
   <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
+    <time datetime="2015-02-27T07:46:11.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
     
   </p>
 </header>
@@ -108,57 +99,35 @@ a critical section is a piece of code that accesses a shared resource(data struc
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_we_need_synchronization"><span class="toc-number">2.</span> <span class="toc-text">Why we need synchronization</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use_synchronization_mechanism"><span class="toc-number">3.</span> <span class="toc-text">How to use synchronization mechanism</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_usage"><span class="toc-number">3.1.</span> <span class="toc-text">Common usage</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_synchronization_in_computer_science"><span class="toc-number">4.</span> <span class="toc-text">What is synchronization in computer science</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Mutual_exclusion"><span class="toc-number">5.</span> <span class="toc-text">Mutual exclusion</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#spinlock_-_unsleepable_mutex"><span class="toc-number">5.1.</span> <span class="toc-text">spinlock - unsleepable mutex</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mutex"><span class="toc-number">5.2.</span> <span class="toc-text">Mutex</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RCU_—_lockless"><span class="toc-number">5.3.</span> <span class="toc-text">RCU — lockless</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Per-cpu"><span class="toc-number">5.4.</span> <span class="toc-text">Per-cpu</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Cooperative"><span class="toc-number">6.</span> <span class="toc-text">Cooperative</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#semaphore"><span class="toc-number">6.1.</span> <span class="toc-text">semaphore</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TCP_handshake"><span class="toc-number">6.2.</span> <span class="toc-text">TCP handshake</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memory_barrier"><span class="toc-number">7.</span> <span class="toc-text">Memory barrier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Refernce"><span class="toc-number">7.1.</span> <span class="toc-text">Refernce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common"><span class="toc-number">7.2.</span> <span class="toc-text">Common</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different"><span class="toc-number">7.3.</span> <span class="toc-text">The Linux kernel has a variety of different barriers that act at different</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACCESS_ONCE"><span class="toc-number">7.4.</span> <span class="toc-text">ACCESS_ONCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#For_volatile"><span class="toc-number">7.5.</span> <span class="toc-text">For volatile</span></a></li></ol></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#黄金精神"><span class="toc-number">1.</span> <span class="toc-text">黄金精神</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#人生"><span class="toc-number"></span> <span class="toc-text">人生</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Society"><span class="toc-number"></span> <span class="toc-text">Society</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Growing_up_—_人最重要的是会成长!"><span class="toc-number"></span> <span class="toc-text">Growing up — 人最重要的是会成长!</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Birthday"><span class="toc-number"></span> <span class="toc-text">Birthday</span></a>
 		
 		</div>
 		
-		<h1 id="Reference">Reference</h1>
-<p>Perfbook</p>
-<h1 id="Why_we_need_synchronization">Why we need synchronization</h1>
-<p>a critical section is a piece of code that accesses a shared resource<br>(data structure or device) that must not be concurrently accessed by more than one thread of execution.</p>
-<p>This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition. </p>
-<h1 id="How_to_use_synchronization_mechanism">How to use synchronization mechanism</h1>
-<p>A must read book<a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html" target="_blank" rel="external">Unreliable Guide To Locking — Rusty Russell</a></p>
-<h2 id="Common_usage">Common usage</h2>
-<p>Protect from interruption by hardware interrupts:<br>        local_irq_disable(int irq) &amp; local_irq_enable(int irq)<br>Protection from software interrupts:<br>        local_bh_disable(void) &amp; local_bh_enable(void)<br>Protection from other CPUs:<br>        spin_lock(spinlock_t <em>) &amp; spin_unlock(spinlock_t </em>)<br>Preemption by other user contexts:<br>        preempt_disable(void) &amp; preempt_enable(void) </p>
-<h1 id="What_is_synchronization_in_computer_science">What is synchronization in computer science</h1>
-<p><a href="http://www.etymonline.com/index.php?term=synchronize" target="_blank" rel="external">Synchronize</a><br>synchronization means be of the same time.<br>It means “make it synchronous”, something like coexistence.</p>
-<p>Process synchronization refers to the idea that multiple processes are<br>to join up or handshake at a certain point, in order to reach an<br>agreement or commit to a certain sequence of action.</p>
+		<p>人与世界最主要的两个方面: 生存 与 成全自己<br>人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.<br>轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.<br>欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.<br>Career, Finance, Physical exercise, Closing, Hygiene, Diet<br>Language, CS, </p>
+<h3 id="黄金精神">黄金精神</h3>
+<p>在我看来, 黄金精神是生命本质底蕴:</p>
+<pre><code>勇气, 勇敢的面对困难, 不逃避, 临危不惧, 直面人生.
+智慧,在困难中积极思考反思,寻求解决之道.天才,不循规蹈矩,独创精神,不是靠人传授的(知识的排泄物),作品典范他人模仿.
+爱, 心底尊重他人，有礼貌，抱有善的平和理念.
+</code></pre><p>在漫长的人生之路上, 这要具有这些底蕴身后的力量, 会支持着我们走下去.<br>这些修为和气度, 德行, 气质, 品格, 要远比你掌握某些知识, 更为珍贵.<br>人要养成如大海一般底蕴.历史上那些了不起的人, 他们是如何成长起来.<br>黄金精神的另一个实质:</p>
+<pre><code>内心平静, 对的时间做合适的事. pace walker. 心态要端正.
+</code></pre><p>用平静的内心, 去对待外界, 操控这些力量, 不会过分偏执被吞噬,<br>亦不应过分消沉, 慢待了时光.</p>
+<h1 id="人生">人生</h1>
+<p>人们一边浪费自己的时间, 一边希望获得更久一些.<br>人生没有目标, 也要好好活着!<br>10点睡觉, 洗澡, 锻炼健身, 时间统计.<br>不做無異事，一日當三日，人活五十年，我活百五年。 (我以为少做 —firo.)<br>讀古人的書，一方面要知道古人聰明到怎樣，一方面也要知道古人傻到怎樣。<br>人生的大病根本在於不肯睜開眼睛來看世間的真實現狀.<br>不受人惑 — 胡适<br>做人莫不可失了做事之心态— firo<br>人如果不沉醉于某些东西,估计都撑不下去吧.<br>所有人都是某些东西的奴隶 — 进击的巨人</p>
+<h1 id="Society">Society</h1>
+<p>生活就是同傻逼的战争!<br>每个人都有自己内心的弱点, 不必害怕他们.<br>Love the persons that love me, absolutely, included myself and girl friend!<br>他人即地狱,世界是荒诞的.<br>出来卖, 活一定要好.<br>人类是一种急功近利的生物，总是想用最小的付出获得最大的受益。 </p>
+<h1 id="Growing_up_—_人最重要的是会成长!">Growing up — 人最重要的是会成长!</h1>
+<p>生长需要滋润.  生活作息必须规律, 要不然要影响其他生活. 今天,就到这里吧, 让生活井井有条, 滋润.</p>
 <ul>
-<li>Mutual exclusion — only one excution routine in  critical section<br>Readers–writers problem<br>The Producer-Consumer Problem </li>
-<li>Cooperative<br>TCP Handshake </li>
-<li>Deadlock<br>Dining philosophers problem</li>
-<li>Starvation</li>
-<li>Prioirty inversion</li>
-<li>Busy waiting</li>
+<li>成长开始于注意到缺陷, 疑问<br>那种概念模糊的地方就是有问题, 比如两个指针相加.<br>成长不同阶段, 比如页表回收又算法,也有具体的代码实现. 我们只要知道算法就可以了.<br>Listen, the key is to just… relax. Don’t worry about the numbers, don’t worry about what the other guys are thinking.<br>Dont think… just feel<br>所谓的自我认知不是达成一切，不是什么事情都要做到完美，而是知道自己所能做到力所能及的事情和无能为力的事情，我要说的是，要学会原谅自己的无能为力<br>当缺点和不足出现了, 你意识到它, 并且有意识地去思考这种不足的原因,你就在成长中! 有自己的想法, 这才是成长的本质, 其他都不算成长. </li>
 </ul>
-<h1 id="Mutual_exclusion">Mutual exclusion</h1>
-<h2 id="spinlock_-_unsleepable_mutex">spinlock - unsleepable mutex</h2>
-<p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/" target="_blank" rel="external">Linux 内核的排队自旋锁FIFO Ticket Spinlock</a><br>spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了<br>context switch, 相对semaphore效率高.<br>显然对于little critical section 使用semaphore而不是spinlock,将带来性能<br>上的巨大损耗.</p>
 <ul>
-<li>rw_lock</li>
+<li>很多时候其实我们的忙碌都是做着自己并不在乎的事情！<br>一个有创造力的人把太多的时间耗在阅读上，是一种浪费 —尼采<br>对于一个哲学家来说，最重要的是独立思考，自己来创造，说出非他不能说出的话来。<br>不要以为努力过后, 就会得到, 永远也不要这样想. </li>
 </ul>
-<h2 id="Mutex">Mutex</h2>
-<p>Monitor lock before sleep.</p>
-<h2 id="RCU_—_lockless">RCU — lockless</h2>
-<p>Check The Journey to RCU for more details</p>
-<h2 id="Per-cpu">Per-cpu</h2>
-<h1 id="Cooperative">Cooperative</h1>
-<h2 id="semaphore">semaphore</h2>
-<p>it was implement based on spinlock.<br>it can have more than one holder at any time (the number decided at initialization time),<br>although it is most commonly used as a single-holder lock (a mutex).<br>if you can not get a semaphore, your task will put itself on the wait queue, and be woken<br>up the semaphore is released.<br>sleepable<br>preemptable</p>
-<h2 id="TCP_handshake">TCP handshake</h2>
-<h1 id="Memory_barrier">Memory barrier</h1>
-<h2 id="Refernce">Refernce</h2>
-<p><a href="http://en.wikipedia.org/wiki/Memory_barrier" target="_blank" rel="external">http://en.wikipedia.org/wiki/Memory_barrier</a><br>Documentation/memory-barriers.txt</p>
-<h2 id="Common">Common</h2>
-<ul>
-<li>When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping<br>to ensure that the program executes as if all memory operations were performed in the order<br>specified by the programmer (program order), so memory barriers are not necessary.<br>However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor<br>system, or memory mapped peripherals, out-of-order access may affect program behavior.<br>For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.</li>
-<li>Compiler and cpu do the same optimization: reorder of instructions<h2 id="The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different">The Linux kernel has a variety of different barriers that act at different</h2>
-levels:<br>(<em>) Compiler barrier.<br>(</em>) CPU memory barriers.<br>(*) MMIO write barrier.<h2 id="ACCESS_ONCE">ACCESS_ONCE</h2>
-</li>
-<li>Does it work cast a variable to volatile?<br>No, there is no efects on cast a variable to volatile.<br>Because, access variable is before volatile cast! That means you<br>still get a register value. What you do is just conversion a temporary<br>variable<br>Rationale for International Standard—Programming Languages—C<br>6.7.3 <h2 id="For_volatile">For volatile</h2>
-<a href="http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/" target="_blank" rel="external">http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/</a></li>
-</ul>
+<h1 id="Birthday">Birthday</h1>
+<p>Mama<br>06 25 1963<br>09 24 1963 Household register<br>Present:</p>
+<p>Baba<br>02 28 1968<br>02 29 1968 Household register<br>Present:</p>
+<p>Brother<br>01 06 1991<br>Present:</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -166,13 +135,13 @@ levels:<br>(<em>) Compiler barrier.<br>(</em>) CPU memory barriers.<br>(*) MMIO 
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
+  <a class="article-category-link" href="/categories/firo/">firo</a>
 </div>
 
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/kernel/">kernel</a>
+  <span></span> <a href="/tags/firo/">firo</a>
   </div>
 
 </div>
@@ -181,7 +150,7 @@ levels:<br>(<em>) Compiler barrier.<br>(</em>) CPU memory barriers.<br>(*) MMIO 
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://firoyang.org/2015/02/27/kernel/synchronization/" data-title="Synchronization | Firo的世界" data-tsina="null" class="share clearfix">
+	  <div data-url="http://firoyang.org/2015/02/27/firo/firo/" data-title="Firo | Firo的世界" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -195,18 +164,18 @@ levels:<br>(<em>) Compiler barrier.<br>(</em>) CPU memory barriers.<br>(*) MMIO 
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/kernel/kernel/" title="kernel">
+ <a href="/2015/02/27/today/" title="Firo today">
   <strong>上一篇：</strong><br/>
   <span>
-  kernel</span>
+  Firo today</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/kernel/fs/"  title="filesystem">
+<a href="/2015/02/27/cs/fedora/"  title="Fedora distro 物语">
  <strong>下一篇：</strong><br/> 
- <span>filesystem
+ <span>Fedora distro 物语
 </span>
 </a>
 </div>
@@ -227,7 +196,7 @@ levels:<br>(<em>) Compiler barrier.<br>(</em>) CPU memory barriers.<br>(*) MMIO 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Why_we_need_synchronization"><span class="toc-number">2.</span> <span class="toc-text">Why we need synchronization</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#How_to_use_synchronization_mechanism"><span class="toc-number">3.</span> <span class="toc-text">How to use synchronization mechanism</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_usage"><span class="toc-number">3.1.</span> <span class="toc-text">Common usage</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_is_synchronization_in_computer_science"><span class="toc-number">4.</span> <span class="toc-text">What is synchronization in computer science</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Mutual_exclusion"><span class="toc-number">5.</span> <span class="toc-text">Mutual exclusion</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#spinlock_-_unsleepable_mutex"><span class="toc-number">5.1.</span> <span class="toc-text">spinlock - unsleepable mutex</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mutex"><span class="toc-number">5.2.</span> <span class="toc-text">Mutex</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RCU_—_lockless"><span class="toc-number">5.3.</span> <span class="toc-text">RCU — lockless</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Per-cpu"><span class="toc-number">5.4.</span> <span class="toc-text">Per-cpu</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Cooperative"><span class="toc-number">6.</span> <span class="toc-text">Cooperative</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#semaphore"><span class="toc-number">6.1.</span> <span class="toc-text">semaphore</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TCP_handshake"><span class="toc-number">6.2.</span> <span class="toc-text">TCP handshake</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Memory_barrier"><span class="toc-number">7.</span> <span class="toc-text">Memory barrier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Refernce"><span class="toc-number">7.1.</span> <span class="toc-text">Refernce</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common"><span class="toc-number">7.2.</span> <span class="toc-text">Common</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The_Linux_kernel_has_a_variety_of_different_barriers_that_act_at_different"><span class="toc-number">7.3.</span> <span class="toc-text">The Linux kernel has a variety of different barriers that act at different</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACCESS_ONCE"><span class="toc-number">7.4.</span> <span class="toc-text">ACCESS_ONCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#For_volatile"><span class="toc-number">7.5.</span> <span class="toc-text">For volatile</span></a></li></ol></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#黄金精神"><span class="toc-number">1.</span> <span class="toc-text">黄金精神</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#人生"><span class="toc-number"></span> <span class="toc-text">人生</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Society"><span class="toc-number"></span> <span class="toc-text">Society</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Growing_up_—_人最重要的是会成长!"><span class="toc-number"></span> <span class="toc-text">Growing up — 人最重要的是会成长!</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Birthday"><span class="toc-number"></span> <span class="toc-text">Birthday</span></a>
  
   </div>
 
