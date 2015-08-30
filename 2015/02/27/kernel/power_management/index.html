@@ -12,17 +12,17 @@
 
     
     <meta name="description" content="Reference
-The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functiona">
+wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-F">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Power management">
 <meta property="og:url" content="http://firoyang.org/2015/02/27/kernel/power_management/">
 <meta property="og:site_name" content="Firo的世界">
 <meta property="og:description" content="Reference
-The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functiona">
+wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-F">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Power management">
 <meta name="twitter:description" content="Reference
-The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functiona">
+wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-F">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -102,13 +102,39 @@ The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">2.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">3.</span> <span class="toc-text">kernel cpuidle subsystem</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#The_structure_of_PM_source_codes"><span class="toc-number">2.</span> <span class="toc-text">The structure of PM source codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Important_data_structure"><span class="toc-number">3.</span> <span class="toc-text">Important data structure</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Steps_of_suspend"><span class="toc-number">4.</span> <span class="toc-text">Steps of suspend</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Knowledge"><span class="toc-number">5.</span> <span class="toc-text">Knowledge</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">6.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">7.</span> <span class="toc-text">kernel cpuidle subsystem</span></a></li></ol>
 		
 		</div>
 		
 		<h1 id="Reference">Reference</h1>
-<p><a href="https://lwn.net/Articles/384146/" target="_blank" rel="external">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently<br><a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF" target="_blank" rel="external">Hardware Specifications 9.4</a><br>[Functional Specifications 34] (<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf" target="_blank" rel="external">http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf</a>)<br>Documentation/power<br>Controlling Processor C-State Usage in Linux<br><a href="http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html" target="_blank" rel="external">Chapter 11. Power Management</a></p>
+<p><a href="http://www.wowotech.net/pm_subsystem/generic_pm_architecture.html" target="_blank" rel="external">wowotech</a><br><a href="https://lwn.net/Articles/384146/" target="_blank" rel="external">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently<br><a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF" target="_blank" rel="external">Hardware Specifications 9.4</a><br>[Functional Specifications 34] (<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf" target="_blank" rel="external">http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf</a>)<br>Documentation/power<br>Controlling Processor C-State Usage in Linux<br><a href="http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html" target="_blank" rel="external">Chapter 11. Power Management</a></p>
 <p>C-states: idle core power state</p>
+<h1 id="The_structure_of_PM_source_codes">The structure of PM source codes</h1>
+<ul>
+<li>Interface<br>syscall /sys/power</li>
+<li>PM core<br>kernel/power<br>main.c suspend.c suspend_test.c console.c process.c</li>
+<li>Device PM<br>driver/base/power — Power management interface, firo<br>driver/各种设备的驱动<br>driver/cpuidle —firo</li>
+<li>Platform PM<br>include/linux/suspend.h——定义platform dependent PM有关的操作函数集<br>arch/xxx/mach-xxx/xxx.c or arch/xxx/plat-xxx/xxx.c——平台相关的电源管理操作</li>
+<li>CPU control</li>
+</ul>
+<h1 id="Important_data_structure">Important data structure</h1>
+<p>platform_suspend_ops, platform plat-<em> is equivalent to mach-</em> and microarchitecture.<br>plat-<em> is abustruct from mach-</em>1 and mach-<em>2 and so on.<br>mach-</em> is more closer to Board!<br>所以这个platform_suspend_ops, 是非常重要的, 他包含了所有BSP底层的内容.<br>竟然是用suspend_ops这个全局变量, 来承载所有platform相关的内容.</p>
+<h1 id="Steps_of_suspend">Steps of suspend</h1>
+<ul>
+<li>PM core<br>freeze userspace<br>console</li>
+<li><p>Device PM<br>suspend device</p>
+</li>
+<li><p>CPU &amp; IRQ (Platform?, no)</p>
+</li>
+<li><p>syscore</p>
+</li>
+<li><p>Device PM check wakeup pendings</p>
+</li>
+<li><p>suspend enter (Platfrom?, yes)</p>
+</li>
+</ul>
+<h1 id="Knowledge">Knowledge</h1>
+<p>console switch、process freeze、CPU hotplug、wakeup</p>
 <h1 id="Introdution">Introdution</h1>
 <p>电源管理都涉及到那些内容?<br>PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices<br>Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down</p>
 <ul>
@@ -187,7 +213,7 @@ The cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">2.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">3.</span> <span class="toc-text">kernel cpuidle subsystem</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#The_structure_of_PM_source_codes"><span class="toc-number">2.</span> <span class="toc-text">The structure of PM source codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Important_data_structure"><span class="toc-number">3.</span> <span class="toc-text">Important data structure</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Steps_of_suspend"><span class="toc-number">4.</span> <span class="toc-text">Steps of suspend</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Knowledge"><span class="toc-number">5.</span> <span class="toc-text">Knowledge</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">6.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">7.</span> <span class="toc-text">kernel cpuidle subsystem</span></a></li></ol>
  
   </div>
 
