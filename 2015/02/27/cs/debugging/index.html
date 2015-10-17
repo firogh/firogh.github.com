@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>General debugging method | Firo的世界</title>
+    <title>Debugging | Firo的世界</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="Firo Yang">
@@ -12,38 +12,35 @@
 
     
     <meta name="description" content="Reference
-DWARF
-BUG type of JimGray
-Bohrbug, can be reproduce.
-Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了
-Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律
-Schroedinbug
-Common types of computer bugs
-Arithme">
+Reverse engineering
+Contents
+Bug typesBug made by meAnti-debugingGeneral debugging stepsGet observationsDebug Kernel bug 
+Bug types
+Gernel Bug types
+CWE - Common Weakness Enumeration
+BUG typ">
 <meta property="og:type" content="article">
-<meta property="og:title" content="General debugging method">
+<meta property="og:title" content="Debugging">
 <meta property="og:url" content="http://firoyang.org/2015/02/27/cs/debugging/">
 <meta property="og:site_name" content="Firo的世界">
 <meta property="og:description" content="Reference
-DWARF
-BUG type of JimGray
-Bohrbug, can be reproduce.
-Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了
-Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律
-Schroedinbug
-Common types of computer bugs
-Arithme">
+Reverse engineering
+Contents
+Bug typesBug made by meAnti-debugingGeneral debugging stepsGet observationsDebug Kernel bug 
+Bug types
+Gernel Bug types
+CWE - Common Weakness Enumeration
+BUG typ">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="General debugging method">
+<meta name="twitter:title" content="Debugging">
 <meta name="twitter:description" content="Reference
-DWARF
-BUG type of JimGray
-Bohrbug, can be reproduce.
-Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了
-Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律
-Schroedinbug
-Common types of computer bugs
-Arithme">
+Reverse engineering
+Contents
+Bug typesBug made by meAnti-debugingGeneral debugging stepsGet observationsDebug Kernel bug 
+Bug types
+Gernel Bug types
+CWE - Common Weakness Enumeration
+BUG typ">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -107,7 +104,7 @@ Arithme">
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/cs/debugging/" title="General debugging method" itemprop="url">General debugging method</a>
+      <a href="/2015/02/27/cs/debugging/" title="Debugging" itemprop="url">Debugging</a>
   </h1>
   <p class="article-author">By
        
@@ -123,125 +120,61 @@ Arithme">
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG_type_of_JimGray"><span class="toc-number">2.</span> <span class="toc-text">BUG type of JimGray</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Bohrbug,_can_be_reproduce-"><span class="toc-number">2.1.</span> <span class="toc-text">Bohrbug, can be reproduce.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Heisenbug_不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了"><span class="toc-number">2.2.</span> <span class="toc-text">Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mandelbug_当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律"><span class="toc-number">2.3.</span> <span class="toc-text">Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Schroedinbug"><span class="toc-number">2.4.</span> <span class="toc-text">Schroedinbug</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_types_of_computer_bugs"><span class="toc-number">3.</span> <span class="toc-text">Common types of computer bugs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Arithmetic_bugs"><span class="toc-number">3.1.</span> <span class="toc-text">Arithmetic bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#syntax_error"><span class="toc-number">3.2.</span> <span class="toc-text">syntax error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logic_error"><span class="toc-number">3.3.</span> <span class="toc-text">Logic error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Resource_bugs"><span class="toc-number">3.4.</span> <span class="toc-text">Resource bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Race_condition_bug"><span class="toc-number">3.5.</span> <span class="toc-text">Race condition bug</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Interfacing_bugs"><span class="toc-number">3.6.</span> <span class="toc-text">Interfacing bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Performance_bugs"><span class="toc-number">3.7.</span> <span class="toc-text">Performance bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Teamworking_bugs"><span class="toc-number">3.8.</span> <span class="toc-text">Teamworking bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vulnerable_bugs"><span class="toc-number">3.9.</span> <span class="toc-text">Vulnerable bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Special_BUG"><span class="toc-number">3.10.</span> <span class="toc-text">Special BUG</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Taxonomy_of_Kernel_BUG"><span class="toc-number">4.</span> <span class="toc-text">Taxonomy of Kernel BUG</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">5.</span> <span class="toc-text">BUG made by me</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Anti_debugging"><span class="toc-number">6.</span> <span class="toc-text">Anti debugging</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Syntax_checking"><span class="toc-number">6.1.</span> <span class="toc-text">Syntax checking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#static_code_analysis"><span class="toc-number">6.2.</span> <span class="toc-text">static code analysis</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Typical_debugging_process_—_step_1,_2,_3_maybe_loop-"><span class="toc-number">7.</span> <span class="toc-text">Typical debugging process — step 1, 2, 3 maybe loop.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#合理推判"><span class="toc-number">8.</span> <span class="toc-text">合理推判</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#我们的程序_or_系统,_库有问题-"><span class="toc-number">8.1.</span> <span class="toc-text">我们的程序 or 系统, 库有问题.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#证明,_注重因果性,_而不是相关性Correlation"><span class="toc-number">8.2.</span> <span class="toc-text">证明, 注重因果性, 而不是相关性Correlation</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Generating_program/system_states"><span class="toc-number">9.</span> <span class="toc-text">Generating program/system states</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Printing"><span class="toc-number">9.1.</span> <span class="toc-text">Printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#beyond_printing"><span class="toc-number">9.2.</span> <span class="toc-text">beyond printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Log"><span class="toc-number">9.3.</span> <span class="toc-text">Log</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">9.4.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SysRq"><span class="toc-number">9.5.</span> <span class="toc-text">SysRq</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#/proc_(specially_/proc/sys/)_and_/sys"><span class="toc-number">9.6.</span> <span class="toc-text">/proc (specially /proc/sys/) and /sys</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Trace"><span class="toc-number">9.7.</span> <span class="toc-text">Trace</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debuger_Gdb_kdb_kgdb"><span class="toc-number">9.8.</span> <span class="toc-text">Debuger Gdb kdb kgdb</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GDB_skills"><span class="toc-number">9.8.1.</span> <span class="toc-text">GDB skills</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kprobes"><span class="toc-number">9.9.</span> <span class="toc-text">Kprobes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lockdep"><span class="toc-number">9.10.</span> <span class="toc-text">lockdep</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tcpdump/wireshark"><span class="toc-number">9.11.</span> <span class="toc-text">tcpdump/wireshark</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lsof"><span class="toc-number">9.12.</span> <span class="toc-text">lsof</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kernel_oops/warn/panic"><span class="toc-number">9.13.</span> <span class="toc-text">kernel oops/warn/panic</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coredump_and_/proc/kcore_and_kdump"><span class="toc-number">9.14.</span> <span class="toc-text">Coredump and /proc/kcore and kdump</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#library_dependencies_of_a_ELF/bin"><span class="toc-number">9.15.</span> <span class="toc-text">library dependencies of a ELF/bin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel_specific"><span class="toc-number">9.16.</span> <span class="toc-text">Kernel specific</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#General_case"><span class="toc-number">9.17.</span> <span class="toc-text">General case</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#how_to_find_or_generate_a_backtrace"><span class="toc-number">9.17.1.</span> <span class="toc-text">how to find or generate a backtrace</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Examine_program_states"><span class="toc-number">10.</span> <span class="toc-text">Examine program states</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Examine_oops-txt"><span class="toc-number">10.1.</span> <span class="toc-text">Examine oops.txt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#demangle_c++_symbols"><span class="toc-number">10.2.</span> <span class="toc-text">demangle c++ symbols</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tracking_down_the_origin_of_the_problems"><span class="toc-number">11.</span> <span class="toc-text">Tracking down the origin of the problems</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Different_Origins"><span class="toc-number">11.1.</span> <span class="toc-text">Different Origins</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Assemblly_level"><span class="toc-number">11.1.1.</span> <span class="toc-text">Assemblly level</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Track_down"><span class="toc-number">11.2.</span> <span class="toc-text">Track down</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#“Wolf_fence”_algorithm"><span class="toc-number">11.2.1.</span> <span class="toc-text">“Wolf fence” algorithm</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_oops_to_ASM"><span class="toc-number">11.3.</span> <span class="toc-text">From oops to ASM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">11.3.1.</span> <span class="toc-text">From ASM to c language</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language_x86"><span class="toc-number">11.3.2.</span> <span class="toc-text">From ASM to c language x86</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Track_skills"><span class="toc-number">11.3.3.</span> <span class="toc-text">Track skills</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tips_on_debugging_optimized_code"><span class="toc-number">11.3.3.1.</span> <span class="toc-text">Tips on debugging optimized code</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#General_track_down_case"><span class="toc-number">11.3.4.</span> <span class="toc-text">General track down case</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A_case_of_oops"><span class="toc-number">11.3.5.</span> <span class="toc-text">A case of oops</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FIXME/FIXIT"><span class="toc-number">12.</span> <span class="toc-text">FIXME/FIXIT</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Bug_types"><span class="toc-number">3.</span> <span class="toc-text">Bug types</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Gernel_Bug_types"><span class="toc-number">3.1.</span> <span class="toc-text">Gernel Bug types</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CWE_-_Common_Weakness_Enumeration"><span class="toc-number">3.2.</span> <span class="toc-text">CWE - Common Weakness Enumeration</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_type_of_JimGray"><span class="toc-number">3.3.</span> <span class="toc-text">BUG type of JimGray</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_types_of_computer_bugs_in_wikipedia"><span class="toc-number">3.4.</span> <span class="toc-text">Common types of computer bugs in wikipedia</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Taxonomy_of_Kernel_BUG"><span class="toc-number">3.5.</span> <span class="toc-text">Taxonomy of Kernel BUG</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">4.</span> <span class="toc-text">BUG made by me</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Anti-debugging"><span class="toc-number">5.</span> <span class="toc-text">Anti-debugging</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Syntax_checking"><span class="toc-number">5.1.</span> <span class="toc-text">Syntax checking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#static_code_analysis"><span class="toc-number">5.2.</span> <span class="toc-text">static code analysis</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#General_debugging_steps_—_Abductive_reasoning"><span class="toc-number">6.</span> <span class="toc-text">General debugging steps — Abductive reasoning</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Get_observations"><span class="toc-number">7.</span> <span class="toc-text">Get observations</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_excute_binary"><span class="toc-number">7.1.</span> <span class="toc-text">Get observations from excute binary</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_Observations_from_program"><span class="toc-number">7.2.</span> <span class="toc-text">Get Observations from program</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do{FILE_*fdebug=fopen(“/tmp/d-log”,_“a+”);_\"><span class="toc-number">8.</span> <span class="toc-text">define debugme(fmt, args…) do{FILE *fdebug=fopen(“/tmp/d.log”, “a+”); \</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Debuger_Gdb_kdb_kgdb"><span class="toc-number">8.0.1.</span> <span class="toc-text">Debuger Gdb kdb kgdb</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kprobes"><span class="toc-number">8.1.</span> <span class="toc-text">Kprobes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_application"><span class="toc-number">8.2.</span> <span class="toc-text">Get observations from application</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_library"><span class="toc-number">8.3.</span> <span class="toc-text">Get observations from library</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_kernel"><span class="toc-number">8.4.</span> <span class="toc-text">Get observations from kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Observations_of_network"><span class="toc-number">8.5.</span> <span class="toc-text">Observations of network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel_specific"><span class="toc-number">8.6.</span> <span class="toc-text">Kernel specific</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#General_case"><span class="toc-number">8.7.</span> <span class="toc-text">General case</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#how_to_find_or_generate_a_backtrace"><span class="toc-number">8.7.1.</span> <span class="toc-text">how to find or generate a backtrace</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Examine_program_states"><span class="toc-number">9.</span> <span class="toc-text">Examine program states</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Examine_oops-txt"><span class="toc-number">9.1.</span> <span class="toc-text">Examine oops.txt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#demangle_c++_symbols"><span class="toc-number">9.2.</span> <span class="toc-text">demangle c++ symbols</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tracking_down_the_origin_of_the_problems"><span class="toc-number">10.</span> <span class="toc-text">Tracking down the origin of the problems</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Different_Origins"><span class="toc-number">10.1.</span> <span class="toc-text">Different Origins</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Assemblly_level"><span class="toc-number">10.1.1.</span> <span class="toc-text">Assemblly level</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Track_down"><span class="toc-number">10.2.</span> <span class="toc-text">Track down</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#“Wolf_fence”_algorithm"><span class="toc-number">10.2.1.</span> <span class="toc-text">“Wolf fence” algorithm</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_oops_to_ASM"><span class="toc-number">10.3.</span> <span class="toc-text">From oops to ASM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">10.3.1.</span> <span class="toc-text">From ASM to c language</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language_x86"><span class="toc-number">10.3.2.</span> <span class="toc-text">From ASM to c language x86</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Track_skills"><span class="toc-number">10.3.3.</span> <span class="toc-text">Track skills</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tips_on_debugging_optimized_code"><span class="toc-number">10.3.3.1.</span> <span class="toc-text">Tips on debugging optimized code</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#General_track_down_case"><span class="toc-number">10.3.4.</span> <span class="toc-text">General track down case</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A_case_of_oops"><span class="toc-number">10.3.5.</span> <span class="toc-text">A case of oops</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_make_bug"><span class="toc-number">11.</span> <span class="toc-text">Debug make bug</span></a></li></ol>
 		
 		</div>
 		
 		<h1 id="Reference">Reference</h1>
-<p>DWARF</p>
-<h1 id="BUG_type_of_JimGray"><a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs/" target="_blank" rel="external">BUG type of JimGray</a></h1>
-<h2 id="Bohrbug,_can_be_reproduce-">Bohrbug, can be reproduce.</h2>
-<h2 id="Heisenbug_不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了">Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了</h2>
-<h2 id="Mandelbug_当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律">Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律</h2>
-<h2 id="Schroedinbug">Schroedinbug</h2>
-<h1 id="Common_types_of_computer_bugs"><a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs" target="_blank" rel="external">Common types of computer bugs</a></h1>
-<h2 id="Arithmetic_bugs">Arithmetic bugs</h2>
-<h2 id="syntax_error">syntax error</h2>
-<h2 id="Logic_error">Logic error</h2>
-<p>Incorrect Bounds-Checking<br>off-by-one bug<br>Skipping Null-Termination Issues</p>
-<h2 id="Resource_bugs">Resource bugs</h2>
-<p>uninitialized/nonvalidated/corrupted pointer dereference.<br>Segmentation fault in userspace<br>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf" target="_blank" rel="external">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br>Buffer overflow/踩内存</p>
-<ul>
-<li><a href="http://lwn.net/Articles/174494/" target="_blank" rel="external">Double kfree errors</a><br>The devm_* series functions introduce more double free error in driver code.</li>
-</ul>
-<h2 id="Race_condition_bug">Race condition bug</h2>
-<p>Multi-threading programming bugs(parallel problems)</p>
-<ul>
-<li>deadlock<h2 id="Interfacing_bugs">Interfacing bugs</h2>
-<h2 id="Performance_bugs">Performance bugs</h2>
-<h2 id="Teamworking_bugs">Teamworking bugs</h2>
-<h2 id="Vulnerable_bugs">Vulnerable bugs</h2>
-*unbounded memory manipulation functions<br>strcpy</li>
-<li>Non-Null Termination Issues<br>non terminaed string<br>*Formate string<br><a href="https://www.owasp.org/index.php/Format_string_attack" target="_blank" rel="external">Format Strings attacker</a> or <a href="https://en.wikipedia.org/wiki/Uncontrolled_format_string" target="_blank" rel="external">Uncontrolled format string</a></li>
-<li>integer issues<br>integer overflow<br>Signed Comparison Vulnerabilities</li>
-</ul>
-<h2 id="Special_BUG">Special BUG</h2>
-<p><a href="http://www.av8n.com/computer/htm/kernel-lockup.htm" target="_blank" rel="external">kenrel lockup</a></p>
-<h1 id="Taxonomy_of_Kernel_BUG">Taxonomy of Kernel BUG</h1>
-<ul>
-<li><a href="http://fedoraproject.org/wiki/KernelBugClassification" target="_blank" rel="external">oops, WARN_ON, or kernel panic</a></li>
-<li><a href="http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification" target="_blank" rel="external">Source of BUG</a>, driver or subsystem and so on.</li>
-</ul>
+<p>Reverse engineering</p>
+<h1 id="Contents">Contents</h1>
+<p>Bug types<br>Bug made by me<br>Anti-debuging<br>General debugging steps<br>Get observations<br>Debug Kernel bug </p>
+<h1 id="Bug_types">Bug types</h1>
+<h2 id="Gernel_Bug_types">Gernel Bug types</h2>
+<h2 id="CWE_-_Common_Weakness_Enumeration"><a href="https://nvd.nist.gov/cwe.cfm" target="_blank" rel="external">CWE - Common Weakness Enumeration</a></h2>
+<h2 id="BUG_type_of_JimGray"><a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs/" target="_blank" rel="external">BUG type of JimGray</a></h2>
+<p>Bohrbug, can be reproduce.<br>Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了<br>Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律<br>Schroedinbug</p>
+<h2 id="Common_types_of_computer_bugs_in_wikipedia"><a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs" target="_blank" rel="external">Common types of computer bugs in wikipedia</a></h2>
+<p>Arithmetic bugs<br>syntax error<br>Logic error</p>
+<blockquote>
+<p>Incorrect Bounds-Checking<br>off-by-one bug<br>Skipping Null-Termination Issues<br>Resource bugs<br>uninitialized/nonvalidated/corrupted pointer dereference.<br>Segmentation fault in userspace<br>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf" target="_blank" rel="external">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br>Buffer overflow/踩内存<br><a href="http://lwn.net/Articles/174494/" target="_blank" rel="external">Double kfree errors</a><br>The devm_* series functions introduce more double free error in driver code.<br>Race condition bug<br>Multi-threading programming bugs(parallel problems)<br>deadlock<br>Interfacing bugs<br>Performance bugs<br>Teamworking bugs<br>Vulnerable bugs<br>unbounded memory manipulation functions<br>strcpy<br>Non-Null Termination Issues<br>non terminaed string<br>Formate string<br><a href="https://www.owasp.org/index.php/Format_string_attack" target="_blank" rel="external">Format Strings attacker</a> or <a href="https://en.wikipedia.org/wiki/Uncontrolled_format_string" target="_blank" rel="external">Uncontrolled format string</a><br>integer issues<br>integer overflow<br>Signed Comparison Vulnerabilities<br>Special BUG<br><a href="http://www.av8n.com/computer/htm/kernel-lockup.htm" target="_blank" rel="external">kenrel lockup</a></p>
+<h2 id="Taxonomy_of_Kernel_BUG">Taxonomy of Kernel BUG</h2>
+<p><a href="http://fedoraproject.org/wiki/KernelBugClassification" target="_blank" rel="external">oops, WARN_ON, or kernel panic</a><br><a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt" target="_blank" rel="external">kernel oops</a>/warn/panic<br>狭隘的认为oops等价于内存地址出问题了, oops 本质上是<strong>die(“Oops”
+</strong>die 却可以表明很多错误 “Bad pagetable”, “Oops - badmode”<br>arm_notify_die(“Oops - undefined instruction” 等等..<br>oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.<br>panic 则是programmer 感知到的是防御式编程assertion的体现.<br><a href="http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification" target="_blank" rel="external">Source of BUG</a>, driver or subsystem and so on.</p>
 <h1 id="BUG_made_by_me">BUG made by me</h1>
 <ul>
 <li>print_signal_info wrong pritk parameters position<pre><code>  printk(KERN_NOTICE <span class="string">"K <span class="variable">%d</span> : <span class="variable">%d</span> -&gt; <span class="variable">%s</span> <span class="variable">%d</span> <span class="variable">%s</span> <span class="variable">%d</span>\n"</span>, sig, <span class="keyword">q</span>-&gt;info.si_code,
           ss[<span class="number">2</span>], ss[<span class="number">3</span>], task_tgid_vnr(r_t), task_tgid_vnr(r_p));
 </code></pre>Watch compile warning info can be avoid of this bug.</li>
-<li>spin_lock(sighand) invoke down_sem and cond_resched…<br>  __send_signal()</li>
-</ul>
-<h1 id="Anti_debugging">Anti debugging</h1>
+<li>spin_lock(sighand) invoke down_sem and cond_resched…<br>  __send_signal()<h1 id="Anti-debugging">Anti-debugging</h1>
 <h2 id="Syntax_checking">Syntax checking</h2>
-<p>gcc -Wall<br>bash -n</p>
-<h2 id="static_code_analysis">static code analysis</h2>
-<p>smatch</p>
-<h1 id="Typical_debugging_process_—_step_1,_2,_3_maybe_loop-">Typical debugging process — step 1, 2, 3 maybe loop.</h1>
+gcc -Wall<br>bash -n<h2 id="static_code_analysis">static code analysis</h2>
+smatch<h1 id="General_debugging_steps_—_Abductive_reasoning">General debugging steps — <a href="https://en.wikipedia.org/wiki/Abductive_reasoning" target="_blank" rel="external">Abductive reasoning</a></h1>
+T + O =&gt; E; //Theory + observations =&gt; explanation<br>E is the sub-set of T, O is the result of E under the T.<br>The process of debugging is use O to minimize T to E instance.</li>
+</ul>
 <ol>
-<li>合理性假设可能性, 最高的一系列原因!</li>
-<li>Generating program states, 对于内核很多时候, 我们只能有一次机会产生调试的信息, 就是panic or oops那时, 不绝对.</li>
-<li>examine program states </li>
-<li>track down the origin of the problem(s)</li>
-<li>fix it</li>
+<li>Reproduce?</li>
+<li>Find the bug type and definations what the bug belong to.<br>The bug type is the broad outline of the Expaination of the specific bug’s Observation.</li>
+<li>结合实际环境get more observations and deuce the explanation/cause.</li>
+<li>Fix it.<h1 id="Get_observations">Get observations</h1>
+<h2 id="Get_observations_from_excute_binary">Get observations from excute binary</h2>
+DWARF<br>ELF header, readelf -h<br>Program header table, readelf -l<br>Segments, readelf —segments<br>Sections, readelf —sections<br>Section header table, readelf -S<br>objdump -S<h2 id="Get_Observations_from_program">Get Observations from program</h2>
+<h1 id="define_debugme(fmt,_args…)_do{FILE_*fdebug=fopen(“/tmp/d-log”,_“a+”);_\">define debugme(fmt, args…) do{FILE *fdebug=fopen(“/tmp/d.log”, “a+”); \</h1>
+fprintf(fdebug,”%s,%s,%d:”fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)<br>Before kernel decompress use putstr<br>Linux serial-port driver is interrupt driven, if irq-off console will not work!<br>early_printk vs printk<br>dump_stack<br>ioctl/netlink<br>Use atexit() register a stackdump or a wrapped print<h3 id="Debuger_Gdb_kdb_kgdb">Debuger Gdb kdb kgdb</h3>
+gdb /usr/src/linux/vmlinux /proc/kcore<br> bt<br> x/100a<br>thread apply all bt full</li>
 </ol>
-<h1 id="合理推判">合理推判</h1>
-<h2 id="我们的程序_or_系统,_库有问题-">我们的程序 or 系统, 库有问题.</h2>
-<h2 id="证明,_注重因果性,_而不是相关性Correlation">证明, 注重因果性, 而不是相关性Correlation</h2>
-<p>充分: 因-&gt;果, 基本backtrace可以断定<br>必要: 果-&gt;因, 这个bug只是这个因造成的.</p>
-<h1 id="Generating_program/system_states">Generating program/system states</h1>
-<h2 id="Printing">Printing</h2>
 <ul>
-<li><p>刘东log法 #define debugme(fmt, args…) do{FILE *fdebug=fopen(“/d.log”, “a+”); fprintf(fdebug,”%s,%s,%d:”, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>);fprintf(fdebug, fmt, ##args);fclose(fdebug);} while(0)</p>
+<li>How to use gdb debug loaded kernel module(maybe kernel its self)<br>gdb vmlinux /proc/kcore<br>core-file /proc/kcore<br>p jiffies_64<br>text_addr=$(cat /sys/module/char-read-write/sections/.text)<br>add-symbol-file /home/nkhare/char-read-write.ko $text_addr</li>
+<li>how to get the offset of member in struct<br>gdb ./vmlinux<br>print &amp;((struct kmem_cache *)0)-&gt;offset<h2 id="Kprobes">Kprobes</h2>
 </li>
-<li><p>before kernel decompress<br>putstr</p>
-</li>
-<li><p>early printk<br>Linux serial-port driver is interrupt driven, if irq-off console will not work!</p>
-</li>
-<li><p>printk</p>
-</li>
+<li>kgdb<br>gdb<br>file vmlinux<br>set remotebaud 115200<br>target remote /dev/ttyS0<h2 id="Get_observations_from_application">Get observations from application</h2>
+lsof<br>strace<br>bash  -x for shell<br>coredump<h2 id="Get_observations_from_library">Get observations from library</h2>
+ltrace<br>library dependencies of a ELF/bin<br>LD_TRACE_LOADED_OBJECTS=1 git<br>ldd /usr/bin/git<h2 id="Get_observations_from_kernel">Get observations from kernel</h2>
+dmesg<br>SysRq<br>/proc (specially /proc/sys/) and /sys<br>ftrace<br><a href="http://lwn.net/Articles/291091/" target="_blank" rel="external">http://lwn.net/Articles/291091/</a><br><a href="http://lwn.net/Articles/330402/" target="_blank" rel="external">http://lwn.net/Articles/330402/</a><br><a href="http://lwn.net/Articles/379903/" target="_blank" rel="external">http://lwn.net/Articles/379903/</a><br><a href="http://lwn.net/Articles/381064/" target="_blank" rel="external">http://lwn.net/Articles/381064/</a><br><a href="http://lwn.net/Articles/383362/" target="_blank" rel="external">http://lwn.net/Articles/383362/</a><br><a href="http://lwn.net/Articles/346470/" target="_blank" rel="external">http://lwn.net/Articles/346470/</a><br>CONFIG_DYNAMIC_DEBUG<br>pr_debug vs dev_debug<br><debugfs>/dynamic_debug/control<br>print signal This is just a hiwifi wonderful kernel patch #931<br>kgtp?<br>lockdep<br>kdump</debugfs></li>
+<li>how to get module text address<br>firo@firo module$ cat /sys/module/wmi/sections/.text<br>0xffffffffa023b000<br>firo@firo module$ cat /proc/modules | grep wmi<br>wmi 18820 0 - Live 0xffffffffa023b000<br>int bss_var;<br>static int hello_init(void)<br>{printk(KERN_ALERT “Text location .text(Code Segment):%p\n”,hello_init);<br>static int data_var=0;<br>printk(KERN_ALERT “Data Location .data(Data Segment):%p\n”,&amp;data_var);<br>printk(KERN_ALERT “BSS Location: .bss(BSS Segment):%p\n”,&amp;bss_var);<br>……}<br>Module_init(hello_init);</li>
 </ul>
-<h2 id="beyond_printing">beyond printing</h2>
-<p>Use atexit() register a stackdump() function<br>dump_stack in kernel<br>ioctl/netlink<br>print signal This is just a hiwifi wonderful kernel patch #931</p>
-<h2 id="Log">Log</h2>
-<p>dmesg<br>syslog</p>
-<h2 id="Debugging_support_in_the_kernel">Debugging support in the kernel</h2>
-<p>更为宽泛意义上的printing 方法.</p>
-<ul>
-<li><p>kernel tracing<br><a href="http://lwn.net/Articles/291091/" target="_blank" rel="external">http://lwn.net/Articles/291091/</a><br><a href="http://lwn.net/Articles/330402/" target="_blank" rel="external">http://lwn.net/Articles/330402/</a><br><a href="http://lwn.net/Articles/379903/" target="_blank" rel="external">http://lwn.net/Articles/379903/</a><br><a href="http://lwn.net/Articles/381064/" target="_blank" rel="external">http://lwn.net/Articles/381064/</a><br><a href="http://lwn.net/Articles/383362/" target="_blank" rel="external">http://lwn.net/Articles/383362/</a><br><a href="http://lwn.net/Articles/346470/" target="_blank" rel="external">http://lwn.net/Articles/346470/</a></p>
-</li>
-<li><p>CONFIG_DYNAMIC_DEBUG<br>pr_debug()/dev_debug()<br><debugfs>/dynamic_debug/control</debugfs></p>
-</li>
-</ul>
-<h2 id="SysRq">SysRq</h2>
-<p>t, m</p>
-<h2 id="/proc_(specially_/proc/sys/)_and_/sys">/proc (specially /proc/sys/) and /sys</h2>
-<h2 id="Trace">Trace</h2>
-<p>strace<br>ltrace<br>ftrace in kernel<br>kgtp</p>
-<h2 id="Debuger_Gdb_kdb_kgdb">Debuger Gdb kdb kgdb</h2>
-<p>gdb /usr/src/linux/vmlinux /proc/kcore<br>    bt<br>    x/100a<br>thread apply all bt full</p>
-<ul>
-<li><p>How to use gdb debug loaded kernel module(maybe kernel its self)<br>gdb vmlinux /proc/kcore<br>core-file /proc/kcore<br>p jiffies_64<br>text_addr=$(cat /sys/module/char-read-write/sections/.text)<br>add-symbol-file /home/nkhare/char-read-write.ko $text_addr</p>
-</li>
-<li><p>how to get module text address<br>firo@firo module$ cat /sys/module/wmi/sections/.text<br>0xffffffffa023b000</p>
-</li>
-</ul>
-<p>firo@firo module$ cat /proc/modules | grep wmi<br>wmi 18820 0 - Live 0xffffffffa023b000</p>
-<p>……<br>int bss_var;<br>static int hello_init(void)<br>{<br>printk(KERN_ALERT “Text location .text(Code Segment):%p\n”,hello_init);<br>static int data_var=0;<br>printk(KERN_ALERT “Data Location .data(Data Segment):%p\n”,&amp;data_var);<br>printk(KERN_ALERT “BSS Location: .bss(BSS Segment):%p\n”,&amp;bss_var);<br>……<br>}<br>Module_init(hello_init);</p>
-<h3 id="GDB_skills">GDB skills</h3>
-<ul>
-<li>offset of member in struct<br>gdb ./vmlinux<br>print &amp;((struct kmem_cache *)0)-&gt;offset</li>
-</ul>
-<h2 id="Kprobes">Kprobes</h2>
-<ul>
-<li>kgdb<br>gdb<br>file vmlinux<br>set remotebaud 115200<br>target remote /dev/ttyS0</li>
-</ul>
-<h2 id="lockdep">lockdep</h2>
-<h2 id="tcpdump/wireshark">tcpdump/wireshark</h2>
-<h2 id="lsof">lsof</h2>
-<h2 id="kernel_oops/warn/panic"><a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt" target="_blank" rel="external">kernel oops</a>/warn/panic</h2>
-<p>狭隘的认为oops等价于内存地址出问题了, oops 本质上是<strong>die(“Oops”
-</strong>die 却可以表明很多错误 “Bad pagetable”, “Oops - badmode”<br>arm_notify_die(“Oops - undefined instruction” 等等..<br>oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.<br>panic 则是programmer 感知到的是防御式编程assertion的体现.</p>
-<h2 id="Coredump_and_/proc/kcore_and_kdump">Coredump and /proc/kcore and kdump</h2>
-<h2 id="library_dependencies_of_a_ELF/bin">library dependencies of a ELF/bin</h2>
-<p>LD_TRACE_LOADED_OBJECTS=1 git<br>ldd /usr/bin/git</p>
+</blockquote>
+<h2 id="Observations_of_network">Observations of network</h2>
+<p>tcpdump netstat iptables wireshark</p>
 <h2 id="Kernel_specific">Kernel specific</h2>
 <p>kernel version<br>ask reporter for the .config<br>decoding “code”</p>
 <h2 id="General_case">General case</h2>
@@ -329,7 +262,14 @@ Arithme">
 </ul>
 <h3 id="A_case_of_oops">A case of oops</h3>
 <p>Register IP: -&gt; System.map /proc/kallsyms -&gt; objdump -S char-read-write.ko</p>
-<h1 id="FIXME/FIXIT">FIXME/FIXIT</h1>
+<h1 id="Debug_make_bug">Debug make bug</h1>
+<ul>
+<li>Just print echo<br>make -s </li>
+<li>Print shell command<br>make -n</li>
+<li>Print all variables. not really execute. Wired-name variable is useful to debug<br>make -p</li>
+<li>Pirnt a message<br>$(warning …)</li>
+<li>Etc<br>—warn-undefined-variables</li>
+</ul>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -352,7 +292,7 @@ Arithme">
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://firoyang.org/2015/02/27/cs/debugging/" data-title="General debugging method | Firo的世界" data-tsina="null" class="share clearfix">
+	  <div data-url="http://firoyang.org/2015/02/27/cs/debugging/" data-title="Debugging | Firo的世界" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -366,18 +306,18 @@ Arithme">
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/cs/programming/" title="Programming">
+ <a href="/2015/02/27/cs/pl/" title="The programming language">
   <strong>上一篇：</strong><br/>
   <span>
-  Programming</span>
+  The programming language</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/cs/mathematics/"  title="Mathematics">
+<a href="/2015/02/27/cs/cs/"  title="Computer science a kernel programmer&#39;s perspective">
  <strong>下一篇：</strong><br/> 
- <span>Mathematics
+ <span>Computer science a kernel programmer&#39;s perspective
 </span>
 </a>
 </div>
@@ -398,7 +338,7 @@ Arithme">
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG_type_of_JimGray"><span class="toc-number">2.</span> <span class="toc-text">BUG type of JimGray</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Bohrbug,_can_be_reproduce-"><span class="toc-number">2.1.</span> <span class="toc-text">Bohrbug, can be reproduce.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Heisenbug_不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了"><span class="toc-number">2.2.</span> <span class="toc-text">Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mandelbug_当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律"><span class="toc-number">2.3.</span> <span class="toc-text">Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Schroedinbug"><span class="toc-number">2.4.</span> <span class="toc-text">Schroedinbug</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Common_types_of_computer_bugs"><span class="toc-number">3.</span> <span class="toc-text">Common types of computer bugs</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Arithmetic_bugs"><span class="toc-number">3.1.</span> <span class="toc-text">Arithmetic bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#syntax_error"><span class="toc-number">3.2.</span> <span class="toc-text">syntax error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logic_error"><span class="toc-number">3.3.</span> <span class="toc-text">Logic error</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Resource_bugs"><span class="toc-number">3.4.</span> <span class="toc-text">Resource bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Race_condition_bug"><span class="toc-number">3.5.</span> <span class="toc-text">Race condition bug</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Interfacing_bugs"><span class="toc-number">3.6.</span> <span class="toc-text">Interfacing bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Performance_bugs"><span class="toc-number">3.7.</span> <span class="toc-text">Performance bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Teamworking_bugs"><span class="toc-number">3.8.</span> <span class="toc-text">Teamworking bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Vulnerable_bugs"><span class="toc-number">3.9.</span> <span class="toc-text">Vulnerable bugs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Special_BUG"><span class="toc-number">3.10.</span> <span class="toc-text">Special BUG</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Taxonomy_of_Kernel_BUG"><span class="toc-number">4.</span> <span class="toc-text">Taxonomy of Kernel BUG</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">5.</span> <span class="toc-text">BUG made by me</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Anti_debugging"><span class="toc-number">6.</span> <span class="toc-text">Anti debugging</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Syntax_checking"><span class="toc-number">6.1.</span> <span class="toc-text">Syntax checking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#static_code_analysis"><span class="toc-number">6.2.</span> <span class="toc-text">static code analysis</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Typical_debugging_process_—_step_1,_2,_3_maybe_loop-"><span class="toc-number">7.</span> <span class="toc-text">Typical debugging process — step 1, 2, 3 maybe loop.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#合理推判"><span class="toc-number">8.</span> <span class="toc-text">合理推判</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#我们的程序_or_系统,_库有问题-"><span class="toc-number">8.1.</span> <span class="toc-text">我们的程序 or 系统, 库有问题.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#证明,_注重因果性,_而不是相关性Correlation"><span class="toc-number">8.2.</span> <span class="toc-text">证明, 注重因果性, 而不是相关性Correlation</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Generating_program/system_states"><span class="toc-number">9.</span> <span class="toc-text">Generating program/system states</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Printing"><span class="toc-number">9.1.</span> <span class="toc-text">Printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#beyond_printing"><span class="toc-number">9.2.</span> <span class="toc-text">beyond printing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Log"><span class="toc-number">9.3.</span> <span class="toc-text">Log</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debugging_support_in_the_kernel"><span class="toc-number">9.4.</span> <span class="toc-text">Debugging support in the kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SysRq"><span class="toc-number">9.5.</span> <span class="toc-text">SysRq</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#/proc_(specially_/proc/sys/)_and_/sys"><span class="toc-number">9.6.</span> <span class="toc-text">/proc (specially /proc/sys/) and /sys</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Trace"><span class="toc-number">9.7.</span> <span class="toc-text">Trace</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debuger_Gdb_kdb_kgdb"><span class="toc-number">9.8.</span> <span class="toc-text">Debuger Gdb kdb kgdb</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GDB_skills"><span class="toc-number">9.8.1.</span> <span class="toc-text">GDB skills</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kprobes"><span class="toc-number">9.9.</span> <span class="toc-text">Kprobes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lockdep"><span class="toc-number">9.10.</span> <span class="toc-text">lockdep</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tcpdump/wireshark"><span class="toc-number">9.11.</span> <span class="toc-text">tcpdump/wireshark</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lsof"><span class="toc-number">9.12.</span> <span class="toc-text">lsof</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kernel_oops/warn/panic"><span class="toc-number">9.13.</span> <span class="toc-text">kernel oops/warn/panic</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Coredump_and_/proc/kcore_and_kdump"><span class="toc-number">9.14.</span> <span class="toc-text">Coredump and /proc/kcore and kdump</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#library_dependencies_of_a_ELF/bin"><span class="toc-number">9.15.</span> <span class="toc-text">library dependencies of a ELF/bin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel_specific"><span class="toc-number">9.16.</span> <span class="toc-text">Kernel specific</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#General_case"><span class="toc-number">9.17.</span> <span class="toc-text">General case</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#how_to_find_or_generate_a_backtrace"><span class="toc-number">9.17.1.</span> <span class="toc-text">how to find or generate a backtrace</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Examine_program_states"><span class="toc-number">10.</span> <span class="toc-text">Examine program states</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Examine_oops-txt"><span class="toc-number">10.1.</span> <span class="toc-text">Examine oops.txt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#demangle_c++_symbols"><span class="toc-number">10.2.</span> <span class="toc-text">demangle c++ symbols</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tracking_down_the_origin_of_the_problems"><span class="toc-number">11.</span> <span class="toc-text">Tracking down the origin of the problems</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Different_Origins"><span class="toc-number">11.1.</span> <span class="toc-text">Different Origins</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Assemblly_level"><span class="toc-number">11.1.1.</span> <span class="toc-text">Assemblly level</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Track_down"><span class="toc-number">11.2.</span> <span class="toc-text">Track down</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#“Wolf_fence”_algorithm"><span class="toc-number">11.2.1.</span> <span class="toc-text">“Wolf fence” algorithm</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_oops_to_ASM"><span class="toc-number">11.3.</span> <span class="toc-text">From oops to ASM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">11.3.1.</span> <span class="toc-text">From ASM to c language</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language_x86"><span class="toc-number">11.3.2.</span> <span class="toc-text">From ASM to c language x86</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Track_skills"><span class="toc-number">11.3.3.</span> <span class="toc-text">Track skills</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tips_on_debugging_optimized_code"><span class="toc-number">11.3.3.1.</span> <span class="toc-text">Tips on debugging optimized code</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#General_track_down_case"><span class="toc-number">11.3.4.</span> <span class="toc-text">General track down case</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A_case_of_oops"><span class="toc-number">11.3.5.</span> <span class="toc-text">A case of oops</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FIXME/FIXIT"><span class="toc-number">12.</span> <span class="toc-text">FIXME/FIXIT</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Bug_types"><span class="toc-number">3.</span> <span class="toc-text">Bug types</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Gernel_Bug_types"><span class="toc-number">3.1.</span> <span class="toc-text">Gernel Bug types</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CWE_-_Common_Weakness_Enumeration"><span class="toc-number">3.2.</span> <span class="toc-text">CWE - Common Weakness Enumeration</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BUG_type_of_JimGray"><span class="toc-number">3.3.</span> <span class="toc-text">BUG type of JimGray</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Common_types_of_computer_bugs_in_wikipedia"><span class="toc-number">3.4.</span> <span class="toc-text">Common types of computer bugs in wikipedia</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Taxonomy_of_Kernel_BUG"><span class="toc-number">3.5.</span> <span class="toc-text">Taxonomy of Kernel BUG</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#BUG_made_by_me"><span class="toc-number">4.</span> <span class="toc-text">BUG made by me</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Anti-debugging"><span class="toc-number">5.</span> <span class="toc-text">Anti-debugging</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Syntax_checking"><span class="toc-number">5.1.</span> <span class="toc-text">Syntax checking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#static_code_analysis"><span class="toc-number">5.2.</span> <span class="toc-text">static code analysis</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#General_debugging_steps_—_Abductive_reasoning"><span class="toc-number">6.</span> <span class="toc-text">General debugging steps — Abductive reasoning</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Get_observations"><span class="toc-number">7.</span> <span class="toc-text">Get observations</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_excute_binary"><span class="toc-number">7.1.</span> <span class="toc-text">Get observations from excute binary</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_Observations_from_program"><span class="toc-number">7.2.</span> <span class="toc-text">Get Observations from program</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#define_debugme(fmt,_args…)_do{FILE_*fdebug=fopen(“/tmp/d-log”,_“a+”);_\"><span class="toc-number">8.</span> <span class="toc-text">define debugme(fmt, args…) do{FILE *fdebug=fopen(“/tmp/d.log”, “a+”); \</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Debuger_Gdb_kdb_kgdb"><span class="toc-number">8.0.1.</span> <span class="toc-text">Debuger Gdb kdb kgdb</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kprobes"><span class="toc-number">8.1.</span> <span class="toc-text">Kprobes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_application"><span class="toc-number">8.2.</span> <span class="toc-text">Get observations from application</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_library"><span class="toc-number">8.3.</span> <span class="toc-text">Get observations from library</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Get_observations_from_kernel"><span class="toc-number">8.4.</span> <span class="toc-text">Get observations from kernel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Observations_of_network"><span class="toc-number">8.5.</span> <span class="toc-text">Observations of network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel_specific"><span class="toc-number">8.6.</span> <span class="toc-text">Kernel specific</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#General_case"><span class="toc-number">8.7.</span> <span class="toc-text">General case</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#how_to_find_or_generate_a_backtrace"><span class="toc-number">8.7.1.</span> <span class="toc-text">how to find or generate a backtrace</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Examine_program_states"><span class="toc-number">9.</span> <span class="toc-text">Examine program states</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Examine_oops-txt"><span class="toc-number">9.1.</span> <span class="toc-text">Examine oops.txt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#demangle_c++_symbols"><span class="toc-number">9.2.</span> <span class="toc-text">demangle c++ symbols</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tracking_down_the_origin_of_the_problems"><span class="toc-number">10.</span> <span class="toc-text">Tracking down the origin of the problems</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Different_Origins"><span class="toc-number">10.1.</span> <span class="toc-text">Different Origins</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Assemblly_level"><span class="toc-number">10.1.1.</span> <span class="toc-text">Assemblly level</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Track_down"><span class="toc-number">10.2.</span> <span class="toc-text">Track down</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#“Wolf_fence”_algorithm"><span class="toc-number">10.2.1.</span> <span class="toc-text">“Wolf fence” algorithm</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#From_oops_to_ASM"><span class="toc-number">10.3.</span> <span class="toc-text">From oops to ASM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language"><span class="toc-number">10.3.1.</span> <span class="toc-text">From ASM to c language</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#From_ASM_to_c_language_x86"><span class="toc-number">10.3.2.</span> <span class="toc-text">From ASM to c language x86</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Track_skills"><span class="toc-number">10.3.3.</span> <span class="toc-text">Track skills</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tips_on_debugging_optimized_code"><span class="toc-number">10.3.3.1.</span> <span class="toc-text">Tips on debugging optimized code</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#General_track_down_case"><span class="toc-number">10.3.4.</span> <span class="toc-text">General track down case</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A_case_of_oops"><span class="toc-number">10.3.5.</span> <span class="toc-text">A case of oops</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Debug_make_bug"><span class="toc-number">11.</span> <span class="toc-text">Debug make bug</span></a></li></ol>
  
   </div>
 
