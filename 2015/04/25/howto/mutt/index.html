@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Power management | Firo的世界</title>
+    <title>使用mutt收发邮件 | Firo的世界</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="Firo Yang">
@@ -12,17 +12,30 @@
 
     
     <meta name="description" content="Reference
-wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-F">
+昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.这才想起来社区的mailist只接收:
+
+No MIME, no links, no compression, no attachments.  Just plain text
+
+我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.有点">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Power management">
-<meta property="og:url" content="http://firoyang.org/2015/02/27/kernel/power_management/">
+<meta property="og:title" content="使用mutt收发邮件">
+<meta property="og:url" content="http://firoyang.org/2015/04/25/howto/mutt/">
 <meta property="og:site_name" content="Firo的世界">
 <meta property="og:description" content="Reference
-wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-F">
+昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.这才想起来社区的mailist只接收:
+
+No MIME, no links, no compression, no attachments.  Just plain text
+
+我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.有点">
+<meta property="og:image" content="http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Power management">
+<meta name="twitter:title" content="使用mutt收发邮件">
 <meta name="twitter:description" content="Reference
-wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifications 9.4[Functional Specifications 34] (http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-F">
+昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.这才想起来社区的mailist只接收:
+
+No MIME, no links, no compression, no attachments.  Just plain text
+
+我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.有点">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -86,14 +99,14 @@ wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifica
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/kernel/power_management/" title="Power management" itemprop="url">Power management</a>
+      <a href="/2015/04/25/howto/mutt/" title="使用mutt收发邮件" itemprop="url">使用mutt收发邮件</a>
   </h1>
   <p class="article-author">By
        
 		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
 		
   <p class="article-time">
-    <time datetime="2015-02-27T07:46:12.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
+    <time datetime="2015-04-24T16:00:00.000Z" itemprop="datePublished"> Published Apr 25 2015</time>
     
   </p>
 </header>
@@ -102,70 +115,37 @@ wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifica
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#The_structure_of_PM_source_codes"><span class="toc-number">2.</span> <span class="toc-text">The structure of PM source codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Important_data_structure"><span class="toc-number">3.</span> <span class="toc-text">Important data structure</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Steps_of_suspend"><span class="toc-number">4.</span> <span class="toc-text">Steps of suspend</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Steps_of_resume"><span class="toc-number">5.</span> <span class="toc-text">Steps of resume</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Knowledge"><span class="toc-number">6.</span> <span class="toc-text">Knowledge</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">7.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">8.</span> <span class="toc-text">kernel cpuidle subsystem</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Steps_of_cpuilde"><span class="toc-number">8.1.</span> <span class="toc-text">Steps of cpuilde</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Source_code_layout"><span class="toc-number">8.2.</span> <span class="toc-text">Source code layout</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Important_data_structre"><span class="toc-number">8.3.</span> <span class="toc-text">Important data structre</span></a></li></ol></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#收邮件"><span class="toc-number">2.</span> <span class="toc-text">收邮件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mutt_与发邮件"><span class="toc-number">3.</span> <span class="toc-text">mutt 与发邮件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#删邮件"><span class="toc-number">4.</span> <span class="toc-text">删邮件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他"><span class="toc-number">5.</span> <span class="toc-text">其他</span></a></li></ol>
 		
 		</div>
 		
-		<h1 id="Reference">Reference</h1>
-<p><a href="http://www.wowotech.net/pm_subsystem/generic_pm_architecture.html" target="_blank" rel="external">wowotech</a><br><a href="https://lwn.net/Articles/384146/" target="_blank" rel="external">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently<br><a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF" target="_blank" rel="external">Hardware Specifications 9.4</a><br>[Functional Specifications 34] (<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf" target="_blank" rel="external">http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf</a>)<br>Documentation/power<br>Controlling Processor C-State Usage in Linux<br><a href="http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html" target="_blank" rel="external">Chapter 11. Power Management</a></p>
-<p>C-states: idle core power state</p>
-<h1 id="The_structure_of_PM_source_codes">The structure of PM source codes</h1>
+		<p><img src="http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg" alt="Trigun"></p>
+<h3 id="Reference">Reference</h3>
+<p>昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.<br>这才想起来社区的mailist只接收:</p>
+<blockquote>
+<p>No MIME, no links, no compression, no attachments.  Just plain text</p>
+</blockquote>
+<p>我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.<br>有点不方便, 今天决定使用mutt.<br>需要mutt, fetchmail, procmail, msmtp, proxychains(天朝专用), vim/emacs<br>发一个邮件, 需要这么多程序啊, 以前一直以为一个mutt就够了, 还Gmail方便啊.<br>mutt的作用类似于胶水, 把其他程序联系起来.<br>fetchmail收, procmail过滤spam mail, msmtp 用来发送, proxychains 翻x墙,<br>vim/emacs用来编辑邮件.</p>
+<h3 id="收邮件">收邮件</h3>
+<p>其实, 并不像网上博客中说的那样, fetchmail 和procmail并不是必须的.<br>参考mutt官网的<a href="http://dev.mutt.org/trac/wiki/UseCases/Gmail" target="_blank" rel="external">UserStory/GMailOverIMAP</a><br>你就可以想Web gmail一样实时推送邮件到你mutt了.<br>之后在.muttrc中加入:</p>
+<pre><code>bind <span class="built_in">index</span> G <span class="keyword">imap</span>-fetch-mail
+</code></pre><p>这样你就可以用G这个命令在mutt中主动同步gmail了.<br>此时翻墙用户启动mutt, proxychains会输出代理信息过滤到/dev/null</p>
+<pre><code><span class="input"><span class="prompt">proxychains mutt 2&gt;</span> /dev/null</span>
+</code></pre><h3 id="mutt_与发邮件">mutt 与发邮件</h3>
+<p>具体的配置看wangcong的<a href="http://wangcong.org/2007/03/09/-e4-bd-bf-e7-94-a8mutt-e5-a4-84-e7-90-86-e7-94-b5-e5-ad-90-e9-82-ae-e4-bb-b6-2/" target="_blank" rel="external">使用mutt处理电子邮件</a></p>
+<h3 id="删邮件">删邮件</h3>
+<p>在.muttrc配置如下，你在mutt中delete的mail在gmail的web上看不到了.<br><code>set delete=yes</code><br>可能需要在mutt中配置gamil trash, 求反馈.</p>
+<h3 id="其他">其他</h3>
 <ul>
-<li>Interface<br>syscall /sys/power</li>
-<li>PM core<br>kernel/power<br>main.c suspend.c suspend_test.c console.c process.c</li>
-<li>Device PM<br>driver/base/power — Power management interface, firo<br>power management 是针对device, bus, driver这部分的. 在suspend_devices_and_enter用到dpm_suspend_start.<br>driver/各种设备的驱动<br>driver/cpuidle —firo</li>
-<li>Platform PM<br>include/linux/suspend.h——定义platform dependent PM有关的操作函数集<br>就是他platform_suspend_ops<br>arch/xxx/mach-xxx/xxx.c or arch/xxx/plat-xxx/xxx.c——平台相关的电源管理操作</li>
-<li>CPU control</li>
-</ul>
-<h1 id="Important_data_structure">Important data structure</h1>
-<ul>
-<li>Platform PM<br>platform_suspend_ops, platform plat-<em> is equivalent to mach-</em> and microarchitecture.<br>plat-<em> is abustruct from mach-</em>1 and mach-<em>2 and so on.<br>mach-</em> is more closer to Board!<br>所以这个platform_suspend_ops, 是非常重要的, 他包含了所有BSP底层的内容.<br>竟然是用suspend_ops这个全局变量, 来承载所有platform相关的内容.</li>
-<li>Device PM<br>dev_pm_ops这个和上面是完全不同的两条调用路线,在suspend_devices_and_enter用到dpm_suspend_start.<h1 id="Steps_of_suspend">Steps of suspend</h1>
+<li><p>国内gmail用户要用proxychains 做下代理, 这样就能使用gmail了:<br><code>set sendmail=&quot;proxychains /usr/bin/msmtp&quot;</code></p>
 </li>
-<li>Function steps<br>state_store-&gt;pm_suspend-&gt;enter_state-&gt;<br>{<br>  valid_state &amp; suspend_prepare<br>  suspend_devices_and_enter-&gt; {<pre><code>  <span class="title">suspend_console</span> &amp; ftrace_stop &amp; dpm_suspend_start
-  suspend_enter-&gt;
-  {
-      <span class="title">disable_nonboot_cpus</span> &amp; arch_suspend_disable_irqs
-  }
-</code></pre>  }<br>}</li>
-<li>PM core<br>freeze userspace<br>console</li>
-<li><p>Device PM<br>suspend device<br>before and first part in suspend_enter</p>
+<li><p>wangcong的blog中的配置&lt;不太符合习惯, 按着习惯和美感应该是:<br><code>set indent_str=&quot;&gt;&quot;</code></p>
 </li>
-<li><p>Mass stuffs<br>CPU &amp; IRQ disable<br>syscore<br>Device PM check wakeup pendings<br>middle part in suspend_enter</p>
+<li><p>mutt取消当前命令用ctrl g</p>
 </li>
-<li><p>Platform PM<br>last part in suspend_enter </p>
-<h1 id="Steps_of_resume">Steps of resume</h1>
+<li><p>靠gmail 存了两份发送邮件, 把这句注释掉, gmail自己本身会缓存的:<br>  <code>set record = &quot;+[Gmail]/Sent Mail&quot;</code></p>
 </li>
 </ul>
-<h1 id="Knowledge">Knowledge</h1>
-<p>console switch、process freeze、CPU hotplug、wakeup</p>
-<h1 id="Introdution">Introdution</h1>
-<p>电源管理都涉及到那些内容?<br>PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices<br>Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down</p>
-<ul>
-<li>WFI: core power down except snoop and interrupt cache working<br>disable clocks of the CPU<br>snoop other Cores and io agent.<br>only snoop block are temporarily woken up and the block back to WFI mode after complete snoop.<br>can recognize interrupt.</li>
-<li>Power down: core power down, l1 flush, cache not mantained/snoop stoped, but l2 &amp; fabric<br>can not recognize interrupt, recovery is fully depended on MP_PMU</li>
-</ul>
-<p>In hardware layer, we need <a href="https://en.wikipedia.org/wiki/Power_Management_Unit" target="_blank" rel="external">PMU</a> to complete power management.<br>What is the relation of PMU and CPU?<br>armadaxp的PMU与CPU物理上与逻辑上是独立的.<br>The Power Management functions are provided by two power manager units:<br>The Device Power Management Unit (DEV_PMU)<br>The Multiprocessor Power Management Service Unit (MP_PMU).<br>PMU省电模式:</p>
-<h1 id="kernel_cpuidle_subsystem">kernel cpuidle subsystem</h1>
-<h2 id="Steps_of_cpuilde">Steps of cpuilde</h2>
-<ul>
-<li><p>interface<br>kernel sched and sysfs</p>
-</li>
-<li><p>cpuidle core<br>cpuidle.c、driver.c、governor.c、sysfs.c。<br>抽象出cpuidle device、cpuidle driver、cpuidle governor三个实体<br>一个core对应一个cpuidle device drivers/cpuidle/cpuidle.c.<br>device 和driver隔离, 通过全局变量联系 ifndef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS<br>管理cpuidle driver 和governor<br>上层sched模块 和sysfs 提供接口 </p>
-</li>
-<li><p>cpuidle governors</p>
-</li>
-<li><p>cpuidle drivers<br>drivers/cpudile/cpuidle-xxx.c or<br>arch/arm/plat-armada/cpuidle.c<br>如何进入idle状态<br>什么条件下会退出</p>
-</li>
-</ul>
-<h2 id="Source_code_layout">Source code layout</h2>
-<ul>
-<li>drivers/cpuidle<br>include/linux/cpuidle.h<br>cpuidle core、cpuidle governors和cpuidle drivers三个模块</li>
-<li>kernel\sched\idle.c<br>kernel sched中的cpuidle entry</li>
-</ul>
-<h2 id="Important_data_structre">Important data structre</h2>
-<p>struct cpuidle_driver<br>struct cpuidle_state<br>struct cpuidle_device used by ladder or menu</p>
-<p>device_initcall -&gt; armadaxp_init_cpuidle -&gt; cpuidle_register_driver  cpuidle_register_device<br>cpu_idle -&gt; cpuidle_idle_call</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -173,14 +153,9 @@ wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifica
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/kernel/">kernel</a>
+  <a class="article-category-link" href="/categories/howto/">howto</a>
 </div>
 
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/kernel/">kernel</a>
-  </div>
 
 </div>
 
@@ -188,7 +163,7 @@ wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifica
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://firoyang.org/2015/02/27/kernel/power_management/" data-title="Power management | Firo的世界" data-tsina="null" class="share clearfix">
+	  <div data-url="http://firoyang.org/2015/04/25/howto/mutt/" data-title="使用mutt收发邮件 | Firo的世界" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -202,18 +177,18 @@ wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifica
 <nav class="article-nav clearfix">
  
  <div class="prev" >
- <a href="/2015/02/27/kernel/process/" title="Linux process management">
+ <a href="/2015/04/25/kernel/hacking/" title="Kernel hacking">
   <strong>上一篇：</strong><br/>
   <span>
-  Linux process management</span>
+  Kernel hacking</span>
 </a>
 </div>
 
 
 <div class="next">
-<a href="/2015/02/27/life/"  title="The life of Firo">
+<a href="/2015/03/20/philosophy/english/"  title="The English Language">
  <strong>下一篇：</strong><br/> 
- <span>The life of Firo
+ <span>The English Language
 </span>
 </a>
 </div>
@@ -234,7 +209,7 @@ wowotechThe cpuidle subsystemcpuidle—Do nothing, efficientlyHardware Specifica
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#The_structure_of_PM_source_codes"><span class="toc-number">2.</span> <span class="toc-text">The structure of PM source codes</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Important_data_structure"><span class="toc-number">3.</span> <span class="toc-text">Important data structure</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Steps_of_suspend"><span class="toc-number">4.</span> <span class="toc-text">Steps of suspend</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Steps_of_resume"><span class="toc-number">5.</span> <span class="toc-text">Steps of resume</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Knowledge"><span class="toc-number">6.</span> <span class="toc-text">Knowledge</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Introdution"><span class="toc-number">7.</span> <span class="toc-text">Introdution</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_cpuidle_subsystem"><span class="toc-number">8.</span> <span class="toc-text">kernel cpuidle subsystem</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Steps_of_cpuilde"><span class="toc-number">8.1.</span> <span class="toc-text">Steps of cpuilde</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Source_code_layout"><span class="toc-number">8.2.</span> <span class="toc-text">Source code layout</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Important_data_structre"><span class="toc-number">8.3.</span> <span class="toc-text">Important data structre</span></a></li></ol></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#收邮件"><span class="toc-number">2.</span> <span class="toc-text">收邮件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mutt_与发邮件"><span class="toc-number">3.</span> <span class="toc-text">mutt 与发邮件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#删邮件"><span class="toc-number">4.</span> <span class="toc-text">删邮件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他"><span class="toc-number">5.</span> <span class="toc-text">其他</span></a></li></ol>
  
   </div>
 
