@@ -4,43 +4,28 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Network layer | Firo的世界</title>
+    <title>System booting | Firo的世界</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="Firo Yang">
     
 
     
-    <meta name="description" content="Network layer
-
-Error detection, unreliableBest effort service,IP has a simple error handling algorithm:throw away the datagram and try to send an ICMP message back to the source
-Host addressing
-
-IP
-
-I">
+    <meta name="description" content="Reference
+Contents
+What basic initializations should be perfomed when power on?How do we load the kernel to memory?What does kernel do when kernel boot.MBR vs BIOS?PC vs embeddedKernel initbefore star">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Network layer">
-<meta property="og:url" content="http://firoyang.org/2015/02/27/net/l3/">
+<meta property="og:title" content="System booting">
+<meta property="og:url" content="http://firoyang.org/2015/11/12/cs/boot/">
 <meta property="og:site_name" content="Firo的世界">
-<meta property="og:description" content="Network layer
-
-Error detection, unreliableBest effort service,IP has a simple error handling algorithm:throw away the datagram and try to send an ICMP message back to the source
-Host addressing
-
-IP
-
-I">
+<meta property="og:description" content="Reference
+Contents
+What basic initializations should be perfomed when power on?How do we load the kernel to memory?What does kernel do when kernel boot.MBR vs BIOS?PC vs embeddedKernel initbefore star">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Network layer">
-<meta name="twitter:description" content="Network layer
-
-Error detection, unreliableBest effort service,IP has a simple error handling algorithm:throw away the datagram and try to send an ICMP message back to the source
-Host addressing
-
-IP
-
-I">
+<meta name="twitter:title" content="System booting">
+<meta name="twitter:description" content="Reference
+Contents
+What basic initializations should be perfomed when power on?How do we load the kernel to memory?What does kernel do when kernel boot.MBR vs BIOS?PC vs embeddedKernel initbefore star">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -104,14 +89,14 @@ I">
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/02/27/net/l3/" title="Network layer" itemprop="url">Network layer</a>
+      <a href="/2015/11/12/cs/boot/" title="System booting" itemprop="url">System booting</a>
   </h1>
   <p class="article-author">By
        
 		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
 		
   <p class="article-time">
-    <time datetime="2015-02-27T07:46:13.000Z" itemprop="datePublished"> Published Feb 27 2015</time>
+    <time datetime="2015-11-12T02:43:23.000Z" itemprop="datePublished"> Published Nov 12 2015</time>
     
   </p>
 </header>
@@ -120,45 +105,30 @@ I">
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Network_layer"><span class="toc-number">1.</span> <span class="toc-text">Network layer</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#IP"><span class="toc-number">2.</span> <span class="toc-text">IP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">2.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Classless_Inter-Domain_Routing"><span class="toc-number">2.2.</span> <span class="toc-text">Classless Inter-Domain Routing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Supernetwork"><span class="toc-number">2.3.</span> <span class="toc-text">Supernetwork</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Private_network"><span class="toc-number">2.4.</span> <span class="toc-text">Private network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IP_fragmention/defragmention"><span class="toc-number">2.5.</span> <span class="toc-text">IP fragmention/defragmention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Route"><span class="toc-number">2.6.</span> <span class="toc-text">Route</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Netfilter"><span class="toc-number">2.7.</span> <span class="toc-text">Netfilter</span></a></li></ol></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PPC_multicore_booting"><span class="toc-number">3.</span> <span class="toc-text">PPC multicore booting</span></a></li></ol>
 		
 		</div>
 		
-		<h1 id="Network_layer">Network layer</h1>
+		<h1 id="Reference">Reference</h1>
+<h1 id="Contents">Contents</h1>
+<p>What basic initializations should be perfomed when power on?<br>How do we load the kernel to memory?<br>What does kernel do when kernel boot.<br>MBR vs BIOS?<br>PC vs embedded<br>Kernel init<br>before start_kernel<br>start_kernel<br>reset_init &amp; kernel_init</p>
+<h1 id="PPC_multicore_booting">PPC multicore booting</h1>
+<p>CCSRBAR<br>MPC86xx_MCM_OFFSET<br>srio_boot_master_release_slave</p>
+<p>uboot-&gt;<br>set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.</p>
+<p>core0 run, 2nd cores holdoff<br>core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp<br>core0 -&gt; arch/powerpc/cpu/mpc85xx/start.S-&gt;_start_e500<br>board_init_r-&gt;cpu_init_r-&gt; setup_mp-&gt; {<br><strong>bootpg_addr = (u32)virt_to_phys(&amp;</strong>second_half_boot_page); //Assembly code for put core to spin tablea. Used by <strong>secondary_start_page
+</strong>spin_table_addr = (u32)get_spin_phys_addr();// used by <strong>second_half_boot_page.<br>bootpg = BPTR = </strong>secondary_start_page<br>plat_mp_up-&gt;kick BRR &amp; Boot Space Translation<br>}<br>2nd cores holdoff -&gt; <strong>secondary_start_page<br>kernel-&gt;<br>core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core’s spin table by writing  the spin table field with the desired address<br>2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle<br>arch/powerpc/kernel/head_fsl_booke.S</p>
+<p>U-boot logs:<br>Reserving MP boot page to 7ffff000^M^M - —   -   MP spin table<br>address.</p>
+<p>SPAG : fdt_fixup_fman_firmware, 567^M^M<br>^M^M<br>..r.^M^M<br>VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M<br>VDBG: Secondary cores are not held in reset.^M^M</p>
+<p>Kernel Logs:</p>
+<p>smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M<br>smp: failed starting cpu 1 (rc -2)^M^M<br>smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M<br>smp: failed starting cpu 2 (rc -2)^M^M<br>smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M<br>smp: failed starting cpu 3 (rc -2)^M^M<br>Brought up 1 CPUs^M^M<br>devtmpfs: initialized^M^M</p>
+<p>Note that u-boot can’t detect  memory above 2G and we need to check<br>if kernel is accessing at high mem of 2G or 4G.</p>
+<p>Here are the logs..</p>
+<p>I printed pa in %lx since the outout of <strong>pa(</strong>early_start) is in long unsigned int.</p>
+<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0<br>Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50<br>Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000<br>Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000<br>smp_85xx_kick_cpu: timeout waiting for core 1 to ack<br>smp: failed starting cpu 1 (rc -2)<br>Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0<br>Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50<br>Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200<br>Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200<br>smp_85xx_kick_cpu: timeout waiting for core 2 to ack<br>smp: failed starting cpu 2 (rc -2)<br>Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0<br>Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50<br>Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a<br>Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a<br>smp_85xx_kick_cpu: timeout waiting for core 3 to ack<br>smp: failed starting cpu 3 (rc -2)<br>I don’t see the following print in u-boot..<br> 69                                 fdt_setprop(blob, off, “cpu-release-addr”,<br> 70                                                 &amp;val, sizeof(val));</p>
 <ul>
-<li>Error detection, unreliable<br>Best effort service,IP has a simple error handling algorithm:<br>throw away the datagram and try to send an ICMP message back to the source</li>
-<li>Host addressing</li>
+<li>printf(“Firo u-boot:cpu release addr %p, value %x\n”, &amp;val, val);</li>
 </ul>
-<h1 id="IP">IP</h1>
-<ul>
-<li>IP Packet Fragmentation/Defragmentation</li>
-<li>MSS tcp_sock-&gt;mss_cache in tcp_sync_mss not minus SACK option<br>  in <em>tcp_current_mss</em> minus SACK option<br>rfc1122</li>
-</ul>
-<ul>
-<li>IP option is  fixed in a session icsk-&gt;icsk_ext_hdr_len;</li>
-<li>is network header icsk-&gt;icsk_af_ops-&gt;net_header_len</li>
-<li>tcp_sock-&gt;tcp_header_len all except SACK option (Not sure)<h2 id="Reference">Reference</h2>
-<a href="http://www.tecmint.com/ipv4-and-ipv6-comparison/" target="_blank" rel="external">What’s wrong with IPv4 and Why we are moving to IPv6</a></li>
-</ul>
-<h2 id="Classless_Inter-Domain_Routing">Classless Inter-Domain Routing</h2>
-<p>CIDR is a method for allocating IP addresses and routing Internet Protocol packets.<br>IETF introduced CIDR in 1993 to replace the classful network.</p>
-<ul>
-<li>prefix/length</li>
-<li>Prefix aggregation</li>
-</ul>
-<h2 id="Supernetwork">Supernetwork</h2>
-<p>prefix/route aggregation<br>decrease the memroy and the time of search route table.</p>
-<h2 id="Private_network">Private network</h2>
-<p>In the Internet addressing architecture, a private network is a network that uses private IP address space.</p>
-<h2 id="IP_fragmention/defragmention">IP fragmention/defragmention</h2>
-<p>iphdr-&gt;id, iphdr-&gt;frag_off<br>skb_shared_info-&gt;frag_list<br>ip_fragment/ip_defrag<br><a href="http://tools.ietf.org/html/rfc6864" target="_blank" rel="external">Updated Specification of the IPv4 ID Field</a></p>
-<h2 id="Route">Route</h2>
-<ul>
-<li>state structure<br>fib_info:route info<br>fib_config:</li>
-<li>add new rule<br>iproute2 …-&gt;inet_rtm_newroute()-&gt;fib_new_table()-&gt;fib_hash_table()</li>
-<li>Multi-time line<br>fib_create_info(): create a fib_info<h2 id="Netfilter">Netfilter</h2>
-</li>
-</ul>
+<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0<br>smp_85xx_kick_cpu: timeout waiting for core 1 to ack<br>smp: failed starting cpu 1 (rc -2)<br>Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0<br>smp_85xx_kick_cpu: timeout waiting for core 2 to ack<br>smp: failed starting cpu 2 (rc -2)<br>Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0<br>smp_85xx_kick_cpu: timeout waiting for core 3 to ack<br>smp: failed starting cpu 3 (rc -2)</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -166,13 +136,13 @@ I">
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/net/">net</a>
+  <a class="article-category-link" href="/categories/cs/">cs</a>
 </div>
 
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/net/">net</a>
+  <span></span> <a href="/tags/cs/">cs</a>
   </div>
 
 </div>
@@ -181,7 +151,7 @@ I">
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://firoyang.org/2015/02/27/net/l3/" data-title="Network layer | Firo的世界" data-tsina="null" class="share clearfix">
+	  <div data-url="http://firoyang.org/2015/11/12/cs/boot/" data-title="System booting | Firo的世界" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -194,19 +164,11 @@ I">
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/02/27/net/l2/" title="Data link layer">
-  <strong>上一篇：</strong><br/>
-  <span>
-  Data link layer</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/02/27/net/l4/"  title="Transport layer">
+<a href="/2015/10/25/cs/build/"  title="Light camera action - compile link load">
  <strong>下一篇：</strong><br/> 
- <span>Transport layer
+ <span>Light camera action - compile link load
 </span>
 </a>
 </div>
@@ -227,7 +189,7 @@ I">
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Network_layer"><span class="toc-number">1.</span> <span class="toc-text">Network layer</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#IP"><span class="toc-number">2.</span> <span class="toc-text">IP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-number">2.1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Classless_Inter-Domain_Routing"><span class="toc-number">2.2.</span> <span class="toc-text">Classless Inter-Domain Routing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Supernetwork"><span class="toc-number">2.3.</span> <span class="toc-text">Supernetwork</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Private_network"><span class="toc-number">2.4.</span> <span class="toc-text">Private network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IP_fragmention/defragmention"><span class="toc-number">2.5.</span> <span class="toc-text">IP fragmention/defragmention</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Route"><span class="toc-number">2.6.</span> <span class="toc-text">Route</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Netfilter"><span class="toc-number">2.7.</span> <span class="toc-text">Netfilter</span></a></li></ol></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PPC_multicore_booting"><span class="toc-number">3.</span> <span class="toc-text">PPC multicore booting</span></a></li></ol>
  
   </div>
 
