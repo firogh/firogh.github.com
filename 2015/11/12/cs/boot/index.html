@@ -113,10 +113,17 @@ What basic initializations should be perfomed when power on?How do we load the k
 <h1 id="Contents">Contents</h1>
 <p>What basic initializations should be perfomed when power on?<br>How do we load the kernel to memory?<br>What does kernel do when kernel boot.<br>MBR vs BIOS?<br>PC vs embedded<br>Kernel init<br>before start_kernel<br>start_kernel<br>reset_init &amp; kernel_init</p>
 <h1 id="PPC_multicore_booting">PPC multicore booting</h1>
+<ul>
+<li>There are two possibilites to make secondary cores booting failed.</li>
+</ul>
+<ol>
+<li>There is a bug in the code executed by Secondary cores</li>
+<li>The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.</li>
+</ol>
 <p>CCSRBAR<br>MPC86xx_MCM_OFFSET<br>srio_boot_master_release_slave</p>
 <p>uboot-&gt;<br>set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.</p>
 <p>core0 run, 2nd cores holdoff<br>core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp<br>core0 -&gt; arch/powerpc/cpu/mpc85xx/start.S-&gt;_start_e500<br>board_init_r-&gt;cpu_init_r-&gt; setup_mp-&gt; {<br><strong>bootpg_addr = (u32)virt_to_phys(&amp;</strong>second_half_boot_page); //Assembly code for put core to spin tablea. Used by <strong>secondary_start_page
-</strong>spin_table_addr = (u32)get_spin_phys_addr();// used by <strong>second_half_boot_page.<br>bootpg = BPTR = </strong>secondary_start_page<br>plat_mp_up-&gt;kick BRR &amp; Boot Space Translation<br>}<br>2nd cores holdoff -&gt; <strong>secondary_start_page<br>kernel-&gt;<br>core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core’s spin table by writing  the spin table field with the desired address<br>2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle<br>arch/powerpc/kernel/head_fsl_booke.S</p>
+</strong>spin_table_addr = (u32)get_spin_phys_addr();// used by <strong>second_half_boot_page<br>bootpg = BPTR = </strong>secondary_start_page<br>plat_mp_up-&gt;kick BRR &amp; Boot Space Translation<br>}<br>2nd cores holdoff -&gt; <strong>secondary_start_page<br>kernel-&gt;<br>core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core’s spin table by writing  the spin table field with the desired address<br>2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle<br>arch/powerpc/kernel/head_fsl_booke.S</p>
 <p>U-boot logs:<br>Reserving MP boot page to 7ffff000^M^M - —   -   MP spin table<br>address.</p>
 <p>SPAG : fdt_fixup_fman_firmware, 567^M^M<br>^M^M<br>..r.^M^M<br>VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M<br>VDBG: Secondary cores are not held in reset.^M^M</p>
 <p>Kernel Logs:</p>
