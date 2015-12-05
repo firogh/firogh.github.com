@@ -108,7 +108,7 @@ get a glan">
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">3.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_part"><span class="toc-number">4.</span> <span class="toc-text">kernel part</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">5.</span> <span class="toc-text">What about tty</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">3.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_part"><span class="toc-number">4.</span> <span class="toc-text">kernel part</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#just_print"><span class="toc-number">5.</span> <span class="toc-text">just print</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_console?"><span class="toc-number">6.</span> <span class="toc-text">What about console?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">7.</span> <span class="toc-text">What about tty</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#device_files"><span class="toc-number">8.</span> <span class="toc-text">device files</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backup"><span class="toc-number">9.</span> <span class="toc-text">Backup</span></a></li></ol>
 		
 		</div>
 		
@@ -119,19 +119,54 @@ get a glan">
 <p>start.S:board_init_r<br>init_sequence_f: -&gt;init_baud_rate; serial_init; console_init_f<br>serial_init -&gt;&amp;eserial1_device-&gt;start=eserial##port##_init-&gt;NS16550_init: UART divisor init.<br>Firstly, the struct of serial define some input and output funtion.<br>It’s basic function of serial, put or get!<br>console_init_f: just gd-&gt;have_console = 1;<br>init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,<br>initr_serial: just register &amp;eserial1_device to serial_devices<br>stdio_add_devices: drv_system_init, serial_stdio_init<br>drv_system_init: register default serial dev to devs.list.<br>serial_stdio_init: register &amp;eserial1_device to devs.list. Duplicate, but serial dev “eserial0”  and system “serial”.<br>console_init_r: console_doenv -&gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is “serial”, but they may be KBD!<br>看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?<br>main_loop:cli_loop: getc!</p>
 <h1 id="kernel_part">kernel part</h1>
 <ul>
-<li>onset<br>start_kernel or setup_arch(arm) -&gt;parse_early_param-&gt;do_early_param-&gt;p-&gt;setup_func()= setup_early_printk-&gt;register_console<br>nucleus</li>
-<li>early_printk</li>
+<li>onset<br>start_kernel or setup_arch(arm)-&gt;parse_early_param-&gt;do_early_param-&gt;p-&gt;setup_func()= setup_early_printk-&gt;register_console<br>nucleus</li>
+<li>early_printk<h1 id="just_print">just print</h1>
+console_drivers-&gt;vt_console_driver-&gt;serial8250_console-&gt;NULL<br>printk-&gt; …-&gt;__call_console_drivers-&gt; console_drivers-&gt;write = vt_console_print<br>{<br>  //保存到screen buf, vga_con也什么不做啊.<br>  scr_writew((vc-&gt;vc_attr &lt;&lt; 8) + c, (unsigned short *)vc-&gt;vc_pos);</li>
 </ul>
-<p>drivers/tty/serial/8250/8250_core.c:module_init(serial8250_init);<br>console_init-&gt; console_initcall(serial8250_console_init) -&gt;register_console(&amp;serial8250_console) to console_drivers; exclusive_console.<br>console [tty0] enabled</p>
+<p>}</p>
+<h1 id="What_about_console?">What about console?</h1>
+<p>start_kerenl-&gt;<br>{<br>    // All about vga console<br>    set_arch-&gt; conswitchp = &amp;vga_con; or conswitchp = &amp;dummy_con;<br>    console_init-&gt;<br>    {<br>        con_init-&gt;<br>        {<br>            // vc-&gt;vc_sw-&gt;con_putcs is DUMMY<br>            //内存映射64KB or 32KB的VGA区域. 启动VGA<br>            conswitchp-&gt;con_startup = vgacon_startup -&gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);<br>            con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间<br>            // 核心内容!<br>            for (currcons = 0; currcons &lt; MIN_NR_CONSOLES; currcons++) {<br>                // 给vc_cons[currcons].d分配内存<br>                vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);<br>                INIT_WORK(&amp;vc_cons[currcons].SAK_work, vc_SAK);<br>                //初始化vc_cons[currcons].d<br>                tty_port_init(&amp;vc-&gt;port);<br>                // 继续初始化, 主要是确定screenbuf size<br>                visual_init(vc, currcons, 1);<br>                // 给vc_screenbuf分配内存<br>                vc-&gt;vc_screenbuf = kzalloc(vc-&gt;vc_screenbuf_size, GFP_NOWAIT);<br>                vc_init(vc, vc-&gt;vc_rows, vc-&gt;vc_cols,<br>                    currcons || !vc-&gt;vc_sw-&gt;con_save_screen);<br>            }</p>
+<pre><code>        <span class="attr_selector">[    0.000000]</span> Console<span class="value">: colour VGA+ <span class="number">80</span>x25
+        <span class="function">register_console</span>(&amp;vt_console_driver);</span><span class="comment">//vt_console can use vgacon writing.</span>
+    }
+    serial8250_console_init-&gt;<span class="function">register_console</span>(&amp;serial8250_console) to console_drivers; exclusive_console.
+    <span class="attr_selector">[    0.000000]</span> console <span class="attr_selector">[tty0]</span> enabled
+}
+<span class="function">module_init</span>(serial8250_init);??
+</code></pre><p>}</p>
+<ul>
+<li>fbcon<br>register_framebuffer-&gt; do_take_over_console -&gt;<br>{<br>  do_register_con_driver-&gt;csw-&gt;con_startup();registered_con_driver<br>  do_bind_con_driver -&gt;<br>  {<pre><code>  [    <span class="number">3.882220</span>] Console: switching <span class="keyword">to</span> colour dummy device <span class="number">80</span>x25
+  [    <span class="number">4.720732</span>] Console: switching <span class="keyword">to</span> colour frame <span class="keyword">buffer</span> device <span class="number">170</span>x48
+</code></pre>  }<br>}</li>
+</ul>
 <h1 id="What_about_tty">What about tty</h1>
 <ul>
-<li>onset<br>console_init-&gt;tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br>N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html" target="_blank" rel="external">Serial Drivers by Alessandro Rubini</a><br>fs_initcall:chr_dev_init-&gt;drivers/tty/tty_io.c: tty_init-&gt;”/dev/tty”,”/dev/console”<br>device_init:serial8250_init-&gt;<br>{<br>  tty_driver set to uart_driver by uart_register_driver -&gt;<br>  {<pre><code>  drv-&gt;state = kzalloc        <span class="comment">//uart_state</span>
+<li><p>onset<br>console_init-&gt;tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br>N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html" target="_blank" rel="external">Serial Drivers by Alessandro Rubini</a><br>fs_initcall:chr_dev_init-&gt;drivers/tty/tty_io.c: tty_init-&gt;<br>{</p>
+<p>  /<em> /dev/tty0 = /dev/console console_ops </em>/<br>  /<em> /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops </em>/</p>
+<p>  //“/dev/tty”,<br>  cdev_init(&amp;tty_cdev, &amp;tty_fops);<br>  “/dev/console”<br>  cdev_init(&amp;console_cdev, &amp;console_fops);<br>  vty_init-&gt;<br>  {</p>
+<pre><code>  <span class="comment">//"dev/tty0"    </span>
+  cdev_init(&amp;vc0_cdev, console_fops);    
+  <span class="comment">//"/dev/ttyN"</span>
+  tty_register_driver-&gt;tty_register_device(<span class="number">_</span>attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
+</code></pre><p>  }<br>}<br>device_init:serial8250_init-&gt;<br>{<br>  // In this function we decide “/dev/ttyS*”<br>  // dmesg |grep Serial<br>  // [    0.696341] Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled<br>  // serial8250.c -&gt; tty_io.c<br>  serial8250_reg.nr = UART_NR;<br>  ret = uart_register_driver(&amp;serial8250_reg);<br>  tty_driver set to uart_driver by uart_register_driver -&gt;<br>  {</p>
+<pre><code>  drv-&gt;state = kzalloc        <span class="comment">//uart_state</span>
   normal-&gt;driver_state    = drv; <span class="comment">//args struct uart_driver *drv = &amp;serial8250_reg</span>
   tty_set_operations(normal, &amp;uart_ops); 
   <span class="keyword">struct</span> tty_port *port = &amp;state-&gt;port
   tty_port_init(port);
   port-&gt;ops = &amp;uart_port_ops; <span class="comment">//tty_port</span>
-</code></pre>  }<br>  serial8250_register_ports(&amp;serial8250_reg, &amp;serial8250_isa_devs-&gt;dev);</li>
+  <span class="comment">// We register "/dev/ttyS*" files here.</span>
+  <span class="keyword">static</span> <span class="keyword">struct</span> uart_driver serial8250_reg = {
+      .owner                  = THIS_MODULE,
+      .driver_name            = <span class="string">"serial"</span>,
+      .dev_name               = <span class="string">"ttyS"</span>,
+      .major                  = TTY_MAJOR,
+      .minor                  = <span class="number">64</span>,
+      .cons                   = SERIAL8250_CONSOLE,
+  };
+  retval = tty_register_driver(normal); -&gt; register_chrdev_region(dev, driver-&gt;num, driver-&gt;name) <span class="comment">//32, ttyS?*? should be tty_ops</span>
+</code></pre><p>  }<br>  serial8250_register_ports(&amp;serial8250_reg, &amp;serial8250_isa_devs-&gt;dev);<br>}</p>
+</li>
 <li><p>nucleus<br>start_kernel-&gt;rest_init-&gt;kernel_init-&gt;kernel_init_freeable-&gt;sys_open((const char __user *) “/dev/console”, O_RDWR, 0)-&gt;…-&gt;<br>tty_open-&gt;<br>{<br>  //This index should be Ctrl + Alt + Fn, Dio!<br>  // tty_struct is corresponding virtual console, or just console??<br>  tty_lookup_driver-&gt;console_device-&gt;c-&gt;device(c, index)<br>  tty_init_dev-&gt;<br>  {</p>
 <pre><code>  //<span class="type">So</span> tty_struct-&gt;ops = tty_driver-&gt;ops = &amp; uart_ops
   alloc_tty_struct-&gt;tty-&gt;ops = driver-&gt;ops;
@@ -148,6 +183,9 @@ get a glan">
 </code></pre><p>  }<br>}<br>tty_write-&gt;ld-&gt;ops-&gt;write=n_tty_write-&gt;(tty_struct tty-&gt;ops-&gt;write)=uart_write-&gt;<br>{<br>  struct uart_state *state = tty-&gt;driver_data;<br>  port = state-&gt;uart_port;<br>  circ = &amp;state-&gt;xmit;<br>  memcpy(circ-&gt;buf + circ-&gt;head, buf, c);<br>  uart_start-&gt;__uart_start-&gt;(uart_port-&gt;ops-&gt;start_tx(port)); //&amp;uart_port_ops ?? uart_ops??<br>}</p>
 </li>
 </ul>
+<h1 id="device_files">device files</h1>
+<h1 id="Backup">Backup</h1>
+<p>./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, “/dev/vc/0”) &lt; 0)<br>./drivers//tty/vt/vc_screen.c:644:    if (register_chrdev(VCS_MAJOR, “vcs”, &amp;vcs_fops))<br>./drivers//tty/tty_io.c:3377:        error = register_chrdev_region(dev, driver-&gt;num, driver-&gt;name);<br>./drivers//tty/tty_io.c:3414:    unregister_chrdev_region(dev, driver-&gt;num);<br>./drivers//tty/tty_io.c:3430:    unregister_chrdev_region(MKDEV(driver-&gt;major, driver-&gt;minor_start),<br>./drivers//tty/tty_io.c:3607:        register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, “/dev/tty”) &lt; 0)<br>./drivers//tty/tty_io.c:3613:        register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, “/dev/console”) &lt; 0)<br>./drivers//tty/pty.c:841:        register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, “/dev/ptmx”) &lt; 0)</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -208,7 +246,7 @@ get a glan">
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">3.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_part"><span class="toc-number">4.</span> <span class="toc-text">kernel part</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">5.</span> <span class="toc-text">What about tty</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">3.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#kernel_part"><span class="toc-number">4.</span> <span class="toc-text">kernel part</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#just_print"><span class="toc-number">5.</span> <span class="toc-text">just print</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_console?"><span class="toc-number">6.</span> <span class="toc-text">What about console?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">7.</span> <span class="toc-text">What about tty</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#device_files"><span class="toc-number">8.</span> <span class="toc-text">device files</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backup"><span class="toc-number">9.</span> <span class="toc-text">Backup</span></a></li></ol>
  
   </div>
 
