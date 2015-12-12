@@ -11,24 +11,24 @@
     
 
     
-    <meta name="description" content="Reference
-Contents
-What is the difference between shell, console, and terminal?What does console do in kernel or u-boot?Linux console?Computer terminal: keyboard + dispalyTerminal emulator:
-get a glan">
+    <meta name="description" content="About the design
+Why dose we use /dev/xxx to represent the “tty” device?
+
+The whole point with “everything is a file” is not that you have somerandom filename (indeed, sockets and pipes show that “fil">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Console and TTY">
 <meta property="og:url" content="http://firoyang.org/2015/12/05/kernel/console/">
 <meta property="og:site_name" content="Firo的世界">
-<meta property="og:description" content="Reference
-Contents
-What is the difference between shell, console, and terminal?What does console do in kernel or u-boot?Linux console?Computer terminal: keyboard + dispalyTerminal emulator:
-get a glan">
+<meta property="og:description" content="About the design
+Why dose we use /dev/xxx to represent the “tty” device?
+
+The whole point with “everything is a file” is not that you have somerandom filename (indeed, sockets and pipes show that “fil">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Console and TTY">
-<meta name="twitter:description" content="Reference
-Contents
-What is the difference between shell, console, and terminal?What does console do in kernel or u-boot?Linux console?Computer terminal: keyboard + dispalyTerminal emulator:
-get a glan">
+<meta name="twitter:description" content="About the design
+Why dose we use /dev/xxx to represent the “tty” device?
+
+The whole point with “everything is a file” is not that you have somerandom filename (indeed, sockets and pipes show that “fil">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -108,11 +108,26 @@ get a glan">
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">3.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#what_is_platform_device_or_driver?"><span class="toc-number">4.</span> <span class="toc-text">what is platform device or driver?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#A_reallife_serial8250"><span class="toc-number">5.</span> <span class="toc-text">A reallife serial8250</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Simple_conceptions"><span class="toc-number">6.</span> <span class="toc-text">Simple conceptions</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_console?"><span class="toc-number">7.</span> <span class="toc-text">What about console?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#VGA_text_console_printk_&_write"><span class="toc-number">7.1.</span> <span class="toc-text">VGA text console printk & write</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">8.</span> <span class="toc-text">What about tty</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_Pseudoterminal"><span class="toc-number">9.</span> <span class="toc-text">What about Pseudoterminal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tty_drivers"><span class="toc-number">10.</span> <span class="toc-text">tty drivers</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Question?"><span class="toc-number">11.</span> <span class="toc-text">Question?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backup"><span class="toc-number">12.</span> <span class="toc-text">Backup</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#About_the_design"><span class="toc-number">1.</span> <span class="toc-text">About the design</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#cpu_hotplug"><span class="toc-number">2.</span> <span class="toc-text">cpu hotplug</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">3.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">4.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">5.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#what_is_platform_device_or_driver?"><span class="toc-number">6.</span> <span class="toc-text">what is platform device or driver?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#A_reallife_serial8250"><span class="toc-number">7.</span> <span class="toc-text">A reallife serial8250</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Simple_conceptions"><span class="toc-number">8.</span> <span class="toc-text">Simple conceptions</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_opening_/dev/console_to_vt_console"><span class="toc-number">9.</span> <span class="toc-text">What about opening /dev/console to vt console</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结下,_打开/dev/console,_会从console_drivers,_最终到达tty_driver-"><span class="toc-number">10.</span> <span class="toc-text">总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#这和/dev/tty_/dev/ttyS_从tty_drivers,_差不多-"><span class="toc-number">11.</span> <span class="toc-text">这和/dev/tty /dev/ttyS 从tty_drivers, 差不多.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#The_perspective"><span class="toc-number">12.</span> <span class="toc-text">The perspective</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_console?"><span class="toc-number">13.</span> <span class="toc-text">What about console?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#VGA_text_console_printk_&_write"><span class="toc-number">13.1.</span> <span class="toc-text">VGA text console printk & write</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">14.</span> <span class="toc-text">What about tty</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_Pseudoterminal"><span class="toc-number">15.</span> <span class="toc-text">What about Pseudoterminal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tty_drivers"><span class="toc-number">16.</span> <span class="toc-text">tty drivers</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Question?"><span class="toc-number">17.</span> <span class="toc-text">Question?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backup"><span class="toc-number">18.</span> <span class="toc-text">Backup</span></a></li></ol>
 		
 		</div>
 		
-		<h1 id="Reference">Reference</h1>
+		<h1 id="About_the_design">About the design</h1>
+<p>Why dose we use /dev/xxx to represent the “tty” device?</p>
+<blockquote>
+<p>The whole point with “everything is a file” is not that you have some<br>random filename (indeed, sockets and pipes show that “file” and “filename”<br>have nothing to do with each other), <em>but the fact that you can use common</em><br><em>tools to operate on different things</em>. — Linus<br>So we got the key point!<br>In order to use the common tools, file ops and vfs layer, the tty device is “abstructed” to<br>files by us. Addnationaly, we must assurance that is the files is <em>different</em>. What does<br>the word “dirrerent” means is not that you have some random different filename, but the<br>fact that you can access the real device through the different.<br>From wikipedia:<br>In mathematics, injections, surjections and bijections are classes of functions distinguished<br>by the manner in which arguments (input expressions from the domain) and images<br>(output expressions from the codomain) are related or mapped to each other.<br>I got an insight that abstruction is a non-injective, right?<br>But non-injective may not be a anstruction.<br>An asbstruction should come from manipulating different objects.<br>Non-injective, 多对一; Multiplex, 一对多.<br>So we can use mathematical language to describe the linux subsystem.<br>From real life device to a filesystem file.</p>
+<ul>
+<li>Abstraction: Non-injective, Multiplex(not partial function).</li>
+<li>Jection num and level: </li>
+</ul>
+</blockquote>
+<h1 id="cpu_hotplug">cpu hotplug</h1>
+<ul>
+<li>onset<br>static struct smp_hotplug_thread softirq_threads {<br>.thread_fn              = run_ksoftirqd<br>};<br>early_initcall(spawn_ksoftirqd)-&gt;mpboot_register_percpu_thread(&amp;softirq_threads)</li>
+<li>nucles onset<br>suspend_enter-&gt;enable_nonboot_cpus-&gt;_cpu_up-&gt;smpboot_create_threads-&gt;<strong>smpboot_create_thread(&amp;hotplug_threads)-&gt;<br>kthread_create_on_cpu(smpboot_thread_fn-&gt; ht-&gt;thread_fn(td-&gt;cpu)= run_ksoftirqd-&gt;</strong>do_softirq-&gt;h-&gt;action(h) = run_timer_softirq-&gt;<br>__run_timers-&gt;call_timer_fn)</li>
+</ul>
+<p>vt 就是个tty也有tty_driver 叫console_driver.</p>
+<h1 id="Reference">Reference</h1>
 <h1 id="Contents">Contents</h1>
 <p><a href="http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal" target="_blank" rel="external">What is the difference between shell, console, and terminal?</a><br>What does console do in kernel or u-boot?<br>Linux console?<br>Computer terminal: keyboard + dispaly<br>Terminal emulator:</p>
 <h1 id="get_a_glance_on_u-boot">get a glance on u-boot</h1>
@@ -142,7 +157,77 @@ tty_port_register_device_attr<span class="subst">-&gt;
 }
 </code></pre><p>}</p>
 <h1 id="Simple_conceptions">Simple conceptions</h1>
-<p><a href="http://www.linusakesson.net/programming/tty/" target="_blank" rel="external">You must read this -&gt; The TTY demystified</a><br>        kernel<br>        TTY(pts, dummy/serial, kbd+vga/fb<br>        Terminal</p>
+<p><a href="http://www.linusakesson.net/programming/tty/" target="_blank" rel="external">You must read this -&gt; The TTY demystified</a><br>System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.<br>        UART<br>        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)</p>
+<ul>
+<li>System console<br>Virtual termial, Terminal emulator/telnet/ssh -&gt; pts ,Physical terminal<br>You need at least one virtual terminal device in order to make use of your keyboard and monitor.<br>VT combine keyboard and display see con_init<br>con_init init a virtual terminal like gnome-terminal but in kernel.<br>con_init mainly init display.<br>vty_init mainly init kbd<br>They all can be system console.(Exception pts??), if you enable it.<br>Console is the entry of linux system.</li>
+<li>Console driver — banckends of  console<br>struct console 指定了console的结构.</li>
+<li>Console config<br>If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.<br>If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.<br>How to explain this phenomena?<br>From show_cons_active, we know /dev/console should come from console_drivers.<br>/dev/console is really the pointer.<br>Now, let’s inspect open /dev/console.</li>
+<li><p>Open /dev/console<br>Fisrt, it’s the very last place of booting kernel.<br>start_kernel-&gt;rest_init-&gt;kernel_init-&gt;kernel_init_freeable-&gt;sys_open((const char __user *) “/dev/console”, O_RDWR, 0)-&gt;…-&gt;<br>console_fops-&gt;tty_open-&gt;<br>{</p>
+<p>  // Sitiuations: disbale VT CONSOLE byt enable SERIAL8250_CONSOLE.<br>  // This function work only for /dev/tty<br>  // ls -l /dev/tty<br>  // crw-rw-rw- 1 root tty 5, 0 Dec 10 10:24 /dev/tty<br>  tty_open_current_tty-&gt;<br>  {</p>
+<pre><code>  <span class="regexp">/dev/</span>console is <span class="number">5</span>:<span class="number">1</span>, just <span class="keyword">return</span> <span class="keyword">NULL</span>
+</code></pre><p>  }<br>  //This index should be Ctrl + Alt + Fn??<br>  // tty_struct is corresponding virtual console, or just console??<br>  // lookup tty_driver. It looks like lookup a inode, right?<br>  tty_lookup_driver-&gt;<br>  {</p>
+<pre><code>  // Find a tty_driver by device() in console_drivers.
+  // So we know, got a console, then got a tty_driver, right?
+  // Where <span class="operator"><span class="keyword">do</span> the components <span class="keyword">of</span> console_drivers come form?
+  // <span class="keyword">At</span> present, we should have <span class="keyword">only</span> serial8250_console because 
+  // console vt_console_driver <span class="keyword">is</span> disabled <span class="keyword">by</span> us! But tty_driver console_driver
+  // still <span class="keyword">do</span> exist!So console <span class="keyword">and</span> tty <span class="keyword">is</span> really separated!
+  // <span class="keyword">When</span> we init vt, we <span class="keyword">get</span> the tty_driver console_driver <span class="keyword">with</span> con_ops type <span class="keyword">of</span> tty_operations.
+  // tty_drivers have the same major <span class="keyword">with</span> /dev/tty0!
+  // char_dev -&gt; tty_driver <span class="built_in">int</span> vty_init, <span class="keyword">not</span> disable.
+  // vt console<span class="comment">---^</span>
+  console_device-&gt;c-&gt;device(c, <span class="keyword">index</span>)
+  // What about serial8250_console?
+  // <span class="keyword">Where</span> <span class="keyword">is</span> the tty_driver <span class="keyword">of</span> serial8250_console?
+  // console-&gt;<span class="keyword">data</span> = uart_driver-&gt;tty_driver.
+  // We got another scene : uart-&gt;tty
+  // serial8250 console-&gt;<span class="keyword">data</span>-^
+  // <span class="built_in">serial</span><span class="string">'s tty_driver alloced in serial8250_init with uart_ops.
+  // vt'</span>s tty_driver alloced <span class="keyword">in</span> vty_init.
+  // We summarize these:
+  // uart_driver serial8250_reg &lt;-&gt;  vc dev <span class="keyword">or</span> /dev/tty*
+  // <span class="built_in">serial</span> tty driver &lt;-&gt; vt tty driver 
+  // fs:vty_init &lt;-&gt; <span class="keyword">module</span>:serial8250_init
+  // tty driver ops con_ops &lt;-&gt; uart_ops
+  // vt <span class="keyword">use</span> major <span class="keyword">to</span> <span class="keyword">connect</span> tty <span class="keyword">and</span>  vc dev
+  // <span class="built_in">serial</span> <span class="keyword">use</span> major <span class="keyword">and</span> -&gt; <span class="keyword">to</span> <span class="keyword">connect</span> tty <span class="keyword">and</span> uart_driver
+  // It seems that uart <span class="keyword">and</span> tty has a strong relationship, yet vt.
+  // Ok... we got tty driver.
+  // <span class="keyword">If</span> we disable vt console, <span class="keyword">then</span> here <span class="keyword">is</span> the serial8250 tty_driver.</span>
+</code></pre><p>  }<br>  // Lookup for tty_struct<br>  tty_driver_lookup_tty -&gt;<br>  {</p>
+<pre><code>  //tty_struct <span class="keyword">is</span> alloced <span class="keyword">in</span> init <span class="keyword">function</span> alloc_tty_driver.
+  // ttys, termios, ports, cdevs.
+  // ttys was used by tty_standard_install <span class="keyword">then</span> tty_driver_install_tty 
+  // <span class="keyword">then</span> tty_init_dev <span class="keyword">then</span> ok we <span class="keyword">return</span> <span class="keyword">to</span> tty <span class="keyword">open</span>. So this <span class="keyword">is</span> the start place.
+
+  So we know tty_driver-&gt;ttys[*] must be <span class="keyword">NULL</span>.
+</code></pre><p>  }<br>  tty_init_dev-&gt;<br>  {</p>
+<pre><code>  <span class="comment">// tty_driver likes a process, ttys like the files, tty_struct like a file!</span>
+  <span class="comment">// So we know a tty_struct is a tty file.</span>
+  <span class="comment">// tty_driver much like a inode</span>
+  <span class="comment">//So tty_struct-&gt;ops = tty_driver-&gt;ops = &amp; uart_ops</span>
+  alloc_tty_struct-&gt;tty-&gt;ops = driver-&gt;ops;
+  tty_driver_install_tty(driver, tty_struct)-&gt; tty_standard_install-&gt;driver-&gt;ttys[tty-&gt;index] = tty;
+</code></pre><p>  }<br>  // Ok… We got a tty_struct.<br>  // Add /dev/console to tty_struct-&gt;tty_files<br>  tty_add_file<br>  // At present, what have we done?<br>  // open(/dev/console)-&gt;console_drivers-&gt;console-&gt;tty_driver-&gt;tty_struct, right?</p>
+<p>  tty-&gt;ops-&gt;open(tty, filp)-&gt;//ops = &amp;uart_ops<br>  {</p>
+<pre><code>  uart_ops-&gt;open = uart_open-&gt;
+  {
+      uart-&gt; tty <span class="keyword">struct</span>
+      <span class="keyword">struct</span> uart_driver *drv = (<span class="keyword">struct</span> uart_driver *)tty-&gt;driver-&gt;driver_state;
+      <span class="keyword">struct</span> uart_state *state = drv-&gt;state + line; <span class="comment">//uart_state</span>
+      tty-&gt;driver_data = state;
+  }
+</code></pre><p>  }<br>}<br>// At present, we understand the flow of open /dev/console to serial console</p>
+<h1 id="What_about_opening_/dev/console_to_vt_console">What about opening /dev/console to vt console</h1>
+<p>sys_open(/dev/console)-&gt; … tty_open -&gt;<br>{<br>  tty_lookup_driver-&gt; get tty_driver=console_driver,<br>  Through the name console_driver, we know, vt tty_driver is the defaut driver of console!<br>  // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.<br>  // system console就有了, printk也就有了归处. In other words, you registered, you got printed<br>  // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.<br>  // 那么在kernel_init中sys_open又是什么鬼呢?<br>  // dev/tty 是专门真对进程的, 就是进程之前打开了一个tty就存在singnal里, 这个dev/tty就是取出来的.</p>
+</li>
+</ul>
+<p>}</p>
+<h1 id="总结下,_打开/dev/console,_会从console_drivers,_最终到达tty_driver-">总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.</h1>
+<h1 id="这和/dev/tty_/dev/ttyS_从tty_drivers,_差不多-">这和/dev/tty<em> /dev/ttyS</em> 从tty_drivers, 差不多.</h1>
+<p>// 这么输出为什么不会打窜了?<br>// How ctrl alt Fn work?<br>// echo xxx /dev/tty in serial tty_lookup_driver<br>// 另一个问题, serial 的terminal?</p>
+<h1 id="The_perspective">The perspective</h1>
+<p>/dev/*<br>vfs<br>chrdev<br>tty_fops—————————————-&gt;tty core<br>    ld_ops ——————————&gt; tty line discipline(for read, write)<br>tty_driver con_ops/uart_ops————&gt; tty driver and tty_operations<br>HW<br>There are three different types of tty drivers: console, serial port, and pty.<br>serial8250_default_handle_irq<br>UART console<br>              |—— Virtual terminal ————————- VT console<br>              |                    | — VT console<br>              |——<br>        Terminal—|<br>              |—— </p>
 <h1 id="What_about_console?">What about console?</h1>
 <ul>
 <li><p>early_con<br>start_kernel or setup_arch(arm)-&gt;parse_early_param-&gt;do_early_param-&gt;p-&gt;setup_func()= setup_early_printk-&gt;register_console</p>
@@ -193,7 +278,23 @@ tty_port_register_device_attr<span class="subst">-&gt;
 <pre><code>  <span class="comment">//"dev/tty0"    </span>
   cdev_init(&amp;vc0_cdev, console_fops);    
   <span class="comment">//"/dev/ttyN"</span>
-  tty_register_driver-&gt;tty_register_device(<span class="number">_</span>attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
+  tty_register_driver-&gt;
+  {
+      <span class="comment">// What does tty_register_driver do ?</span>
+      <span class="comment">// Alloc and register chr dev region.</span>
+      <span class="comment">// Add cdev with tty_ops and above region.</span>
+      <span class="comment">// Register tty device</span>
+      <span class="comment">// Why do we register tty devices?</span>
+      <span class="comment">// These devices must be used in some place.</span>
+      <span class="comment">// After registering itself, the driver registers the devices it controls through the tty_register_device function. </span>
+      <span class="comment">// 原来是把major 和minor做成dev_t放到driver-&gt;cdevs[index].dev里面了.</span>
+      <span class="comment">// 也就是说driver-&gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);</span>
+      <span class="comment">// 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class</span>
+      <span class="comment">// tty_register_device_attr-&gt;device_register-&gt;device_add-&gt;klist_add_tail(&amp;dev-&gt;knode_class,&amp;dev-&gt;class-&gt;p-&gt;klist_devices)</span>
+      <span class="comment">// 果然是在open tty-&gt;dev = tty_get_device(tty);在alloc_tty_struct</span>
+      <span class="comment">// 不知道这个tty-&gt;dev在哪里用, 不管他了.</span>
+      tty_register_device(<span class="number">_</span>attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
+  }
   kbd_init
 </code></pre><p>  }<br>}<br>device_init:serial8250_init-&gt;<br>{<br>  // In this function we decide “/dev/ttyS*”<br>  // dmesg |grep Serial<br>  // [    0.696341] Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled<br>  // serial8250.c -&gt; tty_io.c<br>  serial8250_reg.nr = UART_NR;<br>  ret = uart_register_driver(&amp;serial8250_reg);<br>  tty_driver set to uart_driver by uart_register_driver -&gt;<br>  {</p>
 <pre><code>  drv-&gt;state = kzalloc        <span class="comment">//uart_state</span>
@@ -278,6 +379,14 @@ tty_port_register_device_attr<span class="subst">-&gt;
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2015/12/13/philosophy/ccl/" title="The common cognition language">
+  <strong>上一篇：</strong><br/>
+  <span>
+  The common cognition language</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2015/11/12/cs/boot/"  title="System booting">
@@ -303,7 +412,7 @@ tty_port_register_device_attr<span class="subst">-&gt;
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">3.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#what_is_platform_device_or_driver?"><span class="toc-number">4.</span> <span class="toc-text">what is platform device or driver?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#A_reallife_serial8250"><span class="toc-number">5.</span> <span class="toc-text">A reallife serial8250</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Simple_conceptions"><span class="toc-number">6.</span> <span class="toc-text">Simple conceptions</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_console?"><span class="toc-number">7.</span> <span class="toc-text">What about console?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#VGA_text_console_printk_&_write"><span class="toc-number">7.1.</span> <span class="toc-text">VGA text console printk & write</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">8.</span> <span class="toc-text">What about tty</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_Pseudoterminal"><span class="toc-number">9.</span> <span class="toc-text">What about Pseudoterminal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tty_drivers"><span class="toc-number">10.</span> <span class="toc-text">tty drivers</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Question?"><span class="toc-number">11.</span> <span class="toc-text">Question?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backup"><span class="toc-number">12.</span> <span class="toc-text">Backup</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#About_the_design"><span class="toc-number">1.</span> <span class="toc-text">About the design</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#cpu_hotplug"><span class="toc-number">2.</span> <span class="toc-text">cpu hotplug</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">3.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">4.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get_a_glance_on_u-boot"><span class="toc-number">5.</span> <span class="toc-text">get a glance on u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#what_is_platform_device_or_driver?"><span class="toc-number">6.</span> <span class="toc-text">what is platform device or driver?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#A_reallife_serial8250"><span class="toc-number">7.</span> <span class="toc-text">A reallife serial8250</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Simple_conceptions"><span class="toc-number">8.</span> <span class="toc-text">Simple conceptions</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_opening_/dev/console_to_vt_console"><span class="toc-number">9.</span> <span class="toc-text">What about opening /dev/console to vt console</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结下,_打开/dev/console,_会从console_drivers,_最终到达tty_driver-"><span class="toc-number">10.</span> <span class="toc-text">总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#这和/dev/tty_/dev/ttyS_从tty_drivers,_差不多-"><span class="toc-number">11.</span> <span class="toc-text">这和/dev/tty /dev/ttyS 从tty_drivers, 差不多.</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#The_perspective"><span class="toc-number">12.</span> <span class="toc-text">The perspective</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_console?"><span class="toc-number">13.</span> <span class="toc-text">What about console?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#VGA_text_console_printk_&_write"><span class="toc-number">13.1.</span> <span class="toc-text">VGA text console printk & write</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_tty"><span class="toc-number">14.</span> <span class="toc-text">What about tty</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#What_about_Pseudoterminal"><span class="toc-number">15.</span> <span class="toc-text">What about Pseudoterminal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tty_drivers"><span class="toc-number">16.</span> <span class="toc-text">tty drivers</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Question?"><span class="toc-number">17.</span> <span class="toc-text">Question?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Backup"><span class="toc-number">18.</span> <span class="toc-text">Backup</span></a></li></ol>
  
   </div>
 
@@ -343,7 +452,7 @@ tty_port_register_device_attr<span class="subst">-&gt;
 		  
 		
 		  
-			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>4</sup></a></li>
+			<li><a href="/categories/philosophy/" title="philosophy">philosophy<sup>5</sup></a></li>
 		  
 		
 		  

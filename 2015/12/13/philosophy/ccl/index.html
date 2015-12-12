@@ -4,28 +4,22 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>System booting | Firo的世界</title>
+    <title>The common cognition language | Firo的世界</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="Firo Yang">
     
 
     
-    <meta name="description" content="Reference
-Contents
-What basic initializations should be perfomed when power on?How do we load the kernel to memory?What does kernel do when kernel boot.MBR vs BIOS?PC vs embeddedKernel initbefore star">
+    <meta name="description" content="To be continue!">
 <meta property="og:type" content="article">
-<meta property="og:title" content="System booting">
-<meta property="og:url" content="http://firoyang.org/2015/11/12/cs/boot/">
+<meta property="og:title" content="The common cognition language">
+<meta property="og:url" content="http://firoyang.org/2015/12/13/philosophy/ccl/">
 <meta property="og:site_name" content="Firo的世界">
-<meta property="og:description" content="Reference
-Contents
-What basic initializations should be perfomed when power on?How do we load the kernel to memory?What does kernel do when kernel boot.MBR vs BIOS?PC vs embeddedKernel initbefore star">
+<meta property="og:description" content="To be continue!">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="System booting">
-<meta name="twitter:description" content="Reference
-Contents
-What basic initializations should be perfomed when power on?How do we load the kernel to memory?What does kernel do when kernel boot.MBR vs BIOS?PC vs embeddedKernel initbefore star">
+<meta name="twitter:title" content="The common cognition language">
+<meta name="twitter:description" content="To be continue!">
 <meta name="twitter:creator" content="@firoter">
 <link rel="publisher" href="116338260303228780000">
 
@@ -89,14 +83,14 @@ What basic initializations should be perfomed when power on?How do we load the k
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/11/12/cs/boot/" title="System booting" itemprop="url">System booting</a>
+      <a href="/2015/12/13/philosophy/ccl/" title="The common cognition language" itemprop="url">The common cognition language</a>
   </h1>
   <p class="article-author">By
        
 		<a href="https://plus.google.com/116338260303228780000?rel=author" title="Firo Yang" target="_blank" itemprop="author">Firo Yang</a>
 		
   <p class="article-time">
-    <time datetime="2015-11-12T02:43:23.000Z" itemprop="datePublished"> Published Nov 12 2015</time>
+    <time datetime="2015-12-12T19:27:16.000Z" itemprop="datePublished"> Published Dec 13 2015</time>
     
   </p>
 </header>
@@ -105,43 +99,11 @@ What basic initializations should be perfomed when power on?How do we load the k
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">Contents</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#p4080_Board"><span class="toc-number">3.</span> <span class="toc-text">p4080 Board</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#config"><span class="toc-number">4.</span> <span class="toc-text">config</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#u-boot"><span class="toc-number">5.</span> <span class="toc-text">u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PPC_multicore_booting"><span class="toc-number">6.</span> <span class="toc-text">PPC multicore booting</span></a></li></ol>
+			
 		
 		</div>
 		
-		<h1 id="Reference">Reference</h1>
-<h1 id="Contents">Contents</h1>
-<p>What basic initializations should be perfomed when power on?<br>How do we load the kernel to memory?<br>What does kernel do when kernel boot.<br>MBR vs BIOS?<br>PC vs embedded<br>Kernel init<br>before start_kernel<br>start_kernel<br>reset_init &amp; kernel_init</p>
-<h1 id="p4080_Board">p4080 Board</h1>
-<p>PBL </p>
-<ol>
-<li>initialize I2C, SPI, eLBC, eSDHC.</li>
-<li>Load RCW and boot init commands from above.</li>
-<li>write date to conf register and memory<h1 id="config">config</h1>
-CCSRBAR -&gt; CCSR<br>default is 0x0_FE00_0000<br>CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).<br>CCSRBAR always points to itself.<br>holdoff<h1 id="u-boot">u-boot</h1>
-ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</li>
-</ol>
-<p>main_loop-&gt; …-&gt;./common/bootm_os.c:410:… do_bootm_states-&gt;<br>{<br>bootm_find_other-&gt;bootm_find_ramdisk_fdt-&gt;bootm_find_fdt-&gt;boot_get_fdt&amp;set_working_fdt_addr(0x0200000)-&gt;IMAGE_FORMAT_FIT-&gt;<br>&amp;<br>boot_fn = bootm_os_get_boot_func(images-&gt;os.os)=[IH_OS_LINUX] =<br>&amp;<br>boot_selected_os-&gt;boot_fn=do_bootm_linux-&gt;boot_body_linux-&gt;image_setup_linux-&gt;image_setup_libfdt-&gt;<br>board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&gt; ft_cpu_setup-&gt;<br>}</p>
-<h1 id="PPC_multicore_booting">PPC multicore booting</h1>
-<ul>
-<li>There are two possibilites to make secondary cores booting failed.</li>
-</ul>
-<ol>
-<li>There is a bug in the code executed by Secondary cores</li>
-<li>The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.</li>
-</ol>
-<p>CCSRBAR<br>MPC86xx_MCM_OFFSET<br>srio_boot_master_release_slave</p>
-<p>uboot-&gt;<br>set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.</p>
-<p>core0 run, 2nd cores holdoff<br>core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp<br>core0 -&gt; arch/powerpc/cpu/mpc85xx/start.S-&gt;_start_e500<br>board_init_r-&gt;cpu_init_r-&gt; setup_mp-&gt; {<br><strong>bootpg_addr = (u32)virt_to_phys(&amp;</strong>second_half_boot_page); //Assembly code for put core to spin tablea. Used by <strong>secondary_start_page
-</strong>spin_table_addr = (u32)get_spin_phys_addr();// used by <strong>second_half_boot_page<br>bootpg = BPTR = </strong>secondary_start_page<br>plat_mp_up-&gt;kick BRR &amp; Boot Space Translation<br>}<br>2nd cores holdoff -&gt; <strong>secondary_start_page<br>kernel-&gt;<br>core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core’s spin table by writing  the spin table field with the desired address<br>2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle<br>arch/powerpc/kernel/head_fsl_booke.S<br>U-boot logs:<br>Reserving MP boot page to 7ffff000^M^M - —   -   MP spin table<br>address.<br>SPAG : fdt_fixup_fman_firmware, 567^M^M<br>^M^M<br>..r.^M^M<br>VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M<br>VDBG: Secondary cores are not held in reset.^M^M<br>Kernel Logs:<br>smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M<br>smp: failed starting cpu 1 (rc -2)^M^M<br>smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M<br>smp: failed starting cpu 2 (rc -2)^M^M<br>smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M<br>smp: failed starting cpu 3 (rc -2)^M^M<br>Brought up 1 CPUs^M^M<br>devtmpfs: initialized^M^M</p>
-<p>Note that u-boot can’t detect  memory above 2G and we need to check<br>if kernel is accessing at high mem of 2G or 4G.</p>
-<p>Here are the logs..</p>
-<p>I printed pa in %lx since the outout of <strong>pa(</strong>early_start) is in long unsigned int.</p>
-<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0<br>Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50<br>Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000<br>Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000<br>smp_85xx_kick_cpu: timeout waiting for core 1 to ack<br>smp: failed starting cpu 1 (rc -2)<br>Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0<br>Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50<br>Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200<br>Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200<br>smp_85xx_kick_cpu: timeout waiting for core 2 to ack<br>smp: failed starting cpu 2 (rc -2)<br>Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0<br>Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50<br>Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a<br>Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a<br>smp_85xx_kick_cpu: timeout waiting for core 3 to ack<br>smp: failed starting cpu 3 (rc -2)<br>I don’t see the following print in u-boot..<br> 69                                 fdt_setprop(blob, off, “cpu-release-addr”,<br> 70                                                 &amp;val, sizeof(val));</p>
-<ul>
-<li>printf(“Firo u-boot:cpu release addr %p, value %x\n”, &amp;val, val);</li>
-</ul>
-<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0<br>smp_85xx_kick_cpu: timeout waiting for core 1 to ack<br>smp: failed starting cpu 1 (rc -2)<br>Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0<br>smp_85xx_kick_cpu: timeout waiting for core 2 to ack<br>smp: failed starting cpu 2 (rc -2)<br>Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0<br>smp_85xx_kick_cpu: timeout waiting for core 3 to ack<br>smp: failed starting cpu 3 (rc -2)</p>
+		<p>To be continue!</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -149,14 +111,9 @@ ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</li>
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/cs/">cs</a>
+  <a class="article-category-link" href="/categories/philosophy/">philosophy</a>
 </div>
 
-
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/cs/">cs</a>
-  </div>
 
 </div>
 
@@ -164,7 +121,7 @@ ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</li>
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://firoyang.org/2015/11/12/cs/boot/" data-title="System booting | Firo的世界" data-tsina="null" class="share clearfix">
+	  <div data-url="http://firoyang.org/2015/12/13/philosophy/ccl/" data-title="The common cognition language | Firo的世界" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -177,19 +134,11 @@ ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</li>
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/12/05/kernel/console/" title="Console and TTY">
-  <strong>上一篇：</strong><br/>
-  <span>
-  Console and TTY</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/10/25/cs/build/"  title="Light camera action - compile link load">
+<a href="/2015/12/05/kernel/console/"  title="Console and TTY">
  <strong>下一篇：</strong><br/> 
- <span>Light camera action - compile link load
+ <span>Console and TTY
 </span>
 </a>
 </div>
@@ -210,7 +159,7 @@ ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</li>
   <div id="toc" class="toc-aside">
   <strong class="toc-title">Contents</strong>
  
- <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number">1.</span> <span class="toc-text">Reference</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Contents"><span class="toc-number">2.</span> <span class="toc-text">Contents</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#p4080_Board"><span class="toc-number">3.</span> <span class="toc-text">p4080 Board</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#config"><span class="toc-number">4.</span> <span class="toc-text">config</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#u-boot"><span class="toc-number">5.</span> <span class="toc-text">u-boot</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PPC_multicore_booting"><span class="toc-number">6.</span> <span class="toc-text">PPC multicore booting</span></a></li></ol>
+ 
  
   </div>
 
