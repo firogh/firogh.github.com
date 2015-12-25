@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="
+
+    <base href="/aaaaaaaaaaaaaaaaa">
+    <title> Debugging - nanshu.wang </title>
+    <link rel="canonical" href="/aaaaaaaaaaaaaaaaa/cs/debugging/">
+    
+
+    <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "//hm.baidu.com/hm.js?a79535ca63291dc820e3ecefa615aad1";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
+</head>
+
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<nav id="nav">
+	<div id="title"><a href="/">Firo Notes</a></div>
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+                <a href="/cs/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> About </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/kernel/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> kernel </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+            <li>
+            <a href="/review/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+<section id="main">
+  <h1 itemprop="name" >Debugging</h1>
+  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Mon Jan 1, 0001 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+</aside>
+
+<meta itemprop="wordCount" content="905">
+<meta itemprop="datePublished" content="0001-01-01">
+<meta itemprop="url" content="/aaaaaaaaaaaaaaaaa/cs/debugging/">
+
+
+  <div>
+        <article itemprop="articleBody" id="content">
+           
+
+<h1 id="reference:9df68a0e9ceffd0ef168c5e5e50c9f94">Reference</h1>
+
+<p>Reverse engineering</p>
+
+<h1 id="contents:9df68a0e9ceffd0ef168c5e5e50c9f94">Contents</h1>
+
+<p>Bug types
+Bug made by me
+Anti-debuging
+General debugging steps
+Get observations
+Specific observations
+Debugging experience
+Debug Kernel bug
+How to use your customed debug library without cp system original corespon library? Set a path prefix?
+Method 1: cp&hellip;</p>
+
+<h1 id="bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Bug types</h1>
+
+<h2 id="gernel-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Gernel Bug types</h2>
+
+<h2 id="cwe-common-weakness-enumeration-https-nvd-nist-gov-cwe-cfm:9df68a0e9ceffd0ef168c5e5e50c9f94"><a href="https://nvd.nist.gov/cwe.cfm">CWE - Common Weakness Enumeration</a></h2>
+
+<h2 id="bug-type-of-jimgray-http-www-opensourceforu-com-2010-10-joy-of-programming-types-of-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94"><a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs/">BUG type of JimGray</a></h2>
+
+<p>Bohrbug, can be reproduce.
+Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了
+Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律
+Schroedinbug</p>
+
+<h2 id="common-types-of-computer-bugs-in-wikipedia-https-en-wikipedia-org-wiki-software-bug-common-types-of-computer-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94"><a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a></h2>
+
+<p>Arithmetic bugs
+syntax error
+Logic error
+&gt; Incorrect Bounds-Checking
+&gt; off-by-one bug
+&gt; Skipping Null-Termination Issues
+Resource bugs
+&gt; uninitialized/nonvalidated/corrupted pointer dereference.
+&gt; Segmentation fault in userspace
+&gt; Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a>
+&gt; Buffer overflow/踩内存
+&gt; <a href="http://lwn.net/Articles/174494/">Double kfree errors</a>
+&gt; The devm_* series functions introduce more double free error in driver code.
+Race condition bug
+&gt; Multi-threading programming bugs(parallel problems)
+&gt; deadlock
+Interfacing bugs
+Performance bugs
+Teamworking bugs
+Vulnerable bugs
+&gt; unbounded memory manipulation functions
+&gt; strcpy
+&gt; Non-Null Termination Issues
+&gt; non terminaed string
+&gt; Formate string
+&gt; <a href="https://www.owasp.org/index.php/Format_string_attack">Format Strings attacker</a> or <a href="https://en.wikipedia.org/wiki/Uncontrolled_format_string">Uncontrolled format string</a>
+&gt; integer issues
+&gt; integer overflow
+&gt; Signed Comparison Vulnerabilities
+Special BUG
+<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a></p>
+
+<h2 id="taxonomy-of-kernel-bug:9df68a0e9ceffd0ef168c5e5e50c9f94">Taxonomy of Kernel BUG</h2>
+
+<p><a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a>
+<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic
+狭隘的认为oops等价于内存地址出问题了, oops 本质上是__die(&ldquo;Oops&rdquo;
+__die 却可以表明很多错误 &ldquo;Bad pagetable&rdquo;, &ldquo;Oops - badmode&rdquo;<br />
+arm_notify_die(&ldquo;Oops - undefined instruction&rdquo; 等等..
+oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.
+panic 则是programmer 感知到的是防御式编程assertion的体现.
+<a href="http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification">Source of BUG</a>, driver or subsystem and so on.
+#BUG made by me
+* print_signal_info wrong pritk parameters position
+        printk(KERN_NOTICE &ldquo;K %d : %d -&gt; %s %d %s %d\n&rdquo;, sig, q-&gt;info.si_code,
+                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));
+ Watch compile warning info can be avoid of this bug.
+* spin_lock(sighand) invoke down_sem and cond_resched&hellip;
+    __send_signal()</p>
+
+<h1 id="anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94">Anti-debugging</h1>
+
+<h2 id="syntax-checking:9df68a0e9ceffd0ef168c5e5e50c9f94">Syntax checking</h2>
+
+<p>gcc -Wall
+bash -n</p>
+
+<h2 id="static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94">static code analysis</h2>
+
+<p>smatch</p>
+
+<h1 id="general-debugging-steps-abductive-reasoning-https-en-wikipedia-org-wiki-abductive-reasoning:9df68a0e9ceffd0ef168c5e5e50c9f94">General debugging steps &ndash; <a href="https://en.wikipedia.org/wiki/Abductive_reasoning">Abductive reasoning</a></h1>
+
+<p>T + O =&gt; E; //Theory + observations =&gt; explanation
+E is the sub-set of T, O is the result of E under the T.
+The process of debugging is use O to minimize T to E instance.
+0. Reproduce?
+kernel version
+ask reporter for the .config
+1. Find the bug type and definations what the bug belong to.
+The bug type is the broad outline of the Expaination of the specific bug&rsquo;s Observation.
+2. 结合实际环境get more observations and deuce the explanation/cause.
+3. Fix it.</p>
+
+<h1 id="get-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations</h1>
+
+<h2 id="get-observations-from-excute-binary-maybe-source-file:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from excute binary(maybe source file)</h2>
+
+<p>DWARF
+ELF header, readelf -h
+Program header table, readelf -l
+Segments, readelf &ndash;segments
+Sections, readelf &ndash;sections
+Section header table, readelf -S
+objdump -S
+make kernel/sched.s V=1
+c++filt
+addr2line -f -C -a xxx -e ooo
+/home/build/x/ab/mips-openwrt-linux-addr2line -C -f -e /data/logs/hwf-health-chk/debug-root/HC6361/0.9005.5384s/debugfs/tmp/data/usr/bin/aria2c  0x00607188
+aria2::ZeroBtMessage::~ZeroBtMessage()</p>
+
+<h3 id="tips-for-binary-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Tips for binary observations</h3>
+
+<p><a href="http://www.stlinux.com/devel/debug/jtag/build?q=node/82">Tips on debugging optimized code</a>
+* code reordering
+* inlining
+* Optimized-away variables
+* Tailcall optimization</p>
+
+<h2 id="get-observations-from-program:9df68a0e9ceffd0ef168c5e5e50c9f94">Get Observations from program</h2>
+
+<blockquote>
+<p>#define debugme(fmt, args&hellip;) do{FILE *fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); \
+fprintf(fdebug,&ldquo;%s,%s,%d:&ldquo;fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)
+Before kernel decompress use putstr
+Linux serial-port driver is interrupt driven, if irq-off console will not work!
+early_printk vs printk
+dump_stack
+ioctl/netlink
+Use atexit() register a stackdump or a wrapped print</p>
+
+<h3 id="debuger-gdb-kdb-kgdb:9df68a0e9ceffd0ef168c5e5e50c9f94">Debuger Gdb kdb kgdb</h3>
+
+<p>gdb /usr/src/linux/vmlinux /proc/kcore
+    bt
+    x/100a
+thread apply all bt full
+* How to use gdb debug loaded kernel module(maybe kernel its self)
+gdb vmlinux /proc/kcore
+core-file /proc/kcore
+p jiffies_64
+text_addr=$(cat /sys/module/char-read-write/sections/.text)
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr
+* how to get the offset of member in struct
+gdb ./vmlinux
+print &amp;((struct kmem_cache *)0)-&gt;offset</p>
+</blockquote>
+
+<h2 id="get-observations-from-application:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from application</h2>
+
+<p>lsof
+strace
+bash  -x for shell
+coredump</p>
+
+<h1 id="get-obervations-from-make:9df68a0e9ceffd0ef168c5e5e50c9f94">Get obervations from make</h1>
+
+<ul>
+<li>Just print echo
+make -s</li>
+<li>Print shell command
+make -n</li>
+<li>Print all variables. not really execute. Wired-name variable is useful to debug
+make -p</li>
+<li>Pirnt a message
+$(warning &hellip;)</li>
+
+<li><p>Etc
+&ndash;warn-undefined-variables</p>
+
+<h2 id="get-observations-from-library:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from library</h2>
+
+<p>ltrace
+library dependencies of a ELF/bin
+LD_TRACE_LOADED_OBJECTS=1 git
+ldd /usr/bin/git</p>
+
+<h2 id="get-observations-from-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from kernel</h2>
+
+<p>dmesg
+SysRq
+/proc (specially /proc/sys/) and /sys
+ftrace
+<a href="http://lwn.net/Articles/291091/">http://lwn.net/Articles/291091/</a>
+<a href="http://lwn.net/Articles/330402/">http://lwn.net/Articles/330402/</a>
+<a href="http://lwn.net/Articles/379903/">http://lwn.net/Articles/379903/</a>
+<a href="http://lwn.net/Articles/381064/">http://lwn.net/Articles/381064/</a>
+<a href="http://lwn.net/Articles/383362/">http://lwn.net/Articles/383362/</a>
+<a href="http://lwn.net/Articles/346470/">http://lwn.net/Articles/346470/</a>
+CONFIG_DYNAMIC_DEBUG
+pr_debug vs dev_debug
+<debugfs>/dynamic_debug/control
+print signal This is just a hiwifi wonderful kernel patch #931
+kgtp?
+lockdep
+kdump
+./scripts/decodecode &lt; Oops.txt</p></li>
+
+<li><p>kgdboc
+file vmlinux
+set remotebaud 115200
+target remote /dev/ttyS0</p></li>
+
+<li><p>how to get module text address
+firo@firo module$ cat /sys/module/wmi/sections/.text
+0xffffffffa023b000
+firo@firo module$ cat /proc/modules | grep wmi
+wmi 18820 0 - Live 0xffffffffa023b000
+int bss_var;
+static int hello_init(void)
+{printk(KERN_ALERT &ldquo;Text location .text(Code Segment):%p\n&rdquo;,hello_init);
+static int data_var=0;
+printk(KERN_ALERT &ldquo;Data Location .data(Data Segment):%p\n&rdquo;,&amp;data_var);
+printk(KERN_ALERT &ldquo;BSS Location: .bss(BSS Segment):%p\n&rdquo;,&amp;bss_var);
+……}
+Module_init(hello_init);</p>
+
+<h2 id="tips-for-kernel-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Tips for kernel observations</h2>
+
+<p>General track down case</p></li>
+
+<li><p>If an page oops close to zero, for example 0xfffffff4
+It maybe ERR_PTR(-12);</p></li>
+
+<li><p>smartqos custom qdisc - self inferrence
+要自己推测除几种可能, 之后按着思路去找, 不能汪洋大海, 乱砍.</p></li>
+
+<li><p>追BUG实际上就是, 找关联度最高的, 最好不要从头开始推理, 太耗时.</p>
+
+<h2 id="observations-of-network:9df68a0e9ceffd0ef168c5e5e50c9f94">Observations of network</h2>
+
+<p>tcpdump netstat iptables wireshark</p>
+
+<h1 id="specific-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Specific observations</h1>
+
+<h2 id="backtrace-s-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Backtrace&rsquo;s observations</h2></li>
+
+<li><p>gdb bt(Strongly, recommand), break continue bt</p></li>
+
+<li><p>backtrace / dumpstack</p></li>
+
+<li><p>read source code</p></li>
+
+<li><p>print log</p></li>
+
+<li><p>Timer backtrace, Just for funny, the foolish of me.</p></li>
+
+<li><p>examine codes in oops</p>
+
+<h1 id="debug-kernel-oops:9df68a0e9ceffd0ef168c5e5e50c9f94">Debug kernel oops</h1>
+
+<p>##From oops to ASM</p></li>
+
+<li><p>Fast way maybe???</p></li>
+
+<li><p>make kernel/xx.s</p></li>
+
+<li><p>grep &ldquo;code in oops.txt&rdquo; kernel/xx.s</p>
+
+<h2 id="from-asm-to-c-language:9df68a0e9ceffd0ef168c5e5e50c9f94">From ASM to c language</h2>
+
+<p><a href="http://yarchive.net/comp/linux/oops_decoding.html">lkml-Linus-Al-Viro-oops-debug</a></p></li>
+
+<li><p>expand inline function</p></li>
+
+<li><p>locate <strong>asm</strong>() 内嵌汇编, 能快速定位代码! 但很少! slhc_uncompress()</p></li>
+
+<li><p>找常量!</p></li>
+
+<li><p>找loop codes formate!</p></li>
+
+<li><p>通过.config or CONFIG_判断具体是那个相同函数.</p></li>
+
+<li><p>字符的数字敏感
+0000000034333545 doesnt have a bit 7 set in any byte.
++ef8:   00a01021    move    v0,a1
+efc:   88440003    lwl a0,3(v0)
+f00:   24450004    addiu   a1,v0,4<br />
+f04:   98440000    lwr a0,0(v0)<br />
+f08:   00641821    addu    v1,v1,a0<br />
+f0c:   0064202b    sltu    a0,v1,a0<br />
++f10:   14a7fff9    bne a1,a3,ef8 <slhc_uncompress+0x444><br />
+f14:   00831821    addu    v1,a0,v1</p>
+
+<h2 id="from-asm-to-c-language-x86:9df68a0e9ceffd0ef168c5e5e50c9f94">From ASM to c language x86</h2></li>
+
+<li><p>local_irq_save/disable
+c: 9c                    pushfq      //not sure
+d: 5d                    pop    %rbp //not sure
+e: fa                    cli</p></li>
+
+<li><p>per-CPU
+f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx</p></li>
+</ul>
+
+<h1 id="debug-intel-system-studio:9df68a0e9ceffd0ef168c5e5e50c9f94">Debug Intel system studio</h1>
+
+        </article>
+  </div>
+</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = '\/aaaaaaaaaaaaaaaaa\/cs\/debugging\/';
+    var disqus_title = 'Debugging';
+    var disqus_url = '\/aaaaaaaaaaaaaaaaa\/cs\/debugging\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2015 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang.</span></span>
+        Powered by <a href="http://hugo.spf13.com">Hugo</a>.
+        Theme by <a href="http://spf13.com">Steve Francia</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    
+    
+    
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i = 0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

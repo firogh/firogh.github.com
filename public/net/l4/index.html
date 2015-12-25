@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="
+
+    <base href="/aaaaaaaaaaaaaaaaa">
+    <title> Transport layer - nanshu.wang </title>
+    <link rel="canonical" href="/aaaaaaaaaaaaaaaaa/net/l4/">
+    
+
+    <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "//hm.baidu.com/hm.js?a79535ca63291dc820e3ecefa615aad1";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
+</head>
+
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<nav id="nav">
+	<div id="title"><a href="/">Firo Notes</a></div>
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+                <a href="/cs/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> About </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/kernel/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> kernel </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+            <li>
+            <a href="/review/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+<section id="main">
+  <h1 itemprop="name" >Transport layer</h1>
+  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Mon Jan 1, 0001 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+</aside>
+
+<meta itemprop="wordCount" content="806">
+<meta itemprop="datePublished" content="0001-01-01">
+<meta itemprop="url" content="/aaaaaaaaaaaaaaaaa/net/l4/">
+
+
+  <div>
+        <article itemprop="articleBody" id="content">
+           
+
+<h1 id="rfc:90dde891494f7c922f22925d795590fb">RFC</h1>
+
+<p><a href="http://tools.ietf.org/html/rfc7414">A Roadmap for Transmission Control Protocol (TCP) Specification Documents</a>
+<a href="https://tools.ietf.org/html/rfc1122">Requirements for Internet Hosts &ndash; Communication Layers</a>
+<a href="http://tools.ietf.org/html/rfc793">TRANSMISSION CONTROL PROTOCOL 1981</a>
+<a href="http://www.rfc-editor.org/errata_search.php?rfc=1122&amp;rec_status=15&amp;presentation=records">RFC Errata 一切都有改口的余地</a>
+793的errata建议阅读1122.</p>
+
+<h1 id="introduction:90dde891494f7c922f22925d795590fb">Introduction</h1>
+
+<p>本文主要关注tcp这一类的可靠的传输层协议.
+在之前的推理过程中, 我们已经能够明白, tcp的核心性质, 远没有想象
+中那么复杂:</p>
+
+<pre><code>multiplex, 这是传输层的本质, 标志用户地址, 也就是端口
+面向连接的, 收到的数据有序, 且存在session也就是握手挥手.
+可靠性, 报文一个都不能少.
+congestion control, 拥塞控制, 保证网络整体的性能.
+flow control, 流控, 保证对端可以良好稳定接收到报文.免得想双11的快递公司被爆仓.
+数据校验, 防止传输过程导致数据出错. 我常会想起水浒传中, 戴总送信那段.
+</code></pre>
+
+<p>对tcp就是围绕这6个核心的性质开始设计, 实现的.
+无论你是看tcp的头部啊, 还是协议栈的代码基本上都逃不出这六点.
+我不建议直接去看内核的tcp实现, 我是吃过苦头的.
+1. 很容易让人掉进去代码里面, 而忘了初衷.
+2. 内核的实现有很多工程性的问题, 这和tcp本身是无关的.比如tcp seq回绕的问题.</p>
+
+<h1 id="大话tcp-头部:90dde891494f7c922f22925d795590fb">大话TCP 头部</h1>
+
+<p>从上往下, 这也标志了重要性.
+先是, 源目的端口, 属于multiplex.
+接着sequence number, 这是面向连接, 数据有序
+接着是ack, 这是可靠性
+再往下是, offset 处于数据管理需要和tcp无关,
+tcp flags涉及到了多个性质,主要是握手和拥塞
+之后window size, 这是流控.
+之后是checksum, 保证传输过程中不会修改数据.
+你看tcp真的不复杂, 我们只是没有遇到一个好的解读角度, tcp是有鼻子有眼
+很生动的.</p>
+
+<h1 id="multiplexing:90dde891494f7c922f22925d795590fb">Multiplexing</h1>
+
+<p>Ports can provide multiple endpoints on a single node.
+inet_hash_connect()</p>
+
+<h1 id="flow-control:90dde891494f7c922f22925d795590fb">Flow control</h1>
+
+<h2 id="receive-windowsize:90dde891494f7c922f22925d795590fb">receive windowsize</h2>
+
+<p>暗含tcp的最大64KB.</p>
+
+<h2 id="sliding-window-protocol-滑动窗口协议:90dde891494f7c922f22925d795590fb">Sliding window protocol 滑动窗口协议</h2>
+
+<p>首先滑动窗口本身就是一个协议
+Sliding window protocols are used where reliable in-order delivery of packets is required.
+For every ack packet received, the window slides by one packet (logically) to transmit one new packet.
+发送方的发送窗口, 由发送了但没ack和 可用的发送空间,这个通常有对端的receive windowsize指定.
+如果发送了一个可用的发送空间 = receive windowsize - 那个报文大小, 新来报文更新串口.
+接收端的窗口就是最后收到连续到不连续的位置.</p>
+
+<h1 id="detection-of-transmission-errors:90dde891494f7c922f22925d795590fb">Detection of transmission errors</h1>
+
+<p>Error &ndash;  checksum, the transport protocol may check that the data is not corrupted</p>
+
+<h1 id="connection-oriented-communications:90dde891494f7c922f22925d795590fb">Connection-oriented communications</h1>
+
+<h2 id="handshak:90dde891494f7c922f22925d795590fb">Handshak</h2>
+
+<ul>
+<li><p>kproxy reorder
+chome -&gt;syn(kproxy reocrd syn) -&gt; firoyang.org
+firoyang.org -&gt;sync ack -&gt; chrome
+chrome -&gt; ack -&gt; firoyang.org
+chrome -&gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&gt;nginx
+nginx -&gt; tcp send fake syn ack-&gt;chrome
+chrome -&gt; ack -&gt; nginx(then -&gt; firoyang.org)
+tcp_v4_do_rcv{
+sk-&gt;sk_state == TCP_ESTABLISHED
+tcp_rcv_established{
+len &lt;= tcp_header_len =&gt;
+tcp_ack -&gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&gt; nginx
+}
+}
+nginx-&gt;GET -&gt;firoyang.org
+firoyang.org-&gt;nginx-&gt;chrome</p>
+
+<h2 id="syn-flood:90dde891494f7c922f22925d795590fb">syn flood</h2>
+
+<p>首先syn 也有超时5次指数1 2 4 8 16 32(第五次超时), 如果client发了一个syn就没了,
+会被黑客利用. 解决办法是tcp_syncookies, 在syn队列满了的时候, 构造一个特别isn,
+丢掉syn entry, 等待ack,校验合法直接accpet.好像incomplete队列无限大一般.</p></li>
+</ul>
+
+<h2 id="深入理解seq-和ack:90dde891494f7c922f22925d795590fb">深入理解seq 和ack</h2>
+
+<p><a href="http://serverfault.com/questions/593037/tcp-sequence-acknowledgment-numbers">TCP Sequence &amp; Acknowledgment numbers</a>
+这种问题就是咬住定义就完了.
+The sequence number of the first data octet in this segment (except
+    when SYN is present). If SYN is present the sequence number is the
+    initial sequence number (ISN) and the first data octet is ISN+1.
+If the ACK control bit is set this field contains the value of the
+    next sequence number the sender of the segment is expecting to
+    receive.  Once a connection is established this is always sent.
+ACK最简单了, 整个tcp session只有一个segement没有ack number就是第一个syn.
+其他情况, ack都是对面发来的seq + len + 1. (排除reorder包问题)
+这里的问题是第三次握手的时候, 单独一个ack, 没有数据, 这时候segement的seq
+应该是多少呢?RFC给出的是ISN + 1.但这个ack segment是个空数据.
+也就出现了下面发一个GET的时seq 和ack number和这个ack segement一致.
+那么如果交互过程中出现了空的ack呢?原理和这里是一样的. 空的ack 的seq也是
+标志下一个segement的byte序号, 但是如果no data, 下一个segment的seq还是这个.
+知道有数据了.
+这里想说的是, seq确实是标注segment的data, 知识偶尔因为空ack导致了假象, 会
+被后面的有数据的segement还原真相.
+总结:
+    syn 和 ack, 还有fin这种都不是数据, 不计算在seq里面.
+    seq的计算只和实际的数据有关.
+    小心处理no data这种情况, 就OK了.</p>
+
+<h2 id="time-wait:90dde891494f7c922f22925d795590fb">Time wait</h2>
+
+<p><a href="http://blog.csdn.net/dog250/article/details/13760985">TCP的TIME_WAIT快速回收与重用</a>
+双工, 被动关闭收到ack就%100圆满了.而clinet就不能确认被动关闭是否收到ack,
+显然被动关闭方不能在ack了, 如果下去, 还有个完, 所以两害相权, 取其轻.clinet来吧.</p>
+
+<ol>
+<li><p>为了server考虑, server的session 链接必须别正常正确的关闭!
+如果没有time wait, 而且client的ack丢了, server 重传fin ack, clinet的linux
+发现这个fin对应的sock不存在, 直接RST, server异常关闭, 应用程序会检测到错误.
+不友好.</p></li>
+
+<li><p>为了clinet, 不受旧server 干扰.
+这也是为什么要等2MSL</p></li>
+
+<li><p>tcp_timestamps tcp_tw_recycle
+tcp_time_wait
+一起用如果recycle 不ok就是time wait就是TCP_TIMEWAIT_LEN（60s）</p></li>
+</ol>
+
+<p>两种方法可以进入time wait 状态 tw_substate做区分.
+FIN_WAIT_2 收到fin 见tcp_fin()这个函数
+这个, time wait 如果没有设置recycle就是TCP_TIMEWAIT_LEN,设置了就是rto
+可以说rto的值真的要比TCP_TIMEWAIT_LEN要小.</p>
+
+<p>FIN_WAIT_2 超时假的time wait状态.貌似tcp_keepalive_timer()
+没有遵从协议但是没有break协议,是个优化.
+tcp_sock结构占用的资源要比tcp_timewait_sock结构占用的资源多, tcp_done干掉sock.
+在TIME_WAIT下也可以处理连接的关闭。
+这个,还一样time_wait是和rto TCP_TIMEWAIT_LEN有关.
+inet_twsk_schedule设置等的时间.</p>
+
+<ul>
+<li><p>tcp_tw_reuse
+貌似很激进.
+FIXME
+server 端玩蛋去, 本身像80, 自带重用技能&hellip;
+用在clinet段inet_hash_connect检查是否可以重用TIME_WAIT状态的套接字的端口.</p></li>
+
+<li><p>tcp_fin_timeout
+这个参数是FIN_WAIT_2 转到TIME_WAIT的时间.
+跟time wait时间, 没有直接联系! 好多blog都直接说成time wait的时间.
+这里是间接作用.
+FIXME&hellip;
+而time wait的时间看代码, 要不然是rto 要不然就是TCP_TIMEWAIT_LEN(60s)
+tcp_time_wait
+            if (recycle_ok) {
+                    tw-&gt;tw_timeout = rto;<br />
+            } else {
+                    tw-&gt;tw_timeout = TCP_TIMEWAIT_LEN;
+                    if (state == TCP_TIME_WAIT)
+                            timeo = TCP_TIMEWAIT_LEN;
+            }
+如果启用recycle 就是rto, 这个rto是const int rto = (icsk-&gt;icsk_rto &lt;&lt; 2) - (icsk-&gt;icsk_rto &gt;&gt; 1);
+3.5倍的icsk_rto
+在FIN_WAIT_2状态下没有接收到FIN包就进入TIME_WAIT的情况下，如果tcp_fin_timeout的值设置的太小，可能会导致TIME_WAIT套接字（子状态为FIN_WAIT_2）过早地被释放，这样对端发送的FIN（短暂地延迟或者本来就是正常的时间到达）到达时就没有办法处理，导致连接不正常关闭，所以tcp_fin_timeout参数的值并不是越小越好，通常设置为30S比较合适。</p>
+
+<h1 id="reliability:90dde891494f7c922f22925d795590fb">Reliability</h1>
+
+<h2 id="rtt:90dde891494f7c922f22925d795590fb">RTT</h2>
+
+<p>计算发送和返回ack的时间差.
+tcp_rtt_estimator()</p>
+
+<h2 id="arq:90dde891494f7c922f22925d795590fb">ARQ</h2>
+
+<p>ack and timeout
+Sliding window protocol is based on automatic repeat request/ARQ
+My conclusion: in practice TCP is a mixture between both GBN and SR.</p></li>
+
+<li><p>Go-Back-N</p></li>
+
+<li><p>Selective repeat</p></li>
+</ul>
+
+<h1 id="congestion-control:90dde891494f7c922f22925d795590fb">Congestion control</h1>
+
+<p>icsk_ca_ops;
+tcp_ack {
+tcp_cong_avoid
+tcp_fastretrans_alert
+tcp_slow_start}
+TCP send queue len /proc/sys/net/core/wmem_default
+今天想聊一聊, tcp的拥塞控制, 13年那会, 走自己一个人非常偏执的想把整个协议栈都看完.
+当时看得书不好, 加上自己脑袋已经僵化, 书看得很死性.
+一个人的青春时光不长, 大家要好好珍惜.
+所谓拥塞, 现实生活中也能经常遇到, 比如北京早本的交通, taobao双11的快递物流.
+所以tcp的拥塞控制, 可以说是这一类问题的最为理想化的工程场景.
+简单来看, 为什么会拥塞?发的报文太多了, 网络设备传输不过来了.
+改怎么办? 现实社会中, 可以通过单双号现行的方法, 来减少出行的车辆, 尽量避免交通拥堵.
+或者, 等待时间慢慢流逝, 上班堵车的时候就这么干的, 可是效率非常低啊. 我从镶黄旗去中关村
+不堵车,也就20~30分钟, 一堵车就要40 ~50分钟了.
+在计算机的世界, 我们可以控制发送报文的数量, 而不像真实生活一样, 有车的人出行开车与否,
+都是要依据个人意愿的,很难控制.
+这里, 我直接说tcp, 是如何解决的.
+我们下载电影, 升级系统的时候, 你会发现速度是一点点变快, 最终停留在一个较为固定速度值.
+没错这里就暗含这tcp的拥塞控制思想, tcp的想法是, 我不知道网络带宽到底是多少, 我不能贸然的
+向网络发太多的数据包, 有可能网络本来就很糟了, 更是雪上加霜. 当然运气好, 就没问题了.
+但linux的实现是保守的! 我一点点慢慢的浸满网络, 也就是slow start, 这个方法一点也不满,
+这是个指数增长的算法, 一开始发一个, 网络好, 发2个, 4个.所以增长速度很快的.slow是只起点低.
+但终极这么个长法, 早晚会浸满网络, 之后你再发包, 网络就不通常了.
+tcp既要保守, 又想获取更多的网络带宽.slow start一直长,不加控制, 拥塞是早晚的事, 即便这种方法
+能够在某些时候带来, 快速网络带宽利用, 但是最终确实也很快让网络拥塞了.
+所以tcp, 没有让slow start一直持续着, 相对潜在快速发包, 他们更怕拥塞.
+所以slow start控制的发包数量涨到一点阶段, 就停了. 网上找到的这个临界点是ssthresh的值是65536byte.
+ss就是slow start的缩写, 我没有验证过这个值.
+涨到这个值之后, tcp就谨小慎微地控制发包数量的增长了, 线下的增加发包数量, 指数式不敢再用了.
+即便是这样的增长, 早晚还是要触发拥塞. 拥塞了怎么办?
+已经出去的报文, 你控制不了了. 只能控制将要发送的报文, tcp是直接把当前速度削半作为ssthresh.
+实际又回到slow start 从1 开始一点点的从新晚上增长, 慢慢的等待网络变好.
+这套思想就叫AIMD原则，即加法增大、乘法减小.
+我这里只是,通俗的介绍了拥塞控制,以上帝视角来看一切都是那么合理.
+不过, 做学问有一点, 就是要追根溯源, 这几乎和实践验证同等重要.
+<a href="http://ee.lbl.gov/papers/congavoid.pdf">Congestion Avoidance and Control</a>
+这个paper道出了拥塞控制的初衷, 先驱不是神, 他也踩着坑过来的!
+86年10月LBL to UC Berkeley的网络带宽速率从32 Kbps 降到 40 bps, 才促使了拥塞控制的开始.
+到底传输的流量多少和网络整体传输速度有什么关系呢? 也就是说, 我什么都不做就让整个网络的报文
+一点点的变多, 看看网络的性能是如何变化?
+<a href="http://www.cs.virginia.edu/~cs757/slidespdf/757-13-congestion.pdf">Transport Level Congestion Control</a>
+这个paper将的比较好.
+下面说tcp的优化.</p>
+
+<h2 id="fast-retrans:90dde891494f7c922f22925d795590fb">Fast retrans</h2>
+
+<p>这个解决丢包timeout太慢的问题.
+tcp认为收到3个重复确认相同ack序号的报文, 就认为有报文丢了, 我要重传了.
+比如1 2 3 4 5, 发了这个5个报文, 他收到了3个1序号的ack, 那么他就认为2 丢失了就重传.
+这比等超时, 要快.所以叫快重传. 为什么快重传, 收到重复ack, 说明网络很可能是好的.
+那其实, 我们也没必要再来次slow start了. 而是进入了拥塞避免阶段了, 这个叫做快速恢复.
+我说的比较粗, 细节还是要看rfc和协议栈实现, 但是大致的道理是这样的.
+现在, 我们回过头总结一下:
+协议栈的拥塞算法宏观上看是, slow start, 拥塞避免, 拥塞控制.
+而且目标是让状态机维持在拥塞避免这个状态附近.
+就到这里了.</p>
+
+<h2 id="sack-and-dsack:90dde891494f7c922f22925d795590fb">SACK and DSACK</h2>
+
+<p>看cool shell就够了, 其实很好理解.</p>
+
+<p>#FAQ
+* What about TCP sequence number warp around
+PAWS use timestamp and RTT to solve this problem.
+##Timer
+*sk_timer
+listen: synack
+estblished: keepalive
+timewait:</p>
+
+<h1 id="optimization:90dde891494f7c922f22925d795590fb">optimization</h1>
+
+<h2 id="nagle:90dde891494f7c922f22925d795590fb">Nagle</h2>
+
+<p>Nagle算法并没有阻止发送小包，它只是阻止了发送大量的小包！
+Nagle算法的初衷：避免发送大量的小包，防止小包泛滥于网络，理想情况下，
+对于一个TCP连接而言，网络上每次只能一个小包存在。它更多的是端到端意义上的优化。
+正是交互式应用引入了大量的小包，Nagle算法所作用的正是交互式应用！</p>
+
+<h2 id="cork:90dde891494f7c922f22925d795590fb">Cork</h2>
+
+<p>CORK算法的初衷：提高网络利用率，理想情况下，完全避免发送小包，仅仅发送满包以及不得不发的小包。
+CORK的真正初衷是提高载荷率，提高网络利用率</p>
+
+<h2 id="tso:90dde891494f7c922f22925d795590fb">TSO</h2>
+
+<p>搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文,
+当然skb-&gt;len得大于mss_now才有意义.
+tcp_set_skb_tso_segs</p>
+
+<h2 id="fixme:90dde891494f7c922f22925d795590fb">FIXME</h2>
+
+<ul>
+<li>Create TCP options
+tcp_syn_build_options()</li>
+<li>Receive ack
+tcp_ack()
+记录ack的数据大小mss or tcp abc
+update snd_wl1 and snd_una
+slow path update mtu mss tcp_skb_cb.sacked</li>
+<li>Active send data
+tcp_sendpage()/tcp_sendmsg()-&gt;tcp_write_xmit()/tcp_push_one()-&gt;tcp_transmit_skb</li>
+<li>Timer expiring retransmiter
+tcp_retransmiter_timer()&hellip;-&gt;tcp_transmit_skb()</li>
+<li>reponse for receiving an ACK
+tcp_data_snd_check()-&gt;tcp_write_xmit()</li>
+<li>tcp_v4_rcv
+<a href="http://thread.gmane.org/gmane.linux.network/85613/focus=85614">skb-&gt;dev = NULL;</a></li>
+</ul>
+
+        </article>
+  </div>
+</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = '\/aaaaaaaaaaaaaaaaa\/net\/l4\/';
+    var disqus_title = 'Transport layer';
+    var disqus_url = '\/aaaaaaaaaaaaaaaaa\/net\/l4\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2015 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang.</span></span>
+        Powered by <a href="http://hugo.spf13.com">Hugo</a>.
+        Theme by <a href="http://spf13.com">Steve Francia</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    
+    
+    
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i = 0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

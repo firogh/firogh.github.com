@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="
+
+    <base href="/aaaaaaaaaaaaaaaaa">
+    <title> Understanding linux netfilter - nanshu.wang </title>
+    <link rel="canonical" href="/aaaaaaaaaaaaaaaaa/net/netfilter/">
+    
+
+    <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "//hm.baidu.com/hm.js?a79535ca63291dc820e3ecefa615aad1";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
+</head>
+
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<nav id="nav">
+	<div id="title"><a href="/">Firo Notes</a></div>
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+                <a href="/cs/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> About </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/kernel/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> kernel </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+            <li>
+            <a href="/review/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+<section id="main">
+  <h1 itemprop="name" >Understanding linux netfilter</h1>
+  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Mon Jan 1, 0001 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+</aside>
+
+<meta itemprop="wordCount" content="574">
+<meta itemprop="datePublished" content="0001-01-01">
+<meta itemprop="url" content="/aaaaaaaaaaaaaaaaa/net/netfilter/">
+
+
+  <div>
+        <article itemprop="articleBody" id="content">
+           
+
+<h1 id="reference:e2689587120d0b6ef78b8a3e3eecfbca">Reference</h1>
+
+<p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html">Linux netfilter Hacking HOWTO</a>
+<a href="http://www.karlrupp.net/en/computer/nat_tutorial">NAT - Network Address Translation</a>
+man iptables and man iptables-extension</p>
+
+<h1 id="introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca">Introduction to netfilter</h1>
+
+<p>Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
+Netfilter的本质就是内核协议栈上的Hook的集合.
+对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言</p>
+
+<blockquote>
+<p>Firstly, each protocol defines &ldquo;hooks&rdquo; (IPv4 defines 5) which are well-defined points in a packet&rsquo;s traversal of that protocol stack.</p>
+</blockquote>
+
+<p>到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
+与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
+Netfilter的历史请查阅wikipedia.
+内核基于netfilter构建了 iptables 和 connection track两套系统.
+从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
+netfilter
+ct| |iptables
+nat,filter,mangle,kproxy,smartqos
+当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.</p>
+
+<h1 id="netfilter:e2689587120d0b6ef78b8a3e3eecfbca">netfilter</h1>
+
+<h2 id="source:e2689587120d0b6ef78b8a3e3eecfbca">source</h2>
+
+<p>netfilter 公共: net/netfilter
+ipv4协议的netfilter细节在: net/ipv4/netfilter/</p>
+
+<h2 id="init:e2689587120d0b6ef78b8a3e3eecfbca">Init</h2>
+
+<p>~/linux/net/netfilter/core.c
+netfilter_init()</p>
+
+<h2 id="hook-point:e2689587120d0b6ef78b8a3e3eecfbca">Hook point</h2>
+
+<p>local_in local_out forward pre_routing post_routing</p>
+
+<h1 id="iptables:e2689587120d0b6ef78b8a3e3eecfbca">Iptables</h1>
+
+<p>Iptables is a packet selecttion system (包括内核和用户态两部分).
+iptables 的ip是IP(Internet Protocol).
+xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
+<a href="http://en.wikipedia.org/wiki/Iptables#Overview">Overview of xtables in wikipedia</a></p>
+
+<h2 id="details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca">Details of iptables</h2>
+
+<ul>
+<li><p>iptables command
+直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
+如:iptables -t filter -I INPUT -p tcp &ndash;dport 22 -j ACCEPT
+特别: 从-p开始到-j 之前这是一个 match!
+更多的match 和 target, please, man iptables-extension
+一个table的内置chain,就是他所在的hook点.</p></li>
+
+<li><p>kernel code
+ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.</p></li>
+</ul>
+
+<h2 id="step-of-exution:e2689587120d0b6ef78b8a3e3eecfbca">Step of exution</h2>
+
+<h3 id="init-1:e2689587120d0b6ef78b8a3e3eecfbca">Init</h3>
+
+<ul>
+<li>如mangle表的初始化见iptable_mangle_init
+xt_table: ipt_register_table
+    struct xt_table         *iptable_filter;
+    struct xt_table         *iptable_mangle;
+    struct xt_table         *iptable_raw;
+    struct xt_table         *arptable_filter;
+    struct xt_table         *iptable_security;
+    struct xt_table         *nat_table;</li>
+
+<li><p>如mark match的初始化 mark_mt_init
+xt_match: xt_register_match</p></li>
+
+<li><p>如MARK target 的初始化 也在 mark_mt_init
+xt_target: xt_register_target</p></li>
+</ul>
+
+<h3 id="the-mangle-journal:e2689587120d0b6ef78b8a3e3eecfbca">The mangle journal</h3>
+
+<p>netfilter hook -&gt;  iptable_mangle_hook -&gt; ipt_do_table -&gt;&hellip;</p>
+
+<h1 id="connection-tracking:e2689587120d0b6ef78b8a3e3eecfbca">Connection tracking</h1>
+
+<p>Conntrack 的实现不依赖iptables, 很独立.</p>
+
+<h2 id="init-2:e2689587120d0b6ef78b8a3e3eecfbca">init</h2>
+
+<p>nf_conntrack_standalone_init()
+nf_conntrack_l3proto_ipv4_init()</p>
+
+<h2 id="conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca">conntrack &ndash; user-land tools</h2>
+
+<p>obsolete /proc/net/nf_conntrack</p>
+
+<h2 id="tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca">tuple &ndash; link a socket 5-arry tuple</h2>
+
+<p>Each Netfilter connection is uniquely identified by a
+(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
+nf_conntrack_tuple nf_conn</p>
+
+<h2 id="connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca">Connection tracking helper</h2>
+
+<p>connection tracking can be given knowledge of application-layer protocols
+ALG</p>
+
+<h2 id="template:e2689587120d0b6ef78b8a3e3eecfbca">template</h2>
+
+<p>netfilter: nf_conntrack: support conntrack templates</p>
+
+<h2 id="details:e2689587120d0b6ef78b8a3e3eecfbca">Details</h2>
+
+<p>以上的工作事实上都很简单，基本思路是：
+一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
+徐琛,也这么说!</p>
+
+<p>#NAT
+<a href="https://www.ietf.org/rfc/rfc3489.txt">https://www.ietf.org/rfc/rfc3489.txt</a>
+symmetric nat, 端口不复用, 访问同一个服务器.
+linux 内核的NAT是基于iptables 和 conntrack实现的.</p>
+
+<p>##init
+iptable_nat_init</p>
+
+<h2 id="nat-helper:e2689587120d0b6ef78b8a3e3eecfbca">NAT helper</h2>
+
+<p>Similar to connection tracking helpers, NAT helpers will do a packet inspection
+and substitute original addresses by reply addresses in the payload.</p>
+
+<h2 id="drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca">Drop ICMP redict in NAT</h2>
+
+<p><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></p>
+
+<h2 id="snat:e2689587120d0b6ef78b8a3e3eecfbca">SNAT</h2>
+
+<p>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;
+{
+nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info
+    {
+        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
+        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&gt; new_original找到后再revert,成new_reply在改到ct里面去.
+        orig_orignal-&gt;skb
+        nf_ct_invert_tuplepr(inverse, orig_relply)
+        {
+            ipv4_invert_tuple
+            tcp_invert_tuple
+            For example, orig tuple:
+            original: 192.168.199.132 -&gt; google.com
+            reply: google.com -&gt; 192.168.199.132 //this is orig_relpy</p>
+
+<pre><code>        inverse tuple:
+        original(inverse-&gt;dst.dir = !orig-&gt;dst.dir;):
+        192.168.199.132 -&gt; google.com (!!!reverse orig_reply in ipv4_inver_tuple())
+         这个函数的用途可能是担心, orig被人改了, 不能用了.
+        except for prior manipulations
+    }       
+
+    get_unique_tuple
+    {
+        1. 如果snat, 且前后可以一致就直接new=orig, 合理.
+        2. find_appropriate_src 费点力... 貌似找到已经用到的, 复用
+        3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
+        4. nf_nat_used_tuple 保证唯一
+    }       
+
+    bysoruce 里面存的应该是new_original, hash -&gt; &amp;net-&gt;ct.nat_bysource[srchash]
+
+
+}
+</code></pre>
+
+<p>//上面ct改完了该改skb了.
+    nf_nat_packet -&gt; nf_nat_ipv4_manip_pkt,
+}</p>
+
+<ul>
+<li><p>SNAT nftables
+nf_nat_prerouting &hellip;-&gt; nft_do_chain</p></li>
+
+<li><p>One kind of NAT, just set one flag bit in ct-&gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!</p></li>
+
+<li><p>De-NAT
+最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
+我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。</p></li>
+</ul>
+
+<p>*答案3.17的代码和原来没多大变化就是函数名字变了
+发包-POSTROUTING -&gt;SNAT -&gt;修改ct: nf_nat_setup_info-&gt;　ct-&gt;status |= IPS_SRC_NAT;-&gt;修改skb:nf_nat_packet</p>
+
+<p>收报-PREOUTING-&gt; DNAT-&gt;修改skb:nf_nat_packet
+{
+    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);<br />
+    //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.</p>
+
+<pre><code>if (mtype == NF_NAT_MANIP_SRC)          
+    statusbit = IPS_SRC_NAT;             
+else                                      
+    statusbit = IPS_DST_NAT;        //到这里
+
+/* Invert if this is reply dir. */            
+if (dir == IP_CT_DIR_REPLY) 
+    statusbit ^= IPS_NAT_MASK;        //翻转一下变成SNAT 
+/* Non-atomic: these bits don't change. */                                                                                                    
+if (ct-&gt;status &amp; statusbit) {                 
+//正好和发包是的   ct-&gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    
+    struct nf_conntrack_tuple target;
+    ...
+</code></pre>
+
+<p>}</p>
+
+<p>#ipset
+salist for iptables</p>
+
+<p>#SYN proxy
+SYNPROXY target makes handling of large SYN floods possible without
+the large performance penalties imposed by the connection tracking in such cases.
+On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
+with the release of version 3.12 of the Linux kernel mainline</p>
+
+<p>#nftables</p>
+
+<p>#FAQ
+* 如何查看某个table 具体在那几个hook点.
+去看内核代码 or iptables -L -t &ldquo;table 名&rdquo;</p>
+
+        </article>
+  </div>
+</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = '\/aaaaaaaaaaaaaaaaa\/net\/netfilter\/';
+    var disqus_title = 'Understanding linux netfilter';
+    var disqus_url = '\/aaaaaaaaaaaaaaaaa\/net\/netfilter\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2015 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang.</span></span>
+        Powered by <a href="http://hugo.spf13.com">Hugo</a>.
+        Theme by <a href="http://spf13.com">Steve Francia</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    
+    
+    
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i = 0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

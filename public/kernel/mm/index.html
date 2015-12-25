@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="">
+
+ 
+<meta property="og:type" content="article"/>
+<meta property="og:description" content=""/>
+<meta property="og:title" content="Linux memory management : firo.yang"/>
+<meta property="og:site_name" content="Firo Yang Notes"/>
+<meta property="og:image" content="" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="" />
+<meta property="og:image:height" content="" />
+<meta property="og:url" content="/aaaaaaaaaaaaaaaaa/kernel/mm/">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2014-12-28"/>
+<meta property="article:modified_time" content="2014-12-28"/>
+
+
+
+
+
+
+    <base href="/aaaaaaaaaaaaaaaaa">
+    <title> Linux memory management - nanshu.wang </title>
+    <link rel="canonical" href="/aaaaaaaaaaaaaaaaa/kernel/mm/">
+    
+
+    <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "//hm.baidu.com/hm.js?a79535ca63291dc820e3ecefa615aad1";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
+</head>
+
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<nav id="nav">
+	<div id="title"><a href="/">Firo Notes</a></div>
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+                <a href="/cs/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> About </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/kernel/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> kernel </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+            <li>
+            <a href="/review/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+<section id="main">
+  <h1 itemprop="name" >Linux memory management</h1>
+  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Sun Dec 28, 2014 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+        </ul>
+    </div>
+
+
+</aside>
+
+<meta itemprop="wordCount" content="616">
+<meta itemprop="datePublished" content="2014-12-28">
+<meta itemprop="url" content="/aaaaaaaaaaaaaaaaa/kernel/mm/">
+
+
+  <div>
+        <article itemprop="articleBody" id="content">
+           
+
+<h1 id="reference:9037e4aab15a8fa8be9a2e4d7b536995">Reference</h1>
+
+<p>Computer memory#Management_of_memory
+Memory management (operating systems)</p>
+
+<h1 id="contents:9037e4aab15a8fa8be9a2e4d7b536995">Contents</h1>
+
+<p>Logic gates: SRAM, DRAM
+What is data/contrl/addr bus?
+What problems we will meet in memory management?
+Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?
+How to distribute these memory to processes? Virtual memory.
+How to translate linear address to physical address? Page table.
+Exchange data between primary memory and second memory. Paging.</p>
+
+<p>What are the pitfall of manuplate directly physcial memory</p>
+
+<h1 id="page:9037e4aab15a8fa8be9a2e4d7b536995">page</h1>
+
+<p><a href="https://lwn.net/Articles/619514/">An introduction to compound pages</a></p>
+
+<h1 id="memroy-mangement:9037e4aab15a8fa8be9a2e4d7b536995">Memroy mangement</h1>
+
+<h2 id="gfp-flags:9037e4aab15a8fa8be9a2e4d7b536995">GFP flags</h2>
+
+<p>__GFP_IO: allow disk IO
+__GFP_FS: allow fs operations, depend on io.
+more details in lwn, lkd</p>
+
+<h1 id="virtual-memory:9037e4aab15a8fa8be9a2e4d7b536995">Virtual memory</h1>
+
+<p>##Page table
+mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
+原来低12位里面存了flag啊!
+__pte(((phys_addr_t)page_nr &lt;&lt; PAGE_SHIFT) | massage_pgprot(pgprot));
+For vmalloc(), chechk here vmap_page_range_noflush()
+For kmap(), check kmap_init()
+<a href="http://edsionte.com/techblog/archives/1966">How to emulate the process of translate va to pa?</a></p>
+
+<h2 id="copy-to-user:9037e4aab15a8fa8be9a2e4d7b536995">copy_to_user</h2>
+
+<p>not in kernel?
+read only?</p>
+
+<h2 id="flush-tlb-after-page-table-modification:9037e4aab15a8fa8be9a2e4d7b536995">flush tlb after page table modification.</h2>
+
+<h2 id="direct-mapping-area:9037e4aab15a8fa8be9a2e4d7b536995">Direct mapping area</h2>
+
+<p>high_memory (-128UL &lt;&lt; 20)
+__get_free_pages()
+kmalloc()
+kmem_cache_alloc()/slab</p>
+
+<h2 id="vmalloc:9037e4aab15a8fa8be9a2e4d7b536995">Vmalloc</h2>
+
+<p>may sleep.</p>
+
+<h3 id="hwo-vmalloc-works:9037e4aab15a8fa8be9a2e4d7b536995">Hwo Vmalloc works?</h3>
+
+<p>Work in HIGHMEM and NORMALMEM
+The skeleton is rbtree, root is global variable vmap_area_root.rb_node.
+struct vm_struct likes struct address_space, functionlly;
+struct vmap_area likes struct vm_area_struct.
+map_vm_area 页表映射
+the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!</p>
+
+<h3 id="vmalloc-coherence-with-vfree-after-vmalloc-sync-one:9037e4aab15a8fa8be9a2e4d7b536995">Vmalloc coherence with vfree() after vmalloc_sync_one</h3>
+
+<p>在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
+deatils in vmalloc_sync_one() and vunmap_pte_range()
+只释放pte</p>
+
+<h2 id="persistent-kernel-mappings:9037e4aab15a8fa8be9a2e4d7b536995">Persistent Kernel Mappings</h2>
+
+<p>kmap(struct page *)
+How kmap works?
+    Check kmap_init(), later!</p>
+
+<h2 id="temporay-mappings-fixmaps:9037e4aab15a8fa8be9a2e4d7b536995">Temporay Mappings(Fixmaps)</h2>
+
+<p>kmap_atomic()</p>
+
+<p>##Process virtual memory
+* struct vm_area_struct: The intervals of legal address are called <em>memory areas</em> is permitted to access.
+* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.
+i_mmap: how many processes opened this file.
+<a href="https://lkml.org/lkml/2012/8/7/46">https://lkml.org/lkml/2012/8/7/46</a>
+* sturct mm_struct: how many files(vm_area_struct) does this process opened.</p>
+
+<ul>
+<li><p>Memory mappings
+syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16</p></li>
+
+<li><p>link
+a virtual address and physical address. &ndash;page tale
+a memory region of a process and its virtual page addresses. &ndash;vm_area_struct
+a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&gt;i_mmap.
+a physical page and the processes that share the page(used in swap case)</p></li>
+</ul>
+
+<p>#Page faults
+Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory</p>
+
+<ul>
+<li><p>Segemnt fault
+Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.
+<a href="https://www.kernel.org/doc/Documentation/x86/exception-tables.txt">https://www.kernel.org/doc/Documentation/x86/exception-tables.txt</a>
+Null pointer: probably, mostly catched in below 0x08048000.</p></li>
+
+<li><p>Demanding page
+vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!
+expand_stack()/handle_mm_fault()</p></li>
+
+<li><p>vmalloc fault</p></li>
+
+<li><p>Oops
+kernel access invalid address, in __print_signal_info() task-&gt;sighand and  task-&gt;nsproxy is null.</p></li>
+</ul>
+
+<p>#Physical memory
+* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl
+* ZONE(DMA/NORMAL/HIGHMEM) struct zone:
+* struct page is the basic unit of kernel mm knowns as page frame.
+    The goal of strcut page is to describe physical memory, not the data contained therein.
+* The buddy system is per-zone struct free_area
+* Physical address is connected to Virtual address by pfn = page - mem_map;</p>
+
+<h2 id="page-allocator:9037e4aab15a8fa8be9a2e4d7b536995">page allocator</h2>
+
+<p>alloc_pages()
+##Page/buffer cache
+struct address_space-&gt;page_tree
+##Page writeback
+data synchronization, the flush threads, pdflush
+##Page swap
+The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.</p>
+
+<p>#FAQ
+* Where is Per-CPU variable?
+static Per-CPU in .data(?) below high_memory!
+runtime Per-CPU, it&rsquo;s GFP_KERNEL in pcpu_create_chunk()</p>
+
+<ul>
+<li><p>Memory mode
+flat mem -&gt; uma
+discontig -&gt; NUMA
+sparse -&gt; Hotplug + NUMA</p></li>
+
+<li><p>When does kernel alloc these struct pages in x86_64?
+<a href="http://lwn.net/Articles/229670/">http://lwn.net/Articles/229670/</a>
+vmemmap silimar to memmap</p></li>
+
+<li><p>When kmap_atomic() BUG_ON effect?</p></li>
+
+<li><p>How cpu resolve address below high_memory?
+Cpu-spicific!
+x86 used page table to all address!
+Mips cpu can be aware of this address!</p></li>
+
+<li><p>How to deal with useless page? : &gt; /home/firo/bigdata</p></li>
+</ul>
+
+<p>*pfmemalloc &ndash; skb 表示申请了紧急内存!
+page free</p>
+
+<ul>
+<li>compound pages
+18fa11efc279c20af5eefff2bbe814ca067</li>
+</ul>
+
+        </article>
+  </div>
+</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = '\/aaaaaaaaaaaaaaaaa\/kernel\/mm\/';
+    var disqus_title = 'Linux memory management';
+    var disqus_url = '\/aaaaaaaaaaaaaaaaa\/kernel\/mm\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2015 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang.</span></span>
+        Powered by <a href="http://hugo.spf13.com">Hugo</a>.
+        Theme by <a href="http://spf13.com">Steve Francia</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    
+    
+    
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i = 0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

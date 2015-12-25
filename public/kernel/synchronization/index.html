@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="
+
+    <base href="/aaaaaaaaaaaaaaaaa">
+    <title> Synchronization - nanshu.wang </title>
+    <link rel="canonical" href="/aaaaaaaaaaaaaaaaa/kernel/synchronization/">
+    
+
+    <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "//hm.baidu.com/hm.js?a79535ca63291dc820e3ecefa615aad1";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
+</head>
+
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<nav id="nav">
+	<div id="title"><a href="/">Firo Notes</a></div>
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+                <a href="/cs/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> About </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/kernel/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> kernel </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+            <li>
+            <a href="/review/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+<section id="main">
+  <h1 itemprop="name" >Synchronization</h1>
+  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Mon Jan 1, 0001 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+</aside>
+
+<meta itemprop="wordCount" content="483">
+<meta itemprop="datePublished" content="0001-01-01">
+<meta itemprop="url" content="/aaaaaaaaaaaaaaaaa/kernel/synchronization/">
+
+
+  <div>
+        <article itemprop="articleBody" id="content">
+           
+
+<p>#Reference
+Perfbook</p>
+
+<h1 id="why-we-need-synchronization:cc60bd9bd60be86fcb916e123f79cf09">Why we need synchronization</h1>
+
+<p>a critical section is a piece of code that accesses a shared resource
+(data structure or device) that must not be concurrently accessed by more than one thread of execution.</p>
+
+<p>This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition.</p>
+
+<h1 id="how-to-use-synchronization-mechanism:cc60bd9bd60be86fcb916e123f79cf09">How to use synchronization mechanism</h1>
+
+<p>A must read book<a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html">Unreliable Guide To Locking &ndash; Rusty Russell</a></p>
+
+<h2 id="common-usage:cc60bd9bd60be86fcb916e123f79cf09">Common usage</h2>
+
+<p>Protect from interruption by hardware interrupts:
+        local_irq_disable(int irq) &amp; local_irq_enable(int irq)
+Protection from software interrupts:
+        local_bh_disable(void) &amp; local_bh_enable(void)
+Protection from other CPUs:
+        spin_lock(spinlock_t *) &amp; spin_unlock(spinlock_t *)
+Preemption by other user contexts:
+        preempt_disable(void) &amp; preempt_enable(void)</p>
+
+<h1 id="what-is-synchronization-in-computer-science:cc60bd9bd60be86fcb916e123f79cf09">What is synchronization in computer science</h1>
+
+<p><a href="http://www.etymonline.com/index.php?term=synchronize">Synchronize</a>
+synchronization means be of the same time.
+It means &ldquo;make it synchronous&rdquo;, something like coexistence.</p>
+
+<p>Process synchronization refers to the idea that multiple processes are
+to join up or handshake at a certain point, in order to reach an
+agreement or commit to a certain sequence of action.
+* Mutual exclusion &ndash; only one excution routine in  critical section
+Readers–writers problem
+The Producer-Consumer Problem
+* Cooperative
+TCP Handshake
+* Deadlock
+Dining philosophers problem
+* Starvation
+* Prioirty inversion
+* Busy waiting</p>
+
+<h1 id="mutual-exclusion:cc60bd9bd60be86fcb916e123f79cf09">Mutual exclusion</h1>
+
+<h2 id="spinlock-unsleepable-mutex:cc60bd9bd60be86fcb916e123f79cf09">spinlock - unsleepable mutex</h2>
+
+<p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/">Linux 内核的排队自旋锁FIFO Ticket Spinlock</a>
+spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了
+context switch, 相对semaphore效率高.
+显然对于little critical section 使用semaphore而不是spinlock,将带来性能
+上的巨大损耗.
+* rw_lock</p>
+
+<h2 id="mutex:cc60bd9bd60be86fcb916e123f79cf09">Mutex</h2>
+
+<p>Monitor lock before sleep.</p>
+
+<h2 id="rcu-lockless:cc60bd9bd60be86fcb916e123f79cf09">RCU &ndash; lockless</h2>
+
+<p>Check The Journey to RCU for more details</p>
+
+<h2 id="per-cpu:cc60bd9bd60be86fcb916e123f79cf09">Per-cpu</h2>
+
+<h1 id="cooperative:cc60bd9bd60be86fcb916e123f79cf09">Cooperative</h1>
+
+<h2 id="semaphore:cc60bd9bd60be86fcb916e123f79cf09">semaphore</h2>
+
+<p>it was implement based on spinlock.
+it can have more than one holder at any time (the number decided at initialization time),
+although it is most commonly used as a single-holder lock (a mutex).
+if you can not get a semaphore, your task will put itself on the wait queue, and be woken
+up the semaphore is released.
+sleepable
+preemptable</p>
+
+<h2 id="tcp-handshake:cc60bd9bd60be86fcb916e123f79cf09">TCP handshake</h2>
+
+<h1 id="memory-barrier:cc60bd9bd60be86fcb916e123f79cf09">Memory barrier</h1>
+
+<h2 id="refernce:cc60bd9bd60be86fcb916e123f79cf09">Refernce</h2>
+
+<p><a href="http://en.wikipedia.org/wiki/Memory_barrier">http://en.wikipedia.org/wiki/Memory_barrier</a>
+Documentation/memory-barriers.txt</p>
+
+<h2 id="common:cc60bd9bd60be86fcb916e123f79cf09">Common</h2>
+
+<ul>
+<li>When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping
+to ensure that the program executes as if all memory operations were performed in the order
+specified by the programmer (program order), so memory barriers are not necessary.
+However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor
+system, or memory mapped peripherals, out-of-order access may affect program behavior.
+For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.</li>
+
+<li><p>Compiler and cpu do the same optimization: reorder of instructions</p>
+
+<h2 id="the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different:cc60bd9bd60be86fcb916e123f79cf09">The Linux kernel has a variety of different barriers that act at different</h2>
+
+<p>levels:
+(<em>) Compiler barrier.
+(</em>) CPU memory barriers.
+(*) MMIO write barrier.</p>
+
+<h2 id="access-once:cc60bd9bd60be86fcb916e123f79cf09">ACCESS_ONCE</h2></li>
+
+<li><p>Does it work cast a variable to volatile?
+No, there is no efects on cast a variable to volatile.
+Because, access variable is before volatile cast! That means you
+still get a register value. What you do is just conversion a temporary
+variable
+Rationale for International Standard&ndash;Programming Languages&ndash;C
+6.7.3</p>
+
+<h2 id="for-volatile:cc60bd9bd60be86fcb916e123f79cf09">For volatile</h2>
+
+<p><a href="http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/">http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/</a></p></li>
+</ul>
+
+        </article>
+  </div>
+</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = '\/aaaaaaaaaaaaaaaaa\/kernel\/synchronization\/';
+    var disqus_title = 'Synchronization';
+    var disqus_url = '\/aaaaaaaaaaaaaaaaa\/kernel\/synchronization\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2015 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang.</span></span>
+        Powered by <a href="http://hugo.spf13.com">Hugo</a>.
+        Theme by <a href="http://spf13.com">Steve Francia</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    
+    
+    
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i = 0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="
+
+    <base href="/aaaaaaaaaaaaaaaaa">
+    <title> Linux process management - nanshu.wang </title>
+    <link rel="canonical" href="/aaaaaaaaaaaaaaaaa/kernel/process/">
+    
+
+    <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+	var _hmt = _hmt || [];
+	(function() {
+	  var hm = document.createElement("script");
+	  hm.src = "//hm.baidu.com/hm.js?a79535ca63291dc820e3ecefa615aad1";
+	  var s = document.getElementsByTagName("script")[0]; 
+	  s.parentNode.insertBefore(hm, s);
+	})();
+	</script>
+
+</head>
+
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<nav id="nav">
+	<div id="title"><a href="/">Firo Notes</a></div>
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+                <a href="/cs/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> About </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/">
+                <span class="icon"> <i aria-hidden="true" class="icon-pencil"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/kernel/">
+                <span class="icon"> <i aria-hidden="true" class="icon-quill"></i></span>
+                <span> kernel </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/">
+                <span class="icon"> <i aria-hidden="true" class="icon-leaf"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+            <li>
+            <a href="/review/">
+                <span class="icon"> <i aria-hidden="true" class="icon-heart"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+<section id="main">
+  <h1 itemprop="name" >Linux process management</h1>
+  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Mon Jan 1, 0001 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+</aside>
+
+<meta itemprop="wordCount" content="583">
+<meta itemprop="datePublished" content="0001-01-01">
+<meta itemprop="url" content="/aaaaaaaaaaaaaaaaa/kernel/process/">
+
+
+  <div>
+        <article itemprop="articleBody" id="content">
+           
+
+<h1 id="protection-ring:a0551a02a524ed27c27781d2fca7bf97">Protection ring</h1>
+
+<h2 id="kernel-mode:a0551a02a524ed27c27781d2fca7bf97">Kernel mode:</h2>
+
+<h2 id="user-mode:a0551a02a524ed27c27781d2fca7bf97">User mode</h2>
+
+<p>限制访问地址空间, 内核数据结构, I/O 指令, 中断代码等.</p>
+
+<h2 id="mode-switch:a0551a02a524ed27c27781d2fca7bf97">Mode switch</h2>
+
+<p>esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。
+读TSS段中进程的内核态指针付给ss和esp。
+把用户态SS和esp指针保存在进程的内核栈上，
+从内核态返回时，弹出进程内核栈上用户态ss和esp值。
+那么TSS段中进程的内核态指针是从哪里来的呢？</p>
+
+<p>cpu -&gt; tr -&gt; tss -&gt; esp0 =&gt; 内核栈-&gt;保存用户态cs eip esp等.
+Hardware context switch.
+pt_regs</p>
+
+<h2 id="kernel-stack:a0551a02a524ed27c27781d2fca7bf97">kernel stack</h2>
+
+<p>从system_call中, 我们可以发现:
+GET_THREAD_INFO(%ebp)</p>
+
+<p>master idle进程的kernel stack在init/init_task.c:init_thread_union
+其他进程的kernel stack是fork产生.
+this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);
+this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);</p>
+
+<h1 id="schedule-cfs:a0551a02a524ed27c27781d2fca7bf97">Schedule cfs</h1>
+
+<p>sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &gt; 5）
+sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &lt;= 5）
+sysctl_sched_min_granularity = 4ms
+ideal_time = sum_runtime * se.weight/cfs_rq.weight
+vruntime +=  delta * NICE_0_LOAD/ se.weight;(if curr.nice!=NICE_0_LOAD)</p>
+
+<h1 id="idle:a0551a02a524ed27c27781d2fca7bf97">Idle</h1>
+
+<p>主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0
+init_idle.</p>
+
+<h1 id="porcess-context:a0551a02a524ed27c27781d2fca7bf97">Porcess context</h1>
+
+<h2 id="userspace-context:a0551a02a524ed27c27781d2fca7bf97">Userspace context</h2>
+
+<p>.txt, .data, .bss, userspace stack, heap, library.</p>
+
+<h2 id="kernespace-context:a0551a02a524ed27c27781d2fca7bf97">Kernespace context</h2>
+
+<p>task_struct, mm_struct, pgd, kernelspace stack.</p>
+
+<h2 id="hardware-context:a0551a02a524ed27c27781d2fca7bf97">Hardware context</h2>
+
+<p>Registers</p>
+
+<h2 id="context-switch:a0551a02a524ed27c27781d2fca7bf97">Context switch</h2>
+
+<p>A context switch (also sometimes referred to as a process switch or a task switch)
+is the switching of the CPU (central processing unit) from one process or thread to another.</p>
+
+<h2 id="进程切换process-switch:a0551a02a524ed27c27781d2fca7bf97">进程切换process switch</h2>
+
+<p>也叫上下文切换context switch只发生在内核态，必须理解而不是记住。
+一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，
+如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，
+新的培养液进来，旧的培养液也需要保存，以备稍后使用。
+当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。
+应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？
+在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。
+我们所关心的换出的进程的esp指针也保存在thread_struct当中了。
+当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，
+也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。</p>
+
+<h2 id="switch-to:a0551a02a524ed27c27781d2fca7bf97">switch_to</h2>
+
+<p>__schedule()-&gt;swtich_to</p>
+
+<h3 id="load-tss:a0551a02a524ed27c27781d2fca7bf97">load TSS</h3>
+
+<p>进程切换只发生在内核态
+/<em>将next进程的内核栈指针(next-&gt;thread-&gt;sp0)值更新到当前CPU的TSS中</em>/
+load_sp0(tss, next);
+task_struct.thread.sp0
+thread_struct</p>
+
+<h2 id="type-of-context-switch:a0551a02a524ed27c27781d2fca7bf97">type of Context switch</h2>
+
+<ul>
+<li>context switch by hardware
+Old linux kernel</li>
+<li>context switch by software
+kernel 2.6</li>
+</ul>
+
+<h1 id="common-concepts:a0551a02a524ed27c27781d2fca7bf97">Common concepts</h1>
+
+<p>Multiprocessing for SMP</p>
+
+<h1 id="process-flag:a0551a02a524ed27c27781d2fca7bf97">Process flag</h1>
+
+<p>PF_MEMALLOC <a href="http://thread.gmane.org/gmane.linux.kernel/914878">Kill PF_MEMALLOC abuse</a></p>
+
+<h1 id="process-user-id:a0551a02a524ed27c27781d2fca7bf97">Process user ID</h1>
+
+<h2 id="effective-user-group-id:a0551a02a524ed27c27781d2fca7bf97">Effective user/group ID</h2>
+
+<p>euid:4777
+egid:2777
+chmod u+s cynthia
+root进程执行cynthia后euid变为firo, saved user id变为root</p>
+
+<h2 id="example:a0551a02a524ed27c27781d2fca7bf97">Example</h2>
+
+<p>u+s 就可以
+firo@firo tmp$ iptables -L
+iptables v1.4.21: can&rsquo;t initialize iptables table `filter&rsquo;: Permission denied (you must be root)
+Perhaps iptables or your kernel needs to be upgraded.</p>
+
+<p>chmod +s /usr/sbin/iptables</p>
+
+<p>firo@firo tmp$ iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination</p>
+
+<p>Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination</p>
+
+<p>Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination</p>
+
+<p>chmod -s /usr/sbin/iptables</p>
+
+<p>iptables -L
+iptables v1.4.21: can&rsquo;t initialize iptables table `filter&rsquo;: Permission denied (you must be root)
+Perhaps iptables or your kernel needs to be upgraded.</p>
+
+<h1 id="scheduling-strategies:a0551a02a524ed27c27781d2fca7bf97">Scheduling strategies</h1>
+
+<p>multiprogramming
+time-sharing(multi tasking)
+real-time</p>
+
+<h1 id="multitasking:a0551a02a524ed27c27781d2fca7bf97">Multitasking</h1>
+
+<h2 id="reference:a0551a02a524ed27c27781d2fca7bf97">Reference</h2>
+
+<p>codes: comments of __schedule()
+Book: Linux kernel development</p>
+
+<p>##Common concepts
+* The process scheduler decides which process runs, when, and for how long.
+* Multitasking: cooperative and preemptive.
+* Preemption:Involuntarily suspending a running process.
+* Timeslice: a slice of cpu&rsquo;s time.
+* Yielding: The act of a process voluntarily suspending itself.
+* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.
+* Time sharing: is cooperative mutitasking,
+* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!
+so if !CONFIG_PREEMPT* is cooperative!
+* CFS: Pick the task with the smallest vruntime. That&rsquo;s it!</p>
+
+<p>##TIF_NEED_RESCHED
+* The situation of set task need resched
+scheduler_tick()
+try_to_wake_up() when a process that has a higher priority than <em>current</em> is awakened.
+Other?</p>
+
+<h2 id="save-all:a0551a02a524ed27c27781d2fca7bf97">SAVE_ALL</h2>
+
+<p>no include cs ss ip sp eflag why?</p>
+
+<p>#Deamonize</p>
+
+<h2 id="fork-oraphan:a0551a02a524ed27c27781d2fca7bf97">fork, oraphan</h2>
+
+<p>similar &amp;
+not a goup leader inherit with parent pgid for setsid</p>
+
+<h2 id="setsid:a0551a02a524ed27c27781d2fca7bf97">setsid</h2>
+
+<ul>
+<li>session leader</li>
+<li>process group leader
+A signal directed to a process group is delivered individually to
+all of the processes that are members of the group.</li>
+
+<li><p>deatch controlling terminals(confusing)</p>
+
+<h2 id="chdir:a0551a02a524ed27c27781d2fca7bf97">chdir</h2>
+
+<h2 id="umask:a0551a02a524ed27c27781d2fca7bf97">umask</h2>
+
+<h2 id="deal-with-fd:a0551a02a524ed27c27781d2fca7bf97">deal with fd</h2>
+
+<p>below both output
+守护进程继承了shell的屏幕和键盘输入.
+pid_t pid= fork();
+if (pid != 0) {
+system(&ldquo;sleep 3&rdquo;);
+printf(&ldquo;parent exit\n&rdquo;);
+} else {
+printf(&ldquo;child start\n&rdquo;);
+setsid();
+fprintf(stdout, &ldquo;out child\n&rdquo;);
+fprintf(stderr, &ldquo;err child\n&rdquo;);</p>
+
+<p>system(&ldquo;sleep 7&rdquo;);</p>
+
+<p>fprintf(stdout, &ldquo;after out child\n&rdquo;);
+fprintf(stderr, &ldquo;after err child\n&rdquo;);
+printf(&ldquo;child exit\n&rdquo;);
+}</p>
+
+<h1 id="zombie-process:a0551a02a524ed27c27781d2fca7bf97">Zombie process</h1>
+
+<h2 id="defunct:a0551a02a524ed27c27781d2fca7bf97"><defunct></h2>
+
+<p>forked child not reaped by parent will hooked in process list.
+if parent was killed and exit <defunct> will repaped.
+<defunct>表明父活着, 但不收尸.</p>
+
+<h2 id="double-fork-for-parent-long-live:a0551a02a524ed27c27781d2fca7bf97">Double fork for parent long live</h2>
+
+<p>mirgate subchild to init, parent just reap child.</p></li>
+</ul>
+
+<h1 id="faq:a0551a02a524ed27c27781d2fca7bf97">FAQ</h1>
+
+<ul>
+<li><p>thread_info
+可以快速访问task_struct.</p></li>
+
+<li><p>swtch_stack
+线程切换</p></li>
+</ul>
+
+        </article>
+  </div>
+</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = '\/aaaaaaaaaaaaaaaaa\/kernel\/process\/';
+    var disqus_title = 'Linux process management';
+    var disqus_url = '\/aaaaaaaaaaaaaaaaa\/kernel\/process\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2015 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang.</span></span>
+        Powered by <a href="http://hugo.spf13.com">Hugo</a>.
+        Theme by <a href="http://spf13.com">Steve Francia</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    
+    
+    
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i = 0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>
