@@ -7,12 +7,255 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
-    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
+    <updated>Sun, 10 May 2015 15:46:13 CST</updated>
+    
+    <item>
+      <title>Understanding linux netfilter</title>
+      <link>http://firoyang.org/net/netfilter/</link>
+      <pubDate>Sun, 10 May 2015 15:46:13 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/net/netfilter/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;
+&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;
+man iptables and man iptables-extension&lt;/p&gt;
+
+&lt;h1 id=&#34;introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Introduction to netfilter&lt;/h1&gt;
+
+&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
+Netfilter的本质就是内核协议栈上的Hook的集合.
+对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
+与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
+Netfilter的历史请查阅wikipedia.
+内核基于netfilter构建了 iptables 和 connection track两套系统.
+从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
+netfilter
+ct| |iptables
+nat,filter,mangle,kproxy,smartqos
+当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
+
+&lt;h1 id=&#34;netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;netfilter&lt;/h1&gt;
+
+&lt;h2 id=&#34;source:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;source&lt;/h2&gt;
+
+&lt;p&gt;netfilter 公共: net/netfilter
+ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
+
+&lt;h2 id=&#34;init:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h2&gt;
+
+&lt;p&gt;~/linux/net/netfilter/core.c
+netfilter_init()&lt;/p&gt;
+
+&lt;h2 id=&#34;hook-point:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Hook point&lt;/h2&gt;
+
+&lt;p&gt;local_in local_out forward pre_routing post_routing&lt;/p&gt;
+
+&lt;h1 id=&#34;iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Iptables&lt;/h1&gt;
+
+&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).
+iptables 的ip是IP(Internet Protocol).
+xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details of iptables&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;iptables command
+直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
+如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT
+特别: 从-p开始到-j 之前这是一个 match!
+更多的match 和 target, please, man iptables-extension
+一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kernel code
+ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;step-of-exution:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Step of exution&lt;/h2&gt;
+
+&lt;h3 id=&#34;init-1:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;如mangle表的初始化见iptable_mangle_init
+xt_table: ipt_register_table
+    struct xt_table         *iptable_filter;
+    struct xt_table         *iptable_mangle;
+    struct xt_table         *iptable_raw;
+    struct xt_table         *arptable_filter;
+    struct xt_table         *iptable_security;
+    struct xt_table         *nat_table;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init
+xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init
+xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;the-mangle-journal:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;The mangle journal&lt;/h3&gt;
+
+&lt;p&gt;netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;/p&gt;
+
+&lt;h1 id=&#34;connection-tracking:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking&lt;/h1&gt;
+
+&lt;p&gt;Conntrack 的实现不依赖iptables, 很独立.&lt;/p&gt;
+
+&lt;h2 id=&#34;init-2:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;init&lt;/h2&gt;
+
+&lt;p&gt;nf_conntrack_standalone_init()
+nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
+
+&lt;h2 id=&#34;conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
+
+&lt;p&gt;obsolete /proc/net/nf_conntrack&lt;/p&gt;
+
+&lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
+
+&lt;p&gt;Each Netfilter connection is uniquely identified by a
+(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
+nf_conntrack_tuple nf_conn&lt;/p&gt;
+
+&lt;h2 id=&#34;connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking helper&lt;/h2&gt;
+
+&lt;p&gt;connection tracking can be given knowledge of application-layer protocols
+ALG&lt;/p&gt;
+
+&lt;h2 id=&#34;template:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;template&lt;/h2&gt;
+
+&lt;p&gt;netfilter: nf_conntrack: support conntrack templates&lt;/p&gt;
+
+&lt;h2 id=&#34;details:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details&lt;/h2&gt;
+
+&lt;p&gt;以上的工作事实上都很简单，基本思路是：
+一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
+徐琛,也这么说!&lt;/p&gt;
+
+&lt;p&gt;#NAT
+&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;
+symmetric nat, 端口不复用, 访问同一个服务器.
+linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
+
+&lt;p&gt;##init
+iptable_nat_init&lt;/p&gt;
+
+&lt;h2 id=&#34;nat-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;NAT helper&lt;/h2&gt;
+
+&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection
+and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
+
+&lt;h2 id=&#34;drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&#34;&gt;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;snat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;SNAT&lt;/h2&gt;
+
+&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;
+{
+nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info
+    {
+        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
+        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.
+        orig_orignal-&amp;gt;skb
+        nf_ct_invert_tuplepr(inverse, orig_relply)
+        {
+            ipv4_invert_tuple
+            tcp_invert_tuple
+            For example, orig tuple:
+            original: 192.168.199.132 -&amp;gt; google.com
+            reply: google.com -&amp;gt; 192.168.199.132 //this is orig_relpy&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;        inverse tuple:
+        original(inverse-&amp;gt;dst.dir = !orig-&amp;gt;dst.dir;):
+        192.168.199.132 -&amp;gt; google.com (!!!reverse orig_reply in ipv4_inver_tuple())
+         这个函数的用途可能是担心, orig被人改了, 不能用了.
+        except for prior manipulations
+    }       
+
+    get_unique_tuple
+    {
+        1. 如果snat, 且前后可以一致就直接new=orig, 合理.
+        2. find_appropriate_src 费点力... 貌似找到已经用到的, 复用
+        3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
+        4. nf_nat_used_tuple 保证唯一
+    }       
+
+    bysoruce 里面存的应该是new_original, hash -&amp;gt; &amp;amp;net-&amp;gt;ct.nat_bysource[srchash]
+
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;//上面ct改完了该改skb了.
+    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
+}&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;SNAT nftables
+nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;De-NAT
+最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
+我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp;amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了
+发包-POSTROUTING -&amp;gt;SNAT -&amp;gt;修改ct: nf_nat_setup_info-&amp;gt;　ct-&amp;gt;status |= IPS_SRC_NAT;-&amp;gt;修改skb:nf_nat_packet&lt;/p&gt;
+
+&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet
+{
+    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);&lt;br /&gt;
+    //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;if (mtype == NF_NAT_MANIP_SRC)          
+    statusbit = IPS_SRC_NAT;             
+else                                      
+    statusbit = IPS_DST_NAT;        //到这里
+
+/* Invert if this is reply dir. */            
+if (dir == IP_CT_DIR_REPLY) 
+    statusbit ^= IPS_NAT_MASK;        //翻转一下变成SNAT 
+/* Non-atomic: these bits don&#39;t change. */                                                                                                    
+if (ct-&amp;gt;status &amp;amp; statusbit) {                 
+//正好和发包是的   ct-&amp;gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    
+    struct nf_conntrack_tuple target;
+    ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;p&gt;#ipset
+salist for iptables&lt;/p&gt;
+
+&lt;p&gt;#SYN proxy
+SYNPROXY target makes handling of large SYN floods possible without
+the large performance penalties imposed by the connection tracking in such cases.
+On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
+with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
+
+&lt;p&gt;#nftables&lt;/p&gt;
+
+&lt;p&gt;#FAQ
+* 如何查看某个table 具体在那几个hook点.
+去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Data link layer</title>
       <link>http://firoyang.org/net/l2/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/l2/</guid>
       <description>
@@ -325,7 +568,7 @@ dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
     <item>
       <title>Linux Network Stack</title>
       <link>http://firoyang.org/net/net/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/net/</guid>
       <description>
@@ -1285,7 +1528,7 @@ vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册�
     <item>
       <title>Linux net device</title>
       <link>http://firoyang.org/net/netdevice/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/netdevice/</guid>
       <description>
@@ -1448,7 +1691,7 @@ register_vlan_dev(）把这个设备注册到内核。&lt;/p&gt;
     <item>
       <title>Network layer</title>
       <link>http://firoyang.org/net/l3/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/l3/</guid>
       <description>
@@ -1511,7 +1754,7 @@ fib_create_info(): create a fib_info&lt;/p&gt;
     <item>
       <title>Transport layer</title>
       <link>http://firoyang.org/net/l4/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/l4/</guid>
       <description>
@@ -1822,249 +2065,6 @@ tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;/li&gt;
 &lt;li&gt;tcp_v4_rcv
 &lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/85613/focus=85614&#34;&gt;skb-&amp;gt;dev = NULL;&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Understanding linux netfilter</title>
-      <link>http://firoyang.org/net/netfilter/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/netfilter/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;
-man iptables and man iptables-extension&lt;/p&gt;
-
-&lt;h1 id=&#34;introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Introduction to netfilter&lt;/h1&gt;
-
-&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
-Netfilter的本质就是内核协议栈上的Hook的集合.
-对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
-与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
-Netfilter的历史请查阅wikipedia.
-内核基于netfilter构建了 iptables 和 connection track两套系统.
-从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
-netfilter
-ct| |iptables
-nat,filter,mangle,kproxy,smartqos
-当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
-
-&lt;h1 id=&#34;netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;netfilter&lt;/h1&gt;
-
-&lt;h2 id=&#34;source:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;source&lt;/h2&gt;
-
-&lt;p&gt;netfilter 公共: net/netfilter
-ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
-
-&lt;h2 id=&#34;init:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h2&gt;
-
-&lt;p&gt;~/linux/net/netfilter/core.c
-netfilter_init()&lt;/p&gt;
-
-&lt;h2 id=&#34;hook-point:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Hook point&lt;/h2&gt;
-
-&lt;p&gt;local_in local_out forward pre_routing post_routing&lt;/p&gt;
-
-&lt;h1 id=&#34;iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Iptables&lt;/h1&gt;
-
-&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).
-iptables 的ip是IP(Internet Protocol).
-xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details of iptables&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;iptables command
-直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
-如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT
-特别: 从-p开始到-j 之前这是一个 match!
-更多的match 和 target, please, man iptables-extension
-一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;kernel code
-ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;step-of-exution:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Step of exution&lt;/h2&gt;
-
-&lt;h3 id=&#34;init-1:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;如mangle表的初始化见iptable_mangle_init
-xt_table: ipt_register_table
-    struct xt_table         *iptable_filter;
-    struct xt_table         *iptable_mangle;
-    struct xt_table         *iptable_raw;
-    struct xt_table         *arptable_filter;
-    struct xt_table         *iptable_security;
-    struct xt_table         *nat_table;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init
-xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init
-xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&#34;the-mangle-journal:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;The mangle journal&lt;/h3&gt;
-
-&lt;p&gt;netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;/p&gt;
-
-&lt;h1 id=&#34;connection-tracking:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking&lt;/h1&gt;
-
-&lt;p&gt;Conntrack 的实现不依赖iptables, 很独立.&lt;/p&gt;
-
-&lt;h2 id=&#34;init-2:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;init&lt;/h2&gt;
-
-&lt;p&gt;nf_conntrack_standalone_init()
-nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
-
-&lt;h2 id=&#34;conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
-
-&lt;p&gt;obsolete /proc/net/nf_conntrack&lt;/p&gt;
-
-&lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
-
-&lt;p&gt;Each Netfilter connection is uniquely identified by a
-(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
-nf_conntrack_tuple nf_conn&lt;/p&gt;
-
-&lt;h2 id=&#34;connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking helper&lt;/h2&gt;
-
-&lt;p&gt;connection tracking can be given knowledge of application-layer protocols
-ALG&lt;/p&gt;
-
-&lt;h2 id=&#34;template:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;template&lt;/h2&gt;
-
-&lt;p&gt;netfilter: nf_conntrack: support conntrack templates&lt;/p&gt;
-
-&lt;h2 id=&#34;details:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details&lt;/h2&gt;
-
-&lt;p&gt;以上的工作事实上都很简单，基本思路是：
-一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
-这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
-徐琛,也这么说!&lt;/p&gt;
-
-&lt;p&gt;#NAT
-&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;
-symmetric nat, 端口不复用, 访问同一个服务器.
-linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
-
-&lt;p&gt;##init
-iptable_nat_init&lt;/p&gt;
-
-&lt;h2 id=&#34;nat-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;NAT helper&lt;/h2&gt;
-
-&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection
-and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
-
-&lt;h2 id=&#34;drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&#34;&gt;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;snat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;SNAT&lt;/h2&gt;
-
-&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;
-{
-nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info
-    {
-        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
-        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.
-        orig_orignal-&amp;gt;skb
-        nf_ct_invert_tuplepr(inverse, orig_relply)
-        {
-            ipv4_invert_tuple
-            tcp_invert_tuple
-            For example, orig tuple:
-            original: 192.168.199.132 -&amp;gt; google.com
-            reply: google.com -&amp;gt; 192.168.199.132 //this is orig_relpy&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;        inverse tuple:
-        original(inverse-&amp;gt;dst.dir = !orig-&amp;gt;dst.dir;):
-        192.168.199.132 -&amp;gt; google.com (!!!reverse orig_reply in ipv4_inver_tuple())
-         这个函数的用途可能是担心, orig被人改了, 不能用了.
-        except for prior manipulations
-    }       
-
-    get_unique_tuple
-    {
-        1. 如果snat, 且前后可以一致就直接new=orig, 合理.
-        2. find_appropriate_src 费点力... 貌似找到已经用到的, 复用
-        3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
-        4. nf_nat_used_tuple 保证唯一
-    }       
-
-    bysoruce 里面存的应该是new_original, hash -&amp;gt; &amp;amp;net-&amp;gt;ct.nat_bysource[srchash]
-
-
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;//上面ct改完了该改skb了.
-    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
-}&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;SNAT nftables
-nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;De-NAT
-最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
-我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp;amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了
-发包-POSTROUTING -&amp;gt;SNAT -&amp;gt;修改ct: nf_nat_setup_info-&amp;gt;　ct-&amp;gt;status |= IPS_SRC_NAT;-&amp;gt;修改skb:nf_nat_packet&lt;/p&gt;
-
-&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet
-{
-    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);&lt;br /&gt;
-    //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;if (mtype == NF_NAT_MANIP_SRC)          
-    statusbit = IPS_SRC_NAT;             
-else                                      
-    statusbit = IPS_DST_NAT;        //到这里
-
-/* Invert if this is reply dir. */            
-if (dir == IP_CT_DIR_REPLY) 
-    statusbit ^= IPS_NAT_MASK;        //翻转一下变成SNAT 
-/* Non-atomic: these bits don&#39;t change. */                                                                                                    
-if (ct-&amp;gt;status &amp;amp; statusbit) {                 
-//正好和发包是的   ct-&amp;gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    
-    struct nf_conntrack_tuple target;
-    ...
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;p&gt;#ipset
-salist for iptables&lt;/p&gt;
-
-&lt;p&gt;#SYN proxy
-SYNPROXY target makes handling of large SYN floods possible without
-the large performance penalties imposed by the connection tracking in such cases.
-On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
-with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
-
-&lt;p&gt;#nftables&lt;/p&gt;
-
-&lt;p&gt;#FAQ
-* 如何查看某个table 具体在那几个hook点.
-去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
 </description>
     </item>
     

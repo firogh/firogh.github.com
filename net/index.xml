@@ -7,280 +7,255 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
-    <updated>Sun, 28 Dec 2014 00:00:00 UTC</updated>
+    <updated>Sun, 10 May 2015 15:46:13 CST</updated>
     
     <item>
-      <title>tunnel</title>
-      <link>http://firoyang.org/net/tunnel/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
+      <title>Understanding linux netfilter</title>
+      <link>http://firoyang.org/net/netfilter/</link>
+      <pubDate>Sun, 10 May 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/tunnel/</guid>
+      <guid>http://firoyang.org/net/netfilter/</guid>
       <description>
 
-&lt;p&gt;#class
-network layer over network layer: gre
-link layer over network layer: l2tp, pptp&lt;/p&gt;
+&lt;h1 id=&#34;reference:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;h1 id=&#34;proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Proxy&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;
+&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;
+man iptables and man iptables-extension&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.coder4.com/archives/4434&#34;&gt;透明代理、匿名代理、混淆代理、高匿代理有什么区别？&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Introduction to netfilter&lt;/h1&gt;
 
-&lt;h2 id=&#34;正向代理forward-proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;正向代理forward proxy&lt;/h2&gt;
+&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
+Netfilter的本质就是内核协议栈上的Hook的集合.
+对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
 
-&lt;p&gt;shadowsocks goagent&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;h2 id=&#34;reverse-proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Reverse proxy&lt;/h2&gt;
+&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
+与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
+Netfilter的历史请查阅wikipedia.
+内核基于netfilter构建了 iptables 和 connection track两套系统.
+从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
+netfilter
+ct| |iptables
+nat,filter,mangle,kproxy,smartqos
+当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
 
-&lt;p&gt;负载均衡的服务器, 缓存的静态内容的server&lt;/p&gt;
+&lt;h1 id=&#34;netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;netfilter&lt;/h1&gt;
 
-&lt;h2 id=&#34;透明代理:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;透明代理&lt;/h2&gt;
+&lt;h2 id=&#34;source:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;source&lt;/h2&gt;
 
-&lt;p&gt;hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.
-所谓透明代理就是正向代理且client零配置.&lt;/p&gt;
+&lt;p&gt;netfilter 公共: net/netfilter
+ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
 
-&lt;h2 id=&#34;dmz:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;DMZ&lt;/h2&gt;
+&lt;h2 id=&#34;init:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h2&gt;
 
-&lt;p&gt;Demilitarized zone, 解除军事武装区 or 非军事区!
-这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.
-为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.
-内网和外网是争端的主角, 而DMZ是个缓冲区.&lt;/p&gt;
+&lt;p&gt;~/linux/net/netfilter/core.c
+netfilter_init()&lt;/p&gt;
 
-&lt;h3 id=&#34;simplest-sample:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;simplest sample&lt;/h3&gt;
+&lt;h2 id=&#34;hook-point:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Hook point&lt;/h2&gt;
 
-&lt;p&gt;iptables -A INPUT -p tcp -d 10.42.0.52 &amp;ndash;dport 53 -j ACCEPT
-iptables -A FORWARD -p tcp -d 192.168.1.2 &amp;ndash;dport 53 -j ACCEPT
-iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &amp;ndash;dport 53 -j DNAT &amp;ndash;to 192.168.1.2:53
-我们就知道了dmz有整体有两部分构成ACCEPT and DNAT
-同时涉及到一个dmz地址空间{dmzwan10.42.0.52:53, dmzlan:192.168.1.2:53}&lt;/p&gt;
+&lt;p&gt;local_in local_out forward pre_routing post_routing&lt;/p&gt;
 
-&lt;p&gt;#Basic concepts
-* VPN is created by establishing a virtual point-to-point connection through the use of
-1. dedicated connections(permanent)
-2. virtual tunneling protocols
-traffic encryptions and authentication
-+ connection(tunnel) + secure&lt;/p&gt;
+&lt;h1 id=&#34;iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Iptables&lt;/h1&gt;
 
-&lt;p&gt;#Tunnel proctocol
-* pptp
-data-link header | PPP | IP &amp;hellip;
-data-link header | IP | GRE | PPP | IP&amp;hellip;
-rfc2637
-&lt;a href=&#34;http://pptpclient.sourceforge.net/diagrams.phtml&#34;&gt;http://pptpclient.sourceforge.net/diagrams.phtml&lt;/a&gt;
-* pppd -&amp;gt; /dev/ppp
-/dev/ppp (see ppp_init) 下发密码, 加密之类的.
-ppp_netdev_ops (see ppp_create_interface)
-ppp_wirte-&amp;gt;ppp_xmit_process-&amp;gt;ppp_send_frame-&amp;gt;ppp_push-&amp;gt;|pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit()=pppoe_xmit-&amp;gt;__pppoe_xmit&lt;/p&gt;
+&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).
+iptables 的ip是IP(Internet Protocol).
+xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details of iptables&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;init
-pptp -&amp;gt; pptp server -&amp;gt; generate PPP connection and PPP0(interface)&lt;/li&gt;
-&lt;li&gt;input
-eth -&amp;gt; ppptp(remove gre header)-&amp;gt;PPP header-&amp;gt; pty(device) -&amp;gt; PPP0(interface) -&amp;gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;iptables command
+直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
+如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT
+特别: 从-p开始到-j 之前这是一个 match!
+更多的match 和 target, please, man iptables-extension
+一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;output
--&amp;gt; PPP0(interface) -&amp;gt; PPP header -&amp;gt; pty -&amp;gt; PPPT(add gre header) -&amp;gt; raw socket -&amp;gt; eth&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;shadowsocks
-user -&amp;gt; iptables -&amp;gt; shadowsocks(redir.c (struct server)-&amp;gt;(struct remote)) -&amp;gt; server&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;kernel code
+ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;ssh redsocks
-user -&amp;gt; iptables -&amp;gt; redsocks -&amp;gt; ssh -&amp;gt; server&lt;/p&gt;
+&lt;h2 id=&#34;step-of-exution:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Step of exution&lt;/h2&gt;
+
+&lt;h3 id=&#34;init-1:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h3&gt;
 
 &lt;ul&gt;
-&lt;li&gt;pppoe
-pppoe 的sk-&amp;gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket
-pppoe_rcv_core -&amp;gt;　netif_rx
-从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!
-对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!
-pppoe报文会经过两次sk_filter()
-&lt;a href=&#34;http://blog.csdn.net/osnetdev/article/details/8958058&#34;&gt;http://blog.csdn.net/osnetdev/article/details/8958058&lt;/a&gt;
-&amp;amp;pppoe_chan_ops;&lt;/li&gt;
+&lt;li&gt;如mangle表的初始化见iptable_mangle_init
+xt_table: ipt_register_table
+    struct xt_table         *iptable_filter;
+    struct xt_table         *iptable_mangle;
+    struct xt_table         *iptable_raw;
+    struct xt_table         *arptable_filter;
+    struct xt_table         *iptable_security;
+    struct xt_table         *nat_table;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init
+xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init
+xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;+ppp header
-is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!
-ppp-wan-&amp;gt;ndo_start_xmit()=ppp_start_xmit()-&amp;gt;ppp_xmit_process()-&amp;gt;ppp_send_frame()
--&amp;gt;
+&lt;h3 id=&#34;the-mangle-journal:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;The mangle journal&lt;/h3&gt;
+
+&lt;p&gt;netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;/p&gt;
+
+&lt;h1 id=&#34;connection-tracking:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking&lt;/h1&gt;
+
+&lt;p&gt;Conntrack 的实现不依赖iptables, 很独立.&lt;/p&gt;
+
+&lt;h2 id=&#34;init-2:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;init&lt;/h2&gt;
+
+&lt;p&gt;nf_conntrack_standalone_init()
+nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
+
+&lt;h2 id=&#34;conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
+
+&lt;p&gt;obsolete /proc/net/nf_conntrack&lt;/p&gt;
+
+&lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
+
+&lt;p&gt;Each Netfilter connection is uniquely identified by a
+(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
+nf_conntrack_tuple nf_conn&lt;/p&gt;
+
+&lt;h2 id=&#34;connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking helper&lt;/h2&gt;
+
+&lt;p&gt;connection tracking can be given knowledge of application-layer protocols
+ALG&lt;/p&gt;
+
+&lt;h2 id=&#34;template:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;template&lt;/h2&gt;
+
+&lt;p&gt;netfilter: nf_conntrack: support conntrack templates&lt;/p&gt;
+
+&lt;h2 id=&#34;details:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details&lt;/h2&gt;
+
+&lt;p&gt;以上的工作事实上都很简单，基本思路是：
+一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
+徐琛,也这么说!&lt;/p&gt;
+
+&lt;p&gt;#NAT
+&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;
+symmetric nat, 端口不复用, 访问同一个服务器.
+linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
+
+&lt;p&gt;##init
+iptable_nat_init&lt;/p&gt;
+
+&lt;h2 id=&#34;nat-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;NAT helper&lt;/h2&gt;
+
+&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection
+and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
+
+&lt;h2 id=&#34;drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&#34;&gt;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;snat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;SNAT&lt;/h2&gt;
+
+&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;
 {
-    __skb_push(skb, sizeof(*ph));
-    skb_reset_network_header(skb);
-    //add pppoe_hdr no header???
-    dev_queue_xmit(skb);
-}&lt;/p&gt;
+nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info
+    {
+        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
+        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.
+        orig_orignal-&amp;gt;skb
+        nf_ct_invert_tuplepr(inverse, orig_relply)
+        {
+            ipv4_invert_tuple
+            tcp_invert_tuple
+            For example, orig tuple:
+            original: 192.168.199.132 -&amp;gt; google.com
+            reply: google.com -&amp;gt; 192.168.199.132 //this is orig_relpy&lt;/p&gt;
 
-&lt;p&gt;#PPP
-&lt;a href=&#34;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&#34;&gt;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&lt;/a&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;        inverse tuple:
+        original(inverse-&amp;gt;dst.dir = !orig-&amp;gt;dst.dir;):
+        192.168.199.132 -&amp;gt; google.com (!!!reverse orig_reply in ipv4_inver_tuple())
+         这个函数的用途可能是担心, orig被人改了, 不能用了.
+        except for prior manipulations
+    }       
 
-&lt;p&gt;#GRE
-include/net/gre.h&lt;/p&gt;
+    get_unique_tuple
+    {
+        1. 如果snat, 且前后可以一致就直接new=orig, 合理.
+        2. find_appropriate_src 费点力... 貌似找到已经用到的, 复用
+        3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
+        4. nf_nat_used_tuple 保证唯一
+    }       
 
-&lt;p&gt;#L2tp
-IP -&amp;gt; UDP -&amp;gt; L2TP -&amp;gt; PPP&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;source files
-net/l2tp/
-├── Kconfig
-├── l2tp_core.c
-├── l2tp_core.h
-├── l2tp_debugfs.c
-├── l2tp_eth.c
-├── l2tp_ip.c
-├── l2tp_netlink.c
-├── l2tp_ppp.c
-└── Makefile&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;include/uapi/linux/ppp_defs.h&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Functions
-l2tp_recv_common &amp;hellip;recv_skb=pppol2tp_recv()
-l2tp_xmit_core&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#PPTP
-##Route ip-list to pptp-vpn
-11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3
-    link/ppp
-    inet 192.168.1.60 peer 192.168.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;32&lt;/sub&gt; scope global pptp-vpn
-root@Hiwifi:~# route -n
-Kernel IP routing table
-Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn
-123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2
-192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn
-192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2
-192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan&lt;/p&gt;
-
-&lt;p&gt;##pptp header
-IP | GRE | pptp_gre_header | PPP | IP&lt;/p&gt;
-
-&lt;p&gt;##input
-ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip
-ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&amp;gt;inet_protos.gre_rcv -&amp;gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&amp;gt; sk_receive_skb -&amp;gt;sk_backlog_rcv -&amp;gt; pptp_rcv_core -&amp;gt; ppp_input -&amp;gt; ppp_do_recv
--&amp;gt; ppp_receive_frame -&amp;gt; ppp_receive_nonmp_frame -&amp;gt; netif_rx -&amp;gt; netif_rx_internal -&amp;gt; enqueue_to_backlog -&amp;gt; ____napi_schedule(sd, &amp;amp;sd-&amp;gt;backlog);
--&amp;gt; netif_receive_skb&amp;hellip;&lt;/p&gt;
-
-&lt;p&gt;##output
-ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push
--&amp;gt;pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit=pptp_xmit -&amp;gt; add gre and ip header. -&amp;gt; ip_local_out -&amp;gt;
-+another send skb functions is ip_build_and_send_pkt()
-{ this functions hook is init in pptp_connect() -&amp;gt; ppp_register_channel(&amp;amp;po-&amp;gt;chan) }
-{ppp_connect()&amp;rsquo;s init functions is pptp_create, see pptp_init_module -&amp;gt;
-register_pppox_proto(PX_PROTO_PPTP, &amp;amp;pppox_pptp_proto) pptp_create.}
-when invoke pptp_create? socket()!&lt;/p&gt;
-
-&lt;p&gt;if layer 4 protocol is gre then pass.&lt;/p&gt;
-
-&lt;p&gt;##PPTP &amp;amp; NAT
-* Forward package
-br-lan(PREROUTING orginal packet NAT old)
-(route -&amp;gt; pptp-vpn) = ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()
-pptp-vpn -&amp;gt; ndo_start_xmit -&amp;gt; add some headers -&amp;gt; local_out NAT new -&amp;gt; tc dequeue_qdisc(this is maybe eth2.2&amp;rsquo;s routing result! see top)
-so we need to do is just find original skb in PPTP packet header!&lt;/p&gt;
-
-&lt;p&gt;##PPTP &amp;amp; GRE &amp;amp; Conntrack&lt;/p&gt;
-
-&lt;h1 id=&#34;as-a-pure-ip-protocol-gre-uses-only-ip-addresses-but-no-port-numbers-giving-the-router-s-nat-a-tough-time-to-track-such-a-connection-in-its-base-configuration-openwrt-backfire-is-able-to-nat-a-single-pptp-connections-but-not-multiple-such-connections-concurrently-it-is-also-unreliable-when-trying-to-establish-consecutive-single-pptp-connections-from-different-lan-clients-in-rapid-succession:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;As a pure IP protocol GRE uses only IP addresses but no port numbers giving the router&amp;rsquo;s NAT a tough time to track such a connection. In its base configuration OpenWrt Backfire is able to NAT a single PPTP connections but not multiple such connections concurrently. It is also unreliable when trying to establish consecutive single PPTP connections from different LAN clients in rapid succession.&lt;/h1&gt;
-
-&lt;p&gt;kernel vpn just one session.&lt;/p&gt;
-
-&lt;p&gt;##ppp-&amp;gt; pptp code.
-ppp_send_frame()
-{&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;//below is ok 132 is output!
-printk(&amp;quot;ct %d, %d, %d, %d\n&amp;quot;, HWF_CT_EXT(ct)-&amp;gt;user_id, user_id, HWF_CT_EXT(ct)-&amp;gt;is_marked, proto);
-switch(proto) //0x21, 33
-{
-
-    //Below two print is not show, so we did pass through these codes.
-    if (cp == skb-&amp;gt;data + 2) {
-        /* didn&#39;t compress */
-        printk(&amp;quot;NO compreess %x\n&amp;quot;, ppp-&amp;gt;flags);
-        kfree_skb(new_skb);
-    } else {
-        if (cp[0] &amp;amp; SL_TYPE_COMPRESSED_TCP) {
-            proto = PPP_VJC_COMP;
-            cp[0] &amp;amp;= ~SL_TYPE_COMPRESSED_TCP;
-        } else {
-            proto = PPP_VJC_UNCOMP;
-            cp[0] = skb-&amp;gt;data[2];
-        }
-        kfree_skb(skb);
-        skb = new_skb;
-        printk(&amp;quot;I am here %d ,%d, %x\n&amp;quot;, cp[0], proto, ppp-&amp;gt;flags);
+    bysoruce 里面存的应该是new_original, hash -&amp;gt; &amp;amp;net-&amp;gt;ct.nat_bysource[srchash]
 
 
 }
-printk(&amp;quot;hit b %d\n&amp;quot;, skb-&amp;gt;qosmark);
-skb = pad_compress_skb(ppp, skb);//this functions skb will be replaced with a new_skab by alloc_skb();
-printk(&amp;quot;hit a %d\n&amp;quot;, skb-&amp;gt;qosmark);
-//...
-printk(&amp;quot;befor push %d %d\n&amp;quot;, skb-&amp;gt;qosmark, user_id);
-skb-&amp;gt;qosmark = user_id;
-
-ppp-&amp;gt;xmit_pending = skb;
-ppp_push(ppp);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//dmesg
-[  304.600000] ct 132, 132, 0, 33
-[  304.610000] hit b 132
-[  304.610000] hit a 0
-[  304.610000] befor push 0 132
-[  304.610000] out chan 132
-[  304.620000] chan ok132
-[  304.620000] qosmark132 132&lt;/p&gt;
+&lt;p&gt;//上面ct改完了该改skb了.
+    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
+}&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;so we need backup qosmark be for invoking this function then restore it.
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;SNAT nftables
+nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;De-NAT
+最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
+我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp;amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了
+发包-POSTROUTING -&amp;gt;SNAT -&amp;gt;修改ct: nf_nat_setup_info-&amp;gt;　ct-&amp;gt;status |= IPS_SRC_NAT;-&amp;gt;修改skb:nf_nat_packet&lt;/p&gt;
+
+&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet
+{
+    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);&lt;br /&gt;
+    //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;if (mtype == NF_NAT_MANIP_SRC)          
+    statusbit = IPS_SRC_NAT;             
+else                                      
+    statusbit = IPS_DST_NAT;        //到这里
+
+/* Invert if this is reply dir. */            
+if (dir == IP_CT_DIR_REPLY) 
+    statusbit ^= IPS_NAT_MASK;        //翻转一下变成SNAT 
+/* Non-atomic: these bits don&#39;t change. */                                                                                                    
+if (ct-&amp;gt;status &amp;amp; statusbit) {                 
+//正好和发包是的   ct-&amp;gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    
+    struct nf_conntrack_tuple target;
+    ...
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;ppp_push(struct ppp *ppp)
-{
-    struct list_head *list;
-    struct channel *pch;
-    struct sk_buff *skb = ppp-&amp;gt;xmit_pending;&lt;/p&gt;
+&lt;p&gt;#ipset
+salist for iptables&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;if (!skb)
-    return;
+&lt;p&gt;#SYN proxy
+SYNPROXY target makes handling of large SYN floods possible without
+the large performance penalties imposed by the connection tracking in such cases.
+On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
+with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
 
-list = &amp;amp;ppp-&amp;gt;channels;
-if (list_empty(list)) {
-    /* nowhere to send the packet, just drop it */
-    ppp-&amp;gt;xmit_pending = NULL;
-    kfree_skb(skb);
-    return;
-}
+&lt;p&gt;#nftables&lt;/p&gt;
 
-if ((ppp-&amp;gt;flags &amp;amp; SC_MULTILINK) == 0) {
-    /* not doing multilink: send it down the first channel */
-    list = list-&amp;gt;next;
-    pch = list_entry(list, struct channel, clist);
-
-    printk(&amp;quot;out chan %d\n&amp;quot;, skb-&amp;gt;qosmark);
-    spin_lock_bh(&amp;amp;pch-&amp;gt;downl);
-    if (pch-&amp;gt;chan) {
-        printk(&amp;quot;chan ok%d\n&amp;quot;, skb-&amp;gt;qosmark);
-        if (pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit(pch-&amp;gt;chan, skb))
-            ppp-&amp;gt;xmit_pending = NULL;
-    } else {
-        /* channel got unregistered */
-        printk(&amp;quot;no chan\n&amp;quot;, skb-&amp;gt;qosmark);
-        kfree_skb(skb);
-        ppp-&amp;gt;xmit_pending = NULL;
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;#FAQ
+* 如何查看某个table 具体在那几个hook点.
+去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Data link layer</title>
       <link>http://firoyang.org/net/l2/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/l2/</guid>
       <description>
@@ -593,7 +568,7 @@ dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
     <item>
       <title>Linux Network Stack</title>
       <link>http://firoyang.org/net/net/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/net/</guid>
       <description>
@@ -1553,7 +1528,7 @@ vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册�
     <item>
       <title>Linux net device</title>
       <link>http://firoyang.org/net/netdevice/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/netdevice/</guid>
       <description>
@@ -1716,7 +1691,7 @@ register_vlan_dev(）把这个设备注册到内核。&lt;/p&gt;
     <item>
       <title>Network layer</title>
       <link>http://firoyang.org/net/l3/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/l3/</guid>
       <description>
@@ -1779,7 +1754,7 @@ fib_create_info(): create a fib_info&lt;/p&gt;
     <item>
       <title>Transport layer</title>
       <link>http://firoyang.org/net/l4/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/l4/</guid>
       <description>
@@ -2094,245 +2069,270 @@ tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;/li&gt;
     </item>
     
     <item>
-      <title>Understanding linux netfilter</title>
-      <link>http://firoyang.org/net/netfilter/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <title>tunnel</title>
+      <link>http://firoyang.org/net/tunnel/</link>
+      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/netfilter/</guid>
+      <guid>http://firoyang.org/net/tunnel/</guid>
       <description>
 
-&lt;h1 id=&#34;reference:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Reference&lt;/h1&gt;
+&lt;p&gt;#class
+network layer over network layer: gre
+link layer over network layer: l2tp, pptp&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;
-man iptables and man iptables-extension&lt;/p&gt;
+&lt;h1 id=&#34;proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Proxy&lt;/h1&gt;
 
-&lt;h1 id=&#34;introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Introduction to netfilter&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.coder4.com/archives/4434&#34;&gt;透明代理、匿名代理、混淆代理、高匿代理有什么区别？&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
-Netfilter的本质就是内核协议栈上的Hook的集合.
-对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
+&lt;h2 id=&#34;正向代理forward-proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;正向代理forward proxy&lt;/h2&gt;
 
-&lt;blockquote&gt;
-&lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;p&gt;shadowsocks goagent&lt;/p&gt;
 
-&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
-与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
-Netfilter的历史请查阅wikipedia.
-内核基于netfilter构建了 iptables 和 connection track两套系统.
-从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
-netfilter
-ct| |iptables
-nat,filter,mangle,kproxy,smartqos
-当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
+&lt;h2 id=&#34;reverse-proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Reverse proxy&lt;/h2&gt;
 
-&lt;h1 id=&#34;netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;netfilter&lt;/h1&gt;
+&lt;p&gt;负载均衡的服务器, 缓存的静态内容的server&lt;/p&gt;
 
-&lt;h2 id=&#34;source:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;source&lt;/h2&gt;
+&lt;h2 id=&#34;透明代理:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;透明代理&lt;/h2&gt;
 
-&lt;p&gt;netfilter 公共: net/netfilter
-ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
+&lt;p&gt;hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.
+所谓透明代理就是正向代理且client零配置.&lt;/p&gt;
 
-&lt;h2 id=&#34;init:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h2&gt;
+&lt;h2 id=&#34;dmz:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;DMZ&lt;/h2&gt;
 
-&lt;p&gt;~/linux/net/netfilter/core.c
-netfilter_init()&lt;/p&gt;
+&lt;p&gt;Demilitarized zone, 解除军事武装区 or 非军事区!
+这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.
+为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.
+内网和外网是争端的主角, 而DMZ是个缓冲区.&lt;/p&gt;
 
-&lt;h2 id=&#34;hook-point:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Hook point&lt;/h2&gt;
+&lt;h3 id=&#34;simplest-sample:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;simplest sample&lt;/h3&gt;
 
-&lt;p&gt;local_in local_out forward pre_routing post_routing&lt;/p&gt;
+&lt;p&gt;iptables -A INPUT -p tcp -d 10.42.0.52 &amp;ndash;dport 53 -j ACCEPT
+iptables -A FORWARD -p tcp -d 192.168.1.2 &amp;ndash;dport 53 -j ACCEPT
+iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &amp;ndash;dport 53 -j DNAT &amp;ndash;to 192.168.1.2:53
+我们就知道了dmz有整体有两部分构成ACCEPT and DNAT
+同时涉及到一个dmz地址空间{dmzwan10.42.0.52:53, dmzlan:192.168.1.2:53}&lt;/p&gt;
 
-&lt;h1 id=&#34;iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Iptables&lt;/h1&gt;
+&lt;p&gt;#Basic concepts
+* VPN is created by establishing a virtual point-to-point connection through the use of
+1. dedicated connections(permanent)
+2. virtual tunneling protocols
+traffic encryptions and authentication
++ connection(tunnel) + secure&lt;/p&gt;
 
-&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).
-iptables 的ip是IP(Internet Protocol).
-xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details of iptables&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;iptables command
-直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
-如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT
-特别: 从-p开始到-j 之前这是一个 match!
-更多的match 和 target, please, man iptables-extension
-一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;kernel code
-ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;step-of-exution:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Step of exution&lt;/h2&gt;
-
-&lt;h3 id=&#34;init-1:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h3&gt;
+&lt;p&gt;#Tunnel proctocol
+* pptp
+data-link header | PPP | IP &amp;hellip;
+data-link header | IP | GRE | PPP | IP&amp;hellip;
+rfc2637
+&lt;a href=&#34;http://pptpclient.sourceforge.net/diagrams.phtml&#34;&gt;http://pptpclient.sourceforge.net/diagrams.phtml&lt;/a&gt;
+* pppd -&amp;gt; /dev/ppp
+/dev/ppp (see ppp_init) 下发密码, 加密之类的.
+ppp_netdev_ops (see ppp_create_interface)
+ppp_wirte-&amp;gt;ppp_xmit_process-&amp;gt;ppp_send_frame-&amp;gt;ppp_push-&amp;gt;|pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit()=pppoe_xmit-&amp;gt;__pppoe_xmit&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;如mangle表的初始化见iptable_mangle_init
-xt_table: ipt_register_table
-    struct xt_table         *iptable_filter;
-    struct xt_table         *iptable_mangle;
-    struct xt_table         *iptable_raw;
-    struct xt_table         *arptable_filter;
-    struct xt_table         *iptable_security;
-    struct xt_table         *nat_table;&lt;/li&gt;
+&lt;li&gt;init
+pptp -&amp;gt; pptp server -&amp;gt; generate PPP connection and PPP0(interface)&lt;/li&gt;
+&lt;li&gt;input
+eth -&amp;gt; ppptp(remove gre header)-&amp;gt;PPP header-&amp;gt; pty(device) -&amp;gt; PPP0(interface) -&amp;gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init
-xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;output
+-&amp;gt; PPP0(interface) -&amp;gt; PPP header -&amp;gt; pty -&amp;gt; PPPT(add gre header) -&amp;gt; raw socket -&amp;gt; eth&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init
-xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;shadowsocks
+user -&amp;gt; iptables -&amp;gt; shadowsocks(redir.c (struct server)-&amp;gt;(struct remote)) -&amp;gt; server&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h3 id=&#34;the-mangle-journal:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;The mangle journal&lt;/h3&gt;
+&lt;p&gt;ssh redsocks
+user -&amp;gt; iptables -&amp;gt; redsocks -&amp;gt; ssh -&amp;gt; server&lt;/p&gt;
 
-&lt;p&gt;netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;pppoe
+pppoe 的sk-&amp;gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket
+pppoe_rcv_core -&amp;gt;　netif_rx
+从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!
+对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!
+pppoe报文会经过两次sk_filter()
+&lt;a href=&#34;http://blog.csdn.net/osnetdev/article/details/8958058&#34;&gt;http://blog.csdn.net/osnetdev/article/details/8958058&lt;/a&gt;
+&amp;amp;pppoe_chan_ops;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;h1 id=&#34;connection-tracking:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking&lt;/h1&gt;
-
-&lt;p&gt;Conntrack 的实现不依赖iptables, 很独立.&lt;/p&gt;
-
-&lt;h2 id=&#34;init-2:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;init&lt;/h2&gt;
-
-&lt;p&gt;nf_conntrack_standalone_init()
-nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
-
-&lt;h2 id=&#34;conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
-
-&lt;p&gt;obsolete /proc/net/nf_conntrack&lt;/p&gt;
-
-&lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
-
-&lt;p&gt;Each Netfilter connection is uniquely identified by a
-(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
-nf_conntrack_tuple nf_conn&lt;/p&gt;
-
-&lt;h2 id=&#34;connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking helper&lt;/h2&gt;
-
-&lt;p&gt;connection tracking can be given knowledge of application-layer protocols
-ALG&lt;/p&gt;
-
-&lt;h2 id=&#34;template:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;template&lt;/h2&gt;
-
-&lt;p&gt;netfilter: nf_conntrack: support conntrack templates&lt;/p&gt;
-
-&lt;h2 id=&#34;details:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details&lt;/h2&gt;
-
-&lt;p&gt;以上的工作事实上都很简单，基本思路是：
-一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
-这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
-徐琛,也这么说!&lt;/p&gt;
-
-&lt;p&gt;#NAT
-&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;
-symmetric nat, 端口不复用, 访问同一个服务器.
-linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
-
-&lt;p&gt;##init
-iptable_nat_init&lt;/p&gt;
-
-&lt;h2 id=&#34;nat-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;NAT helper&lt;/h2&gt;
-
-&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection
-and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
-
-&lt;h2 id=&#34;drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&#34;&gt;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;snat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;SNAT&lt;/h2&gt;
-
-&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;
+&lt;p&gt;+ppp header
+is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!
+ppp-wan-&amp;gt;ndo_start_xmit()=ppp_start_xmit()-&amp;gt;ppp_xmit_process()-&amp;gt;ppp_send_frame()
+-&amp;gt;
 {
-nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info
-    {
-        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
-        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.
-        orig_orignal-&amp;gt;skb
-        nf_ct_invert_tuplepr(inverse, orig_relply)
-        {
-            ipv4_invert_tuple
-            tcp_invert_tuple
-            For example, orig tuple:
-            original: 192.168.199.132 -&amp;gt; google.com
-            reply: google.com -&amp;gt; 192.168.199.132 //this is orig_relpy&lt;/p&gt;
+    __skb_push(skb, sizeof(*ph));
+    skb_reset_network_header(skb);
+    //add pppoe_hdr no header???
+    dev_queue_xmit(skb);
+}&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;        inverse tuple:
-        original(inverse-&amp;gt;dst.dir = !orig-&amp;gt;dst.dir;):
-        192.168.199.132 -&amp;gt; google.com (!!!reverse orig_reply in ipv4_inver_tuple())
-         这个函数的用途可能是担心, orig被人改了, 不能用了.
-        except for prior manipulations
-    }       
+&lt;p&gt;#PPP
+&lt;a href=&#34;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&#34;&gt;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&lt;/a&gt;&lt;/p&gt;
 
-    get_unique_tuple
-    {
-        1. 如果snat, 且前后可以一致就直接new=orig, 合理.
-        2. find_appropriate_src 费点力... 貌似找到已经用到的, 复用
-        3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
-        4. nf_nat_used_tuple 保证唯一
-    }       
+&lt;p&gt;#GRE
+include/net/gre.h&lt;/p&gt;
 
-    bysoruce 里面存的应该是new_original, hash -&amp;gt; &amp;amp;net-&amp;gt;ct.nat_bysource[srchash]
+&lt;p&gt;#L2tp
+IP -&amp;gt; UDP -&amp;gt; L2TP -&amp;gt; PPP&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;source files
+net/l2tp/
+├── Kconfig
+├── l2tp_core.c
+├── l2tp_core.h
+├── l2tp_debugfs.c
+├── l2tp_eth.c
+├── l2tp_ip.c
+├── l2tp_netlink.c
+├── l2tp_ppp.c
+└── Makefile&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;include/uapi/linux/ppp_defs.h&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Functions
+l2tp_recv_common &amp;hellip;recv_skb=pppol2tp_recv()
+l2tp_xmit_core&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;#PPTP
+##Route ip-list to pptp-vpn
+11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3
+    link/ppp
+    inet 192.168.1.60 peer 192.168.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;32&lt;/sub&gt; scope global pptp-vpn
+root@Hiwifi:~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn
+123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2
+192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn
+192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2
+192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan&lt;/p&gt;
+
+&lt;p&gt;##pptp header
+IP | GRE | pptp_gre_header | PPP | IP&lt;/p&gt;
+
+&lt;p&gt;##input
+ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip
+ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&amp;gt;inet_protos.gre_rcv -&amp;gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&amp;gt; sk_receive_skb -&amp;gt;sk_backlog_rcv -&amp;gt; pptp_rcv_core -&amp;gt; ppp_input -&amp;gt; ppp_do_recv
+-&amp;gt; ppp_receive_frame -&amp;gt; ppp_receive_nonmp_frame -&amp;gt; netif_rx -&amp;gt; netif_rx_internal -&amp;gt; enqueue_to_backlog -&amp;gt; ____napi_schedule(sd, &amp;amp;sd-&amp;gt;backlog);
+-&amp;gt; netif_receive_skb&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;##output
+ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push
+-&amp;gt;pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit=pptp_xmit -&amp;gt; add gre and ip header. -&amp;gt; ip_local_out -&amp;gt;
++another send skb functions is ip_build_and_send_pkt()
+{ this functions hook is init in pptp_connect() -&amp;gt; ppp_register_channel(&amp;amp;po-&amp;gt;chan) }
+{ppp_connect()&amp;rsquo;s init functions is pptp_create, see pptp_init_module -&amp;gt;
+register_pppox_proto(PX_PROTO_PPTP, &amp;amp;pppox_pptp_proto) pptp_create.}
+when invoke pptp_create? socket()!&lt;/p&gt;
+
+&lt;p&gt;if layer 4 protocol is gre then pass.&lt;/p&gt;
+
+&lt;p&gt;##PPTP &amp;amp; NAT
+* Forward package
+br-lan(PREROUTING orginal packet NAT old)
+(route -&amp;gt; pptp-vpn) = ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()
+pptp-vpn -&amp;gt; ndo_start_xmit -&amp;gt; add some headers -&amp;gt; local_out NAT new -&amp;gt; tc dequeue_qdisc(this is maybe eth2.2&amp;rsquo;s routing result! see top)
+so we need to do is just find original skb in PPTP packet header!&lt;/p&gt;
+
+&lt;p&gt;##PPTP &amp;amp; GRE &amp;amp; Conntrack&lt;/p&gt;
+
+&lt;h1 id=&#34;as-a-pure-ip-protocol-gre-uses-only-ip-addresses-but-no-port-numbers-giving-the-router-s-nat-a-tough-time-to-track-such-a-connection-in-its-base-configuration-openwrt-backfire-is-able-to-nat-a-single-pptp-connections-but-not-multiple-such-connections-concurrently-it-is-also-unreliable-when-trying-to-establish-consecutive-single-pptp-connections-from-different-lan-clients-in-rapid-succession:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;As a pure IP protocol GRE uses only IP addresses but no port numbers giving the router&amp;rsquo;s NAT a tough time to track such a connection. In its base configuration OpenWrt Backfire is able to NAT a single PPTP connections but not multiple such connections concurrently. It is also unreliable when trying to establish consecutive single PPTP connections from different LAN clients in rapid succession.&lt;/h1&gt;
+
+&lt;p&gt;kernel vpn just one session.&lt;/p&gt;
+
+&lt;p&gt;##ppp-&amp;gt; pptp code.
+ppp_send_frame()
+{&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;//below is ok 132 is output!
+printk(&amp;quot;ct %d, %d, %d, %d\n&amp;quot;, HWF_CT_EXT(ct)-&amp;gt;user_id, user_id, HWF_CT_EXT(ct)-&amp;gt;is_marked, proto);
+switch(proto) //0x21, 33
+{
+
+    //Below two print is not show, so we did pass through these codes.
+    if (cp == skb-&amp;gt;data + 2) {
+        /* didn&#39;t compress */
+        printk(&amp;quot;NO compreess %x\n&amp;quot;, ppp-&amp;gt;flags);
+        kfree_skb(new_skb);
+    } else {
+        if (cp[0] &amp;amp; SL_TYPE_COMPRESSED_TCP) {
+            proto = PPP_VJC_COMP;
+            cp[0] &amp;amp;= ~SL_TYPE_COMPRESSED_TCP;
+        } else {
+            proto = PPP_VJC_UNCOMP;
+            cp[0] = skb-&amp;gt;data[2];
+        }
+        kfree_skb(skb);
+        skb = new_skb;
+        printk(&amp;quot;I am here %d ,%d, %x\n&amp;quot;, cp[0], proto, ppp-&amp;gt;flags);
 
 
 }
+printk(&amp;quot;hit b %d\n&amp;quot;, skb-&amp;gt;qosmark);
+skb = pad_compress_skb(ppp, skb);//this functions skb will be replaced with a new_skab by alloc_skb();
+printk(&amp;quot;hit a %d\n&amp;quot;, skb-&amp;gt;qosmark);
+//...
+printk(&amp;quot;befor push %d %d\n&amp;quot;, skb-&amp;gt;qosmark, user_id);
+skb-&amp;gt;qosmark = user_id;
+
+ppp-&amp;gt;xmit_pending = skb;
+ppp_push(ppp);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//上面ct改完了该改skb了.
-    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
-}&lt;/p&gt;
+&lt;p&gt;//dmesg
+[  304.600000] ct 132, 132, 0, 33
+[  304.610000] hit b 132
+[  304.610000] hit a 0
+[  304.610000] befor push 0 132
+[  304.610000] out chan 132
+[  304.620000] chan ok132
+[  304.620000] qosmark132 132&lt;/p&gt;
 
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;SNAT nftables
-nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;De-NAT
-最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
-我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp;amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了
-发包-POSTROUTING -&amp;gt;SNAT -&amp;gt;修改ct: nf_nat_setup_info-&amp;gt;　ct-&amp;gt;status |= IPS_SRC_NAT;-&amp;gt;修改skb:nf_nat_packet&lt;/p&gt;
-
-&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet
-{
-    enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);&lt;br /&gt;
-    //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;if (mtype == NF_NAT_MANIP_SRC)          
-    statusbit = IPS_SRC_NAT;             
-else                                      
-    statusbit = IPS_DST_NAT;        //到这里
-
-/* Invert if this is reply dir. */            
-if (dir == IP_CT_DIR_REPLY) 
-    statusbit ^= IPS_NAT_MASK;        //翻转一下变成SNAT 
-/* Non-atomic: these bits don&#39;t change. */                                                                                                    
-if (ct-&amp;gt;status &amp;amp; statusbit) {                 
-//正好和发包是的   ct-&amp;gt;status |= IPS_SRC_NAT;匹配了, 开始de-snat.                    
-    struct nf_conntrack_tuple target;
-    ...
+&lt;pre&gt;&lt;code&gt;so we need backup qosmark be for invoking this function then restore it.
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;#ipset
-salist for iptables&lt;/p&gt;
+&lt;p&gt;ppp_push(struct ppp *ppp)
+{
+    struct list_head *list;
+    struct channel *pch;
+    struct sk_buff *skb = ppp-&amp;gt;xmit_pending;&lt;/p&gt;
 
-&lt;p&gt;#SYN proxy
-SYNPROXY target makes handling of large SYN floods possible without
-the large performance penalties imposed by the connection tracking in such cases.
-On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
-with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;if (!skb)
+    return;
 
-&lt;p&gt;#nftables&lt;/p&gt;
+list = &amp;amp;ppp-&amp;gt;channels;
+if (list_empty(list)) {
+    /* nowhere to send the packet, just drop it */
+    ppp-&amp;gt;xmit_pending = NULL;
+    kfree_skb(skb);
+    return;
+}
 
-&lt;p&gt;#FAQ
-* 如何查看某个table 具体在那几个hook点.
-去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
+if ((ppp-&amp;gt;flags &amp;amp; SC_MULTILINK) == 0) {
+    /* not doing multilink: send it down the first channel */
+    list = list-&amp;gt;next;
+    pch = list_entry(list, struct channel, clist);
+
+    printk(&amp;quot;out chan %d\n&amp;quot;, skb-&amp;gt;qosmark);
+    spin_lock_bh(&amp;amp;pch-&amp;gt;downl);
+    if (pch-&amp;gt;chan) {
+        printk(&amp;quot;chan ok%d\n&amp;quot;, skb-&amp;gt;qosmark);
+        if (pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit(pch-&amp;gt;chan, skb))
+            ppp-&amp;gt;xmit_pending = NULL;
+    } else {
+        /* channel got unregistered */
+        printk(&amp;quot;no chan\n&amp;quot;, skb-&amp;gt;qosmark);
+        kfree_skb(skb);
+        ppp-&amp;gt;xmit_pending = NULL;
+&lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
     

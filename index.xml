@@ -7,2658 +7,22 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
-    <updated>Tue, 22 Sep 2015 00:00:00 UTC</updated>
+    <updated>Sun, 13 Dec 2015 03:27:16 CST</updated>
     
     <item>
-      <title>Linux time subsystem</title>
-      <link>http://firoyang.org/kernel/time/</link>
-      <pubDate>Tue, 22 Sep 2015 00:00:00 UTC</pubDate>
+      <title>The common cognition language</title>
+      <link>http://firoyang.org/philosophy/ccl/</link>
+      <pubDate>Sun, 13 Dec 2015 03:27:16 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/time/</guid>
-      <description>
-
-&lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
-
-&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.
-一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,
-*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态
-那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全
-转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
-                        — William Gibson
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.
-想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在
-时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
-
-&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.
-UTC/GMT
-Based on caesium microwave atomic clock
-Leap second&lt;/p&gt;
-
-&lt;h2 id=&#34;genus-differentia-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;Genus-differentia definition&lt;/h2&gt;
-
-&lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
-
-&lt;h2 id=&#34;功用定义:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;功用定义&lt;/h2&gt;
-
-&lt;p&gt;获取时间
-timer
-sleep ?
-update sched info&lt;/p&gt;
-
-&lt;h2 id=&#34;发生定义-设计-etymology-history-operational-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;发生定义/设计   etymology, history Operational definition&lt;/h2&gt;
-
-&lt;p&gt;timekeeping/计时:时刻．
-clock source: 时间之源, 表针之力.
-clock event: 闹铃之力, 经过tick展现能力.
-tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.
-tickless:
-for timer: use HW timer one shot, set next.
-for update time: in above HW timer, not good
-for sched: for priority distributed in time slice, use timer.
-dynamic tick/no HZ:
-No HZ in idle
-No HZ while only 1 process running for HPC.
-tick devies 就是clock event包了层虎皮.
-tick broadcast framework:  based on tick device
-clock: 可记录时间, 表盘.利用timekeeping
-timer: use clock. what about timer_list?
-timer_list: do in softirq
-* timekeeping aspect
-onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; \
-kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))
-nucleus:used by clock see init_posix_timers and update_wall_time and sys_time
-coda:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;clock source aspect&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tick device layer aspect
-per_cpu(tick_cpu_device, cpu)
-onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device
-nucleus: a38x_timer_interrupt-&amp;gt;a38x_clkevt.event_handler&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tick broadcast framework
-onset:&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;clock aspect
-k_clock
-onset:init_posix_timers &amp;amp; init_posix_cpu_timers
-nucleus: 用户-&amp;gt; posix_clock-&amp;gt;timepkeeping-&amp;gt;clock_socurce&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;timer aspect
-onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
-nucleus: common_timer_set
-hrtimer_interrupt | (tick_handle_periodic-&amp;gt; tick_periodic-&amp;gt; update_process_times-&amp;gt;run_local_timers-&amp;gt;hrtimer_run_queues)-&amp;gt;__run_hrtimer-&amp;gt;timer.function = posix_timer_fn;(set in common_timer_set)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;计算机概念
-system clock CLOCK_REALTIME CLOCK_MONOTONIC
-time.h time_t=tm=timeval=timespec calendar time  clock_t&lt;/p&gt;
-
-&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function
-clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,
-clock event 通过timer来体现自己, timer面向使用者的onset,
-而clock event 则是偏向于nucleus and coda.
-timer: 标记不能立即执行的变化.
-clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.
-* kernel requirement
-linux的时间子系统要求硬件timer提供下面两种能力：
-一是free running的counter，此外需要能够在指定的counter值上产生中断的能力。&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Quantitative congnition - The philosophy on what I live</title>
-      <link>http://firoyang.org/philosophy/philosophy/</link>
-      <pubDate>Sun, 13 Sep 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/philosophy/philosophy/</guid>
-      <description>
-
-&lt;h1 id=&#34;epistemology:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Epistemology&lt;/h1&gt;
-
-&lt;h2 id=&#34;top-conceptions:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Top conceptions&lt;/h2&gt;
-
-&lt;p&gt;因果律
-世界处在不稳定的状态. &amp;ndash; Firo
-世界的普遍不确定性 &amp;ndash; Firo Soros
-认知的unit是概念. &amp;ndash; Firo
-世界是复杂的, 不能仅仅一条道理就讲明白. &amp;ndash; Firo
-A theory is a perspective of understanding this world. Get more perspective to understanding the world:-)&amp;ndash; Firo
-In genearl, 认知过程就是一种perspective 转换到另一种perspective. &amp;ndash; Firo
-For example, mathematics, logic, computer science are all the theory and perspective:-) 这三种思维都要养成, 慢慢来. &amp;ndash; Firo
-compile就是这样一种转换. &amp;ndash; Firo&lt;/p&gt;
-
-&lt;h2 id=&#34;criteria-and-benchmark-or-protype:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Criteria and benchmark or protype&lt;/h2&gt;
-
-&lt;p&gt;To attain perfect clearness in our thoughts of an object, then,
-we need only consider what conceivable effects of a practical kind the object
-may involve—what sensations we are to expect from it,
-and what reactions we must prepare. (1907: 29)
-        &amp;ndash; James,Pragmatism: A New Name for an Old way of Thinking
-视野要广能有多广要多广.
-你不需要掌握所有的内容, 你需要的是基础的general,重要的,常用的. Bound to James Pragmatism &amp;ndash; Firo
-准确的定义你的问题 &amp;ndash; Firo
-More rationality, less obseravtions. e.g. delete state_count of cpuidle_device. &amp;ndash; Firo
-Accept as true only what is indubitable. &amp;ndash; Descartes
-Falsifiability可证伪性 &amp;ndash; Popper
-批判性, 你所学的一切都是暂时性的,任何所学都有改口 驳斥 质疑的余地 &amp;ndash;Aaron Swartz,25:20
-一一性  &amp;ndash; Moritz Schlick
-合理性. &amp;ndash; Firo
-方法的可行性. &amp;ndash; Firo
-简单, 易操作, 可长久做下去. &amp;ndash; Engflunt
-容易理解, 易推导. &amp;ndash; Firo
-逻辑等价 &amp;ndash; Firo
-Completeness, consistency &amp;ndash; Logic
-繁忙的工作生活会令人身心愉悦 &amp;ndash; Firo
-Plan and record  &amp;ndash; Firo
-Multitasking  &amp;ndash; CS
-怎么样才算是学到了知识呢?
-1. 所有知识都不是stand alone的,孤立的知识是死知识,必须和你了解熟悉的知识建立等价的认知关系. &amp;ndash;Firo
-可以确认这个潜在可以和众多知识建立联系的知识就是逻辑,数学, 生活. &amp;ndash; Firo
-2. 要有醍醐灌顶的感觉.
-Quick!
-如果dd做同样的事情, 他会怎么做了?&lt;/p&gt;
-
-&lt;h2 id=&#34;adverse-factors-of-congition:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Adverse factors of congition&lt;/h2&gt;
-
-&lt;p&gt;认知的缺陷, imperfect-understand, 彻底可错性. &amp;ndash;Firo Soros Popper
-别人(自己存在)认识的谬误性. &amp;ndash; Firo Soros
-个人 or Government 积累掩盖篡改历史的真相.
-越是大型的魔术表演，其门道往往就越是简单！人们认定不可能发生这种事的常识，固定观念往往孕育出盲点！&amp;ndash; 唐吉诃德·多弗朗明哥
-正义会胜？那是当然的吧，只有胜者，才是正义啊！&amp;ndash; 唐吉诃德·多弗朗明哥
-基于问题思考可以客服重复, 用处小的知识信息耽误时间, 也能解决脱离实际, 学了很多无用功. &amp;ndash; Firo&lt;/p&gt;
-
-&lt;h2 id=&#34;object:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Object&lt;/h2&gt;
-
-&lt;p&gt;认知思考的对象一点不能超出思维的连贯性. &amp;ndash;Firo
-首先这个知识是个复杂的具体的内容且是隔离的独立的知识比如x86的lds. 直接看就很不舒服.  &amp;ndash;Firo
-应该看的是gnu ld关于script的基础还有地址relocation. &amp;ndash;Firo
-这里就是要去看他的origin, foundation. &amp;ndash; Firo&lt;/p&gt;
-
-&lt;h2 id=&#34;aspect:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Aspect&lt;/h2&gt;
-
-&lt;p&gt;自己思考. 不要上来就读, 你要思考这个过程! 相信自己.&amp;ndash; Firo
-From ground, from zero, from origin. &amp;ndash; Firo
-Pragmatism Question the beginning of mind. &amp;ndash; Firo
-掌控好大方向, 安心的一点点做起, 需求不是想出来的. 要做什么事是实际遇到的, 不能规划
-的太详细, 可以有个大方向时间点. 大概是因为彻底可错, 认知的不完美. 记住需求来自实际不是想出来的. &amp;ndash; Firo
-如果有些重要的事, 我一生都无法实现怎么办?我不能一直这样下去, 到头来, 人生都毁了.
-所以认真过好每一天, 这很重要. 也是认知的缺陷导致的. &amp;ndash; Firo&lt;/p&gt;
-
-&lt;p&gt;建立非常很究极的理性(Rational)的逻辑系统, 不怕出错.More rationality, less observation!
-准确定义问题. &amp;ndash; Firo
-把事闹大. Broaden the horizons. Framework/pattern is the incarnation of mind.&amp;ndash; Firo
-学会问题转换这非常重要. &amp;ndash; Firo
-Knowledge degree of target, 必须区别对待知识.
-学会多角度看待问题. &amp;ndash; Firo
-如鱼得水. 如果问题难, 不好下手就划分小的(内核只关注console init, 内存映射, cpu 初始化这些), 减小难度(语速编码).&amp;ndash; Firo
-认知的方法, 海绵式，　淘金式，对抗式, 后面来个都应该用来认知. 因为
-Known and unknown/question - the complete vision. &amp;ndash; Firo
-Pragmatism questions:
-Why does it appear? What problem does it solve? What happend if it does not exist?
-How does it solve this problem in generalization and different sesanations level?
-Is it good or bad? What is the feedback?
-Question about what is the important, foundation, most useful, minimal cached? &amp;ndash; Firo&lt;/p&gt;
-
-&lt;p&gt;做好模式类比!至少有两个模式, 一个background, 一个是problem.
-就那debug和英语, 都要有基础的background, 之后的problem就要根据具体场景, 找办法.
-简单说来一个事情-&amp;gt;模式-&amp;gt;问题 &amp;amp; 方法.
-所谓模式就是一条执行的过程. 多是逻辑上的.
-比如模式background, 在逻辑上就是先架构上的, 之后在具体上的.topdown.
-而模式problem, 在逻辑上就是笛卡尔方法, 复杂细分成小的部分, 之后在从简单开始做, 另外就是不断用真实的实践去做calculus-update.&lt;/p&gt;
-
-&lt;p&gt;解决问题的方法往往是多种多样的.
-General problem solving methods, how many method we can use to get answer:
-1. sovle problem by self, you need to know the most things.(For unsimilar things, Not recomend!)
-2. Does anyone solve the same problem?
-3. Does anyone solve the similar things?(这需要提取一些共有的信息比如fsl, usb3320.
-Divide every question into manageable parts. &amp;ndash; Descartes
-一种快速构建pattern 或者达成初级认知的方法是, 先到主体, 确定主体后, 在建立之间的关系. &amp;ndash;Firo
-Modularity, &amp;ndash; Computer science
-Begin with the simplest issues and ascend to the more complex. &amp;ndash; Descartes&lt;/p&gt;
-
-&lt;p&gt;语言分析, 是我认知的重要工具, 甚至是主要工具. &amp;ndash; Firo, Saussure
-* 抽象明确概念所属的范畴,从而正确的定义理解问题.
-* 内涵定义: Genus-differentia definition 属加种差定义: 发生定义(设计), 关系定义, 功用定义, 摹状定义
-* 充要定义, Real and nominal definitions
-* Classes of extensional definitions: enumerative definition
-* &lt;a href=&#34;http://plato.stanford.edu/entries/definitions/&#34;&gt;Definitions Stanford Encyclopedia of Philosophy&lt;/a&gt;
-Comparison reflection abstraction &amp;ndash; concept in Wikipedia
-语言必须被还原到实际的生活场景  &amp;ndash; 维特根斯坦&lt;/p&gt;
-
-&lt;p&gt;Autonomous decision &amp;ndash; Firo
-问题的答案是常识.每一次认知都是积累pattern的过程. &amp;ndash; Firo
-君子生非异也，善假于物也。 &amp;ndash;荀子 劝学
-Change-of-state calculus &amp;ndash;Von Wright’s approach&lt;/p&gt;
-
-&lt;p&gt;学以致用 实践 &amp;ndash; Firo 胡适
-Self-correcting. &amp;ndash; Firo
-Review frequently enough to retain the whole argument at once &amp;ndash; Descartes
-第一是不要害怕冒险，第二是冒险时不要押上全部家当  &amp;ndash; Soros
-改造的反射性, 反射原理. &amp;ndash; Soros&lt;/p&gt;
-
-&lt;h2 id=&#34;instances:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Instances&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;对陌生语言问题(技术)的认知&lt;br /&gt;
-依照Wittgenstein, 语言要还原到生活中.会发现这是一个反过程, 实际变成了, 生活映射到语言词汇的过程. &amp;ndash; Firo
-通过对被还原到生活的语言词汇(有些时候我们需要修改那些不适当的词汇名字), 来从新认识他在问题中的语义意义. &amp;ndash;Firo
-比如内核时间子系统的, timekeeping, 还原到生活是日晷, 沙漏, 钟表. 再次回到程序中, 虽然只是个struct数据结构却携带这涵义丰富生活语义.&amp;ndash;Firo
-这是为什么好的命名, 对于程序理解的重要性.想较于使用不同语言的计算机程序开发者在源码中寻找词汇的original的来说, 社会生活中etymology要复杂多. &amp;ndash;Firo&lt;/p&gt;
-
-&lt;h1 id=&#34;模式-结构-关系-原理:007041aa20bf44bd43eba68b5f650c57&#34;&gt;模式 &amp;ndash; 结构 关系 原理&lt;/h1&gt;
-
-&lt;p&gt;这里所说的模式是事物某种既定的认知, 而方法是来揭示模式的.
-定位问题, 一定要从全局触发. 如果一直wfi问题, 先看下3.2sdk的config, 就done了.
-问题总是复杂的, 解决方法总是简单的  &amp;ndash;xiaolai.li
-computer first pattern: init onset,  running nuclus,  exit, coda
-溯因推理abduction
-Theory &amp;amp; application
-In &amp;amp; output
-Ideal &amp;amp; real
-Asynchronous &amp;amp; synchronous&lt;/p&gt;
-
-&lt;h2 id=&#34;pragmatism-sensations:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Pragmatism sensations&lt;/h2&gt;
-
-&lt;p&gt;Theory&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;aaron-swartz:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Aaron Swartz&lt;/h1&gt;
-
-&lt;p&gt;I feel very strongly that it&amp;rsquo;s not enough to just live in the world as it is, it&amp;rsquo;s just kind of take what you are given,
-and you know follow the things that adults told you to do,and that your parents told you to do, and that society tells to do.
-I think you should always be questioning.I take this very scientific attitude that
-every thing you&amp;rsquo;ve learned  is just provisional, you know, it&amp;rsquo;s always open to recantation or refutation or questioning,
-and I think  the same applies to society. Once I realized that there were real serious problems, fundamental problems
-that I could do something to address, I didnt see a way to forget that, I didnt see a way not to.&lt;/p&gt;
-
-&lt;h1 id=&#34;胡适日记全集-第三册-1921年7月10一则:007041aa20bf44bd43eba68b5f650c57&#34;&gt;胡适日记全集 第三册，1921年7月10一则&lt;/h1&gt;
-
-&lt;p&gt;杜威先生不曾给我们一些关于特别问题的特别主张，——如共产主义，无政府主义，自由恋爱之类，——他只给了我们一个哲学方法，
-使我们用这个方法去解决我们自己的特别问题。
-* （1）历史的方法——“祖孙的方法”   the genetic method, why xxx?
-他从来不把一个制度或学说，看做一个孤立的东西，总被他看做一个中段；一头是他所以发生的原因，一头是他自己发生的效果；上头有他的祖父，下头有他的孙子。捉住了这两头，他再也逃不出去了！这个方法的应用，一方面是很忠厚宽恕的，因为他处处指出一个制度或学说所以发生的原因，指出他历史的背景，故能了解他在历史上的地位和价值，故不致有过分的苛责。一方面，这个方法又是很严厉的，最带有革命性质的。因为他处处拿一个学说或制度发生的结果，来评判他本身的价值，故最公平，又最利害。这种方法，是一切带有评判（Critical）精神的运动的一个武器。
-* （2）实验的方法　　实验的方法，至少注重三件事：
-（一）从具体的事实与境地下手；
-（二）一切学说理想，一切知识，都只是待证的假设，并非天经地义；
-（三）一切学说与理想，都须用实行来试验过。实验是真理的唯一试金石。
-第一件，——注意具体的境地——使我们免去许多无谓的问题，省去许多无意识的争论。
-第二件，——一切学理都看做假设——可以解放许多“古人的奴隶”。
-第三件，——实验——可以稍稍限制那上天下地的妄想冥想。实验主义只承认那一点一滴做到的进步，步步有智慧的指导，步步有自动的实验——才是真进化。
-所谓实验的方法应该看成实证主义, 而不是更宽泛的实用主义. 维也纳小组, 即是逻辑实证主义.
-#Philosophy
-物自体-&amp;gt;感知-&amp;gt;经验对象-&amp;gt;认知-&amp;gt;概念
-我们所做的乃是把词从形而上学的使用带回到日常的使用上来”。
-我们能够陈述的只是语言的“外部事实”，我们对语言的误解来自对词的使用的不清——“我们的语法缺乏这种清晰性”。面对不清晰的语法，“哲学的任务并不是通过数学或逻辑数学的发现去解决矛盾，而是使我们有可能看清楚给我们造成麻烦的数学的现状：在矛盾解决之前的事态”，哲学的身份是“只把一切都摆在我们面前，既不作说明也不作推论”。
-##Foundations
-+ 认识是人脑对外界事物的反映
-+ 认识的对象
-* 存在就是不同.
-+ 认识的方法
-* 划分就是要从混沌中找出不同
-=现象与根本
-* 现象不同的存在
-* 根本相同的存在
-=静态与动态
-=宏观与微观
-宏观是指从整体、全局来看;微观是指从个体、局部来看
-系统是由相互作用的元素所构成的整体;元素是系统的组成部分
-宏观的存在称为事物,构成该事物的微观的存在称为该事物的来源
-事物是客观存在的一切物体及其表现出的现象，比如原子是“物”，原子的行为表现是其“现象”，统合在一起，就是原子这么个“事物”。&lt;/p&gt;
-
-&lt;p&gt;=实体与作用
-主体是目的实体,就是被作为目的的实体
-客体是手段实体,就是被作为手段的实体&lt;/p&gt;
-
-&lt;p&gt;作用就是影响,实体对实体影响就叫做作用
-属性实际上就是外在表现角度的实体的作用
-事物之间的相互作用就叫做关系&lt;/p&gt;
-
-&lt;p&gt;客体对主体的作用叫做功用; 主体对客体的作用叫做利用&lt;/p&gt;
-
-&lt;p&gt;功用就是价值
-=形式与内容
-内容指构成事物的一切内在要素的总和；
-形式指事物内在要素的结构或表现方式。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;区别是对已经存在的多个事物进行比较,找出它们之间的不同之处,现象&lt;/li&gt;
-&lt;li&gt;联系是对已经存在的多个事物进行比较,找出它们之间的相同之处,根本&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;+静态存在
-事物实体的形式——结构,结构是事物内部诸元素之间的空间关系
-事物实体的内容——质料
-事物作用的形式一般被称为方式。
-事物作用的内容是输入与输出。
-事物关系的形式一般就叫做形式
-事物关系的内容是交换
-事物功用的形式——价值,哲学价值就是形式价值,使用价值就是内容价值(美／面包）
-事物功用的内容就是功能
-事物利用的形式是技术
-事物利用的内容是生产&lt;/p&gt;
-
-&lt;p&gt;事物的根本结构(形式)——层级结构
-事物的根本内容——需要&lt;/p&gt;
-
-&lt;p&gt;事物的根本价值——好
-事物的根本功能——满足主体需要
-事物的根本技术——妙
-事物的根本生产——满足客体需要
-事物之间的根本作用是价值作用、利益作用,也就是对需要的作用——满足或者不满足对方需要的作用。
-事物之间的根本关系是利益关系
-+ 动态的存在
-+ 根本划分
-静态的根本称为法则,动态的根本称为规律。
-事物的根本就叫做根本。根本的来源叫做本原,事物的根本元素就是事物的本原
-根本的实体称为本体,根本的属性称为本性。
-根本的形式,称为本形;非根本的形式,称为末形;
-根本的内容,称为本质;非根本的内容,称为末质。
-+ 认识的成果
-* 概念是外界事物在人脑中的抽象反映
-* 外延是反映在概念中的事物的现象
-* 内涵是反映在概念中的事物的根本
-+ 认识的目的
-* 真理是人脑对外界事物的正确反映。
-* 谬误是人脑对外界存在的错误反映
-* 根本性的真理就是真谛,
-* 非根本性的真理就是俗谛&lt;/p&gt;
-
-&lt;p&gt;#Gerneral theroy of knowledge &amp;ndash; Moritz Schlik
-##Common concepts
-###认知是再认识or再发现&lt;/p&gt;
-
-&lt;h3 id=&#34;知识就是把一种东西-现象-归结位另一种东西-原则:007041aa20bf44bd43eba68b5f650c57&#34;&gt;知识就是把一种东西(现象)归结位另一种东西(原则).&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;给狗一个名字, 那不是知识是见识!&lt;/li&gt;
-&lt;li&gt;有同一个原则解释的现象越多, 用来解释整个现象的所需的原则数目越少.&lt;/li&gt;
-&lt;li&gt;知识的水平用解释性原则的数目多少来衡量.&lt;/li&gt;
-&lt;li&gt;认知的最终任务就是使这个最低限度的数目尽可能的小.why?
-###科学知识的两个条件&lt;/li&gt;
-&lt;li&gt;完全规定个体(in/extension)&lt;/li&gt;
-&lt;li&gt;通过归结为最一般的东西来实现这种规定
-###知识的拥有与增长.&lt;/li&gt;
-&lt;li&gt;任何学科,开始工作之前, 必须对研究主题形成确定概念(in/extension).在探究之前界定研究的领域.研究什么?希望的回答是什么?&lt;/li&gt;
-&lt;li&gt;主题的定义会随着展开关系, 变得明确, 但必须有最初的定义, 如光的定义.
-###Type fo 问题&lt;/li&gt;
-&lt;li&gt;把所要知道的东西归结为什么样的因素(法则)?
-一个学科的发展, 如物理学不断发展到现在的量子力学和相对论
-计算机unix linux google 移动互联网 物联网&lt;/li&gt;
-&lt;li&gt;采取什么样的途径来实现这种归结?
-天体运动归结为universal gravitation(因素/法则)
-气象-&amp;gt;热力学(因素/法则)&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;诚然, 对于求助于哪些因素作为解释性原则, 我们常常犯错, 因而被容易被某些捉摸不定的东西引向迷途.
-##知识的性质&lt;/p&gt;
-
-&lt;h3 id=&#34;认识论的意义:007041aa20bf44bd43eba68b5f650c57&#34;&gt;认识论的意义&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;清谬
-运动本身不需要了解, 生理学知识, 也行.但病变的肢体就需要这些知识恢复.
-同样, 悖谬时, 认识论澄清不合理.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;深刻认知
-另外, 科学的训练需要生理学知识, 高效的学习也同样学习epistemmology.
-个门学科的展开不需要认识论的基础, 但除非经过认识论, 我们绝不会深刻的理解这些学科.
-Helmholtz, every thing lead us to philosophy.&lt;/p&gt;
-
-&lt;h3 id=&#34;日常生活中的认知:007041aa20bf44bd43eba68b5f650c57&#34;&gt;日常生活中的认知&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;对知识做出圆满的定义在研究的后期甚至终结时才可靠, 如果我们接收这个观点, 领域的界限和进入点都会模糊不清.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;狗, 知觉和心里意像相同&lt;/p&gt;
-
-&lt;h3 id=&#34;科学中的认知:007041aa20bf44bd43eba68b5f650c57&#34;&gt;科学中的认知&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;光, 两种法则相同&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;亚里士多德和手稿, 知识的核心都是再发现,
-###通过意象的认知&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;记忆意象是一种极为模糊, 变动不居, 容易像云雾那样消散的结构.
-这就是我之前的学习状态, 所有东西都停留在意象层次, 根本不是细节的问题.
-###通过概念的认知
-属性称为概念的特性or特征
-逻辑学, 概念的特征的总合叫概念的内涵/内容.概念所指的对象集合叫做概念的外延.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Linux virtualization</title>
-      <link>http://firoyang.org/kernel/virt/</link>
-      <pubDate>Wed, 17 Jun 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/virt/</guid>
-      <description>
-
-&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.
-已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!
-现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和
-他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与
-空间去体验到不同生命历程.
-今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;
-如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.
-显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.
-法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是
-词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是
-influencing by physical virtues or capabilities,
-effective with respect to inherent natural qualities
-受某种实在的长处能力影响, 源自本质的效用.
-这里从两种角度理解virtual, 受影响者, 影响者本身.
-所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.
-这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;virtual 音节划分：vir▪tual
-英 [ˈvɜ:tʃuəl] 美 [ˈvɜ:rtʃuəl]
-adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;有效的，虚像的；（粒子）实际存在的
-虚；虚拟艺术；虚拟的；模拟帐户
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!
-话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.
-很多事情, 在我们出生前就决定了, 我是89年9月出生的.
-我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.
-如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.
-没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.
-好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?
-没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?
-所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.
-那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!
-我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.
-终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora
-之上.&lt;/p&gt;
-
-&lt;h2 id=&#34;fkvm:d29da9244342e72819e84d5dee753d17&#34;&gt;FKVM&lt;/h2&gt;
-
-&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!
-首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel
-运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!
-因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!
-你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.
-怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行
-start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的
-cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.
-也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.
-在内核初始化的时候, 会用调用bios的中断来获取内存信息.
-也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.
-开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.
-现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是
-高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.
-只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?
-我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.
-就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.
-也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.
-如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.
-这里需要很多底层的知识. 先看点资料再回来.
-看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.
-访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.
-探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.
-无论别人说的多么好, 我们必须要有自己的思路.
-总结下所得:
-控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.
-虚拟化一块内存.
-我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.
-由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.
-同时乐趣也会减少.&lt;/p&gt;
-
-&lt;h1 id=&#34;kvm-qemu:d29da9244342e72819e84d5dee753d17&#34;&gt;KVM QEMU&lt;/h1&gt;
-
-&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;
-探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.
-千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然
-是我们自己, 别人的知识只是辅助. 那好我们开始.
-首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.
-往往初学者, 很容易被绕进去.
-从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.
-为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.
-Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供
-全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的
-洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.
-Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.
-至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.
-从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.
-这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.
-Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.
-类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.
-Operating-system-level virtualization
-这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.
-但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.
-比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.
-这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.
-比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,
-他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.
-这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.
-在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,
-网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.
-我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.
-首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?
-官网的解释:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;QEMU is a generic and open source machine emulator and virtualizer.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.
-qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.
-我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.
-那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.
-毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的
-虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.
-据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情
-补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.
-不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂
-肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.
-内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.
-下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.
-我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.&lt;/p&gt;
-
-&lt;p&gt;下面是设备的虚拟化, 这个还是看书去吧.&lt;/p&gt;
-
-&lt;h1 id=&#34;代码实现:d29da9244342e72819e84d5dee753d17&#34;&gt;代码实现&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;KVM architecture&lt;/li&gt;
-&lt;li&gt;Kernel running flow
-svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;/li&gt;
-&lt;li&gt;File
-svm.c vmx.c kvm_main.c kvm_svm.h&lt;/li&gt;
-&lt;li&gt;Function&lt;/li&gt;
-&lt;li&gt;Struct
-kvm_x86_ops x86.h
-vcpu_svm    kvm_svm.h&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Kernel hacking</title>
-      <link>http://firoyang.org/kernel/hacking/</link>
-      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/hacking/</guid>
-      <description>
-
-&lt;h1 id=&#34;kernel-hacker之路:0b18016038ccf925131bdc7a6edbb900&#34;&gt;kernel hacker之路&lt;/h1&gt;
-
-&lt;p&gt;我实在太想聊这个话题 &amp;ndash; 内核hacker的成长之路!
-不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为
-内核的中坚力量, 甚至是maintainer.
-作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.
-因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.
-起始我在12年的11月份曾经给社区, 提过几次补丁. 后来有那么两三次, 想帮着修复
-kernel panic 和oops的问题, 基本上个人感觉难度非常太大就无极而终了.
-5月份这次, 我是因为实在不想在看书籍了, 市面上稍微有点名的书籍, 我都看过.
-实在太厌烦再看书了, 我把自己和另外一个内核hacker 王聪做了对比, 得出结论:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;赶快滚去给社区提patch! 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;我挨个看了王聪给社区提的前50个patch. 都是很简单的修改.
-我几次挫败都是, 因为没能找到合适内核事情去做, 最终没有下文了.
-今天, 我在给社区提了20个左右的patch 10几个被接收了. 我现在找到了一条成长路.&lt;/p&gt;
-
-&lt;h2 id=&#34;内核我现在认为可以给新人做得事:0b18016038ccf925131bdc7a6edbb900&#34;&gt;内核我现在认为可以给新人做得事&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/284099/&#34;&gt;https://lwn.net/Articles/284099/&lt;/a&gt;  这个帖子, 提供了新手可以做得事情, 我觉得非常好.
-smatch coccinelle的分析结果.
-源码中标注的FIXME和TODO, 简单的提过去很难被接受, 难的这些开发者自己都没搞定, 新人更难.
-这也不是一条好路.
-内核bugzilla kerneloops上问题, 这个很难.
-找一个和内核相关的工作驱动啊, 网络开发, 虚拟化, 存储都非常赞.
-自己搞个feature, 感觉更难, 这个需要需求驱动.
-没有一条轻松的路让你走, 但你却不应该光着脚走在上面!!!
-内核之外有很多值得珍惜的. 尽力做好, 你能做的, 开始点滴积累.
-终有一天会聚成沧海, 前提是你等得到那天, 不要亏待自己.
-内核之路始终时不那么清晰, 但是反思过后, 你便知道, 该去做什么了.
-这也许是最难受的情况了.
-Linus 之前说过, 搞得内核你得用起来. uml 是个不错的开端.
-用起来才是王道!&lt;/p&gt;
-
-&lt;p&gt;#git
-&lt;a href=&#34;http://git-scm.com/docs/gittutorial&#34;&gt;gittutorial - A tutorial introduction to Git&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;linux-source-code:0b18016038ccf925131bdc7a6edbb900&#34;&gt;linux source code&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;
-要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.
-我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.
-我的linux next remote 就叫next, 基于其创建开发分支.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git branch now next/master
-git pull next master:now
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1 id=&#34;你提patch-社区的困惑是什么:0b18016038ccf925131bdc7a6edbb900&#34;&gt;你提patch, 社区的困惑是什么?&lt;/h1&gt;
-
-&lt;p&gt;每个kernel newbie 都应该完整看完这个mail list
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&lt;/a&gt;
-你能看到鹰派的Al还有温和派Andrew Morton.
-为什么&lt;a href=&#34;http://kernelnewbies.org/这么重要网站&#34;&gt;http://kernelnewbies.org/这么重要网站&lt;/a&gt;, 不做的好一点, 至少界面友好点.
-应该找个机会, 整一下.&lt;/p&gt;
-
-&lt;h1 id=&#34;fix-kernel-mistakes:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Fix kernel mistakes&lt;/h1&gt;
-
-&lt;p&gt;内核至今如此优秀就是因为, 成千上万前赴后继的开发者笔耕不缀的结果.
-别当豆包不当干粮, 虽然, 你不能设计出很牛的算法, or 什么子系统,
-但是内核还有很多问题有待解决, 正所谓老虎也要打, 苍蝇也要拍; 千里之堤毁于蚁穴.
-我提过好些这种patch Dan Carpenter都告诉我Linus已经改了.&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel-newbie上有个list:0b18016038ccf925131bdc7a6edbb900&#34;&gt;kernel newbie上有个list&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;KernelJanitors/Todo&lt;/a&gt;
-* Style fix
-如:
-remove_wait_queue(entry-&amp;gt;wait_address,&amp;amp;entry-&amp;gt;wait);
-remove_wait_queue(entry-&amp;gt;wait_address, &amp;amp;entry-&amp;gt;wait);&lt;/p&gt;
-
-&lt;h2 id=&#34;smatch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Smatch&lt;/h2&gt;
-
-&lt;p&gt;smatch这个工具是Dan写的主要就是为了找到内核的小问题, 基本用法:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    make CHECK=&amp;quot;~/path/to/smatch/smatch -p=kernel&amp;quot; C=1 \
-            bzImage modules | tee warns.txt
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;smatch 会产生好多可疑的问题, 细心寻找吧.
-你找到了, 那么就是修改了.
-记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.&lt;/p&gt;
-
-&lt;h2 id=&#34;coccinelle:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Coccinelle&lt;/h2&gt;
-
-&lt;p&gt;Coccinelle是 Julia Lawall 写的静态检测工具.very nice.
-自己研究吧
-Documentation/coccinelle.txt
-&lt;a href=&#34;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&#34;&gt;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;生成patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;生成patch&lt;/h2&gt;
-
-&lt;p&gt;先修改.
-之后git add
-在commit 之前你要 git log &amp;ndash;online path/to/modification/file
-看下提交的titile:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git log  --oneline drivers/base/firmware_class.c
-5455c8c firmware: Fix memory leak in error path
-e0fd9b1 firmware: use const for remaining firmware names
-f9692b2 firmware: fix possible use after free on name on a
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;主义冒号:后一定要有一个空格!
-你会还是看下Document下的submitting的文档.
-之后commit:
-先是类似上面的一行oneline 简要说明
-空一行.
-之后具体描述下.
-commit后, 生成patch
-如果你只提交了一次:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git format-patch HEAD^..HEAD
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个命令就ok了.
-如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.
-这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的
-如我这个, 已被接收:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;0001-firmware-Fix-memory-leak-in-error-path.patch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9&lt;/p&gt;
-
-&lt;h2 id=&#34;测试patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;测试patch&lt;/h2&gt;
-
-&lt;p&gt;复杂的patch要编译内核, 安装的机器上跑一下.&lt;/p&gt;
-
-&lt;h2 id=&#34;发送patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;发送patch&lt;/h2&gt;
-
-&lt;p&gt;天朝用户自己打梯子吧proxychains shadowsocks.
-基本步骤是
-先编译一下:
-make path/to/modification/file.o
-之后
-./scripts/checkpatch.pl
-之后 get maintainer
-./scripts/get_maintainer.pl&lt;/p&gt;
-
-&lt;p&gt;发送的时候, 发给维护者 &amp;ndash;cc其他人, 还有cc 一个mailist, 如果没有合适的list的话,
-就cc到linux-kernel@vger.kernel.org, 这是个开放的list, 有合适的list了, 就不要cc它了.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;proxychains git send-email --to ming.lei@canonical.com --cc gregkh@linuxfoundation.org --cc kernel-janitors@vger.kernel.org 0001-firmware-Fix-memory-leak-in-error-path.patch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;免不了你要返工重新修改.这时候, 新生成的patch这样:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git format-patch --subject-prefix=&amp;quot;PATCH v2&amp;quot; HEAD^..HEAD
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;改几次就v几.
-和社区交流的时候, 要注意礼貌, 而且要感谢别人对你的patch做出的建议,
-没有人的时间是被猪拱来的.&lt;/p&gt;
-
-&lt;p&gt;这些都是比较简单(代码量上)的patch, 要想提交深度的还需要对某方面的深度.
-基本上这就完了, 你的真正的patch就给社区了.&lt;/p&gt;
-
-&lt;h1 id=&#34;进阶decent:0b18016038ccf925131bdc7a6edbb900&#34;&gt;进阶decent&lt;/h1&gt;
-
-&lt;p&gt;这个是昨天晚上改drivers代码时候, 看到TODO的注释猛然想到的.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;grep -nr &#39;FIXME&#39; --include=&amp;quot;*.c&amp;quot;  ./ | tee fixmek.log
-grep -nr &#39;TODO&#39; --include=&amp;quot;*.c&amp;quot; ./ | tee todok.log
-wc -l fixmek.log 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;有6000多个.&lt;/p&gt;
-
-&lt;h1 id=&#34;deeply-involved:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Deeply involved&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;http://vger.kernel.org/~davem/net_todo.html&lt;/a&gt;
-这个列表上的基本都过期了&amp;hellip;.哎
-往深了走不是难事, 主要是意识到内核, 不是什么神秘的东西, 选好一个方向
-简单看看概念见我的&amp;lt;如何学习&amp;gt; 就可以实践.
-必须要意识到, 动手比看再多概念管用, 我就是之前看了太多, 还发展出一个哲学
-体系出来:-) 确实随着现代信息科学给社会带来的巨大变化, 哲学也必须要更新.
-才能更好的服务于人.
-这几天就在, 找内核哪里还不完善, 自己能补上, 今天6号了.
-#patch formate advices
-* Julia Lawall Sorry to be picky,
-but normally people put a space after the colon.  Also,
-the subject line could be shorter: Remove unneeded cast.&lt;br /&gt;
-The description part of the subject doesnt have to be unique,
-just the whole thing, asfter the [PATCH] part.
-* Dan Carpenter
-Otherwise your patch was fine, btw.  Other improvements.
-Don&amp;rsquo;t put &amp;ldquo;Drivers:&amp;rdquo; in the subject.
-On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:
-&amp;gt; From: Firo Yang &lt;a href=&#34;mailto:firogm@gmail.com&#34;&gt;firogm@gmail.com&lt;/a&gt;
-Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;/p&gt;
-
-&lt;p&gt;Include everyone from the ./scripts/get_maintainer.pl output except
-don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing
-list there already.
-* To find  patch prefix&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git log --oneline  path/to/file.c
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;更新patch 要加v几&lt;/p&gt;
-
-&lt;p&gt;git format-patch &amp;ndash;subject-prefix=&amp;ldquo;PATCH v2&amp;rdquo; xxx..ooo&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;提交多个patch 要手动生成一个[PATCH 0/N], 这个0就是要写简要描述的.&lt;/p&gt;
-
-&lt;p&gt;proxychains git send-email &amp;ndash;subject &amp;ldquo;[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values&amp;rdquo; &amp;ndash;thread &amp;ndash;compose &amp;ndash;confirm=compose &amp;ndash;to firogm@gmail.com *.patch&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Dave Miller偏好
-@@ -325,13 +325,15 @@ static inline void empty_child_dec(struct key_vector *n)
-static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)
-{&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct tnode *kv = kmem_cache_alloc(trie_leaf_kmem, GFP_KERNEL);&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct key_vector *l = kv-&amp;gt;kv;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct tnode *kv;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct key_vector *l;
-Dave Miller usually prefers it if variables are ordered from longest to shortest.&lt;br /&gt;
-So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>使用mutt收发邮件</title>
-      <link>http://firoyang.org/howto/mutt/</link>
-      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/howto/mutt/</guid>
-      <description>
-
-&lt;p&gt;&lt;img src=&#34;http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg&#34; alt=&#34;Trigun&#34; /&gt;
-###Reference
-昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.
-这才想起来社区的mailist只接收:&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;No MIME, no links, no compression, no attachments.  Just plain text&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.
-有点不方便, 今天决定使用mutt.
-需要mutt, fetchmail, procmail, msmtp, proxychains(天朝专用), vim/emacs
-发一个邮件, 需要这么多程序啊, 以前一直以为一个mutt就够了, 还Gmail方便啊.
-mutt的作用类似于胶水, 把其他程序联系起来.
-fetchmail收, procmail过滤spam mail, msmtp 用来发送, proxychains 翻x墙,
-vim/emacs用来编辑邮件.&lt;/p&gt;
-
-&lt;p&gt;###收邮件
-其实, 并不像网上博客中说的那样, fetchmail 和procmail并不是必须的.
-参考mutt官网的&lt;a href=&#34;http://dev.mutt.org/trac/wiki/UseCases/Gmail&#34;&gt;UserStory/GMailOverIMAP&lt;/a&gt;
-你就可以想Web gmail一样实时推送邮件到你mutt了.
-之后在.muttrc中加入:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;bind index G imap-fetch-mail
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这样你就可以用G这个命令在mutt中主动同步gmail了.
-此时翻墙用户启动mutt, proxychains会输出代理信息过滤到/dev/null&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;proxychains mutt 2&amp;gt; /dev/null
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;###mutt 与发邮件
-具体的配置看wangcong的&lt;a href=&#34;http://wangcong.org/2007/03/09/-e4-bd-bf-e7-94-a8mutt-e5-a4-84-e7-90-86-e7-94-b5-e5-ad-90-e9-82-ae-e4-bb-b6-2/&#34;&gt;使用mutt处理电子邮件&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;删邮件:fd4348eee750480c168c18a1c3baf16a&#34;&gt;删邮件&lt;/h3&gt;
-
-&lt;p&gt;在.muttrc配置如下，你在mutt中delete的mail在gmail的web上看不到了.
-&lt;code&gt;set delete=yes&lt;/code&gt;
-可能需要在mutt中配置gamil trash, 求反馈.&lt;/p&gt;
-
-&lt;p&gt;###其他
-* 国内gmail用户要用proxychains 做下代理, 这样就能使用gmail了:
-&lt;code&gt;set sendmail=&amp;quot;proxychains /usr/bin/msmtp&amp;quot;&lt;/code&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;wangcong的blog中的配置&amp;lt;不太符合习惯, 按着习惯和美感应该是:
-&lt;code&gt;set indent_str=&amp;quot;&amp;gt;&amp;quot;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;mutt取消当前命令用ctrl g&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;靠gmail 存了两份发送邮件, 把这句注释掉, gmail自己本身会缓存的:
-&lt;code&gt;set record = &amp;quot;+[Gmail]/Sent Mail&amp;quot;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>逻辑实证主义者的英语二语习得</title>
-      <link>http://firoyang.org/philosophy/english/</link>
-      <pubDate>Fri, 20 Mar 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/philosophy/english/</guid>
-      <description>
-
-&lt;p&gt;题目起地有点装X.
-学习这种事说到底, 不外乎方法与花时间.
-我们这几代中国学生在英语上花的功夫都不少, 从小学到大学, 少说也有10年.
-可是绝大多数人还是吃力不讨好.
-抛开语言环境的问题, 我主要想说下英语学习的方法.&lt;/p&gt;
-
-&lt;p&gt;从日常用途角度划分英语.
-听, 说, 读, 写.
-基于上面的划分, 分析涉及到语言学的方面.
-听: 语音, 语法, 词汇
-说: 语音, 语法, 词汇
-读: 词汇, 语法, 语音
-写: 语法, 词汇, 语音&lt;/p&gt;
-
-&lt;p&gt;先说, 词汇从小到大不知花了多少时间背单词, 默写了多少遍.
-但是, 词汇量还是不够. 学校里老师, 一直叫背, 好像这样就够了.
-不得不说, 死记硬背这种方法蠢到家了! 这样老师也是!完全不负责任!
-本文的标题是逻辑实证主义, 简单介绍下. (先略过)
-简单说来, 就是我们要理解单词, 从单词的字母拼写本身, 来推导单词的而已.
-怎么推到呢? 书单:
-英语词缀和英语派生词 &amp;ndash; 李平武
-英语词根与单词的说文解字(修订版) &amp;ndash;李平武
-Word Power Made Easy &amp;ndash; Norman Lewis
-Merriam-Webster&amp;rsquo;s Vocabulary Builder Second Edition &amp;ndash; Mary Wood Cornog
-&lt;a href=&#34;http://www.etymonline.com/&#34;&gt;Online Etymology Dictionary&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;接下来说语法, 语法这个东西也是长久的痛啊, 记得高考那会儿, 什么五年高考三年模拟,
-薛金星英语啊, 各种各种各样的语法词典就不例举了. 我还是没有把语法学明白:-(
-国内张道真, 薄冰, 新东方的语法书, 包括豆瓣评分高的离谱的英语魔法师之语法俱乐部,
-都没能让我真正理解透语法. 直到我遇到了国外的三本语法书, 书单:
-The Cambridge Grammar of the English Language &amp;ndash;Rodney D. Huddleston / Geoffrey K. Pullum
-Longman Grammar of Spoken and Written English &amp;ndash;Douglas Biber / Stig Johansson / Geoffrey Leech / Susan Conrad / Edward Finegan
-A Comprehensive Grammar of the English Language &amp;ndash; Randolph Quirk / Sidney Greenbaum / Geoffrey Leech / Jan Svartvik
-简单说下这三本书, 贵, 上千! 厚, 上千!
-大家别怕这么厚的书什么时候能读完, 其实我们都积累一些基础的语法知识. 只是有一些较真的要不准.
-所以实际上要看的很少, 但都是重要的.
-关于这三本书, 夸克(Quick)的书最老85年, Longman的次之99年, 剑桥是02年的.
-建议, 剑桥做主要书目, 夸克和Longman做佐证备查.
-这三本都有电子版, 不是太好, 都可看.
-有时间会把国内语法书中的错误整理下.&lt;/p&gt;
-
-&lt;p&gt;在下来是语音, 我总结听说主要的问题.
-1. 对方说的太快, 没听清. 放慢就能听清.  说明你是知道这个次的发音,
-你需要的是&amp;rdquo;熟悉&amp;rdquo; 这个音, 这里我推荐, 网易云音乐上有牛津书虫, 新概念等众多英语听力音频,
-多半都有字幕(最好不看). 另外ESL pod之类也可以.
-2. 即是这个单词放慢你也听不出来, 有两种情况.
-2.1 无法从这个音联系到对应的词, 本质就是根本语音基础太差, 学的时候就没发对. 另外缺少从音推导词的能力.
-2.2 这是个生词.
-这里推荐两个资源:
-&lt;a href=&#34;http://soundsofspeech.uiowa.edu/english/english.html&#34;&gt;Phonetics: The sounds of American English&lt;/a&gt;
-英语读音的奥秘 &amp;ndash; 李佳俊
-赖世雄美语音标 &amp;ndash;赖世雄
-英语读音的奥秘这本书真正体现了逻辑实证主义的精髓, 基本上教你推导所有词的读音.
-依靠单词本身的拼写推导出词的发音, 非常屌.
-本来自己想做这份工作的, 遇到这本书节省我大量的时间.&lt;/p&gt;
-
-&lt;p&gt;基础的部分就这些了.英语这东西还是要多用啊. 怎么用?
-读
-&lt;a href=&#34;http://www.economist.com/&#34;&gt;The Economist&lt;/a&gt;
-NYTimes
-&lt;a href=&#34;http://www.lrb.co.uk/&#34;&gt;London Review of Books&lt;/a&gt;
-听
-2015 大选
-美国各种脱口秀
-网易的资源
-说
-北京这面meetup.com
-写(只读过第一本)
-The Elements of Style &amp;ndash;William Strunk / E. B. White
-On Writing : A Memoir of the Craft &amp;ndash;STEPHEN KING
-Bird by Bird : Some Instructions on Writing and Life &amp;ndash;Anne Lamott
-On Writing Well : The Classic Guide To Writing Nonfiction &amp;ndash; William Zinsser&lt;/p&gt;
-
-&lt;p&gt;下面的内容已过期, 不用看, 没时间整理.&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Use english to comunicate with others.
-Speak
-Listen
-Read
-Write&lt;/li&gt;
-&lt;li&gt;Develop vocabulary&lt;/li&gt;
-&lt;li&gt;Phonology&lt;/li&gt;
-&lt;li&gt;Grammar
-syntax&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;etc
-The English indicative
-Syntactic category
-catenative verbs
-subordinated verb&lt;/p&gt;
-
-&lt;h1 id=&#34;grammar:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Grammar&lt;/h1&gt;
-
-&lt;h2 id=&#34;sentence:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Sentence&lt;/h2&gt;
-
-&lt;p&gt;Independent clause, contains subject and a predict.
-Simple sentence: independent clause
-Compound sentence:  Independent clauses can be joined by using
-a smicolon or comma followed by a coordinating  conjunction(, for, and, yet, nor, so)
-Complex sentence: Independent clause + dependent clauses
-Complex-compound sentence:
-Dependent clause:  subordinating conjunctions + subject + verb.
-a dependent clause cannot stand on its own as a sentence. Why?
-Adverbial clause: the entire clause modifies a verb, an adjective, or another adverb.
-Relative clause: modifies a noun or noun phrase in the independent clause.
-Subordinating conjunctions:
-Noun clauses,&lt;/p&gt;
-
-&lt;h2 id=&#34;word-classes-and-phrases:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Word classes and phrases&lt;/h2&gt;
-
-&lt;p&gt;Nouns
-Noun phrases
-Pronuns
-Verbs
-Verb phrases
-Adjectives
-Adverbs
-What is adverb?
-Prepositions
-Conjunctions
-Negation&lt;/p&gt;
-
-&lt;h2 id=&#34;english-determiners:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;English determiners&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;article: the 逻辑上的
-An article (abbreviated art) is a word (or prefix or suffix) that is used with
-a noun to indicate the type of reference being made by the noun.
-Articles specify grammatical definiteness of the noun,
-in some languages extending to volume or numerical scope.
-a/an some 值不确定, the 是确定后面可以跟复数.
-Zero article:复数和不可数名词没有冠词,貌似代表全部 reference to a general class of things.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为什么冠词叫article 和文章是同一个词?
-article的词源是separate parts of anything written 符合文章的涵义,
-而冠词表示后面的名词之前是否提及过, 也有separate的涵义.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;demonstrative: that/this 空间上&lt;/p&gt;
-
-&lt;h2 id=&#34;时态:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;时态&lt;/h2&gt;
-
-&lt;p&gt;ing表示持续, 对应一段时间; 表示正在, 对应另一event&lt;/p&gt;
-
-&lt;h2 id=&#34;faq:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;FAQ&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://ebooks.unibuc.ro/filologie/cornilescu/cuprins.htm&#34;&gt;complementation in english a minimalist approach&lt;/a&gt;
-To do from to-preposition phrase (purpose adjunct).
-否定更偏向于完整的事件而不是to do隐含的onset.
-Gerund &amp;amp; Infinitive Usage , 关键还是看是否要做, 句子更倾向哪个动词.
-At first glance, it may seem difficult to know when to use an infinitive and when to use a gerund.
-You will find the following guidelines for gerund/infinitive usage helpful.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Gerunds
-Gerunds are best for use in sentences about actions that are real or complete or just an action且subject关于action不是active voic, or that have been completed.
-• I stopped worrying about the future.
-In this example, the worrying was real and it happened until I stopped.
-• We really enjoy climbing mountains.
-In this example, the climbing is real and it’s something we like to do.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Infinitives
-Infinitives are best for use in sentences about actions that are unreal or abstract, or that will occur in the future.
-• I’d like you to think about something.
-In this example, I’m asking you to think about something, but the thinking hasn’t happened yet.
-• Can we take a walk without you stopping to smoke?
-In this example, we’re talking about taking a walk and the smoking hasn’t happened yet.&lt;/p&gt;
-
-&lt;h1 id=&#34;phonology:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Phonology&lt;/h1&gt;
-
-&lt;p&gt;相似音标辨析.
-AAT
-赖世雄美语音标
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Phonics&#34;&gt;Phonics 自然拼读法&lt;/a&gt;
-&lt;a href=&#34;http://www.youku.com/playlist_show/id_5241166.html&#34;&gt;Pronunciation workshop&lt;/a&gt;
-&lt;a href=&#34;http://www.uiowa.edu/~acadtech/phonetics/english/english.html&#34;&gt;Sounds of Speech in Iowa&lt;/a&gt;
-&lt;a href=&#34;http://www.jlrtvu.jl.cn/xb/file.asp?fileid=20101040001&#34;&gt;我为什么能读懂却听不懂英语&lt;/a&gt;
-&lt;a href=&#34;https://www.eslpod.com/website/show_all.php?cat_id=-59456&amp;amp;low_rec=1600&#34;&gt;English as a Second Language Podcast&lt;/a&gt;
-&lt;a href=&#34;http://teflpedia.com/IPA_phoneme_/i%CB%90/&#34;&gt;Most American dictionaries dont write the triangular colon at all: fleece /flis/&lt;/a&gt;
-British iː -&amp;gt; American i
-British ɪə -&amp;gt; American ɪ -&amp;gt; strict IPA ɪə ̯
-&lt;a href=&#34;http://www.internationalphoneticalphabet.org/ipa-sounds/ipa-chart-with-sounds/&#34;&gt;IPA table with sounds&lt;/a&gt;
-&lt;a href=&#34;https://blog.udemy.com/short-and-long-vowel-differences/&#34;&gt;Short and Long Vowels Differences and Examples&lt;/a&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=4TjcT7Gto3U&#34;&gt;The Long &amp;amp; Short Vowels Song ♫♪♫&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;can-you-distinguish:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Can you distinguish?&lt;/h2&gt;
-
-&lt;p&gt;“Road” vs. “Load”
-“Mouth” vs. “Mouse”
-“Bad” vs. “Bed”
-“Girl” vs. “Go”
-“Hate” vs. “Hit” “Say” vs. “See” “Bee” vs. “Be”&lt;/p&gt;
-
-&lt;h2 id=&#34;neutral:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Neutral&lt;/h2&gt;
-
-&lt;p&gt;I ɛ ə/ʌ ʊ
-i: ee ea ie ei
-I: i y&lt;/p&gt;
-
-&lt;h1 id=&#34;vocabulary:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Vocabulary&lt;/h1&gt;
-
-&lt;p&gt;Merriam-Webster&amp;rsquo;s Vocabulary Builder
-Word power made easy&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;cage:b6b595a68cd480ac7859f3dfec888e20&#34;&gt;Cage&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;5 gerund-participals
-a gerundial noun,
-a present participial adjective.
-a gerund-participle form of a verb: Gerund phrase as noun, Participle phrase as adjective, progressive present participle.
-现在进行时和现代分词短语做形容词, 都是形容词, 好像是一回事??&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;participle
-adjective
-work with auxiliary. be/have
-adjective pharase&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Firo Yang</title>
-      <link>http://firoyang.org/about</link>
-      <pubDate>Fri, 30 Jan 2015 15:33:51 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/about</guid>
-      <description>
-
-&lt;p&gt;My chinese name is 杨永明, 永(yong) is 行辈(seniority in the family) means prosperous family.&lt;/p&gt;
-
-&lt;p&gt;I am a junior philosoher, applied sociologist and Linux kernel hacker.&lt;/p&gt;
-
-&lt;p&gt;Now, I live in Beijing and worked in 极路由, a router manufacturer.&lt;/p&gt;
-
-&lt;p&gt;Use below email to connect with me, copyright by wangcong.org:&lt;/p&gt;
-
-&lt;p&gt;echo -e &amp;lsquo;#define cat(c,d) c##.d \n  #define mb(a,b) a##@b \n  mb(firogm,cat(gmail,com))&amp;rsquo; | gcc -E -x c - 2&amp;gt; /dev/null | tail -n 1&lt;/p&gt;
-
-&lt;p&gt;认识论, 旅行, 健身, 化妆品, 内核, 文学, 日式动画游戏, Karl Popper, 维特根斯坦, 木心 any topic is welcome:-)&lt;/p&gt;
-
-&lt;h1 id=&#34;the-person-who-inspires-me:6083a88ee3411b0d17ce02d738f69d47&#34;&gt;The person who inspires me&lt;/h1&gt;
-
-&lt;p&gt;&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/vXr-2hwTk58&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;for-chinese-user:6083a88ee3411b0d17ce02d738f69d47&#34;&gt;For Chinese user&lt;/h1&gt;
-
-&lt;p&gt;&lt;embed src=&#34;http://www.tudou.com/v/jefojo_-HjQ/&amp;bid=05&amp;resourceId=0_05_05_99/v.swf&#34; type=&#34;application/x-shockwave-flash&#34; allowscriptaccess=&#34;always&#34; allowfullscreen=&#34;true&#34; wmode=&#34;opaque&#34; width=&#34;480&#34; height=&#34;400&#34;&gt;&lt;/embed&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;getfedora&#34;&gt;
-    &lt;p class=&#34;asidetitle&#34;&gt;Get fedora&lt;/p&gt;
-    &lt;script id=&#34;fedora-banner&#34; type=&#34;text/javascript&#34; src=&#34;http://getfedora.org/static/js/release-counter-ext.js?lang=en&#34;&gt;&lt;/script&gt;
-&lt;/div&gt;
-&amp;mdash;&amp;ndash;BEGIN PGP PUBLIC KEY BLOCK&amp;mdash;&amp;ndash;
-Version: GnuPG v1&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;mQENBFVAWW0BCADRQuNy5kCl0QVPuklgy8hatUQPxc0i83ADBSg4U4rF0by4gl0S
-ZyvrWjBegeFV+ltf0UmfCZvh/J+brk/GZc4irlW1IetoEMhWSOWcB/4jkoF7lNb/
-JMMPMOAOImaXvWiJJ1Ctsf+0VAs6xKUIaL6HtcLT+ObIH5Cvv932pVKubBIVR1e9
-e/KQKoi/mPLtDyp4muMwmzIlvAUSN3lsPwtcRvUEdk120nYJHHCx3t7wD0nTPBjB
-g/OpPbTqNB4wXTyHmddmVONTbBJIyGkcgSugNXLoRokawbYCsxQ7Xu5R2CxjJ42H
-ZJnbRRCyM/2ITwHd09helOpCAhBA6ch/8PTtABEBAAG0I0Zpcm8gWWFuZyAoRmly
-bykgPGZpcm9nbUBnbWFpbC5jb20+iQE4BBMBAgAiBQJVQFltAhsDBgsJCAcDAgYV
-CAIJCgsEFgIDAQIeAQIXgAAKCRCcCWk8amYIuK+WB/9c2agYRj85bIAuYPOtnITr
-cnN4v+ORGarSzLJeC/LiYiNc9zhXwombHMzjz7zZg/b0987/lKOZDv5sutRrbr+F
-ws6S+iUYmYA6Y7iOpTJAlD6z2HBGQ2oEs9zO+V5n2dSaftGsEVgOPevNOE7Lz71U
-IIlbOxdHah08Wi4S2jZbCTcD0QrjKXKKPPWr6asnJEMdd5ptSdu2NhssUnuz+0TO
-t3vcyUjROtAjOZgBQVIZ6XVf3rsQ4GQ01skJ3YQfcO8sW/isnfmoXlJQvTILexKA
-GZfpst/F4xdbJZZn9CvJeVdvGXnqLMepP6H9FRWaB6vYFVeVLyoix0Q148IUIwfr
-uQENBFVAWW0BCACZoUtd6Nj3nfCF0CGQdNPhVPwvPL8/2qSxSt1LzuClsOFMCttZ
-VkGPIzpzprFwfK7z/TT+TrfDQFNqfSFu3fqg2BfVrU1FgfBTIy5cZFoXuFgv0W1M
-mjGh29NcJe0WritGJ+HBJts6+uJW4z8Vd0qfhVULHx8gUOnsOtDPlHCZpO7SP/j3
-F9U+uaElBQQ0oKk/Sq3uvoGzC90IomRTcLNEQ/dDPpv2QwmY/mYF5O5OZvSGWH3Q
-S1XkfNobwns3ndaTiYFFRepSFYh8A7oWT9JDdqQx8F2IMiu2wbuWxP9SFOAUH+Km
-WHdqGGyIT2GCr0HQ5hho9yEFIywXrP7rL6hrABEBAAGJAR8EGAECAAkFAlVAWW0C
-GwwACgkQnAlpPGpmCLiK7QgAlfZgnEedSeIdvn+X1czqUYek2Wy7gsGcyyyeeMrF
-zMR1jz+fQA5g8MRtqa1f6mZULXJECM2WXm0y5w3KEWAIArpVT4rEtcwRbipRtPFf
-K+o/ae1ZgdX8ia/KaNS6YMIAEEbT1rG/JMdJgSWfid3EPNE48A4KSQ+18qMlB/W7
-7hnRsDcxBAlqojU57/43FgReBVx0X8KHHO5zYeXRpEK2L+QyuYRBp3VN3rarcNsE
-v6oD/UyN1irescMZLIGuyr1lUXoY6AtGte12+5ThRO8xZN+wxrkRp5wT2Nhjb/ze
-RgxgjIW1vcwM/jOWYzE/QWiwZ+JhYruhgfqOmE5IMi0DeA==
-=4i/U
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&amp;mdash;&amp;ndash;END PGP PUBLIC KEY BLOCK&amp;mdash;&amp;ndash;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Linux memory management</title>
-      <link>http://firoyang.org/kernel/mm/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/mm/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;Computer memory#Management_of_memory
-Memory management (operating systems)&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Logic gates: SRAM, DRAM
-What is data/contrl/addr bus?
-What problems we will meet in memory management?
-Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?
-How to distribute these memory to processes? Virtual memory.
-How to translate linear address to physical address? Page table.
-Exchange data between primary memory and second memory. Paging.&lt;/p&gt;
-
-&lt;p&gt;What are the pitfall of manuplate directly physcial memory&lt;/p&gt;
-
-&lt;h1 id=&#34;page:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;page&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;An introduction to compound pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;memroy-mangement:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Memroy mangement&lt;/h1&gt;
-
-&lt;h2 id=&#34;gfp-flags:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;GFP flags&lt;/h2&gt;
-
-&lt;p&gt;__GFP_IO: allow disk IO
-__GFP_FS: allow fs operations, depend on io.
-more details in lwn, lkd&lt;/p&gt;
-
-&lt;h1 id=&#34;virtual-memory:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Virtual memory&lt;/h1&gt;
-
-&lt;p&gt;##Page table
-mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
-原来低12位里面存了flag啊!
-__pte(((phys_addr_t)page_nr &amp;lt;&amp;lt; PAGE_SHIFT) | massage_pgprot(pgprot));
-For vmalloc(), chechk here vmap_page_range_noflush()
-For kmap(), check kmap_init()
-&lt;a href=&#34;http://edsionte.com/techblog/archives/1966&#34;&gt;How to emulate the process of translate va to pa?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;copy-to-user:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;copy_to_user&lt;/h2&gt;
-
-&lt;p&gt;not in kernel?
-read only?&lt;/p&gt;
-
-&lt;h2 id=&#34;flush-tlb-after-page-table-modification:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;flush tlb after page table modification.&lt;/h2&gt;
-
-&lt;h2 id=&#34;direct-mapping-area:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Direct mapping area&lt;/h2&gt;
-
-&lt;p&gt;high_memory (-128UL &amp;lt;&amp;lt; 20)
-__get_free_pages()
-kmalloc()
-kmem_cache_alloc()/slab&lt;/p&gt;
-
-&lt;h2 id=&#34;vmalloc:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Vmalloc&lt;/h2&gt;
-
-&lt;p&gt;may sleep.&lt;/p&gt;
-
-&lt;h3 id=&#34;hwo-vmalloc-works:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Hwo Vmalloc works?&lt;/h3&gt;
-
-&lt;p&gt;Work in HIGHMEM and NORMALMEM
-The skeleton is rbtree, root is global variable vmap_area_root.rb_node.
-struct vm_struct likes struct address_space, functionlly;
-struct vmap_area likes struct vm_area_struct.
-map_vm_area 页表映射
-the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!&lt;/p&gt;
-
-&lt;h3 id=&#34;vmalloc-coherence-with-vfree-after-vmalloc-sync-one:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Vmalloc coherence with vfree() after vmalloc_sync_one&lt;/h3&gt;
-
-&lt;p&gt;在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
-deatils in vmalloc_sync_one() and vunmap_pte_range()
-只释放pte&lt;/p&gt;
-
-&lt;h2 id=&#34;persistent-kernel-mappings:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Persistent Kernel Mappings&lt;/h2&gt;
-
-&lt;p&gt;kmap(struct page *)
-How kmap works?
-    Check kmap_init(), later!&lt;/p&gt;
-
-&lt;h2 id=&#34;temporay-mappings-fixmaps:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Temporay Mappings(Fixmaps)&lt;/h2&gt;
-
-&lt;p&gt;kmap_atomic()&lt;/p&gt;
-
-&lt;p&gt;##Process virtual memory
-* struct vm_area_struct: The intervals of legal address are called &lt;em&gt;memory areas&lt;/em&gt; is permitted to access.
-* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.
-i_mmap: how many processes opened this file.
-&lt;a href=&#34;https://lkml.org/lkml/2012/8/7/46&#34;&gt;https://lkml.org/lkml/2012/8/7/46&lt;/a&gt;
-* sturct mm_struct: how many files(vm_area_struct) does this process opened.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Memory mappings
-syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;link
-a virtual address and physical address. &amp;ndash;page tale
-a memory region of a process and its virtual page addresses. &amp;ndash;vm_area_struct
-a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&amp;gt;i_mmap.
-a physical page and the processes that share the page(used in swap case)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Page faults
-Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Segemnt fault
-Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&lt;/a&gt;
-Null pointer: probably, mostly catched in below 0x08048000.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Demanding page
-vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!
-expand_stack()/handle_mm_fault()&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;vmalloc fault&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Oops
-kernel access invalid address, in __print_signal_info() task-&amp;gt;sighand and  task-&amp;gt;nsproxy is null.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Physical memory
-* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl
-* ZONE(DMA/NORMAL/HIGHMEM) struct zone:
-* struct page is the basic unit of kernel mm knowns as page frame.
-    The goal of strcut page is to describe physical memory, not the data contained therein.
-* The buddy system is per-zone struct free_area
-* Physical address is connected to Virtual address by pfn = page - mem_map;&lt;/p&gt;
-
-&lt;h2 id=&#34;page-allocator:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;page allocator&lt;/h2&gt;
-
-&lt;p&gt;alloc_pages()
-##Page/buffer cache
-struct address_space-&amp;gt;page_tree
-##Page writeback
-data synchronization, the flush threads, pdflush
-##Page swap
-The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.&lt;/p&gt;
-
-&lt;p&gt;#FAQ
-* Where is Per-CPU variable?
-static Per-CPU in .data(?) below high_memory!
-runtime Per-CPU, it&amp;rsquo;s GFP_KERNEL in pcpu_create_chunk()&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Memory mode
-flat mem -&amp;gt; uma
-discontig -&amp;gt; NUMA
-sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When does kernel alloc these struct pages in x86_64?
-&lt;a href=&#34;http://lwn.net/Articles/229670/&#34;&gt;http://lwn.net/Articles/229670/&lt;/a&gt;
-vmemmap silimar to memmap&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When kmap_atomic() BUG_ON effect?&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How cpu resolve address below high_memory?
-Cpu-spicific!
-x86 used page table to all address!
-Mips cpu can be aware of this address!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How to deal with useless page? : &amp;gt; /home/firo/bigdata&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;*pfmemalloc &amp;ndash; skb 表示申请了紧急内存!
-page free&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;compound pages
-18fa11efc279c20af5eefff2bbe814ca067&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Physical life</title>
-      <link>http://firoyang.org/firo/physical/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/firo/physical/</guid>
-      <description>
-
-&lt;p&gt;#Body
-##Soma              Now                                 Future&lt;br /&gt;
-Face
-Skin&lt;br /&gt;
-Belly, Abdomen&lt;br /&gt;
-Chest,Pectorails&lt;br /&gt;
-Back&lt;br /&gt;
-Shoulder,Deltoid&lt;br /&gt;
-Arms, Biceps&lt;br /&gt;
-Leg&lt;br /&gt;
-Eyes
-Ears&lt;br /&gt;
-Shoulder width          53                                  &lt;sup&gt;176&lt;/sup&gt;&amp;frasl;&lt;sub&gt;4&lt;/sub&gt;=44 ~ 52cm
-肩围              106
-Height              177cm
-Weight              67kg                                    77kg
-+Burst/胸围           85cm                                    106
-上臂围             27cm                                    36
-Thigh/大腿围           51cm                                    54
-+Waistline/腰围           84                                      79
-Hip line            87cm                                    94cm ~ 112cm&lt;/p&gt;
-
-&lt;h1 id=&#34;personal-finance:ac0ca70489c6bd70457d509992a36fc4&#34;&gt;Personal finance&lt;/h1&gt;
-
-&lt;h2 id=&#34;personal-budget:ac0ca70489c6bd70457d509992a36fc4&#34;&gt;Personal budget&lt;/h2&gt;
-
-&lt;p&gt;20
-1700 * 12 = 20400&lt;/p&gt;
-
-&lt;p&gt;#Physical life
-##Clothing(no jeans)    Now                                         Future
-* 大方合体美感
-* 扔掉不合适的衣服
-Tank tops       2 Playboy&lt;br /&gt;
-Sweatshirts &amp;amp; Hoodies   1 Adidas                                        +1
-Boxer brief     2                                           +0
-T-shirt                 5                                           5&lt;br /&gt;
-Dress shirt     3                                           3(-2 + 2)
-Thermal underware   0                                           1
-Trousers        5&lt;br /&gt;
-Hoodies         1 adidas
-Casual shorts           0                                           (+2)&lt;br /&gt;
-Sweatpants      3 anta, adidas, A&amp;amp;F
-Down jackets/coats  2 null/ Jack jones
-##Shoes
-Sneaker         0                   2 Converse and Warrior
-Skate shoes     1   Nike                2
-Slippers                1                           new 1
-##Accessories
-Scarf                   1       Cacuss
-Mask                    1
-Gloves                  0&lt;br /&gt;
-Beanie          1   Whitebird
-##Travel&lt;br /&gt;
-Luggage &amp;amp; Bag           Travalue bag&lt;br /&gt;
-##Accessory     Now                     Future
-Phone           Nexus 5
-Laptop          Y460                        Intel haswell | Chrome pixel
-##Residency
-Razor           Schick quatto titanium and hydro
-Chair           Steelcase think chair
-Mug         1                       2&lt;/p&gt;
-
-&lt;h2 id=&#34;kitchen-厨:ac0ca70489c6bd70457d509992a36fc4&#34;&gt;Kitchen/厨&lt;/h2&gt;
-
-&lt;p&gt;Rice cooker     美的, 排名考前
-IRON FRYING WOK     CCK, 制造用料比较放心, 炒菜香.
-Chopping board      ? Before September 19
-Kitchen knife       ? Before September 19
-pancake turner      CCK
-Ricer
-Soybean oil
-Seasonings
-醋 vinegar
-酱油 soy
-盐 salt
-加碘盐 iodized salt
-糖 sugar
-白糖 refined sugar
-酱 soy sauce
-沙拉 salad
-辣椒 hot（red）pepper
-胡椒（black）pepper
-花椒wild pepper Chinese prickly ash powder
-色拉油salad oil 调料 fixing sauce seasoning
-砂糖 granulated sugar
-红糖 brown sugar
-冰糖 Rock Sugar
-芝麻 Sesame
-芝麻酱 Sesame paste
-芝麻油 Sesame oil
-咖喱粉curry
-番茄酱（汁） ketchup redeye
-辣根horseradish
-葱 shallot （Spring onions）
-姜 ginger
-蒜 garlic
-料酒 cooking wine
-蚝油oyster sauce
-枸杞（枇杷,欧查果 ） medlar
-八角aniseed
-酵母粉yeast barm 　　Yellow pepper
-黄椒肉桂 cinnamon (在美国十分受欢迎，很多事物都有肉桂料)
-黄油 butter
-香草精 vanilla extract(甜点必备)
-面粉 flour
-洋葱 onion&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>tunnel</title>
-      <link>http://firoyang.org/net/tunnel/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/tunnel/</guid>
-      <description>
-
-&lt;p&gt;#class
-network layer over network layer: gre
-link layer over network layer: l2tp, pptp&lt;/p&gt;
-
-&lt;h1 id=&#34;proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Proxy&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.coder4.com/archives/4434&#34;&gt;透明代理、匿名代理、混淆代理、高匿代理有什么区别？&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;正向代理forward-proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;正向代理forward proxy&lt;/h2&gt;
-
-&lt;p&gt;shadowsocks goagent&lt;/p&gt;
-
-&lt;h2 id=&#34;reverse-proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Reverse proxy&lt;/h2&gt;
-
-&lt;p&gt;负载均衡的服务器, 缓存的静态内容的server&lt;/p&gt;
-
-&lt;h2 id=&#34;透明代理:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;透明代理&lt;/h2&gt;
-
-&lt;p&gt;hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.
-所谓透明代理就是正向代理且client零配置.&lt;/p&gt;
-
-&lt;h2 id=&#34;dmz:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;DMZ&lt;/h2&gt;
-
-&lt;p&gt;Demilitarized zone, 解除军事武装区 or 非军事区!
-这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.
-为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.
-内网和外网是争端的主角, 而DMZ是个缓冲区.&lt;/p&gt;
-
-&lt;h3 id=&#34;simplest-sample:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;simplest sample&lt;/h3&gt;
-
-&lt;p&gt;iptables -A INPUT -p tcp -d 10.42.0.52 &amp;ndash;dport 53 -j ACCEPT
-iptables -A FORWARD -p tcp -d 192.168.1.2 &amp;ndash;dport 53 -j ACCEPT
-iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &amp;ndash;dport 53 -j DNAT &amp;ndash;to 192.168.1.2:53
-我们就知道了dmz有整体有两部分构成ACCEPT and DNAT
-同时涉及到一个dmz地址空间{dmzwan10.42.0.52:53, dmzlan:192.168.1.2:53}&lt;/p&gt;
-
-&lt;p&gt;#Basic concepts
-* VPN is created by establishing a virtual point-to-point connection through the use of
-1. dedicated connections(permanent)
-2. virtual tunneling protocols
-traffic encryptions and authentication
-+ connection(tunnel) + secure&lt;/p&gt;
-
-&lt;p&gt;#Tunnel proctocol
-* pptp
-data-link header | PPP | IP &amp;hellip;
-data-link header | IP | GRE | PPP | IP&amp;hellip;
-rfc2637
-&lt;a href=&#34;http://pptpclient.sourceforge.net/diagrams.phtml&#34;&gt;http://pptpclient.sourceforge.net/diagrams.phtml&lt;/a&gt;
-* pppd -&amp;gt; /dev/ppp
-/dev/ppp (see ppp_init) 下发密码, 加密之类的.
-ppp_netdev_ops (see ppp_create_interface)
-ppp_wirte-&amp;gt;ppp_xmit_process-&amp;gt;ppp_send_frame-&amp;gt;ppp_push-&amp;gt;|pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit()=pppoe_xmit-&amp;gt;__pppoe_xmit&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;init
-pptp -&amp;gt; pptp server -&amp;gt; generate PPP connection and PPP0(interface)&lt;/li&gt;
-&lt;li&gt;input
-eth -&amp;gt; ppptp(remove gre header)-&amp;gt;PPP header-&amp;gt; pty(device) -&amp;gt; PPP0(interface) -&amp;gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;output
--&amp;gt; PPP0(interface) -&amp;gt; PPP header -&amp;gt; pty -&amp;gt; PPPT(add gre header) -&amp;gt; raw socket -&amp;gt; eth&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;shadowsocks
-user -&amp;gt; iptables -&amp;gt; shadowsocks(redir.c (struct server)-&amp;gt;(struct remote)) -&amp;gt; server&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;ssh redsocks
-user -&amp;gt; iptables -&amp;gt; redsocks -&amp;gt; ssh -&amp;gt; server&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;pppoe
-pppoe 的sk-&amp;gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket
-pppoe_rcv_core -&amp;gt;　netif_rx
-从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!
-对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!
-pppoe报文会经过两次sk_filter()
-&lt;a href=&#34;http://blog.csdn.net/osnetdev/article/details/8958058&#34;&gt;http://blog.csdn.net/osnetdev/article/details/8958058&lt;/a&gt;
-&amp;amp;pppoe_chan_ops;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;+ppp header
-is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!
-ppp-wan-&amp;gt;ndo_start_xmit()=ppp_start_xmit()-&amp;gt;ppp_xmit_process()-&amp;gt;ppp_send_frame()
--&amp;gt;
-{
-    __skb_push(skb, sizeof(*ph));
-    skb_reset_network_header(skb);
-    //add pppoe_hdr no header???
-    dev_queue_xmit(skb);
-}&lt;/p&gt;
-
-&lt;p&gt;#PPP
-&lt;a href=&#34;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&#34;&gt;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#GRE
-include/net/gre.h&lt;/p&gt;
-
-&lt;p&gt;#L2tp
-IP -&amp;gt; UDP -&amp;gt; L2TP -&amp;gt; PPP&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;source files
-net/l2tp/
-├── Kconfig
-├── l2tp_core.c
-├── l2tp_core.h
-├── l2tp_debugfs.c
-├── l2tp_eth.c
-├── l2tp_ip.c
-├── l2tp_netlink.c
-├── l2tp_ppp.c
-└── Makefile&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;include/uapi/linux/ppp_defs.h&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Functions
-l2tp_recv_common &amp;hellip;recv_skb=pppol2tp_recv()
-l2tp_xmit_core&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#PPTP
-##Route ip-list to pptp-vpn
-11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3
-    link/ppp
-    inet 192.168.1.60 peer 192.168.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;32&lt;/sub&gt; scope global pptp-vpn
-root@Hiwifi:~# route -n
-Kernel IP routing table
-Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn
-123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2
-192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn
-192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2
-192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan&lt;/p&gt;
-
-&lt;p&gt;##pptp header
-IP | GRE | pptp_gre_header | PPP | IP&lt;/p&gt;
-
-&lt;p&gt;##input
-ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip
-ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&amp;gt;inet_protos.gre_rcv -&amp;gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&amp;gt; sk_receive_skb -&amp;gt;sk_backlog_rcv -&amp;gt; pptp_rcv_core -&amp;gt; ppp_input -&amp;gt; ppp_do_recv
--&amp;gt; ppp_receive_frame -&amp;gt; ppp_receive_nonmp_frame -&amp;gt; netif_rx -&amp;gt; netif_rx_internal -&amp;gt; enqueue_to_backlog -&amp;gt; ____napi_schedule(sd, &amp;amp;sd-&amp;gt;backlog);
--&amp;gt; netif_receive_skb&amp;hellip;&lt;/p&gt;
-
-&lt;p&gt;##output
-ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push
--&amp;gt;pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit=pptp_xmit -&amp;gt; add gre and ip header. -&amp;gt; ip_local_out -&amp;gt;
-+another send skb functions is ip_build_and_send_pkt()
-{ this functions hook is init in pptp_connect() -&amp;gt; ppp_register_channel(&amp;amp;po-&amp;gt;chan) }
-{ppp_connect()&amp;rsquo;s init functions is pptp_create, see pptp_init_module -&amp;gt;
-register_pppox_proto(PX_PROTO_PPTP, &amp;amp;pppox_pptp_proto) pptp_create.}
-when invoke pptp_create? socket()!&lt;/p&gt;
-
-&lt;p&gt;if layer 4 protocol is gre then pass.&lt;/p&gt;
-
-&lt;p&gt;##PPTP &amp;amp; NAT
-* Forward package
-br-lan(PREROUTING orginal packet NAT old)
-(route -&amp;gt; pptp-vpn) = ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()
-pptp-vpn -&amp;gt; ndo_start_xmit -&amp;gt; add some headers -&amp;gt; local_out NAT new -&amp;gt; tc dequeue_qdisc(this is maybe eth2.2&amp;rsquo;s routing result! see top)
-so we need to do is just find original skb in PPTP packet header!&lt;/p&gt;
-
-&lt;p&gt;##PPTP &amp;amp; GRE &amp;amp; Conntrack&lt;/p&gt;
-
-&lt;h1 id=&#34;as-a-pure-ip-protocol-gre-uses-only-ip-addresses-but-no-port-numbers-giving-the-router-s-nat-a-tough-time-to-track-such-a-connection-in-its-base-configuration-openwrt-backfire-is-able-to-nat-a-single-pptp-connections-but-not-multiple-such-connections-concurrently-it-is-also-unreliable-when-trying-to-establish-consecutive-single-pptp-connections-from-different-lan-clients-in-rapid-succession:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;As a pure IP protocol GRE uses only IP addresses but no port numbers giving the router&amp;rsquo;s NAT a tough time to track such a connection. In its base configuration OpenWrt Backfire is able to NAT a single PPTP connections but not multiple such connections concurrently. It is also unreliable when trying to establish consecutive single PPTP connections from different LAN clients in rapid succession.&lt;/h1&gt;
-
-&lt;p&gt;kernel vpn just one session.&lt;/p&gt;
-
-&lt;p&gt;##ppp-&amp;gt; pptp code.
-ppp_send_frame()
-{&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;//below is ok 132 is output!
-printk(&amp;quot;ct %d, %d, %d, %d\n&amp;quot;, HWF_CT_EXT(ct)-&amp;gt;user_id, user_id, HWF_CT_EXT(ct)-&amp;gt;is_marked, proto);
-switch(proto) //0x21, 33
-{
-
-    //Below two print is not show, so we did pass through these codes.
-    if (cp == skb-&amp;gt;data + 2) {
-        /* didn&#39;t compress */
-        printk(&amp;quot;NO compreess %x\n&amp;quot;, ppp-&amp;gt;flags);
-        kfree_skb(new_skb);
-    } else {
-        if (cp[0] &amp;amp; SL_TYPE_COMPRESSED_TCP) {
-            proto = PPP_VJC_COMP;
-            cp[0] &amp;amp;= ~SL_TYPE_COMPRESSED_TCP;
-        } else {
-            proto = PPP_VJC_UNCOMP;
-            cp[0] = skb-&amp;gt;data[2];
-        }
-        kfree_skb(skb);
-        skb = new_skb;
-        printk(&amp;quot;I am here %d ,%d, %x\n&amp;quot;, cp[0], proto, ppp-&amp;gt;flags);
-
-
-}
-printk(&amp;quot;hit b %d\n&amp;quot;, skb-&amp;gt;qosmark);
-skb = pad_compress_skb(ppp, skb);//this functions skb will be replaced with a new_skab by alloc_skb();
-printk(&amp;quot;hit a %d\n&amp;quot;, skb-&amp;gt;qosmark);
-//...
-printk(&amp;quot;befor push %d %d\n&amp;quot;, skb-&amp;gt;qosmark, user_id);
-skb-&amp;gt;qosmark = user_id;
-
-ppp-&amp;gt;xmit_pending = skb;
-ppp_push(ppp);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;//dmesg
-[  304.600000] ct 132, 132, 0, 33
-[  304.610000] hit b 132
-[  304.610000] hit a 0
-[  304.610000] befor push 0 132
-[  304.610000] out chan 132
-[  304.620000] chan ok132
-[  304.620000] qosmark132 132&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;so we need backup qosmark be for invoking this function then restore it.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;p&gt;ppp_push(struct ppp *ppp)
-{
-    struct list_head *list;
-    struct channel *pch;
-    struct sk_buff *skb = ppp-&amp;gt;xmit_pending;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;if (!skb)
-    return;
-
-list = &amp;amp;ppp-&amp;gt;channels;
-if (list_empty(list)) {
-    /* nowhere to send the packet, just drop it */
-    ppp-&amp;gt;xmit_pending = NULL;
-    kfree_skb(skb);
-    return;
-}
-
-if ((ppp-&amp;gt;flags &amp;amp; SC_MULTILINK) == 0) {
-    /* not doing multilink: send it down the first channel */
-    list = list-&amp;gt;next;
-    pch = list_entry(list, struct channel, clist);
-
-    printk(&amp;quot;out chan %d\n&amp;quot;, skb-&amp;gt;qosmark);
-    spin_lock_bh(&amp;amp;pch-&amp;gt;downl);
-    if (pch-&amp;gt;chan) {
-        printk(&amp;quot;chan ok%d\n&amp;quot;, skb-&amp;gt;qosmark);
-        if (pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit(pch-&amp;gt;chan, skb))
-            ppp-&amp;gt;xmit_pending = NULL;
-    } else {
-        /* channel got unregistered */
-        printk(&amp;quot;no chan\n&amp;quot;, skb-&amp;gt;qosmark);
-        kfree_skb(skb);
-        ppp-&amp;gt;xmit_pending = NULL;
-&lt;/code&gt;&lt;/pre&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>漂亮的话</title>
-      <link>http://firoyang.org/philosophy/gallery/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/philosophy/gallery/</guid>
-      <description>&lt;p&gt;#Griffith
-是的 就连一个国王也不能真正的随心所欲地生活 我们都只是随着命运的波浪漂流而已
-直到我们最终离开这个世界 时间是有限的 而且命运在我们知道自己之前就会退去 在这个世界里 一定有一个人命中注定&amp;hellip; 无论他的社会地位和阶层如何 我一定要知道我在这个世界真正的身份是什么！我命中注定的东西到底是什么？
-无谓的悲伤是没有用的
-面对随时可能离去的生命
-只有牢牢抓紧它不去浪费
-才对得起昨日离开之人无限渴望的今日&lt;/p&gt;
-
-&lt;p&gt;梦想可以左右世界 可以让一个人一生而为之 很多梦想只能在孤独中苦苦寻求 而有些梦想则会在瞬间化为泡影 梦想能给人以支撑 也能带来巨大的苦痛
-即使人被他的梦想所抛弃 仍然会有些东西是深深的郁结在他心中 每个人都应该为自己的梦想 去承受巨大的痛苦 至少一次 能够这样对待他们的生活
-有些人认为生命不过是长时间的生活而后突然的死去 我从心底讨厌这种想法 也绝不认同它
-我认为真正的朋友从不依赖他人的梦想 一个真正能成为我朋友的人 必须能靠自己而不是我的帮助 明白为了什么而生活 他必须全身心地投入
-保护好他自己的梦想 必须毫不犹豫的为了自己的梦想而战斗 甚至是和我战斗&lt;/p&gt;
-
-&lt;p&gt;我不能有遗憾和负罪感&lt;/p&gt;
-
-&lt;p&gt;想要实现广大而纯洁的梦想的人不可避免的要忍受可怕的事情 我们并非天生强大&lt;/p&gt;
-
-&lt;p&gt;我从你的眼中看到一些熟悉的东西 恐惧的味道 当一个人发现他十分恐惧的东西时 他会意识到不能坐视不管 不得不作出选择
-要么屈服于恐惧的事物以求自保 要么消灭所害怕的事物来消除恐惧感&lt;/p&gt;
-
-&lt;p&gt;在这个空壳一样的世界 有一样东西清晰印在我的脑海中
-每个人都很虚弱 因此我们紧紧地同我们的希望与梦想抱在一起 安慰也好 我渴望有人在我身边&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Algorithms and data structues for kernel hacking</title>
-      <link>http://firoyang.org/cs/algorithm/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/algorithm/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;
-Algorithms: Design Techniques and Analysis
-kernel/algorithm.md&lt;/p&gt;
-
-&lt;h1 id=&#34;introduction:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Introduction&lt;/h1&gt;
-
-&lt;p&gt;说实话, 这年头想要做点学问还是需要点定力的.
-就拿内核中的数据结构与算法来说, 也不是说, 别人来了句, 我靠, awesome!
-你也过来瞅两眼, 也能心生感慨, what the fuck! how can this be true?
-我说的定力, 不是两耳闻听窗外事, 一心还读圣贤书!而是思维的能力.
-这是见真章的地方, 不动脑子是玩不转的, 最终浮于表面, 不得所获.&lt;/p&gt;
-
-&lt;p&gt;kfifo 和lock-less list 是kernel中两个基础的数据结构, 用得也不多.
-说实在的这些都不是什么特别难的技术, 但是这种较真的东西使最能考察一个人的能力的.
-什么能力? 写个链表, 队列谁不会? 这里考察的是人的创造力!
-所谓创造力就是一种组合的能力.拆分也是一种组合.&lt;/p&gt;
-
-&lt;p&gt;今天, 我们来聊一聊算法. 数据结构在我看来是算法的一种.
-到底是什么呢? algorithm这个词来自中古拉丁文algorismus音译自一位阿拉伯数学家的名字
-al-Khwarizmi, 这只是一个姓, 类似中文赵钱孙李, al-Khwarizmi这个姓表示
-&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E8%8A%B1%E5%89%8C%E5%AD%90%E6%A8%A1&#34;&gt;花剌子模&lt;/a&gt;地方的人.数学家的全名是Abū ‘Abdallāh Muḥammad ibn Mūsā al-Khwārizmī
-花剌子模有太阳升起之地之意源于这个国家被大量沙漠围住, 气候干燥. 而lowland, 则是因为其海拔很低.
-显然, 这不是我们关心的算法本质. 那么, 为什么欧洲人会把al-Khwarizmi, 作为算法的称谓呢?
-al-Khwarizmi向西方引入了10进制计数法和代数. 同时他的名字慢慢被赋予了现代算法的涵义.
-也就是algorithm的涵义是慢慢衍生出来的.
-那我们能否给算法下一个定义呢:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;An informal definition could be &amp;quot;a set of rules that precisely defines a sequence of operations.&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;简单说, 就是一个执行序列. 这有点太概况了.我们需要一个更精准的定义.
-同时, 我并不把他限制在计算机科学内.
-如果你读过石里克的&lt;a href=&#34;http://book.douban.com/subject/1443472/&#34;&gt;普通认识论&lt;/a&gt;你就会知道, 光的定义也是一波三折.
-所谓的定义, 实际上事物某些属性的集合!
-我们来考察算法的属性.诚如前面的定义算法是一个执行序列.
-那么算法的表现形式呢? 他是抽象的, 根植于人类的思维逻辑当中. 而人的逻辑是通过
-语言表述的.所以算法的重要属性就是他是语言这种形式表现出来的.
-所以我们的定义, 变成一个被执行的语言序列.
-我们还是不满足, 你难道就让我去用这么一句话, 去面对面试时候的各种算法题吗?
-现在我们从算法解决的问题入手? 这是算法的目的. 我的目的是让算法更加的通俗易懂.
-不是让人们说道, 算法就会去向排序, 二叉树. 这跳跃太大了, 在算法的基础定义和实际的算法之间,
-还有一些内容, 值得我们挖掘.我们考察排序和二叉树, 这两种算法:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;A sorting algorithm is an algorithm that puts elements of a list in a certain order.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;从排序算法的定义中, 我们窥探到了算法的一些本质属性. 使对象具备某种属性.这里面有序就是一种属性.
-再来看二叉树:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;a binary tree is a tree data structure in which each node has at most two children, 
-which are referred to as the left child and the right child.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;无论是二叉树, 还是排序, 我们都能感受到, 算法在展现一种魔法, 使用元素的建立某种空间结构/关系.
-也就是说, 我们的思维本身就具有某种抽象意义上的空间搬运能力.我门知道空间关系, 在确定了个提之后
-是十分清晰的前后左右上下, 这样, 现在我们能进一步的定义算法:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;算法是使对象具备某种空间关系的而被执行的语言序列
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这里的对象显然是语言层面的.我们的定义是否恰当能呢? 是否所有的算法都是让对象具备某种空间关系吗?
-在比如找到两个数组中相同的元素, 类似常见的字符串查找, 也是不具有所谓的空间的关系, 而是更为抽象的序关系.
-什么是序关系? c语言的比较操作符 &amp;lt; &amp;gt; = 这些都是序关系, 准确说是二元关系.
-而空间关系, 我们也可以通过坐标抽象, 得到数学上的需关系.显然有些时候空间关系更为生动, 但你知道这可以
-用order theory解释.
-作为最古老的算法gcd, 最大公约数, 不是上面的所谓的序关系结构. 他就是一种纯粹的数学定义.
-这个算法的目的不在是一个多个元素的整体了, 只是单独挑出符合性质的其中的元素. 但是在界gcd问题时
-我们依然可以把他转换为同过序关系得到答案.而欧几里得的方法, 确不是用gcd定义的方法解的而是用求余的
-方法. 求余依然是序的关系, 只不过方法不一样, 一个循环比较一个是通过求余加速了答案的发现.
-我们现在姑且认为, 所有算法的最终结果都是为了得到一种序的关系.
-我们现在来整理下算法的定义:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;算法是使对象具备某种序关系的而被执行的语言序列
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;我们现在来考察, 算法的对象, 我们能感觉到他可以具有任何形态.
-暂略.
-我们来看算法的核心&amp;ndash; 语言序列, 对象, 执行的目的某种序关系, 三者之间的关系.
-同时为了更好的理解语言序列.
-我们先探索一些重要且常见的思路, 也就是语言序列的patterns.
-我们学过的一些算法, 可以用递归的方式解, 而且很简单. 比如二叉树翻转, 二叉树遍历,
-快排等等, 作为一种解问题的思路也就是, 语言序列的模式. 我们要彻底的搞懂倒地什么才是&lt;/p&gt;
-
-&lt;h2 id=&#34;递归-为什么递归可以很好的解决问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;递归? 为什么递归可以很好的解决问题.&lt;/h2&gt;
-
-&lt;p&gt;&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Droste.jpg/220px-Droste.jpg&#34; alt=&#34;递归图&#34; /&gt;
-就是这种感觉, 你总能看到自己的样子, 每个尽头. 可是计算机的递归是有终止条件, 否则程序就跑飞了.
-所以, 无论脑洞多大, 都要想到如何停止递归调用.
-就和我们写个for循环for (i=0; i &amp;lt; 10; i++) 一个道理, 本质都是在重复. 递归定义:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;通俗说函数调用自身, 都是递归.一个合格的递归, 有终止条件和非终止条件.非终止条件必须可以通过递归变成终止条件.
-现在我们来看下两类经典的算法排序和二叉树.先说二叉树, 各种遍历啊翻转都是用递归实现的.
-先不考虑递归的问题, 就比方说我们要把二叉树的所有点都打印出来, 随便打不要管什么深度广度中序啊. 你会怎么办?
-一个for循环把所有最left都打出来了, 其他点呢? 没出来.怎么办?为什么二叉树这么难处理啊?
-我们之前打印数组or链表一个循环就ok了. 二叉树的和他们的区别是一个点有2个后继.
-那么2个后继对我们造成什么影响. for通过单个指针只能得到线性的关系. 那如何得到树式的关系呢?
-我们可以从最简单的开始考察空树, 1,2层的树都好办. 3层呢, 就不好办了? 怎么不好办了.
-如果我们知识在白板上把每个节点, 画个对号, 就算输出的话, 我们很轻松, 就画完了.
-可是在计算机内部, 比如我们现在100层的树我们在left子树上输出, 我们就没有办法知道丛root开始
-的right子树的信息了, 我们一条路走到黑, 回不去了. 我门必要track住所谓的right节点的信息.
-这很明显, 咋么track住呢?还是以3层树为例我们可以轻而易举的输出上面两层.
-如果按层输出, 我们输出当前node把子nodes存到queue里面, 每次都这么干. 我们track住了其他节点的信息了
-而链表这种线性结构则是自身就可以track住后继节点的信息, 这就是差别, 多了一个node我们就要
-多个地方存他, 在我们的场景你都不需要关系存的顺序, 因为我们就是随便输出, 全输出就可以了.
-回过头, 我们来看, 这个解法和递归之间的关系. 只要最终能终止就可以用递归解, 我们这个问题能吗?
-显然可以, 停在最底层节点.
-void bin_recur(node)
-{
-    //这是内核的标准风格
-    if(!node)
-        return&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;print(node);
-bin_recur(node-&amp;gt;left);
-bin_recur(node-&amp;gt;right);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;p&gt;完了这就是我们的随意树遍历法, 记住我们只要求输出全部节点就ok了. 至于, node之间的关系, 就随他去吧.哈哈.
-无论递归多么简洁, track nrightnode信息一个也不能少, 知识没有眼睛的计算机的眼睛, 就好像盲人的盲文一样.
-这个递归的和我们的for循环的结果不一样.不用queue用stack结果就一直了.
-广度优先不可以用递归形式, 这是我们知道的第一个不能用递归解的问题.
-1. 接下来我们聊3个问题, 什么问题不能用递归解
-2. 递归 和非递归如何转换
-3. 结合二叉树排序算法探讨递归如何可能.&lt;/p&gt;
-
-&lt;h3 id=&#34;先看第三个问题-同时我们也知道gcd也是递归算法实现的:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;先看第三个问题, 同时我们也知道gcd也是递归算法实现的.&lt;/h3&gt;
-
-&lt;p&gt;在这里我们要达成的是递归为什么能解问题. 遇到一个问题时我们我们如何用递归曲解.
-我们要用另外一种思想去解释递归, 且最好是生活化的例子.
-搜了半天也没有即通俗又深刻的讲解.
-我们按着递归的定义来:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;为什么我们不找一个实际生活场景来解释递归呢? 你给我找一个试试, 正常人谁这么做事啊:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;To Iterate is Human, to Recurse, Divine
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;定义中明确说明了基本情况可以不止一种, 意识到这点很重要. 那么下面我们来看一个递归函数都有什么.
-通过定义, 我们知道递归函数只要两部分内容, 基本情况 + 还原到基本情况两部分:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;int depth(Tree t){
-    if(!t) 
-        return 0; 
-    int a=depth(t.right); 
-    int b=depth(t.left); 
-    return (a&amp;gt;b)?(a+1):(b+1); 
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;求二叉树深度,这个函数的目标就是返回int值树深度
-我们试图通过这么小的一个递归函数, 完成我们对所有递归的认知!
-基本情况:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;return 0 和return (a&amp;gt;b)?(a+1):(b+1);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;还原到基本情况:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;int a=depth(t.right);
-int b=depth(t.left);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;现在我们要当一回弗兰肯斯坦, 原料都有了, 那我们如何把他组成一个会动且名字叫做递归函数的人呢?
-代码本身就是执行序列, 而这些序列的先后关系非常重要.基本情况和还原基本情况具备哪些关系呢?
-这是我们要完整认知递归, 所必须面对的问题.
-在这个例子当中, 我们可以把基本情况和还原情况分类两类, 从基本情况看:
-不需要依赖还原情况和依赖还原情况的基本情况两类.
-所以我们主要关注, 基本情况就好了, 我们把基本情况排好了还原情况就不是问题了.
-我们总对看不到事物, 不放心,那么还原情况的代码是如何是生效的呢, 怎么就能保证整个程序是我们想要的
-正确结果? 也就是说我们必须证明他!如何证明呢?
-我们只看第一次调用, 显然如果两次depth调用时正确的, 我们最上面这次也是千真万确的!
-也就是说当前的结果正确性依赖于子函数调用的正确性.那么现在问题就变成了, 还原情况是否能
-够真正意义上的收敛到基本情况:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;int factorial(int n)
-{
-    int recurse = factorial(n-1);
-    int result = n * recurse;
-    return result;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个函数是一个递归函数, 却不能收敛!最后程序直接跑飞了.所以说不是递归就是正确的.
-这严格的依赖于你的实现的语言序列!上面这个例子, 只有去没有回!
-只有保证了去和回的程序才是合理的! 进一步, 我们的基本情况,可以说都是在还原情况的去和回的路径上.
-使用数学归纳法, 我们可以证明递归函数的是否正确!
-现在我们更细致的考察基本情况和去回路径的关系.如果基本情况在去的路径上我们就收他是一种independent
-情况. 反之, 在回来的路径上, 我们就说他是dependent情况. 不用费心, 去想什么那些基本情况是independent哪些
-是dependent这个和具体业务,算法内容相关的.
-下面我们看下排序算法以期更加透彻的理解基本情况!先说快排!
-不知道你还记得吗, 我早都忘了.哈哈.快排的效率是nlogn,why?简单分析下就知道了.
-起始所有的算法都是分治, 只不过分的程度不一样. 快排的思想就是, 又粗到细逐步排序.
-显示选一个特定的元素, 之后把其他元素分列这个元素左右, 之后在分别对左右的元素执行相同的动作.
-用递归怎么实现呢?
-先确定基本情况
-小于2个elements不需要排序
-if ( (first &amp;gt;= last)
-    return;
-这样independent就确定了.
-pivot= array[first]
-while( low &amp;lt;  high){
-    while ( a[high] &amp;gt; pivot  )
-        high&amp;ndash;;
-    a[low]= a[hgih]
-    while ( a[low] &amp;lt; pivot)
-        low++;
-    a[high] = a[low]
-}
-a[low] = pivot
-qs(a, first, low -1)
-qs(a, low + 1, last)&lt;/p&gt;
-
-&lt;p&gt;从这个算法, 我们可以看出全都是independent的基本情况, 都是还原情况依赖基本情况.
-也就是说, 上层的正确性,
-我们在前序二叉树遍历也遇到这种, 全是independent的情况.
-我们来总结下qsort的基本情况:
-他的基本情况是数据的区间.最基本的就是不排序这种
-之后是下面这种通用形式. 瞄准一个区间.基本+通用类似归纳法.
-那我们现在明白了排除最基本的形态作为终止条件. 其他的基本情况和还原情况表明了这个
-算法的核心本质也就是自顶向下top down还是自底向下bottom up的的方法这是最根本的本质.
-要比我们之前说的由粗到细逐步排序, 要准确深刻许多!
-我们再看归并排序.归并是什么思想呢?正好相反, 它依赖底层的排序.
-也就是bottom up的方式, 我们看下msort的代码
-merge sort是基于合并,
-if (len &amp;lt;= 1)
-    return&lt;/p&gt;
-
-&lt;p&gt;ms(a, first, len/2)
-ms(a, len/2 + 1, last)
-merge(a, first, last)
-这次是通用情况在最下面.
-那我们在来看, 二叉树的的遍历. 前序遍历是top down的思想吗?
-先print root, 之后是最左的一排, 从底往上从左往右一次输出left子树
-之后, 类似方法输出right子树.但是为什么不是层序遍历的效果呢?这里是收到了树结构的影响.
-在排序的例子, 我们以数据的宽度大小得出topdown的思路.
-在遍历二叉树, 我们是node的高度和左右作为top的衡量.
-这里就不是topdown的思想而是先处理谁后处理谁的问题, 我们反过来看排序算法, topdown
-bottomup 似乎也只是一种巧合, 那么我们能不能在qsort的时候只处理两个元素, 之后在递归呢
-就好比二叉树中从root到leaf一样之后从leaf到root, 以此往复, 在用递归处理排序是遵从从多到少的去,
-从少到多.
-二叉树: root-&amp;gt;left leaf -&amp;gt;root-&amp;gt;right leaf
-排序:大范围-&amp;gt;个体-&amp;gt;大范围　这也是递归解问题的标准方法逐渐减小问题．
-那么我们能否从最小的地方, 之后逐渐变大, 想当然是可以的.回来路径上的mergesort就是一个.
-其他的呢插入排序的递归版?
-insert sort
-if ( len = 1)
-    return
-isort(a, len -1)
-for(i=0; i&amp;lt; len;i++
-    sort insert alen
-对比非递归版, 我们发现递归给我门提供了两个潜在的for循环.
-如果是从bottom up这种方式接的问题, 递归是放在回来的路径.
-当然递归也是允许你在取得路径上慢慢扩大处理的问题
-插入排序的终止条件编程了len &amp;gt; maxlen.
-qsort和msort 一去一回.
-我们已经考察递归差不多了,总结下
-1. 一去一回, 两个非嵌套循环
-2. 最好遵从, 去的是逐渐减小任务. 回时增大.
-3. 去回可以互相转换.如isort, 当不是所有的都是要稳定性.&lt;/p&gt;
-
-&lt;h3 id=&#34;接下来看递归和非递归的转换:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;接下来看递归和非递归的转换.&lt;/h3&gt;
-
-&lt;p&gt;bubble sort
-if len &amp;lt; 2
-    return
-sort maxer
-bulle sort(len -1)
-冒泡的递归很简单
-那么qsort的非递归版呢
-首先递归给了一个for我们得自己补上
-for
-接下来递归编程压栈就可以了,
-下面的问题答案也是本问题的答案.&lt;/p&gt;
-
-&lt;h3 id=&#34;最后一个问题什么问题不能用递归解:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;最后一个问题什么问题不能用递归解?&lt;/h3&gt;
-
-&lt;p&gt;二叉树层序遍历递归搞不定.
-这个问题实际转换成, 非递归版什么问题搞定什么问题
-我简单的认为
-1. 问题可被还原.
-2. 必要时, 需要stack 信息追踪
-没了. 好关于递归就到这里.
-在考察语言序列的顺序问题.递归的顺序我们很清楚了.但我们似乎还迷茫.
-实际上我们接触的问题都不是用递归解的.
-比如内核的伙伴系统, page cache这些算法. 实际上是这些结构的延伸.
-所有的函数方法都是为了让操作对象, 保持相应结构的性质.
-也就是说这种算法的核心与目的就是结构, 使数据保持这种结构, 算法的目的达到了.
-重点在于维护结构整体, 这点看来和排序算法一样, 一个是侧重空间关系, 一个数值关系.
-可以说都是在保证空间性质的前提, 完成量的性质:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;我们得到两个基本概念, 描述数据个体的量, 与整体的空间结构.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;空间结构是框架, 量则是内容.
-现在我们来看一个实际的算法问题, 如何判断两边是否有环, 这里说的主要是空间结构.
-这个问题主要关注数据的空间结构, 最简单的加个访问标志位.不加呢, 别的方法呢?
-再加一个指针, 也能解决.通过辅助数据结构两个指针解决了这个问题. 现在回想问题.
-我们判断环, 实质上是找到一个等价的条件, 这个条件, 要不然是 ==, 要不然是 !=
-这和具体逻辑有关. 但是我们一定可以确定的就是我们需要right 和left两个operand.
-需要至少两个对比的对象.而这个对象本质就是量. 这里想提供解决问题的通用方式.
-判断问题要有两个量. 而这两个量.
-这里揭示了算法的核心, 就是在完成特定的问题or 结构, 我们需要辅助的结构:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;常见的辅助结构:变量/flag之类, 指针, 队列, stack, 不限制使用数量.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;问题的解决, 变成寻找挑选合适的辅助结构了. 如两个变量比较/flag自身test, 两个指针:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;指针的速度是个很重要的解决问题的因素, 如上面的环问题的两个不同指针.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这也是解决比较问题的, 常见方法.
-选好辅助数据结构就是, 运用了. 运用的主要原则就是找到基本情况. 把具备的互斥特征的
-基本情况找到, 并应用辅助数据结构解决问题.&lt;/p&gt;
-
-&lt;h2 id=&#34;动态规划问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;动态规划问题&lt;/h2&gt;
-
-&lt;p&gt;DP通常是以递归化简问题形式出现.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Computer architecture</title>
-      <link>http://firoyang.org/cs/arch/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/arch/</guid>
-      <description>
-
-&lt;p&gt;##Reference
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存
-《模拟电子技术基础 童诗白 第四版》第一章前半部分
-Structured Computer Organization 6th Edition
-Digital Design and Computer Architecture 2nd Edition
-Computer Organization and Design 5th Edition
-Write Great Code: Volume 1: Understanding the Machine
-See MIPS run
-Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
-Microelectronics&lt;/p&gt;
-
-&lt;h1 id=&#34;computer-architecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer architecture&lt;/h1&gt;
-
-&lt;p&gt;cpu
-memory
-I/O&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;I/O IC
-Assembly language
-Interrupt
-ISA
-Machine language
-Interpreting Machine Language Code
-Microarchitecture
-Digital Logic circuit(Logic gates)
-ALU
-Computer memory
-Register/Flip-flop
-Cache/SRAM
-DRAM/capacitor
-Analog Circuit
-BJT FET Didoe&lt;/p&gt;
-
-&lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
-
-&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle
-Semantics in computer science: In programming language theory, semantics is the field concerned
-with the rigorous mathematical study of the meaning of programming languages.
-Language primitive
-ISA: memory model, registers, data types, instructions, word size(?).
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.
-The interface between hardware and software.
-Arm v7
-word = instruction
-vocabulary = instruction set&lt;/p&gt;
-
-&lt;h2 id=&#34;microarchitecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture&lt;/h2&gt;
-
-&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.
-control unit/decoder
-Microcode
-How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?
-What is the pipeline?
-architectural state (the program counter and registers&lt;/p&gt;
-
-&lt;h1 id=&#34;logic-circuit:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Logic circuit&lt;/h1&gt;
-
-&lt;p&gt;Sequential logic
-Combinational logic&lt;/p&gt;
-
-&lt;h2 id=&#34;computer-memory:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer memory&lt;/h2&gt;
-
-&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys
-What is NOR gates?
-What is the implement of gate?&lt;/p&gt;
-
-&lt;p&gt;data type
-instructions: 算术, 控制, 数据传送
-register file
-addressing modes(include memory mode)
-interrupt and exception handling,
-external I/O&lt;/p&gt;
-
-&lt;p&gt;#x86 Interrupt
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.
-##Hardware interrupts
-are used by devices to communicate that they require attention from the operating system.
-asynchronus
-more details in init_IRQ() or set_irq() in driver.
-##software interrupt
-synchronus
-more details in trap_init().
-* exception or trap
-is caused either by an exceptional condition in the processor itself,
-divide zero painc?
-* special instruction, for example INT 0x80
-or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
-
-&lt;h2 id=&#34;microarchitecture-1:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC
-IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.
-结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.
-数据冒险, 指令件参数依赖造成的问题.
-控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;/li&gt;
-&lt;li&gt;branch prediction.
-dsp用条件执行替代跳转.&lt;/li&gt;
-&lt;li&gt;out-of-order
-乱序执行相对于顺序执行.
-无关指令可以任意执行.&lt;/li&gt;
-&lt;li&gt;superscalar
-instruction cycle, 什么是cycle.&lt;/li&gt;
-&lt;li&gt;data level parallelism&lt;/li&gt;
-&lt;li&gt;thread level parallelism
-超线程, 同步问题.&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;cache
-cache miss
-住要看cache, 乱序, 还有lock对执行的影响.
-temporal locality: for icache
-spatial locality: array
-第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.
-##Cache
-a cache is a component that stores data so future requests for that data can be served faster;
-the data stored in a cache might be the results of an earlier computation,
-or the duplicates of data stored elsewhere.
-###CPU cache
-A CPU cache is a cache used by the central processing unit (CPU) of a computer
-to reduce the average time to access data from the main memory.&lt;/p&gt;
-
-&lt;h4 id=&#34;associativity-cpu-cache-algorithms:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Associativity - CPU Cache algorithms&lt;/h4&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Two-way set associative cache&lt;/p&gt;
-
-&lt;h4 id=&#34;cache-coherence:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Cache coherence&lt;/h4&gt;
-
-&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.
-Cache conerence is mantained by mostly archtecure like cpu&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;MSI
-####Cache type&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Instructin cache&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Data cache&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer
-###GPU cache
-###Disk cache
-###Web cache&lt;/p&gt;
-
-&lt;h2 id=&#34;fixme-concepts:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;FIXME concepts&lt;/h2&gt;
-
-&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码
-Numeral system: 手指头　-&amp;gt; 二进制
-logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农
-A Symbolic Analysis of Relay and Switching Circuits
-The Mathematical Theory of Communication
-触发器 英国射电物理学家 William Henry Eccles
-晶体管&lt;/p&gt;
-
-&lt;h1 id=&#34;phy-the-physical-layer:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;PHY &amp;ndash; The physical layer&lt;/h1&gt;
-
-&lt;h2 id=&#34;introductions:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Introductions&lt;/h2&gt;
-
-&lt;p&gt;Fromwikipedia:
-&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]
-&amp;gt; The implementation of this layer is often termed PHY.
-&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;
-PCS
-PMD&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
-
-&lt;p&gt;serial communication: UART(16550) + RS-232
-parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Computer science a kernel programmer&#39;s perspective</title>
-      <link>http://firoyang.org/cs/cs/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/cs/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://book.douban.com/subject/1494026/&#34;&gt;Code The Hidden Language of Computer Hardware and Software&lt;/a&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/XsW0QfVYgg4&#34;&gt;Google groups&lt;/a&gt;
-For programming reference programming.md
-Graphviz + CodeViz
-&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;contents-of-computer-science:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Contents of computer science&lt;/h1&gt;
-
-&lt;p&gt;What is the address.
-Is the address generated by compiler physical or virtual?
-What&amp;rsquo;s the difference between eprom falsh ssd?
-What is UART USB serial/prallel port
-How to find UART prot to print log?
-programming
-compile
-computer
-Interface&lt;/p&gt;
-
-&lt;h1 id=&#34;interface:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Interface&lt;/h1&gt;
-
-&lt;p&gt;ABI: calling convetion&lt;/p&gt;
-
-&lt;h1 id=&#34;system-boot:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;System boot&lt;/h1&gt;
-
-&lt;h1 id=&#34;terminal:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;terminal&lt;/h1&gt;
-
-&lt;p&gt;NS16550_putc&lt;/p&gt;
-
-&lt;h1 id=&#34;layers-of-computer:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Layers of computer&lt;/h1&gt;
-
-&lt;p&gt;Applications
-Operating system
-ISA
-Micro-architecture
-Logical gate
-Digital circuits
-Analog circuits
-Electronic component
-Physics&lt;/p&gt;
-
-&lt;h1 id=&#34;计算机科学启示录:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;计算机科学启示录&lt;/h1&gt;
-
-&lt;p&gt;计算机是人与世界的一种关系.
-人&amp;lt;-&amp;gt; Computer &amp;lt;-&amp;gt; 世界.
-人意志-&amp;gt;思维逻辑-&amp;gt;电信号-&amp;gt;物理世界
-人类的思维语言-&amp;gt;人-&amp;gt;计算机语言-&amp;gt;编译器-&amp;gt;机器语言-&amp;gt;Microarchitecture(datapath, control unit)logic 电路-&amp;gt;模拟电路电信号-&amp;gt;物理世界.
-思维-&amp;gt;电信号, 外部世界的改变(for good life)
-人类物理世界-&amp;gt;思维世界-&amp;gt; 物理世界
-人类思维与语言, 计算机语言, 数字电路, 模拟电路, 世界.
-每一个sensation都有自己的内部规则, &amp;ldquo;语言&amp;rdquo;,pattern, paradigm, theory. 这是他们不同的地方.
-作为程序员要理解认知这每一种paradigm, 似乎需要寻找到一种通用的语言, 来更好的理解他们. 有必要吗?
-当然逻辑思维好的人, 容易看到问题的本质. 数学和逻辑, 严密且语法简单适用其他paradigm的表述.
-语言总归是用来表述的媒介, 重要的还是内容. 统一的语言更容易看到联系, 相似的逻辑.
-也就是说, 有意识的用数学和逻辑表示pattern.
-Two point:
-不同sensation level之间的抽象类比, 方向人-&amp;gt;物理世界.
-不同sensation level不同or相同的抽象. 具体的形而下-&amp;gt;形而上数学与逻辑&lt;/p&gt;
-
-&lt;h1 id=&#34;os:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;OS&lt;/h1&gt;
-
-&lt;h2 id=&#34;process-management:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Process management&lt;/h2&gt;
-
-&lt;p&gt;进程的定义和PCB，进程和线程的区别，进程的三个基本状态及它们之间的转换关系，进程的同步，竞争和死锁，进程间通信
-###Representation
-* Program memory
-Stack(User/Kernel)
-Heap
-Data segment(data/bss)
-Code segment
-* PCB
-Resource
-Processor Context
-Process state
-###daemonize
-&lt;a href=&#34;http://fixunix.com/unix/84640-daemon-controlling-terminal.html&#34;&gt;http://fixunix.com/unix/84640-daemon-controlling-terminal.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-managerment:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory managerment&lt;/h2&gt;
-
-&lt;p&gt;分页式管理，分段式管理，虚拟内存的概念，页面置换算法，内存分配算法&lt;/p&gt;
-
-&lt;h3 id=&#34;paging:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Paging&lt;/h3&gt;
-
-&lt;p&gt;paging is one of the memory management schemes by which
-a computer stores and retrieves data from the secondary storage for use in main memory.
-* Page fault
-###Page replacement algorithm
-OPT
-FIFO
-Second-chance
-LRU&lt;/p&gt;
-
-&lt;h3 id=&#34;x86-memory-segmentation:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;x86 memory segmentation&lt;/h3&gt;
-
-&lt;p&gt;linux 基本不用
-&lt;a href=&#34;http://oss.org.cn/kernel-book/ch02/2.3.7.htm&#34;&gt;Linux中的段&lt;/a&gt;
-* GDT
-* TSS
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Task_state_segment#Use_of_TSS_in_Linux&#34;&gt;Use of TSS in Linux&lt;/a&gt;
-* Linear address&lt;/p&gt;
-
-&lt;h3 id=&#34;virtual-memory-https-en-wikipedia-org-wiki-virtual-memory-paged-virtual-memory:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtual_memory#Paged_virtual_memory&#34;&gt;Virtual memory&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;It maps memory addresses used by a program, called virtual addresses, into physical addresses in computer memory.
-* Logic/Virtual address
-* Page table&lt;/p&gt;
-
-&lt;h3 id=&#34;memory-allocation:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory allocation&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Buddy memory allocation.&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Slab allocation/Memory Pool&lt;/p&gt;
-
-&lt;h2 id=&#34;device-management:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Device management&lt;/h2&gt;
-
-&lt;p&gt;中断的概念，中断处理，I/O控制方式，缓冲区管理，设备驱动，磁盘调度和高速缓存&lt;/p&gt;
-
-&lt;h3 id=&#34;low-i-o-type:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Low I/O type&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Programmed I/O/Polling&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;DMA&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Interrupt I/O&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Channel I/O&lt;/p&gt;
-
-&lt;h3 id=&#34;i-o-scheduling:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O scheduling&lt;/h3&gt;
-
-&lt;p&gt;Elevator algorithm
-###Asynchronous I/O NEED CLEAN&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;synchronous I/O multiplexing and I/O event notification facility
-select/poll/epoll
-For the ease of use, the select loop is implemented as an &lt;em&gt;event loop&lt;/em&gt; with callbacks.
-libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.
-##File formate
-ELF &amp;ndash; ELF executable and linkable format.
-Used for Relocatable file(object file, kernel moudle), Executable file, Dynamic library, Core dump.
-###Relocatable file(object file, kernel module)
-ELF header.
-Sections.
-Section header table.&lt;/p&gt;
-
-&lt;h3 id=&#34;executeable-file-dynamic-library:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Executeable file, dynamic library&lt;/h3&gt;
-
-&lt;p&gt;ELF header.
-Program header table.
-Segments.
-Section header table.
-.symtab, Symbol table store index of string
-.strtab, String table is a array of all strings split by \0
-.hash, utiliy for quire symbols
-.shstrtab, Section header string table store section name for ELF,like .text, .data&amp;hellip;&lt;/p&gt;
-
-&lt;h2 id=&#34;file-system:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;File system&lt;/h2&gt;
-
-&lt;p&gt;文件的概念，文件的管理，文件系统&lt;/p&gt;
-
-&lt;h2 id=&#34;system-calls:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;System calls&lt;/h2&gt;
-
-&lt;p&gt;系统调用的概念，系统调用的处理，系统调用类型
-#I/O
-CPU and main memory is the brain of a computer.
-Any transfer of information to or from the CPU/memory combo, for example by reading data from a disk drive, is considered I/O.
-##CPU-device I/O&lt;/p&gt;
-
-&lt;h3 id=&#34;memory-mapped-i-o:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory-mapped I/O&lt;/h3&gt;
-
-&lt;p&gt;ioremap: physical address-&amp;gt;logical address, simlar to vmalloc except we need not page.&lt;/p&gt;
-
-&lt;h3 id=&#34;ported-mapped-i-o:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Ported-mapped I/O&lt;/h3&gt;
-
-&lt;p&gt;##Non CPU-device I/O&lt;/p&gt;
-
-&lt;h3 id=&#34;i-o-channels:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O channels&lt;/h3&gt;
-
-&lt;h2 id=&#34;同步与异步io:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;同步与异步IO&lt;/h2&gt;
-
-&lt;p&gt;今天我们要辨析一下同步和异步IO. 我们先解释最基础的概念, 之后用生活化的例子
-完成认知.
-首先是blocking 和 non-blocking这两个概念. 这两个概念实质上是和IO没有关系.
-他们是在说, 比如读数据, 如果没有数据我该怎么办. 也就是说, 他是在IO不存的时候,
-在语义上才是有效, 如果你要读的数据始终存在, 那么你还会考虑阻塞与不阻塞的问题吗?
-那你应该考虑什么? 同步还是异步IO, 倒地什么是同步或者异步呢?
-英文synchronous, syn 和chronous构成, syn是在一起的意思而chronous是时间的意思.
-也就是说在一个时间点上在一起, 那么是谁和谁在意一起呢?其中一个是IO可以肯定, 另外一个
-就是执行IO的发起者, 通常也就是进程. 简单说来这个IO是由进程执行的.
-那么异步IO呢, asynchronous是a + synchronous. a表否定, 我们知道在IO进行的过程中我们的
-进程是始终存在的, 也就是说IO 和进程共享着相同的时间进度, 但是却不在一起.也就是说,
-IO不是由我们的进程完成而是别的进程完成, 是谁呢,是内核线程.
-那么我们就知道只有linux上的aio是符合异步IO的标准, 而多路复用, 如epoll返回是我们和IO是在
-一起, 我们要调用read之类的完成他.
-下面用一个生活化的例子, 说明下linux下的IO.
-比如你要买&amp;lt;百年孤独&amp;gt; 还要买件衬衫, 你会怎么买
-你要先去书店, 如果店家没有货, 如果一个小时后货补齐了你可以等,
-长点你就不愿意等了. 也就是阻塞和不阻塞.之后你要去衣服点.也是同样.
-假如都没货, 你有等不下去, 怎么办? 你又不能一会儿去这家问下书怎么样? 一会儿去衣服店询问.
-这太累人了. 最好的方式, 你告诉店家我要什么, 到货了给我打个电话, 我在过来.
-这就是io多路复用. 可是还有更高明的方法, 没错就是京东了, 我网上下订单, 第二天直接送到家了.
-京东, 为什么成功? 你知道了吧.用户省心啊.对应异步io
-##Interface
-&lt;a href=&#34;http://www.cs.uwm.edu/classes/cs458/Lecture/HTML/ch11s02.html&#34;&gt;Methods for designing a CPU&amp;rsquo;s I/O interface generally fall into one of the following categories:&lt;/a&gt;
-Completely separate memory and I/O. buses DMA?
-Common buses, separate control lines. Port-I/O
-Common buses and control line. Memroy-maped I/O
-###Higher level implemention
-device or partion of device/memory -&amp;gt; file
-io -&amp;gt; stream
-####&lt;a href=&#34;https://en.wikipedia.org/wiki/Stream_(computing&#34;&gt;stream&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Standard_streams&#34;&gt;Standard streams&lt;/a&gt;
-interface is stdio library or the kernel version.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;codata
-#Buffer
-a data buffer (or just buffer) is a region of a physical memory storage
-used to temporarily store data while it is being moved from one place to another.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Page cache, Buffer head&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pipe&lt;/p&gt;
-
-&lt;h1 id=&#34;data-struct-aligment:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Data struct aligment&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86&#34;&gt;Typical alignment of C structs on x86&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;为什么需要结构体对齐:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;为什么需要结构体对齐?&lt;/h2&gt;
-
-&lt;p&gt;struct foo {
-char c;
-int i;};
-如果是32位, cpu 一次取4byte a word 数据.
-如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.
-那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.
-如果我们把i单独放到4byte 对齐的地址, 那么我们只需要一次cpu读取.fast!&lt;/p&gt;
-
-&lt;h2 id=&#34;产生非对齐访问的场景:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;产生非对齐访问的场景&lt;/h2&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Casting variables to types of different lengths, 比如char * 到int *&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.&lt;/p&gt;
-
-&lt;h2 id=&#34;我们做什么:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;我们做什么?&lt;/h2&gt;&lt;/li&gt;
-&lt;/ol&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;什么也不干, 按默认对齐来Natural alignment&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为了不影响性能, 同时减少内存使用, 编程时最好显示reorder.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;get/put_unaligned  to avoid analigned access.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;通过attribute aligned指定对齐要求.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed
-也就是说不对齐, 不同平台对齐可能不同, 我们不能让数据corruption.&lt;/p&gt;
-
-&lt;h2 id=&#34;如果数据不对齐有什么-cpu怎么办:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;如果数据不对齐有什么, cpu怎么办?&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt&#34;&gt;必读UNALIGNED MEMORY ACCESSES&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如果用了packed, 编译器会生成extra代码阻止非对齐访问, performance loss.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;cpu呢? 可能正确处理raise a exception to fix it with performance loss.&lt;/p&gt;
-
-&lt;h2 id=&#34;calculate-the-sizeof-of-aligned-c-struct:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Calculate the sizeof of aligned c struct&lt;/h2&gt;
-
-&lt;p&gt;Data alignment means putting the data at a memory address equal to some multiple of the word size,
-which increases the system&amp;rsquo;s performance due to the way the CPU handles memory.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;find the widest scalar member and attribute( aligned(x)) to determin alignment.
-找到结构体内scalar和attribute最大的对齐要求.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fill the member to alignement without wrap
-把结构的成员一次填满对齐宽度, 不够的填到下个对齐宽度, 空出来留着padding&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;pading to alignment
-填上所有空.&lt;/p&gt;
-
-&lt;h2 id=&#34;关于kernel中put-get-unaligned实现:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;关于kernel中put/get_unaligned实现&lt;/h2&gt;
-
-&lt;p&gt;access_ok, do nothing in essence
-byteshift, 移位每次访问u8,
-packed_struct: 交给gcc
-memove, byte-wise copy&lt;/p&gt;
-
-&lt;h2 id=&#34;faq:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Faq&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How does gcc attribute((aligned)) work?
-struct S1 { short f; short f1; short f2;char a; char c;} &lt;strong&gt;attribute&lt;/strong&gt; ((aligned ));
-sizeof S1 = 16 in 64-bit&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;In what situation can unaligned accesss make a kernel panic?
-may be arch/mips/kernel/unaligned.c&lt;/p&gt;
-
-&lt;h1 id=&#34;scheduling:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Scheduling&lt;/h1&gt;
-
-&lt;h2 id=&#34;process-scheduler:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Process scheduler&lt;/h2&gt;
-
-&lt;h2 id=&#34;network-scheduler:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Network scheduler&lt;/h2&gt;
-
-&lt;h2 id=&#34;i-o-scheduling-1:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O scheduling&lt;/h2&gt;
-
-&lt;h1 id=&#34;endianess:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Endianess&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;
-应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.
-这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,
-之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;
-这样就可以更好的理解iphdr:
-#if defined(__LITTLE_ENDIAN_BITFIELD)
-&lt;strong&gt;u8    ihl:4,
-    version:4;
-#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)
-__u8    version:4,
-    ihl:4;
-#else
-#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;
-#endif
-ipv4 header的拓扑
-version ihl
-0100 0101
-因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl
-而be的cpu是 msb first, 从最右开始所以version开头.
-而使用unsigned char ver_ihl
-(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version
-ver_ihl &amp;amp; 0x0f = ihl
-是无关cpu读取顺序的.&lt;/p&gt;
-
-&lt;h3 id=&#34;endianess-in-build:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Endianess in build&lt;/h3&gt;
-
-&lt;p&gt;cpu -&amp;gt; toolchain
-ar71xx big
-ralink little&lt;/p&gt;
-
-&lt;h1 id=&#34;introdution:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Introdution&lt;/h1&gt;
-
-&lt;p&gt;我们先看ISA. 我们都知道语言有个范式, 汇编语言的范式是什么呢?
-&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;
-貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.
-换个角度理解, &lt;a href=&#34;http://202.116.24.124/computer/content/theory/web/Chap04/4.1.3.HTM&#34;&gt;低级语言与硬件结构的关系&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+      <guid>http://firoyang.org/philosophy/ccl/</guid>
+      <description>&lt;p&gt;To be continue!&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Console and TTY</title>
       <link>http://firoyang.org/kernel/console/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Sat, 05 Dec 2015 14:06:29 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/console/</guid>
       <description>
@@ -3168,6 +532,1765 @@ unknown              /dev/tty        4 1-63 console&lt;/li&gt;
 ./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)
 ./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)
 ./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>System booting</title>
+      <link>http://firoyang.org/cs/boot/</link>
+      <pubDate>Thu, 12 Nov 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/boot/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;h1 id=&#34;contents:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;What basic initializations should be perfomed when power on?
+How do we load the kernel to memory?
+What does kernel do when kernel boot.
+MBR vs BIOS?
+PC vs embedded
+Kernel init
+before start_kernel
+start_kernel
+reset_init &amp;amp; kernel_init&lt;/p&gt;
+
+&lt;h1 id=&#34;p4080-board:4ccc61562af88da39fe562fcf76d50be&#34;&gt;p4080 Board&lt;/h1&gt;
+
+&lt;p&gt;PBL
+1. initialize I2C, SPI, eLBC, eSDHC.
+2. Load RCW and boot init commands from above.
+3. write date to conf register and memory&lt;/p&gt;
+
+&lt;h1 id=&#34;config:4ccc61562af88da39fe562fcf76d50be&#34;&gt;config&lt;/h1&gt;
+
+&lt;p&gt;CCSRBAR -&amp;gt; CCSR
+default is 0x0_FE00_0000&lt;br /&gt;
+CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).
+CCSRBAR always points to itself.
+holdoff&lt;/p&gt;
+
+&lt;h1 id=&#34;u-boot:4ccc61562af88da39fe562fcf76d50be&#34;&gt;u-boot&lt;/h1&gt;
+
+&lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
+
+&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;
+{
+bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;
+&amp;amp;
+boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =
+&amp;amp;
+boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;
+board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;ppc-multicore-booting:4ccc61562af88da39fe562fcf76d50be&#34;&gt;PPC multicore booting&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;/li&gt;
+&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;/li&gt;
+&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;CCSRBAR
+MPC86xx_MCM_OFFSET
+srio_boot_master_release_slave&lt;/p&gt;
+
+&lt;p&gt;uboot-&amp;gt;
+set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
+
+&lt;p&gt;core0 run, 2nd cores holdoff
+core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp
+core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500
+board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {
+&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page
+__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page
+bootpg = BPTR = __secondary_start_page
+plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation
+}
+2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page
+kernel-&amp;gt;
+core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address
+2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle
+arch/powerpc/kernel/head_fsl_booke.S
+U-boot logs:
+Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table
+address.
+SPAG : fdt_fixup_fman_firmware, 567^M^M
+^M^M
+..r.^M^M
+VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M
+VDBG: Secondary cores are not held in reset.^M^M
+Kernel Logs:
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M
+smp: failed starting cpu 1 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M
+smp: failed starting cpu 2 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M
+smp: failed starting cpu 3 (rc -2)^M^M
+Brought up 1 CPUs^M^M
+devtmpfs: initialized^M^M&lt;/p&gt;
+
+&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check
+if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
+
+&lt;p&gt;Here are the logs..&lt;/p&gt;
+
+&lt;p&gt;I printed pa in %lx since the outout of &lt;strong&gt;pa(&lt;/strong&gt;early_start) is in long unsigned int.&lt;/p&gt;
+
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+smp: failed starting cpu 3 (rc -2)
+I don’t see the following print in u-boot..
+ 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,
+ 70                                                 &amp;amp;val, sizeof(val));
++ printf(&amp;ldquo;Firo u-boot:cpu release addr %p, value %x\n&amp;rdquo;, &amp;amp;val, val);&lt;/p&gt;
+
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Light camera action - compile link load</title>
+      <link>http://firoyang.org/cs/build/</link>
+      <pubDate>Sun, 25 Oct 2015 01:46:28 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/build/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:aba878e576894cc4457876fdf276811e&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;contents:aba878e576894cc4457876fdf276811e&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;Why complier can manipulate the address of vriables?
+What is the address in lds(??) file?&lt;/p&gt;
+
+&lt;h1 id=&#34;build-automation:aba878e576894cc4457876fdf276811e&#34;&gt;Build automation&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Make
+make cynthia&lt;/p&gt;
+
+&lt;h2 id=&#34;kbuild:aba878e576894cc4457876fdf276811e&#34;&gt;kbuild&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if no .config, every config tools make a .config from scrach!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;make localmodconfig will reduce many unused kernel config.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;make bzImage  #kmods will not build that configured with M!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;/p&gt;
+
+&lt;h2 id=&#34;yocto:aba878e576894cc4457876fdf276811e&#34;&gt;yocto&lt;/h2&gt;
+
+&lt;p&gt;make ARCH=arm menuconfig
+##build signle kernel module
+make menuconfig
+make oldconfig &amp;amp;&amp;amp; make prepare
+make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1
+make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
+
+&lt;h1 id=&#34;compile-construction:aba878e576894cc4457876fdf276811e&#34;&gt;Compile construction&lt;/h1&gt;
+
+&lt;p&gt;Understand pl deeply
+how to translate it into machine code for specific CPU&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;gcc
+-E -S -c
+-I -L -l
+-ansi
+-fsyntax-only
+-Werror
+-save-temps
+-H: show all header used
+-v
+-Wall
+-fPIC: for shared library
+-Q: print function and statisc?
+-Wextra: 用处不大.
+-U: undefine a preprocessor macro.
+-pipe: make compilation faster, replace xx.S with |
+-Wpadded: we can rearrange the fields of structure to make the structure smaller
+-time
+-x c: c language
+-: stdin
+asmlinkage
+However, for C functions invoked from assembly code,
+we should explicitly declare the function&amp;rsquo;s calling convention,
+because the parameter passing code in assembly side has been fixed.
+##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;
+##Symbol table&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;System.map less
+When you compile the kernel
+nm vmlinux
+readelf -s&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;
+
+&lt;h1 id=&#34;link:aba878e576894cc4457876fdf276811e&#34;&gt;Link&lt;/h1&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;GNU ld&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;gold&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>我读过的好书</title>
+      <link>http://firoyang.org/review/book_list/</link>
+      <pubDate>Wed, 14 Oct 2015 14:09:57 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/review/book_list/</guid>
+      <description>
+
+&lt;p&gt;我在大连民族学院学的本科计算机专业,主攻哲学,毕业3年工作2年左右.
+推荐一些我觉得好的书.&lt;/p&gt;
+
+&lt;h1 id=&#34;computer-science:55cb7bf81f2a4f67e449fcf14cb41572&#34;&gt;Computer science&lt;/h1&gt;
+
+&lt;p&gt;Code: The hidden language of computer hardware and software
+Digital Design and Computer Architecture 2nd Edition&lt;/p&gt;
+
+&lt;p&gt;未看口碑好:
+Computer Organization and Design, Fifth Edition
+ARM System-on-Chip Architecture (2nd Edition)&lt;/p&gt;
+
+&lt;h1 id=&#34;philosophy:55cb7bf81f2a4f67e449fcf14cb41572&#34;&gt;Philosophy&lt;/h1&gt;
+
+&lt;p&gt;普通认识论 &amp;ndash; Moritz Schlick&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>我读过的好书</title>
+      <link>http://firoyang.org/b/</link>
+      <pubDate>Wed, 14 Oct 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/b/</guid>
+      <description>
+
+&lt;p&gt;我在大连民族学院学的本科计算机专业,主攻哲学,毕业3年工作2年左右.
+推荐一些我觉得好的书.&lt;/p&gt;
+
+&lt;h1 id=&#34;computer-science:90a50305328857c269eec2ce7bb00d09&#34;&gt;Computer science&lt;/h1&gt;
+
+&lt;p&gt;Code: The hidden language of computer hardware and software
+Digital Design and Computer Architecture 2nd Edition&lt;/p&gt;
+
+&lt;p&gt;未看口碑好:
+Computer Organization and Design, Fifth Edition
+ARM System-on-Chip Architecture (2nd Edition)&lt;/p&gt;
+
+&lt;h1 id=&#34;philosophy:90a50305328857c269eec2ce7bb00d09&#34;&gt;Philosophy&lt;/h1&gt;
+
+&lt;p&gt;普通认识论 &amp;ndash; Moritz Schlick&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Computer architecture</title>
+      <link>http://firoyang.org/cs/arch/</link>
+      <pubDate>Tue, 13 Oct 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/arch/</guid>
+      <description>
+
+&lt;p&gt;##Reference
+Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存
+《模拟电子技术基础 童诗白 第四版》第一章前半部分
+Structured Computer Organization 6th Edition
+Digital Design and Computer Architecture 2nd Edition
+Computer Organization and Design 5th Edition
+Write Great Code: Volume 1: Understanding the Machine
+See MIPS run
+Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
+Microelectronics&lt;/p&gt;
+
+&lt;h1 id=&#34;computer-architecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer architecture&lt;/h1&gt;
+
+&lt;p&gt;cpu
+memory
+I/O&lt;/p&gt;
+
+&lt;h1 id=&#34;contents:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;I/O IC
+Assembly language
+Interrupt
+ISA
+Machine language
+Interpreting Machine Language Code
+Microarchitecture
+Digital Logic circuit(Logic gates)
+ALU
+Computer memory
+Register/Flip-flop
+Cache/SRAM
+DRAM/capacitor
+Analog Circuit
+BJT FET Didoe&lt;/p&gt;
+
+&lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
+
+&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle
+Semantics in computer science: In programming language theory, semantics is the field concerned
+with the rigorous mathematical study of the meaning of programming languages.
+Language primitive
+ISA: memory model, registers, data types, instructions, word size(?).
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.
+The interface between hardware and software.
+Arm v7
+word = instruction
+vocabulary = instruction set&lt;/p&gt;
+
+&lt;h2 id=&#34;microarchitecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture&lt;/h2&gt;
+
+&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.
+control unit/decoder
+Microcode
+How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?
+What is the pipeline?
+architectural state (the program counter and registers&lt;/p&gt;
+
+&lt;h1 id=&#34;logic-circuit:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Logic circuit&lt;/h1&gt;
+
+&lt;p&gt;Sequential logic
+Combinational logic&lt;/p&gt;
+
+&lt;h2 id=&#34;computer-memory:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer memory&lt;/h2&gt;
+
+&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys
+What is NOR gates?
+What is the implement of gate?&lt;/p&gt;
+
+&lt;p&gt;data type
+instructions: 算术, 控制, 数据传送
+register file
+addressing modes(include memory mode)
+interrupt and exception handling,
+external I/O&lt;/p&gt;
+
+&lt;p&gt;#x86 Interrupt
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.
+##Hardware interrupts
+are used by devices to communicate that they require attention from the operating system.
+asynchronus
+more details in init_IRQ() or set_irq() in driver.
+##software interrupt
+synchronus
+more details in trap_init().
+* exception or trap
+is caused either by an exceptional condition in the processor itself,
+divide zero painc?
+* special instruction, for example INT 0x80
+or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
+
+&lt;h2 id=&#34;microarchitecture-1:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC
+IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.
+结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.
+数据冒险, 指令件参数依赖造成的问题.
+控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;/li&gt;
+&lt;li&gt;branch prediction.
+dsp用条件执行替代跳转.&lt;/li&gt;
+&lt;li&gt;out-of-order
+乱序执行相对于顺序执行.
+无关指令可以任意执行.&lt;/li&gt;
+&lt;li&gt;superscalar
+instruction cycle, 什么是cycle.&lt;/li&gt;
+&lt;li&gt;data level parallelism&lt;/li&gt;
+&lt;li&gt;thread level parallelism
+超线程, 同步问题.&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;cache
+cache miss
+住要看cache, 乱序, 还有lock对执行的影响.
+temporal locality: for icache
+spatial locality: array
+第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.
+##Cache
+a cache is a component that stores data so future requests for that data can be served faster;
+the data stored in a cache might be the results of an earlier computation,
+or the duplicates of data stored elsewhere.
+###CPU cache
+A CPU cache is a cache used by the central processing unit (CPU) of a computer
+to reduce the average time to access data from the main memory.&lt;/p&gt;
+
+&lt;h4 id=&#34;associativity-cpu-cache-algorithms:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Associativity - CPU Cache algorithms&lt;/h4&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Two-way set associative cache&lt;/p&gt;
+
+&lt;h4 id=&#34;cache-coherence:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Cache coherence&lt;/h4&gt;
+
+&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.
+Cache conerence is mantained by mostly archtecure like cpu&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;MSI
+####Cache type&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Instructin cache&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Data cache&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer
+###GPU cache
+###Disk cache
+###Web cache&lt;/p&gt;
+
+&lt;h2 id=&#34;fixme-concepts:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;FIXME concepts&lt;/h2&gt;
+
+&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码
+Numeral system: 手指头　-&amp;gt; 二进制
+logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农
+A Symbolic Analysis of Relay and Switching Circuits
+The Mathematical Theory of Communication
+触发器 英国射电物理学家 William Henry Eccles
+晶体管&lt;/p&gt;
+
+&lt;h1 id=&#34;phy-the-physical-layer:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;PHY &amp;ndash; The physical layer&lt;/h1&gt;
+
+&lt;h2 id=&#34;introductions:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Introductions&lt;/h2&gt;
+
+&lt;p&gt;Fromwikipedia:
+&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]
+&amp;gt; The implementation of this layer is often termed PHY.
+&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;
+PCS
+PMD&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
+
+&lt;p&gt;serial communication: UART(16550) + RS-232
+parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Linux time subsystem</title>
+      <link>http://firoyang.org/kernel/time/</link>
+      <pubDate>Tue, 22 Sep 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/time/</guid>
+      <description>
+
+&lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
+
+&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.
+一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,
+*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态
+那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全
+转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
+                        — William Gibson
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.
+想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在
+时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
+
+&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.
+UTC/GMT
+Based on caesium microwave atomic clock
+Leap second&lt;/p&gt;
+
+&lt;h2 id=&#34;genus-differentia-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;Genus-differentia definition&lt;/h2&gt;
+
+&lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
+
+&lt;h2 id=&#34;功用定义:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;功用定义&lt;/h2&gt;
+
+&lt;p&gt;获取时间
+timer
+sleep ?
+update sched info&lt;/p&gt;
+
+&lt;h2 id=&#34;发生定义-设计-etymology-history-operational-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;发生定义/设计   etymology, history Operational definition&lt;/h2&gt;
+
+&lt;p&gt;timekeeping/计时:时刻．
+clock source: 时间之源, 表针之力.
+clock event: 闹铃之力, 经过tick展现能力.
+tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.
+tickless:
+for timer: use HW timer one shot, set next.
+for update time: in above HW timer, not good
+for sched: for priority distributed in time slice, use timer.
+dynamic tick/no HZ:
+No HZ in idle
+No HZ while only 1 process running for HPC.
+tick devies 就是clock event包了层虎皮.
+tick broadcast framework:  based on tick device
+clock: 可记录时间, 表盘.利用timekeeping
+timer: use clock. what about timer_list?
+timer_list: do in softirq
+* timekeeping aspect
+onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; \
+kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))
+nucleus:used by clock see init_posix_timers and update_wall_time and sys_time
+coda:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;clock source aspect&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;tick device layer aspect
+per_cpu(tick_cpu_device, cpu)
+onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device
+nucleus: a38x_timer_interrupt-&amp;gt;a38x_clkevt.event_handler&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;tick broadcast framework
+onset:&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;clock aspect
+k_clock
+onset:init_posix_timers &amp;amp; init_posix_cpu_timers
+nucleus: 用户-&amp;gt; posix_clock-&amp;gt;timepkeeping-&amp;gt;clock_socurce&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;timer aspect
+onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
+nucleus: common_timer_set
+hrtimer_interrupt | (tick_handle_periodic-&amp;gt; tick_periodic-&amp;gt; update_process_times-&amp;gt;run_local_timers-&amp;gt;hrtimer_run_queues)-&amp;gt;__run_hrtimer-&amp;gt;timer.function = posix_timer_fn;(set in common_timer_set)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;计算机概念
+system clock CLOCK_REALTIME CLOCK_MONOTONIC
+time.h time_t=tm=timeval=timespec calendar time  clock_t&lt;/p&gt;
+
+&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function
+clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,
+clock event 通过timer来体现自己, timer面向使用者的onset,
+而clock event 则是偏向于nucleus and coda.
+timer: 标记不能立即执行的变化.
+clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.
+* kernel requirement
+linux的时间子系统要求硬件timer提供下面两种能力：
+一是free running的counter，此外需要能够在指定的counter值上产生中断的能力。&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Quantitative congnition - The philosophy on what I live</title>
+      <link>http://firoyang.org/philosophy/philosophy/</link>
+      <pubDate>Sun, 13 Sep 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/philosophy/philosophy/</guid>
+      <description>
+
+&lt;h1 id=&#34;epistemology:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Epistemology&lt;/h1&gt;
+
+&lt;h2 id=&#34;top-conceptions:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Top conceptions&lt;/h2&gt;
+
+&lt;p&gt;因果律
+世界处在不稳定的状态. &amp;ndash; Firo
+世界的普遍不确定性 &amp;ndash; Firo Soros
+认知的unit是概念. &amp;ndash; Firo
+世界是复杂的, 不能仅仅一条道理就讲明白. &amp;ndash; Firo
+A theory is a perspective of understanding this world. Get more perspective to understanding the world:-)&amp;ndash; Firo
+In genearl, 认知过程就是一种perspective 转换到另一种perspective. &amp;ndash; Firo
+For example, mathematics, logic, computer science are all the theory and perspective:-) 这三种思维都要养成, 慢慢来. &amp;ndash; Firo
+compile就是这样一种转换. &amp;ndash; Firo&lt;/p&gt;
+
+&lt;h2 id=&#34;criteria-and-benchmark-or-protype:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Criteria and benchmark or protype&lt;/h2&gt;
+
+&lt;p&gt;To attain perfect clearness in our thoughts of an object, then,
+we need only consider what conceivable effects of a practical kind the object
+may involve—what sensations we are to expect from it,
+and what reactions we must prepare. (1907: 29)
+        &amp;ndash; James,Pragmatism: A New Name for an Old way of Thinking
+视野要广能有多广要多广.
+你不需要掌握所有的内容, 你需要的是基础的general,重要的,常用的. Bound to James Pragmatism &amp;ndash; Firo
+准确的定义你的问题 &amp;ndash; Firo
+More rationality, less obseravtions. e.g. delete state_count of cpuidle_device. &amp;ndash; Firo
+Accept as true only what is indubitable. &amp;ndash; Descartes
+Falsifiability可证伪性 &amp;ndash; Popper
+批判性, 你所学的一切都是暂时性的,任何所学都有改口 驳斥 质疑的余地 &amp;ndash;Aaron Swartz,25:20
+一一性  &amp;ndash; Moritz Schlick
+合理性. &amp;ndash; Firo
+方法的可行性. &amp;ndash; Firo
+简单, 易操作, 可长久做下去. &amp;ndash; Engflunt
+容易理解, 易推导. &amp;ndash; Firo
+逻辑等价 &amp;ndash; Firo
+Completeness, consistency &amp;ndash; Logic
+繁忙的工作生活会令人身心愉悦 &amp;ndash; Firo
+Plan and record  &amp;ndash; Firo
+Multitasking  &amp;ndash; CS
+怎么样才算是学到了知识呢?
+1. 所有知识都不是stand alone的,孤立的知识是死知识,必须和你了解熟悉的知识建立等价的认知关系. &amp;ndash;Firo
+可以确认这个潜在可以和众多知识建立联系的知识就是逻辑,数学, 生活. &amp;ndash; Firo
+2. 要有醍醐灌顶的感觉.
+Quick!
+如果dd做同样的事情, 他会怎么做了?&lt;/p&gt;
+
+&lt;h2 id=&#34;adverse-factors-of-congition:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Adverse factors of congition&lt;/h2&gt;
+
+&lt;p&gt;认知的缺陷, imperfect-understand, 彻底可错性. &amp;ndash;Firo Soros Popper
+别人(自己存在)认识的谬误性. &amp;ndash; Firo Soros
+个人 or Government 积累掩盖篡改历史的真相.
+越是大型的魔术表演，其门道往往就越是简单！人们认定不可能发生这种事的常识，固定观念往往孕育出盲点！&amp;ndash; 唐吉诃德·多弗朗明哥
+正义会胜？那是当然的吧，只有胜者，才是正义啊！&amp;ndash; 唐吉诃德·多弗朗明哥
+基于问题思考可以客服重复, 用处小的知识信息耽误时间, 也能解决脱离实际, 学了很多无用功. &amp;ndash; Firo&lt;/p&gt;
+
+&lt;h2 id=&#34;object:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Object&lt;/h2&gt;
+
+&lt;p&gt;认知思考的对象一点不能超出思维的连贯性. &amp;ndash;Firo
+首先这个知识是个复杂的具体的内容且是隔离的独立的知识比如x86的lds. 直接看就很不舒服.  &amp;ndash;Firo
+应该看的是gnu ld关于script的基础还有地址relocation. &amp;ndash;Firo
+这里就是要去看他的origin, foundation. &amp;ndash; Firo&lt;/p&gt;
+
+&lt;h2 id=&#34;aspect:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Aspect&lt;/h2&gt;
+
+&lt;p&gt;自己思考. 不要上来就读, 你要思考这个过程! 相信自己.&amp;ndash; Firo
+From ground, from zero, from origin. &amp;ndash; Firo
+Pragmatism Question the beginning of mind. &amp;ndash; Firo
+掌控好大方向, 安心的一点点做起, 需求不是想出来的. 要做什么事是实际遇到的, 不能规划
+的太详细, 可以有个大方向时间点. 大概是因为彻底可错, 认知的不完美. 记住需求来自实际不是想出来的. &amp;ndash; Firo
+如果有些重要的事, 我一生都无法实现怎么办?我不能一直这样下去, 到头来, 人生都毁了.
+所以认真过好每一天, 这很重要. 也是认知的缺陷导致的. &amp;ndash; Firo&lt;/p&gt;
+
+&lt;p&gt;建立非常很究极的理性(Rational)的逻辑系统, 不怕出错.More rationality, less observation!
+准确定义问题. &amp;ndash; Firo
+把事闹大. Broaden the horizons. Framework/pattern is the incarnation of mind.&amp;ndash; Firo
+学会问题转换这非常重要. &amp;ndash; Firo
+Knowledge degree of target, 必须区别对待知识.
+学会多角度看待问题. &amp;ndash; Firo
+如鱼得水. 如果问题难, 不好下手就划分小的(内核只关注console init, 内存映射, cpu 初始化这些), 减小难度(语速编码).&amp;ndash; Firo
+认知的方法, 海绵式，　淘金式，对抗式, 后面来个都应该用来认知. 因为
+Known and unknown/question - the complete vision. &amp;ndash; Firo
+Pragmatism questions:
+Why does it appear? What problem does it solve? What happend if it does not exist?
+How does it solve this problem in generalization and different sesanations level?
+Is it good or bad? What is the feedback?
+Question about what is the important, foundation, most useful, minimal cached? &amp;ndash; Firo&lt;/p&gt;
+
+&lt;p&gt;做好模式类比!至少有两个模式, 一个background, 一个是problem.
+就那debug和英语, 都要有基础的background, 之后的problem就要根据具体场景, 找办法.
+简单说来一个事情-&amp;gt;模式-&amp;gt;问题 &amp;amp; 方法.
+所谓模式就是一条执行的过程. 多是逻辑上的.
+比如模式background, 在逻辑上就是先架构上的, 之后在具体上的.topdown.
+而模式problem, 在逻辑上就是笛卡尔方法, 复杂细分成小的部分, 之后在从简单开始做, 另外就是不断用真实的实践去做calculus-update.&lt;/p&gt;
+
+&lt;p&gt;解决问题的方法往往是多种多样的.
+General problem solving methods, how many method we can use to get answer:
+1. sovle problem by self, you need to know the most things.(For unsimilar things, Not recomend!)
+2. Does anyone solve the same problem?
+3. Does anyone solve the similar things?(这需要提取一些共有的信息比如fsl, usb3320.
+Divide every question into manageable parts. &amp;ndash; Descartes
+一种快速构建pattern 或者达成初级认知的方法是, 先到主体, 确定主体后, 在建立之间的关系. &amp;ndash;Firo
+Modularity, &amp;ndash; Computer science
+Begin with the simplest issues and ascend to the more complex. &amp;ndash; Descartes&lt;/p&gt;
+
+&lt;p&gt;语言分析, 是我认知的重要工具, 甚至是主要工具. &amp;ndash; Firo, Saussure
+* 抽象明确概念所属的范畴,从而正确的定义理解问题.
+* 内涵定义: Genus-differentia definition 属加种差定义: 发生定义(设计), 关系定义, 功用定义, 摹状定义
+* 充要定义, Real and nominal definitions
+* Classes of extensional definitions: enumerative definition
+* &lt;a href=&#34;http://plato.stanford.edu/entries/definitions/&#34;&gt;Definitions Stanford Encyclopedia of Philosophy&lt;/a&gt;
+Comparison reflection abstraction &amp;ndash; concept in Wikipedia
+语言必须被还原到实际的生活场景  &amp;ndash; 维特根斯坦&lt;/p&gt;
+
+&lt;p&gt;Autonomous decision &amp;ndash; Firo
+问题的答案是常识.每一次认知都是积累pattern的过程. &amp;ndash; Firo
+君子生非异也，善假于物也。 &amp;ndash;荀子 劝学
+Change-of-state calculus &amp;ndash;Von Wright’s approach&lt;/p&gt;
+
+&lt;p&gt;学以致用 实践 &amp;ndash; Firo 胡适
+Self-correcting. &amp;ndash; Firo
+Review frequently enough to retain the whole argument at once &amp;ndash; Descartes
+第一是不要害怕冒险，第二是冒险时不要押上全部家当  &amp;ndash; Soros
+改造的反射性, 反射原理. &amp;ndash; Soros&lt;/p&gt;
+
+&lt;h2 id=&#34;instances:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Instances&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;对陌生语言问题(技术)的认知&lt;br /&gt;
+依照Wittgenstein, 语言要还原到生活中.会发现这是一个反过程, 实际变成了, 生活映射到语言词汇的过程. &amp;ndash; Firo
+通过对被还原到生活的语言词汇(有些时候我们需要修改那些不适当的词汇名字), 来从新认识他在问题中的语义意义. &amp;ndash;Firo
+比如内核时间子系统的, timekeeping, 还原到生活是日晷, 沙漏, 钟表. 再次回到程序中, 虽然只是个struct数据结构却携带这涵义丰富生活语义.&amp;ndash;Firo
+这是为什么好的命名, 对于程序理解的重要性.想较于使用不同语言的计算机程序开发者在源码中寻找词汇的original的来说, 社会生活中etymology要复杂多. &amp;ndash;Firo&lt;/p&gt;
+
+&lt;h1 id=&#34;模式-结构-关系-原理:007041aa20bf44bd43eba68b5f650c57&#34;&gt;模式 &amp;ndash; 结构 关系 原理&lt;/h1&gt;
+
+&lt;p&gt;这里所说的模式是事物某种既定的认知, 而方法是来揭示模式的.
+定位问题, 一定要从全局触发. 如果一直wfi问题, 先看下3.2sdk的config, 就done了.
+问题总是复杂的, 解决方法总是简单的  &amp;ndash;xiaolai.li
+computer first pattern: init onset,  running nuclus,  exit, coda
+溯因推理abduction
+Theory &amp;amp; application
+In &amp;amp; output
+Ideal &amp;amp; real
+Asynchronous &amp;amp; synchronous&lt;/p&gt;
+
+&lt;h2 id=&#34;pragmatism-sensations:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Pragmatism sensations&lt;/h2&gt;
+
+&lt;p&gt;Theory&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;aaron-swartz:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Aaron Swartz&lt;/h1&gt;
+
+&lt;p&gt;I feel very strongly that it&amp;rsquo;s not enough to just live in the world as it is, it&amp;rsquo;s just kind of take what you are given,
+and you know follow the things that adults told you to do,and that your parents told you to do, and that society tells to do.
+I think you should always be questioning.I take this very scientific attitude that
+every thing you&amp;rsquo;ve learned  is just provisional, you know, it&amp;rsquo;s always open to recantation or refutation or questioning,
+and I think  the same applies to society. Once I realized that there were real serious problems, fundamental problems
+that I could do something to address, I didnt see a way to forget that, I didnt see a way not to.&lt;/p&gt;
+
+&lt;h1 id=&#34;胡适日记全集-第三册-1921年7月10一则:007041aa20bf44bd43eba68b5f650c57&#34;&gt;胡适日记全集 第三册，1921年7月10一则&lt;/h1&gt;
+
+&lt;p&gt;杜威先生不曾给我们一些关于特别问题的特别主张，——如共产主义，无政府主义，自由恋爱之类，——他只给了我们一个哲学方法，
+使我们用这个方法去解决我们自己的特别问题。
+* （1）历史的方法——“祖孙的方法”   the genetic method, why xxx?
+他从来不把一个制度或学说，看做一个孤立的东西，总被他看做一个中段；一头是他所以发生的原因，一头是他自己发生的效果；上头有他的祖父，下头有他的孙子。捉住了这两头，他再也逃不出去了！这个方法的应用，一方面是很忠厚宽恕的，因为他处处指出一个制度或学说所以发生的原因，指出他历史的背景，故能了解他在历史上的地位和价值，故不致有过分的苛责。一方面，这个方法又是很严厉的，最带有革命性质的。因为他处处拿一个学说或制度发生的结果，来评判他本身的价值，故最公平，又最利害。这种方法，是一切带有评判（Critical）精神的运动的一个武器。
+* （2）实验的方法　　实验的方法，至少注重三件事：
+（一）从具体的事实与境地下手；
+（二）一切学说理想，一切知识，都只是待证的假设，并非天经地义；
+（三）一切学说与理想，都须用实行来试验过。实验是真理的唯一试金石。
+第一件，——注意具体的境地——使我们免去许多无谓的问题，省去许多无意识的争论。
+第二件，——一切学理都看做假设——可以解放许多“古人的奴隶”。
+第三件，——实验——可以稍稍限制那上天下地的妄想冥想。实验主义只承认那一点一滴做到的进步，步步有智慧的指导，步步有自动的实验——才是真进化。
+所谓实验的方法应该看成实证主义, 而不是更宽泛的实用主义. 维也纳小组, 即是逻辑实证主义.
+#Philosophy
+物自体-&amp;gt;感知-&amp;gt;经验对象-&amp;gt;认知-&amp;gt;概念
+我们所做的乃是把词从形而上学的使用带回到日常的使用上来”。
+我们能够陈述的只是语言的“外部事实”，我们对语言的误解来自对词的使用的不清——“我们的语法缺乏这种清晰性”。面对不清晰的语法，“哲学的任务并不是通过数学或逻辑数学的发现去解决矛盾，而是使我们有可能看清楚给我们造成麻烦的数学的现状：在矛盾解决之前的事态”，哲学的身份是“只把一切都摆在我们面前，既不作说明也不作推论”。
+##Foundations
++ 认识是人脑对外界事物的反映
++ 认识的对象
+* 存在就是不同.
++ 认识的方法
+* 划分就是要从混沌中找出不同
+=现象与根本
+* 现象不同的存在
+* 根本相同的存在
+=静态与动态
+=宏观与微观
+宏观是指从整体、全局来看;微观是指从个体、局部来看
+系统是由相互作用的元素所构成的整体;元素是系统的组成部分
+宏观的存在称为事物,构成该事物的微观的存在称为该事物的来源
+事物是客观存在的一切物体及其表现出的现象，比如原子是“物”，原子的行为表现是其“现象”，统合在一起，就是原子这么个“事物”。&lt;/p&gt;
+
+&lt;p&gt;=实体与作用
+主体是目的实体,就是被作为目的的实体
+客体是手段实体,就是被作为手段的实体&lt;/p&gt;
+
+&lt;p&gt;作用就是影响,实体对实体影响就叫做作用
+属性实际上就是外在表现角度的实体的作用
+事物之间的相互作用就叫做关系&lt;/p&gt;
+
+&lt;p&gt;客体对主体的作用叫做功用; 主体对客体的作用叫做利用&lt;/p&gt;
+
+&lt;p&gt;功用就是价值
+=形式与内容
+内容指构成事物的一切内在要素的总和；
+形式指事物内在要素的结构或表现方式。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;区别是对已经存在的多个事物进行比较,找出它们之间的不同之处,现象&lt;/li&gt;
+&lt;li&gt;联系是对已经存在的多个事物进行比较,找出它们之间的相同之处,根本&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;+静态存在
+事物实体的形式——结构,结构是事物内部诸元素之间的空间关系
+事物实体的内容——质料
+事物作用的形式一般被称为方式。
+事物作用的内容是输入与输出。
+事物关系的形式一般就叫做形式
+事物关系的内容是交换
+事物功用的形式——价值,哲学价值就是形式价值,使用价值就是内容价值(美／面包）
+事物功用的内容就是功能
+事物利用的形式是技术
+事物利用的内容是生产&lt;/p&gt;
+
+&lt;p&gt;事物的根本结构(形式)——层级结构
+事物的根本内容——需要&lt;/p&gt;
+
+&lt;p&gt;事物的根本价值——好
+事物的根本功能——满足主体需要
+事物的根本技术——妙
+事物的根本生产——满足客体需要
+事物之间的根本作用是价值作用、利益作用,也就是对需要的作用——满足或者不满足对方需要的作用。
+事物之间的根本关系是利益关系
++ 动态的存在
++ 根本划分
+静态的根本称为法则,动态的根本称为规律。
+事物的根本就叫做根本。根本的来源叫做本原,事物的根本元素就是事物的本原
+根本的实体称为本体,根本的属性称为本性。
+根本的形式,称为本形;非根本的形式,称为末形;
+根本的内容,称为本质;非根本的内容,称为末质。
++ 认识的成果
+* 概念是外界事物在人脑中的抽象反映
+* 外延是反映在概念中的事物的现象
+* 内涵是反映在概念中的事物的根本
++ 认识的目的
+* 真理是人脑对外界事物的正确反映。
+* 谬误是人脑对外界存在的错误反映
+* 根本性的真理就是真谛,
+* 非根本性的真理就是俗谛&lt;/p&gt;
+
+&lt;p&gt;#Gerneral theroy of knowledge &amp;ndash; Moritz Schlik
+##Common concepts
+###认知是再认识or再发现&lt;/p&gt;
+
+&lt;h3 id=&#34;知识就是把一种东西-现象-归结位另一种东西-原则:007041aa20bf44bd43eba68b5f650c57&#34;&gt;知识就是把一种东西(现象)归结位另一种东西(原则).&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;给狗一个名字, 那不是知识是见识!&lt;/li&gt;
+&lt;li&gt;有同一个原则解释的现象越多, 用来解释整个现象的所需的原则数目越少.&lt;/li&gt;
+&lt;li&gt;知识的水平用解释性原则的数目多少来衡量.&lt;/li&gt;
+&lt;li&gt;认知的最终任务就是使这个最低限度的数目尽可能的小.why?
+###科学知识的两个条件&lt;/li&gt;
+&lt;li&gt;完全规定个体(in/extension)&lt;/li&gt;
+&lt;li&gt;通过归结为最一般的东西来实现这种规定
+###知识的拥有与增长.&lt;/li&gt;
+&lt;li&gt;任何学科,开始工作之前, 必须对研究主题形成确定概念(in/extension).在探究之前界定研究的领域.研究什么?希望的回答是什么?&lt;/li&gt;
+&lt;li&gt;主题的定义会随着展开关系, 变得明确, 但必须有最初的定义, 如光的定义.
+###Type fo 问题&lt;/li&gt;
+&lt;li&gt;把所要知道的东西归结为什么样的因素(法则)?
+一个学科的发展, 如物理学不断发展到现在的量子力学和相对论
+计算机unix linux google 移动互联网 物联网&lt;/li&gt;
+&lt;li&gt;采取什么样的途径来实现这种归结?
+天体运动归结为universal gravitation(因素/法则)
+气象-&amp;gt;热力学(因素/法则)&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;诚然, 对于求助于哪些因素作为解释性原则, 我们常常犯错, 因而被容易被某些捉摸不定的东西引向迷途.
+##知识的性质&lt;/p&gt;
+
+&lt;h3 id=&#34;认识论的意义:007041aa20bf44bd43eba68b5f650c57&#34;&gt;认识论的意义&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;清谬
+运动本身不需要了解, 生理学知识, 也行.但病变的肢体就需要这些知识恢复.
+同样, 悖谬时, 认识论澄清不合理.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;深刻认知
+另外, 科学的训练需要生理学知识, 高效的学习也同样学习epistemmology.
+个门学科的展开不需要认识论的基础, 但除非经过认识论, 我们绝不会深刻的理解这些学科.
+Helmholtz, every thing lead us to philosophy.&lt;/p&gt;
+
+&lt;h3 id=&#34;日常生活中的认知:007041aa20bf44bd43eba68b5f650c57&#34;&gt;日常生活中的认知&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;对知识做出圆满的定义在研究的后期甚至终结时才可靠, 如果我们接收这个观点, 领域的界限和进入点都会模糊不清.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;狗, 知觉和心里意像相同&lt;/p&gt;
+
+&lt;h3 id=&#34;科学中的认知:007041aa20bf44bd43eba68b5f650c57&#34;&gt;科学中的认知&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;光, 两种法则相同&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;亚里士多德和手稿, 知识的核心都是再发现,
+###通过意象的认知&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;记忆意象是一种极为模糊, 变动不居, 容易像云雾那样消散的结构.
+这就是我之前的学习状态, 所有东西都停留在意象层次, 根本不是细节的问题.
+###通过概念的认知
+属性称为概念的特性or特征
+逻辑学, 概念的特征的总合叫概念的内涵/内容.概念所指的对象集合叫做概念的外延.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Firo</title>
+      <link>http://firoyang.org/firo/firo/</link>
+      <pubDate>Tue, 25 Aug 2015 15:46:11 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/firo/firo/</guid>
+      <description>
+
+&lt;p&gt;人与世界最主要的两个方面: 生存 与 成全自己
+人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.
+轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.
+欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.
+Career, Finance, Physical exercise, Clothing, Hygiene, Diet,
+Language, CS.
+I am Darwinism, Liberalism, maybe Mohism.&lt;/p&gt;
+
+&lt;h1 id=&#34;life-key-concepts:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Life key concepts&lt;/h1&gt;
+
+&lt;h1 id=&#34;philosophy:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Philosophy&lt;/h1&gt;
+
+&lt;h1 id=&#34;黄金精神:213dd4826e16cd3f137912c1a443e25a&#34;&gt;黄金精神&lt;/h1&gt;
+
+&lt;p&gt;在我看来, 黄金精神是生命本质底蕴:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;勇气, 勇敢的面对困难, 不逃避, 临危不惧, 直面人生.
+智慧,在困难中积极思考反思,寻求解决之道.天才,不循规蹈矩,独创精神,不是靠人传授的(知识的排泄物),作品典范他人模仿.
+爱, 心底尊重他人，有礼貌，抱有善的平和理念.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在漫长的人生之路上, 这要具有这些底蕴身后的力量, 会支持着我们走下去.
+这些修为和气度, 德行, 气质, 品格, 要远比你掌握某些知识, 更为珍贵.
+人要养成如大海一般底蕴.历史上那些了不起的人, 他们是如何成长起来.
+黄金精神的另一个实质:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;内心平静, 对的时间做合适的事. pace walker. 心态要端正.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;用平静的内心, 去对待外界, 操控这些力量, 不会过分偏执被吞噬,
+亦不应过分消沉, 慢待了时光.&lt;/p&gt;
+
+&lt;h1 id=&#34;人生:213dd4826e16cd3f137912c1a443e25a&#34;&gt;人生&lt;/h1&gt;
+
+&lt;p&gt;人们一边浪费自己的时间, 一边希望获得更久一些.
+人生没有目标, 也要好好活着!
+10点睡觉, 洗澡, 锻炼健身, 时间统计.
+不做無異事，一日當三日，人活五十年，我活百五年。 (我以为少做 &amp;ndash;firo.)
+讀古人的書，一方面要知道古人聰明到怎樣，一方面也要知道古人傻到怎樣。
+人生的大病根本在於不肯睜開眼睛來看世間的真實現狀.
+不受人惑 &amp;ndash; 胡适
+做人莫不可失了做事之心态&amp;ndash; firo
+人如果不沉醉于某些东西,估计都撑不下去吧.
+所有人都是某些东西的奴隶 &amp;ndash; 进击的巨人&lt;/p&gt;
+
+&lt;h1 id=&#34;society:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Society&lt;/h1&gt;
+
+&lt;p&gt;生活就是同傻逼的战争!
+每个人都有自己内心的弱点, 不必害怕他们.
+Love the persons that love me, absolutely, included myself and girl friend!
+他人即地狱,世界是荒诞的.
+出来卖, 活一定要好.
+人类是一种急功近利的生物，总是想用最小的付出获得最大的受益。&lt;/p&gt;
+
+&lt;h1 id=&#34;growing-up-人最重要的是会成长:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Growing up &amp;ndash; 人最重要的是会成长!&lt;/h1&gt;
+
+&lt;p&gt;生长需要滋润.  生活作息必须规律, 要不然要影响其他生活. 今天,就到这里吧, 让生活井井有条, 滋润.
+* 成长开始于注意到缺陷, 疑问
+那种概念模糊的地方就是有问题, 比如两个指针相加.
+成长不同阶段, 比如页表回收又算法,也有具体的代码实现. 我们只要知道算法就可以了.
+Listen, the key is to just&amp;hellip; relax. Don&amp;rsquo;t worry about the numbers, don&amp;rsquo;t worry about what the other guys are thinking.
+Dont think&amp;hellip; just feel
+所谓的自我认知不是达成一切，不是什么事情都要做到完美，而是知道自己所能做到力所能及的事情和无能为力的事情，我要说的是，要学会原谅自己的无能为力
+当缺点和不足出现了, 你意识到它, 并且有意识地去思考这种不足的原因,你就在成长中! 有自己的想法, 这才是成长的本质, 其他都不算成长.
++ 很多时候其实我们的忙碌都是做着自己并不在乎的事情！
+一个有创造力的人把太多的时间耗在阅读上，是一种浪费 &amp;ndash;尼采
+对于一个哲学家来说，最重要的是独立思考，自己来创造，说出非他不能说出的话来。
+不要以为努力过后, 就会得到, 永远也不要这样想.&lt;/p&gt;
+
+&lt;h3 id=&#34;自我认知-cirtical-introspection:213dd4826e16cd3f137912c1a443e25a&#34;&gt;自我认知 cirtical introspection&lt;/h3&gt;
+
+&lt;p&gt;批判性思考与反思
+非常重要, 却被忽视的一点是, 自我! 也就是说, 我们将过多的精力放在学习对象上,
+而忽视了自身. 人不是为解决问题而活!解决问题是来服务人的.到底学习过后,
+我们能得到什么? 少有人问津.如果将这个问题放到一段时间看, 这就是成长. 人的苦难,
+往往来自于自身认识的不足, 对自身有足够的认识之后, 成长本身就成了填空题.
+我们需要自身评估, 发现自我:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;个人的成长永远是第一位的, 找到成长的路径吧!
+你是入门, 还是要干事, 还是一个expert, 是什么水平?
+我需要什么, 更注重什么, 轻视什么, 忽略什么? 目标是什么?
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;没有什么方法是万能的, 也没有永恒的方法, 只有不断反思, 前进.很多时候,
+不是一上来就找到对的方法, 需要反复探索反思. 如果路走不通, 就换一条; 不能一直死磕.
+这就是批判思维的核心:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;问题解决不了, 说明方法不对, 要反思, 并找到新的方法, 才不会被反噬.
+没有解决问题的终极方法, 只有不断变化的解决问题的心.
+你没解出来,说明方法思路不对.
+君子性非异也,善假于物也
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;关于方法的寻找, 本身这是一个问题, 而所有问题都可以基于本文论述的其他方法, 找到答案.
+问题与方法相互转换. 答案或者认知是之于问题的. 而方法则是之于人, 人的成长.
+所以方法的选取要考虑到人:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;人生的道路应该是快乐幸福的, 你没必要苦了自己.更不能被所谓理想绑架.
+如果一种方法, 你感到不适, 不快乐, 或者让你厌恶不能良好愉快的激发你
+的思考, 那么你就应该放弃他.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;所以方法在不能解决问题和对人不友好的时候, 都是你反思的时机.
+人生就是不断寻找方法解决问题, 也许有些问题当下解决不了, 你应该暂时放下, 人的一生会
+遇到很多问题, 有些事情很重要, 有些问题不重要, 有些问题很小但却不能忽视:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;生命所不能承受之轻!
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;比如很多人类似我从小学到大学二年级, 人生的一大半时光都先给了游戏和漫画, 体验到了丰富
+多彩的世界, 尤其是龙珠这部漫画, 悟空不断赵越自我, 深刻影响到了我. 如果从头再来一次,
+显然, 我后悔了, 我希望去做一些其他的事情. 毕业之后, 我又染上了英雄联盟这个游戏, 我幡然
+悔悟只是已是三年过去了. 这都是生命所不能承受之轻. 生命在一点点耗散.
+之于人生的其他事情, 也要拿捏好轻重缓急, 不能放任自留.
+    轻重厉害, 要自己权衡.
+    重要的事都是, 一件件小事,积累的. 很多时候把重要的小事都做了,
+    大的重要的事就迎刃而解了.
+比如英语健身这种重要的事情, 就是贵在坚持, 而非一朝一夕一蹴而就.
+还有日间的活动也是, 坐在办公室要常动一动.
+人每天的精力都是有限的, 而为了第二天, 你要适时的好好休息, 保养自己.
+    生命的成长是需要滋润的.
+    如果你不遵从生命节奏, 生命终将枯萎.&lt;/p&gt;
+
+&lt;p&gt;#Birthday
+Mama
+06 25 1963
+09 24 1963 Household register
+Present:
+Baba
+02 28 1968
+02 29 1968 Household register
+Present:
+Brother
+01 06 1991
+Present:&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>My Career 职业生涯生涯规划</title>
+      <link>http://firoyang.org/firo/career/</link>
+      <pubDate>Sun, 26 Jul 2015 15:46:11 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/firo/career/</guid>
+      <description>
+
+&lt;p&gt;无论是位高权重的政治家, 富贵显荣的商人, 亦或是蝇营狗苟的市侩之人等等, 所有芸芸众生
+每日莫不是为了谋生而奔走. 长久的活着是一种负担.
+忙碌的生活, 难以审视自己的人生. 今天坐下来, 谈谈这个话题.&lt;/p&gt;
+
+&lt;p&gt;毫无已问, 从小到大, 即便是为曾到达的未来, 工作都占据了我们据大多数时间, 当然X二代
+不在此列. 在这个社会, 即便每日辛劳的工作, 绝大多数人, 依然连自己卑微的梦想都无法实现.
+今天, 我不谈政治层面的原因. 只想从个人角度, 去剖析人与工作之间的关系.&lt;/p&gt;
+
+&lt;p&gt;英文&lt;a href=&#34;https://en.wikipedia.org/wiki/Career&#34;&gt;career&lt;/a&gt;, 在维基给出了基本的解释:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;A career is an individual&#39;s journey through learning, work and other aspects of life.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;词源上是由马车引出的人生之路的涵义. 而中文, 生涯出自《庄子·养生主》：“吾生也有涯，而知也无涯。”
+我们今天主要谈两个问题, 人生的马车和人生的&amp;rdquo;涯&amp;rdquo;.
+我的职业生涯始于大学, 童年时期热爱电子游戏, 导致大学选择了计算机科学这个行业. 到今天整整过去了
+7个年头, 不短了. 本人只敢自称勤奋之人, 大学伊始至今, 绝大多数时光都在勤奋治学, 未曾懈怠.
+大学毕业三年, 依然没有实现自己当初的愿望, a remote kernel hacker. 这个目标完全是个人喜好, 性格使然.
+同时也受限于我个人的视野.
+1. 我喜欢自由, 所以不希望自己被束缚在办公室里面, 我期望那种一边旅行一边工作的生活.
+所以纯个人脑力的工作是我的第一选择, programmer, 作家,都在此列, 而且我也很喜欢且擅长这样的工作.
+2. 我喜欢开放的东西, 开源的软件就成了我的选择, kernel, openstack, 都是那时的选择.
+3. 我喜欢有挑战的事情, 11年一起在sina实习的同学, 现在是openstack的remote开发者了,
+当初我们一起去的, 我最后选择了kernel, 源于我认为kernel会更靠近计算机科学.
+我对web相关的技术有偏见,觉得缺乏深度且很多与用户体验相关.
+其实很多&lt;a href=&#34;http://careers.stackoverflow.com/jobs/remote&#34;&gt;职位&lt;/a&gt;都是可以remote的不限于open source的, 而且相对于
+kernel和openstack的remote工作机会更多.
+4. 我认为社会风气不好, 会对计算机这个行业有影响, 我更侧重选择纯技术的方向, 原理web, 具体业务.
+这就是当时的思考, 当初的视野太狭隘了,主观臆断太严重.
+这个时候薪资都不在考虑之列, 以为做喜欢的事就很开心了.
+大学4年都在逃课, 专业知识, 都是仿照MIT和Computer ScienceCurriculum 2008自己设计出来的.
+大学一年级, 看各种游戏的书,
+大学二年级做机器人的比赛还有和艺术学院合作的事情,
+大二下学期开始基础linux,看apue 还有unp这些书, 开始搞搜索引擎
+大三的时候看了csapp, 还有组合数学
+大四上学期基本上没干什么事, 10月份就去sina实习了, 下学期开始看内核.
+虽然一直都很忙, 但是没学到什么东西.
+我放弃了sina的offer, 毕业(12年7月)后整整有一年时间没有工作了.
+一直到次年13年的9月才开始去极路由工作.到今年15年5月离职.
+现在以外包的形式在windriver的ccm team 工作.
+这就是我职业生涯的7年时光, 过得很坎坷.&lt;/p&gt;
+
+&lt;h1 id=&#34;plan:7e6e72851422b97b7259805ca91208dc&#34;&gt;Plan&lt;/h1&gt;
+
+&lt;p&gt;0916, 0515, 8 months
+Go abroad &amp;amp; HB1
+English: 3w
+Work achievement: 6w
+Problem solving/Pattern or estemology: 3w
+Kernel patches 500 commits, 10w&lt;/p&gt;
+
+&lt;h1 id=&#34;interview:7e6e72851422b97b7259805ca91208dc&#34;&gt;Interview&lt;/h1&gt;
+
+&lt;h2 id=&#34;关于薪资问题:7e6e72851422b97b7259805ca91208dc&#34;&gt;关于薪资问题&lt;/h2&gt;
+
+&lt;p&gt;全面回答包括股票期权.
+real background.
+期望的薪资别说太低, 往上也别说的太死, 比预期要高.
+说更关注职业发展.&lt;/p&gt;
+
+&lt;h2 id=&#34;想面试公司提出的问题:7e6e72851422b97b7259805ca91208dc&#34;&gt;想面试公司提出的问题&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;NO1. 我所应聘的这个职位为什么会出现空缺？
+如果空, 空多长时间, 因为什么原因空的.
+如果这个职位是新近才出现的，或许你就拥有了一个理想的、开辟属于自己的道路的机会。&lt;/li&gt;
+&lt;li&gt;NO2. 请问贵公司最成功的员工为公司做出了什么样的贡献？
+谁对公司贡献最大, 谁领导之类的, 做了什么? 有那些优秀品质. 了解公司文化.
+面试管, 可能认为你是志在成功公司最优秀的员工之一.&lt;/li&gt;
+&lt;li&gt;NO3.如何评估自己在三个月试用期内的工作表现？何种标准算成功？
+该职位遇到的最大的挑战是什么?
+了解公司做事风格, 是否稳重成熟. 排除不靠谱公司, 谁知道半年后他们
+能干出什么? 谨慎对待抛出橄榄枝.&lt;/li&gt;
+&lt;li&gt;NO5.目前公司所面对的最大的挑战有哪些？
+这个编程比如说内核在公司的位置, 是否是中心.&lt;/li&gt;
+&lt;li&gt;NO6.公司如何来保证人才不流失？
+长期的意愿, 这个问题比较屌.&lt;/li&gt;
+&lt;li&gt;NO7.请问您为什么要为这家公司工作呢？
+连面试官自己都不知道为什么要为这家公司工作，你觉得这样的公司会给员工提供多少机会呢？
+去面试工作，是一个相互合作的过程，并不是说哪一方成为主导。你为公司工作，公司给你报酬。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;而对所有公司来说它总希望找到那一种类似合作伙伴的员工而不是仅仅是来打工的。
+所以，在面试的时候除了展示你自身特长和文化外，还要表现出一个对公司前景关心和一种参与者的心态来。
+这样能让公司的管理者对你更有好感！这不仅为了进入这个公司也为了以后的发展&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>有一段历史离我们如此近记忆却模糊</title>
+      <link>http://firoyang.org/history/china_a_century_of_revolution/</link>
+      <pubDate>Wed, 24 Jun 2015 15:46:11 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/history/china_a_century_of_revolution/</guid>
+      <description>&lt;p&gt;毛泽东的时代
+&lt;iframe width=&#34;420&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/GMaXSKH2w3c&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;&lt;/p&gt;
+
+&lt;p&gt;建国后出生的新一代
+&lt;iframe width=&#34;420&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/qsmJXJcvG3g&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Linux virtualization</title>
+      <link>http://firoyang.org/kernel/virt/</link>
+      <pubDate>Wed, 17 Jun 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/virt/</guid>
+      <description>
+
+&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.
+已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!
+现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
+看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和
+他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与
+空间去体验到不同生命历程.
+今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;
+如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.
+显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.
+法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是
+词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是
+influencing by physical virtues or capabilities,
+effective with respect to inherent natural qualities
+受某种实在的长处能力影响, 源自本质的效用.
+这里从两种角度理解virtual, 受影响者, 影响者本身.
+所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.
+这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;virtual 音节划分：vir▪tual
+英 [ˈvɜ:tʃuəl] 美 [ˈvɜ:rtʃuəl]
+adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;有效的，虚像的；（粒子）实际存在的
+虚；虚拟艺术；虚拟的；模拟帐户
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!
+话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.
+很多事情, 在我们出生前就决定了, 我是89年9月出生的.
+我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.
+如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.
+没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.
+好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?
+没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?
+所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.
+那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!
+我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.
+终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora
+之上.&lt;/p&gt;
+
+&lt;h2 id=&#34;fkvm:d29da9244342e72819e84d5dee753d17&#34;&gt;FKVM&lt;/h2&gt;
+
+&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!
+首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel
+运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!
+因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!
+你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.
+怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行
+start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的
+cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.
+也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.
+在内核初始化的时候, 会用调用bios的中断来获取内存信息.
+也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.
+开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.
+现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是
+高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.
+只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?
+我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.
+就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.
+也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.
+如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.
+这里需要很多底层的知识. 先看点资料再回来.
+看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.
+访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.
+探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.
+无论别人说的多么好, 我们必须要有自己的思路.
+总结下所得:
+控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.
+虚拟化一块内存.
+我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.
+由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.
+同时乐趣也会减少.&lt;/p&gt;
+
+&lt;h1 id=&#34;kvm-qemu:d29da9244342e72819e84d5dee753d17&#34;&gt;KVM QEMU&lt;/h1&gt;
+
+&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;
+探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.
+千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然
+是我们自己, 别人的知识只是辅助. 那好我们开始.
+首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.
+往往初学者, 很容易被绕进去.
+从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.
+为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.
+Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供
+全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的
+洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.
+Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.
+至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.
+从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.
+这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.
+Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.
+类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.
+Operating-system-level virtualization
+这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.
+但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.
+比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.
+这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.
+比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,
+他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.
+这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.
+在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,
+网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.
+我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.
+首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?
+官网的解释:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;QEMU is a generic and open source machine emulator and virtualizer.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.
+qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.
+我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.
+那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.
+毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的
+虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.
+据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情
+补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.
+不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂
+肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.
+内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.
+下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.
+我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.&lt;/p&gt;
+
+&lt;p&gt;下面是设备的虚拟化, 这个还是看书去吧.&lt;/p&gt;
+
+&lt;h1 id=&#34;代码实现:d29da9244342e72819e84d5dee753d17&#34;&gt;代码实现&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;KVM architecture&lt;/li&gt;
+&lt;li&gt;Kernel running flow
+svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;/li&gt;
+&lt;li&gt;File
+svm.c vmx.c kvm_main.c kvm_svm.h&lt;/li&gt;
+&lt;li&gt;Function&lt;/li&gt;
+&lt;li&gt;Struct
+kvm_x86_ops x86.h
+vcpu_svm    kvm_svm.h&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Algorithms and data structues for kernel hacking</title>
+      <link>http://firoyang.org/cs/algorithm/</link>
+      <pubDate>Wed, 27 May 2015 12:42:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/algorithm/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;
+Algorithms: Design Techniques and Analysis
+kernel/algorithm.md&lt;/p&gt;
+
+&lt;h1 id=&#34;introduction:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Introduction&lt;/h1&gt;
+
+&lt;p&gt;说实话, 这年头想要做点学问还是需要点定力的.
+就拿内核中的数据结构与算法来说, 也不是说, 别人来了句, 我靠, awesome!
+你也过来瞅两眼, 也能心生感慨, what the fuck! how can this be true?
+我说的定力, 不是两耳闻听窗外事, 一心还读圣贤书!而是思维的能力.
+这是见真章的地方, 不动脑子是玩不转的, 最终浮于表面, 不得所获.&lt;/p&gt;
+
+&lt;p&gt;kfifo 和lock-less list 是kernel中两个基础的数据结构, 用得也不多.
+说实在的这些都不是什么特别难的技术, 但是这种较真的东西使最能考察一个人的能力的.
+什么能力? 写个链表, 队列谁不会? 这里考察的是人的创造力!
+所谓创造力就是一种组合的能力.拆分也是一种组合.&lt;/p&gt;
+
+&lt;p&gt;今天, 我们来聊一聊算法. 数据结构在我看来是算法的一种.
+到底是什么呢? algorithm这个词来自中古拉丁文algorismus音译自一位阿拉伯数学家的名字
+al-Khwarizmi, 这只是一个姓, 类似中文赵钱孙李, al-Khwarizmi这个姓表示
+&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E8%8A%B1%E5%89%8C%E5%AD%90%E6%A8%A1&#34;&gt;花剌子模&lt;/a&gt;地方的人.数学家的全名是Abū ‘Abdallāh Muḥammad ibn Mūsā al-Khwārizmī
+花剌子模有太阳升起之地之意源于这个国家被大量沙漠围住, 气候干燥. 而lowland, 则是因为其海拔很低.
+显然, 这不是我们关心的算法本质. 那么, 为什么欧洲人会把al-Khwarizmi, 作为算法的称谓呢?
+al-Khwarizmi向西方引入了10进制计数法和代数. 同时他的名字慢慢被赋予了现代算法的涵义.
+也就是algorithm的涵义是慢慢衍生出来的.
+那我们能否给算法下一个定义呢:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;An informal definition could be &amp;quot;a set of rules that precisely defines a sequence of operations.&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;简单说, 就是一个执行序列. 这有点太概况了.我们需要一个更精准的定义.
+同时, 我并不把他限制在计算机科学内.
+如果你读过石里克的&lt;a href=&#34;http://book.douban.com/subject/1443472/&#34;&gt;普通认识论&lt;/a&gt;你就会知道, 光的定义也是一波三折.
+所谓的定义, 实际上事物某些属性的集合!
+我们来考察算法的属性.诚如前面的定义算法是一个执行序列.
+那么算法的表现形式呢? 他是抽象的, 根植于人类的思维逻辑当中. 而人的逻辑是通过
+语言表述的.所以算法的重要属性就是他是语言这种形式表现出来的.
+所以我们的定义, 变成一个被执行的语言序列.
+我们还是不满足, 你难道就让我去用这么一句话, 去面对面试时候的各种算法题吗?
+现在我们从算法解决的问题入手? 这是算法的目的. 我的目的是让算法更加的通俗易懂.
+不是让人们说道, 算法就会去向排序, 二叉树. 这跳跃太大了, 在算法的基础定义和实际的算法之间,
+还有一些内容, 值得我们挖掘.我们考察排序和二叉树, 这两种算法:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;A sorting algorithm is an algorithm that puts elements of a list in a certain order.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;从排序算法的定义中, 我们窥探到了算法的一些本质属性. 使对象具备某种属性.这里面有序就是一种属性.
+再来看二叉树:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;a binary tree is a tree data structure in which each node has at most two children, 
+which are referred to as the left child and the right child.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;无论是二叉树, 还是排序, 我们都能感受到, 算法在展现一种魔法, 使用元素的建立某种空间结构/关系.
+也就是说, 我们的思维本身就具有某种抽象意义上的空间搬运能力.我门知道空间关系, 在确定了个提之后
+是十分清晰的前后左右上下, 这样, 现在我们能进一步的定义算法:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;算法是使对象具备某种空间关系的而被执行的语言序列
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这里的对象显然是语言层面的.我们的定义是否恰当能呢? 是否所有的算法都是让对象具备某种空间关系吗?
+在比如找到两个数组中相同的元素, 类似常见的字符串查找, 也是不具有所谓的空间的关系, 而是更为抽象的序关系.
+什么是序关系? c语言的比较操作符 &amp;lt; &amp;gt; = 这些都是序关系, 准确说是二元关系.
+而空间关系, 我们也可以通过坐标抽象, 得到数学上的需关系.显然有些时候空间关系更为生动, 但你知道这可以
+用order theory解释.
+作为最古老的算法gcd, 最大公约数, 不是上面的所谓的序关系结构. 他就是一种纯粹的数学定义.
+这个算法的目的不在是一个多个元素的整体了, 只是单独挑出符合性质的其中的元素. 但是在界gcd问题时
+我们依然可以把他转换为同过序关系得到答案.而欧几里得的方法, 确不是用gcd定义的方法解的而是用求余的
+方法. 求余依然是序的关系, 只不过方法不一样, 一个循环比较一个是通过求余加速了答案的发现.
+我们现在姑且认为, 所有算法的最终结果都是为了得到一种序的关系.
+我们现在来整理下算法的定义:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;算法是使对象具备某种序关系的而被执行的语言序列
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;我们现在来考察, 算法的对象, 我们能感觉到他可以具有任何形态.
+暂略.
+我们来看算法的核心&amp;ndash; 语言序列, 对象, 执行的目的某种序关系, 三者之间的关系.
+同时为了更好的理解语言序列.
+我们先探索一些重要且常见的思路, 也就是语言序列的patterns.
+我们学过的一些算法, 可以用递归的方式解, 而且很简单. 比如二叉树翻转, 二叉树遍历,
+快排等等, 作为一种解问题的思路也就是, 语言序列的模式. 我们要彻底的搞懂倒地什么才是&lt;/p&gt;
+
+&lt;h2 id=&#34;递归-为什么递归可以很好的解决问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;递归? 为什么递归可以很好的解决问题.&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Droste.jpg/220px-Droste.jpg&#34; alt=&#34;递归图&#34; /&gt;
+就是这种感觉, 你总能看到自己的样子, 每个尽头. 可是计算机的递归是有终止条件, 否则程序就跑飞了.
+所以, 无论脑洞多大, 都要想到如何停止递归调用.
+就和我们写个for循环for (i=0; i &amp;lt; 10; i++) 一个道理, 本质都是在重复. 递归定义:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;通俗说函数调用自身, 都是递归.一个合格的递归, 有终止条件和非终止条件.非终止条件必须可以通过递归变成终止条件.
+现在我们来看下两类经典的算法排序和二叉树.先说二叉树, 各种遍历啊翻转都是用递归实现的.
+先不考虑递归的问题, 就比方说我们要把二叉树的所有点都打印出来, 随便打不要管什么深度广度中序啊. 你会怎么办?
+一个for循环把所有最left都打出来了, 其他点呢? 没出来.怎么办?为什么二叉树这么难处理啊?
+我们之前打印数组or链表一个循环就ok了. 二叉树的和他们的区别是一个点有2个后继.
+那么2个后继对我们造成什么影响. for通过单个指针只能得到线性的关系. 那如何得到树式的关系呢?
+我们可以从最简单的开始考察空树, 1,2层的树都好办. 3层呢, 就不好办了? 怎么不好办了.
+如果我们知识在白板上把每个节点, 画个对号, 就算输出的话, 我们很轻松, 就画完了.
+可是在计算机内部, 比如我们现在100层的树我们在left子树上输出, 我们就没有办法知道丛root开始
+的right子树的信息了, 我们一条路走到黑, 回不去了. 我门必要track住所谓的right节点的信息.
+这很明显, 咋么track住呢?还是以3层树为例我们可以轻而易举的输出上面两层.
+如果按层输出, 我们输出当前node把子nodes存到queue里面, 每次都这么干. 我们track住了其他节点的信息了
+而链表这种线性结构则是自身就可以track住后继节点的信息, 这就是差别, 多了一个node我们就要
+多个地方存他, 在我们的场景你都不需要关系存的顺序, 因为我们就是随便输出, 全输出就可以了.
+回过头, 我们来看, 这个解法和递归之间的关系. 只要最终能终止就可以用递归解, 我们这个问题能吗?
+显然可以, 停在最底层节点.
+void bin_recur(node)
+{
+    //这是内核的标准风格
+    if(!node)
+        return&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;print(node);
+bin_recur(node-&amp;gt;left);
+bin_recur(node-&amp;gt;right);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;p&gt;完了这就是我们的随意树遍历法, 记住我们只要求输出全部节点就ok了. 至于, node之间的关系, 就随他去吧.哈哈.
+无论递归多么简洁, track nrightnode信息一个也不能少, 知识没有眼睛的计算机的眼睛, 就好像盲人的盲文一样.
+这个递归的和我们的for循环的结果不一样.不用queue用stack结果就一直了.
+广度优先不可以用递归形式, 这是我们知道的第一个不能用递归解的问题.
+1. 接下来我们聊3个问题, 什么问题不能用递归解
+2. 递归 和非递归如何转换
+3. 结合二叉树排序算法探讨递归如何可能.&lt;/p&gt;
+
+&lt;h3 id=&#34;先看第三个问题-同时我们也知道gcd也是递归算法实现的:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;先看第三个问题, 同时我们也知道gcd也是递归算法实现的.&lt;/h3&gt;
+
+&lt;p&gt;在这里我们要达成的是递归为什么能解问题. 遇到一个问题时我们我们如何用递归曲解.
+我们要用另外一种思想去解释递归, 且最好是生活化的例子.
+搜了半天也没有即通俗又深刻的讲解.
+我们按着递归的定义来:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;为什么我们不找一个实际生活场景来解释递归呢? 你给我找一个试试, 正常人谁这么做事啊:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;To Iterate is Human, to Recurse, Divine
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;定义中明确说明了基本情况可以不止一种, 意识到这点很重要. 那么下面我们来看一个递归函数都有什么.
+通过定义, 我们知道递归函数只要两部分内容, 基本情况 + 还原到基本情况两部分:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;int depth(Tree t){
+    if(!t) 
+        return 0; 
+    int a=depth(t.right); 
+    int b=depth(t.left); 
+    return (a&amp;gt;b)?(a+1):(b+1); 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;求二叉树深度,这个函数的目标就是返回int值树深度
+我们试图通过这么小的一个递归函数, 完成我们对所有递归的认知!
+基本情况:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;return 0 和return (a&amp;gt;b)?(a+1):(b+1);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;还原到基本情况:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;int a=depth(t.right);
+int b=depth(t.left);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;现在我们要当一回弗兰肯斯坦, 原料都有了, 那我们如何把他组成一个会动且名字叫做递归函数的人呢?
+代码本身就是执行序列, 而这些序列的先后关系非常重要.基本情况和还原基本情况具备哪些关系呢?
+这是我们要完整认知递归, 所必须面对的问题.
+在这个例子当中, 我们可以把基本情况和还原情况分类两类, 从基本情况看:
+不需要依赖还原情况和依赖还原情况的基本情况两类.
+所以我们主要关注, 基本情况就好了, 我们把基本情况排好了还原情况就不是问题了.
+我们总对看不到事物, 不放心,那么还原情况的代码是如何是生效的呢, 怎么就能保证整个程序是我们想要的
+正确结果? 也就是说我们必须证明他!如何证明呢?
+我们只看第一次调用, 显然如果两次depth调用时正确的, 我们最上面这次也是千真万确的!
+也就是说当前的结果正确性依赖于子函数调用的正确性.那么现在问题就变成了, 还原情况是否能
+够真正意义上的收敛到基本情况:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;int factorial(int n)
+{
+    int recurse = factorial(n-1);
+    int result = n * recurse;
+    return result;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这个函数是一个递归函数, 却不能收敛!最后程序直接跑飞了.所以说不是递归就是正确的.
+这严格的依赖于你的实现的语言序列!上面这个例子, 只有去没有回!
+只有保证了去和回的程序才是合理的! 进一步, 我们的基本情况,可以说都是在还原情况的去和回的路径上.
+使用数学归纳法, 我们可以证明递归函数的是否正确!
+现在我们更细致的考察基本情况和去回路径的关系.如果基本情况在去的路径上我们就收他是一种independent
+情况. 反之, 在回来的路径上, 我们就说他是dependent情况. 不用费心, 去想什么那些基本情况是independent哪些
+是dependent这个和具体业务,算法内容相关的.
+下面我们看下排序算法以期更加透彻的理解基本情况!先说快排!
+不知道你还记得吗, 我早都忘了.哈哈.快排的效率是nlogn,why?简单分析下就知道了.
+起始所有的算法都是分治, 只不过分的程度不一样. 快排的思想就是, 又粗到细逐步排序.
+显示选一个特定的元素, 之后把其他元素分列这个元素左右, 之后在分别对左右的元素执行相同的动作.
+用递归怎么实现呢?
+先确定基本情况
+小于2个elements不需要排序
+if ( (first &amp;gt;= last)
+    return;
+这样independent就确定了.
+pivot= array[first]
+while( low &amp;lt;  high){
+    while ( a[high] &amp;gt; pivot  )
+        high&amp;ndash;;
+    a[low]= a[hgih]
+    while ( a[low] &amp;lt; pivot)
+        low++;
+    a[high] = a[low]
+}
+a[low] = pivot
+qs(a, first, low -1)
+qs(a, low + 1, last)&lt;/p&gt;
+
+&lt;p&gt;从这个算法, 我们可以看出全都是independent的基本情况, 都是还原情况依赖基本情况.
+也就是说, 上层的正确性,
+我们在前序二叉树遍历也遇到这种, 全是independent的情况.
+我们来总结下qsort的基本情况:
+他的基本情况是数据的区间.最基本的就是不排序这种
+之后是下面这种通用形式. 瞄准一个区间.基本+通用类似归纳法.
+那我们现在明白了排除最基本的形态作为终止条件. 其他的基本情况和还原情况表明了这个
+算法的核心本质也就是自顶向下top down还是自底向下bottom up的的方法这是最根本的本质.
+要比我们之前说的由粗到细逐步排序, 要准确深刻许多!
+我们再看归并排序.归并是什么思想呢?正好相反, 它依赖底层的排序.
+也就是bottom up的方式, 我们看下msort的代码
+merge sort是基于合并,
+if (len &amp;lt;= 1)
+    return&lt;/p&gt;
+
+&lt;p&gt;ms(a, first, len/2)
+ms(a, len/2 + 1, last)
+merge(a, first, last)
+这次是通用情况在最下面.
+那我们在来看, 二叉树的的遍历. 前序遍历是top down的思想吗?
+先print root, 之后是最左的一排, 从底往上从左往右一次输出left子树
+之后, 类似方法输出right子树.但是为什么不是层序遍历的效果呢?这里是收到了树结构的影响.
+在排序的例子, 我们以数据的宽度大小得出topdown的思路.
+在遍历二叉树, 我们是node的高度和左右作为top的衡量.
+这里就不是topdown的思想而是先处理谁后处理谁的问题, 我们反过来看排序算法, topdown
+bottomup 似乎也只是一种巧合, 那么我们能不能在qsort的时候只处理两个元素, 之后在递归呢
+就好比二叉树中从root到leaf一样之后从leaf到root, 以此往复, 在用递归处理排序是遵从从多到少的去,
+从少到多.
+二叉树: root-&amp;gt;left leaf -&amp;gt;root-&amp;gt;right leaf
+排序:大范围-&amp;gt;个体-&amp;gt;大范围　这也是递归解问题的标准方法逐渐减小问题．
+那么我们能否从最小的地方, 之后逐渐变大, 想当然是可以的.回来路径上的mergesort就是一个.
+其他的呢插入排序的递归版?
+insert sort
+if ( len = 1)
+    return
+isort(a, len -1)
+for(i=0; i&amp;lt; len;i++
+    sort insert alen
+对比非递归版, 我们发现递归给我门提供了两个潜在的for循环.
+如果是从bottom up这种方式接的问题, 递归是放在回来的路径.
+当然递归也是允许你在取得路径上慢慢扩大处理的问题
+插入排序的终止条件编程了len &amp;gt; maxlen.
+qsort和msort 一去一回.
+我们已经考察递归差不多了,总结下
+1. 一去一回, 两个非嵌套循环
+2. 最好遵从, 去的是逐渐减小任务. 回时增大.
+3. 去回可以互相转换.如isort, 当不是所有的都是要稳定性.&lt;/p&gt;
+
+&lt;h3 id=&#34;接下来看递归和非递归的转换:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;接下来看递归和非递归的转换.&lt;/h3&gt;
+
+&lt;p&gt;bubble sort
+if len &amp;lt; 2
+    return
+sort maxer
+bulle sort(len -1)
+冒泡的递归很简单
+那么qsort的非递归版呢
+首先递归给了一个for我们得自己补上
+for
+接下来递归编程压栈就可以了,
+下面的问题答案也是本问题的答案.&lt;/p&gt;
+
+&lt;h3 id=&#34;最后一个问题什么问题不能用递归解:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;最后一个问题什么问题不能用递归解?&lt;/h3&gt;
+
+&lt;p&gt;二叉树层序遍历递归搞不定.
+这个问题实际转换成, 非递归版什么问题搞定什么问题
+我简单的认为
+1. 问题可被还原.
+2. 必要时, 需要stack 信息追踪
+没了. 好关于递归就到这里.
+在考察语言序列的顺序问题.递归的顺序我们很清楚了.但我们似乎还迷茫.
+实际上我们接触的问题都不是用递归解的.
+比如内核的伙伴系统, page cache这些算法. 实际上是这些结构的延伸.
+所有的函数方法都是为了让操作对象, 保持相应结构的性质.
+也就是说这种算法的核心与目的就是结构, 使数据保持这种结构, 算法的目的达到了.
+重点在于维护结构整体, 这点看来和排序算法一样, 一个是侧重空间关系, 一个数值关系.
+可以说都是在保证空间性质的前提, 完成量的性质:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;我们得到两个基本概念, 描述数据个体的量, 与整体的空间结构.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;空间结构是框架, 量则是内容.
+现在我们来看一个实际的算法问题, 如何判断两边是否有环, 这里说的主要是空间结构.
+这个问题主要关注数据的空间结构, 最简单的加个访问标志位.不加呢, 别的方法呢?
+再加一个指针, 也能解决.通过辅助数据结构两个指针解决了这个问题. 现在回想问题.
+我们判断环, 实质上是找到一个等价的条件, 这个条件, 要不然是 ==, 要不然是 !=
+这和具体逻辑有关. 但是我们一定可以确定的就是我们需要right 和left两个operand.
+需要至少两个对比的对象.而这个对象本质就是量. 这里想提供解决问题的通用方式.
+判断问题要有两个量. 而这两个量.
+这里揭示了算法的核心, 就是在完成特定的问题or 结构, 我们需要辅助的结构:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;常见的辅助结构:变量/flag之类, 指针, 队列, stack, 不限制使用数量.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;问题的解决, 变成寻找挑选合适的辅助结构了. 如两个变量比较/flag自身test, 两个指针:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;指针的速度是个很重要的解决问题的因素, 如上面的环问题的两个不同指针.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这也是解决比较问题的, 常见方法.
+选好辅助数据结构就是, 运用了. 运用的主要原则就是找到基本情况. 把具备的互斥特征的
+基本情况找到, 并应用辅助数据结构解决问题.&lt;/p&gt;
+
+&lt;h2 id=&#34;动态规划问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;动态规划问题&lt;/h2&gt;
+
+&lt;p&gt;DP通常是以递归化简问题形式出现.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The Journey to RCU</title>
+      <link>http://firoyang.org/kernel/rcu/</link>
+      <pubDate>Sun, 24 May 2015 09:52:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/rcu/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
+&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
+
+&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
+scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
+scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
+另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
+From wikipedia,  A system whose performance improves after adding hardware,
+proportionally to the capacity added, is said to be a scalable system.
+&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
+言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
+Read Copy Update HOWTO介绍了当初RCU开发的动机:
+* Increase in cost of conventional locks
+第一个原因也是最重要的, 最根本原因.
+传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
+一种新的锁机制减少访问内存,就成了强烈的需求.
+* Cache benefits of lock-free reads
+传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
+3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
+spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
+之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
+在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
+像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
+其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
+* Avoiding complicated races
+No deadlock, 减少了开发维护.&lt;/p&gt;
+
+&lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
+
+&lt;p&gt;list rcu
+&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
+&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
+&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
+RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
+
+&lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Publish-Subscribe
+For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
+&lt;li&gt;Observer
+For updater to wait For Pre-Existing RCU Readers to Complete
+Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
+
+&lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
+
+&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
+obeyed by the critical sections of pure spinlocks:
+blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
+
+&lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
+stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
+
+&lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
+
+&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
+
+&lt;p&gt;#FAQ
+* Difference with primitive and atomic
+* Grace period is synchroinze_rcu or a softirq justment
+* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
+
+&lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
+
+&lt;h1 id=&#34;reference-1:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
+
+&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
+本文不关心RCU的实现.
+本文的核心目标就是了解如何使用RCU.
+所有使用RCU代码, 都可以分为4部分:
+RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
+update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
+synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
+free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
+Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
+理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
+
+&lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
+
+&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
+上面的RCU read critical section和synchronize可以构成completion的语义.
+为什么要用RCU而不是内核自身提供的completion函数呢?
+Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
+所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
+
+&lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
+
+&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
+但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
+Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
+同样也会带来性能的损耗,而不是almost zero in his paper.
+引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
+
+&lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
+
+&lt;h1 id=&#34;publish-subscribe:ccb822b6795f419b08737308491f6183&#34;&gt;Publish-Subscribe&lt;/h1&gt;
+
+&lt;h1 id=&#34;read-write-lock-alternative:ccb822b6795f419b08737308491f6183&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
 </description>
     </item>
     

@@ -7,528 +7,142 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
-    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
+    <updated>Sun, 24 May 2015 09:52:12 CST</updated>
     
     <item>
-      <title>Console and TTY</title>
-      <link>http://firoyang.org/kernel/console/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <title>The Journey to RCU</title>
+      <link>http://firoyang.org/kernel/rcu/</link>
+      <pubDate>Sun, 24 May 2015 09:52:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/console/</guid>
+      <guid>http://firoyang.org/kernel/rcu/</guid>
       <description>
 
-&lt;h1 id=&#34;about-the-design:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;About the design&lt;/h1&gt;
+&lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;Why dose we use /dev/xxx to represent the &amp;ldquo;tty&amp;rdquo; device?
-&amp;gt; The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some
-&amp;gt; random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;
-&amp;gt; have nothing to do with each other), &lt;em&gt;but the fact that you can use common&lt;/em&gt;
-&amp;gt; &lt;em&gt;tools to operate on different things&lt;/em&gt;. &amp;ndash; Linus
-So we got the key point!
-In order to use the common tools, file ops and vfs layer, the tty device is &amp;ldquo;abstructed&amp;rdquo; to
-files by us. Addnationaly, we must assurance that is the files is &lt;em&gt;different&lt;/em&gt;. What does
-the word &amp;ldquo;dirrerent&amp;rdquo; means is not that you have some random different filename, but the
-fact that you can access the real device through the different.
-&amp;gt; From wikipedia:
-&amp;gt; In mathematics, injections, surjections and bijections are classes of functions distinguished
-&amp;gt; by the manner in which arguments (input expressions from the domain) and images
-&amp;gt; (output expressions from the codomain) are related or mapped to each other.
-I got an insight that abstruction is a non-injective, right?
-But non-injective may not be a anstruction.
-An asbstruction should come from manipulating different objects.
-Non-injective, 多对一; Multiplex, 一对多.
-So we can use mathematical language to describe the linux subsystem.
-From real life device to a filesystem file.
-* Abstruction: Non-injective, Multiplex(not partial function).
-* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!
-Abstruction -&amp;gt; Control abstruction and data abstruction -&amp;gt; Abstruction layer&lt;/p&gt;
+&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
+&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;软件设计的两个主要目的.
-1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.
-2. Separation of concerns, modular(abstruciton in layer), 笛卡尔划分的思想&lt;/p&gt;
+&lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
 
-&lt;h1 id=&#34;tty-struct-disc-data:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;tty_struct-&amp;gt;disc_data&lt;/h1&gt;
+&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
+scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
+scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
+另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
+From wikipedia,  A system whose performance improves after adding hardware,
+proportionally to the capacity added, is said to be a scalable system.
+&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
+言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
+Read Copy Update HOWTO介绍了当初RCU开发的动机:
+* Increase in cost of conventional locks
+第一个原因也是最重要的, 最根本原因.
+传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
+一种新的锁机制减少访问内存,就成了强烈的需求.
+* Cache benefits of lock-free reads
+传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
+3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
+spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
+之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
+在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
+像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
+其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
+* Avoiding complicated races
+No deadlock, 减少了开发维护.&lt;/p&gt;
 
-&lt;p&gt;tty_init_dev-&amp;gt;
-{
-    initialize_tty_struct-&amp;gt;tty_ldisc_init
-    tty_ldisc_setup-&amp;gt;tty_ldisc_open-&amp;gt;n_tty_open-&amp;gt; tty-&amp;gt;disc_data = ldata;
-}
-sys_vhangup-&amp;gt;tty_vhangup_self-&amp;gt;__tty_hangup-&amp;gt;tty_ldisc_hangup-&amp;gt;tty_ldisc_reinit
-vfs_write-&amp;gt;redirected_tty_write-&amp;gt;tty_write-&amp;gt;n_tty_write-&amp;gt;process_output&lt;/p&gt;
+&lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
 
-&lt;h1 id=&#34;early-con:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;early_con&lt;/h1&gt;
+&lt;p&gt;list rcu
+&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
+&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);
-setup_earlycon-&amp;gt;
-{
-    parse_options-&amp;gt;
-    {
-        parse earlycon_device-&amp;gt;port-&amp;gt;uartclk and
-        earlycon_device-&amp;gt;baud
-    }
-    setup = early_serial8250_setup-&amp;gt; init_port(device);
-    register_console(early_console_dev.con)
-}&lt;/p&gt;
+&lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
 
-&lt;h1 id=&#34;earlyprintk:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;earlyprintk&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
+&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
+RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
 
-&lt;p&gt;early_param(&amp;ldquo;earlyprintk&amp;rdquo;, setup_early_printk)-&amp;gt;
-{
-    early_serial_init-&amp;gt;
-    {&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;}
-early_console_register(&amp;amp;early_serial_console, keep);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;cpu-hotplug:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;cpu hotplug&lt;/h1&gt;
+&lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;onset
-static struct smp_hotplug_thread softirq_threads {
-.thread_fn              = run_ksoftirqd
-};
-early_initcall(spawn_ksoftirqd)-&amp;gt;mpboot_register_percpu_thread(&amp;amp;softirq_threads)&lt;/li&gt;
-&lt;li&gt;nucles onset
-suspend_enter-&amp;gt;enable_nonboot_cpus-&amp;gt;_cpu_up-&amp;gt;smpboot_create_threads-&amp;gt;&lt;strong&gt;smpboot_create_thread(&amp;amp;hotplug_threads)-&amp;gt;
-kthread_create_on_cpu(smpboot_thread_fn-&amp;gt; ht-&amp;gt;thread_fn(td-&amp;gt;cpu)= run_ksoftirqd-&amp;gt;&lt;/strong&gt;do_softirq-&amp;gt;h-&amp;gt;action(h) = run_timer_softirq-&amp;gt;
-__run_timers-&amp;gt;call_timer_fn)&lt;/li&gt;
+&lt;li&gt;Publish-Subscribe
+For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
+&lt;li&gt;Observer
+For updater to wait For Pre-Existing RCU Readers to Complete
+Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;vt 就是个tty也有tty_driver 叫console_driver.&lt;/p&gt;
+&lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
 
-&lt;h1 id=&#34;reference:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Reference&lt;/h1&gt;
+&lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
 
-&lt;h1 id=&#34;contents:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Contents&lt;/h1&gt;
+&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
+obeyed by the critical sections of pure spinlocks:
+blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal&#34;&gt;What is the difference between shell, console, and terminal?&lt;/a&gt;
-What does console do in kernel or u-boot?
-Linux console?
-Computer terminal: keyboard + dispaly
-Terminal emulator:&lt;/p&gt;
+&lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
 
-&lt;h1 id=&#34;get-a-glance-on-u-boot:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;get a glance on u-boot&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
+stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
 
-&lt;p&gt;start.S:board_init_r
-init_sequence_f: -&amp;gt;init_baud_rate; serial_init; console_init_f
-serial_init -&amp;gt;&amp;amp;eserial1_device-&amp;gt;start=eserial##port##_init-&amp;gt;NS16550_init: UART divisor init.
-Firstly, the struct of serial define some input and output funtion.
-It&amp;rsquo;s basic function of serial, put or get!
-console_init_f: just gd-&amp;gt;have_console = 1;
-init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,
-initr_serial: just register &amp;amp;eserial1_device to serial_devices
-stdio_add_devices: drv_system_init, serial_stdio_init
-drv_system_init: register default serial dev to devs.list.
-serial_stdio_init: register &amp;amp;eserial1_device to devs.list. Duplicate, but serial dev &amp;ldquo;eserial0&amp;rdquo;  and system &amp;ldquo;serial&amp;rdquo;.
-console_init_r: console_doenv -&amp;gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &amp;ldquo;serial&amp;rdquo;, but they may be KBD!
-看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?
-main_loop:cli_loop: getc!&lt;/p&gt;
+&lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
 
-&lt;h1 id=&#34;what-is-platform-device-or-driver:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;what is platform device or driver?&lt;/h1&gt;
+&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
 
-&lt;h1 id=&#34;a-reallife-serial8250:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;A reallife serial8250&lt;/h1&gt;
+&lt;p&gt;#FAQ
+* Difference with primitive and atomic
+* Grace period is synchroinze_rcu or a softirq justment
+* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
 
-&lt;p&gt;drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port
-module_init-&amp;gt;
-{
-    serial8250_init-&amp;gt;serial8250_isa_init_ports-&amp;gt;serial8250_ports[i].port.ops = &amp;amp;serial8250_pops; //insidious
-    boca_init-&amp;gt;platform_device_register(&amp;amp;boca_device); //register platform device and data.
-}
-* uart_port-&amp;gt;tty_port&lt;/p&gt;
+&lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
 
-&lt;p&gt;serial8250_probe(plat_serial8250_port)-&amp;gt;serial8250_register_8250_port(uart_8250_port)-&amp;gt;
-uart_add_one_port(&amp;amp;serial8250_reg, &amp;amp;uart-&amp;gt;port=uart_port)-&amp;gt;
-{&lt;/p&gt;
+&lt;h1 id=&#34;reference-1:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;pre&gt;&lt;code&gt;uart_configure_port-&amp;gt;
-{
-    port-&amp;gt;ops-&amp;gt;config_port(port, flags)=serial8250_config_port
-    if post is console and not registered; register!
-    we know that uport-&amp;gt;cons = drv-&amp;gt;cons; what is the relation to registering about up-&amp;gt;cons.
-    why we register it? where does drv-&amp;gt;cons come from?
-    //这个uart_driver drv就是serial8250_reg, 我们也就知道了
-    // console是设备的一种天生能力. 能否使用, 只关乎你是否想用, 就是配置相关的config SERIAL8250_CONSOLE
-    // con_driver is the backends, vga, dummy/serial?, fb. 
-}
-tty_port_register_device_attr-&amp;gt;
-{
-    //tty_driver  tty_port
-    tty_port_link_device
-    tty_register_device_attr
-}
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;}&lt;/p&gt;
+&lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
 
-&lt;h1 id=&#34;simple-conceptions:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Simple conceptions&lt;/h1&gt;
+&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
+本文不关心RCU的实现.
+本文的核心目标就是了解如何使用RCU.
+所有使用RCU代码, 都可以分为4部分:
+RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
+update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
+synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
+free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
+Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
+理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.linusakesson.net/programming/tty/&#34;&gt;You must read this -&amp;gt; The TTY demystified&lt;/a&gt;
-System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.
-        UART
-        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)
-* System console
-Virtual termial, Terminal emulator/telnet/ssh -&amp;gt; pts ,Physical terminal
-You need at least one virtual terminal device in order to make use of your keyboard and monitor.
-VT combine keyboard and display see con_init
-con_init init a virtual terminal like gnome-terminal but in kernel.
-con_init mainly init display.
-vty_init mainly init kbd
-They all can be system console.(Exception pts??), if you enable it.
-Console is the entry of linux system.
-* Console driver &amp;ndash; banckends of  console
-struct console 指定了console的结构.
-* Console config
-If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.
-If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.
-How to explain this phenomena?
-From show_cons_active, we know /dev/console should come from console_drivers.
-/dev/console is really the pointer.
-Now, let&amp;rsquo;s inspect open /dev/console.
-* Open /dev/console
-Fisrt, it&amp;rsquo;s the very last place of booting kernel.
-start_kernel-&amp;gt;rest_init-&amp;gt;kernel_init-&amp;gt;kernel_init_freeable-&amp;gt;sys_open((const char __user *) &amp;ldquo;/dev/console&amp;rdquo;, O_RDWR, 0)-&amp;gt;&amp;hellip;-&amp;gt;
-console_fops-&amp;gt;tty_open-&amp;gt;
-{&lt;/p&gt;
+&lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
 
-&lt;pre&gt;&lt;code&gt;// Sitiuations: disbale VT CONSOLE byt enable SERIAL8250_CONSOLE.
-// This function work only for /dev/tty
-// ls -l /dev/tty
-// crw-rw-rw- 1 root tty 5, 0 Dec 10 10:24 /dev/tty
-tty_open_current_tty-&amp;gt;
-{
-    /dev/console is 5:1, just return NULL
-}
-//This index should be Ctrl + Alt + Fn??
-// tty_struct is corresponding virtual console, or just console??
-// lookup tty_driver. It looks like lookup a inode, right?
-tty_lookup_driver-&amp;gt;
-{
-    // Find a tty_driver by device() in console_drivers.
-    // So we know, got a console, then got a tty_driver, right?
-    // Where do the components of console_drivers come form?
-    // At present, we should have only serial8250_console because 
-    // console vt_console_driver is disabled by us! But tty_driver console_driver
-    // still do exist!So console and tty is really separated!
-    // When we init vt, we get the tty_driver console_driver with con_ops type of tty_operations.
-    // tty_drivers have the same major with /dev/tty0!
-    // char_dev -&amp;gt; tty_driver int vty_init, not disable.
-    // vt console---^
-    console_device-&amp;gt;c-&amp;gt;device(c, index)
-    // What about serial8250_console?
-    // Where is the tty_driver of serial8250_console?
-    // console-&amp;gt;data = uart_driver-&amp;gt;tty_driver.
-    // We got another scene : uart-&amp;gt;tty
-    // serial8250 console-&amp;gt;data-^
-    // serial&#39;s tty_driver alloced in serial8250_init with uart_ops.
-    // vt&#39;s tty_driver alloced in vty_init.
-    // We summarize these:
-    // uart_driver serial8250_reg &amp;lt;-&amp;gt;  vc dev or /dev/tty*
-    // serial tty driver &amp;lt;-&amp;gt; vt tty driver 
-    // fs:vty_init &amp;lt;-&amp;gt; module:serial8250_init
-    // tty driver ops con_ops &amp;lt;-&amp;gt; uart_ops
-    // vt use major to connect tty and  vc dev
-    // serial use major and -&amp;gt; to connect tty and uart_driver
-    // It seems that uart and tty has a strong relationship, yet vt.
-    // Ok... we got tty driver.
-    // If we disable vt console, then here is the serial8250 tty_driver.
-}
-// Lookup for tty_struct
-tty_driver_lookup_tty -&amp;gt;
-{
-    //tty_struct is alloced in init function alloc_tty_driver.
-    // ttys, termios, ports, cdevs.
-    // ttys was used by tty_standard_install then tty_driver_install_tty 
-    // then tty_init_dev then ok we return to tty open. So this is the start place.
+&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
+上面的RCU read critical section和synchronize可以构成completion的语义.
+为什么要用RCU而不是内核自身提供的completion函数呢?
+Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
+所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
 
-    So we know tty_driver-&amp;gt;ttys[*] must be NULL.
-}
-tty_init_dev-&amp;gt;
-{
-    // tty_driver likes a process, ttys like the files, tty_struct like a file!
-    // So we know a tty_struct is a tty file.
-    // tty_driver much like a inode
-    //So tty_struct-&amp;gt;ops = tty_driver-&amp;gt;ops = &amp;amp; uart_ops
-    alloc_tty_struct-&amp;gt;tty-&amp;gt;ops = driver-&amp;gt;ops;
-    tty_driver_install_tty(driver, tty_struct)-&amp;gt; tty_standard_install-&amp;gt;driver-&amp;gt;ttys[tty-&amp;gt;index] = tty;
-}
-// Ok... We got a tty_struct.
-// Add /dev/console to tty_struct-&amp;gt;tty_files
-tty_add_file
-// At present, what have we done?
-// open(/dev/console)-&amp;gt;console_drivers-&amp;gt;console-&amp;gt;tty_driver-&amp;gt;tty_struct, right?
+&lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
 
-tty-&amp;gt;ops-&amp;gt;open(tty, filp)-&amp;gt;//ops = &amp;amp;uart_ops
-{
-    uart_ops-&amp;gt;open = uart_open-&amp;gt;
-    {
-        uart-&amp;gt; tty struct
-        struct uart_driver *drv = (struct uart_driver *)tty-&amp;gt;driver-&amp;gt;driver_state;
-        struct uart_state *state = drv-&amp;gt;state + line; //uart_state
-        tty-&amp;gt;driver_data = state;
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
+但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
+Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
+同样也会带来性能的损耗,而不是almost zero in his paper.
+引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
 
-&lt;p&gt;}
-// At present, we understand the flow of open /dev/console to serial console&lt;/p&gt;
+&lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
 
-&lt;h1 id=&#34;what-about-opening-dev-console-to-vt-console:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about opening /dev/console to vt console&lt;/h1&gt;
+&lt;h1 id=&#34;publish-subscribe:ccb822b6795f419b08737308491f6183&#34;&gt;Publish-Subscribe&lt;/h1&gt;
 
-&lt;p&gt;sys_open(/dev/console)-&amp;gt; &amp;hellip; tty_open -&amp;gt;
-{
-    tty_lookup_driver-&amp;gt; get tty_driver=console_driver,
-    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!
-    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.
-    // system console就有了, printk也就有了归处. In other words, you registered, you got printed
-    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.
-    // 那么在kernel_init中sys_open又是什么鬼呢?
-    // dev/tty 是专门真对进程的, 就是进程之前打开了一个tty就存在singnal里, 这个dev/tty就是取出来的.&lt;/p&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;总结下-打开-dev-console-会从console-drivers-最终到达tty-driver:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.&lt;/h1&gt;
-
-&lt;h1 id=&#34;这和-dev-tty-dev-ttys-从tty-drivers-差不多:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.&lt;/h1&gt;
-
-&lt;p&gt;// 这么输出为什么不会打窜了?
-// How ctrl alt Fn work?
-// echo xxx /dev/tty in serial tty_lookup_driver
-// 另一个问题, serial 的terminal?&lt;/p&gt;
-
-&lt;h1 id=&#34;the-perspective:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;The perspective&lt;/h1&gt;
-
-&lt;p&gt;/dev/*
-vfs
-chrdev
-tty_fops&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;gt;tty core
-    ld_ops &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty line discipline(for read, write)
-tty_driver con_ops/uart_ops&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty driver and tty_operations
-HW
-There are three different types of tty drivers: console, serial port, and pty.
-serial8250_default_handle_irq
-UART console
-              |&amp;mdash;- Virtual terminal &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash; VT console
-              |                 | &amp;ndash; VT console
-              |&amp;mdash;-
-        Terminal&amp;ndash;|
-              |&amp;mdash;-&lt;/p&gt;
-
-&lt;h1 id=&#34;what-about-console:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about console?&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;early_con
-start_kernel or setup_arch(arm)-&amp;gt;parse_early_param-&amp;gt;do_early_param-&amp;gt;p-&amp;gt;setup_func()= setup_early_printk-&amp;gt;register_console&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;vga_con
-start_kerenl-&amp;gt;
-{
-// All about vga console
-set_arch-&amp;gt; conswitchp = &amp;amp;vga_con; or conswitchp = &amp;amp;dummy_con;
-console_init-&amp;gt;
-{
-    con_init-&amp;gt;
-    {
-        // vc-&amp;gt;vc_sw-&amp;gt;con_putcs is DUMMY
-        //内存映射64KB or 32KB的VGA区域. 启动VGA
-        conswitchp-&amp;gt;con_startup = vgacon_startup -&amp;gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);
-        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间
-        // 核心内容!
-        for (currcons = 0; currcons &amp;lt; MIN_NR_CONSOLES; currcons++) {
-            // 给vc_cons[currcons].d分配内存
-            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);
-            INIT_WORK(&amp;amp;vc_cons[currcons].SAK_work, vc_SAK);
-            //初始化vc_cons[currcons].d
-            tty_port_init(&amp;amp;vc-&amp;gt;port);
-            // 继续初始化, 主要是确定screenbuf size
-            visual_init(vc, currcons, 1);
-            // 给vc_screenbuf分配内存
-            vc-&amp;gt;vc_screenbuf = kzalloc(vc-&amp;gt;vc_screenbuf_size, GFP_NOWAIT);
-            vc_init(vc, vc-&amp;gt;vc_rows, vc-&amp;gt;vc_cols,
-                currcons || !vc-&amp;gt;vc_sw-&amp;gt;con_save_screen);
-        }&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    [    0.000000] Console: colour VGA+ 80x25
-    register_console(&amp;amp;vt_console_driver);//vt_console can use vgacon writing.
-}
-serial8250_console_init-&amp;gt;register_console(&amp;amp;serial8250_console) to console_drivers; exclusive_console.
-[    0.000000] console [tty0] enabled
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}
-module_init(serial8250_init);??
-}&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fbcon
-register_framebuffer-&amp;gt; do_take_over_console -&amp;gt;
-{
-do_register_con_driver-&amp;gt;csw-&amp;gt;con_startup();registered_con_driver
-do_bind_con_driver -&amp;gt;
-{
-    [    3.882220] Console: switching to colour dummy device 80x25
-    [    4.720732] Console: switching to colour frame buffer device 170x48
-}
-}&lt;/p&gt;
-
-&lt;h2 id=&#34;vga-text-console-printk-write:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;VGA text console printk &amp;amp; write&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;kernel space
-printk-&amp;gt; &amp;hellip;-&amp;gt;log_buf&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;userspace for ttyN
-tty_fops-&amp;gt;write=tty_write-&amp;gt; tty_ldisc_N_TTY-&amp;gt;write=n_tty_write-&amp;gt; tty_driver-&amp;gt;ops=con_ops-&amp;gt;write=con_write-&amp;gt;do_con_write&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;agent
-console_drivers-&amp;gt;vt_console_driver-&amp;gt;serial8250_console-&amp;gt;NULL
-console_unlock-&amp;gt;..-&amp;gt;__call_console_drivers-&amp;gt; console_drivers-&amp;gt;write = vt_console_print
-{
-//保存到screen buf, vga_con也什么不做啊.
-scr_writew((vc-&amp;gt;vc_attr &amp;lt;&amp;lt; 8) + c, (unsigned short *)vc-&amp;gt;vc_pos);&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;what-about-tty:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about tty&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;onset
-console_init-&amp;gt;tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);
-N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;
-fs_initcall:chr_dev_init-&amp;gt;drivers/tty/tty_io.c: tty_init-&amp;gt;
-{&lt;/p&gt;
-
-&lt;p&gt;/* /dev/tty0 = /dev/console console_ops &lt;em&gt;/
-/&lt;/em&gt; /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */&lt;/p&gt;
-
-&lt;p&gt;//&amp;ldquo;/dev/tty&amp;rdquo;,
-cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);
-&amp;ldquo;/dev/console&amp;rdquo;
-cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);
-vty_init-&amp;gt;
-{
-    //&amp;ldquo;dev/tty0&amp;rdquo;&lt;br /&gt;
-    cdev_init(&amp;amp;vc0_cdev, console_fops);
-    //&amp;ldquo;/dev/ttyN&amp;rdquo;
-    tty_register_driver-&amp;gt;
-    {
-        // What does tty_register_driver do ?
-        // Alloc and register chr dev region.
-        // Add cdev with tty_ops and above region.
-        // Register tty device
-        // Why do we register tty devices?
-        // These devices must be used in some place.
-        // After registering itself, the driver registers the devices it controls through the tty_register_device function.
-        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.
-        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
-        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
-        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)
-        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct
-        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.
-        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
-    }
-    kbd_init
-}
-}
-device_init:serial8250_init-&amp;gt;
-{
-// In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;
-// dmesg |grep Serial
-// [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled
-// serial8250.c -&amp;gt; tty_io.c
-serial8250_reg.nr = UART_NR;
-ret = uart_register_driver(&amp;amp;serial8250_reg);
-tty_driver set to uart_driver by uart_register_driver -&amp;gt;
-{
-    drv-&amp;gt;state = kzalloc        //uart_state
-    normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg
-    tty_set_operations(normal, &amp;amp;uart_ops);
-    struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port
-    tty_port_init(port);
-    port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port
-    // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.
-    static struct uart_driver serial8250_reg = {
-        .owner                  = THIS_MODULE,
-        .driver_name            = &amp;ldquo;serial&amp;rdquo;,
-        .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,
-        .major                  = TTY_MAJOR,
-        .minor                  = 64,
-        .cons                   = SERIAL8250_CONSOLE,
-    };
-    retval = tty_register_driver(normal); -&amp;gt; register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name) //32, ttyS?*? should be tty_ops&lt;/p&gt;
-
-&lt;p&gt;}
-serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);
-}&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;nucleus
-tty_write-&amp;gt;ld-&amp;gt;ops-&amp;gt;write=n_tty_write-&amp;gt;(tty_struct tty-&amp;gt;ops-&amp;gt;write)=uart_write-&amp;gt;
-{
-struct uart_state *state = tty-&amp;gt;driver_data;
-port = state-&amp;gt;uart_port;
-circ = &amp;amp;state-&amp;gt;xmit;
-memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);
-uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??
-}&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;what-about-pseudoterminal:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about Pseudoterminal&lt;/h1&gt;
-
-&lt;p&gt;/dev/ptmx is the &amp;ldquo;pseudo-terminal master multiplexer&amp;rdquo;. from wikipedia
-static struct tty_driver *ptm_driver;
-static struct tty_driver *pts_driver;
-module_init(pty_init)-&amp;gt;unix98_pty_init-&amp;gt;
-{
-    tty_set_operations(ptm_driver, &amp;amp;ptm_unix98_ops);
-    tty_register_driver(ptm_driver)
-    tty_set_operations(pts_driver, &amp;amp;pty_unix98_ops);
-    tty_register_driver(pts_driver)
-    ptmx_fops = tty_fops;
-    ptmx_fops.open = ptmx_open;
-    cdev_init(&amp;amp;ptmx_cdev, &amp;amp;ptmx_fops);
-}&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;How to use ptmx?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;tty-drivers:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;tty drivers&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;cat /proc/tty/drivers
-/dev/tty             /dev/tty        5       0 system:/dev/tty
-/dev/console         /dev/console    5       1 system:console
-/dev/ptmx            /dev/ptmx       5       2 system
-/dev/vc/0            /dev/vc/0       4       0 system:vtmaster
-usbserial            /dev/ttyUSB   188 0-511 serial
-serial               /dev/ttyS       4 64-95 serial
-pty_slave            /dev/pts      136 0-1048575 pty:slave
-pty_master           /dev/ptm      128 0-1048575 pty:master
-unknown              /dev/tty        4 1-63 console&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;question:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Question?&lt;/h1&gt;
-
-&lt;p&gt;what is /dev/vcs?&lt;/p&gt;
-
-&lt;h1 id=&#34;backup:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Backup&lt;/h1&gt;
-
-&lt;p&gt;./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &amp;ldquo;/dev/vc/0&amp;rdquo;) &amp;lt; 0)
-./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &amp;ldquo;vcs&amp;rdquo;, &amp;amp;vcs_fops))
-./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name);
-./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&amp;gt;num);
-./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&amp;gt;major, driver-&amp;gt;minor_start),
-./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)
-./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)
-./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
+&lt;h1 id=&#34;read-write-lock-alternative:ccb822b6795f419b08737308491f6183&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
 </description>
     </item>
     
     <item>
       <title>Interrupt</title>
       <link>http://firoyang.org/kernel/interrupt/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/interrupt/</guid>
       <description>
@@ -701,7 +315,7 @@ when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
     <item>
       <title>Linux device driver</title>
       <link>http://firoyang.org/kernel/dd/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/dd/</guid>
       <description>
@@ -810,7 +424,7 @@ see release_nodes() -&amp;gt;kfree(dr);&lt;/li&gt;
     <item>
       <title>Linux process management</title>
       <link>http://firoyang.org/kernel/process/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/process/</guid>
       <description>
@@ -1058,7 +672,7 @@ if parent was killed and exit &lt;defunct&gt; will repaped.
     <item>
       <title>Power management</title>
       <link>http://firoyang.org/kernel/pm/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/pm/</guid>
       <description>
@@ -1217,7 +831,7 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
     <item>
       <title>Synchronization</title>
       <link>http://firoyang.org/kernel/synchronization/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/synchronization/</guid>
       <description>
@@ -1346,139 +960,9 @@ Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C
     </item>
     
     <item>
-      <title>The Journey to RCU</title>
-      <link>http://firoyang.org/kernel/rcu/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/rcu/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
-&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
-
-&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
-scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
-scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
-另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
-From wikipedia,  A system whose performance improves after adding hardware,
-proportionally to the capacity added, is said to be a scalable system.
-&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
-言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
-Read Copy Update HOWTO介绍了当初RCU开发的动机:
-* Increase in cost of conventional locks
-第一个原因也是最重要的, 最根本原因.
-传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
-一种新的锁机制减少访问内存,就成了强烈的需求.
-* Cache benefits of lock-free reads
-传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
-3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
-spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
-之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
-在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
-像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
-其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
-* Avoiding complicated races
-No deadlock, 减少了开发维护.&lt;/p&gt;
-
-&lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
-
-&lt;p&gt;list rcu
-&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
-&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
-&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
-&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
-RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
-
-&lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Publish-Subscribe
-For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
-&lt;li&gt;Observer
-For updater to wait For Pre-Existing RCU Readers to Complete
-Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
-
-&lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
-
-&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
-obeyed by the critical sections of pure spinlocks:
-blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
-
-&lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
-stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
-
-&lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
-
-&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
-
-&lt;p&gt;#FAQ
-* Difference with primitive and atomic
-* Grace period is synchroinze_rcu or a softirq justment
-* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
-
-&lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
-
-&lt;h1 id=&#34;reference-1:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
-
-&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
-本文不关心RCU的实现.
-本文的核心目标就是了解如何使用RCU.
-所有使用RCU代码, 都可以分为4部分:
-RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
-update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
-synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
-free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
-Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
-理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
-
-&lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
-
-&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
-上面的RCU read critical section和synchronize可以构成completion的语义.
-为什么要用RCU而不是内核自身提供的completion函数呢?
-Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
-所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
-
-&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
-但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
-Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
-同样也会带来性能的损耗,而不是almost zero in his paper.
-引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
-
-&lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
-
-&lt;h1 id=&#34;publish-subscribe:ccb822b6795f419b08737308491f6183&#34;&gt;Publish-Subscribe&lt;/h1&gt;
-
-&lt;h1 id=&#34;read-write-lock-alternative:ccb822b6795f419b08737308491f6183&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
-</description>
-    </item>
-    
-    <item>
       <title>filesystem</title>
       <link>http://firoyang.org/kernel/fs/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/fs/</guid>
       <description>
@@ -1642,7 +1126,7 @@ man mount&lt;/p&gt;
     <item>
       <title>kernel</title>
       <link>http://firoyang.org/kernel/kernel/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/kernel/</guid>
       <description>

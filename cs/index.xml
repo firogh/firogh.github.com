@@ -7,12 +7,426 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
-    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
+    <updated>Thu, 12 Nov 2015 00:00:00 UTC</updated>
+    
+    <item>
+      <title>System booting</title>
+      <link>http://firoyang.org/cs/boot/</link>
+      <pubDate>Thu, 12 Nov 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/boot/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;h1 id=&#34;contents:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;What basic initializations should be perfomed when power on?
+How do we load the kernel to memory?
+What does kernel do when kernel boot.
+MBR vs BIOS?
+PC vs embedded
+Kernel init
+before start_kernel
+start_kernel
+reset_init &amp;amp; kernel_init&lt;/p&gt;
+
+&lt;h1 id=&#34;p4080-board:4ccc61562af88da39fe562fcf76d50be&#34;&gt;p4080 Board&lt;/h1&gt;
+
+&lt;p&gt;PBL
+1. initialize I2C, SPI, eLBC, eSDHC.
+2. Load RCW and boot init commands from above.
+3. write date to conf register and memory&lt;/p&gt;
+
+&lt;h1 id=&#34;config:4ccc61562af88da39fe562fcf76d50be&#34;&gt;config&lt;/h1&gt;
+
+&lt;p&gt;CCSRBAR -&amp;gt; CCSR
+default is 0x0_FE00_0000&lt;br /&gt;
+CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).
+CCSRBAR always points to itself.
+holdoff&lt;/p&gt;
+
+&lt;h1 id=&#34;u-boot:4ccc61562af88da39fe562fcf76d50be&#34;&gt;u-boot&lt;/h1&gt;
+
+&lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
+
+&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;
+{
+bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;
+&amp;amp;
+boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =
+&amp;amp;
+boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;
+board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;ppc-multicore-booting:4ccc61562af88da39fe562fcf76d50be&#34;&gt;PPC multicore booting&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;/li&gt;
+&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;/li&gt;
+&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;CCSRBAR
+MPC86xx_MCM_OFFSET
+srio_boot_master_release_slave&lt;/p&gt;
+
+&lt;p&gt;uboot-&amp;gt;
+set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
+
+&lt;p&gt;core0 run, 2nd cores holdoff
+core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp
+core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500
+board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {
+&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page
+__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page
+bootpg = BPTR = __secondary_start_page
+plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation
+}
+2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page
+kernel-&amp;gt;
+core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address
+2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle
+arch/powerpc/kernel/head_fsl_booke.S
+U-boot logs:
+Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table
+address.
+SPAG : fdt_fixup_fman_firmware, 567^M^M
+^M^M
+..r.^M^M
+VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M
+VDBG: Secondary cores are not held in reset.^M^M
+Kernel Logs:
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M
+smp: failed starting cpu 1 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M
+smp: failed starting cpu 2 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M
+smp: failed starting cpu 3 (rc -2)^M^M
+Brought up 1 CPUs^M^M
+devtmpfs: initialized^M^M&lt;/p&gt;
+
+&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check
+if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
+
+&lt;p&gt;Here are the logs..&lt;/p&gt;
+
+&lt;p&gt;I printed pa in %lx since the outout of &lt;strong&gt;pa(&lt;/strong&gt;early_start) is in long unsigned int.&lt;/p&gt;
+
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+smp: failed starting cpu 3 (rc -2)
+I don’t see the following print in u-boot..
+ 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,
+ 70                                                 &amp;amp;val, sizeof(val));
++ printf(&amp;ldquo;Firo u-boot:cpu release addr %p, value %x\n&amp;rdquo;, &amp;amp;val, val);&lt;/p&gt;
+
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Light camera action - compile link load</title>
+      <link>http://firoyang.org/cs/build/</link>
+      <pubDate>Sun, 25 Oct 2015 01:46:28 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/build/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:aba878e576894cc4457876fdf276811e&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;contents:aba878e576894cc4457876fdf276811e&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;Why complier can manipulate the address of vriables?
+What is the address in lds(??) file?&lt;/p&gt;
+
+&lt;h1 id=&#34;build-automation:aba878e576894cc4457876fdf276811e&#34;&gt;Build automation&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Make
+make cynthia&lt;/p&gt;
+
+&lt;h2 id=&#34;kbuild:aba878e576894cc4457876fdf276811e&#34;&gt;kbuild&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if no .config, every config tools make a .config from scrach!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;make localmodconfig will reduce many unused kernel config.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;make bzImage  #kmods will not build that configured with M!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;/p&gt;
+
+&lt;h2 id=&#34;yocto:aba878e576894cc4457876fdf276811e&#34;&gt;yocto&lt;/h2&gt;
+
+&lt;p&gt;make ARCH=arm menuconfig
+##build signle kernel module
+make menuconfig
+make oldconfig &amp;amp;&amp;amp; make prepare
+make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1
+make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
+
+&lt;h1 id=&#34;compile-construction:aba878e576894cc4457876fdf276811e&#34;&gt;Compile construction&lt;/h1&gt;
+
+&lt;p&gt;Understand pl deeply
+how to translate it into machine code for specific CPU&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;gcc
+-E -S -c
+-I -L -l
+-ansi
+-fsyntax-only
+-Werror
+-save-temps
+-H: show all header used
+-v
+-Wall
+-fPIC: for shared library
+-Q: print function and statisc?
+-Wextra: 用处不大.
+-U: undefine a preprocessor macro.
+-pipe: make compilation faster, replace xx.S with |
+-Wpadded: we can rearrange the fields of structure to make the structure smaller
+-time
+-x c: c language
+-: stdin
+asmlinkage
+However, for C functions invoked from assembly code,
+we should explicitly declare the function&amp;rsquo;s calling convention,
+because the parameter passing code in assembly side has been fixed.
+##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;
+##Symbol table&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;System.map less
+When you compile the kernel
+nm vmlinux
+readelf -s&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;
+
+&lt;h1 id=&#34;link:aba878e576894cc4457876fdf276811e&#34;&gt;Link&lt;/h1&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;GNU ld&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;gold&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Computer architecture</title>
+      <link>http://firoyang.org/cs/arch/</link>
+      <pubDate>Tue, 13 Oct 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/arch/</guid>
+      <description>
+
+&lt;p&gt;##Reference
+Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存
+《模拟电子技术基础 童诗白 第四版》第一章前半部分
+Structured Computer Organization 6th Edition
+Digital Design and Computer Architecture 2nd Edition
+Computer Organization and Design 5th Edition
+Write Great Code: Volume 1: Understanding the Machine
+See MIPS run
+Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
+Microelectronics&lt;/p&gt;
+
+&lt;h1 id=&#34;computer-architecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer architecture&lt;/h1&gt;
+
+&lt;p&gt;cpu
+memory
+I/O&lt;/p&gt;
+
+&lt;h1 id=&#34;contents:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;I/O IC
+Assembly language
+Interrupt
+ISA
+Machine language
+Interpreting Machine Language Code
+Microarchitecture
+Digital Logic circuit(Logic gates)
+ALU
+Computer memory
+Register/Flip-flop
+Cache/SRAM
+DRAM/capacitor
+Analog Circuit
+BJT FET Didoe&lt;/p&gt;
+
+&lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
+
+&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle
+Semantics in computer science: In programming language theory, semantics is the field concerned
+with the rigorous mathematical study of the meaning of programming languages.
+Language primitive
+ISA: memory model, registers, data types, instructions, word size(?).
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.
+The interface between hardware and software.
+Arm v7
+word = instruction
+vocabulary = instruction set&lt;/p&gt;
+
+&lt;h2 id=&#34;microarchitecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture&lt;/h2&gt;
+
+&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.
+control unit/decoder
+Microcode
+How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?
+What is the pipeline?
+architectural state (the program counter and registers&lt;/p&gt;
+
+&lt;h1 id=&#34;logic-circuit:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Logic circuit&lt;/h1&gt;
+
+&lt;p&gt;Sequential logic
+Combinational logic&lt;/p&gt;
+
+&lt;h2 id=&#34;computer-memory:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer memory&lt;/h2&gt;
+
+&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys
+What is NOR gates?
+What is the implement of gate?&lt;/p&gt;
+
+&lt;p&gt;data type
+instructions: 算术, 控制, 数据传送
+register file
+addressing modes(include memory mode)
+interrupt and exception handling,
+external I/O&lt;/p&gt;
+
+&lt;p&gt;#x86 Interrupt
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.
+##Hardware interrupts
+are used by devices to communicate that they require attention from the operating system.
+asynchronus
+more details in init_IRQ() or set_irq() in driver.
+##software interrupt
+synchronus
+more details in trap_init().
+* exception or trap
+is caused either by an exceptional condition in the processor itself,
+divide zero painc?
+* special instruction, for example INT 0x80
+or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
+
+&lt;h2 id=&#34;microarchitecture-1:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC
+IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.
+结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.
+数据冒险, 指令件参数依赖造成的问题.
+控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;/li&gt;
+&lt;li&gt;branch prediction.
+dsp用条件执行替代跳转.&lt;/li&gt;
+&lt;li&gt;out-of-order
+乱序执行相对于顺序执行.
+无关指令可以任意执行.&lt;/li&gt;
+&lt;li&gt;superscalar
+instruction cycle, 什么是cycle.&lt;/li&gt;
+&lt;li&gt;data level parallelism&lt;/li&gt;
+&lt;li&gt;thread level parallelism
+超线程, 同步问题.&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;cache
+cache miss
+住要看cache, 乱序, 还有lock对执行的影响.
+temporal locality: for icache
+spatial locality: array
+第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.
+##Cache
+a cache is a component that stores data so future requests for that data can be served faster;
+the data stored in a cache might be the results of an earlier computation,
+or the duplicates of data stored elsewhere.
+###CPU cache
+A CPU cache is a cache used by the central processing unit (CPU) of a computer
+to reduce the average time to access data from the main memory.&lt;/p&gt;
+
+&lt;h4 id=&#34;associativity-cpu-cache-algorithms:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Associativity - CPU Cache algorithms&lt;/h4&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Two-way set associative cache&lt;/p&gt;
+
+&lt;h4 id=&#34;cache-coherence:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Cache coherence&lt;/h4&gt;
+
+&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.
+Cache conerence is mantained by mostly archtecure like cpu&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;MSI
+####Cache type&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Instructin cache&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Data cache&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer
+###GPU cache
+###Disk cache
+###Web cache&lt;/p&gt;
+
+&lt;h2 id=&#34;fixme-concepts:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;FIXME concepts&lt;/h2&gt;
+
+&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码
+Numeral system: 手指头　-&amp;gt; 二进制
+logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农
+A Symbolic Analysis of Relay and Switching Circuits
+The Mathematical Theory of Communication
+触发器 英国射电物理学家 William Henry Eccles
+晶体管&lt;/p&gt;
+
+&lt;h1 id=&#34;phy-the-physical-layer:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;PHY &amp;ndash; The physical layer&lt;/h1&gt;
+
+&lt;h2 id=&#34;introductions:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Introductions&lt;/h2&gt;
+
+&lt;p&gt;Fromwikipedia:
+&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]
+&amp;gt; The implementation of this layer is often termed PHY.
+&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;
+PCS
+PMD&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
+
+&lt;p&gt;serial communication: UART(16550) + RS-232
+parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Algorithms and data structues for kernel hacking</title>
       <link>http://firoyang.org/cs/algorithm/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Wed, 27 May 2015 12:42:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/algorithm/</guid>
       <description>
@@ -349,192 +763,9 @@ for
     </item>
     
     <item>
-      <title>Computer architecture</title>
-      <link>http://firoyang.org/cs/arch/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/arch/</guid>
-      <description>
-
-&lt;p&gt;##Reference
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存
-《模拟电子技术基础 童诗白 第四版》第一章前半部分
-Structured Computer Organization 6th Edition
-Digital Design and Computer Architecture 2nd Edition
-Computer Organization and Design 5th Edition
-Write Great Code: Volume 1: Understanding the Machine
-See MIPS run
-Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
-Microelectronics&lt;/p&gt;
-
-&lt;h1 id=&#34;computer-architecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer architecture&lt;/h1&gt;
-
-&lt;p&gt;cpu
-memory
-I/O&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;I/O IC
-Assembly language
-Interrupt
-ISA
-Machine language
-Interpreting Machine Language Code
-Microarchitecture
-Digital Logic circuit(Logic gates)
-ALU
-Computer memory
-Register/Flip-flop
-Cache/SRAM
-DRAM/capacitor
-Analog Circuit
-BJT FET Didoe&lt;/p&gt;
-
-&lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
-
-&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle
-Semantics in computer science: In programming language theory, semantics is the field concerned
-with the rigorous mathematical study of the meaning of programming languages.
-Language primitive
-ISA: memory model, registers, data types, instructions, word size(?).
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.
-The interface between hardware and software.
-Arm v7
-word = instruction
-vocabulary = instruction set&lt;/p&gt;
-
-&lt;h2 id=&#34;microarchitecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture&lt;/h2&gt;
-
-&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.
-control unit/decoder
-Microcode
-How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?
-What is the pipeline?
-architectural state (the program counter and registers&lt;/p&gt;
-
-&lt;h1 id=&#34;logic-circuit:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Logic circuit&lt;/h1&gt;
-
-&lt;p&gt;Sequential logic
-Combinational logic&lt;/p&gt;
-
-&lt;h2 id=&#34;computer-memory:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer memory&lt;/h2&gt;
-
-&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys
-What is NOR gates?
-What is the implement of gate?&lt;/p&gt;
-
-&lt;p&gt;data type
-instructions: 算术, 控制, 数据传送
-register file
-addressing modes(include memory mode)
-interrupt and exception handling,
-external I/O&lt;/p&gt;
-
-&lt;p&gt;#x86 Interrupt
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.
-##Hardware interrupts
-are used by devices to communicate that they require attention from the operating system.
-asynchronus
-more details in init_IRQ() or set_irq() in driver.
-##software interrupt
-synchronus
-more details in trap_init().
-* exception or trap
-is caused either by an exceptional condition in the processor itself,
-divide zero painc?
-* special instruction, for example INT 0x80
-or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
-
-&lt;h2 id=&#34;microarchitecture-1:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC
-IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.
-结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.
-数据冒险, 指令件参数依赖造成的问题.
-控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;/li&gt;
-&lt;li&gt;branch prediction.
-dsp用条件执行替代跳转.&lt;/li&gt;
-&lt;li&gt;out-of-order
-乱序执行相对于顺序执行.
-无关指令可以任意执行.&lt;/li&gt;
-&lt;li&gt;superscalar
-instruction cycle, 什么是cycle.&lt;/li&gt;
-&lt;li&gt;data level parallelism&lt;/li&gt;
-&lt;li&gt;thread level parallelism
-超线程, 同步问题.&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;cache
-cache miss
-住要看cache, 乱序, 还有lock对执行的影响.
-temporal locality: for icache
-spatial locality: array
-第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.
-##Cache
-a cache is a component that stores data so future requests for that data can be served faster;
-the data stored in a cache might be the results of an earlier computation,
-or the duplicates of data stored elsewhere.
-###CPU cache
-A CPU cache is a cache used by the central processing unit (CPU) of a computer
-to reduce the average time to access data from the main memory.&lt;/p&gt;
-
-&lt;h4 id=&#34;associativity-cpu-cache-algorithms:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Associativity - CPU Cache algorithms&lt;/h4&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Two-way set associative cache&lt;/p&gt;
-
-&lt;h4 id=&#34;cache-coherence:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Cache coherence&lt;/h4&gt;
-
-&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.
-Cache conerence is mantained by mostly archtecure like cpu&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;MSI
-####Cache type&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Instructin cache&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Data cache&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer
-###GPU cache
-###Disk cache
-###Web cache&lt;/p&gt;
-
-&lt;h2 id=&#34;fixme-concepts:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;FIXME concepts&lt;/h2&gt;
-
-&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码
-Numeral system: 手指头　-&amp;gt; 二进制
-logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农
-A Symbolic Analysis of Relay and Switching Circuits
-The Mathematical Theory of Communication
-触发器 英国射电物理学家 William Henry Eccles
-晶体管&lt;/p&gt;
-
-&lt;h1 id=&#34;phy-the-physical-layer:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;PHY &amp;ndash; The physical layer&lt;/h1&gt;
-
-&lt;h2 id=&#34;introductions:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Introductions&lt;/h2&gt;
-
-&lt;p&gt;Fromwikipedia:
-&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]
-&amp;gt; The implementation of this layer is often termed PHY.
-&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;
-PCS
-PMD&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
-
-&lt;p&gt;serial communication: UART(16550) + RS-232
-parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Computer science a kernel programmer&#39;s perspective</title>
       <link>http://firoyang.org/cs/cs/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
@@ -893,7 +1124,7 @@ ralink little&lt;/p&gt;
     <item>
       <title>Debugging</title>
       <link>http://firoyang.org/cs/debugging/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/debugging/</guid>
       <description>
@@ -1210,316 +1441,9 @@ f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx&lt;/p&gt;&lt;/li&gt;
     </item>
     
     <item>
-      <title>Fedora distro 物语</title>
-      <link>http://firoyang.org/cs/fedora/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/fedora/</guid>
-      <description>
-
-&lt;p&gt;#Goagent
-139.175.107.84|139.175.107.89|139.175.107.94|139.175.107.99|139.175.107.103|139.175.107.104|139.175.107.108|139.175.107.109|139.175.107.113|139.175.107.118|139.175.107.119|139.175.107.123&lt;/p&gt;
-
-&lt;p&gt;#Nautilus
-* Sidebar
-Edit below file to rename dir in place menu of sidebar.
-vim ~/.config/user-dirs.dirs&lt;/p&gt;
-
-&lt;p&gt;#xdg
-* Specification
-&lt;a href=&#34;http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html&#34;&gt;http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#Raspberry pi
-* Remote viewer
-vinagre&lt;/p&gt;
-
-&lt;p&gt;#fedora 22
-* Check dup and error
-yum check&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;after distro-sync 22 yum/dnf still recognize 21
-yum check must output fedor-relase/repos-21 something like, remove it.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tty loop login
-disable selinux
-authconfig update all&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;kernel parameter
-audit=0 selinux=0&lt;br /&gt;
-rhgb  redaht graphical boot, show picture
-quiet: show little message
-init=/bin/bash&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;boot stop at update UTMP
-disable NetworkManager&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#dropbear
-=generate private key
-dropbearkey -t rsa -f ~/.ssh/id_rsa.db
-=yank public key
-dropbearkey -y -f ~/.ssh/id_rsa.db
-=login in
-dbclient -y -i ~/.ssh/id_rsa.db user@ip
-=trans file
-scp -S dbclient -i ~/.ssh/id_rsa fileName user@ip:/dir&lt;/p&gt;
-
-&lt;h1 id=&#34;gpg:7ebe7329b8e4e35c034da6317572557f&#34;&gt;gpg&lt;/h1&gt;
-
-&lt;p&gt;6A6608B8
-#id3tag
-id3tag -2 *.mp3
-for file in *.mp3;do f=$(echo &amp;ldquo;$file&amp;rdquo; |awk -F &amp;lsquo; &amp;rsquo; &amp;lsquo;{print $2}&amp;rsquo; | awk -F &amp;lsquo;.&amp;rsquo; &amp;lsquo;{print $1}&amp;rsquo;); id3tag -s &amp;ldquo;$f&amp;rdquo; &amp;ldquo;$file&amp;rdquo;;  done
-exiftool -json Baccano!\ 永生之酒(バッカーノ！)\ ORIGINAL\ SOUNDTRACK\ SPIRAL\ MELODIES/12.緩みきった官能のダンス.mp3&lt;/p&gt;
-
-&lt;p&gt;#indent
-indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs *.c *.h
-#qemu
-qemu -m 512 -kernel bzImage -append “root=/dev/sda” -boot c -hda busybox.img -k en-us&lt;/p&gt;
-
-&lt;p&gt;#rdesktop
-rdesktop -K -g 1366x700 -r clipboard:PRIMARYCLIPBOARD 192.168.10.200 -r sound:local -u firo -p &amp;ldquo;&amp;rdquo;
-rdesktop -K -g 1366x700 -r clipboard:CLIPBOAD 192.168.10.200
-nmap  -sP 192.168.10.0/24  | grep &amp;lsquo;Nmap scan&amp;rsquo; | awk &amp;lsquo;{print$5}&amp;rsquo; | while read line; do echo &amp;ldquo;connect to $line&amp;rdquo;;  timeout -s 9 2 rdesktop -K -g 1366x700 -r clipboard:CLIPBOARD $line; done&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Light camera action - compile link load</title>
-      <link>http://firoyang.org/cs/build/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/build/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:aba878e576894cc4457876fdf276811e&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:aba878e576894cc4457876fdf276811e&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Why complier can manipulate the address of vriables?
-What is the address in lds(??) file?&lt;/p&gt;
-
-&lt;h1 id=&#34;build-automation:aba878e576894cc4457876fdf276811e&#34;&gt;Build automation&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Make
-make cynthia&lt;/p&gt;
-
-&lt;h2 id=&#34;kbuild:aba878e576894cc4457876fdf276811e&#34;&gt;kbuild&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;if no .config, every config tools make a .config from scrach!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;make localmodconfig will reduce many unused kernel config.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;make bzImage  #kmods will not build that configured with M!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;/p&gt;
-
-&lt;h2 id=&#34;yocto:aba878e576894cc4457876fdf276811e&#34;&gt;yocto&lt;/h2&gt;
-
-&lt;p&gt;make ARCH=arm menuconfig
-##build signle kernel module
-make menuconfig
-make oldconfig &amp;amp;&amp;amp; make prepare
-make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1
-make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
-
-&lt;h1 id=&#34;compile-construction:aba878e576894cc4457876fdf276811e&#34;&gt;Compile construction&lt;/h1&gt;
-
-&lt;p&gt;Understand pl deeply
-how to translate it into machine code for specific CPU&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;gcc
--E -S -c
--I -L -l
--ansi
--fsyntax-only
--Werror
--save-temps
--H: show all header used
--v
--Wall
--fPIC: for shared library
--Q: print function and statisc?
--Wextra: 用处不大.
--U: undefine a preprocessor macro.
--pipe: make compilation faster, replace xx.S with |
--Wpadded: we can rearrange the fields of structure to make the structure smaller
--time
--x c: c language
--: stdin
-asmlinkage
-However, for C functions invoked from assembly code,
-we should explicitly declare the function&amp;rsquo;s calling convention,
-because the parameter passing code in assembly side has been fixed.
-##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;
-##Symbol table&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;System.map less
-When you compile the kernel
-nm vmlinux
-readelf -s&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;
-
-&lt;h1 id=&#34;link:aba878e576894cc4457876fdf276811e&#34;&gt;Link&lt;/h1&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;GNU ld&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;gold&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>System booting</title>
-      <link>http://firoyang.org/cs/boot/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/boot/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;h1 id=&#34;contents:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;What basic initializations should be perfomed when power on?
-How do we load the kernel to memory?
-What does kernel do when kernel boot.
-MBR vs BIOS?
-PC vs embedded
-Kernel init
-before start_kernel
-start_kernel
-reset_init &amp;amp; kernel_init&lt;/p&gt;
-
-&lt;h1 id=&#34;p4080-board:4ccc61562af88da39fe562fcf76d50be&#34;&gt;p4080 Board&lt;/h1&gt;
-
-&lt;p&gt;PBL
-1. initialize I2C, SPI, eLBC, eSDHC.
-2. Load RCW and boot init commands from above.
-3. write date to conf register and memory&lt;/p&gt;
-
-&lt;h1 id=&#34;config:4ccc61562af88da39fe562fcf76d50be&#34;&gt;config&lt;/h1&gt;
-
-&lt;p&gt;CCSRBAR -&amp;gt; CCSR
-default is 0x0_FE00_0000&lt;br /&gt;
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).
-CCSRBAR always points to itself.
-holdoff&lt;/p&gt;
-
-&lt;h1 id=&#34;u-boot:4ccc61562af88da39fe562fcf76d50be&#34;&gt;u-boot&lt;/h1&gt;
-
-&lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
-
-&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;
-{
-bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;
-&amp;amp;
-boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =
-&amp;amp;
-boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;ppc-multicore-booting:4ccc61562af88da39fe562fcf76d50be&#34;&gt;PPC multicore booting&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;/li&gt;
-&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;/li&gt;
-&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;CCSRBAR
-MPC86xx_MCM_OFFSET
-srio_boot_master_release_slave&lt;/p&gt;
-
-&lt;p&gt;uboot-&amp;gt;
-set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
-
-&lt;p&gt;core0 run, 2nd cores holdoff
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp
-core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500
-board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {
-&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page
-bootpg = BPTR = __secondary_start_page
-plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation
-}
-2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page
-kernel-&amp;gt;
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address
-2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle
-arch/powerpc/kernel/head_fsl_booke.S
-U-boot logs:
-Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table
-address.
-SPAG : fdt_fixup_fman_firmware, 567^M^M
-^M^M
-..r.^M^M
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M
-VDBG: Secondary cores are not held in reset.^M^M
-Kernel Logs:
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M
-smp: failed starting cpu 1 (rc -2)^M^M
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M
-smp: failed starting cpu 2 (rc -2)^M^M
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M
-smp: failed starting cpu 3 (rc -2)^M^M
-Brought up 1 CPUs^M^M
-devtmpfs: initialized^M^M&lt;/p&gt;
-
-&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check
-if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
-
-&lt;p&gt;Here are the logs..&lt;/p&gt;
-
-&lt;p&gt;I printed pa in %lx since the outout of &lt;strong&gt;pa(&lt;/strong&gt;early_start) is in long unsigned int.&lt;/p&gt;
-
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
-Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50
-Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
-Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack
-smp: failed starting cpu 1 (rc -2)
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
-Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50
-Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
-Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack
-smp: failed starting cpu 2 (rc -2)
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
-Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50
-Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
-Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack
-smp: failed starting cpu 3 (rc -2)
-I don’t see the following print in u-boot..
- 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,
- 70                                                 &amp;amp;val, sizeof(val));
-+ printf(&amp;ldquo;Firo u-boot:cpu release addr %p, value %x\n&amp;rdquo;, &amp;amp;val, val);&lt;/p&gt;
-
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack
-smp: failed starting cpu 1 (rc -2)
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack
-smp: failed starting cpu 2 (rc -2)
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack
-smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>The art of Programming</title>
       <link>http://firoyang.org/cs/programming/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/programming/</guid>
       <description>
@@ -1695,7 +1619,7 @@ procmail&lt;/p&gt;&lt;/li&gt;
     <item>
       <title>The programming language</title>
       <link>http://firoyang.org/cs/pl/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/pl/</guid>
       <description>
@@ -2082,6 +2006,86 @@ netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&am
 ##Vim regex
 &lt;a href=&#34;http://vimregex.com/&#34;&gt;http://vimregex.com/&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Fedora distro 物语</title>
+      <link>http://firoyang.org/cs/fedora/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:11 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/fedora/</guid>
+      <description>
+
+&lt;p&gt;#Goagent
+139.175.107.84|139.175.107.89|139.175.107.94|139.175.107.99|139.175.107.103|139.175.107.104|139.175.107.108|139.175.107.109|139.175.107.113|139.175.107.118|139.175.107.119|139.175.107.123&lt;/p&gt;
+
+&lt;p&gt;#Nautilus
+* Sidebar
+Edit below file to rename dir in place menu of sidebar.
+vim ~/.config/user-dirs.dirs&lt;/p&gt;
+
+&lt;p&gt;#xdg
+* Specification
+&lt;a href=&#34;http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html&#34;&gt;http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;#Raspberry pi
+* Remote viewer
+vinagre&lt;/p&gt;
+
+&lt;p&gt;#fedora 22
+* Check dup and error
+yum check&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;after distro-sync 22 yum/dnf still recognize 21
+yum check must output fedor-relase/repos-21 something like, remove it.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;tty loop login
+disable selinux
+authconfig update all&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kernel parameter
+audit=0 selinux=0&lt;br /&gt;
+rhgb  redaht graphical boot, show picture
+quiet: show little message
+init=/bin/bash&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;boot stop at update UTMP
+disable NetworkManager&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;#dropbear
+=generate private key
+dropbearkey -t rsa -f ~/.ssh/id_rsa.db
+=yank public key
+dropbearkey -y -f ~/.ssh/id_rsa.db
+=login in
+dbclient -y -i ~/.ssh/id_rsa.db user@ip
+=trans file
+scp -S dbclient -i ~/.ssh/id_rsa fileName user@ip:/dir&lt;/p&gt;
+
+&lt;h1 id=&#34;gpg:7ebe7329b8e4e35c034da6317572557f&#34;&gt;gpg&lt;/h1&gt;
+
+&lt;p&gt;6A6608B8
+#id3tag
+id3tag -2 *.mp3
+for file in *.mp3;do f=$(echo &amp;ldquo;$file&amp;rdquo; |awk -F &amp;lsquo; &amp;rsquo; &amp;lsquo;{print $2}&amp;rsquo; | awk -F &amp;lsquo;.&amp;rsquo; &amp;lsquo;{print $1}&amp;rsquo;); id3tag -s &amp;ldquo;$f&amp;rdquo; &amp;ldquo;$file&amp;rdquo;;  done
+exiftool -json Baccano!\ 永生之酒(バッカーノ！)\ ORIGINAL\ SOUNDTRACK\ SPIRAL\ MELODIES/12.緩みきった官能のダンス.mp3&lt;/p&gt;
+
+&lt;p&gt;#indent
+indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs *.c *.h
+#qemu
+qemu -m 512 -kernel bzImage -append “root=/dev/sda” -boot c -hda busybox.img -k en-us&lt;/p&gt;
+
+&lt;p&gt;#rdesktop
+rdesktop -K -g 1366x700 -r clipboard:PRIMARYCLIPBOARD 192.168.10.200 -r sound:local -u firo -p &amp;ldquo;&amp;rdquo;
+rdesktop -K -g 1366x700 -r clipboard:CLIPBOAD 192.168.10.200
+nmap  -sP 192.168.10.0/24  | grep &amp;lsquo;Nmap scan&amp;rsquo; | awk &amp;lsquo;{print$5}&amp;rsquo; | while read line; do echo &amp;ldquo;connect to $line&amp;rdquo;;  timeout -s 9 2 rdesktop -K -g 1366x700 -r clipboard:CLIPBOARD $line; done&lt;/p&gt;
+
+&lt;h1 id=&#34;sed:7ebe7329b8e4e35c034da6317572557f&#34;&gt;sed&lt;/h1&gt;
+
+&lt;p&gt;sed  -Ei &amp;rsquo;s/^date: ([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2})/date: \1T\2+08:00 /&amp;rsquo;&lt;/p&gt;
 </description>
     </item>
     

@@ -7,678 +7,12 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
-    <updated>Tue, 22 Sep 2015 00:00:00 UTC</updated>
-    
-    <item>
-      <title>Linux time subsystem</title>
-      <link>http://firoyang.org/kernel/time/</link>
-      <pubDate>Tue, 22 Sep 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/time/</guid>
-      <description>
-
-&lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
-
-&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.
-一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,
-*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态
-那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全
-转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
-                        — William Gibson
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.
-想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在
-时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
-
-&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.
-UTC/GMT
-Based on caesium microwave atomic clock
-Leap second&lt;/p&gt;
-
-&lt;h2 id=&#34;genus-differentia-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;Genus-differentia definition&lt;/h2&gt;
-
-&lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
-
-&lt;h2 id=&#34;功用定义:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;功用定义&lt;/h2&gt;
-
-&lt;p&gt;获取时间
-timer
-sleep ?
-update sched info&lt;/p&gt;
-
-&lt;h2 id=&#34;发生定义-设计-etymology-history-operational-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;发生定义/设计   etymology, history Operational definition&lt;/h2&gt;
-
-&lt;p&gt;timekeeping/计时:时刻．
-clock source: 时间之源, 表针之力.
-clock event: 闹铃之力, 经过tick展现能力.
-tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.
-tickless:
-for timer: use HW timer one shot, set next.
-for update time: in above HW timer, not good
-for sched: for priority distributed in time slice, use timer.
-dynamic tick/no HZ:
-No HZ in idle
-No HZ while only 1 process running for HPC.
-tick devies 就是clock event包了层虎皮.
-tick broadcast framework:  based on tick device
-clock: 可记录时间, 表盘.利用timekeeping
-timer: use clock. what about timer_list?
-timer_list: do in softirq
-* timekeeping aspect
-onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; \
-kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))
-nucleus:used by clock see init_posix_timers and update_wall_time and sys_time
-coda:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;clock source aspect&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tick device layer aspect
-per_cpu(tick_cpu_device, cpu)
-onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device
-nucleus: a38x_timer_interrupt-&amp;gt;a38x_clkevt.event_handler&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tick broadcast framework
-onset:&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;clock aspect
-k_clock
-onset:init_posix_timers &amp;amp; init_posix_cpu_timers
-nucleus: 用户-&amp;gt; posix_clock-&amp;gt;timepkeeping-&amp;gt;clock_socurce&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;timer aspect
-onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
-nucleus: common_timer_set
-hrtimer_interrupt | (tick_handle_periodic-&amp;gt; tick_periodic-&amp;gt; update_process_times-&amp;gt;run_local_timers-&amp;gt;hrtimer_run_queues)-&amp;gt;__run_hrtimer-&amp;gt;timer.function = posix_timer_fn;(set in common_timer_set)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;计算机概念
-system clock CLOCK_REALTIME CLOCK_MONOTONIC
-time.h time_t=tm=timeval=timespec calendar time  clock_t&lt;/p&gt;
-
-&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function
-clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,
-clock event 通过timer来体现自己, timer面向使用者的onset,
-而clock event 则是偏向于nucleus and coda.
-timer: 标记不能立即执行的变化.
-clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.
-* kernel requirement
-linux的时间子系统要求硬件timer提供下面两种能力：
-一是free running的counter，此外需要能够在指定的counter值上产生中断的能力。&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Linux virtualization</title>
-      <link>http://firoyang.org/kernel/virt/</link>
-      <pubDate>Wed, 17 Jun 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/virt/</guid>
-      <description>
-
-&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.
-已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!
-现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和
-他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与
-空间去体验到不同生命历程.
-今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;
-如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.
-显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.
-法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是
-词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是
-influencing by physical virtues or capabilities,
-effective with respect to inherent natural qualities
-受某种实在的长处能力影响, 源自本质的效用.
-这里从两种角度理解virtual, 受影响者, 影响者本身.
-所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.
-这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;virtual 音节划分：vir▪tual
-英 [ˈvɜ:tʃuəl] 美 [ˈvɜ:rtʃuəl]
-adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;有效的，虚像的；（粒子）实际存在的
-虚；虚拟艺术；虚拟的；模拟帐户
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!
-话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.
-很多事情, 在我们出生前就决定了, 我是89年9月出生的.
-我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.
-如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.
-没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.
-好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?
-没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?
-所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.
-那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!
-我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.
-终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora
-之上.&lt;/p&gt;
-
-&lt;h2 id=&#34;fkvm:d29da9244342e72819e84d5dee753d17&#34;&gt;FKVM&lt;/h2&gt;
-
-&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!
-首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel
-运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!
-因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!
-你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.
-怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行
-start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的
-cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.
-也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.
-在内核初始化的时候, 会用调用bios的中断来获取内存信息.
-也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.
-开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.
-现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是
-高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.
-只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?
-我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.
-就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.
-也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.
-如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.
-这里需要很多底层的知识. 先看点资料再回来.
-看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.
-访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.
-探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.
-无论别人说的多么好, 我们必须要有自己的思路.
-总结下所得:
-控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.
-虚拟化一块内存.
-我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.
-由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.
-同时乐趣也会减少.&lt;/p&gt;
-
-&lt;h1 id=&#34;kvm-qemu:d29da9244342e72819e84d5dee753d17&#34;&gt;KVM QEMU&lt;/h1&gt;
-
-&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;
-探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.
-千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然
-是我们自己, 别人的知识只是辅助. 那好我们开始.
-首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.
-往往初学者, 很容易被绕进去.
-从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.
-为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.
-Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供
-全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的
-洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.
-Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.
-至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.
-从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.
-这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.
-Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.
-类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.
-Operating-system-level virtualization
-这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.
-但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.
-比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.
-这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.
-比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,
-他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.
-这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.
-在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,
-网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.
-我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.
-首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?
-官网的解释:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;QEMU is a generic and open source machine emulator and virtualizer.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.
-qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.
-我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.
-那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.
-毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的
-虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.
-据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情
-补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.
-不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂
-肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.
-内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.
-下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.
-我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.&lt;/p&gt;
-
-&lt;p&gt;下面是设备的虚拟化, 这个还是看书去吧.&lt;/p&gt;
-
-&lt;h1 id=&#34;代码实现:d29da9244342e72819e84d5dee753d17&#34;&gt;代码实现&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;KVM architecture&lt;/li&gt;
-&lt;li&gt;Kernel running flow
-svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;/li&gt;
-&lt;li&gt;File
-svm.c vmx.c kvm_main.c kvm_svm.h&lt;/li&gt;
-&lt;li&gt;Function&lt;/li&gt;
-&lt;li&gt;Struct
-kvm_x86_ops x86.h
-vcpu_svm    kvm_svm.h&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Kernel hacking</title>
-      <link>http://firoyang.org/kernel/hacking/</link>
-      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/hacking/</guid>
-      <description>
-
-&lt;h1 id=&#34;kernel-hacker之路:0b18016038ccf925131bdc7a6edbb900&#34;&gt;kernel hacker之路&lt;/h1&gt;
-
-&lt;p&gt;我实在太想聊这个话题 &amp;ndash; 内核hacker的成长之路!
-不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为
-内核的中坚力量, 甚至是maintainer.
-作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.
-因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.
-起始我在12年的11月份曾经给社区, 提过几次补丁. 后来有那么两三次, 想帮着修复
-kernel panic 和oops的问题, 基本上个人感觉难度非常太大就无极而终了.
-5月份这次, 我是因为实在不想在看书籍了, 市面上稍微有点名的书籍, 我都看过.
-实在太厌烦再看书了, 我把自己和另外一个内核hacker 王聪做了对比, 得出结论:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;赶快滚去给社区提patch! 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;我挨个看了王聪给社区提的前50个patch. 都是很简单的修改.
-我几次挫败都是, 因为没能找到合适内核事情去做, 最终没有下文了.
-今天, 我在给社区提了20个左右的patch 10几个被接收了. 我现在找到了一条成长路.&lt;/p&gt;
-
-&lt;h2 id=&#34;内核我现在认为可以给新人做得事:0b18016038ccf925131bdc7a6edbb900&#34;&gt;内核我现在认为可以给新人做得事&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/284099/&#34;&gt;https://lwn.net/Articles/284099/&lt;/a&gt;  这个帖子, 提供了新手可以做得事情, 我觉得非常好.
-smatch coccinelle的分析结果.
-源码中标注的FIXME和TODO, 简单的提过去很难被接受, 难的这些开发者自己都没搞定, 新人更难.
-这也不是一条好路.
-内核bugzilla kerneloops上问题, 这个很难.
-找一个和内核相关的工作驱动啊, 网络开发, 虚拟化, 存储都非常赞.
-自己搞个feature, 感觉更难, 这个需要需求驱动.
-没有一条轻松的路让你走, 但你却不应该光着脚走在上面!!!
-内核之外有很多值得珍惜的. 尽力做好, 你能做的, 开始点滴积累.
-终有一天会聚成沧海, 前提是你等得到那天, 不要亏待自己.
-内核之路始终时不那么清晰, 但是反思过后, 你便知道, 该去做什么了.
-这也许是最难受的情况了.
-Linus 之前说过, 搞得内核你得用起来. uml 是个不错的开端.
-用起来才是王道!&lt;/p&gt;
-
-&lt;p&gt;#git
-&lt;a href=&#34;http://git-scm.com/docs/gittutorial&#34;&gt;gittutorial - A tutorial introduction to Git&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;linux-source-code:0b18016038ccf925131bdc7a6edbb900&#34;&gt;linux source code&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;
-要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.
-我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.
-我的linux next remote 就叫next, 基于其创建开发分支.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git branch now next/master
-git pull next master:now
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1 id=&#34;你提patch-社区的困惑是什么:0b18016038ccf925131bdc7a6edbb900&#34;&gt;你提patch, 社区的困惑是什么?&lt;/h1&gt;
-
-&lt;p&gt;每个kernel newbie 都应该完整看完这个mail list
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&lt;/a&gt;
-你能看到鹰派的Al还有温和派Andrew Morton.
-为什么&lt;a href=&#34;http://kernelnewbies.org/这么重要网站&#34;&gt;http://kernelnewbies.org/这么重要网站&lt;/a&gt;, 不做的好一点, 至少界面友好点.
-应该找个机会, 整一下.&lt;/p&gt;
-
-&lt;h1 id=&#34;fix-kernel-mistakes:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Fix kernel mistakes&lt;/h1&gt;
-
-&lt;p&gt;内核至今如此优秀就是因为, 成千上万前赴后继的开发者笔耕不缀的结果.
-别当豆包不当干粮, 虽然, 你不能设计出很牛的算法, or 什么子系统,
-但是内核还有很多问题有待解决, 正所谓老虎也要打, 苍蝇也要拍; 千里之堤毁于蚁穴.
-我提过好些这种patch Dan Carpenter都告诉我Linus已经改了.&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel-newbie上有个list:0b18016038ccf925131bdc7a6edbb900&#34;&gt;kernel newbie上有个list&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;KernelJanitors/Todo&lt;/a&gt;
-* Style fix
-如:
-remove_wait_queue(entry-&amp;gt;wait_address,&amp;amp;entry-&amp;gt;wait);
-remove_wait_queue(entry-&amp;gt;wait_address, &amp;amp;entry-&amp;gt;wait);&lt;/p&gt;
-
-&lt;h2 id=&#34;smatch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Smatch&lt;/h2&gt;
-
-&lt;p&gt;smatch这个工具是Dan写的主要就是为了找到内核的小问题, 基本用法:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    make CHECK=&amp;quot;~/path/to/smatch/smatch -p=kernel&amp;quot; C=1 \
-            bzImage modules | tee warns.txt
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;smatch 会产生好多可疑的问题, 细心寻找吧.
-你找到了, 那么就是修改了.
-记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.&lt;/p&gt;
-
-&lt;h2 id=&#34;coccinelle:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Coccinelle&lt;/h2&gt;
-
-&lt;p&gt;Coccinelle是 Julia Lawall 写的静态检测工具.very nice.
-自己研究吧
-Documentation/coccinelle.txt
-&lt;a href=&#34;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&#34;&gt;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;生成patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;生成patch&lt;/h2&gt;
-
-&lt;p&gt;先修改.
-之后git add
-在commit 之前你要 git log &amp;ndash;online path/to/modification/file
-看下提交的titile:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git log  --oneline drivers/base/firmware_class.c
-5455c8c firmware: Fix memory leak in error path
-e0fd9b1 firmware: use const for remaining firmware names
-f9692b2 firmware: fix possible use after free on name on a
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;主义冒号:后一定要有一个空格!
-你会还是看下Document下的submitting的文档.
-之后commit:
-先是类似上面的一行oneline 简要说明
-空一行.
-之后具体描述下.
-commit后, 生成patch
-如果你只提交了一次:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git format-patch HEAD^..HEAD
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个命令就ok了.
-如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.
-这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的
-如我这个, 已被接收:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;0001-firmware-Fix-memory-leak-in-error-path.patch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9&lt;/p&gt;
-
-&lt;h2 id=&#34;测试patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;测试patch&lt;/h2&gt;
-
-&lt;p&gt;复杂的patch要编译内核, 安装的机器上跑一下.&lt;/p&gt;
-
-&lt;h2 id=&#34;发送patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;发送patch&lt;/h2&gt;
-
-&lt;p&gt;天朝用户自己打梯子吧proxychains shadowsocks.
-基本步骤是
-先编译一下:
-make path/to/modification/file.o
-之后
-./scripts/checkpatch.pl
-之后 get maintainer
-./scripts/get_maintainer.pl&lt;/p&gt;
-
-&lt;p&gt;发送的时候, 发给维护者 &amp;ndash;cc其他人, 还有cc 一个mailist, 如果没有合适的list的话,
-就cc到linux-kernel@vger.kernel.org, 这是个开放的list, 有合适的list了, 就不要cc它了.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;proxychains git send-email --to ming.lei@canonical.com --cc gregkh@linuxfoundation.org --cc kernel-janitors@vger.kernel.org 0001-firmware-Fix-memory-leak-in-error-path.patch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;免不了你要返工重新修改.这时候, 新生成的patch这样:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git format-patch --subject-prefix=&amp;quot;PATCH v2&amp;quot; HEAD^..HEAD
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;改几次就v几.
-和社区交流的时候, 要注意礼貌, 而且要感谢别人对你的patch做出的建议,
-没有人的时间是被猪拱来的.&lt;/p&gt;
-
-&lt;p&gt;这些都是比较简单(代码量上)的patch, 要想提交深度的还需要对某方面的深度.
-基本上这就完了, 你的真正的patch就给社区了.&lt;/p&gt;
-
-&lt;h1 id=&#34;进阶decent:0b18016038ccf925131bdc7a6edbb900&#34;&gt;进阶decent&lt;/h1&gt;
-
-&lt;p&gt;这个是昨天晚上改drivers代码时候, 看到TODO的注释猛然想到的.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;grep -nr &#39;FIXME&#39; --include=&amp;quot;*.c&amp;quot;  ./ | tee fixmek.log
-grep -nr &#39;TODO&#39; --include=&amp;quot;*.c&amp;quot; ./ | tee todok.log
-wc -l fixmek.log 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;有6000多个.&lt;/p&gt;
-
-&lt;h1 id=&#34;deeply-involved:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Deeply involved&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;http://vger.kernel.org/~davem/net_todo.html&lt;/a&gt;
-这个列表上的基本都过期了&amp;hellip;.哎
-往深了走不是难事, 主要是意识到内核, 不是什么神秘的东西, 选好一个方向
-简单看看概念见我的&amp;lt;如何学习&amp;gt; 就可以实践.
-必须要意识到, 动手比看再多概念管用, 我就是之前看了太多, 还发展出一个哲学
-体系出来:-) 确实随着现代信息科学给社会带来的巨大变化, 哲学也必须要更新.
-才能更好的服务于人.
-这几天就在, 找内核哪里还不完善, 自己能补上, 今天6号了.
-#patch formate advices
-* Julia Lawall Sorry to be picky,
-but normally people put a space after the colon.  Also,
-the subject line could be shorter: Remove unneeded cast.&lt;br /&gt;
-The description part of the subject doesnt have to be unique,
-just the whole thing, asfter the [PATCH] part.
-* Dan Carpenter
-Otherwise your patch was fine, btw.  Other improvements.
-Don&amp;rsquo;t put &amp;ldquo;Drivers:&amp;rdquo; in the subject.
-On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:
-&amp;gt; From: Firo Yang &lt;a href=&#34;mailto:firogm@gmail.com&#34;&gt;firogm@gmail.com&lt;/a&gt;
-Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;/p&gt;
-
-&lt;p&gt;Include everyone from the ./scripts/get_maintainer.pl output except
-don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing
-list there already.
-* To find  patch prefix&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git log --oneline  path/to/file.c
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;更新patch 要加v几&lt;/p&gt;
-
-&lt;p&gt;git format-patch &amp;ndash;subject-prefix=&amp;ldquo;PATCH v2&amp;rdquo; xxx..ooo&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;提交多个patch 要手动生成一个[PATCH 0/N], 这个0就是要写简要描述的.&lt;/p&gt;
-
-&lt;p&gt;proxychains git send-email &amp;ndash;subject &amp;ldquo;[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values&amp;rdquo; &amp;ndash;thread &amp;ndash;compose &amp;ndash;confirm=compose &amp;ndash;to firogm@gmail.com *.patch&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Dave Miller偏好
-@@ -325,13 +325,15 @@ static inline void empty_child_dec(struct key_vector *n)
-static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)
-{&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct tnode *kv = kmem_cache_alloc(trie_leaf_kmem, GFP_KERNEL);&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct key_vector *l = kv-&amp;gt;kv;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct tnode *kv;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct key_vector *l;
-Dave Miller usually prefers it if variables are ordered from longest to shortest.&lt;br /&gt;
-So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Linux memory management</title>
-      <link>http://firoyang.org/kernel/mm/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/mm/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;Computer memory#Management_of_memory
-Memory management (operating systems)&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Logic gates: SRAM, DRAM
-What is data/contrl/addr bus?
-What problems we will meet in memory management?
-Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?
-How to distribute these memory to processes? Virtual memory.
-How to translate linear address to physical address? Page table.
-Exchange data between primary memory and second memory. Paging.&lt;/p&gt;
-
-&lt;p&gt;What are the pitfall of manuplate directly physcial memory&lt;/p&gt;
-
-&lt;h1 id=&#34;page:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;page&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;An introduction to compound pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;memroy-mangement:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Memroy mangement&lt;/h1&gt;
-
-&lt;h2 id=&#34;gfp-flags:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;GFP flags&lt;/h2&gt;
-
-&lt;p&gt;__GFP_IO: allow disk IO
-__GFP_FS: allow fs operations, depend on io.
-more details in lwn, lkd&lt;/p&gt;
-
-&lt;h1 id=&#34;virtual-memory:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Virtual memory&lt;/h1&gt;
-
-&lt;p&gt;##Page table
-mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
-原来低12位里面存了flag啊!
-__pte(((phys_addr_t)page_nr &amp;lt;&amp;lt; PAGE_SHIFT) | massage_pgprot(pgprot));
-For vmalloc(), chechk here vmap_page_range_noflush()
-For kmap(), check kmap_init()
-&lt;a href=&#34;http://edsionte.com/techblog/archives/1966&#34;&gt;How to emulate the process of translate va to pa?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;copy-to-user:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;copy_to_user&lt;/h2&gt;
-
-&lt;p&gt;not in kernel?
-read only?&lt;/p&gt;
-
-&lt;h2 id=&#34;flush-tlb-after-page-table-modification:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;flush tlb after page table modification.&lt;/h2&gt;
-
-&lt;h2 id=&#34;direct-mapping-area:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Direct mapping area&lt;/h2&gt;
-
-&lt;p&gt;high_memory (-128UL &amp;lt;&amp;lt; 20)
-__get_free_pages()
-kmalloc()
-kmem_cache_alloc()/slab&lt;/p&gt;
-
-&lt;h2 id=&#34;vmalloc:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Vmalloc&lt;/h2&gt;
-
-&lt;p&gt;may sleep.&lt;/p&gt;
-
-&lt;h3 id=&#34;hwo-vmalloc-works:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Hwo Vmalloc works?&lt;/h3&gt;
-
-&lt;p&gt;Work in HIGHMEM and NORMALMEM
-The skeleton is rbtree, root is global variable vmap_area_root.rb_node.
-struct vm_struct likes struct address_space, functionlly;
-struct vmap_area likes struct vm_area_struct.
-map_vm_area 页表映射
-the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!&lt;/p&gt;
-
-&lt;h3 id=&#34;vmalloc-coherence-with-vfree-after-vmalloc-sync-one:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Vmalloc coherence with vfree() after vmalloc_sync_one&lt;/h3&gt;
-
-&lt;p&gt;在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
-deatils in vmalloc_sync_one() and vunmap_pte_range()
-只释放pte&lt;/p&gt;
-
-&lt;h2 id=&#34;persistent-kernel-mappings:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Persistent Kernel Mappings&lt;/h2&gt;
-
-&lt;p&gt;kmap(struct page *)
-How kmap works?
-    Check kmap_init(), later!&lt;/p&gt;
-
-&lt;h2 id=&#34;temporay-mappings-fixmaps:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Temporay Mappings(Fixmaps)&lt;/h2&gt;
-
-&lt;p&gt;kmap_atomic()&lt;/p&gt;
-
-&lt;p&gt;##Process virtual memory
-* struct vm_area_struct: The intervals of legal address are called &lt;em&gt;memory areas&lt;/em&gt; is permitted to access.
-* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.
-i_mmap: how many processes opened this file.
-&lt;a href=&#34;https://lkml.org/lkml/2012/8/7/46&#34;&gt;https://lkml.org/lkml/2012/8/7/46&lt;/a&gt;
-* sturct mm_struct: how many files(vm_area_struct) does this process opened.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Memory mappings
-syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;link
-a virtual address and physical address. &amp;ndash;page tale
-a memory region of a process and its virtual page addresses. &amp;ndash;vm_area_struct
-a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&amp;gt;i_mmap.
-a physical page and the processes that share the page(used in swap case)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Page faults
-Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Segemnt fault
-Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&lt;/a&gt;
-Null pointer: probably, mostly catched in below 0x08048000.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Demanding page
-vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!
-expand_stack()/handle_mm_fault()&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;vmalloc fault&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Oops
-kernel access invalid address, in __print_signal_info() task-&amp;gt;sighand and  task-&amp;gt;nsproxy is null.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Physical memory
-* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl
-* ZONE(DMA/NORMAL/HIGHMEM) struct zone:
-* struct page is the basic unit of kernel mm knowns as page frame.
-    The goal of strcut page is to describe physical memory, not the data contained therein.
-* The buddy system is per-zone struct free_area
-* Physical address is connected to Virtual address by pfn = page - mem_map;&lt;/p&gt;
-
-&lt;h2 id=&#34;page-allocator:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;page allocator&lt;/h2&gt;
-
-&lt;p&gt;alloc_pages()
-##Page/buffer cache
-struct address_space-&amp;gt;page_tree
-##Page writeback
-data synchronization, the flush threads, pdflush
-##Page swap
-The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.&lt;/p&gt;
-
-&lt;p&gt;#FAQ
-* Where is Per-CPU variable?
-static Per-CPU in .data(?) below high_memory!
-runtime Per-CPU, it&amp;rsquo;s GFP_KERNEL in pcpu_create_chunk()&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Memory mode
-flat mem -&amp;gt; uma
-discontig -&amp;gt; NUMA
-sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When does kernel alloc these struct pages in x86_64?
-&lt;a href=&#34;http://lwn.net/Articles/229670/&#34;&gt;http://lwn.net/Articles/229670/&lt;/a&gt;
-vmemmap silimar to memmap&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When kmap_atomic() BUG_ON effect?&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How cpu resolve address below high_memory?
-Cpu-spicific!
-x86 used page table to all address!
-Mips cpu can be aware of this address!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How to deal with useless page? : &amp;gt; /home/firo/bigdata&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;*pfmemalloc &amp;ndash; skb 表示申请了紧急内存!
-page free&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;compound pages
-18fa11efc279c20af5eefff2bbe814ca067&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
+    <updated>Sat, 05 Dec 2015 14:06:29 CST</updated>
     
     <item>
       <title>Console and TTY</title>
       <link>http://firoyang.org/kernel/console/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Sat, 05 Dec 2015 14:06:29 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/console/</guid>
       <description>
@@ -1192,9 +526,625 @@ unknown              /dev/tty        4 1-63 console&lt;/li&gt;
     </item>
     
     <item>
+      <title>Linux time subsystem</title>
+      <link>http://firoyang.org/kernel/time/</link>
+      <pubDate>Tue, 22 Sep 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/time/</guid>
+      <description>
+
+&lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
+
+&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.
+一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,
+*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态
+那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全
+转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
+                        — William Gibson
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.
+想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在
+时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
+
+&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.
+UTC/GMT
+Based on caesium microwave atomic clock
+Leap second&lt;/p&gt;
+
+&lt;h2 id=&#34;genus-differentia-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;Genus-differentia definition&lt;/h2&gt;
+
+&lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
+
+&lt;h2 id=&#34;功用定义:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;功用定义&lt;/h2&gt;
+
+&lt;p&gt;获取时间
+timer
+sleep ?
+update sched info&lt;/p&gt;
+
+&lt;h2 id=&#34;发生定义-设计-etymology-history-operational-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;发生定义/设计   etymology, history Operational definition&lt;/h2&gt;
+
+&lt;p&gt;timekeeping/计时:时刻．
+clock source: 时间之源, 表针之力.
+clock event: 闹铃之力, 经过tick展现能力.
+tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.
+tickless:
+for timer: use HW timer one shot, set next.
+for update time: in above HW timer, not good
+for sched: for priority distributed in time slice, use timer.
+dynamic tick/no HZ:
+No HZ in idle
+No HZ while only 1 process running for HPC.
+tick devies 就是clock event包了层虎皮.
+tick broadcast framework:  based on tick device
+clock: 可记录时间, 表盘.利用timekeeping
+timer: use clock. what about timer_list?
+timer_list: do in softirq
+* timekeeping aspect
+onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; \
+kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))
+nucleus:used by clock see init_posix_timers and update_wall_time and sys_time
+coda:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;clock source aspect&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;tick device layer aspect
+per_cpu(tick_cpu_device, cpu)
+onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device
+nucleus: a38x_timer_interrupt-&amp;gt;a38x_clkevt.event_handler&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;tick broadcast framework
+onset:&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;clock aspect
+k_clock
+onset:init_posix_timers &amp;amp; init_posix_cpu_timers
+nucleus: 用户-&amp;gt; posix_clock-&amp;gt;timepkeeping-&amp;gt;clock_socurce&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;timer aspect
+onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
+nucleus: common_timer_set
+hrtimer_interrupt | (tick_handle_periodic-&amp;gt; tick_periodic-&amp;gt; update_process_times-&amp;gt;run_local_timers-&amp;gt;hrtimer_run_queues)-&amp;gt;__run_hrtimer-&amp;gt;timer.function = posix_timer_fn;(set in common_timer_set)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;计算机概念
+system clock CLOCK_REALTIME CLOCK_MONOTONIC
+time.h time_t=tm=timeval=timespec calendar time  clock_t&lt;/p&gt;
+
+&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function
+clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,
+clock event 通过timer来体现自己, timer面向使用者的onset,
+而clock event 则是偏向于nucleus and coda.
+timer: 标记不能立即执行的变化.
+clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.
+* kernel requirement
+linux的时间子系统要求硬件timer提供下面两种能力：
+一是free running的counter，此外需要能够在指定的counter值上产生中断的能力。&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Linux virtualization</title>
+      <link>http://firoyang.org/kernel/virt/</link>
+      <pubDate>Wed, 17 Jun 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/virt/</guid>
+      <description>
+
+&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.
+已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!
+现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
+看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和
+他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与
+空间去体验到不同生命历程.
+今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;
+如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.
+显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.
+法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是
+词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是
+influencing by physical virtues or capabilities,
+effective with respect to inherent natural qualities
+受某种实在的长处能力影响, 源自本质的效用.
+这里从两种角度理解virtual, 受影响者, 影响者本身.
+所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.
+这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;virtual 音节划分：vir▪tual
+英 [ˈvɜ:tʃuəl] 美 [ˈvɜ:rtʃuəl]
+adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;有效的，虚像的；（粒子）实际存在的
+虚；虚拟艺术；虚拟的；模拟帐户
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!
+话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.
+很多事情, 在我们出生前就决定了, 我是89年9月出生的.
+我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.
+如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.
+没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.
+好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?
+没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?
+所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.
+那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!
+我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.
+终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora
+之上.&lt;/p&gt;
+
+&lt;h2 id=&#34;fkvm:d29da9244342e72819e84d5dee753d17&#34;&gt;FKVM&lt;/h2&gt;
+
+&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!
+首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel
+运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!
+因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!
+你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.
+怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行
+start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的
+cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.
+也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.
+在内核初始化的时候, 会用调用bios的中断来获取内存信息.
+也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.
+开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.
+现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是
+高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.
+只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?
+我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.
+就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.
+也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.
+如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.
+这里需要很多底层的知识. 先看点资料再回来.
+看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.
+访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.
+探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.
+无论别人说的多么好, 我们必须要有自己的思路.
+总结下所得:
+控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.
+虚拟化一块内存.
+我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.
+由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.
+同时乐趣也会减少.&lt;/p&gt;
+
+&lt;h1 id=&#34;kvm-qemu:d29da9244342e72819e84d5dee753d17&#34;&gt;KVM QEMU&lt;/h1&gt;
+
+&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;
+探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.
+千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然
+是我们自己, 别人的知识只是辅助. 那好我们开始.
+首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.
+往往初学者, 很容易被绕进去.
+从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.
+为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.
+Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供
+全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的
+洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.
+Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.
+至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.
+从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.
+这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.
+Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.
+类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.
+Operating-system-level virtualization
+这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.
+但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.
+比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.
+这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.
+比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,
+他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.
+这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.
+在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,
+网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.
+我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.
+首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?
+官网的解释:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;QEMU is a generic and open source machine emulator and virtualizer.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.
+qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.
+我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.
+那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.
+毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的
+虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.
+据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情
+补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.
+不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂
+肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.
+内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.
+下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.
+我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.&lt;/p&gt;
+
+&lt;p&gt;下面是设备的虚拟化, 这个还是看书去吧.&lt;/p&gt;
+
+&lt;h1 id=&#34;代码实现:d29da9244342e72819e84d5dee753d17&#34;&gt;代码实现&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;KVM architecture&lt;/li&gt;
+&lt;li&gt;Kernel running flow
+svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;/li&gt;
+&lt;li&gt;File
+svm.c vmx.c kvm_main.c kvm_svm.h&lt;/li&gt;
+&lt;li&gt;Function&lt;/li&gt;
+&lt;li&gt;Struct
+kvm_x86_ops x86.h
+vcpu_svm    kvm_svm.h&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The Journey to RCU</title>
+      <link>http://firoyang.org/kernel/rcu/</link>
+      <pubDate>Sun, 24 May 2015 09:52:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/rcu/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
+&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
+
+&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
+scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
+scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
+另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
+From wikipedia,  A system whose performance improves after adding hardware,
+proportionally to the capacity added, is said to be a scalable system.
+&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
+言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
+Read Copy Update HOWTO介绍了当初RCU开发的动机:
+* Increase in cost of conventional locks
+第一个原因也是最重要的, 最根本原因.
+传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
+一种新的锁机制减少访问内存,就成了强烈的需求.
+* Cache benefits of lock-free reads
+传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
+3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
+spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
+之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
+在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
+像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
+其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
+* Avoiding complicated races
+No deadlock, 减少了开发维护.&lt;/p&gt;
+
+&lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
+
+&lt;p&gt;list rcu
+&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
+&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
+&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
+RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
+
+&lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Publish-Subscribe
+For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
+&lt;li&gt;Observer
+For updater to wait For Pre-Existing RCU Readers to Complete
+Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
+
+&lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
+
+&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
+obeyed by the critical sections of pure spinlocks:
+blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
+
+&lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
+stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
+
+&lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
+
+&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
+
+&lt;p&gt;#FAQ
+* Difference with primitive and atomic
+* Grace period is synchroinze_rcu or a softirq justment
+* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
+
+&lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
+
+&lt;h1 id=&#34;reference-1:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
+
+&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
+本文不关心RCU的实现.
+本文的核心目标就是了解如何使用RCU.
+所有使用RCU代码, 都可以分为4部分:
+RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
+update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
+synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
+free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
+Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
+理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
+
+&lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
+
+&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
+上面的RCU read critical section和synchronize可以构成completion的语义.
+为什么要用RCU而不是内核自身提供的completion函数呢?
+Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
+所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
+
+&lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
+
+&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
+但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
+Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
+同样也会带来性能的损耗,而不是almost zero in his paper.
+引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
+
+&lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
+
+&lt;h1 id=&#34;publish-subscribe:ccb822b6795f419b08737308491f6183&#34;&gt;Publish-Subscribe&lt;/h1&gt;
+
+&lt;h1 id=&#34;read-write-lock-alternative:ccb822b6795f419b08737308491f6183&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Kernel hacking</title>
+      <link>http://firoyang.org/kernel/hacking/</link>
+      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/hacking/</guid>
+      <description>
+
+&lt;h1 id=&#34;kernel-hacker之路:0b18016038ccf925131bdc7a6edbb900&#34;&gt;kernel hacker之路&lt;/h1&gt;
+
+&lt;p&gt;我实在太想聊这个话题 &amp;ndash; 内核hacker的成长之路!
+不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为
+内核的中坚力量, 甚至是maintainer.
+作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.
+因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.
+起始我在12年的11月份曾经给社区, 提过几次补丁. 后来有那么两三次, 想帮着修复
+kernel panic 和oops的问题, 基本上个人感觉难度非常太大就无极而终了.
+5月份这次, 我是因为实在不想在看书籍了, 市面上稍微有点名的书籍, 我都看过.
+实在太厌烦再看书了, 我把自己和另外一个内核hacker 王聪做了对比, 得出结论:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;赶快滚去给社区提patch! 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;我挨个看了王聪给社区提的前50个patch. 都是很简单的修改.
+我几次挫败都是, 因为没能找到合适内核事情去做, 最终没有下文了.
+今天, 我在给社区提了20个左右的patch 10几个被接收了. 我现在找到了一条成长路.&lt;/p&gt;
+
+&lt;h2 id=&#34;内核我现在认为可以给新人做得事:0b18016038ccf925131bdc7a6edbb900&#34;&gt;内核我现在认为可以给新人做得事&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/284099/&#34;&gt;https://lwn.net/Articles/284099/&lt;/a&gt;  这个帖子, 提供了新手可以做得事情, 我觉得非常好.
+smatch coccinelle的分析结果.
+源码中标注的FIXME和TODO, 简单的提过去很难被接受, 难的这些开发者自己都没搞定, 新人更难.
+这也不是一条好路.
+内核bugzilla kerneloops上问题, 这个很难.
+找一个和内核相关的工作驱动啊, 网络开发, 虚拟化, 存储都非常赞.
+自己搞个feature, 感觉更难, 这个需要需求驱动.
+没有一条轻松的路让你走, 但你却不应该光着脚走在上面!!!
+内核之外有很多值得珍惜的. 尽力做好, 你能做的, 开始点滴积累.
+终有一天会聚成沧海, 前提是你等得到那天, 不要亏待自己.
+内核之路始终时不那么清晰, 但是反思过后, 你便知道, 该去做什么了.
+这也许是最难受的情况了.
+Linus 之前说过, 搞得内核你得用起来. uml 是个不错的开端.
+用起来才是王道!&lt;/p&gt;
+
+&lt;p&gt;#git
+&lt;a href=&#34;http://git-scm.com/docs/gittutorial&#34;&gt;gittutorial - A tutorial introduction to Git&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;linux-source-code:0b18016038ccf925131bdc7a6edbb900&#34;&gt;linux source code&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;
+要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.
+我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.
+我的linux next remote 就叫next, 基于其创建开发分支.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;git branch now next/master
+git pull next master:now
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;你提patch-社区的困惑是什么:0b18016038ccf925131bdc7a6edbb900&#34;&gt;你提patch, 社区的困惑是什么?&lt;/h1&gt;
+
+&lt;p&gt;每个kernel newbie 都应该完整看完这个mail list
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&lt;/a&gt;
+你能看到鹰派的Al还有温和派Andrew Morton.
+为什么&lt;a href=&#34;http://kernelnewbies.org/这么重要网站&#34;&gt;http://kernelnewbies.org/这么重要网站&lt;/a&gt;, 不做的好一点, 至少界面友好点.
+应该找个机会, 整一下.&lt;/p&gt;
+
+&lt;h1 id=&#34;fix-kernel-mistakes:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Fix kernel mistakes&lt;/h1&gt;
+
+&lt;p&gt;内核至今如此优秀就是因为, 成千上万前赴后继的开发者笔耕不缀的结果.
+别当豆包不当干粮, 虽然, 你不能设计出很牛的算法, or 什么子系统,
+但是内核还有很多问题有待解决, 正所谓老虎也要打, 苍蝇也要拍; 千里之堤毁于蚁穴.
+我提过好些这种patch Dan Carpenter都告诉我Linus已经改了.&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-newbie上有个list:0b18016038ccf925131bdc7a6edbb900&#34;&gt;kernel newbie上有个list&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;KernelJanitors/Todo&lt;/a&gt;
+* Style fix
+如:
+remove_wait_queue(entry-&amp;gt;wait_address,&amp;amp;entry-&amp;gt;wait);
+remove_wait_queue(entry-&amp;gt;wait_address, &amp;amp;entry-&amp;gt;wait);&lt;/p&gt;
+
+&lt;h2 id=&#34;smatch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Smatch&lt;/h2&gt;
+
+&lt;p&gt;smatch这个工具是Dan写的主要就是为了找到内核的小问题, 基本用法:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    make CHECK=&amp;quot;~/path/to/smatch/smatch -p=kernel&amp;quot; C=1 \
+            bzImage modules | tee warns.txt
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;smatch 会产生好多可疑的问题, 细心寻找吧.
+你找到了, 那么就是修改了.
+记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.&lt;/p&gt;
+
+&lt;h2 id=&#34;coccinelle:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Coccinelle&lt;/h2&gt;
+
+&lt;p&gt;Coccinelle是 Julia Lawall 写的静态检测工具.very nice.
+自己研究吧
+Documentation/coccinelle.txt
+&lt;a href=&#34;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&#34;&gt;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;生成patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;生成patch&lt;/h2&gt;
+
+&lt;p&gt;先修改.
+之后git add
+在commit 之前你要 git log &amp;ndash;online path/to/modification/file
+看下提交的titile:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;git log  --oneline drivers/base/firmware_class.c
+5455c8c firmware: Fix memory leak in error path
+e0fd9b1 firmware: use const for remaining firmware names
+f9692b2 firmware: fix possible use after free on name on a
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;主义冒号:后一定要有一个空格!
+你会还是看下Document下的submitting的文档.
+之后commit:
+先是类似上面的一行oneline 简要说明
+空一行.
+之后具体描述下.
+commit后, 生成patch
+如果你只提交了一次:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;git format-patch HEAD^..HEAD
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这个命令就ok了.
+如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.
+这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的
+如我这个, 已被接收:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;0001-firmware-Fix-memory-leak-in-error-path.patch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9&lt;/p&gt;
+
+&lt;h2 id=&#34;测试patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;测试patch&lt;/h2&gt;
+
+&lt;p&gt;复杂的patch要编译内核, 安装的机器上跑一下.&lt;/p&gt;
+
+&lt;h2 id=&#34;发送patch:0b18016038ccf925131bdc7a6edbb900&#34;&gt;发送patch&lt;/h2&gt;
+
+&lt;p&gt;天朝用户自己打梯子吧proxychains shadowsocks.
+基本步骤是
+先编译一下:
+make path/to/modification/file.o
+之后
+./scripts/checkpatch.pl
+之后 get maintainer
+./scripts/get_maintainer.pl&lt;/p&gt;
+
+&lt;p&gt;发送的时候, 发给维护者 &amp;ndash;cc其他人, 还有cc 一个mailist, 如果没有合适的list的话,
+就cc到linux-kernel@vger.kernel.org, 这是个开放的list, 有合适的list了, 就不要cc它了.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;proxychains git send-email --to ming.lei@canonical.com --cc gregkh@linuxfoundation.org --cc kernel-janitors@vger.kernel.org 0001-firmware-Fix-memory-leak-in-error-path.patch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;免不了你要返工重新修改.这时候, 新生成的patch这样:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;git format-patch --subject-prefix=&amp;quot;PATCH v2&amp;quot; HEAD^..HEAD
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;改几次就v几.
+和社区交流的时候, 要注意礼貌, 而且要感谢别人对你的patch做出的建议,
+没有人的时间是被猪拱来的.&lt;/p&gt;
+
+&lt;p&gt;这些都是比较简单(代码量上)的patch, 要想提交深度的还需要对某方面的深度.
+基本上这就完了, 你的真正的patch就给社区了.&lt;/p&gt;
+
+&lt;h1 id=&#34;进阶decent:0b18016038ccf925131bdc7a6edbb900&#34;&gt;进阶decent&lt;/h1&gt;
+
+&lt;p&gt;这个是昨天晚上改drivers代码时候, 看到TODO的注释猛然想到的.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;grep -nr &#39;FIXME&#39; --include=&amp;quot;*.c&amp;quot;  ./ | tee fixmek.log
+grep -nr &#39;TODO&#39; --include=&amp;quot;*.c&amp;quot; ./ | tee todok.log
+wc -l fixmek.log 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;有6000多个.&lt;/p&gt;
+
+&lt;h1 id=&#34;deeply-involved:0b18016038ccf925131bdc7a6edbb900&#34;&gt;Deeply involved&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;http://vger.kernel.org/~davem/net_todo.html&lt;/a&gt;
+这个列表上的基本都过期了&amp;hellip;.哎
+往深了走不是难事, 主要是意识到内核, 不是什么神秘的东西, 选好一个方向
+简单看看概念见我的&amp;lt;如何学习&amp;gt; 就可以实践.
+必须要意识到, 动手比看再多概念管用, 我就是之前看了太多, 还发展出一个哲学
+体系出来:-) 确实随着现代信息科学给社会带来的巨大变化, 哲学也必须要更新.
+才能更好的服务于人.
+这几天就在, 找内核哪里还不完善, 自己能补上, 今天6号了.
+#patch formate advices
+* Julia Lawall Sorry to be picky,
+but normally people put a space after the colon.  Also,
+the subject line could be shorter: Remove unneeded cast.&lt;br /&gt;
+The description part of the subject doesnt have to be unique,
+just the whole thing, asfter the [PATCH] part.
+* Dan Carpenter
+Otherwise your patch was fine, btw.  Other improvements.
+Don&amp;rsquo;t put &amp;ldquo;Drivers:&amp;rdquo; in the subject.
+On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:
+&amp;gt; From: Firo Yang &lt;a href=&#34;mailto:firogm@gmail.com&#34;&gt;firogm@gmail.com&lt;/a&gt;
+Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;/p&gt;
+
+&lt;p&gt;Include everyone from the ./scripts/get_maintainer.pl output except
+don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing
+list there already.
+* To find  patch prefix&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;git log --oneline  path/to/file.c
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;更新patch 要加v几&lt;/p&gt;
+
+&lt;p&gt;git format-patch &amp;ndash;subject-prefix=&amp;ldquo;PATCH v2&amp;rdquo; xxx..ooo&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;提交多个patch 要手动生成一个[PATCH 0/N], 这个0就是要写简要描述的.&lt;/p&gt;
+
+&lt;p&gt;proxychains git send-email &amp;ndash;subject &amp;ldquo;[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values&amp;rdquo; &amp;ndash;thread &amp;ndash;compose &amp;ndash;confirm=compose &amp;ndash;to firogm@gmail.com *.patch&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Dave Miller偏好
+@@ -325,13 +325,15 @@ static inline void empty_child_dec(struct key_vector *n)
+static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)
+{&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;struct tnode *kv = kmem_cache_alloc(trie_leaf_kmem, GFP_KERNEL);&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;struct key_vector *l = kv-&amp;gt;kv;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;struct tnode *kv;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;struct key_vector *l;
+Dave Miller usually prefers it if variables are ordered from longest to shortest.&lt;br /&gt;
+So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Interrupt</title>
       <link>http://firoyang.org/kernel/interrupt/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/interrupt/</guid>
       <description>
@@ -1367,7 +1317,7 @@ when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
     <item>
       <title>Linux device driver</title>
       <link>http://firoyang.org/kernel/dd/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/dd/</guid>
       <description>
@@ -1476,7 +1426,7 @@ see release_nodes() -&amp;gt;kfree(dr);&lt;/li&gt;
     <item>
       <title>Linux process management</title>
       <link>http://firoyang.org/kernel/process/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/process/</guid>
       <description>
@@ -1724,7 +1674,7 @@ if parent was killed and exit &lt;defunct&gt; will repaped.
     <item>
       <title>Power management</title>
       <link>http://firoyang.org/kernel/pm/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/pm/</guid>
       <description>
@@ -1883,7 +1833,7 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
     <item>
       <title>Synchronization</title>
       <link>http://firoyang.org/kernel/synchronization/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/synchronization/</guid>
       <description>
@@ -2012,139 +1962,9 @@ Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C
     </item>
     
     <item>
-      <title>The Journey to RCU</title>
-      <link>http://firoyang.org/kernel/rcu/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/rcu/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
-&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
-
-&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
-scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
-scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
-另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
-From wikipedia,  A system whose performance improves after adding hardware,
-proportionally to the capacity added, is said to be a scalable system.
-&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
-言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
-Read Copy Update HOWTO介绍了当初RCU开发的动机:
-* Increase in cost of conventional locks
-第一个原因也是最重要的, 最根本原因.
-传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
-一种新的锁机制减少访问内存,就成了强烈的需求.
-* Cache benefits of lock-free reads
-传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
-3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
-spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
-之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
-在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
-像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
-其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
-* Avoiding complicated races
-No deadlock, 减少了开发维护.&lt;/p&gt;
-
-&lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
-
-&lt;p&gt;list rcu
-&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
-&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
-&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
-&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
-RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
-
-&lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Publish-Subscribe
-For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
-&lt;li&gt;Observer
-For updater to wait For Pre-Existing RCU Readers to Complete
-Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
-
-&lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
-
-&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
-obeyed by the critical sections of pure spinlocks:
-blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
-
-&lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
-stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
-
-&lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
-
-&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
-
-&lt;p&gt;#FAQ
-* Difference with primitive and atomic
-* Grace period is synchroinze_rcu or a softirq justment
-* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
-
-&lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
-
-&lt;h1 id=&#34;reference-1:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
-
-&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
-本文不关心RCU的实现.
-本文的核心目标就是了解如何使用RCU.
-所有使用RCU代码, 都可以分为4部分:
-RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
-update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
-synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
-free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
-Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
-理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
-
-&lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
-
-&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
-上面的RCU read critical section和synchronize可以构成completion的语义.
-为什么要用RCU而不是内核自身提供的completion函数呢?
-Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
-所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
-
-&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
-但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
-Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
-同样也会带来性能的损耗,而不是almost zero in his paper.
-引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
-
-&lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
-
-&lt;h1 id=&#34;publish-subscribe:ccb822b6795f419b08737308491f6183&#34;&gt;Publish-Subscribe&lt;/h1&gt;
-
-&lt;h1 id=&#34;read-write-lock-alternative:ccb822b6795f419b08737308491f6183&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
-</description>
-    </item>
-    
-    <item>
       <title>filesystem</title>
       <link>http://firoyang.org/kernel/fs/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/fs/</guid>
       <description>
@@ -2308,7 +2128,7 @@ man mount&lt;/p&gt;
     <item>
       <title>kernel</title>
       <link>http://firoyang.org/kernel/kernel/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/kernel/</guid>
       <description>
@@ -2575,6 +2395,186 @@ armada_xp_db            MACH_ARMADA_XP_DB       ARMADA_XP_DB            3036&lt;
 &lt;p&gt;debug initcall_debug&lt;/p&gt;
 
 &lt;h3 id=&#34;printk:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;printk&lt;/h3&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Linux memory management</title>
+      <link>http://firoyang.org/kernel/mm/</link>
+      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/kernel/mm/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;Computer memory#Management_of_memory
+Memory management (operating systems)&lt;/p&gt;
+
+&lt;h1 id=&#34;contents:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;Logic gates: SRAM, DRAM
+What is data/contrl/addr bus?
+What problems we will meet in memory management?
+Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?
+How to distribute these memory to processes? Virtual memory.
+How to translate linear address to physical address? Page table.
+Exchange data between primary memory and second memory. Paging.&lt;/p&gt;
+
+&lt;p&gt;What are the pitfall of manuplate directly physcial memory&lt;/p&gt;
+
+&lt;h1 id=&#34;page:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;page&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;An introduction to compound pages&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;memroy-mangement:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Memroy mangement&lt;/h1&gt;
+
+&lt;h2 id=&#34;gfp-flags:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;GFP flags&lt;/h2&gt;
+
+&lt;p&gt;__GFP_IO: allow disk IO
+__GFP_FS: allow fs operations, depend on io.
+more details in lwn, lkd&lt;/p&gt;
+
+&lt;h1 id=&#34;virtual-memory:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Virtual memory&lt;/h1&gt;
+
+&lt;p&gt;##Page table
+mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
+原来低12位里面存了flag啊!
+__pte(((phys_addr_t)page_nr &amp;lt;&amp;lt; PAGE_SHIFT) | massage_pgprot(pgprot));
+For vmalloc(), chechk here vmap_page_range_noflush()
+For kmap(), check kmap_init()
+&lt;a href=&#34;http://edsionte.com/techblog/archives/1966&#34;&gt;How to emulate the process of translate va to pa?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;copy-to-user:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;copy_to_user&lt;/h2&gt;
+
+&lt;p&gt;not in kernel?
+read only?&lt;/p&gt;
+
+&lt;h2 id=&#34;flush-tlb-after-page-table-modification:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;flush tlb after page table modification.&lt;/h2&gt;
+
+&lt;h2 id=&#34;direct-mapping-area:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Direct mapping area&lt;/h2&gt;
+
+&lt;p&gt;high_memory (-128UL &amp;lt;&amp;lt; 20)
+__get_free_pages()
+kmalloc()
+kmem_cache_alloc()/slab&lt;/p&gt;
+
+&lt;h2 id=&#34;vmalloc:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Vmalloc&lt;/h2&gt;
+
+&lt;p&gt;may sleep.&lt;/p&gt;
+
+&lt;h3 id=&#34;hwo-vmalloc-works:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Hwo Vmalloc works?&lt;/h3&gt;
+
+&lt;p&gt;Work in HIGHMEM and NORMALMEM
+The skeleton is rbtree, root is global variable vmap_area_root.rb_node.
+struct vm_struct likes struct address_space, functionlly;
+struct vmap_area likes struct vm_area_struct.
+map_vm_area 页表映射
+the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!&lt;/p&gt;
+
+&lt;h3 id=&#34;vmalloc-coherence-with-vfree-after-vmalloc-sync-one:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Vmalloc coherence with vfree() after vmalloc_sync_one&lt;/h3&gt;
+
+&lt;p&gt;在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
+deatils in vmalloc_sync_one() and vunmap_pte_range()
+只释放pte&lt;/p&gt;
+
+&lt;h2 id=&#34;persistent-kernel-mappings:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Persistent Kernel Mappings&lt;/h2&gt;
+
+&lt;p&gt;kmap(struct page *)
+How kmap works?
+    Check kmap_init(), later!&lt;/p&gt;
+
+&lt;h2 id=&#34;temporay-mappings-fixmaps:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;Temporay Mappings(Fixmaps)&lt;/h2&gt;
+
+&lt;p&gt;kmap_atomic()&lt;/p&gt;
+
+&lt;p&gt;##Process virtual memory
+* struct vm_area_struct: The intervals of legal address are called &lt;em&gt;memory areas&lt;/em&gt; is permitted to access.
+* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.
+i_mmap: how many processes opened this file.
+&lt;a href=&#34;https://lkml.org/lkml/2012/8/7/46&#34;&gt;https://lkml.org/lkml/2012/8/7/46&lt;/a&gt;
+* sturct mm_struct: how many files(vm_area_struct) does this process opened.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Memory mappings
+syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;link
+a virtual address and physical address. &amp;ndash;page tale
+a memory region of a process and its virtual page addresses. &amp;ndash;vm_area_struct
+a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&amp;gt;i_mmap.
+a physical page and the processes that share the page(used in swap case)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;#Page faults
+Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Segemnt fault
+Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&lt;/a&gt;
+Null pointer: probably, mostly catched in below 0x08048000.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Demanding page
+vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!
+expand_stack()/handle_mm_fault()&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;vmalloc fault&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Oops
+kernel access invalid address, in __print_signal_info() task-&amp;gt;sighand and  task-&amp;gt;nsproxy is null.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;#Physical memory
+* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl
+* ZONE(DMA/NORMAL/HIGHMEM) struct zone:
+* struct page is the basic unit of kernel mm knowns as page frame.
+    The goal of strcut page is to describe physical memory, not the data contained therein.
+* The buddy system is per-zone struct free_area
+* Physical address is connected to Virtual address by pfn = page - mem_map;&lt;/p&gt;
+
+&lt;h2 id=&#34;page-allocator:9037e4aab15a8fa8be9a2e4d7b536995&#34;&gt;page allocator&lt;/h2&gt;
+
+&lt;p&gt;alloc_pages()
+##Page/buffer cache
+struct address_space-&amp;gt;page_tree
+##Page writeback
+data synchronization, the flush threads, pdflush
+##Page swap
+The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.&lt;/p&gt;
+
+&lt;p&gt;#FAQ
+* Where is Per-CPU variable?
+static Per-CPU in .data(?) below high_memory!
+runtime Per-CPU, it&amp;rsquo;s GFP_KERNEL in pcpu_create_chunk()&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Memory mode
+flat mem -&amp;gt; uma
+discontig -&amp;gt; NUMA
+sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When does kernel alloc these struct pages in x86_64?
+&lt;a href=&#34;http://lwn.net/Articles/229670/&#34;&gt;http://lwn.net/Articles/229670/&lt;/a&gt;
+vmemmap silimar to memmap&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When kmap_atomic() BUG_ON effect?&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;How cpu resolve address below high_memory?
+Cpu-spicific!
+x86 used page table to all address!
+Mips cpu can be aware of this address!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;How to deal with useless page? : &amp;gt; /home/firo/bigdata&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;*pfmemalloc &amp;ndash; skb 表示申请了紧急内存!
+page free&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;compound pages
+18fa11efc279c20af5eefff2bbe814ca067&lt;/li&gt;
+&lt;/ul&gt;
 </description>
     </item>
     
