@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="/kernel/pm/">
+<meta property="og:url" content="http://firoyang.org/kernel/pm/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2015-02-27"/>
 <meta property="article:modified_time" content="2015-02-27"/>
@@ -34,9 +34,9 @@
 
 
 
-    <base href="">
+    <base href="http://firoyang.org/">
     <title> Power management</title>
-    <link rel="canonical" href="/kernel/pm/">
+    <link rel="canonical" href="http://firoyang.org/kernel/pm/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -130,7 +130,7 @@
         
         <ul id="tags">
           
-            <li> <a href="/tags/kernel">kernel</a> </li>
+            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
           
         </ul>
 
@@ -141,7 +141,7 @@
 
 <meta itemprop="wordCount" content="392">
 <meta itemprop="datePublished" content="2015-02-27">
-<meta itemprop="url" content="/kernel/pm/">
+<meta itemprop="url" content="http://firoyang.org/kernel/pm/">
 
 
   <div>
@@ -150,12 +150,12 @@
 
 <h1 id="reference:243fc1ea57e1b68ab2b7a4065db2e761">Reference</h1>
 
-<p><a href="http://www.wowotech.net/pm_subsystem/generic_pm_architecture.html">wowotech</a>
-<a href="https://lwn.net/Articles/384146/">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently
-<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF">Hardware Specifications 9.4</a>
-<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf">Functional Specifications 34</a>
-Documentation/power
-Controlling Processor C-State Usage in Linux
+<p><a href="http://www.wowotech.net/pm_subsystem/generic_pm_architecture.html">wowotech</a><br />
+<a href="https://lwn.net/Articles/384146/">The cpuidle subsystem</a>cpuidle—Do nothing, efficiently<br />
+<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF">Hardware Specifications 9.4</a><br />
+<a href="http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf">Functional Specifications 34</a><br />
+Documentation/power<br />
+Controlling Processor C-State Usage in Linux<br />
 <a href="http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html">Chapter 11. Power Management</a></p>
 
 <p>C-states: idle core power state</p>
@@ -164,65 +164,65 @@ Controlling Processor C-State Usage in Linux
 
 <ul>
 <li>Interface<br />
-syscall /sys/power</li>
-<li>PM core
-kernel/power
-main.c suspend.c suspend_test.c console.c process.c</li>
-<li>Device PM
-driver/base/power &ndash; Power management interface, firo
-power management 是针对device, bus, driver这部分的. 在suspend_devices_and_enter用到dpm_suspend_start.
-driver/各种设备的驱动
-driver/cpuidle &ndash;firo</li>
-<li>Platform PM
-include/linux/suspend.h&mdash;-定义platform dependent PM有关的操作函数集
-就是他platform_suspend_ops
-arch/xxx/mach-xxx/xxx.c or arch/xxx/plat-xxx/xxx.c&mdash;-平台相关的电源管理操作</li>
-<li>CPU control</li>
+syscall /sys/power<br /></li>
+<li>PM core<br />
+kernel/power<br />
+main.c suspend.c suspend_test.c console.c process.c<br /></li>
+<li>Device PM<br />
+driver/base/power &ndash; Power management interface, firo<br />
+power management 是针对device, bus, driver这部分的. 在suspend_devices_and_enter用到dpm_suspend_start.<br />
+driver/各种设备的驱动<br />
+driver/cpuidle &ndash;firo<br /></li>
+<li>Platform PM<br />
+include/linux/suspend.h&mdash;-定义platform dependent PM有关的操作函数集<br />
+就是他platform_suspend_ops<br />
+arch/xxx/mach-xxx/xxx.c or arch/xxx/plat-xxx/xxx.c&mdash;-平台相关的电源管理操作<br /></li>
+<li>CPU control<br /></li>
 </ul>
 
 <h1 id="important-data-structure:243fc1ea57e1b68ab2b7a4065db2e761">Important data structure</h1>
 
 <ul>
-<li>Platform PM
-platform_suspend_ops, platform plat-* is equivalent to mach-* and microarchitecture.
-plat-* is abustruct from mach-*1 and mach-<em>2 and so on.
-mach-</em> is more closer to Board!
-所以这个platform_suspend_ops, 是非常重要的, 他包含了所有BSP底层的内容.
-竟然是用suspend_ops这个全局变量, 来承载所有platform相关的内容.</li>
+<li>Platform PM<br />
+platform_suspend_ops, platform plat-* is equivalent to mach-* and microarchitecture.<br />
+plat-* is abustruct from mach-*1 and mach-<em>2 and so on.<br />
+mach-</em> is more closer to Board!<br />
+所以这个platform_suspend_ops, 是非常重要的, 他包含了所有BSP底层的内容.<br />
+竟然是用suspend_ops这个全局变量, 来承载所有platform相关的内容.<br /></li>
 
-<li><p>Device PM
+<li><p>Device PM<br />
 dev_pm_ops这个和上面是完全不同的两条调用路线,在suspend_devices_and_enter用到dpm_suspend_start.</p>
 
 <h1 id="steps-of-suspend:243fc1ea57e1b68ab2b7a4065db2e761">Steps of suspend</h1></li>
 
-<li><p>Function steps
-state_store-&gt;pm_suspend-&gt;enter_state-&gt;
-{
-valid_state &amp; suspend_prepare
-suspend_devices_and_enter-&gt; {
-    suspend_console &amp; ftrace_stop &amp; dpm_suspend_start
-    suspend_enter-&gt;
-    {
-        disable_nonboot_cpus &amp; arch_suspend_disable_irqs
-    }
-}
+<li><p>Function steps<br />
+state_store-&gt;pm_suspend-&gt;enter_state-&gt;<br />
+{<br />
+valid_state &amp; suspend_prepare<br />
+suspend_devices_and_enter-&gt; {<br />
+    suspend_console &amp; ftrace_stop &amp; dpm_suspend_start<br />
+    suspend_enter-&gt;<br />
+    {<br />
+        disable_nonboot_cpus &amp; arch_suspend_disable_irqs<br />
+    }<br />
+}<br />
 }</p></li>
 
-<li><p>PM core
-freeze userspace
+<li><p>PM core<br />
+freeze userspace<br />
 console</p></li>
 
-<li><p>Device PM
-suspend device
+<li><p>Device PM<br />
+suspend device<br />
 before and first part in suspend_enter</p></li>
 
-<li><p>Mass stuffs
-CPU &amp; IRQ disable
-syscore
-Device PM check wakeup pendings
+<li><p>Mass stuffs<br />
+CPU &amp; IRQ disable<br />
+syscore<br />
+Device PM check wakeup pendings<br />
 middle part in suspend_enter</p></li>
 
-<li><p>Platform PM
+<li><p>Platform PM<br />
 last part in suspend_enter</p>
 
 <h1 id="steps-of-resume:243fc1ea57e1b68ab2b7a4065db2e761">Steps of resume</h1></li>
@@ -234,23 +234,23 @@ last part in suspend_enter</p>
 
 <h1 id="introdution:243fc1ea57e1b68ab2b7a4065db2e761">Introdution</h1>
 
-<p>电源管理都涉及到那些内容?
-PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices
-Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down
-* WFI: core power down except snoop and interrupt cache working
-disable clocks of the CPU
-snoop other Cores and io agent.
-only snoop block are temporarily woken up and the block back to WFI mode after complete snoop.
-can recognize interrupt.
-* Power down: core power down, l1 flush, cache not mantained/snoop stoped, but l2 &amp; fabric
+<p>电源管理都涉及到那些内容?<br />
+PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices<br />
+Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down<br />
+* WFI: core power down except snoop and interrupt cache working<br />
+disable clocks of the CPU<br />
+snoop other Cores and io agent.<br />
+only snoop block are temporarily woken up and the block back to WFI mode after complete snoop.<br />
+can recognize interrupt.<br />
+* Power down: core power down, l1 flush, cache not mantained/snoop stoped, but l2 &amp; fabric<br />
 can not recognize interrupt, recovery is fully depended on MP_PMU</p>
 
-<p>In hardware layer, we need <a href="https://en.wikipedia.org/wiki/Power_Management_Unit">PMU</a> to complete power management.
-What is the relation of PMU and CPU?
-armadaxp的PMU与CPU物理上与逻辑上是独立的.
-The Power Management functions are provided by two power manager units:
-The Device Power Management Unit (DEV_PMU)
-The Multiprocessor Power Management Service Unit (MP_PMU).
+<p>In hardware layer, we need <a href="https://en.wikipedia.org/wiki/Power_Management_Unit">PMU</a> to complete power management.<br />
+What is the relation of PMU and CPU?<br />
+armadaxp的PMU与CPU物理上与逻辑上是独立的.<br />
+The Power Management functions are provided by two power manager units:<br />
+The Device Power Management Unit (DEV_PMU)<br />
+The Multiprocessor Power Management Service Unit (MP_PMU).<br />
 PMU省电模式:</p>
 
 <h1 id="kernel-cpuidle-subsystem:243fc1ea57e1b68ab2b7a4065db2e761">kernel cpuidle subsystem</h1>
@@ -258,43 +258,43 @@ PMU省电模式:</p>
 <h2 id="steps-of-cpuilde:243fc1ea57e1b68ab2b7a4065db2e761">Steps of cpuilde</h2>
 
 <ul>
-<li><p>interface
+<li><p>interface<br />
 kernel sched and sysfs</p></li>
 
-<li><p>cpuidle core
-cpuidle.c、driver.c、governor.c、sysfs.c。
-抽象出cpuidle device、cpuidle driver、cpuidle governor三个实体
-一个core对应一个cpuidle device drivers/cpuidle/cpuidle.c.
-device 和driver隔离, 通过全局变量联系 ifndef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS
-管理cpuidle driver 和governor
+<li><p>cpuidle core<br />
+cpuidle.c、driver.c、governor.c、sysfs.c。<br />
+抽象出cpuidle device、cpuidle driver、cpuidle governor三个实体<br />
+一个core对应一个cpuidle device drivers/cpuidle/cpuidle.c.<br />
+device 和driver隔离, 通过全局变量联系 ifndef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS<br />
+管理cpuidle driver 和governor<br />
 上层sched模块 和sysfs 提供接口</p></li>
 
 <li><p>cpuidle governors</p></li>
 
-<li><p>cpuidle drivers
-drivers/cpudile/cpuidle-xxx.c or
-arch/arm/plat-armada/cpuidle.c
-如何进入idle状态
+<li><p>cpuidle drivers<br />
+drivers/cpudile/cpuidle-xxx.c or<br />
+arch/arm/plat-armada/cpuidle.c<br />
+如何进入idle状态<br />
 什么条件下会退出</p></li>
 </ul>
 
 <h2 id="source-code-layout:243fc1ea57e1b68ab2b7a4065db2e761">Source code layout</h2>
 
 <ul>
-<li>drivers/cpuidle
-include/linux/cpuidle.h
-cpuidle core、cpuidle governors和cpuidle drivers三个模块</li>
-<li>kernel\sched\idle.c
-kernel sched中的cpuidle entry</li>
+<li>drivers/cpuidle<br />
+include/linux/cpuidle.h<br />
+cpuidle core、cpuidle governors和cpuidle drivers三个模块<br /></li>
+<li>kernel\sched\idle.c<br />
+kernel sched中的cpuidle entry<br /></li>
 </ul>
 
 <h2 id="important-data-structre:243fc1ea57e1b68ab2b7a4065db2e761">Important data structre</h2>
 
-<p>struct cpuidle_driver
-struct cpuidle_state
+<p>struct cpuidle_driver<br />
+struct cpuidle_state<br />
 struct cpuidle_device used by ladder or menu</p>
 
-<p>device_initcall -&gt; armadaxp_init_cpuidle -&gt; cpuidle_register_driver  cpuidle_register_device
+<p>device_initcall -&gt; armadaxp_init_cpuidle -&gt; cpuidle_register_driver  cpuidle_register_device<br />
 cpu_idle -&gt; cpuidle_idle_call</p>
 
         </article>
@@ -303,7 +303,21 @@ cpu_idle -&gt; cpuidle_idle_call</p>
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/kernel\/pm\/';
+    var disqus_title = 'Power management';
+    var disqus_url = 'http:\/\/firoyang.org\/kernel\/pm\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 </aside>
 
 <footer>

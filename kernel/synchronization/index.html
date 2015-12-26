@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="/kernel/synchronization/">
+<meta property="og:url" content="http://firoyang.org/kernel/synchronization/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2015-02-27"/>
 <meta property="article:modified_time" content="2015-02-27"/>
@@ -34,9 +34,9 @@
 
 
 
-    <base href="">
+    <base href="http://firoyang.org/">
     <title> Synchronization</title>
-    <link rel="canonical" href="/kernel/synchronization/">
+    <link rel="canonical" href="http://firoyang.org/kernel/synchronization/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -130,7 +130,7 @@
         
         <ul id="tags">
           
-            <li> <a href="/tags/kernel">kernel</a> </li>
+            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
           
         </ul>
 
@@ -141,19 +141,19 @@
 
 <meta itemprop="wordCount" content="483">
 <meta itemprop="datePublished" content="2015-02-27">
-<meta itemprop="url" content="/kernel/synchronization/">
+<meta itemprop="url" content="http://firoyang.org/kernel/synchronization/">
 
 
   <div>
         <article itemprop="articleBody" id="content">
            
 
-<p>#Reference
+<p>#Reference<br />
 Perfbook</p>
 
 <h1 id="why-we-need-synchronization:cc60bd9bd60be86fcb916e123f79cf09">Why we need synchronization</h1>
 
-<p>a critical section is a piece of code that accesses a shared resource
+<p>a critical section is a piece of code that accesses a shared resource<br />
 (data structure or device) that must not be concurrently accessed by more than one thread of execution.</p>
 
 <p>This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition.</p>
@@ -164,44 +164,44 @@ Perfbook</p>
 
 <h2 id="common-usage:cc60bd9bd60be86fcb916e123f79cf09">Common usage</h2>
 
-<p>Protect from interruption by hardware interrupts:
-        local_irq_disable(int irq) &amp; local_irq_enable(int irq)
-Protection from software interrupts:
-        local_bh_disable(void) &amp; local_bh_enable(void)
-Protection from other CPUs:
-        spin_lock(spinlock_t *) &amp; spin_unlock(spinlock_t *)
-Preemption by other user contexts:
+<p>Protect from interruption by hardware interrupts:<br />
+        local_irq_disable(int irq) &amp; local_irq_enable(int irq)<br />
+Protection from software interrupts:<br />
+        local_bh_disable(void) &amp; local_bh_enable(void)<br />
+Protection from other CPUs:<br />
+        spin_lock(spinlock_t *) &amp; spin_unlock(spinlock_t *)<br />
+Preemption by other user contexts:<br />
         preempt_disable(void) &amp; preempt_enable(void)</p>
 
 <h1 id="what-is-synchronization-in-computer-science:cc60bd9bd60be86fcb916e123f79cf09">What is synchronization in computer science</h1>
 
-<p><a href="http://www.etymonline.com/index.php?term=synchronize">Synchronize</a>
-synchronization means be of the same time.
+<p><a href="http://www.etymonline.com/index.php?term=synchronize">Synchronize</a><br />
+synchronization means be of the same time.<br />
 It means &ldquo;make it synchronous&rdquo;, something like coexistence.</p>
 
-<p>Process synchronization refers to the idea that multiple processes are
-to join up or handshake at a certain point, in order to reach an
-agreement or commit to a certain sequence of action.
-* Mutual exclusion &ndash; only one excution routine in  critical section
-Readers–writers problem
-The Producer-Consumer Problem
-* Cooperative
-TCP Handshake
-* Deadlock
-Dining philosophers problem
-* Starvation
-* Prioirty inversion
+<p>Process synchronization refers to the idea that multiple processes are<br />
+to join up or handshake at a certain point, in order to reach an<br />
+agreement or commit to a certain sequence of action.<br />
+* Mutual exclusion &ndash; only one excution routine in  critical section<br />
+Readers–writers problem<br />
+The Producer-Consumer Problem<br />
+* Cooperative<br />
+TCP Handshake<br />
+* Deadlock<br />
+Dining philosophers problem<br />
+* Starvation<br />
+* Prioirty inversion<br />
 * Busy waiting</p>
 
 <h1 id="mutual-exclusion:cc60bd9bd60be86fcb916e123f79cf09">Mutual exclusion</h1>
 
 <h2 id="spinlock-unsleepable-mutex:cc60bd9bd60be86fcb916e123f79cf09">spinlock - unsleepable mutex</h2>
 
-<p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/">Linux 内核的排队自旋锁FIFO Ticket Spinlock</a>
-spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了
-context switch, 相对semaphore效率高.
-显然对于little critical section 使用semaphore而不是spinlock,将带来性能
-上的巨大损耗.
+<p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/">Linux 内核的排队自旋锁FIFO Ticket Spinlock</a><br />
+spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了<br />
+context switch, 相对semaphore效率高.<br />
+显然对于little critical section 使用semaphore而不是spinlock,将带来性能<br />
+上的巨大损耗.<br />
 * rw_lock</p>
 
 <h2 id="mutex:cc60bd9bd60be86fcb916e123f79cf09">Mutex</h2>
@@ -218,12 +218,12 @@ context switch, 相对semaphore效率高.
 
 <h2 id="semaphore:cc60bd9bd60be86fcb916e123f79cf09">semaphore</h2>
 
-<p>it was implement based on spinlock.
-it can have more than one holder at any time (the number decided at initialization time),
-although it is most commonly used as a single-holder lock (a mutex).
-if you can not get a semaphore, your task will put itself on the wait queue, and be woken
-up the semaphore is released.
-sleepable
+<p>it was implement based on spinlock.<br />
+it can have more than one holder at any time (the number decided at initialization time),<br />
+although it is most commonly used as a single-holder lock (a mutex).<br />
+if you can not get a semaphore, your task will put itself on the wait queue, and be woken<br />
+up the semaphore is released.<br />
+sleepable<br />
 preemptable</p>
 
 <h2 id="tcp-handshake:cc60bd9bd60be86fcb916e123f79cf09">TCP handshake</h2>
@@ -232,36 +232,36 @@ preemptable</p>
 
 <h2 id="refernce:cc60bd9bd60be86fcb916e123f79cf09">Refernce</h2>
 
-<p><a href="http://en.wikipedia.org/wiki/Memory_barrier">http://en.wikipedia.org/wiki/Memory_barrier</a>
+<p><a href="http://en.wikipedia.org/wiki/Memory_barrier">http://en.wikipedia.org/wiki/Memory_barrier</a><br />
 Documentation/memory-barriers.txt</p>
 
 <h2 id="common:cc60bd9bd60be86fcb916e123f79cf09">Common</h2>
 
 <ul>
-<li>When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping
-to ensure that the program executes as if all memory operations were performed in the order
-specified by the programmer (program order), so memory barriers are not necessary.
-However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor
-system, or memory mapped peripherals, out-of-order access may affect program behavior.
-For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.</li>
+<li>When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping<br />
+to ensure that the program executes as if all memory operations were performed in the order<br />
+specified by the programmer (program order), so memory barriers are not necessary.<br />
+However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor<br />
+system, or memory mapped peripherals, out-of-order access may affect program behavior.<br />
+For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.<br /></li>
 
 <li><p>Compiler and cpu do the same optimization: reorder of instructions</p>
 
 <h2 id="the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different:cc60bd9bd60be86fcb916e123f79cf09">The Linux kernel has a variety of different barriers that act at different</h2>
 
-<p>levels:
-(<em>) Compiler barrier.
-(</em>) CPU memory barriers.
+<p>levels:<br />
+(<em>) Compiler barrier.<br />
+(</em>) CPU memory barriers.<br />
 (*) MMIO write barrier.</p>
 
 <h2 id="access-once:cc60bd9bd60be86fcb916e123f79cf09">ACCESS_ONCE</h2></li>
 
-<li><p>Does it work cast a variable to volatile?
-No, there is no efects on cast a variable to volatile.
-Because, access variable is before volatile cast! That means you
-still get a register value. What you do is just conversion a temporary
-variable
-Rationale for International Standard&ndash;Programming Languages&ndash;C
+<li><p>Does it work cast a variable to volatile?<br />
+No, there is no efects on cast a variable to volatile.<br />
+Because, access variable is before volatile cast! That means you<br />
+still get a register value. What you do is just conversion a temporary<br />
+variable<br />
+Rationale for International Standard&ndash;Programming Languages&ndash;C<br />
 6.7.3</p>
 
 <h2 id="for-volatile:cc60bd9bd60be86fcb916e123f79cf09">For volatile</h2>
@@ -275,7 +275,21 @@ Rationale for International Standard&ndash;Programming Languages&ndash;C
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/kernel\/synchronization\/';
+    var disqus_title = 'Synchronization';
+    var disqus_url = 'http:\/\/firoyang.org\/kernel\/synchronization\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 </aside>
 
 <footer>

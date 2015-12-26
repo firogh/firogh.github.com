@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="/kernel/console/">
+<meta property="og:url" content="http://firoyang.org/kernel/console/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2015-12-05"/>
 <meta property="article:modified_time" content="2015-12-05"/>
@@ -31,9 +31,9 @@
 
 
 
-    <base href="">
+    <base href="http://firoyang.org/">
     <title> Console and TTY</title>
-    <link rel="canonical" href="/kernel/console/">
+    <link rel="canonical" href="http://firoyang.org/kernel/console/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -136,7 +136,7 @@
 
 <meta itemprop="wordCount" content="1932">
 <meta itemprop="datePublished" content="2015-12-05">
-<meta itemprop="url" content="/kernel/console/">
+<meta itemprop="url" content="http://firoyang.org/kernel/console/">
 
 
   <div>
@@ -145,63 +145,63 @@
 
 <h1 id="about-the-design:49ed33abd1f8adafccaa91748bb495b5">About the design</h1>
 
-<p>Why dose we use /dev/xxx to represent the &ldquo;tty&rdquo; device?
-&gt; The whole point with &ldquo;everything is a file&rdquo; is not that you have some
-&gt; random filename (indeed, sockets and pipes show that &ldquo;file&rdquo; and &ldquo;filename&rdquo;
-&gt; have nothing to do with each other), <em>but the fact that you can use common</em>
-&gt; <em>tools to operate on different things</em>. &ndash; Linus
-So we got the key point!
-In order to use the common tools, file ops and vfs layer, the tty device is &ldquo;abstructed&rdquo; to
-files by us. Addnationaly, we must assurance that is the files is <em>different</em>. What does
-the word &ldquo;dirrerent&rdquo; means is not that you have some random different filename, but the
-fact that you can access the real device through the different.
-&gt; From wikipedia:
-&gt; In mathematics, injections, surjections and bijections are classes of functions distinguished
-&gt; by the manner in which arguments (input expressions from the domain) and images
-&gt; (output expressions from the codomain) are related or mapped to each other.
-I got an insight that abstruction is a non-injective, right?
-But non-injective may not be a anstruction.
-An asbstruction should come from manipulating different objects.
-Non-injective, 多对一; Multiplex, 一对多.
-So we can use mathematical language to describe the linux subsystem.
-From real life device to a filesystem file.
-* Abstruction: Non-injective, Multiplex(not partial function).
-* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!
+<p>Why dose we use /dev/xxx to represent the &ldquo;tty&rdquo; device?<br />
+&gt; The whole point with &ldquo;everything is a file&rdquo; is not that you have some<br />
+&gt; random filename (indeed, sockets and pipes show that &ldquo;file&rdquo; and &ldquo;filename&rdquo;<br />
+&gt; have nothing to do with each other), <em>but the fact that you can use common</em><br />
+&gt; <em>tools to operate on different things</em>. &ndash; Linus<br />
+So we got the key point!<br />
+In order to use the common tools, file ops and vfs layer, the tty device is &ldquo;abstructed&rdquo; to<br />
+files by us. Addnationaly, we must assurance that is the files is <em>different</em>. What does<br />
+the word &ldquo;dirrerent&rdquo; means is not that you have some random different filename, but the<br />
+fact that you can access the real device through the different.<br />
+&gt; From wikipedia:<br />
+&gt; In mathematics, injections, surjections and bijections are classes of functions distinguished<br />
+&gt; by the manner in which arguments (input expressions from the domain) and images<br />
+&gt; (output expressions from the codomain) are related or mapped to each other.<br />
+I got an insight that abstruction is a non-injective, right?<br />
+But non-injective may not be a anstruction.<br />
+An asbstruction should come from manipulating different objects.<br />
+Non-injective, 多对一; Multiplex, 一对多.<br />
+So we can use mathematical language to describe the linux subsystem.<br />
+From real life device to a filesystem file.<br />
+* Abstruction: Non-injective, Multiplex(not partial function).<br />
+* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!<br />
 Abstruction -&gt; Control abstruction and data abstruction -&gt; Abstruction layer</p>
 
-<p>软件设计的两个主要目的.
-1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.
+<p>软件设计的两个主要目的.<br />
+1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.<br />
 2. Separation of concerns, modular(abstruciton in layer), 笛卡尔划分的思想</p>
 
 <h1 id="tty-struct-disc-data:49ed33abd1f8adafccaa91748bb495b5">tty_struct-&gt;disc_data</h1>
 
-<p>tty_init_dev-&gt;
-{
-    initialize_tty_struct-&gt;tty_ldisc_init
-    tty_ldisc_setup-&gt;tty_ldisc_open-&gt;n_tty_open-&gt; tty-&gt;disc_data = ldata;
-}
-sys_vhangup-&gt;tty_vhangup_self-&gt;__tty_hangup-&gt;tty_ldisc_hangup-&gt;tty_ldisc_reinit
+<p>tty_init_dev-&gt;<br />
+{<br />
+    initialize_tty_struct-&gt;tty_ldisc_init<br />
+    tty_ldisc_setup-&gt;tty_ldisc_open-&gt;n_tty_open-&gt; tty-&gt;disc_data = ldata;<br />
+}<br />
+sys_vhangup-&gt;tty_vhangup_self-&gt;__tty_hangup-&gt;tty_ldisc_hangup-&gt;tty_ldisc_reinit<br />
 vfs_write-&gt;redirected_tty_write-&gt;tty_write-&gt;n_tty_write-&gt;process_output</p>
 
 <h1 id="early-con:49ed33abd1f8adafccaa91748bb495b5">early_con</h1>
 
-<p>EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);
-setup_earlycon-&gt;
-{
-    parse_options-&gt;
-    {
-        parse earlycon_device-&gt;port-&gt;uartclk and
-        earlycon_device-&gt;baud
-    }
-    setup = early_serial8250_setup-&gt; init_port(device);
-    register_console(early_console_dev.con)
+<p>EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);<br />
+setup_earlycon-&gt;<br />
+{<br />
+    parse_options-&gt;<br />
+    {<br />
+        parse earlycon_device-&gt;port-&gt;uartclk and<br />
+        earlycon_device-&gt;baud<br />
+    }<br />
+    setup = early_serial8250_setup-&gt; init_port(device);<br />
+    register_console(early_console_dev.con)<br />
 }</p>
 
 <h1 id="earlyprintk:49ed33abd1f8adafccaa91748bb495b5">earlyprintk</h1>
 
-<p>early_param(&ldquo;earlyprintk&rdquo;, setup_early_printk)-&gt;
-{
-    early_serial_init-&gt;
+<p>early_param(&ldquo;earlyprintk&rdquo;, setup_early_printk)-&gt;<br />
+{<br />
+    early_serial_init-&gt;<br />
     {</p>
 
 <pre><code>}
@@ -213,15 +213,15 @@ early_console_register(&amp;early_serial_console, keep);
 <h1 id="cpu-hotplug:49ed33abd1f8adafccaa91748bb495b5">cpu hotplug</h1>
 
 <ul>
-<li>onset
-static struct smp_hotplug_thread softirq_threads {
-.thread_fn              = run_ksoftirqd
-};
-early_initcall(spawn_ksoftirqd)-&gt;mpboot_register_percpu_thread(&amp;softirq_threads)</li>
-<li>nucles onset
-suspend_enter-&gt;enable_nonboot_cpus-&gt;_cpu_up-&gt;smpboot_create_threads-&gt;<strong>smpboot_create_thread(&amp;hotplug_threads)-&gt;
-kthread_create_on_cpu(smpboot_thread_fn-&gt; ht-&gt;thread_fn(td-&gt;cpu)= run_ksoftirqd-&gt;</strong>do_softirq-&gt;h-&gt;action(h) = run_timer_softirq-&gt;
-__run_timers-&gt;call_timer_fn)</li>
+<li>onset<br />
+static struct smp_hotplug_thread softirq_threads {<br />
+.thread_fn              = run_ksoftirqd<br />
+};<br />
+early_initcall(spawn_ksoftirqd)-&gt;mpboot_register_percpu_thread(&amp;softirq_threads)<br /></li>
+<li>nucles onset<br />
+suspend_enter-&gt;enable_nonboot_cpus-&gt;_cpu_up-&gt;smpboot_create_threads-&gt;<strong>smpboot_create_thread(&amp;hotplug_threads)-&gt;<br />
+kthread_create_on_cpu(smpboot_thread_fn-&gt; ht-&gt;thread_fn(td-&gt;cpu)= run_ksoftirqd-&gt;</strong>do_softirq-&gt;h-&gt;action(h) = run_timer_softirq-&gt;<br />
+__run_timers-&gt;call_timer_fn)<br /></li>
 </ul>
 
 <p>vt 就是个tty也有tty_driver 叫console_driver.</p>
@@ -230,43 +230,43 @@ __run_timers-&gt;call_timer_fn)</li>
 
 <h1 id="contents:49ed33abd1f8adafccaa91748bb495b5">Contents</h1>
 
-<p><a href="http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal">What is the difference between shell, console, and terminal?</a>
-What does console do in kernel or u-boot?
-Linux console?
-Computer terminal: keyboard + dispaly
+<p><a href="http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal">What is the difference between shell, console, and terminal?</a><br />
+What does console do in kernel or u-boot?<br />
+Linux console?<br />
+Computer terminal: keyboard + dispaly<br />
 Terminal emulator:</p>
 
 <h1 id="get-a-glance-on-u-boot:49ed33abd1f8adafccaa91748bb495b5">get a glance on u-boot</h1>
 
-<p>start.S:board_init_r
-init_sequence_f: -&gt;init_baud_rate; serial_init; console_init_f
-serial_init -&gt;&amp;eserial1_device-&gt;start=eserial##port##_init-&gt;NS16550_init: UART divisor init.
-Firstly, the struct of serial define some input and output funtion.
-It&rsquo;s basic function of serial, put or get!
-console_init_f: just gd-&gt;have_console = 1;
-init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,
-initr_serial: just register &amp;eserial1_device to serial_devices
-stdio_add_devices: drv_system_init, serial_stdio_init
-drv_system_init: register default serial dev to devs.list.
-serial_stdio_init: register &amp;eserial1_device to devs.list. Duplicate, but serial dev &ldquo;eserial0&rdquo;  and system &ldquo;serial&rdquo;.
-console_init_r: console_doenv -&gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &ldquo;serial&rdquo;, but they may be KBD!
-看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?
+<p>start.S:board_init_r<br />
+init_sequence_f: -&gt;init_baud_rate; serial_init; console_init_f<br />
+serial_init -&gt;&amp;eserial1_device-&gt;start=eserial##port##_init-&gt;NS16550_init: UART divisor init.<br />
+Firstly, the struct of serial define some input and output funtion.<br />
+It&rsquo;s basic function of serial, put or get!<br />
+console_init_f: just gd-&gt;have_console = 1;<br />
+init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,<br />
+initr_serial: just register &amp;eserial1_device to serial_devices<br />
+stdio_add_devices: drv_system_init, serial_stdio_init<br />
+drv_system_init: register default serial dev to devs.list.<br />
+serial_stdio_init: register &amp;eserial1_device to devs.list. Duplicate, but serial dev &ldquo;eserial0&rdquo;  and system &ldquo;serial&rdquo;.<br />
+console_init_r: console_doenv -&gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &ldquo;serial&rdquo;, but they may be KBD!<br />
+看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?<br />
 main_loop:cli_loop: getc!</p>
 
 <h1 id="what-is-platform-device-or-driver:49ed33abd1f8adafccaa91748bb495b5">what is platform device or driver?</h1>
 
 <h1 id="a-reallife-serial8250:49ed33abd1f8adafccaa91748bb495b5">A reallife serial8250</h1>
 
-<p>drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port
-module_init-&gt;
-{
-    serial8250_init-&gt;serial8250_isa_init_ports-&gt;serial8250_ports[i].port.ops = &amp;serial8250_pops; //insidious
-    boca_init-&gt;platform_device_register(&amp;boca_device); //register platform device and data.
-}
+<p>drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port<br />
+module_init-&gt;<br />
+{<br />
+    serial8250_init-&gt;serial8250_isa_init_ports-&gt;serial8250_ports[i].port.ops = &amp;serial8250_pops; //insidious<br />
+    boca_init-&gt;platform_device_register(&amp;boca_device); //register platform device and data.<br />
+}<br />
 * uart_port-&gt;tty_port</p>
 
-<p>serial8250_probe(plat_serial8250_port)-&gt;serial8250_register_8250_port(uart_8250_port)-&gt;
-uart_add_one_port(&amp;serial8250_reg, &amp;uart-&gt;port=uart_port)-&gt;
+<p>serial8250_probe(plat_serial8250_port)-&gt;serial8250_register_8250_port(uart_8250_port)-&gt;<br />
+uart_add_one_port(&amp;serial8250_reg, &amp;uart-&gt;port=uart_port)-&gt;<br />
 {</p>
 
 <pre><code>uart_configure_port-&gt;
@@ -291,32 +291,32 @@ tty_port_register_device_attr-&gt;
 
 <h1 id="simple-conceptions:49ed33abd1f8adafccaa91748bb495b5">Simple conceptions</h1>
 
-<p><a href="http://www.linusakesson.net/programming/tty/">You must read this -&gt; The TTY demystified</a>
-System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.
-        UART
-        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)
-* System console
-Virtual termial, Terminal emulator/telnet/ssh -&gt; pts ,Physical terminal
-You need at least one virtual terminal device in order to make use of your keyboard and monitor.
-VT combine keyboard and display see con_init
-con_init init a virtual terminal like gnome-terminal but in kernel.
-con_init mainly init display.
-vty_init mainly init kbd
-They all can be system console.(Exception pts??), if you enable it.
-Console is the entry of linux system.
-* Console driver &ndash; banckends of  console
-struct console 指定了console的结构.
-* Console config
-If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.
-If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.
-How to explain this phenomena?
-From show_cons_active, we know /dev/console should come from console_drivers.
-/dev/console is really the pointer.
-Now, let&rsquo;s inspect open /dev/console.
-* Open /dev/console
-Fisrt, it&rsquo;s the very last place of booting kernel.
-start_kernel-&gt;rest_init-&gt;kernel_init-&gt;kernel_init_freeable-&gt;sys_open((const char __user *) &ldquo;/dev/console&rdquo;, O_RDWR, 0)-&gt;&hellip;-&gt;
-console_fops-&gt;tty_open-&gt;
+<p><a href="http://www.linusakesson.net/programming/tty/">You must read this -&gt; The TTY demystified</a><br />
+System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.<br />
+        UART<br />
+        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)<br />
+* System console<br />
+Virtual termial, Terminal emulator/telnet/ssh -&gt; pts ,Physical terminal<br />
+You need at least one virtual terminal device in order to make use of your keyboard and monitor.<br />
+VT combine keyboard and display see con_init<br />
+con_init init a virtual terminal like gnome-terminal but in kernel.<br />
+con_init mainly init display.<br />
+vty_init mainly init kbd<br />
+They all can be system console.(Exception pts??), if you enable it.<br />
+Console is the entry of linux system.<br />
+* Console driver &ndash; banckends of  console<br />
+struct console 指定了console的结构.<br />
+* Console config<br />
+If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.<br />
+If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.<br />
+How to explain this phenomena?<br />
+From show_cons_active, we know /dev/console should come from console_drivers.<br />
+/dev/console is really the pointer.<br />
+Now, let&rsquo;s inspect open /dev/console.<br />
+* Open /dev/console<br />
+Fisrt, it&rsquo;s the very last place of booting kernel.<br />
+start_kernel-&gt;rest_init-&gt;kernel_init-&gt;kernel_init_freeable-&gt;sys_open((const char __user *) &ldquo;/dev/console&rdquo;, O_RDWR, 0)-&gt;&hellip;-&gt;<br />
+console_fops-&gt;tty_open-&gt;<br />
 {</p>
 
 <pre><code>// Sitiuations: disbale VT CONSOLE byt enable SERIAL8250_CONSOLE.
@@ -398,19 +398,19 @@ tty-&gt;ops-&gt;open(tty, filp)-&gt;//ops = &amp;uart_ops
 }
 </code></pre>
 
-<p>}
+<p>}<br />
 // At present, we understand the flow of open /dev/console to serial console</p>
 
 <h1 id="what-about-opening-dev-console-to-vt-console:49ed33abd1f8adafccaa91748bb495b5">What about opening /dev/console to vt console</h1>
 
-<p>sys_open(/dev/console)-&gt; &hellip; tty_open -&gt;
-{
-    tty_lookup_driver-&gt; get tty_driver=console_driver,
-    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!
-    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.
-    // system console就有了, printk也就有了归处. In other words, you registered, you got printed
-    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.
-    // 那么在kernel_init中sys_open又是什么鬼呢?
+<p>sys_open(/dev/console)-&gt; &hellip; tty_open -&gt;<br />
+{<br />
+    tty_lookup_driver-&gt; get tty_driver=console_driver,<br />
+    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!<br />
+    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.<br />
+    // system console就有了, printk也就有了归处. In other words, you registered, you got printed<br />
+    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.<br />
+    // 那么在kernel_init中sys_open又是什么鬼呢?<br />
     // dev/tty 是专门真对进程的, 就是进程之前打开了一个tty就存在singnal里, 这个dev/tty就是取出来的.</p>
 
 <p>}</p>
@@ -419,61 +419,61 @@ tty-&gt;ops-&gt;open(tty, filp)-&gt;//ops = &amp;uart_ops
 
 <h1 id="这和-dev-tty-dev-ttys-从tty-drivers-差不多:49ed33abd1f8adafccaa91748bb495b5">这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.</h1>
 
-<p>// 这么输出为什么不会打窜了?
-// How ctrl alt Fn work?
-// echo xxx /dev/tty in serial tty_lookup_driver
+<p>// 这么输出为什么不会打窜了?<br />
+// How ctrl alt Fn work?<br />
+// echo xxx /dev/tty in serial tty_lookup_driver<br />
 // 另一个问题, serial 的terminal?</p>
 
 <h1 id="the-perspective:49ed33abd1f8adafccaa91748bb495b5">The perspective</h1>
 
-<p>/dev/*
-vfs
-chrdev
-tty_fops&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&gt;tty core
-    ld_ops &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&ndash;&gt; tty line discipline(for read, write)
-tty_driver con_ops/uart_ops&mdash;&mdash;&ndash;&gt; tty driver and tty_operations
-HW
-There are three different types of tty drivers: console, serial port, and pty.
-serial8250_default_handle_irq
-UART console
-              |&mdash;- Virtual terminal &mdash;&mdash;&mdash;&mdash;&mdash;&ndash; VT console
-              |                 | &ndash; VT console
-              |&mdash;-
-        Terminal&ndash;|
+<p>/dev/*<br />
+vfs<br />
+chrdev<br />
+tty_fops&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&gt;tty core<br />
+    ld_ops &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&ndash;&gt; tty line discipline(for read, write)<br />
+tty_driver con_ops/uart_ops&mdash;&mdash;&ndash;&gt; tty driver and tty_operations<br />
+HW<br />
+There are three different types of tty drivers: console, serial port, and pty.<br />
+serial8250_default_handle_irq<br />
+UART console<br />
+              |&mdash;- Virtual terminal &mdash;&mdash;&mdash;&mdash;&mdash;&ndash; VT console<br />
+              |                 | &ndash; VT console<br />
+              |&mdash;-<br />
+        Terminal&ndash;|<br />
               |&mdash;-</p>
 
 <h1 id="what-about-console:49ed33abd1f8adafccaa91748bb495b5">What about console?</h1>
 
 <ul>
-<li><p>early_con
+<li><p>early_con<br />
 start_kernel or setup_arch(arm)-&gt;parse_early_param-&gt;do_early_param-&gt;p-&gt;setup_func()= setup_early_printk-&gt;register_console</p></li>
 
-<li><p>vga_con
-start_kerenl-&gt;
-{
-// All about vga console
-set_arch-&gt; conswitchp = &amp;vga_con; or conswitchp = &amp;dummy_con;
-console_init-&gt;
-{
-    con_init-&gt;
-    {
-        // vc-&gt;vc_sw-&gt;con_putcs is DUMMY
-        //内存映射64KB or 32KB的VGA区域. 启动VGA
-        conswitchp-&gt;con_startup = vgacon_startup -&gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);
-        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间
-        // 核心内容!
-        for (currcons = 0; currcons &lt; MIN_NR_CONSOLES; currcons++) {
-            // 给vc_cons[currcons].d分配内存
-            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);
-            INIT_WORK(&amp;vc_cons[currcons].SAK_work, vc_SAK);
-            //初始化vc_cons[currcons].d
-            tty_port_init(&amp;vc-&gt;port);
-            // 继续初始化, 主要是确定screenbuf size
-            visual_init(vc, currcons, 1);
-            // 给vc_screenbuf分配内存
-            vc-&gt;vc_screenbuf = kzalloc(vc-&gt;vc_screenbuf_size, GFP_NOWAIT);
-            vc_init(vc, vc-&gt;vc_rows, vc-&gt;vc_cols,
-                currcons || !vc-&gt;vc_sw-&gt;con_save_screen);
+<li><p>vga_con<br />
+start_kerenl-&gt;<br />
+{<br />
+// All about vga console<br />
+set_arch-&gt; conswitchp = &amp;vga_con; or conswitchp = &amp;dummy_con;<br />
+console_init-&gt;<br />
+{<br />
+    con_init-&gt;<br />
+    {<br />
+        // vc-&gt;vc_sw-&gt;con_putcs is DUMMY<br />
+        //内存映射64KB or 32KB的VGA区域. 启动VGA<br />
+        conswitchp-&gt;con_startup = vgacon_startup -&gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);<br />
+        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间<br />
+        // 核心内容!<br />
+        for (currcons = 0; currcons &lt; MIN_NR_CONSOLES; currcons++) {<br />
+            // 给vc_cons[currcons].d分配内存<br />
+            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);<br />
+            INIT_WORK(&amp;vc_cons[currcons].SAK_work, vc_SAK);<br />
+            //初始化vc_cons[currcons].d<br />
+            tty_port_init(&amp;vc-&gt;port);<br />
+            // 继续初始化, 主要是确定screenbuf size<br />
+            visual_init(vc, currcons, 1);<br />
+            // 给vc_screenbuf分配内存<br />
+            vc-&gt;vc_screenbuf = kzalloc(vc-&gt;vc_screenbuf_size, GFP_NOWAIT);<br />
+            vc_init(vc, vc-&gt;vc_rows, vc-&gt;vc_cols,<br />
+                currcons || !vc-&gt;vc_sw-&gt;con_save_screen);<br />
         }</p>
 
 <pre><code>    [    0.000000] Console: colour VGA+ 80x25
@@ -483,34 +483,34 @@ serial8250_console_init-&gt;register_console(&amp;serial8250_console) to console
 [    0.000000] console [tty0] enabled
 </code></pre>
 
-<p>}
-module_init(serial8250_init);??
+<p>}<br />
+module_init(serial8250_init);??<br />
 }</p></li>
 
-<li><p>fbcon
-register_framebuffer-&gt; do_take_over_console -&gt;
-{
-do_register_con_driver-&gt;csw-&gt;con_startup();registered_con_driver
-do_bind_con_driver -&gt;
-{
-    [    3.882220] Console: switching to colour dummy device 80x25
-    [    4.720732] Console: switching to colour frame buffer device 170x48
-}
+<li><p>fbcon<br />
+register_framebuffer-&gt; do_take_over_console -&gt;<br />
+{<br />
+do_register_con_driver-&gt;csw-&gt;con_startup();registered_con_driver<br />
+do_bind_con_driver -&gt;<br />
+{<br />
+    [    3.882220] Console: switching to colour dummy device 80x25<br />
+    [    4.720732] Console: switching to colour frame buffer device 170x48<br />
+}<br />
 }</p>
 
 <h2 id="vga-text-console-printk-write:49ed33abd1f8adafccaa91748bb495b5">VGA text console printk &amp; write</h2></li>
 
-<li><p>kernel space
+<li><p>kernel space<br />
 printk-&gt; &hellip;-&gt;log_buf</p></li>
 
-<li><p>userspace for ttyN
+<li><p>userspace for ttyN<br />
 tty_fops-&gt;write=tty_write-&gt; tty_ldisc_N_TTY-&gt;write=n_tty_write-&gt; tty_driver-&gt;ops=con_ops-&gt;write=con_write-&gt;do_con_write</p></li>
 
-<li><p>agent
-console_drivers-&gt;vt_console_driver-&gt;serial8250_console-&gt;NULL
-console_unlock-&gt;..-&gt;__call_console_drivers-&gt; console_drivers-&gt;write = vt_console_print
-{
-//保存到screen buf, vga_con也什么不做啊.
+<li><p>agent<br />
+console_drivers-&gt;vt_console_driver-&gt;serial8250_console-&gt;NULL<br />
+console_unlock-&gt;..-&gt;__call_console_drivers-&gt; console_drivers-&gt;write = vt_console_print<br />
+{<br />
+//保存到screen buf, vga_con也什么不做啊.<br />
 scr_writew((vc-&gt;vc_attr &lt;&lt; 8) + c, (unsigned short *)vc-&gt;vc_pos);</p></li>
 </ul>
 
@@ -519,119 +519,119 @@ scr_writew((vc-&gt;vc_attr &lt;&lt; 8) + c, (unsigned short *)vc-&gt;vc_pos);</p
 <h1 id="what-about-tty:49ed33abd1f8adafccaa91748bb495b5">What about tty</h1>
 
 <ul>
-<li><p>onset
-console_init-&gt;tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);
-N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html">Serial Drivers by Alessandro Rubini</a>
-fs_initcall:chr_dev_init-&gt;drivers/tty/tty_io.c: tty_init-&gt;
+<li><p>onset<br />
+console_init-&gt;tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br />
+N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html">Serial Drivers by Alessandro Rubini</a><br />
+fs_initcall:chr_dev_init-&gt;drivers/tty/tty_io.c: tty_init-&gt;<br />
 {</p>
 
-<p>/* /dev/tty0 = /dev/console console_ops <em>/
+<p>/* /dev/tty0 = /dev/console console_ops <em>/<br />
 /</em> /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */</p>
 
-<p>//&ldquo;/dev/tty&rdquo;,
-cdev_init(&amp;tty_cdev, &amp;tty_fops);
-&ldquo;/dev/console&rdquo;
-cdev_init(&amp;console_cdev, &amp;console_fops);
-vty_init-&gt;
-{
+<p>//&ldquo;/dev/tty&rdquo;,<br />
+cdev_init(&amp;tty_cdev, &amp;tty_fops);<br />
+&rdquo;/dev/console&rdquo;<br />
+cdev_init(&amp;console_cdev, &amp;console_fops);<br />
+vty_init-&gt;<br />
+{<br />
     //&ldquo;dev/tty0&rdquo;<br />
-    cdev_init(&amp;vc0_cdev, console_fops);
-    //&ldquo;/dev/ttyN&rdquo;
-    tty_register_driver-&gt;
-    {
-        // What does tty_register_driver do ?
-        // Alloc and register chr dev region.
-        // Add cdev with tty_ops and above region.
-        // Register tty device
-        // Why do we register tty devices?
-        // These devices must be used in some place.
-        // After registering itself, the driver registers the devices it controls through the tty_register_device function.
-        // 原来是把major 和minor做成dev_t放到driver-&gt;cdevs[index].dev里面了.
-        // 也就是说driver-&gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
-        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
-        // tty_register_device_attr-&gt;device_register-&gt;device_add-&gt;klist_add_tail(&amp;dev-&gt;knode_class,&amp;dev-&gt;class-&gt;p-&gt;klist_devices)
-        // 果然是在open tty-&gt;dev = tty_get_device(tty);在alloc_tty_struct
-        // 不知道这个tty-&gt;dev在哪里用, 不管他了.
-        tty_register_device(_attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
-    }
-    kbd_init
-}
-}
-device_init:serial8250_init-&gt;
-{
-// In this function we decide &ldquo;/dev/ttyS*&rdquo;
-// dmesg |grep Serial
-// [    0.696341] Serial: <sup>8250</sup>&frasl;<sub>16550</sub> driver, 32 ports, IRQ sharing enabled
-// serial8250.c -&gt; tty_io.c
-serial8250_reg.nr = UART_NR;
-ret = uart_register_driver(&amp;serial8250_reg);
-tty_driver set to uart_driver by uart_register_driver -&gt;
-{
-    drv-&gt;state = kzalloc        //uart_state
-    normal-&gt;driver_state    = drv; //args struct uart_driver *drv = &amp;serial8250_reg
-    tty_set_operations(normal, &amp;uart_ops);
-    struct tty_port <em>port = &amp;state-&gt;port
-    tty_port_init(port);
-    port-&gt;ops = &amp;uart_port_ops; //tty_port
-    // We register &ldquo;/dev/ttyS</em>&rdquo; files here.
-    static struct uart_driver serial8250_reg = {
-        .owner                  = THIS_MODULE,
-        .driver_name            = &ldquo;serial&rdquo;,
-        .dev_name               = &ldquo;ttyS&rdquo;,
-        .major                  = TTY_MAJOR,
-        .minor                  = 64,
-        .cons                   = SERIAL8250_CONSOLE,
-    };
+    cdev_init(&amp;vc0_cdev, console_fops);<br />
+    //&ldquo;/dev/ttyN&rdquo;<br />
+    tty_register_driver-&gt;<br />
+    {<br />
+        // What does tty_register_driver do ?<br />
+        // Alloc and register chr dev region.<br />
+        // Add cdev with tty_ops and above region.<br />
+        // Register tty device<br />
+        // Why do we register tty devices?<br />
+        // These devices must be used in some place.<br />
+        // After registering itself, the driver registers the devices it controls through the tty_register_device function.<br />
+        // 原来是把major 和minor做成dev_t放到driver-&gt;cdevs[index].dev里面了.<br />
+        // 也就是说driver-&gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);<br />
+        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class<br />
+        // tty_register_device_attr-&gt;device_register-&gt;device_add-&gt;klist_add_tail(&amp;dev-&gt;knode_class,&amp;dev-&gt;class-&gt;p-&gt;klist_devices)<br />
+        // 果然是在open tty-&gt;dev = tty_get_device(tty);在alloc_tty_struct<br />
+        // 不知道这个tty-&gt;dev在哪里用, 不管他了.<br />
+        tty_register_device(_attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);<br />
+    }<br />
+    kbd_init<br />
+}<br />
+}<br />
+device_init:serial8250_init-&gt;<br />
+{<br />
+// In this function we decide &ldquo;/dev/ttyS*&rdquo;<br />
+// dmesg |grep Serial<br />
+// [    0.696341] Serial: <sup>8250</sup>&frasl;<sub>16550</sub> driver, 32 ports, IRQ sharing enabled<br />
+// serial8250.c -&gt; tty_io.c<br />
+serial8250_reg.nr = UART_NR;<br />
+ret = uart_register_driver(&amp;serial8250_reg);<br />
+tty_driver set to uart_driver by uart_register_driver -&gt;<br />
+{<br />
+    drv-&gt;state = kzalloc        //uart_state<br />
+    normal-&gt;driver_state    = drv; //args struct uart_driver *drv = &amp;serial8250_reg<br />
+    tty_set_operations(normal, &amp;uart_ops);<br />
+    struct tty_port <em>port = &amp;state-&gt;port<br />
+    tty_port_init(port);<br />
+    port-&gt;ops = &amp;uart_port_ops; //tty_port<br />
+    // We register &ldquo;/dev/ttyS</em>&rdquo; files here.<br />
+    static struct uart_driver serial8250_reg = {<br />
+        .owner                  = THIS_MODULE,<br />
+        .driver_name            = &ldquo;serial&rdquo;,<br />
+        .dev_name               = &ldquo;ttyS&rdquo;,<br />
+        .major                  = TTY_MAJOR,<br />
+        .minor                  = 64,<br />
+        .cons                   = SERIAL8250_CONSOLE,<br />
+    };<br />
     retval = tty_register_driver(normal); -&gt; register_chrdev_region(dev, driver-&gt;num, driver-&gt;name) //32, ttyS?*? should be tty_ops</p>
 
-<p>}
-serial8250_register_ports(&amp;serial8250_reg, &amp;serial8250_isa_devs-&gt;dev);
+<p>}<br />
+serial8250_register_ports(&amp;serial8250_reg, &amp;serial8250_isa_devs-&gt;dev);<br />
 }</p></li>
 
-<li><p>nucleus
-tty_write-&gt;ld-&gt;ops-&gt;write=n_tty_write-&gt;(tty_struct tty-&gt;ops-&gt;write)=uart_write-&gt;
-{
-struct uart_state *state = tty-&gt;driver_data;
-port = state-&gt;uart_port;
-circ = &amp;state-&gt;xmit;
-memcpy(circ-&gt;buf + circ-&gt;head, buf, c);
-uart_start-&gt;__uart_start-&gt;(uart_port-&gt;ops-&gt;start_tx(port)); //&amp;uart_port_ops ?? uart_ops??
+<li><p>nucleus<br />
+tty_write-&gt;ld-&gt;ops-&gt;write=n_tty_write-&gt;(tty_struct tty-&gt;ops-&gt;write)=uart_write-&gt;<br />
+{<br />
+struct uart_state *state = tty-&gt;driver_data;<br />
+port = state-&gt;uart_port;<br />
+circ = &amp;state-&gt;xmit;<br />
+memcpy(circ-&gt;buf + circ-&gt;head, buf, c);<br />
+uart_start-&gt;__uart_start-&gt;(uart_port-&gt;ops-&gt;start_tx(port)); //&amp;uart_port_ops ?? uart_ops??<br />
 }</p></li>
 </ul>
 
 <h1 id="what-about-pseudoterminal:49ed33abd1f8adafccaa91748bb495b5">What about Pseudoterminal</h1>
 
-<p>/dev/ptmx is the &ldquo;pseudo-terminal master multiplexer&rdquo;. from wikipedia
-static struct tty_driver *ptm_driver;
-static struct tty_driver *pts_driver;
-module_init(pty_init)-&gt;unix98_pty_init-&gt;
-{
-    tty_set_operations(ptm_driver, &amp;ptm_unix98_ops);
-    tty_register_driver(ptm_driver)
-    tty_set_operations(pts_driver, &amp;pty_unix98_ops);
-    tty_register_driver(pts_driver)
-    ptmx_fops = tty_fops;
-    ptmx_fops.open = ptmx_open;
-    cdev_init(&amp;ptmx_cdev, &amp;ptmx_fops);
+<p>/dev/ptmx is the &ldquo;pseudo-terminal master multiplexer&rdquo;. from wikipedia<br />
+static struct tty_driver *ptm_driver;<br />
+static struct tty_driver *pts_driver;<br />
+module_init(pty_init)-&gt;unix98_pty_init-&gt;<br />
+{<br />
+    tty_set_operations(ptm_driver, &amp;ptm_unix98_ops);<br />
+    tty_register_driver(ptm_driver)<br />
+    tty_set_operations(pts_driver, &amp;pty_unix98_ops);<br />
+    tty_register_driver(pts_driver)<br />
+    ptmx_fops = tty_fops;<br />
+    ptmx_fops.open = ptmx_open;<br />
+    cdev_init(&amp;ptmx_cdev, &amp;ptmx_fops);<br />
 }</p>
 
 <ul>
-<li>How to use ptmx?</li>
+<li>How to use ptmx?<br /></li>
 </ul>
 
 <h1 id="tty-drivers:49ed33abd1f8adafccaa91748bb495b5">tty drivers</h1>
 
 <ul>
-<li>cat /proc/tty/drivers
-/dev/tty             /dev/tty        5       0 system:/dev/tty
-/dev/console         /dev/console    5       1 system:console
-/dev/ptmx            /dev/ptmx       5       2 system
-/dev/vc/0            /dev/vc/0       4       0 system:vtmaster
-usbserial            /dev/ttyUSB   188 0-511 serial
-serial               /dev/ttyS       4 64-95 serial
-pty_slave            /dev/pts      136 0-1048575 pty:slave
-pty_master           /dev/ptm      128 0-1048575 pty:master
-unknown              /dev/tty        4 1-63 console</li>
+<li>cat /proc/tty/drivers<br />
+/dev/tty             /dev/tty        5       0 system:/dev/tty<br />
+/dev/console         /dev/console    5       1 system:console<br />
+/dev/ptmx            /dev/ptmx       5       2 system<br />
+/dev/vc/0            /dev/vc/0       4       0 system:vtmaster<br />
+usbserial            /dev/ttyUSB   188 0-511 serial<br />
+serial               /dev/ttyS       4 64-95 serial<br />
+pty_slave            /dev/pts      136 0-1048575 pty:slave<br />
+pty_master           /dev/ptm      128 0-1048575 pty:master<br />
+unknown              /dev/tty        4 1-63 console<br /></li>
 </ul>
 
 <h1 id="question:49ed33abd1f8adafccaa91748bb495b5">Question?</h1>
@@ -640,13 +640,13 @@ unknown              /dev/tty        4 1-63 console</li>
 
 <h1 id="backup:49ed33abd1f8adafccaa91748bb495b5">Backup</h1>
 
-<p>./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &ldquo;/dev/vc/0&rdquo;) &lt; 0)
-./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &ldquo;vcs&rdquo;, &amp;vcs_fops))
-./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&gt;num, driver-&gt;name);
-./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&gt;num);
-./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&gt;major, driver-&gt;minor_start),
-./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &ldquo;/dev/tty&rdquo;) &lt; 0)
-./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &ldquo;/dev/console&rdquo;) &lt; 0)
+<p>./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &ldquo;/dev/vc/0&rdquo;) &lt; 0)<br />
+./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &ldquo;vcs&rdquo;, &amp;vcs_fops))<br />
+./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&gt;num, driver-&gt;name);<br />
+./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&gt;num);<br />
+./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&gt;major, driver-&gt;minor_start),<br />
+./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &ldquo;/dev/tty&rdquo;) &lt; 0)<br />
+./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &ldquo;/dev/console&rdquo;) &lt; 0)<br />
 ./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &ldquo;/dev/ptmx&rdquo;) &lt; 0)</p>
 
         </article>
@@ -655,7 +655,21 @@ unknown              /dev/tty        4 1-63 console</li>
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/kernel\/console\/';
+    var disqus_title = 'Console and TTY';
+    var disqus_url = 'http:\/\/firoyang.org\/kernel\/console\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 </aside>
 
 <footer>

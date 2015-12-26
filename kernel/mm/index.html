@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="/kernel/mm/">
+<meta property="og:url" content="http://firoyang.org/kernel/mm/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2014-12-28"/>
 <meta property="article:modified_time" content="2014-12-28"/>
@@ -31,9 +31,9 @@
 
 
 
-    <base href="">
+    <base href="http://firoyang.org/">
     <title> Linux memory management</title>
-    <link rel="canonical" href="/kernel/mm/">
+    <link rel="canonical" href="http://firoyang.org/kernel/mm/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -136,7 +136,7 @@
 
 <meta itemprop="wordCount" content="616">
 <meta itemprop="datePublished" content="2014-12-28">
-<meta itemprop="url" content="/kernel/mm/">
+<meta itemprop="url" content="http://firoyang.org/kernel/mm/">
 
 
   <div>
@@ -145,17 +145,17 @@
 
 <h1 id="reference:9037e4aab15a8fa8be9a2e4d7b536995">Reference</h1>
 
-<p>Computer memory#Management_of_memory
+<p>Computer memory#Management_of_memory<br />
 Memory management (operating systems)</p>
 
 <h1 id="contents:9037e4aab15a8fa8be9a2e4d7b536995">Contents</h1>
 
-<p>Logic gates: SRAM, DRAM
-What is data/contrl/addr bus?
-What problems we will meet in memory management?
-Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?
-How to distribute these memory to processes? Virtual memory.
-How to translate linear address to physical address? Page table.
+<p>Logic gates: SRAM, DRAM<br />
+What is data/contrl/addr bus?<br />
+What problems we will meet in memory management?<br />
+Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?<br />
+How to distribute these memory to processes? Virtual memory.<br />
+How to translate linear address to physical address? Page table.<br />
 Exchange data between primary memory and second memory. Paging.</p>
 
 <p>What are the pitfall of manuplate directly physcial memory</p>
@@ -168,32 +168,32 @@ Exchange data between primary memory and second memory. Paging.</p>
 
 <h2 id="gfp-flags:9037e4aab15a8fa8be9a2e4d7b536995">GFP flags</h2>
 
-<p>__GFP_IO: allow disk IO
-__GFP_FS: allow fs operations, depend on io.
+<p>__GFP_IO: allow disk IO<br />
+__GFP_FS: allow fs operations, depend on io.<br />
 more details in lwn, lkd</p>
 
 <h1 id="virtual-memory:9037e4aab15a8fa8be9a2e4d7b536995">Virtual memory</h1>
 
-<p>##Page table
-mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
-原来低12位里面存了flag啊!
-__pte(((phys_addr_t)page_nr &lt;&lt; PAGE_SHIFT) | massage_pgprot(pgprot));
-For vmalloc(), chechk here vmap_page_range_noflush()
-For kmap(), check kmap_init()
+<p>##Page table<br />
+mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))<br />
+原来低12位里面存了flag啊!<br />
+__pte(((phys_addr_t)page_nr &lt;&lt; PAGE_SHIFT) | massage_pgprot(pgprot));<br />
+For vmalloc(), chechk here vmap_page_range_noflush()<br />
+For kmap(), check kmap_init()<br />
 <a href="http://edsionte.com/techblog/archives/1966">How to emulate the process of translate va to pa?</a></p>
 
 <h2 id="copy-to-user:9037e4aab15a8fa8be9a2e4d7b536995">copy_to_user</h2>
 
-<p>not in kernel?
+<p>not in kernel?<br />
 read only?</p>
 
 <h2 id="flush-tlb-after-page-table-modification:9037e4aab15a8fa8be9a2e4d7b536995">flush tlb after page table modification.</h2>
 
 <h2 id="direct-mapping-area:9037e4aab15a8fa8be9a2e4d7b536995">Direct mapping area</h2>
 
-<p>high_memory (-128UL &lt;&lt; 20)
-__get_free_pages()
-kmalloc()
+<p>high_memory (-128UL &lt;&lt; 20)<br />
+__get_free_pages()<br />
+kmalloc()<br />
 kmem_cache_alloc()/slab</p>
 
 <h2 id="vmalloc:9037e4aab15a8fa8be9a2e4d7b536995">Vmalloc</h2>
@@ -202,115 +202,115 @@ kmem_cache_alloc()/slab</p>
 
 <h3 id="hwo-vmalloc-works:9037e4aab15a8fa8be9a2e4d7b536995">Hwo Vmalloc works?</h3>
 
-<p>Work in HIGHMEM and NORMALMEM
-The skeleton is rbtree, root is global variable vmap_area_root.rb_node.
-struct vm_struct likes struct address_space, functionlly;
-struct vmap_area likes struct vm_area_struct.
-map_vm_area 页表映射
+<p>Work in HIGHMEM and NORMALMEM<br />
+The skeleton is rbtree, root is global variable vmap_area_root.rb_node.<br />
+struct vm_struct likes struct address_space, functionlly;<br />
+struct vmap_area likes struct vm_area_struct.<br />
+map_vm_area 页表映射<br />
 the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!</p>
 
 <h3 id="vmalloc-coherence-with-vfree-after-vmalloc-sync-one:9037e4aab15a8fa8be9a2e4d7b536995">Vmalloc coherence with vfree() after vmalloc_sync_one</h3>
 
-<p>在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
-deatils in vmalloc_sync_one() and vunmap_pte_range()
+<p>在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。<br />
+deatils in vmalloc_sync_one() and vunmap_pte_range()<br />
 只释放pte</p>
 
 <h2 id="persistent-kernel-mappings:9037e4aab15a8fa8be9a2e4d7b536995">Persistent Kernel Mappings</h2>
 
-<p>kmap(struct page *)
-How kmap works?
+<p>kmap(struct page *)<br />
+How kmap works?<br />
     Check kmap_init(), later!</p>
 
 <h2 id="temporay-mappings-fixmaps:9037e4aab15a8fa8be9a2e4d7b536995">Temporay Mappings(Fixmaps)</h2>
 
 <p>kmap_atomic()</p>
 
-<p>##Process virtual memory
-* struct vm_area_struct: The intervals of legal address are called <em>memory areas</em> is permitted to access.
-* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.
-i_mmap: how many processes opened this file.
-<a href="https://lkml.org/lkml/2012/8/7/46">https://lkml.org/lkml/2012/8/7/46</a>
+<p>##Process virtual memory<br />
+* struct vm_area_struct: The intervals of legal address are called <em>memory areas</em> is permitted to access.<br />
+* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.<br />
+i_mmap: how many processes opened this file.<br />
+<a href="https://lkml.org/lkml/2012/8/7/46">https://lkml.org/lkml/2012/8/7/46</a><br />
 * sturct mm_struct: how many files(vm_area_struct) does this process opened.</p>
 
 <ul>
-<li><p>Memory mappings
+<li><p>Memory mappings<br />
 syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16</p></li>
 
-<li><p>link
-a virtual address and physical address. &ndash;page tale
-a memory region of a process and its virtual page addresses. &ndash;vm_area_struct
-a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&gt;i_mmap.
+<li><p>link<br />
+a virtual address and physical address. &ndash;page tale<br />
+a memory region of a process and its virtual page addresses. &ndash;vm_area_struct<br />
+a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&gt;i_mmap.<br />
 a physical page and the processes that share the page(used in swap case)</p></li>
 </ul>
 
-<p>#Page faults
+<p>#Page faults<br />
 Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory</p>
 
 <ul>
-<li><p>Segemnt fault
-Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.
-<a href="https://www.kernel.org/doc/Documentation/x86/exception-tables.txt">https://www.kernel.org/doc/Documentation/x86/exception-tables.txt</a>
+<li><p>Segemnt fault<br />
+Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.<br />
+<a href="https://www.kernel.org/doc/Documentation/x86/exception-tables.txt">https://www.kernel.org/doc/Documentation/x86/exception-tables.txt</a><br />
 Null pointer: probably, mostly catched in below 0x08048000.</p></li>
 
-<li><p>Demanding page
-vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!
+<li><p>Demanding page<br />
+vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!<br />
 expand_stack()/handle_mm_fault()</p></li>
 
 <li><p>vmalloc fault</p></li>
 
-<li><p>Oops
+<li><p>Oops<br />
 kernel access invalid address, in __print_signal_info() task-&gt;sighand and  task-&gt;nsproxy is null.</p></li>
 </ul>
 
-<p>#Physical memory
-* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl
-* ZONE(DMA/NORMAL/HIGHMEM) struct zone:
-* struct page is the basic unit of kernel mm knowns as page frame.
-    The goal of strcut page is to describe physical memory, not the data contained therein.
-* The buddy system is per-zone struct free_area
+<p>#Physical memory<br />
+* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl<br />
+* ZONE(DMA/NORMAL/HIGHMEM) struct zone:<br />
+* struct page is the basic unit of kernel mm knowns as page frame.<br />
+    The goal of strcut page is to describe physical memory, not the data contained therein.<br />
+* The buddy system is per-zone struct free_area<br />
 * Physical address is connected to Virtual address by pfn = page - mem_map;</p>
 
 <h2 id="page-allocator:9037e4aab15a8fa8be9a2e4d7b536995">page allocator</h2>
 
-<p>alloc_pages()
-##Page/buffer cache
-struct address_space-&gt;page_tree
-##Page writeback
-data synchronization, the flush threads, pdflush
-##Page swap
+<p>alloc_pages()<br />
+##Page/buffer cache<br />
+struct address_space-&gt;page_tree<br />
+##Page writeback<br />
+data synchronization, the flush threads, pdflush<br />
+##Page swap<br />
 The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.</p>
 
-<p>#FAQ
-* Where is Per-CPU variable?
-static Per-CPU in .data(?) below high_memory!
+<p>#FAQ<br />
+* Where is Per-CPU variable?<br />
+static Per-CPU in .data(?) below high_memory!<br />
 runtime Per-CPU, it&rsquo;s GFP_KERNEL in pcpu_create_chunk()</p>
 
 <ul>
-<li><p>Memory mode
-flat mem -&gt; uma
-discontig -&gt; NUMA
+<li><p>Memory mode<br />
+flat mem -&gt; uma<br />
+discontig -&gt; NUMA<br />
 sparse -&gt; Hotplug + NUMA</p></li>
 
-<li><p>When does kernel alloc these struct pages in x86_64?
-<a href="http://lwn.net/Articles/229670/">http://lwn.net/Articles/229670/</a>
+<li><p>When does kernel alloc these struct pages in x86_64?<br />
+<a href="http://lwn.net/Articles/229670/">http://lwn.net/Articles/229670/</a><br />
 vmemmap silimar to memmap</p></li>
 
 <li><p>When kmap_atomic() BUG_ON effect?</p></li>
 
-<li><p>How cpu resolve address below high_memory?
-Cpu-spicific!
-x86 used page table to all address!
+<li><p>How cpu resolve address below high_memory?<br />
+Cpu-spicific!<br />
+x86 used page table to all address!<br />
 Mips cpu can be aware of this address!</p></li>
 
 <li><p>How to deal with useless page? : &gt; /home/firo/bigdata</p></li>
 </ul>
 
-<p>*pfmemalloc &ndash; skb 表示申请了紧急内存!
+<p>*pfmemalloc &ndash; skb 表示申请了紧急内存!<br />
 page free</p>
 
 <ul>
-<li>compound pages
-18fa11efc279c20af5eefff2bbe814ca067</li>
+<li>compound pages<br />
+18fa11efc279c20af5eefff2bbe814ca067<br /></li>
 </ul>
 
         </article>
@@ -319,7 +319,21 @@ page free</p>
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/kernel\/mm\/';
+    var disqus_title = 'Linux memory management';
+    var disqus_url = 'http:\/\/firoyang.org\/kernel\/mm\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 </aside>
 
 <footer>
