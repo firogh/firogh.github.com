@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/net/tunnel/">
+<meta property="og:url" content="/net/tunnel/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2014-12-28"/>
 <meta property="article:modified_time" content="2014-12-28"/>
@@ -31,9 +31,9 @@
 
 
 
-    <base href="http://firoyang.org/">
+    <base href="">
     <title> tunnel</title>
-    <link rel="canonical" href="http://firoyang.org/net/tunnel/">
+    <link rel="canonical" href="/net/tunnel/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -136,15 +136,15 @@
 
 <meta itemprop="wordCount" content="894">
 <meta itemprop="datePublished" content="2014-12-28">
-<meta itemprop="url" content="http://firoyang.org/net/tunnel/">
+<meta itemprop="url" content="/net/tunnel/">
 
 
   <div>
         <article itemprop="articleBody" id="content">
            
 
-<p>#class<br />
-network layer over network layer: gre<br />
+<p>#class
+network layer over network layer: gre
 link layer over network layer: l2tp, pptp</p>
 
 <h1 id="proxy:76e7252b2d04b0b5161bfb0dbf64d663">Proxy</h1>
@@ -161,150 +161,150 @@ link layer over network layer: l2tp, pptp</p>
 
 <h2 id="透明代理:76e7252b2d04b0b5161bfb0dbf64d663">透明代理</h2>
 
-<p>hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.<br />
+<p>hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.
 所谓透明代理就是正向代理且client零配置.</p>
 
 <h2 id="dmz:76e7252b2d04b0b5161bfb0dbf64d663">DMZ</h2>
 
-<p>Demilitarized zone, 解除军事武装区 or 非军事区!<br />
-这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.<br />
-为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.<br />
+<p>Demilitarized zone, 解除军事武装区 or 非军事区!
+这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.
+为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.
 内网和外网是争端的主角, 而DMZ是个缓冲区.</p>
 
 <h3 id="simplest-sample:76e7252b2d04b0b5161bfb0dbf64d663">simplest sample</h3>
 
-<p>iptables -A INPUT -p tcp -d 10.42.0.52 &ndash;dport 53 -j ACCEPT<br />
-iptables -A FORWARD -p tcp -d 192.168.1.2 &ndash;dport 53 -j ACCEPT<br />
-iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &ndash;dport 53 -j DNAT &ndash;to 192.168.1.2:53<br />
-我们就知道了dmz有整体有两部分构成ACCEPT and DNAT<br />
+<p>iptables -A INPUT -p tcp -d 10.42.0.52 &ndash;dport 53 -j ACCEPT
+iptables -A FORWARD -p tcp -d 192.168.1.2 &ndash;dport 53 -j ACCEPT
+iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &ndash;dport 53 -j DNAT &ndash;to 192.168.1.2:53
+我们就知道了dmz有整体有两部分构成ACCEPT and DNAT
 同时涉及到一个dmz地址空间{dmzwan10.42.0.52:53, dmzlan:192.168.1.2:53}</p>
 
-<p>#Basic concepts<br />
-* VPN is created by establishing a virtual point-to-point connection through the use of<br />
-1. dedicated connections(permanent)<br />
-2. virtual tunneling protocols<br />
-traffic encryptions and authentication<br />
+<p>#Basic concepts
+* VPN is created by establishing a virtual point-to-point connection through the use of
+1. dedicated connections(permanent)
+2. virtual tunneling protocols
+traffic encryptions and authentication
 + connection(tunnel) + secure</p>
 
-<p>#Tunnel proctocol<br />
-* pptp<br />
-data-link header | PPP | IP &hellip;<br />
-data-link header | IP | GRE | PPP | IP&hellip;<br />
-rfc2637<br />
-<a href="http://pptpclient.sourceforge.net/diagrams.phtml">http://pptpclient.sourceforge.net/diagrams.phtml</a><br />
-* pppd -&gt; /dev/ppp<br />
-/dev/ppp (see ppp_init) 下发密码, 加密之类的.<br />
-ppp_netdev_ops (see ppp_create_interface)<br />
+<p>#Tunnel proctocol
+* pptp
+data-link header | PPP | IP &hellip;
+data-link header | IP | GRE | PPP | IP&hellip;
+rfc2637
+<a href="http://pptpclient.sourceforge.net/diagrams.phtml">http://pptpclient.sourceforge.net/diagrams.phtml</a>
+* pppd -&gt; /dev/ppp
+/dev/ppp (see ppp_init) 下发密码, 加密之类的.
+ppp_netdev_ops (see ppp_create_interface)
 ppp_wirte-&gt;ppp_xmit_process-&gt;ppp_send_frame-&gt;ppp_push-&gt;|pch-&gt;chan-&gt;ops-&gt;start_xmit()=pppoe_xmit-&gt;__pppoe_xmit</p>
 
 <ul>
-<li>init<br />
-pptp -&gt; pptp server -&gt; generate PPP connection and PPP0(interface)<br /></li>
-<li>input<br />
-eth -&gt; ppptp(remove gre header)-&gt;PPP header-&gt; pty(device) -&gt; PPP0(interface) -&gt;<br /></li>
+<li>init
+pptp -&gt; pptp server -&gt; generate PPP connection and PPP0(interface)</li>
+<li>input
+eth -&gt; ppptp(remove gre header)-&gt;PPP header-&gt; pty(device) -&gt; PPP0(interface) -&gt;</li>
 
-<li><p>output<br />
+<li><p>output
 -&gt; PPP0(interface) -&gt; PPP header -&gt; pty -&gt; PPPT(add gre header) -&gt; raw socket -&gt; eth</p></li>
 
-<li><p>shadowsocks<br />
+<li><p>shadowsocks
 user -&gt; iptables -&gt; shadowsocks(redir.c (struct server)-&gt;(struct remote)) -&gt; server</p></li>
 </ul>
 
-<p>ssh redsocks<br />
+<p>ssh redsocks
 user -&gt; iptables -&gt; redsocks -&gt; ssh -&gt; server</p>
 
 <ul>
-<li>pppoe<br />
-pppoe 的sk-&gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket<br />
-pppoe_rcv_core -&gt;　netif_rx<br />
-从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!<br />
-对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!<br />
-pppoe报文会经过两次sk_filter()<br />
-<a href="http://blog.csdn.net/osnetdev/article/details/8958058">http://blog.csdn.net/osnetdev/article/details/8958058</a><br />
-&amp;pppoe_chan_ops;<br /></li>
+<li>pppoe
+pppoe 的sk-&gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket
+pppoe_rcv_core -&gt;　netif_rx
+从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!
+对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!
+pppoe报文会经过两次sk_filter()
+<a href="http://blog.csdn.net/osnetdev/article/details/8958058">http://blog.csdn.net/osnetdev/article/details/8958058</a>
+&amp;pppoe_chan_ops;</li>
 </ul>
 
-<p>+ppp header<br />
-is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!<br />
-ppp-wan-&gt;ndo_start_xmit()=ppp_start_xmit()-&gt;ppp_xmit_process()-&gt;ppp_send_frame()<br />
--&gt;<br />
-{<br />
-    __skb_push(skb, sizeof(*ph));<br />
-    skb_reset_network_header(skb);<br />
-    //add pppoe_hdr no header???<br />
-    dev_queue_xmit(skb);<br />
+<p>+ppp header
+is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!
+ppp-wan-&gt;ndo_start_xmit()=ppp_start_xmit()-&gt;ppp_xmit_process()-&gt;ppp_send_frame()
+-&gt;
+{
+    __skb_push(skb, sizeof(*ph));
+    skb_reset_network_header(skb);
+    //add pppoe_hdr no header???
+    dev_queue_xmit(skb);
 }</p>
 
-<p>#PPP<br />
+<p>#PPP
 <a href="http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html">http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html</a></p>
 
-<p>#GRE<br />
+<p>#GRE
 include/net/gre.h</p>
 
-<p>#L2tp<br />
+<p>#L2tp
 IP -&gt; UDP -&gt; L2TP -&gt; PPP</p>
 
 <ul>
-<li>source files<br />
-net/l2tp/<br />
-├── Kconfig<br />
-├── l2tp_core.c<br />
-├── l2tp_core.h<br />
-├── l2tp_debugfs.c<br />
-├── l2tp_eth.c<br />
-├── l2tp_ip.c<br />
-├── l2tp_netlink.c<br />
-├── l2tp_ppp.c<br />
-└── Makefile<br /></li>
+<li>source files
+net/l2tp/
+├── Kconfig
+├── l2tp_core.c
+├── l2tp_core.h
+├── l2tp_debugfs.c
+├── l2tp_eth.c
+├── l2tp_ip.c
+├── l2tp_netlink.c
+├── l2tp_ppp.c
+└── Makefile</li>
 </ul>
 
 <p>include/uapi/linux/ppp_defs.h</p>
 
 <ul>
-<li>Functions<br />
-l2tp_recv_common &hellip;recv_skb=pppol2tp_recv()<br />
-l2tp_xmit_core<br /></li>
+<li>Functions
+l2tp_recv_common &hellip;recv_skb=pppol2tp_recv()
+l2tp_xmit_core</li>
 </ul>
 
-<p>#PPTP<br />
-##Route ip-list to pptp-vpn<br />
-11: pptp-vpn: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3<br />
-    link/ppp<br />
-    inet 192.168.1.60 peer 192.168.1.<sup>1</sup>&frasl;<sub>32</sub> scope global pptp-vpn<br />
-root@Hiwifi:~# route -n<br />
-Kernel IP routing table<br />
-Destination     Gateway         Genmask         Flags Metric Ref    Use Iface<br />
-0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn<br />
-123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2<br />
-192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn<br />
-192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2<br />
+<p>#PPTP
+##Route ip-list to pptp-vpn
+11: pptp-vpn: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3
+    link/ppp
+    inet 192.168.1.60 peer 192.168.1.<sup>1</sup>&frasl;<sub>32</sub> scope global pptp-vpn
+root@Hiwifi:~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn
+123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2
+192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn
+192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2
 192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan</p>
 
-<p>##pptp header<br />
+<p>##pptp header
 IP | GRE | pptp_gre_header | PPP | IP</p>
 
-<p>##input<br />
-ip -&gt; gre -&gt; ppp -&gt; ip<br />
-ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&gt;inet_protos.gre_rcv -&gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&gt; sk_receive_skb -&gt;sk_backlog_rcv -&gt; pptp_rcv_core -&gt; ppp_input -&gt; ppp_do_recv<br />
--&gt; ppp_receive_frame -&gt; ppp_receive_nonmp_frame -&gt; netif_rx -&gt; netif_rx_internal -&gt; enqueue_to_backlog -&gt; ____napi_schedule(sd, &amp;sd-&gt;backlog);<br />
+<p>##input
+ip -&gt; gre -&gt; ppp -&gt; ip
+ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&gt;inet_protos.gre_rcv -&gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&gt; sk_receive_skb -&gt;sk_backlog_rcv -&gt; pptp_rcv_core -&gt; ppp_input -&gt; ppp_do_recv
+-&gt; ppp_receive_frame -&gt; ppp_receive_nonmp_frame -&gt; netif_rx -&gt; netif_rx_internal -&gt; enqueue_to_backlog -&gt; ____napi_schedule(sd, &amp;sd-&gt;backlog);
 -&gt; netif_receive_skb&hellip;</p>
 
-<p>##output<br />
-ip_output &hellip;-&gt; ppp_start_xmit -&gt; ppp_xmit_process -&gt; ppp_send_frame -&gt; add ppp header -&gt; ppp_push<br />
--&gt;pch-&gt;chan-&gt;ops-&gt;start_xmit=pptp_xmit -&gt; add gre and ip header. -&gt; ip_local_out -&gt;<br />
-+another send skb functions is ip_build_and_send_pkt()<br />
-{ this functions hook is init in pptp_connect() -&gt; ppp_register_channel(&amp;po-&gt;chan) }<br />
-{ppp_connect()&rsquo;s init functions is pptp_create, see pptp_init_module -&gt;<br />
-register_pppox_proto(PX_PROTO_PPTP, &amp;pppox_pptp_proto) pptp_create.}<br />
+<p>##output
+ip_output &hellip;-&gt; ppp_start_xmit -&gt; ppp_xmit_process -&gt; ppp_send_frame -&gt; add ppp header -&gt; ppp_push
+-&gt;pch-&gt;chan-&gt;ops-&gt;start_xmit=pptp_xmit -&gt; add gre and ip header. -&gt; ip_local_out -&gt;
++another send skb functions is ip_build_and_send_pkt()
+{ this functions hook is init in pptp_connect() -&gt; ppp_register_channel(&amp;po-&gt;chan) }
+{ppp_connect()&rsquo;s init functions is pptp_create, see pptp_init_module -&gt;
+register_pppox_proto(PX_PROTO_PPTP, &amp;pppox_pptp_proto) pptp_create.}
 when invoke pptp_create? socket()!</p>
 
 <p>if layer 4 protocol is gre then pass.</p>
 
-<p>##PPTP &amp; NAT<br />
-* Forward package<br />
-br-lan(PREROUTING orginal packet NAT old)<br />
-(route -&gt; pptp-vpn) = ip_forward()-&gt;NF_INET_FORWARD-&gt;ip_forward_finish()-&gt;dst_output()<br />
-pptp-vpn -&gt; ndo_start_xmit -&gt; add some headers -&gt; local_out NAT new -&gt; tc dequeue_qdisc(this is maybe eth2.2&rsquo;s routing result! see top)<br />
+<p>##PPTP &amp; NAT
+* Forward package
+br-lan(PREROUTING orginal packet NAT old)
+(route -&gt; pptp-vpn) = ip_forward()-&gt;NF_INET_FORWARD-&gt;ip_forward_finish()-&gt;dst_output()
+pptp-vpn -&gt; ndo_start_xmit -&gt; add some headers -&gt; local_out NAT new -&gt; tc dequeue_qdisc(this is maybe eth2.2&rsquo;s routing result! see top)
 so we need to do is just find original skb in PPTP packet header!</p>
 
 <p>##PPTP &amp; GRE &amp; Conntrack</p>
@@ -313,8 +313,8 @@ so we need to do is just find original skb in PPTP packet header!</p>
 
 <p>kernel vpn just one session.</p>
 
-<p>##ppp-&gt; pptp code.<br />
-ppp_send_frame()<br />
+<p>##ppp-&gt; pptp code.
+ppp_send_frame()
 {</p>
 
 <pre><code>//below is ok 132 is output!
@@ -352,13 +352,13 @@ ppp-&gt;xmit_pending = skb;
 ppp_push(ppp);
 </code></pre>
 
-<p>//dmesg<br />
-[  304.600000] ct 132, 132, 0, 33<br />
-[  304.610000] hit b 132<br />
-[  304.610000] hit a 0<br />
-[  304.610000] befor push 0 132<br />
-[  304.610000] out chan 132<br />
-[  304.620000] chan ok132<br />
+<p>//dmesg
+[  304.600000] ct 132, 132, 0, 33
+[  304.610000] hit b 132
+[  304.610000] hit a 0
+[  304.610000] befor push 0 132
+[  304.610000] out chan 132
+[  304.620000] chan ok132
 [  304.620000] qosmark132 132</p>
 
 <pre><code>so we need backup qosmark be for invoking this function then restore it.
@@ -366,10 +366,10 @@ ppp_push(ppp);
 
 <p>}</p>
 
-<p>ppp_push(struct ppp *ppp)<br />
-{<br />
-    struct list_head *list;<br />
-    struct channel *pch;<br />
+<p>ppp_push(struct ppp *ppp)
+{
+    struct list_head *list;
+    struct channel *pch;
     struct sk_buff *skb = ppp-&gt;xmit_pending;</p>
 
 <pre><code>if (!skb)
@@ -407,21 +407,7 @@ if ((ppp-&gt;flags &amp; SC_MULTILINK) == 0) {
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/net\/tunnel\/';
-    var disqus_title = 'tunnel';
-    var disqus_url = 'http:\/\/firoyang.org\/net\/tunnel\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    
 </aside>
 
 <footer>

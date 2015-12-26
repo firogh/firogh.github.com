@@ -1,160 +1,160 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Cs on Firo Notes </title>
+      <title>Cs on  </title>
       <generator uri="https://gohugo.io">Hugo</generator>
-    <link>http://firoyang.org/cs/</link>
-    <language>en-us</language>
-    <author>Firo Yang</author>
-    <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
+    <link>/cs/</link>
+    
+    
+    
     <updated>Thu, 12 Nov 2015 00:00:00 UTC</updated>
     
     <item>
       <title>System booting</title>
-      <link>http://firoyang.org/cs/boot/</link>
+      <link>/cs/boot/</link>
       <pubDate>Thu, 12 Nov 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/boot/</guid>
+      
+      <guid>/cs/boot/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;h1 id=&#34;contents:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;What basic initializations should be perfomed when power on?&lt;br /&gt;
-How do we load the kernel to memory?&lt;br /&gt;
-What does kernel do when kernel boot.&lt;br /&gt;
-MBR vs BIOS?&lt;br /&gt;
-PC vs embedded&lt;br /&gt;
-Kernel init&lt;br /&gt;
-before start_kernel&lt;br /&gt;
-start_kernel&lt;br /&gt;
+&lt;p&gt;What basic initializations should be perfomed when power on?
+How do we load the kernel to memory?
+What does kernel do when kernel boot.
+MBR vs BIOS?
+PC vs embedded
+Kernel init
+before start_kernel
+start_kernel
 reset_init &amp;amp; kernel_init&lt;/p&gt;
 
 &lt;h1 id=&#34;p4080-board:4ccc61562af88da39fe562fcf76d50be&#34;&gt;p4080 Board&lt;/h1&gt;
 
-&lt;p&gt;PBL&lt;br /&gt;
-1. initialize I2C, SPI, eLBC, eSDHC.&lt;br /&gt;
-2. Load RCW and boot init commands from above.&lt;br /&gt;
+&lt;p&gt;PBL
+1. initialize I2C, SPI, eLBC, eSDHC.
+2. Load RCW and boot init commands from above.
 3. write date to conf register and memory&lt;/p&gt;
 
 &lt;h1 id=&#34;config:4ccc61562af88da39fe562fcf76d50be&#34;&gt;config&lt;/h1&gt;
 
-&lt;p&gt;CCSRBAR -&amp;gt; CCSR&lt;br /&gt;
+&lt;p&gt;CCSRBAR -&amp;gt; CCSR
 default is 0x0_FE00_0000&lt;br /&gt;
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).&lt;br /&gt;
-CCSRBAR always points to itself.&lt;br /&gt;
+CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).
+CCSRBAR always points to itself.
 holdoff&lt;/p&gt;
 
 &lt;h1 id=&#34;u-boot:4ccc61562af88da39fe562fcf76d50be&#34;&gt;u-boot&lt;/h1&gt;
 
 &lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
 
-&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;&lt;br /&gt;
-&amp;amp;&lt;br /&gt;
-boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =&lt;br /&gt;
-&amp;amp;&lt;br /&gt;
-boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;&lt;br /&gt;
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;&lt;br /&gt;
+&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;
+{
+bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;
+&amp;amp;
+boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =
+&amp;amp;
+boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;
+board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;
 }&lt;/p&gt;
 
 &lt;h1 id=&#34;ppc-multicore-booting:4ccc61562af88da39fe562fcf76d50be&#34;&gt;PPC multicore booting&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;/li&gt;
+&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;/li&gt;
+&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;CCSRBAR&lt;br /&gt;
-MPC86xx_MCM_OFFSET&lt;br /&gt;
+&lt;p&gt;CCSRBAR
+MPC86xx_MCM_OFFSET
 srio_boot_master_release_slave&lt;/p&gt;
 
-&lt;p&gt;uboot-&amp;gt;&lt;br /&gt;
+&lt;p&gt;uboot-&amp;gt;
 set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
 
-&lt;p&gt;core0 run, 2nd cores holdoff&lt;br /&gt;
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp&lt;br /&gt;
-core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500&lt;br /&gt;
-board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {&lt;br /&gt;
-&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page&lt;br /&gt;
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page&lt;br /&gt;
-bootpg = BPTR = __secondary_start_page&lt;br /&gt;
-plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation&lt;br /&gt;
-}&lt;br /&gt;
-2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page&lt;br /&gt;
-kernel-&amp;gt;&lt;br /&gt;
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address&lt;br /&gt;
-2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle&lt;br /&gt;
-arch/powerpc/kernel/head_fsl_booke.S&lt;br /&gt;
-U-boot logs:&lt;br /&gt;
-Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table&lt;br /&gt;
-address.&lt;br /&gt;
-SPAG : fdt_fixup_fman_firmware, 567^M^M&lt;br /&gt;
-^M^M&lt;br /&gt;
-..r.^M^M&lt;br /&gt;
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M&lt;br /&gt;
-VDBG: Secondary cores are not held in reset.^M^M&lt;br /&gt;
-Kernel Logs:&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)^M^M&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)^M^M&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 3 (rc -2)^M^M&lt;br /&gt;
-Brought up 1 CPUs^M^M&lt;br /&gt;
+&lt;p&gt;core0 run, 2nd cores holdoff
+core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp
+core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500
+board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {
+&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page
+__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page
+bootpg = BPTR = __secondary_start_page
+plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation
+}
+2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page
+kernel-&amp;gt;
+core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address
+2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle
+arch/powerpc/kernel/head_fsl_booke.S
+U-boot logs:
+Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table
+address.
+SPAG : fdt_fixup_fman_firmware, 567^M^M
+^M^M
+..r.^M^M
+VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M
+VDBG: Secondary cores are not held in reset.^M^M
+Kernel Logs:
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M
+smp: failed starting cpu 1 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M
+smp: failed starting cpu 2 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M
+smp: failed starting cpu 3 (rc -2)^M^M
+Brought up 1 CPUs^M^M
 devtmpfs: initialized^M^M&lt;/p&gt;
 
-&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check&lt;br /&gt;
+&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check
 if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
 
 &lt;p&gt;Here are the logs..&lt;/p&gt;
 
 &lt;p&gt;I printed pa in %lx since the outout of &lt;strong&gt;pa(&lt;/strong&gt;early_start) is in long unsigned int.&lt;/p&gt;
 
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0&lt;br /&gt;
-Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50&lt;br /&gt;
-Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000&lt;br /&gt;
-Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)&lt;br /&gt;
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0&lt;br /&gt;
-Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50&lt;br /&gt;
-Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200&lt;br /&gt;
-Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)&lt;br /&gt;
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0&lt;br /&gt;
-Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50&lt;br /&gt;
-Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a&lt;br /&gt;
-Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack&lt;br /&gt;
-smp: failed starting cpu 3 (rc -2)&lt;br /&gt;
-I don’t see the following print in u-boot..&lt;br /&gt;
- 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,&lt;br /&gt;
- 70                                                 &amp;amp;val, sizeof(val));&lt;br /&gt;
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+smp: failed starting cpu 3 (rc -2)
+I don’t see the following print in u-boot..
+ 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,
+ 70                                                 &amp;amp;val, sizeof(val));
 + printf(&amp;ldquo;Firo u-boot:cpu release addr %p, value %x\n&amp;rdquo;, &amp;amp;val, val);&lt;/p&gt;
 
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)&lt;br /&gt;
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)&lt;br /&gt;
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack&lt;br /&gt;
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
 smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Light camera action - compile link load</title>
-      <link>http://firoyang.org/cs/build/</link>
+      <link>/cs/build/</link>
       <pubDate>Sun, 25 Oct 2015 01:46:28 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/build/</guid>
+      
+      <guid>/cs/build/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:aba878e576894cc4457876fdf276811e&#34;&gt;Reference&lt;/h1&gt;
@@ -163,13 +163,13 @@ smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:aba878e576894cc4457876fdf276811e&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;Why complier can manipulate the address of vriables?&lt;br /&gt;
+&lt;p&gt;Why complier can manipulate the address of vriables?
 What is the address in lds(??) file?&lt;/p&gt;
 
 &lt;h1 id=&#34;build-automation:aba878e576894cc4457876fdf276811e&#34;&gt;Build automation&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Make&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Make
 make cynthia&lt;/p&gt;
 
 &lt;h2 id=&#34;kbuild:aba878e576894cc4457876fdf276811e&#34;&gt;kbuild&lt;/h2&gt;&lt;/li&gt;
@@ -186,47 +186,47 @@ make cynthia&lt;/p&gt;
 
 &lt;h2 id=&#34;yocto:aba878e576894cc4457876fdf276811e&#34;&gt;yocto&lt;/h2&gt;
 
-&lt;p&gt;make ARCH=arm menuconfig&lt;br /&gt;
-##build signle kernel module&lt;br /&gt;
-make menuconfig&lt;br /&gt;
-make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
-make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
+&lt;p&gt;make ARCH=arm menuconfig
+##build signle kernel module
+make menuconfig
+make oldconfig &amp;amp;&amp;amp; make prepare
+make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1
 make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
 
 &lt;h1 id=&#34;compile-construction:aba878e576894cc4457876fdf276811e&#34;&gt;Compile construction&lt;/h1&gt;
 
-&lt;p&gt;Understand pl deeply&lt;br /&gt;
+&lt;p&gt;Understand pl deeply
 how to translate it into machine code for specific CPU&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;gcc&lt;br /&gt;
--E -S -c&lt;br /&gt;
--I -L -l&lt;br /&gt;
--ansi&lt;br /&gt;
--fsyntax-only&lt;br /&gt;
--Werror&lt;br /&gt;
--save-temps&lt;br /&gt;
--H: show all header used&lt;br /&gt;
--v&lt;br /&gt;
--Wall&lt;br /&gt;
--fPIC: for shared library&lt;br /&gt;
--Q: print function and statisc?&lt;br /&gt;
--Wextra: 用处不大.&lt;br /&gt;
--U: undefine a preprocessor macro.&lt;br /&gt;
--pipe: make compilation faster, replace xx.S with |&lt;br /&gt;
--Wpadded: we can rearrange the fields of structure to make the structure smaller&lt;br /&gt;
--time&lt;br /&gt;
--x c: c language&lt;br /&gt;
--: stdin&lt;br /&gt;
-asmlinkage&lt;br /&gt;
-However, for C functions invoked from assembly code,&lt;br /&gt;
-we should explicitly declare the function&amp;rsquo;s calling convention,&lt;br /&gt;
-because the parameter passing code in assembly side has been fixed.&lt;br /&gt;
-##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;gcc
+-E -S -c
+-I -L -l
+-ansi
+-fsyntax-only
+-Werror
+-save-temps
+-H: show all header used
+-v
+-Wall
+-fPIC: for shared library
+-Q: print function and statisc?
+-Wextra: 用处不大.
+-U: undefine a preprocessor macro.
+-pipe: make compilation faster, replace xx.S with |
+-Wpadded: we can rearrange the fields of structure to make the structure smaller
+-time
+-x c: c language
+-: stdin
+asmlinkage
+However, for C functions invoked from assembly code,
+we should explicitly declare the function&amp;rsquo;s calling convention,
+because the parameter passing code in assembly side has been fixed.
+##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;
 ##Symbol table&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;System.map less&lt;br /&gt;
-When you compile the kernel&lt;br /&gt;
-nm vmlinux&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;System.map less
+When you compile the kernel
+nm vmlinux
 readelf -s&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;
@@ -242,134 +242,134 @@ readelf -s&lt;/p&gt;&lt;/li&gt;
     
     <item>
       <title>Computer architecture</title>
-      <link>http://firoyang.org/cs/arch/</link>
+      <link>/cs/arch/</link>
       <pubDate>Tue, 13 Oct 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/arch/</guid>
+      
+      <guid>/cs/arch/</guid>
       <description>
 
-&lt;p&gt;##Reference&lt;br /&gt;
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
-《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
-Structured Computer Organization 6th Edition&lt;br /&gt;
-Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;
-Computer Organization and Design 5th Edition&lt;br /&gt;
-Write Great Code: Volume 1: Understanding the Machine&lt;br /&gt;
-See MIPS run&lt;br /&gt;
+&lt;p&gt;##Reference
+Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存
+《模拟电子技术基础 童诗白 第四版》第一章前半部分
+Structured Computer Organization 6th Edition
+Digital Design and Computer Architecture 2nd Edition
+Computer Organization and Design 5th Edition
+Write Great Code: Volume 1: Understanding the Machine
+See MIPS run
 Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
 Microelectronics&lt;/p&gt;
 
 &lt;h1 id=&#34;computer-architecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer architecture&lt;/h1&gt;
 
-&lt;p&gt;cpu&lt;br /&gt;
-memory&lt;br /&gt;
+&lt;p&gt;cpu
+memory
 I/O&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;I/O IC&lt;br /&gt;
-Assembly language&lt;br /&gt;
-Interrupt&lt;br /&gt;
-ISA&lt;br /&gt;
-Machine language&lt;br /&gt;
-Interpreting Machine Language Code&lt;br /&gt;
-Microarchitecture&lt;br /&gt;
-Digital Logic circuit(Logic gates)&lt;br /&gt;
-ALU&lt;br /&gt;
-Computer memory&lt;br /&gt;
-Register/Flip-flop&lt;br /&gt;
-Cache/SRAM&lt;br /&gt;
-DRAM/capacitor&lt;br /&gt;
-Analog Circuit&lt;br /&gt;
+&lt;p&gt;I/O IC
+Assembly language
+Interrupt
+ISA
+Machine language
+Interpreting Machine Language Code
+Microarchitecture
+Digital Logic circuit(Logic gates)
+ALU
+Computer memory
+Register/Flip-flop
+Cache/SRAM
+DRAM/capacitor
+Analog Circuit
 BJT FET Didoe&lt;/p&gt;
 
 &lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
 
-&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle&lt;br /&gt;
-Semantics in computer science: In programming language theory, semantics is the field concerned&lt;br /&gt;
-with the rigorous mathematical study of the meaning of programming languages.&lt;br /&gt;
-Language primitive&lt;br /&gt;
-ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;br /&gt;
-The interface between hardware and software.&lt;br /&gt;
-Arm v7&lt;br /&gt;
-word = instruction&lt;br /&gt;
+&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle
+Semantics in computer science: In programming language theory, semantics is the field concerned
+with the rigorous mathematical study of the meaning of programming languages.
+Language primitive
+ISA: memory model, registers, data types, instructions, word size(?).
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.
+The interface between hardware and software.
+Arm v7
+word = instruction
 vocabulary = instruction set&lt;/p&gt;
 
 &lt;h2 id=&#34;microarchitecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture&lt;/h2&gt;
 
-&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.&lt;br /&gt;
-control unit/decoder&lt;br /&gt;
-Microcode&lt;br /&gt;
-How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?&lt;br /&gt;
-What is the pipeline?&lt;br /&gt;
+&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.
+control unit/decoder
+Microcode
+How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?
+What is the pipeline?
 architectural state (the program counter and registers&lt;/p&gt;
 
 &lt;h1 id=&#34;logic-circuit:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Logic circuit&lt;/h1&gt;
 
-&lt;p&gt;Sequential logic&lt;br /&gt;
+&lt;p&gt;Sequential logic
 Combinational logic&lt;/p&gt;
 
 &lt;h2 id=&#34;computer-memory:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer memory&lt;/h2&gt;
 
-&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys&lt;br /&gt;
-What is NOR gates?&lt;br /&gt;
+&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys
+What is NOR gates?
 What is the implement of gate?&lt;/p&gt;
 
-&lt;p&gt;data type&lt;br /&gt;
-instructions: 算术, 控制, 数据传送&lt;br /&gt;
-register file&lt;br /&gt;
-addressing modes(include memory mode)&lt;br /&gt;
-interrupt and exception handling,&lt;br /&gt;
+&lt;p&gt;data type
+instructions: 算术, 控制, 数据传送
+register file
+addressing modes(include memory mode)
+interrupt and exception handling,
 external I/O&lt;/p&gt;
 
-&lt;p&gt;#x86 Interrupt&lt;br /&gt;
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
-##Hardware interrupts&lt;br /&gt;
-are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
-asynchronus&lt;br /&gt;
-more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
-##software interrupt&lt;br /&gt;
-synchronus&lt;br /&gt;
-more details in trap_init().&lt;br /&gt;
-* exception or trap&lt;br /&gt;
-is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
-divide zero painc?&lt;br /&gt;
-* special instruction, for example INT 0x80&lt;br /&gt;
+&lt;p&gt;#x86 Interrupt
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.
+##Hardware interrupts
+are used by devices to communicate that they require attention from the operating system.
+asynchronus
+more details in init_IRQ() or set_irq() in driver.
+##software interrupt
+synchronus
+more details in trap_init().
+* exception or trap
+is caused either by an exceptional condition in the processor itself,
+divide zero painc?
+* special instruction, for example INT 0x80
 or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
 
 &lt;h2 id=&#34;microarchitecture-1:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture.&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC&lt;br /&gt;
-IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.&lt;br /&gt;
-结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.&lt;br /&gt;
-数据冒险, 指令件参数依赖造成的问题.&lt;br /&gt;
-控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;branch prediction.&lt;br /&gt;
-dsp用条件执行替代跳转.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;out-of-order&lt;br /&gt;
-乱序执行相对于顺序执行.&lt;br /&gt;
-无关指令可以任意执行.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;superscalar&lt;br /&gt;
-instruction cycle, 什么是cycle.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;data level parallelism&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;thread level parallelism&lt;br /&gt;
-超线程, 同步问题.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC
+IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.
+结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.
+数据冒险, 指令件参数依赖造成的问题.
+控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;/li&gt;
+&lt;li&gt;branch prediction.
+dsp用条件执行替代跳转.&lt;/li&gt;
+&lt;li&gt;out-of-order
+乱序执行相对于顺序执行.
+无关指令可以任意执行.&lt;/li&gt;
+&lt;li&gt;superscalar
+instruction cycle, 什么是cycle.&lt;/li&gt;
+&lt;li&gt;data level parallelism&lt;/li&gt;
+&lt;li&gt;thread level parallelism
+超线程, 同步问题.&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;cache&lt;br /&gt;
-cache miss&lt;br /&gt;
-住要看cache, 乱序, 还有lock对执行的影响.&lt;br /&gt;
-temporal locality: for icache&lt;br /&gt;
-spatial locality: array&lt;br /&gt;
-第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.&lt;br /&gt;
-##Cache&lt;br /&gt;
-a cache is a component that stores data so future requests for that data can be served faster;&lt;br /&gt;
-the data stored in a cache might be the results of an earlier computation,&lt;br /&gt;
-or the duplicates of data stored elsewhere.&lt;br /&gt;
-###CPU cache&lt;br /&gt;
-A CPU cache is a cache used by the central processing unit (CPU) of a computer&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;cache
+cache miss
+住要看cache, 乱序, 还有lock对执行的影响.
+temporal locality: for icache
+spatial locality: array
+第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.
+##Cache
+a cache is a component that stores data so future requests for that data can be served faster;
+the data stored in a cache might be the results of an earlier computation,
+or the duplicates of data stored elsewhere.
+###CPU cache
+A CPU cache is a cache used by the central processing unit (CPU) of a computer
 to reduce the average time to access data from the main memory.&lt;/p&gt;
 
 &lt;h4 id=&#34;associativity-cpu-cache-algorithms:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Associativity - CPU Cache algorithms&lt;/h4&gt;&lt;/li&gt;
@@ -378,174 +378,174 @@ to reduce the average time to access data from the main memory.&lt;/p&gt;
 
 &lt;h4 id=&#34;cache-coherence:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Cache coherence&lt;/h4&gt;
 
-&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.&lt;br /&gt;
+&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.
 Cache conerence is mantained by mostly archtecure like cpu&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;MSI&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;MSI
 ####Cache type&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Instructin cache&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Data cache&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer&lt;br /&gt;
-###GPU cache&lt;br /&gt;
-###Disk cache&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer
+###GPU cache
+###Disk cache
 ###Web cache&lt;/p&gt;
 
 &lt;h2 id=&#34;fixme-concepts:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;FIXME concepts&lt;/h2&gt;
 
-&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码&lt;br /&gt;
-Numeral system: 手指头　-&amp;gt; 二进制&lt;br /&gt;
-logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农&lt;br /&gt;
-A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
-The Mathematical Theory of Communication&lt;br /&gt;
-触发器 英国射电物理学家 William Henry Eccles&lt;br /&gt;
+&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码
+Numeral system: 手指头　-&amp;gt; 二进制
+logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农
+A Symbolic Analysis of Relay and Switching Circuits
+The Mathematical Theory of Communication
+触发器 英国射电物理学家 William Henry Eccles
 晶体管&lt;/p&gt;
 
 &lt;h1 id=&#34;phy-the-physical-layer:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;PHY &amp;ndash; The physical layer&lt;/h1&gt;
 
 &lt;h2 id=&#34;introductions:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Introductions&lt;/h2&gt;
 
-&lt;p&gt;Fromwikipedia:&lt;br /&gt;
-&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]&lt;br /&gt;
-&amp;gt; The implementation of this layer is often termed PHY.&lt;br /&gt;
-&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;&lt;br /&gt;
-PCS&lt;br /&gt;
+&lt;p&gt;Fromwikipedia:
+&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]
+&amp;gt; The implementation of this layer is often termed PHY.
+&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;
+PCS
 PMD&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
 
-&lt;p&gt;serial communication: UART(16550) + RS-232&lt;br /&gt;
+&lt;p&gt;serial communication: UART(16550) + RS-232
 parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Algorithms and data structues for kernel hacking</title>
-      <link>http://firoyang.org/cs/algorithm/</link>
+      <link>/cs/algorithm/</link>
       <pubDate>Wed, 27 May 2015 12:42:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/algorithm/</guid>
+      
+      <guid>/cs/algorithm/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;&lt;br /&gt;
-Algorithms: Design Techniques and Analysis&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;
+Algorithms: Design Techniques and Analysis
 kernel/algorithm.md&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Introduction&lt;/h1&gt;
 
-&lt;p&gt;说实话, 这年头想要做点学问还是需要点定力的.&lt;br /&gt;
-就拿内核中的数据结构与算法来说, 也不是说, 别人来了句, 我靠, awesome!&lt;br /&gt;
-你也过来瞅两眼, 也能心生感慨, what the fuck! how can this be true?&lt;br /&gt;
-我说的定力, 不是两耳闻听窗外事, 一心还读圣贤书!而是思维的能力.&lt;br /&gt;
+&lt;p&gt;说实话, 这年头想要做点学问还是需要点定力的.
+就拿内核中的数据结构与算法来说, 也不是说, 别人来了句, 我靠, awesome!
+你也过来瞅两眼, 也能心生感慨, what the fuck! how can this be true?
+我说的定力, 不是两耳闻听窗外事, 一心还读圣贤书!而是思维的能力.
 这是见真章的地方, 不动脑子是玩不转的, 最终浮于表面, 不得所获.&lt;/p&gt;
 
-&lt;p&gt;kfifo 和lock-less list 是kernel中两个基础的数据结构, 用得也不多.&lt;br /&gt;
-说实在的这些都不是什么特别难的技术, 但是这种较真的东西使最能考察一个人的能力的.&lt;br /&gt;
-什么能力? 写个链表, 队列谁不会? 这里考察的是人的创造力!&lt;br /&gt;
+&lt;p&gt;kfifo 和lock-less list 是kernel中两个基础的数据结构, 用得也不多.
+说实在的这些都不是什么特别难的技术, 但是这种较真的东西使最能考察一个人的能力的.
+什么能力? 写个链表, 队列谁不会? 这里考察的是人的创造力!
 所谓创造力就是一种组合的能力.拆分也是一种组合.&lt;/p&gt;
 
-&lt;p&gt;今天, 我们来聊一聊算法. 数据结构在我看来是算法的一种.&lt;br /&gt;
-到底是什么呢? algorithm这个词来自中古拉丁文algorismus音译自一位阿拉伯数学家的名字&lt;br /&gt;
-al-Khwarizmi, 这只是一个姓, 类似中文赵钱孙李, al-Khwarizmi这个姓表示&lt;br /&gt;
-&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E8%8A%B1%E5%89%8C%E5%AD%90%E6%A8%A1&#34;&gt;花剌子模&lt;/a&gt;地方的人.数学家的全名是Abū ‘Abdallāh Muḥammad ibn Mūsā al-Khwārizmī&lt;br /&gt;
-花剌子模有太阳升起之地之意源于这个国家被大量沙漠围住, 气候干燥. 而lowland, 则是因为其海拔很低.&lt;br /&gt;
-显然, 这不是我们关心的算法本质. 那么, 为什么欧洲人会把al-Khwarizmi, 作为算法的称谓呢?&lt;br /&gt;
-al-Khwarizmi向西方引入了10进制计数法和代数. 同时他的名字慢慢被赋予了现代算法的涵义.&lt;br /&gt;
-也就是algorithm的涵义是慢慢衍生出来的.&lt;br /&gt;
+&lt;p&gt;今天, 我们来聊一聊算法. 数据结构在我看来是算法的一种.
+到底是什么呢? algorithm这个词来自中古拉丁文algorismus音译自一位阿拉伯数学家的名字
+al-Khwarizmi, 这只是一个姓, 类似中文赵钱孙李, al-Khwarizmi这个姓表示
+&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E8%8A%B1%E5%89%8C%E5%AD%90%E6%A8%A1&#34;&gt;花剌子模&lt;/a&gt;地方的人.数学家的全名是Abū ‘Abdallāh Muḥammad ibn Mūsā al-Khwārizmī
+花剌子模有太阳升起之地之意源于这个国家被大量沙漠围住, 气候干燥. 而lowland, 则是因为其海拔很低.
+显然, 这不是我们关心的算法本质. 那么, 为什么欧洲人会把al-Khwarizmi, 作为算法的称谓呢?
+al-Khwarizmi向西方引入了10进制计数法和代数. 同时他的名字慢慢被赋予了现代算法的涵义.
+也就是algorithm的涵义是慢慢衍生出来的.
 那我们能否给算法下一个定义呢:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;An informal definition could be &amp;quot;a set of rules that precisely defines a sequence of operations.&amp;quot;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;简单说, 就是一个执行序列. 这有点太概况了.我们需要一个更精准的定义.&lt;br /&gt;
-同时, 我并不把他限制在计算机科学内.&lt;br /&gt;
-如果你读过石里克的&lt;a href=&#34;http://book.douban.com/subject/1443472/&#34;&gt;普通认识论&lt;/a&gt;你就会知道, 光的定义也是一波三折.&lt;br /&gt;
-所谓的定义, 实际上事物某些属性的集合!&lt;br /&gt;
-我们来考察算法的属性.诚如前面的定义算法是一个执行序列.&lt;br /&gt;
-那么算法的表现形式呢? 他是抽象的, 根植于人类的思维逻辑当中. 而人的逻辑是通过&lt;br /&gt;
-语言表述的.所以算法的重要属性就是他是语言这种形式表现出来的.&lt;br /&gt;
-所以我们的定义, 变成一个被执行的语言序列.&lt;br /&gt;
-我们还是不满足, 你难道就让我去用这么一句话, 去面对面试时候的各种算法题吗?&lt;br /&gt;
-现在我们从算法解决的问题入手? 这是算法的目的. 我的目的是让算法更加的通俗易懂.&lt;br /&gt;
-不是让人们说道, 算法就会去向排序, 二叉树. 这跳跃太大了, 在算法的基础定义和实际的算法之间,&lt;br /&gt;
+&lt;p&gt;简单说, 就是一个执行序列. 这有点太概况了.我们需要一个更精准的定义.
+同时, 我并不把他限制在计算机科学内.
+如果你读过石里克的&lt;a href=&#34;http://book.douban.com/subject/1443472/&#34;&gt;普通认识论&lt;/a&gt;你就会知道, 光的定义也是一波三折.
+所谓的定义, 实际上事物某些属性的集合!
+我们来考察算法的属性.诚如前面的定义算法是一个执行序列.
+那么算法的表现形式呢? 他是抽象的, 根植于人类的思维逻辑当中. 而人的逻辑是通过
+语言表述的.所以算法的重要属性就是他是语言这种形式表现出来的.
+所以我们的定义, 变成一个被执行的语言序列.
+我们还是不满足, 你难道就让我去用这么一句话, 去面对面试时候的各种算法题吗?
+现在我们从算法解决的问题入手? 这是算法的目的. 我的目的是让算法更加的通俗易懂.
+不是让人们说道, 算法就会去向排序, 二叉树. 这跳跃太大了, 在算法的基础定义和实际的算法之间,
 还有一些内容, 值得我们挖掘.我们考察排序和二叉树, 这两种算法:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;A sorting algorithm is an algorithm that puts elements of a list in a certain order.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;从排序算法的定义中, 我们窥探到了算法的一些本质属性. 使对象具备某种属性.这里面有序就是一种属性.&lt;br /&gt;
+&lt;p&gt;从排序算法的定义中, 我们窥探到了算法的一些本质属性. 使对象具备某种属性.这里面有序就是一种属性.
 再来看二叉树:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;a binary tree is a tree data structure in which each node has at most two children, 
 which are referred to as the left child and the right child.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;无论是二叉树, 还是排序, 我们都能感受到, 算法在展现一种魔法, 使用元素的建立某种空间结构/关系.&lt;br /&gt;
-也就是说, 我们的思维本身就具有某种抽象意义上的空间搬运能力.我门知道空间关系, 在确定了个提之后&lt;br /&gt;
+&lt;p&gt;无论是二叉树, 还是排序, 我们都能感受到, 算法在展现一种魔法, 使用元素的建立某种空间结构/关系.
+也就是说, 我们的思维本身就具有某种抽象意义上的空间搬运能力.我门知道空间关系, 在确定了个提之后
 是十分清晰的前后左右上下, 这样, 现在我们能进一步的定义算法:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;算法是使对象具备某种空间关系的而被执行的语言序列
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这里的对象显然是语言层面的.我们的定义是否恰当能呢? 是否所有的算法都是让对象具备某种空间关系吗?&lt;br /&gt;
-在比如找到两个数组中相同的元素, 类似常见的字符串查找, 也是不具有所谓的空间的关系, 而是更为抽象的序关系.&lt;br /&gt;
-什么是序关系? c语言的比较操作符 &amp;lt; &amp;gt; = 这些都是序关系, 准确说是二元关系.&lt;br /&gt;
-而空间关系, 我们也可以通过坐标抽象, 得到数学上的需关系.显然有些时候空间关系更为生动, 但你知道这可以&lt;br /&gt;
-用order theory解释.&lt;br /&gt;
-作为最古老的算法gcd, 最大公约数, 不是上面的所谓的序关系结构. 他就是一种纯粹的数学定义.&lt;br /&gt;
-这个算法的目的不在是一个多个元素的整体了, 只是单独挑出符合性质的其中的元素. 但是在界gcd问题时&lt;br /&gt;
-我们依然可以把他转换为同过序关系得到答案.而欧几里得的方法, 确不是用gcd定义的方法解的而是用求余的&lt;br /&gt;
-方法. 求余依然是序的关系, 只不过方法不一样, 一个循环比较一个是通过求余加速了答案的发现.&lt;br /&gt;
-我们现在姑且认为, 所有算法的最终结果都是为了得到一种序的关系.&lt;br /&gt;
+&lt;p&gt;这里的对象显然是语言层面的.我们的定义是否恰当能呢? 是否所有的算法都是让对象具备某种空间关系吗?
+在比如找到两个数组中相同的元素, 类似常见的字符串查找, 也是不具有所谓的空间的关系, 而是更为抽象的序关系.
+什么是序关系? c语言的比较操作符 &amp;lt; &amp;gt; = 这些都是序关系, 准确说是二元关系.
+而空间关系, 我们也可以通过坐标抽象, 得到数学上的需关系.显然有些时候空间关系更为生动, 但你知道这可以
+用order theory解释.
+作为最古老的算法gcd, 最大公约数, 不是上面的所谓的序关系结构. 他就是一种纯粹的数学定义.
+这个算法的目的不在是一个多个元素的整体了, 只是单独挑出符合性质的其中的元素. 但是在界gcd问题时
+我们依然可以把他转换为同过序关系得到答案.而欧几里得的方法, 确不是用gcd定义的方法解的而是用求余的
+方法. 求余依然是序的关系, 只不过方法不一样, 一个循环比较一个是通过求余加速了答案的发现.
+我们现在姑且认为, 所有算法的最终结果都是为了得到一种序的关系.
 我们现在来整理下算法的定义:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;算法是使对象具备某种序关系的而被执行的语言序列
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;我们现在来考察, 算法的对象, 我们能感觉到他可以具有任何形态.&lt;br /&gt;
-暂略.&lt;br /&gt;
-我们来看算法的核心&amp;ndash; 语言序列, 对象, 执行的目的某种序关系, 三者之间的关系.&lt;br /&gt;
-同时为了更好的理解语言序列.&lt;br /&gt;
-我们先探索一些重要且常见的思路, 也就是语言序列的patterns.&lt;br /&gt;
-我们学过的一些算法, 可以用递归的方式解, 而且很简单. 比如二叉树翻转, 二叉树遍历,&lt;br /&gt;
+&lt;p&gt;我们现在来考察, 算法的对象, 我们能感觉到他可以具有任何形态.
+暂略.
+我们来看算法的核心&amp;ndash; 语言序列, 对象, 执行的目的某种序关系, 三者之间的关系.
+同时为了更好的理解语言序列.
+我们先探索一些重要且常见的思路, 也就是语言序列的patterns.
+我们学过的一些算法, 可以用递归的方式解, 而且很简单. 比如二叉树翻转, 二叉树遍历,
 快排等等, 作为一种解问题的思路也就是, 语言序列的模式. 我们要彻底的搞懂倒地什么才是&lt;/p&gt;
 
 &lt;h2 id=&#34;递归-为什么递归可以很好的解决问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;递归? 为什么递归可以很好的解决问题.&lt;/h2&gt;
 
-&lt;p&gt;&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Droste.jpg/220px-Droste.jpg&#34; alt=&#34;递归图&#34; /&gt;&lt;br /&gt;
-就是这种感觉, 你总能看到自己的样子, 每个尽头. 可是计算机的递归是有终止条件, 否则程序就跑飞了.&lt;br /&gt;
-所以, 无论脑洞多大, 都要想到如何停止递归调用.&lt;br /&gt;
+&lt;p&gt;&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Droste.jpg/220px-Droste.jpg&#34; alt=&#34;递归图&#34; /&gt;
+就是这种感觉, 你总能看到自己的样子, 每个尽头. 可是计算机的递归是有终止条件, 否则程序就跑飞了.
+所以, 无论脑洞多大, 都要想到如何停止递归调用.
 就和我们写个for循环for (i=0; i &amp;lt; 10; i++) 一个道理, 本质都是在重复. 递归定义:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;通俗说函数调用自身, 都是递归.一个合格的递归, 有终止条件和非终止条件.非终止条件必须可以通过递归变成终止条件.&lt;br /&gt;
-现在我们来看下两类经典的算法排序和二叉树.先说二叉树, 各种遍历啊翻转都是用递归实现的.&lt;br /&gt;
-先不考虑递归的问题, 就比方说我们要把二叉树的所有点都打印出来, 随便打不要管什么深度广度中序啊. 你会怎么办?&lt;br /&gt;
-一个for循环把所有最left都打出来了, 其他点呢? 没出来.怎么办?为什么二叉树这么难处理啊?&lt;br /&gt;
-我们之前打印数组or链表一个循环就ok了. 二叉树的和他们的区别是一个点有2个后继.&lt;br /&gt;
-那么2个后继对我们造成什么影响. for通过单个指针只能得到线性的关系. 那如何得到树式的关系呢?&lt;br /&gt;
-我们可以从最简单的开始考察空树, 1,2层的树都好办. 3层呢, 就不好办了? 怎么不好办了.&lt;br /&gt;
-如果我们知识在白板上把每个节点, 画个对号, 就算输出的话, 我们很轻松, 就画完了.&lt;br /&gt;
-可是在计算机内部, 比如我们现在100层的树我们在left子树上输出, 我们就没有办法知道丛root开始&lt;br /&gt;
-的right子树的信息了, 我们一条路走到黑, 回不去了. 我门必要track住所谓的right节点的信息.&lt;br /&gt;
-这很明显, 咋么track住呢?还是以3层树为例我们可以轻而易举的输出上面两层.&lt;br /&gt;
-如果按层输出, 我们输出当前node把子nodes存到queue里面, 每次都这么干. 我们track住了其他节点的信息了&lt;br /&gt;
-而链表这种线性结构则是自身就可以track住后继节点的信息, 这就是差别, 多了一个node我们就要&lt;br /&gt;
-多个地方存他, 在我们的场景你都不需要关系存的顺序, 因为我们就是随便输出, 全输出就可以了.&lt;br /&gt;
-回过头, 我们来看, 这个解法和递归之间的关系. 只要最终能终止就可以用递归解, 我们这个问题能吗?&lt;br /&gt;
-显然可以, 停在最底层节点.&lt;br /&gt;
-void bin_recur(node)&lt;br /&gt;
-{&lt;br /&gt;
-    //这是内核的标准风格&lt;br /&gt;
-    if(!node)&lt;br /&gt;
+&lt;p&gt;通俗说函数调用自身, 都是递归.一个合格的递归, 有终止条件和非终止条件.非终止条件必须可以通过递归变成终止条件.
+现在我们来看下两类经典的算法排序和二叉树.先说二叉树, 各种遍历啊翻转都是用递归实现的.
+先不考虑递归的问题, 就比方说我们要把二叉树的所有点都打印出来, 随便打不要管什么深度广度中序啊. 你会怎么办?
+一个for循环把所有最left都打出来了, 其他点呢? 没出来.怎么办?为什么二叉树这么难处理啊?
+我们之前打印数组or链表一个循环就ok了. 二叉树的和他们的区别是一个点有2个后继.
+那么2个后继对我们造成什么影响. for通过单个指针只能得到线性的关系. 那如何得到树式的关系呢?
+我们可以从最简单的开始考察空树, 1,2层的树都好办. 3层呢, 就不好办了? 怎么不好办了.
+如果我们知识在白板上把每个节点, 画个对号, 就算输出的话, 我们很轻松, 就画完了.
+可是在计算机内部, 比如我们现在100层的树我们在left子树上输出, 我们就没有办法知道丛root开始
+的right子树的信息了, 我们一条路走到黑, 回不去了. 我门必要track住所谓的right节点的信息.
+这很明显, 咋么track住呢?还是以3层树为例我们可以轻而易举的输出上面两层.
+如果按层输出, 我们输出当前node把子nodes存到queue里面, 每次都这么干. 我们track住了其他节点的信息了
+而链表这种线性结构则是自身就可以track住后继节点的信息, 这就是差别, 多了一个node我们就要
+多个地方存他, 在我们的场景你都不需要关系存的顺序, 因为我们就是随便输出, 全输出就可以了.
+回过头, 我们来看, 这个解法和递归之间的关系. 只要最终能终止就可以用递归解, 我们这个问题能吗?
+显然可以, 停在最底层节点.
+void bin_recur(node)
+{
+    //这是内核的标准风格
+    if(!node)
         return&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;print(node);
@@ -555,19 +555,19 @@ bin_recur(node-&amp;gt;right);
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;完了这就是我们的随意树遍历法, 记住我们只要求输出全部节点就ok了. 至于, node之间的关系, 就随他去吧.哈哈.&lt;br /&gt;
-无论递归多么简洁, track nrightnode信息一个也不能少, 知识没有眼睛的计算机的眼睛, 就好像盲人的盲文一样.&lt;br /&gt;
-这个递归的和我们的for循环的结果不一样.不用queue用stack结果就一直了.&lt;br /&gt;
-广度优先不可以用递归形式, 这是我们知道的第一个不能用递归解的问题.&lt;br /&gt;
-1. 接下来我们聊3个问题, 什么问题不能用递归解&lt;br /&gt;
-2. 递归 和非递归如何转换&lt;br /&gt;
+&lt;p&gt;完了这就是我们的随意树遍历法, 记住我们只要求输出全部节点就ok了. 至于, node之间的关系, 就随他去吧.哈哈.
+无论递归多么简洁, track nrightnode信息一个也不能少, 知识没有眼睛的计算机的眼睛, 就好像盲人的盲文一样.
+这个递归的和我们的for循环的结果不一样.不用queue用stack结果就一直了.
+广度优先不可以用递归形式, 这是我们知道的第一个不能用递归解的问题.
+1. 接下来我们聊3个问题, 什么问题不能用递归解
+2. 递归 和非递归如何转换
 3. 结合二叉树排序算法探讨递归如何可能.&lt;/p&gt;
 
 &lt;h3 id=&#34;先看第三个问题-同时我们也知道gcd也是递归算法实现的:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;先看第三个问题, 同时我们也知道gcd也是递归算法实现的.&lt;/h3&gt;
 
-&lt;p&gt;在这里我们要达成的是递归为什么能解问题. 遇到一个问题时我们我们如何用递归曲解.&lt;br /&gt;
-我们要用另外一种思想去解释递归, 且最好是生活化的例子.&lt;br /&gt;
-搜了半天也没有即通俗又深刻的讲解.&lt;br /&gt;
+&lt;p&gt;在这里我们要达成的是递归为什么能解问题. 遇到一个问题时我们我们如何用递归曲解.
+我们要用另外一种思想去解释递归, 且最好是生活化的例子.
+搜了半天也没有即通俗又深刻的讲解.
 我们按着递归的定义来:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
@@ -578,7 +578,7 @@ bin_recur(node-&amp;gt;right);
 &lt;pre&gt;&lt;code&gt;To Iterate is Human, to Recurse, Divine
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;定义中明确说明了基本情况可以不止一种, 意识到这点很重要. 那么下面我们来看一个递归函数都有什么.&lt;br /&gt;
+&lt;p&gt;定义中明确说明了基本情况可以不止一种, 意识到这点很重要. 那么下面我们来看一个递归函数都有什么.
 通过定义, 我们知道递归函数只要两部分内容, 基本情况 + 还原到基本情况两部分:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;int depth(Tree t){
@@ -590,8 +590,8 @@ bin_recur(node-&amp;gt;right);
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;求二叉树深度,这个函数的目标就是返回int值树深度&lt;br /&gt;
-我们试图通过这么小的一个递归函数, 完成我们对所有递归的认知!&lt;br /&gt;
+&lt;p&gt;求二叉树深度,这个函数的目标就是返回int值树深度
+我们试图通过这么小的一个递归函数, 完成我们对所有递归的认知!
 基本情况:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;return 0 和return (a&amp;gt;b)?(a+1):(b+1);
@@ -603,16 +603,16 @@ bin_recur(node-&amp;gt;right);
 int b=depth(t.left);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;现在我们要当一回弗兰肯斯坦, 原料都有了, 那我们如何把他组成一个会动且名字叫做递归函数的人呢?&lt;br /&gt;
-代码本身就是执行序列, 而这些序列的先后关系非常重要.基本情况和还原基本情况具备哪些关系呢?&lt;br /&gt;
-这是我们要完整认知递归, 所必须面对的问题.&lt;br /&gt;
-在这个例子当中, 我们可以把基本情况和还原情况分类两类, 从基本情况看:&lt;br /&gt;
-不需要依赖还原情况和依赖还原情况的基本情况两类.&lt;br /&gt;
-所以我们主要关注, 基本情况就好了, 我们把基本情况排好了还原情况就不是问题了.&lt;br /&gt;
-我们总对看不到事物, 不放心,那么还原情况的代码是如何是生效的呢, 怎么就能保证整个程序是我们想要的&lt;br /&gt;
-正确结果? 也就是说我们必须证明他!如何证明呢?&lt;br /&gt;
-我们只看第一次调用, 显然如果两次depth调用时正确的, 我们最上面这次也是千真万确的!&lt;br /&gt;
-也就是说当前的结果正确性依赖于子函数调用的正确性.那么现在问题就变成了, 还原情况是否能&lt;br /&gt;
+&lt;p&gt;现在我们要当一回弗兰肯斯坦, 原料都有了, 那我们如何把他组成一个会动且名字叫做递归函数的人呢?
+代码本身就是执行序列, 而这些序列的先后关系非常重要.基本情况和还原基本情况具备哪些关系呢?
+这是我们要完整认知递归, 所必须面对的问题.
+在这个例子当中, 我们可以把基本情况和还原情况分类两类, 从基本情况看:
+不需要依赖还原情况和依赖还原情况的基本情况两类.
+所以我们主要关注, 基本情况就好了, 我们把基本情况排好了还原情况就不是问题了.
+我们总对看不到事物, 不放心,那么还原情况的代码是如何是生效的呢, 怎么就能保证整个程序是我们想要的
+正确结果? 也就是说我们必须证明他!如何证明呢?
+我们只看第一次调用, 显然如果两次depth调用时正确的, 我们最上面这次也是千真万确的!
+也就是说当前的结果正确性依赖于子函数调用的正确性.那么现在问题就变成了, 还原情况是否能
 够真正意义上的收敛到基本情况:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;int factorial(int n)
@@ -623,125 +623,125 @@ int b=depth(t.left);
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这个函数是一个递归函数, 却不能收敛!最后程序直接跑飞了.所以说不是递归就是正确的.&lt;br /&gt;
-这严格的依赖于你的实现的语言序列!上面这个例子, 只有去没有回!&lt;br /&gt;
-只有保证了去和回的程序才是合理的! 进一步, 我们的基本情况,可以说都是在还原情况的去和回的路径上.&lt;br /&gt;
-使用数学归纳法, 我们可以证明递归函数的是否正确!&lt;br /&gt;
-现在我们更细致的考察基本情况和去回路径的关系.如果基本情况在去的路径上我们就收他是一种independent&lt;br /&gt;
-情况. 反之, 在回来的路径上, 我们就说他是dependent情况. 不用费心, 去想什么那些基本情况是independent哪些&lt;br /&gt;
-是dependent这个和具体业务,算法内容相关的.&lt;br /&gt;
-下面我们看下排序算法以期更加透彻的理解基本情况!先说快排!&lt;br /&gt;
-不知道你还记得吗, 我早都忘了.哈哈.快排的效率是nlogn,why?简单分析下就知道了.&lt;br /&gt;
-起始所有的算法都是分治, 只不过分的程度不一样. 快排的思想就是, 又粗到细逐步排序.&lt;br /&gt;
-显示选一个特定的元素, 之后把其他元素分列这个元素左右, 之后在分别对左右的元素执行相同的动作.&lt;br /&gt;
-用递归怎么实现呢?&lt;br /&gt;
-先确定基本情况&lt;br /&gt;
-小于2个elements不需要排序&lt;br /&gt;
-if ( (first &amp;gt;= last)&lt;br /&gt;
-    return;&lt;br /&gt;
-这样independent就确定了.&lt;br /&gt;
-pivot= array[first]&lt;br /&gt;
-while( low &amp;lt;  high){&lt;br /&gt;
-    while ( a[high] &amp;gt; pivot  )&lt;br /&gt;
-        high&amp;ndash;;&lt;br /&gt;
-    a[low]= a[hgih]&lt;br /&gt;
-    while ( a[low] &amp;lt; pivot)&lt;br /&gt;
-        low++;&lt;br /&gt;
-    a[high] = a[low]&lt;br /&gt;
-}&lt;br /&gt;
-a[low] = pivot&lt;br /&gt;
-qs(a, first, low -1)&lt;br /&gt;
+&lt;p&gt;这个函数是一个递归函数, 却不能收敛!最后程序直接跑飞了.所以说不是递归就是正确的.
+这严格的依赖于你的实现的语言序列!上面这个例子, 只有去没有回!
+只有保证了去和回的程序才是合理的! 进一步, 我们的基本情况,可以说都是在还原情况的去和回的路径上.
+使用数学归纳法, 我们可以证明递归函数的是否正确!
+现在我们更细致的考察基本情况和去回路径的关系.如果基本情况在去的路径上我们就收他是一种independent
+情况. 反之, 在回来的路径上, 我们就说他是dependent情况. 不用费心, 去想什么那些基本情况是independent哪些
+是dependent这个和具体业务,算法内容相关的.
+下面我们看下排序算法以期更加透彻的理解基本情况!先说快排!
+不知道你还记得吗, 我早都忘了.哈哈.快排的效率是nlogn,why?简单分析下就知道了.
+起始所有的算法都是分治, 只不过分的程度不一样. 快排的思想就是, 又粗到细逐步排序.
+显示选一个特定的元素, 之后把其他元素分列这个元素左右, 之后在分别对左右的元素执行相同的动作.
+用递归怎么实现呢?
+先确定基本情况
+小于2个elements不需要排序
+if ( (first &amp;gt;= last)
+    return;
+这样independent就确定了.
+pivot= array[first]
+while( low &amp;lt;  high){
+    while ( a[high] &amp;gt; pivot  )
+        high&amp;ndash;;
+    a[low]= a[hgih]
+    while ( a[low] &amp;lt; pivot)
+        low++;
+    a[high] = a[low]
+}
+a[low] = pivot
+qs(a, first, low -1)
 qs(a, low + 1, last)&lt;/p&gt;
 
-&lt;p&gt;从这个算法, 我们可以看出全都是independent的基本情况, 都是还原情况依赖基本情况.&lt;br /&gt;
-也就是说, 上层的正确性,&lt;br /&gt;
-我们在前序二叉树遍历也遇到这种, 全是independent的情况.&lt;br /&gt;
-我们来总结下qsort的基本情况:&lt;br /&gt;
-他的基本情况是数据的区间.最基本的就是不排序这种&lt;br /&gt;
-之后是下面这种通用形式. 瞄准一个区间.基本+通用类似归纳法.&lt;br /&gt;
-那我们现在明白了排除最基本的形态作为终止条件. 其他的基本情况和还原情况表明了这个&lt;br /&gt;
-算法的核心本质也就是自顶向下top down还是自底向下bottom up的的方法这是最根本的本质.&lt;br /&gt;
-要比我们之前说的由粗到细逐步排序, 要准确深刻许多!&lt;br /&gt;
-我们再看归并排序.归并是什么思想呢?正好相反, 它依赖底层的排序.&lt;br /&gt;
-也就是bottom up的方式, 我们看下msort的代码&lt;br /&gt;
-merge sort是基于合并,&lt;br /&gt;
-if (len &amp;lt;= 1)&lt;br /&gt;
+&lt;p&gt;从这个算法, 我们可以看出全都是independent的基本情况, 都是还原情况依赖基本情况.
+也就是说, 上层的正确性,
+我们在前序二叉树遍历也遇到这种, 全是independent的情况.
+我们来总结下qsort的基本情况:
+他的基本情况是数据的区间.最基本的就是不排序这种
+之后是下面这种通用形式. 瞄准一个区间.基本+通用类似归纳法.
+那我们现在明白了排除最基本的形态作为终止条件. 其他的基本情况和还原情况表明了这个
+算法的核心本质也就是自顶向下top down还是自底向下bottom up的的方法这是最根本的本质.
+要比我们之前说的由粗到细逐步排序, 要准确深刻许多!
+我们再看归并排序.归并是什么思想呢?正好相反, 它依赖底层的排序.
+也就是bottom up的方式, 我们看下msort的代码
+merge sort是基于合并,
+if (len &amp;lt;= 1)
     return&lt;/p&gt;
 
-&lt;p&gt;ms(a, first, len/2)&lt;br /&gt;
-ms(a, len/2 + 1, last)&lt;br /&gt;
-merge(a, first, last)&lt;br /&gt;
-这次是通用情况在最下面.&lt;br /&gt;
-那我们在来看, 二叉树的的遍历. 前序遍历是top down的思想吗?&lt;br /&gt;
-先print root, 之后是最左的一排, 从底往上从左往右一次输出left子树&lt;br /&gt;
-之后, 类似方法输出right子树.但是为什么不是层序遍历的效果呢?这里是收到了树结构的影响.&lt;br /&gt;
-在排序的例子, 我们以数据的宽度大小得出topdown的思路.&lt;br /&gt;
-在遍历二叉树, 我们是node的高度和左右作为top的衡量.&lt;br /&gt;
-这里就不是topdown的思想而是先处理谁后处理谁的问题, 我们反过来看排序算法, topdown&lt;br /&gt;
-bottomup 似乎也只是一种巧合, 那么我们能不能在qsort的时候只处理两个元素, 之后在递归呢&lt;br /&gt;
-就好比二叉树中从root到leaf一样之后从leaf到root, 以此往复, 在用递归处理排序是遵从从多到少的去,&lt;br /&gt;
-从少到多.&lt;br /&gt;
-二叉树: root-&amp;gt;left leaf -&amp;gt;root-&amp;gt;right leaf&lt;br /&gt;
-排序:大范围-&amp;gt;个体-&amp;gt;大范围　这也是递归解问题的标准方法逐渐减小问题．&lt;br /&gt;
-那么我们能否从最小的地方, 之后逐渐变大, 想当然是可以的.回来路径上的mergesort就是一个.&lt;br /&gt;
-其他的呢插入排序的递归版?&lt;br /&gt;
-insert sort&lt;br /&gt;
-if ( len = 1)&lt;br /&gt;
-    return&lt;br /&gt;
-isort(a, len -1)&lt;br /&gt;
-for(i=0; i&amp;lt; len;i++&lt;br /&gt;
-    sort insert alen&lt;br /&gt;
-对比非递归版, 我们发现递归给我门提供了两个潜在的for循环.&lt;br /&gt;
-如果是从bottom up这种方式接的问题, 递归是放在回来的路径.&lt;br /&gt;
-当然递归也是允许你在取得路径上慢慢扩大处理的问题&lt;br /&gt;
-插入排序的终止条件编程了len &amp;gt; maxlen.&lt;br /&gt;
-qsort和msort 一去一回.&lt;br /&gt;
-我们已经考察递归差不多了,总结下&lt;br /&gt;
-1. 一去一回, 两个非嵌套循环&lt;br /&gt;
-2. 最好遵从, 去的是逐渐减小任务. 回时增大.&lt;br /&gt;
+&lt;p&gt;ms(a, first, len/2)
+ms(a, len/2 + 1, last)
+merge(a, first, last)
+这次是通用情况在最下面.
+那我们在来看, 二叉树的的遍历. 前序遍历是top down的思想吗?
+先print root, 之后是最左的一排, 从底往上从左往右一次输出left子树
+之后, 类似方法输出right子树.但是为什么不是层序遍历的效果呢?这里是收到了树结构的影响.
+在排序的例子, 我们以数据的宽度大小得出topdown的思路.
+在遍历二叉树, 我们是node的高度和左右作为top的衡量.
+这里就不是topdown的思想而是先处理谁后处理谁的问题, 我们反过来看排序算法, topdown
+bottomup 似乎也只是一种巧合, 那么我们能不能在qsort的时候只处理两个元素, 之后在递归呢
+就好比二叉树中从root到leaf一样之后从leaf到root, 以此往复, 在用递归处理排序是遵从从多到少的去,
+从少到多.
+二叉树: root-&amp;gt;left leaf -&amp;gt;root-&amp;gt;right leaf
+排序:大范围-&amp;gt;个体-&amp;gt;大范围　这也是递归解问题的标准方法逐渐减小问题．
+那么我们能否从最小的地方, 之后逐渐变大, 想当然是可以的.回来路径上的mergesort就是一个.
+其他的呢插入排序的递归版?
+insert sort
+if ( len = 1)
+    return
+isort(a, len -1)
+for(i=0; i&amp;lt; len;i++
+    sort insert alen
+对比非递归版, 我们发现递归给我门提供了两个潜在的for循环.
+如果是从bottom up这种方式接的问题, 递归是放在回来的路径.
+当然递归也是允许你在取得路径上慢慢扩大处理的问题
+插入排序的终止条件编程了len &amp;gt; maxlen.
+qsort和msort 一去一回.
+我们已经考察递归差不多了,总结下
+1. 一去一回, 两个非嵌套循环
+2. 最好遵从, 去的是逐渐减小任务. 回时增大.
 3. 去回可以互相转换.如isort, 当不是所有的都是要稳定性.&lt;/p&gt;
 
 &lt;h3 id=&#34;接下来看递归和非递归的转换:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;接下来看递归和非递归的转换.&lt;/h3&gt;
 
-&lt;p&gt;bubble sort&lt;br /&gt;
-if len &amp;lt; 2&lt;br /&gt;
-    return&lt;br /&gt;
-sort maxer&lt;br /&gt;
-bulle sort(len -1)&lt;br /&gt;
-冒泡的递归很简单&lt;br /&gt;
-那么qsort的非递归版呢&lt;br /&gt;
-首先递归给了一个for我们得自己补上&lt;br /&gt;
-for&lt;br /&gt;
-接下来递归编程压栈就可以了,&lt;br /&gt;
+&lt;p&gt;bubble sort
+if len &amp;lt; 2
+    return
+sort maxer
+bulle sort(len -1)
+冒泡的递归很简单
+那么qsort的非递归版呢
+首先递归给了一个for我们得自己补上
+for
+接下来递归编程压栈就可以了,
 下面的问题答案也是本问题的答案.&lt;/p&gt;
 
 &lt;h3 id=&#34;最后一个问题什么问题不能用递归解:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;最后一个问题什么问题不能用递归解?&lt;/h3&gt;
 
-&lt;p&gt;二叉树层序遍历递归搞不定.&lt;br /&gt;
-这个问题实际转换成, 非递归版什么问题搞定什么问题&lt;br /&gt;
-我简单的认为&lt;br /&gt;
-1. 问题可被还原.&lt;br /&gt;
-2. 必要时, 需要stack 信息追踪&lt;br /&gt;
-没了. 好关于递归就到这里.&lt;br /&gt;
-在考察语言序列的顺序问题.递归的顺序我们很清楚了.但我们似乎还迷茫.&lt;br /&gt;
-实际上我们接触的问题都不是用递归解的.&lt;br /&gt;
-比如内核的伙伴系统, page cache这些算法. 实际上是这些结构的延伸.&lt;br /&gt;
-所有的函数方法都是为了让操作对象, 保持相应结构的性质.&lt;br /&gt;
-也就是说这种算法的核心与目的就是结构, 使数据保持这种结构, 算法的目的达到了.&lt;br /&gt;
-重点在于维护结构整体, 这点看来和排序算法一样, 一个是侧重空间关系, 一个数值关系.&lt;br /&gt;
+&lt;p&gt;二叉树层序遍历递归搞不定.
+这个问题实际转换成, 非递归版什么问题搞定什么问题
+我简单的认为
+1. 问题可被还原.
+2. 必要时, 需要stack 信息追踪
+没了. 好关于递归就到这里.
+在考察语言序列的顺序问题.递归的顺序我们很清楚了.但我们似乎还迷茫.
+实际上我们接触的问题都不是用递归解的.
+比如内核的伙伴系统, page cache这些算法. 实际上是这些结构的延伸.
+所有的函数方法都是为了让操作对象, 保持相应结构的性质.
+也就是说这种算法的核心与目的就是结构, 使数据保持这种结构, 算法的目的达到了.
+重点在于维护结构整体, 这点看来和排序算法一样, 一个是侧重空间关系, 一个数值关系.
 可以说都是在保证空间性质的前提, 完成量的性质:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;我们得到两个基本概念, 描述数据个体的量, 与整体的空间结构.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;空间结构是框架, 量则是内容.&lt;br /&gt;
-现在我们来看一个实际的算法问题, 如何判断两边是否有环, 这里说的主要是空间结构.&lt;br /&gt;
-这个问题主要关注数据的空间结构, 最简单的加个访问标志位.不加呢, 别的方法呢?&lt;br /&gt;
-再加一个指针, 也能解决.通过辅助数据结构两个指针解决了这个问题. 现在回想问题.&lt;br /&gt;
-我们判断环, 实质上是找到一个等价的条件, 这个条件, 要不然是 ==, 要不然是 !=&lt;br /&gt;
-这和具体逻辑有关. 但是我们一定可以确定的就是我们需要right 和left两个operand.&lt;br /&gt;
-需要至少两个对比的对象.而这个对象本质就是量. 这里想提供解决问题的通用方式.&lt;br /&gt;
-判断问题要有两个量. 而这两个量.&lt;br /&gt;
+&lt;p&gt;空间结构是框架, 量则是内容.
+现在我们来看一个实际的算法问题, 如何判断两边是否有环, 这里说的主要是空间结构.
+这个问题主要关注数据的空间结构, 最简单的加个访问标志位.不加呢, 别的方法呢?
+再加一个指针, 也能解决.通过辅助数据结构两个指针解决了这个问题. 现在回想问题.
+我们判断环, 实质上是找到一个等价的条件, 这个条件, 要不然是 ==, 要不然是 !=
+这和具体逻辑有关. 但是我们一定可以确定的就是我们需要right 和left两个operand.
+需要至少两个对比的对象.而这个对象本质就是量. 这里想提供解决问题的通用方式.
+判断问题要有两个量. 而这两个量.
 这里揭示了算法的核心, 就是在完成特定的问题or 结构, 我们需要辅助的结构:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;常见的辅助结构:变量/flag之类, 指针, 队列, stack, 不限制使用数量.
@@ -752,8 +752,8 @@ for&lt;br /&gt;
 &lt;pre&gt;&lt;code&gt;指针的速度是个很重要的解决问题的因素, 如上面的环问题的两个不同指针.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这也是解决比较问题的, 常见方法.&lt;br /&gt;
-选好辅助数据结构就是, 运用了. 运用的主要原则就是找到基本情况. 把具备的互斥特征的&lt;br /&gt;
+&lt;p&gt;这也是解决比较问题的, 常见方法.
+选好辅助数据结构就是, 运用了. 运用的主要原则就是找到基本情况. 把具备的互斥特征的
 基本情况找到, 并应用辅助数据结构解决问题.&lt;/p&gt;
 
 &lt;h2 id=&#34;动态规划问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;动态规划问题&lt;/h2&gt;
@@ -764,30 +764,30 @@ for&lt;br /&gt;
     
     <item>
       <title>Computer science a kernel programmer&#39;s perspective</title>
-      <link>http://firoyang.org/cs/cs/</link>
+      <link>/cs/cs/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/cs/</guid>
+      
+      <guid>/cs/cs/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://book.douban.com/subject/1494026/&#34;&gt;Code The Hidden Language of Computer Hardware and Software&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/XsW0QfVYgg4&#34;&gt;Google groups&lt;/a&gt;&lt;br /&gt;
-For programming reference programming.md&lt;br /&gt;
-Graphviz + CodeViz&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://book.douban.com/subject/1494026/&#34;&gt;Code The Hidden Language of Computer Hardware and Software&lt;/a&gt;
+&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/XsW0QfVYgg4&#34;&gt;Google groups&lt;/a&gt;
+For programming reference programming.md
+Graphviz + CodeViz
 &lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;contents-of-computer-science:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Contents of computer science&lt;/h1&gt;
 
-&lt;p&gt;What is the address.&lt;br /&gt;
-Is the address generated by compiler physical or virtual?&lt;br /&gt;
-What&amp;rsquo;s the difference between eprom falsh ssd?&lt;br /&gt;
-What is UART USB serial/prallel port&lt;br /&gt;
-How to find UART prot to print log?&lt;br /&gt;
-programming&lt;br /&gt;
-compile&lt;br /&gt;
-computer&lt;br /&gt;
+&lt;p&gt;What is the address.
+Is the address generated by compiler physical or virtual?
+What&amp;rsquo;s the difference between eprom falsh ssd?
+What is UART USB serial/prallel port
+How to find UART prot to print log?
+programming
+compile
+computer
 Interface&lt;/p&gt;
 
 &lt;h1 id=&#34;interface:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Interface&lt;/h1&gt;
@@ -802,50 +802,50 @@ Interface&lt;/p&gt;
 
 &lt;h1 id=&#34;layers-of-computer:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Layers of computer&lt;/h1&gt;
 
-&lt;p&gt;Applications&lt;br /&gt;
-Operating system&lt;br /&gt;
-ISA&lt;br /&gt;
-Micro-architecture&lt;br /&gt;
-Logical gate&lt;br /&gt;
-Digital circuits&lt;br /&gt;
-Analog circuits&lt;br /&gt;
-Electronic component&lt;br /&gt;
+&lt;p&gt;Applications
+Operating system
+ISA
+Micro-architecture
+Logical gate
+Digital circuits
+Analog circuits
+Electronic component
 Physics&lt;/p&gt;
 
 &lt;h1 id=&#34;计算机科学启示录:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;计算机科学启示录&lt;/h1&gt;
 
-&lt;p&gt;计算机是人与世界的一种关系.&lt;br /&gt;
-人&amp;lt;-&amp;gt; Computer &amp;lt;-&amp;gt; 世界.&lt;br /&gt;
-人意志-&amp;gt;思维逻辑-&amp;gt;电信号-&amp;gt;物理世界&lt;br /&gt;
-人类的思维语言-&amp;gt;人-&amp;gt;计算机语言-&amp;gt;编译器-&amp;gt;机器语言-&amp;gt;Microarchitecture(datapath, control unit)logic 电路-&amp;gt;模拟电路电信号-&amp;gt;物理世界.&lt;br /&gt;
-思维-&amp;gt;电信号, 外部世界的改变(for good life)&lt;br /&gt;
-人类物理世界-&amp;gt;思维世界-&amp;gt; 物理世界&lt;br /&gt;
-人类思维与语言, 计算机语言, 数字电路, 模拟电路, 世界.&lt;br /&gt;
-每一个sensation都有自己的内部规则, &amp;ldquo;语言&amp;rdquo;,pattern, paradigm, theory. 这是他们不同的地方.&lt;br /&gt;
-作为程序员要理解认知这每一种paradigm, 似乎需要寻找到一种通用的语言, 来更好的理解他们. 有必要吗?&lt;br /&gt;
-当然逻辑思维好的人, 容易看到问题的本质. 数学和逻辑, 严密且语法简单适用其他paradigm的表述.&lt;br /&gt;
-语言总归是用来表述的媒介, 重要的还是内容. 统一的语言更容易看到联系, 相似的逻辑.&lt;br /&gt;
-也就是说, 有意识的用数学和逻辑表示pattern.&lt;br /&gt;
-Two point:&lt;br /&gt;
-不同sensation level之间的抽象类比, 方向人-&amp;gt;物理世界.&lt;br /&gt;
+&lt;p&gt;计算机是人与世界的一种关系.
+人&amp;lt;-&amp;gt; Computer &amp;lt;-&amp;gt; 世界.
+人意志-&amp;gt;思维逻辑-&amp;gt;电信号-&amp;gt;物理世界
+人类的思维语言-&amp;gt;人-&amp;gt;计算机语言-&amp;gt;编译器-&amp;gt;机器语言-&amp;gt;Microarchitecture(datapath, control unit)logic 电路-&amp;gt;模拟电路电信号-&amp;gt;物理世界.
+思维-&amp;gt;电信号, 外部世界的改变(for good life)
+人类物理世界-&amp;gt;思维世界-&amp;gt; 物理世界
+人类思维与语言, 计算机语言, 数字电路, 模拟电路, 世界.
+每一个sensation都有自己的内部规则, &amp;ldquo;语言&amp;rdquo;,pattern, paradigm, theory. 这是他们不同的地方.
+作为程序员要理解认知这每一种paradigm, 似乎需要寻找到一种通用的语言, 来更好的理解他们. 有必要吗?
+当然逻辑思维好的人, 容易看到问题的本质. 数学和逻辑, 严密且语法简单适用其他paradigm的表述.
+语言总归是用来表述的媒介, 重要的还是内容. 统一的语言更容易看到联系, 相似的逻辑.
+也就是说, 有意识的用数学和逻辑表示pattern.
+Two point:
+不同sensation level之间的抽象类比, 方向人-&amp;gt;物理世界.
 不同sensation level不同or相同的抽象. 具体的形而下-&amp;gt;形而上数学与逻辑&lt;/p&gt;
 
 &lt;h1 id=&#34;os:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;OS&lt;/h1&gt;
 
 &lt;h2 id=&#34;process-management:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Process management&lt;/h2&gt;
 
-&lt;p&gt;进程的定义和PCB，进程和线程的区别，进程的三个基本状态及它们之间的转换关系，进程的同步，竞争和死锁，进程间通信&lt;br /&gt;
-###Representation&lt;br /&gt;
-* Program memory&lt;br /&gt;
-Stack(User/Kernel)&lt;br /&gt;
-Heap&lt;br /&gt;
-Data segment(data/bss)&lt;br /&gt;
-Code segment&lt;br /&gt;
-* PCB&lt;br /&gt;
-Resource&lt;br /&gt;
-Processor Context&lt;br /&gt;
-Process state&lt;br /&gt;
-###daemonize&lt;br /&gt;
+&lt;p&gt;进程的定义和PCB，进程和线程的区别，进程的三个基本状态及它们之间的转换关系，进程的同步，竞争和死锁，进程间通信
+###Representation
+* Program memory
+Stack(User/Kernel)
+Heap
+Data segment(data/bss)
+Code segment
+* PCB
+Resource
+Processor Context
+Process state
+###daemonize
 &lt;a href=&#34;http://fixunix.com/unix/84640-daemon-controlling-terminal.html&#34;&gt;http://fixunix.com/unix/84640-daemon-controlling-terminal.html&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;memory-managerment:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory managerment&lt;/h2&gt;
@@ -854,34 +854,34 @@ Process state&lt;br /&gt;
 
 &lt;h3 id=&#34;paging:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Paging&lt;/h3&gt;
 
-&lt;p&gt;paging is one of the memory management schemes by which&lt;br /&gt;
-a computer stores and retrieves data from the secondary storage for use in main memory.&lt;br /&gt;
-* Page fault&lt;br /&gt;
-###Page replacement algorithm&lt;br /&gt;
-OPT&lt;br /&gt;
-FIFO&lt;br /&gt;
-Second-chance&lt;br /&gt;
+&lt;p&gt;paging is one of the memory management schemes by which
+a computer stores and retrieves data from the secondary storage for use in main memory.
+* Page fault
+###Page replacement algorithm
+OPT
+FIFO
+Second-chance
 LRU&lt;/p&gt;
 
 &lt;h3 id=&#34;x86-memory-segmentation:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;x86 memory segmentation&lt;/h3&gt;
 
-&lt;p&gt;linux 基本不用&lt;br /&gt;
-&lt;a href=&#34;http://oss.org.cn/kernel-book/ch02/2.3.7.htm&#34;&gt;Linux中的段&lt;/a&gt;&lt;br /&gt;
-* GDT&lt;br /&gt;
-* TSS&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Task_state_segment#Use_of_TSS_in_Linux&#34;&gt;Use of TSS in Linux&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;linux 基本不用
+&lt;a href=&#34;http://oss.org.cn/kernel-book/ch02/2.3.7.htm&#34;&gt;Linux中的段&lt;/a&gt;
+* GDT
+* TSS
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Task_state_segment#Use_of_TSS_in_Linux&#34;&gt;Use of TSS in Linux&lt;/a&gt;
 * Linear address&lt;/p&gt;
 
 &lt;h3 id=&#34;virtual-memory-https-en-wikipedia-org-wiki-virtual-memory-paged-virtual-memory:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtual_memory#Paged_virtual_memory&#34;&gt;Virtual memory&lt;/a&gt;&lt;/h3&gt;
 
-&lt;p&gt;It maps memory addresses used by a program, called virtual addresses, into physical addresses in computer memory.&lt;br /&gt;
-* Logic/Virtual address&lt;br /&gt;
+&lt;p&gt;It maps memory addresses used by a program, called virtual addresses, into physical addresses in computer memory.
+* Logic/Virtual address
 * Page table&lt;/p&gt;
 
 &lt;h3 id=&#34;memory-allocation:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory allocation&lt;/h3&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Buddy memory allocation.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Buddy memory allocation.&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Slab allocation/Memory Pool&lt;/p&gt;
 
@@ -901,30 +901,30 @@ LRU&lt;/p&gt;
 
 &lt;h3 id=&#34;i-o-scheduling:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O scheduling&lt;/h3&gt;
 
-&lt;p&gt;Elevator algorithm&lt;br /&gt;
+&lt;p&gt;Elevator algorithm
 ###Asynchronous I/O NEED CLEAN&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;synchronous I/O multiplexing and I/O event notification facility&lt;br /&gt;
-select/poll/epoll&lt;br /&gt;
-For the ease of use, the select loop is implemented as an &lt;em&gt;event loop&lt;/em&gt; with callbacks.&lt;br /&gt;
-libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.&lt;br /&gt;
-##File formate&lt;br /&gt;
-ELF &amp;ndash; ELF executable and linkable format.&lt;br /&gt;
-Used for Relocatable file(object file, kernel moudle), Executable file, Dynamic library, Core dump.&lt;br /&gt;
-###Relocatable file(object file, kernel module)&lt;br /&gt;
-ELF header.&lt;br /&gt;
-Sections.&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;synchronous I/O multiplexing and I/O event notification facility
+select/poll/epoll
+For the ease of use, the select loop is implemented as an &lt;em&gt;event loop&lt;/em&gt; with callbacks.
+libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.
+##File formate
+ELF &amp;ndash; ELF executable and linkable format.
+Used for Relocatable file(object file, kernel moudle), Executable file, Dynamic library, Core dump.
+###Relocatable file(object file, kernel module)
+ELF header.
+Sections.
 Section header table.&lt;/p&gt;
 
 &lt;h3 id=&#34;executeable-file-dynamic-library:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Executeable file, dynamic library&lt;/h3&gt;
 
-&lt;p&gt;ELF header.&lt;br /&gt;
-Program header table.&lt;br /&gt;
-Segments.&lt;br /&gt;
-Section header table.&lt;br /&gt;
-.symtab, Symbol table store index of string&lt;br /&gt;
-.strtab, String table is a array of all strings split by \0&lt;br /&gt;
-.hash, utiliy for quire symbols&lt;br /&gt;
+&lt;p&gt;ELF header.
+Program header table.
+Segments.
+Section header table.
+.symtab, Symbol table store index of string
+.strtab, String table is a array of all strings split by \0
+.hash, utiliy for quire symbols
 .shstrtab, Section header string table store section name for ELF,like .text, .data&amp;hellip;&lt;/p&gt;
 
 &lt;h2 id=&#34;file-system:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;File system&lt;/h2&gt;
@@ -933,10 +933,10 @@ Section header table.&lt;br /&gt;
 
 &lt;h2 id=&#34;system-calls:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;System calls&lt;/h2&gt;
 
-&lt;p&gt;系统调用的概念，系统调用的处理，系统调用类型&lt;br /&gt;
-#I/O&lt;br /&gt;
-CPU and main memory is the brain of a computer.&lt;br /&gt;
-Any transfer of information to or from the CPU/memory combo, for example by reading data from a disk drive, is considered I/O.&lt;br /&gt;
+&lt;p&gt;系统调用的概念，系统调用的处理，系统调用类型
+#I/O
+CPU and main memory is the brain of a computer.
+Any transfer of information to or from the CPU/memory combo, for example by reading data from a disk drive, is considered I/O.
 ##CPU-device I/O&lt;/p&gt;
 
 &lt;h3 id=&#34;memory-mapped-i-o:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory-mapped I/O&lt;/h3&gt;
@@ -951,44 +951,44 @@ Any transfer of information to or from the CPU/memory combo, for example by read
 
 &lt;h2 id=&#34;同步与异步io:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;同步与异步IO&lt;/h2&gt;
 
-&lt;p&gt;今天我们要辨析一下同步和异步IO. 我们先解释最基础的概念, 之后用生活化的例子&lt;br /&gt;
-完成认知.&lt;br /&gt;
-首先是blocking 和 non-blocking这两个概念. 这两个概念实质上是和IO没有关系.&lt;br /&gt;
-他们是在说, 比如读数据, 如果没有数据我该怎么办. 也就是说, 他是在IO不存的时候,&lt;br /&gt;
-在语义上才是有效, 如果你要读的数据始终存在, 那么你还会考虑阻塞与不阻塞的问题吗?&lt;br /&gt;
-那你应该考虑什么? 同步还是异步IO, 倒地什么是同步或者异步呢?&lt;br /&gt;
-英文synchronous, syn 和chronous构成, syn是在一起的意思而chronous是时间的意思.&lt;br /&gt;
-也就是说在一个时间点上在一起, 那么是谁和谁在意一起呢?其中一个是IO可以肯定, 另外一个&lt;br /&gt;
-就是执行IO的发起者, 通常也就是进程. 简单说来这个IO是由进程执行的.&lt;br /&gt;
-那么异步IO呢, asynchronous是a + synchronous. a表否定, 我们知道在IO进行的过程中我们的&lt;br /&gt;
-进程是始终存在的, 也就是说IO 和进程共享着相同的时间进度, 但是却不在一起.也就是说,&lt;br /&gt;
-IO不是由我们的进程完成而是别的进程完成, 是谁呢,是内核线程.&lt;br /&gt;
-那么我们就知道只有linux上的aio是符合异步IO的标准, 而多路复用, 如epoll返回是我们和IO是在&lt;br /&gt;
-一起, 我们要调用read之类的完成他.&lt;br /&gt;
-下面用一个生活化的例子, 说明下linux下的IO.&lt;br /&gt;
-比如你要买&amp;lt;百年孤独&amp;gt; 还要买件衬衫, 你会怎么买&lt;br /&gt;
-你要先去书店, 如果店家没有货, 如果一个小时后货补齐了你可以等,&lt;br /&gt;
-长点你就不愿意等了. 也就是阻塞和不阻塞.之后你要去衣服点.也是同样.&lt;br /&gt;
-假如都没货, 你有等不下去, 怎么办? 你又不能一会儿去这家问下书怎么样? 一会儿去衣服店询问.&lt;br /&gt;
-这太累人了. 最好的方式, 你告诉店家我要什么, 到货了给我打个电话, 我在过来.&lt;br /&gt;
-这就是io多路复用. 可是还有更高明的方法, 没错就是京东了, 我网上下订单, 第二天直接送到家了.&lt;br /&gt;
-京东, 为什么成功? 你知道了吧.用户省心啊.对应异步io&lt;br /&gt;
-##Interface&lt;br /&gt;
-&lt;a href=&#34;http://www.cs.uwm.edu/classes/cs458/Lecture/HTML/ch11s02.html&#34;&gt;Methods for designing a CPU&amp;rsquo;s I/O interface generally fall into one of the following categories:&lt;/a&gt;&lt;br /&gt;
-Completely separate memory and I/O. buses DMA?&lt;br /&gt;
-Common buses, separate control lines. Port-I/O&lt;br /&gt;
-Common buses and control line. Memroy-maped I/O&lt;br /&gt;
-###Higher level implemention&lt;br /&gt;
-device or partion of device/memory -&amp;gt; file&lt;br /&gt;
-io -&amp;gt; stream&lt;br /&gt;
+&lt;p&gt;今天我们要辨析一下同步和异步IO. 我们先解释最基础的概念, 之后用生活化的例子
+完成认知.
+首先是blocking 和 non-blocking这两个概念. 这两个概念实质上是和IO没有关系.
+他们是在说, 比如读数据, 如果没有数据我该怎么办. 也就是说, 他是在IO不存的时候,
+在语义上才是有效, 如果你要读的数据始终存在, 那么你还会考虑阻塞与不阻塞的问题吗?
+那你应该考虑什么? 同步还是异步IO, 倒地什么是同步或者异步呢?
+英文synchronous, syn 和chronous构成, syn是在一起的意思而chronous是时间的意思.
+也就是说在一个时间点上在一起, 那么是谁和谁在意一起呢?其中一个是IO可以肯定, 另外一个
+就是执行IO的发起者, 通常也就是进程. 简单说来这个IO是由进程执行的.
+那么异步IO呢, asynchronous是a + synchronous. a表否定, 我们知道在IO进行的过程中我们的
+进程是始终存在的, 也就是说IO 和进程共享着相同的时间进度, 但是却不在一起.也就是说,
+IO不是由我们的进程完成而是别的进程完成, 是谁呢,是内核线程.
+那么我们就知道只有linux上的aio是符合异步IO的标准, 而多路复用, 如epoll返回是我们和IO是在
+一起, 我们要调用read之类的完成他.
+下面用一个生活化的例子, 说明下linux下的IO.
+比如你要买&amp;lt;百年孤独&amp;gt; 还要买件衬衫, 你会怎么买
+你要先去书店, 如果店家没有货, 如果一个小时后货补齐了你可以等,
+长点你就不愿意等了. 也就是阻塞和不阻塞.之后你要去衣服点.也是同样.
+假如都没货, 你有等不下去, 怎么办? 你又不能一会儿去这家问下书怎么样? 一会儿去衣服店询问.
+这太累人了. 最好的方式, 你告诉店家我要什么, 到货了给我打个电话, 我在过来.
+这就是io多路复用. 可是还有更高明的方法, 没错就是京东了, 我网上下订单, 第二天直接送到家了.
+京东, 为什么成功? 你知道了吧.用户省心啊.对应异步io
+##Interface
+&lt;a href=&#34;http://www.cs.uwm.edu/classes/cs458/Lecture/HTML/ch11s02.html&#34;&gt;Methods for designing a CPU&amp;rsquo;s I/O interface generally fall into one of the following categories:&lt;/a&gt;
+Completely separate memory and I/O. buses DMA?
+Common buses, separate control lines. Port-I/O
+Common buses and control line. Memroy-maped I/O
+###Higher level implemention
+device or partion of device/memory -&amp;gt; file
+io -&amp;gt; stream
 ####&lt;a href=&#34;https://en.wikipedia.org/wiki/Stream_(computing&#34;&gt;stream&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Standard_streams&#34;&gt;Standard streams&lt;/a&gt;&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Standard_streams&#34;&gt;Standard streams&lt;/a&gt;
 interface is stdio library or the kernel version.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;codata&lt;br /&gt;
-#Buffer&lt;br /&gt;
-a data buffer (or just buffer) is a region of a physical memory storage&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;codata
+#Buffer
+a data buffer (or just buffer) is a region of a physical memory storage
 used to temporarily store data while it is being moved from one place to another.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Page cache, Buffer head&lt;/p&gt;&lt;/li&gt;
@@ -997,23 +997,23 @@ used to temporarily store data while it is being moved from one place to another
 
 &lt;h1 id=&#34;data-struct-aligment:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Data struct aligment&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86&#34;&gt;Typical alignment of C structs on x86&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;为什么需要结构体对齐:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;为什么需要结构体对齐?&lt;/h2&gt;
 
-&lt;p&gt;struct foo {&lt;br /&gt;
-char c;&lt;br /&gt;
-int i;};&lt;br /&gt;
-如果是32位, cpu 一次取4byte a word 数据.&lt;br /&gt;
-如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.&lt;br /&gt;
-那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.&lt;br /&gt;
+&lt;p&gt;struct foo {
+char c;
+int i;};
+如果是32位, cpu 一次取4byte a word 数据.
+如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.
+那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.
 如果我们把i单独放到4byte 对齐的地址, 那么我们只需要一次cpu读取.fast!&lt;/p&gt;
 
 &lt;h2 id=&#34;产生非对齐访问的场景:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;产生非对齐访问的场景&lt;/h2&gt;
 
 &lt;ol&gt;
-&lt;li&gt;Casting variables to types of different lengths, 比如char * 到int *&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Casting variables to types of different lengths, 比如char * 到int *&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.&lt;/p&gt;
 
@@ -1028,7 +1028,7 @@ int i;};&lt;br /&gt;
 
 &lt;li&gt;&lt;p&gt;通过attribute aligned指定对齐要求.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed
 也就是说不对齐, 不同平台对齐可能不同, 我们不能让数据corruption.&lt;/p&gt;
 
 &lt;h2 id=&#34;如果数据不对齐有什么-cpu怎么办:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;如果数据不对齐有什么, cpu怎么办?&lt;/h2&gt;
@@ -1041,32 +1041,32 @@ int i;};&lt;br /&gt;
 
 &lt;h2 id=&#34;calculate-the-sizeof-of-aligned-c-struct:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Calculate the sizeof of aligned c struct&lt;/h2&gt;
 
-&lt;p&gt;Data alignment means putting the data at a memory address equal to some multiple of the word size,&lt;br /&gt;
+&lt;p&gt;Data alignment means putting the data at a memory address equal to some multiple of the word size,
 which increases the system&amp;rsquo;s performance due to the way the CPU handles memory.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;find the widest scalar member and attribute( aligned(x)) to determin alignment.&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;find the widest scalar member and attribute( aligned(x)) to determin alignment.
 找到结构体内scalar和attribute最大的对齐要求.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;fill the member to alignement without wrap&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;fill the member to alignement without wrap
 把结构的成员一次填满对齐宽度, 不够的填到下个对齐宽度, 空出来留着padding&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;pading to alignment&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;pading to alignment
 填上所有空.&lt;/p&gt;
 
 &lt;h2 id=&#34;关于kernel中put-get-unaligned实现:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;关于kernel中put/get_unaligned实现&lt;/h2&gt;
 
-&lt;p&gt;access_ok, do nothing in essence&lt;br /&gt;
-byteshift, 移位每次访问u8,&lt;br /&gt;
-packed_struct: 交给gcc&lt;br /&gt;
+&lt;p&gt;access_ok, do nothing in essence
+byteshift, 移位每次访问u8,
+packed_struct: 交给gcc
 memove, byte-wise copy&lt;/p&gt;
 
 &lt;h2 id=&#34;faq:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Faq&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;How does gcc attribute((aligned)) work?&lt;br /&gt;
-struct S1 { short f; short f1; short f2;char a; char c;} &lt;strong&gt;attribute&lt;/strong&gt; ((aligned ));&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;How does gcc attribute((aligned)) work?
+struct S1 { short f; short f1; short f2;char a; char c;} &lt;strong&gt;attribute&lt;/strong&gt; ((aligned ));
 sizeof S1 = 16 in 64-bit&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;In what situation can unaligned accesss make a kernel panic?&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;In what situation can unaligned accesss make a kernel panic?
 may be arch/mips/kernel/unaligned.c&lt;/p&gt;
 
 &lt;h1 id=&#34;scheduling:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Scheduling&lt;/h1&gt;
@@ -1079,43 +1079,43 @@ may be arch/mips/kernel/unaligned.c&lt;/p&gt;
 
 &lt;h1 id=&#34;endianess:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Endianess&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;&lt;br /&gt;
-应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.&lt;br /&gt;
-这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;
+应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.
+这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,
 之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;br /&gt;
-这样就可以更好的理解iphdr:&lt;br /&gt;
-#if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
-&lt;strong&gt;u8    ihl:4,&lt;br /&gt;
-    version:4;&lt;br /&gt;
-#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)&lt;br /&gt;
-__u8    version:4,&lt;br /&gt;
-    ihl:4;&lt;br /&gt;
-#else&lt;br /&gt;
-#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;&lt;br /&gt;
-#endif&lt;br /&gt;
-ipv4 header的拓扑&lt;br /&gt;
-version ihl&lt;br /&gt;
-0100 0101&lt;br /&gt;
-因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl&lt;br /&gt;
-而be的cpu是 msb first, 从最右开始所以version开头.&lt;br /&gt;
-而使用unsigned char ver_ihl&lt;br /&gt;
-(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version&lt;br /&gt;
-ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;
+这样就可以更好的理解iphdr:
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+&lt;strong&gt;u8    ihl:4,
+    version:4;
+#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)
+__u8    version:4,
+    ihl:4;
+#else
+#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;
+#endif
+ipv4 header的拓扑
+version ihl
+0100 0101
+因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl
+而be的cpu是 msb first, 从最右开始所以version开头.
+而使用unsigned char ver_ihl
+(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version
+ver_ihl &amp;amp; 0x0f = ihl
 是无关cpu读取顺序的.&lt;/p&gt;
 
 &lt;h3 id=&#34;endianess-in-build:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Endianess in build&lt;/h3&gt;
 
-&lt;p&gt;cpu -&amp;gt; toolchain&lt;br /&gt;
-ar71xx big&lt;br /&gt;
+&lt;p&gt;cpu -&amp;gt; toolchain
+ar71xx big
 ralink little&lt;/p&gt;
 
 &lt;h1 id=&#34;introdution:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Introdution&lt;/h1&gt;
 
-&lt;p&gt;我们先看ISA. 我们都知道语言有个范式, 汇编语言的范式是什么呢?&lt;br /&gt;
-&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;&lt;br /&gt;
-貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.&lt;br /&gt;
+&lt;p&gt;我们先看ISA. 我们都知道语言有个范式, 汇编语言的范式是什么呢?
+&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;
+貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.
 换个角度理解, &lt;a href=&#34;http://202.116.24.124/computer/content/theory/web/Chap04/4.1.3.HTM&#34;&gt;低级语言与硬件结构的关系&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
@@ -1123,10 +1123,10 @@ ralink little&lt;/p&gt;
     
     <item>
       <title>Debugging</title>
-      <link>http://firoyang.org/cs/debugging/</link>
+      <link>/cs/debugging/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/debugging/</guid>
+      
+      <guid>/cs/debugging/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Reference&lt;/h1&gt;
@@ -1135,15 +1135,15 @@ ralink little&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;Bug types&lt;br /&gt;
-Bug made by me&lt;br /&gt;
-Anti-debuging&lt;br /&gt;
-General debugging steps&lt;br /&gt;
-Get observations&lt;br /&gt;
-Specific observations&lt;br /&gt;
-Debugging experience&lt;br /&gt;
-Debug Kernel bug&lt;br /&gt;
-How to use your customed debug library without cp system original corespon library? Set a path prefix?&lt;br /&gt;
+&lt;p&gt;Bug types
+Bug made by me
+Anti-debuging
+General debugging steps
+Get observations
+Specific observations
+Debugging experience
+Debug Kernel bug
+How to use your customed debug library without cp system original corespon library? Set a path prefix?
 Method 1: cp&amp;hellip;&lt;/p&gt;
 
 &lt;h1 id=&#34;bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Bug types&lt;/h1&gt;
@@ -1154,68 +1154,68 @@ Method 1: cp&amp;hellip;&lt;/p&gt;
 
 &lt;h2 id=&#34;bug-type-of-jimgray-http-www-opensourceforu-com-2010-10-joy-of-programming-types-of-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs/&#34;&gt;BUG type of JimGray&lt;/a&gt;&lt;/h2&gt;
 
-&lt;p&gt;Bohrbug, can be reproduce.&lt;br /&gt;
-Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了&lt;br /&gt;
-Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律&lt;br /&gt;
+&lt;p&gt;Bohrbug, can be reproduce.
+Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了
+Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律
 Schroedinbug&lt;/p&gt;
 
 &lt;h2 id=&#34;common-types-of-computer-bugs-in-wikipedia-https-en-wikipedia-org-wiki-software-bug-common-types-of-computer-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;&lt;/h2&gt;
 
-&lt;p&gt;Arithmetic bugs&lt;br /&gt;
-syntax error&lt;br /&gt;
-Logic error&lt;br /&gt;
-&amp;gt; Incorrect Bounds-Checking&lt;br /&gt;
-&amp;gt; off-by-one bug&lt;br /&gt;
-&amp;gt; Skipping Null-Termination Issues&lt;br /&gt;
-Resource bugs&lt;br /&gt;
-&amp;gt; uninitialized/nonvalidated/corrupted pointer dereference.&lt;br /&gt;
-&amp;gt; Segmentation fault in userspace&lt;br /&gt;
-&amp;gt; Kernel oops,&lt;a href=&#34;http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf&#34;&gt;When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.&lt;/a&gt;&lt;br /&gt;
-&amp;gt; Buffer overflow/踩内存&lt;br /&gt;
-&amp;gt; &lt;a href=&#34;http://lwn.net/Articles/174494/&#34;&gt;Double kfree errors&lt;/a&gt;&lt;br /&gt;
-&amp;gt; The devm_* series functions introduce more double free error in driver code.&lt;br /&gt;
-Race condition bug&lt;br /&gt;
-&amp;gt; Multi-threading programming bugs(parallel problems)&lt;br /&gt;
-&amp;gt; deadlock&lt;br /&gt;
-Interfacing bugs&lt;br /&gt;
-Performance bugs&lt;br /&gt;
-Teamworking bugs&lt;br /&gt;
-Vulnerable bugs&lt;br /&gt;
-&amp;gt; unbounded memory manipulation functions&lt;br /&gt;
-&amp;gt; strcpy&lt;br /&gt;
-&amp;gt; Non-Null Termination Issues&lt;br /&gt;
-&amp;gt; non terminaed string&lt;br /&gt;
-&amp;gt; Formate string&lt;br /&gt;
-&amp;gt; &lt;a href=&#34;https://www.owasp.org/index.php/Format_string_attack&#34;&gt;Format Strings attacker&lt;/a&gt; or &lt;a href=&#34;https://en.wikipedia.org/wiki/Uncontrolled_format_string&#34;&gt;Uncontrolled format string&lt;/a&gt;&lt;br /&gt;
-&amp;gt; integer issues&lt;br /&gt;
-&amp;gt; integer overflow&lt;br /&gt;
-&amp;gt; Signed Comparison Vulnerabilities&lt;br /&gt;
-Special BUG&lt;br /&gt;
+&lt;p&gt;Arithmetic bugs
+syntax error
+Logic error
+&amp;gt; Incorrect Bounds-Checking
+&amp;gt; off-by-one bug
+&amp;gt; Skipping Null-Termination Issues
+Resource bugs
+&amp;gt; uninitialized/nonvalidated/corrupted pointer dereference.
+&amp;gt; Segmentation fault in userspace
+&amp;gt; Kernel oops,&lt;a href=&#34;http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf&#34;&gt;When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.&lt;/a&gt;
+&amp;gt; Buffer overflow/踩内存
+&amp;gt; &lt;a href=&#34;http://lwn.net/Articles/174494/&#34;&gt;Double kfree errors&lt;/a&gt;
+&amp;gt; The devm_* series functions introduce more double free error in driver code.
+Race condition bug
+&amp;gt; Multi-threading programming bugs(parallel problems)
+&amp;gt; deadlock
+Interfacing bugs
+Performance bugs
+Teamworking bugs
+Vulnerable bugs
+&amp;gt; unbounded memory manipulation functions
+&amp;gt; strcpy
+&amp;gt; Non-Null Termination Issues
+&amp;gt; non terminaed string
+&amp;gt; Formate string
+&amp;gt; &lt;a href=&#34;https://www.owasp.org/index.php/Format_string_attack&#34;&gt;Format Strings attacker&lt;/a&gt; or &lt;a href=&#34;https://en.wikipedia.org/wiki/Uncontrolled_format_string&#34;&gt;Uncontrolled format string&lt;/a&gt;
+&amp;gt; integer issues
+&amp;gt; integer overflow
+&amp;gt; Signed Comparison Vulnerabilities
+Special BUG
 &lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;kenrel lockup&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;taxonomy-of-kernel-bug:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Taxonomy of Kernel BUG&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugClassification&#34;&gt;oops, WARN_ON, or kernel panic&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops&lt;/a&gt;/warn/panic&lt;br /&gt;
-狭隘的认为oops等价于内存地址出问题了, oops 本质上是__die(&amp;ldquo;Oops&amp;rdquo;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugClassification&#34;&gt;oops, WARN_ON, or kernel panic&lt;/a&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops&lt;/a&gt;/warn/panic
+狭隘的认为oops等价于内存地址出问题了, oops 本质上是__die(&amp;ldquo;Oops&amp;rdquo;
 __die 却可以表明很多错误 &amp;ldquo;Bad pagetable&amp;rdquo;, &amp;ldquo;Oops - badmode&amp;rdquo;&lt;br /&gt;
-arm_notify_die(&amp;ldquo;Oops - undefined instruction&amp;rdquo; 等等..&lt;br /&gt;
-oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.&lt;br /&gt;
-panic 则是programmer 感知到的是防御式编程assertion的体现.&lt;br /&gt;
-&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification&#34;&gt;Source of BUG&lt;/a&gt;, driver or subsystem and so on.&lt;br /&gt;
-#BUG made by me&lt;br /&gt;
-* print_signal_info wrong pritk parameters position&lt;br /&gt;
-        printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
- Watch compile warning info can be avoid of this bug.&lt;br /&gt;
-* spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
+arm_notify_die(&amp;ldquo;Oops - undefined instruction&amp;rdquo; 等等..
+oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.
+panic 则是programmer 感知到的是防御式编程assertion的体现.
+&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification&#34;&gt;Source of BUG&lt;/a&gt;, driver or subsystem and so on.
+#BUG made by me
+* print_signal_info wrong pritk parameters position
+        printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,
+                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));
+ Watch compile warning info can be avoid of this bug.
+* spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;
     __send_signal()&lt;/p&gt;
 
 &lt;h1 id=&#34;anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Anti-debugging&lt;/h1&gt;
 
 &lt;h2 id=&#34;syntax-checking:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Syntax checking&lt;/h2&gt;
 
-&lt;p&gt;gcc -Wall&lt;br /&gt;
+&lt;p&gt;gcc -Wall
 bash -n&lt;/p&gt;
 
 &lt;h2 id=&#34;static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;static code analysis&lt;/h2&gt;
@@ -1224,148 +1224,148 @@ bash -n&lt;/p&gt;
 
 &lt;h1 id=&#34;general-debugging-steps-abductive-reasoning-https-en-wikipedia-org-wiki-abductive-reasoning:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;General debugging steps &amp;ndash; &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning&#34;&gt;Abductive reasoning&lt;/a&gt;&lt;/h1&gt;
 
-&lt;p&gt;T + O =&amp;gt; E; //Theory + observations =&amp;gt; explanation&lt;br /&gt;
-E is the sub-set of T, O is the result of E under the T.&lt;br /&gt;
-The process of debugging is use O to minimize T to E instance.&lt;br /&gt;
-0. Reproduce?&lt;br /&gt;
-kernel version&lt;br /&gt;
-ask reporter for the .config&lt;br /&gt;
-1. Find the bug type and definations what the bug belong to.&lt;br /&gt;
-The bug type is the broad outline of the Expaination of the specific bug&amp;rsquo;s Observation.&lt;br /&gt;
-2. 结合实际环境get more observations and deuce the explanation/cause.&lt;br /&gt;
+&lt;p&gt;T + O =&amp;gt; E; //Theory + observations =&amp;gt; explanation
+E is the sub-set of T, O is the result of E under the T.
+The process of debugging is use O to minimize T to E instance.
+0. Reproduce?
+kernel version
+ask reporter for the .config
+1. Find the bug type and definations what the bug belong to.
+The bug type is the broad outline of the Expaination of the specific bug&amp;rsquo;s Observation.
+2. 结合实际环境get more observations and deuce the explanation/cause.
 3. Fix it.&lt;/p&gt;
 
 &lt;h1 id=&#34;get-observations:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get observations&lt;/h1&gt;
 
 &lt;h2 id=&#34;get-observations-from-excute-binary-maybe-source-file:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get observations from excute binary(maybe source file)&lt;/h2&gt;
 
-&lt;p&gt;DWARF&lt;br /&gt;
-ELF header, readelf -h&lt;br /&gt;
-Program header table, readelf -l&lt;br /&gt;
-Segments, readelf &amp;ndash;segments&lt;br /&gt;
-Sections, readelf &amp;ndash;sections&lt;br /&gt;
-Section header table, readelf -S&lt;br /&gt;
-objdump -S&lt;br /&gt;
-make kernel/sched.s V=1&lt;br /&gt;
-c++filt&lt;br /&gt;
-addr2line -f -C -a xxx -e ooo&lt;br /&gt;
-/home/build/x/ab/mips-openwrt-linux-addr2line -C -f -e /data/logs/hwf-health-chk/debug-root/HC6361/0.9005.5384s/debugfs/tmp/data/usr/bin/aria2c  0x00607188&lt;br /&gt;
+&lt;p&gt;DWARF
+ELF header, readelf -h
+Program header table, readelf -l
+Segments, readelf &amp;ndash;segments
+Sections, readelf &amp;ndash;sections
+Section header table, readelf -S
+objdump -S
+make kernel/sched.s V=1
+c++filt
+addr2line -f -C -a xxx -e ooo
+/home/build/x/ab/mips-openwrt-linux-addr2line -C -f -e /data/logs/hwf-health-chk/debug-root/HC6361/0.9005.5384s/debugfs/tmp/data/usr/bin/aria2c  0x00607188
 aria2::ZeroBtMessage::~ZeroBtMessage()&lt;/p&gt;
 
 &lt;h3 id=&#34;tips-for-binary-observations:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Tips for binary observations&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;&lt;br /&gt;
-* code reordering&lt;br /&gt;
-* inlining&lt;br /&gt;
-* Optimized-away variables&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;
+* code reordering
+* inlining
+* Optimized-away variables
 * Tailcall optimization&lt;/p&gt;
 
 &lt;h2 id=&#34;get-observations-from-program:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get Observations from program&lt;/h2&gt;
 
 &lt;blockquote&gt;
-&lt;p&gt;#define debugme(fmt, args&amp;hellip;) do{FILE *fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); \&lt;br /&gt;
-fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
-Before kernel decompress use putstr&lt;br /&gt;
-Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;br /&gt;
-early_printk vs printk&lt;br /&gt;
-dump_stack&lt;br /&gt;
-ioctl/netlink&lt;br /&gt;
+&lt;p&gt;#define debugme(fmt, args&amp;hellip;) do{FILE *fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); \
+fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)
+Before kernel decompress use putstr
+Linux serial-port driver is interrupt driven, if irq-off console will not work!
+early_printk vs printk
+dump_stack
+ioctl/netlink
 Use atexit() register a stackdump or a wrapped print&lt;/p&gt;
 
 &lt;h3 id=&#34;debuger-gdb-kdb-kgdb:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Debuger Gdb kdb kgdb&lt;/h3&gt;
 
-&lt;p&gt;gdb /usr/src/linux/vmlinux /proc/kcore&lt;br /&gt;
-    bt&lt;br /&gt;
-    x/100a&lt;br /&gt;
-thread apply all bt full&lt;br /&gt;
-* How to use gdb debug loaded kernel module(maybe kernel its self)&lt;br /&gt;
-gdb vmlinux /proc/kcore&lt;br /&gt;
-core-file /proc/kcore&lt;br /&gt;
-p jiffies_64&lt;br /&gt;
-text_addr=$(cat /sys/module/char-read-write/sections/.text)&lt;br /&gt;
-add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
-* how to get the offset of member in struct&lt;br /&gt;
-gdb ./vmlinux&lt;br /&gt;
+&lt;p&gt;gdb /usr/src/linux/vmlinux /proc/kcore
+    bt
+    x/100a
+thread apply all bt full
+* How to use gdb debug loaded kernel module(maybe kernel its self)
+gdb vmlinux /proc/kcore
+core-file /proc/kcore
+p jiffies_64
+text_addr=$(cat /sys/module/char-read-write/sections/.text)
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr
+* how to get the offset of member in struct
+gdb ./vmlinux
 print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;/p&gt;
 &lt;/blockquote&gt;
 
 &lt;h2 id=&#34;get-observations-from-application:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get observations from application&lt;/h2&gt;
 
-&lt;p&gt;lsof&lt;br /&gt;
-strace&lt;br /&gt;
-bash  -x for shell&lt;br /&gt;
+&lt;p&gt;lsof
+strace
+bash  -x for shell
 coredump&lt;/p&gt;
 
 &lt;h1 id=&#34;get-obervations-from-make:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get obervations from make&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Just print echo&lt;br /&gt;
-make -s&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Print shell command&lt;br /&gt;
-make -n&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Print all variables. not really execute. Wired-name variable is useful to debug&lt;br /&gt;
-make -p&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Pirnt a message&lt;br /&gt;
-$(warning &amp;hellip;)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Just print echo
+make -s&lt;/li&gt;
+&lt;li&gt;Print shell command
+make -n&lt;/li&gt;
+&lt;li&gt;Print all variables. not really execute. Wired-name variable is useful to debug
+make -p&lt;/li&gt;
+&lt;li&gt;Pirnt a message
+$(warning &amp;hellip;)&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Etc&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Etc
 &amp;ndash;warn-undefined-variables&lt;/p&gt;
 
 &lt;h2 id=&#34;get-observations-from-library:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get observations from library&lt;/h2&gt;
 
-&lt;p&gt;ltrace&lt;br /&gt;
-library dependencies of a ELF/bin&lt;br /&gt;
-LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
+&lt;p&gt;ltrace
+library dependencies of a ELF/bin
+LD_TRACE_LOADED_OBJECTS=1 git
 ldd /usr/bin/git&lt;/p&gt;
 
 &lt;h2 id=&#34;get-observations-from-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Get observations from kernel&lt;/h2&gt;
 
-&lt;p&gt;dmesg&lt;br /&gt;
-SysRq&lt;br /&gt;
-/proc (specially /proc/sys/) and /sys&lt;br /&gt;
-ftrace&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/291091/&#34;&gt;http://lwn.net/Articles/291091/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/330402/&#34;&gt;http://lwn.net/Articles/330402/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/379903/&#34;&gt;http://lwn.net/Articles/379903/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/381064/&#34;&gt;http://lwn.net/Articles/381064/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/383362/&#34;&gt;http://lwn.net/Articles/383362/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/346470/&#34;&gt;http://lwn.net/Articles/346470/&lt;/a&gt;&lt;br /&gt;
-CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
-pr_debug vs dev_debug&lt;br /&gt;
-&lt;debugfs&gt;/dynamic_debug/control&lt;br /&gt;
-print signal This is just a hiwifi wonderful kernel patch #931&lt;br /&gt;
-kgtp?&lt;br /&gt;
-lockdep&lt;br /&gt;
-kdump&lt;br /&gt;
+&lt;p&gt;dmesg
+SysRq
+/proc (specially /proc/sys/) and /sys
+ftrace
+&lt;a href=&#34;http://lwn.net/Articles/291091/&#34;&gt;http://lwn.net/Articles/291091/&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/330402/&#34;&gt;http://lwn.net/Articles/330402/&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/379903/&#34;&gt;http://lwn.net/Articles/379903/&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/381064/&#34;&gt;http://lwn.net/Articles/381064/&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/383362/&#34;&gt;http://lwn.net/Articles/383362/&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/346470/&#34;&gt;http://lwn.net/Articles/346470/&lt;/a&gt;
+CONFIG_DYNAMIC_DEBUG
+pr_debug vs dev_debug
+&lt;debugfs&gt;/dynamic_debug/control
+print signal This is just a hiwifi wonderful kernel patch #931
+kgtp?
+lockdep
+kdump
 ./scripts/decodecode &amp;lt; Oops.txt&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kgdboc&lt;br /&gt;
-file vmlinux&lt;br /&gt;
-set remotebaud 115200&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;kgdboc
+file vmlinux
+set remotebaud 115200
 target remote /dev/ttyS0&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;how to get module text address&lt;br /&gt;
-firo@firo module$ cat /sys/module/wmi/sections/.text&lt;br /&gt;
-0xffffffffa023b000&lt;br /&gt;
-firo@firo module$ cat /proc/modules | grep wmi&lt;br /&gt;
-wmi 18820 0 - Live 0xffffffffa023b000&lt;br /&gt;
-int bss_var;&lt;br /&gt;
-static int hello_init(void)&lt;br /&gt;
-{printk(KERN_ALERT &amp;ldquo;Text location .text(Code Segment):%p\n&amp;rdquo;,hello_init);&lt;br /&gt;
-static int data_var=0;&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);&lt;br /&gt;
-……}&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;how to get module text address
+firo@firo module$ cat /sys/module/wmi/sections/.text
+0xffffffffa023b000
+firo@firo module$ cat /proc/modules | grep wmi
+wmi 18820 0 - Live 0xffffffffa023b000
+int bss_var;
+static int hello_init(void)
+{printk(KERN_ALERT &amp;ldquo;Text location .text(Code Segment):%p\n&amp;rdquo;,hello_init);
+static int data_var=0;
+printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);
+printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);
+……}
 Module_init(hello_init);&lt;/p&gt;
 
 &lt;h2 id=&#34;tips-for-kernel-observations:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Tips for kernel observations&lt;/h2&gt;
 
 &lt;p&gt;General track down case&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;If an page oops close to zero, for example 0xfffffff4&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;If an page oops close to zero, for example 0xfffffff4
 It maybe ERR_PTR(-12);&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;smartqos custom qdisc - self inferrence&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;smartqos custom qdisc - self inferrence
 要自己推测除几种可能, 之后按着思路去找, 不能汪洋大海, 乱砍.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;追BUG实际上就是, 找关联度最高的, 最好不要从头开始推理, 太耗时.&lt;/p&gt;
@@ -1414,10 +1414,10 @@ It maybe ERR_PTR(-12);&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;通过.config or CONFIG_判断具体是那个相同函数.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;字符的数字敏感&lt;br /&gt;
-0000000034333545 doesnt have a bit 7 set in any byte.&lt;br /&gt;
-+ef8:   00a01021    move    v0,a1&lt;br /&gt;
-efc:   88440003    lwl a0,3(v0)&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;字符的数字敏感
+0000000034333545 doesnt have a bit 7 set in any byte.
++ef8:   00a01021    move    v0,a1
+efc:   88440003    lwl a0,3(v0)
 f00:   24450004    addiu   a1,v0,4&lt;br /&gt;
 f04:   98440000    lwr a0,0(v0)&lt;br /&gt;
 f08:   00641821    addu    v1,v1,a0&lt;br /&gt;
@@ -1427,12 +1427,12 @@ f14:   00831821    addu    v1,a0,v1&lt;/p&gt;
 
 &lt;h2 id=&#34;from-asm-to-c-language-x86:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;From ASM to c language x86&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;local_irq_save/disable&lt;br /&gt;
-c: 9c                    pushfq      //not sure&lt;br /&gt;
-d: 5d                    pop    %rbp //not sure&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;local_irq_save/disable
+c: 9c                    pushfq      //not sure
+d: 5d                    pop    %rbp //not sure
 e: fa                    cli&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;per-CPU&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;per-CPU
 f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -1442,37 +1442,37 @@ f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx&lt;/p&gt;&lt;/li&gt;
     
     <item>
       <title>The art of Programming</title>
-      <link>http://firoyang.org/cs/programming/</link>
+      <link>/cs/programming/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/programming/</guid>
+      
+      <guid>/cs/programming/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:5c3da39ff357103852539a99ae0feccc&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Programming_tool&#34;&gt;Programming tool&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Utility_software&#34;&gt;Utility software&lt;/a&gt;&lt;br /&gt;
-programming principles&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Programming_tool&#34;&gt;Programming tool&lt;/a&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Utility_software&#34;&gt;Utility software&lt;/a&gt;
+programming principles
 High cohesion low coupling&lt;/p&gt;
 
 &lt;h1 id=&#34;computer-programming:5c3da39ff357103852539a99ae0feccc&#34;&gt;Computer programming&lt;/h1&gt;
 
-&lt;p&gt;Programming language theory&lt;br /&gt;
-Programming language&lt;br /&gt;
+&lt;p&gt;Programming language theory
+Programming language
 Compiler construction&lt;/p&gt;
 
-&lt;p&gt;Coding style&lt;br /&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Category:Programming_principles&#34;&gt;Programming principles&lt;/a&gt;&lt;br /&gt;
-Programming paradigms&lt;br /&gt;
-Design pattern&lt;br /&gt;
+&lt;p&gt;Coding style
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Category:Programming_principles&#34;&gt;Programming principles&lt;/a&gt;
+Programming paradigms
+Design pattern
 Algorithms and data structures&lt;/p&gt;
 
-&lt;p&gt;Mathematics&lt;br /&gt;
-Automata&lt;br /&gt;
+&lt;p&gt;Mathematics
+Automata
 Logic&lt;/p&gt;
 
-&lt;p&gt;Software engineering&lt;br /&gt;
-Debuging&lt;br /&gt;
+&lt;p&gt;Software engineering
+Debuging
 Testing&lt;/p&gt;
 
 &lt;h1 id=&#34;source-code-editor:5c3da39ff357103852539a99ae0feccc&#34;&gt;Source code editor&lt;/h1&gt;
@@ -1485,34 +1485,34 @@ Testing&lt;/p&gt;
 
 &lt;h1 id=&#34;mathematics:5c3da39ff357103852539a99ae0feccc&#34;&gt;Mathematics&lt;/h1&gt;
 
-&lt;p&gt;Introduction to Mathematical Thinking - Devlin, Keith&lt;br /&gt;
-数学思维是什么样的? 如何构建呢?&lt;br /&gt;
-1.In mathematics, and more specifically in algebra, a domain is a ring such that ab = 0 implies a = 0 or b = 0.&lt;br /&gt;
-Complement&lt;br /&gt;
-radix complement&lt;br /&gt;
-diminished radix complement&lt;br /&gt;
-Codata&lt;br /&gt;
+&lt;p&gt;Introduction to Mathematical Thinking - Devlin, Keith
+数学思维是什么样的? 如何构建呢?
+1.In mathematics, and more specifically in algebra, a domain is a ring such that ab = 0 implies a = 0 or b = 0.
+Complement
+radix complement
+diminished radix complement
+Codata
 Collection&lt;/p&gt;
 
 &lt;h2 id=&#34;commenting:5c3da39ff357103852539a99ae0feccc&#34;&gt;Commenting&lt;/h2&gt;
 
-&lt;p&gt;Copyleft/right,&lt;br /&gt;
-Author and maintainer&lt;br /&gt;
-Update log&lt;br /&gt;
-Name of the module&lt;br /&gt;
+&lt;p&gt;Copyleft/right,
+Author and maintainer
+Update log
+Name of the module
 Usage&lt;/p&gt;
 
 &lt;h2 id=&#34;label:5c3da39ff357103852539a99ae0feccc&#34;&gt;Label&lt;/h2&gt;
 
-&lt;p&gt;It is considered to be safer that the label reflect what happens at the&lt;br /&gt;
+&lt;p&gt;It is considered to be safer that the label reflect what happens at the
 destination, and not the reason for reaching the label. &amp;ndash;Julia&lt;/p&gt;
 
 &lt;h1 id=&#34;programming-paradigms:5c3da39ff357103852539a99ae0feccc&#34;&gt;Programming paradigms&lt;/h1&gt;
 
 &lt;h2 id=&#34;defensive-programming:5c3da39ff357103852539a99ae0feccc&#34;&gt;defensive programming&lt;/h2&gt;
 
-&lt;p&gt;Low tolerance against &amp;ldquo;potential&amp;rdquo; bugs&lt;br /&gt;
-Assertion, panic in user space&lt;br /&gt;
+&lt;p&gt;Low tolerance against &amp;ldquo;potential&amp;rdquo; bugs
+Assertion, panic in user space
 How to use assertion&lt;/p&gt;
 
 &lt;h1 id=&#34;algorithms-and-data-structures:5c3da39ff357103852539a99ae0feccc&#34;&gt;Algorithms and data structures&lt;/h1&gt;
@@ -1522,13 +1522,13 @@ How to use assertion&lt;/p&gt;
 &lt;h1 id=&#34;design-pattern:5c3da39ff357103852539a99ae0feccc&#34;&gt;Design pattern&lt;/h1&gt;
 
 &lt;ol&gt;
-&lt;li&gt;Publish-Subscribe Mechanism&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Publish-Subscribe Mechanism&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Observation&lt;/p&gt;
 
 &lt;h1 id=&#34;code-navigation-tools:5c3da39ff357103852539a99ae0feccc&#34;&gt;Code navigation tools&lt;/h1&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;ctags&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;ctags
 ctags -R &amp;ndash;regex-c=&amp;ldquo;/^SYSCALL&lt;em&gt;DEFINE[0-9]?(([a-zA-Z0-9&lt;/em&gt;]&lt;em&gt;).&lt;/em&gt;/sys_\1/&amp;rdquo;&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;cscope&lt;/p&gt;&lt;/li&gt;
@@ -1539,14 +1539,14 @@ ctags -R &amp;ndash;regex-c=&amp;ldquo;/^SYSCALL&lt;em&gt;DEFINE[0-9]?(([a-zA-Z0
 
 &lt;li&gt;&lt;p&gt;Google code search&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;How to find hook functions of a struct ops&lt;br /&gt;
-For example, all start_xmit of ppp_channel_ops,&lt;br /&gt;
-pppol2tp_chan_ops, pppol2tp_xmit,&lt;br /&gt;
-pptp_chan_ops pptp_xmit&lt;br /&gt;
-pppoe_chan_ops pppoe_xmit&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;How to find hook functions of a struct ops
+For example, all start_xmit of ppp_channel_ops,
+pppol2tp_chan_ops, pppol2tp_xmit,
+pptp_chan_ops pptp_xmit
+pppoe_chan_ops pppoe_xmit
 or grep -nr &amp;lsquo;ppp_channel_ops&amp;rsquo; /path/to/{l2tp, pptp, pppoe}&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;locate codes in complex program source files .&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;locate codes in complex program source files .
 Bubble locate, begin with the fundermental system api for example socket(), bind(), connect()&amp;hellip;then raise&lt;/p&gt;
 
 &lt;h1 id=&#34;review:5c3da39ff357103852539a99ae0feccc&#34;&gt;Review&lt;/h1&gt;
@@ -1555,43 +1555,43 @@ Bubble locate, begin with the fundermental system api for example socket(), bind
 
 &lt;h1 id=&#34;version-control:5c3da39ff357103852539a99ae0feccc&#34;&gt;Version control&lt;/h1&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://git-scm.com/docs&#34;&gt;git&lt;/a&gt;&lt;br /&gt;
-git ls-files -d |xargs -i git checkout {}&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http://git-scm.com/docs&#34;&gt;git&lt;/a&gt;
+git ls-files -d |xargs -i git checkout {}
 git log -S &amp;ldquo;RTN_UNSPEC&amp;rdquo; &amp;ndash;source &amp;ndash;all&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;reverse find all the blame from start commit id to now&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;reverse find all the blame from start commit id to now
 git blame &amp;ndash;reverse 9e734775f7c22d2f89943ad6c745571f1930105f..   include/linux/netlink.h&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;find kernel version of path&lt;br /&gt;
-git describe &amp;ndash;contains&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;find kernel version of path
+git describe &amp;ndash;contains
 git tag &amp;ndash;contains &lt;id&gt;&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;find commit id of a tag&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;find commit id of a tag
 git rev-parse v2.6.12-rc2&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;blame before a commit&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;blame before a commit
 git blame sha1^ &amp;ndash; path/to/file&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;find commit after specific commit&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;find commit after specific commit
 git log  &amp;ndash;oneline  &amp;ndash;ancestry-path   c146066ab^^..HEAD  net/ipv4/ip_output.c&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;find when line was deleted&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;find when line was deleted
 git log -c -S&amp;rsquo;missingtext&amp;rsquo; /path/to/file&lt;/p&gt;
 
 &lt;h2 id=&#34;git-pull:5c3da39ff357103852539a99ae0feccc&#34;&gt;git pull&lt;/h2&gt;
 
-&lt;p&gt;git pull {repo} {remotebranchname}:{localbranchname}&lt;br /&gt;
-git pull origin xyz:xyz&lt;br /&gt;
+&lt;p&gt;git pull {repo} {remotebranchname}:{localbranchname}
+git pull origin xyz:xyz
 git pull next master:now&lt;/p&gt;
 
 &lt;h2 id=&#34;git-sendmail:5c3da39ff357103852539a99ae0feccc&#34;&gt;git sendmail&lt;/h2&gt;
 
-&lt;p&gt;shadowsocks&lt;br /&gt;
-/etc/proxychains.conf&lt;br /&gt;
-/home/firo/.gitconfig&lt;br /&gt;
-proxychains git send-email &amp;ndash;to dbaryshkov@gmail.com &amp;ndash;cc rmk+kernel@arm.linux.org.uk &amp;ndash;cc linux-pcmcia@lists.infradead.org  0001-Drivers-pcmcia-Fix-memroy-leak-in-sa11xx_drv&lt;em&gt;pcmcia&lt;/em&gt;.patch&lt;br /&gt;
-git send-email &amp;ndash;smtp-encryption=tls &amp;ndash;smtp-server=smtp.gmail.com &amp;ndash;smtp-user=firogm@gmail.com &amp;ndash;smtp-server-port=587 &amp;ndash;to &amp;ldquo;kernel-janitors@vger.kernel.org&amp;rdquo; 0001-x86-Remove-unnecessary-void-pointer-casts.patch&lt;br /&gt;
-##git diff&lt;br /&gt;
+&lt;p&gt;shadowsocks
+/etc/proxychains.conf
+/home/firo/.gitconfig
+proxychains git send-email &amp;ndash;to dbaryshkov@gmail.com &amp;ndash;cc rmk+kernel@arm.linux.org.uk &amp;ndash;cc linux-pcmcia@lists.infradead.org  0001-Drivers-pcmcia-Fix-memroy-leak-in-sa11xx_drv&lt;em&gt;pcmcia&lt;/em&gt;.patch
+git send-email &amp;ndash;smtp-encryption=tls &amp;ndash;smtp-server=smtp.gmail.com &amp;ndash;smtp-user=firogm@gmail.com &amp;ndash;smtp-server-port=587 &amp;ndash;to &amp;ldquo;kernel-janitors@vger.kernel.org&amp;rdquo; 0001-x86-Remove-unnecessary-void-pointer-casts.patch
+##git diff
 git -c core.whitespace=tab-in-indent diff &amp;ndash;check&lt;/p&gt;
 
 &lt;h1 id=&#34;debugging:5c3da39ff357103852539a99ae0feccc&#34;&gt;Debugging&lt;/h1&gt;
@@ -1600,17 +1600,17 @@ git -c core.whitespace=tab-in-indent diff &amp;ndash;check&lt;/p&gt;
 
 &lt;h1 id=&#34;testing:5c3da39ff357103852539a99ae0feccc&#34;&gt;Testing&lt;/h1&gt;
 
-&lt;p&gt;1.Black-box testing test software function.&lt;br /&gt;
-2.White-box testing test software internal logic.&lt;br /&gt;
+&lt;p&gt;1.Black-box testing test software function.
+2.White-box testing test software internal logic.
 kvm  &amp;amp; supermin&lt;/p&gt;
 
 &lt;h1 id=&#34;mail:5c3da39ff357103852539a99ae0feccc&#34;&gt;Mail&lt;/h1&gt;
 
-&lt;p&gt;mutt&lt;br /&gt;
-fetchmail&lt;br /&gt;
-fetchmail -d0 -vk pop.gmail.com&lt;br /&gt;
-msmtp&lt;br /&gt;
-/home/firo/.msmtprc&lt;br /&gt;
+&lt;p&gt;mutt
+fetchmail
+fetchmail -d0 -vk pop.gmail.com
+msmtp
+/home/firo/.msmtprc
 procmail&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 </description>
@@ -1618,47 +1618,47 @@ procmail&lt;/p&gt;&lt;/li&gt;
     
     <item>
       <title>The programming language</title>
-      <link>http://firoyang.org/cs/pl/</link>
+      <link>/cs/pl/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/pl/</guid>
+      
+      <guid>/cs/pl/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:9e7166b21e1cf7669599f36f84659158&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;Programming Language Pragmatics 3rd&lt;br /&gt;
-C11&lt;br /&gt;
-C Traps and Pitfalls&lt;br /&gt;
+&lt;p&gt;Programming Language Pragmatics 3rd
+C11
+C Traps and Pitfalls
 Expert C Programming&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:9e7166b21e1cf7669599f36f84659158&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;Programming language theory&lt;br /&gt;
+&lt;p&gt;Programming language theory
 Programming language&lt;/p&gt;
 
 &lt;h1 id=&#34;programming-language-theory:9e7166b21e1cf7669599f36f84659158&#34;&gt;Programming language theory&lt;/h1&gt;
 
-&lt;p&gt;What is formal language and the relationg between fl and pl?&lt;br /&gt;
+&lt;p&gt;What is formal language and the relationg between fl and pl?
 Language primitive&lt;/p&gt;
 
 &lt;h2 id=&#34;semantics:9e7166b21e1cf7669599f36f84659158&#34;&gt;Semantics&lt;/h2&gt;
 
 &lt;h1 id=&#34;c:9e7166b21e1cf7669599f36f84659158&#34;&gt;C&lt;/h1&gt;
 
-&lt;p&gt;我们还是从使用的角度来看c 语言;&lt;br /&gt;
-c语言自身重要基础性质, 我们需要了解.&lt;br /&gt;
-除此之外, 我们还要了解一些重要的标准库函数.&lt;br /&gt;
+&lt;p&gt;我们还是从使用的角度来看c 语言;
+c语言自身重要基础性质, 我们需要了解.
+除此之外, 我们还要了解一些重要的标准库函数.
 知道这些, 我们就能用c语言.&lt;/p&gt;
 
 &lt;h2 id=&#34;type:9e7166b21e1cf7669599f36f84659158&#34;&gt;Type&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Object type and function type&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Object &amp;ndash; void, scalar,aggregate types, composite&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Scalar type &amp;ndash; Arithmetic types and pointer types&lt;br /&gt;
-&lt;a href=&#34;http://www.techopedia.com/definition/16441/scalar&#34;&gt;What does Scalar mean?&lt;/a&gt;&lt;br /&gt;
-scalar 词源上由scale演化而来, scalar type来自scalar processor and vector processor.&lt;br /&gt;
-超标量也是来自这里concurrent SISD =&amp;gt;MIMD 所谓的流水线.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Object type and function type&lt;/li&gt;
+&lt;li&gt;Object &amp;ndash; void, scalar,aggregate types, composite&lt;/li&gt;
+&lt;li&gt;Scalar type &amp;ndash; Arithmetic types and pointer types
+&lt;a href=&#34;http://www.techopedia.com/definition/16441/scalar&#34;&gt;What does Scalar mean?&lt;/a&gt;
+scalar 词源上由scale演化而来, scalar type来自scalar processor and vector processor.
+超标量也是来自这里concurrent SISD =&amp;gt;MIMD 所谓的流水线.&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Arithmetic type &amp;ndash; Integer and floating types&lt;/p&gt;
 
@@ -1668,12 +1668,12 @@ scalar 词源上由scale演化而来, scalar type来自scalar processor and vect
 
 &lt;h2 id=&#34;conversion:9e7166b21e1cf7669599f36f84659158&#34;&gt;Conversion&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;only effect to scalar type data&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;only effect to scalar type data
 error: conversion to non-scalar type requested&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;无符号数 转换成upper rank的有符号数, 还是无符号数, 不管最初是-1!&lt;br /&gt;
-unsigned int i = 1; long f = -10;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true 证明确实usigned 向long转换了.&lt;br /&gt;
-unsigned int i = -3; long f = -5u;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;无符号数 转换成upper rank的有符号数, 还是无符号数, 不管最初是-1!
+unsigned int i = 1; long f = -10;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true 证明确实usigned 向long转换了.
+unsigned int i = -3; long f = -5u;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true
 c11上是ok的!&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;做signed 和unsigned 貌似both convert to unsigned gcc才给警告, 否则不给即便是signed和unsigned比较.&lt;/p&gt;
@@ -1684,12 +1684,12 @@ c11上是ok的!&lt;/p&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;array-decay:9e7166b21e1cf7669599f36f84659158&#34;&gt;Array decay&lt;/h2&gt;
 
-&lt;p&gt;数组退化的初衷, 可能是K&amp;amp;R当年计算资源紧缺, 导致不允许函数传值copy数组内容.&lt;br /&gt;
-总之标准委员会介入之前就决定.&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-1031622-1-1.html&#34;&gt;[C] [原创]数组与指针&amp;mdash;都是&amp;rdquo;退化&amp;rdquo;惹的祸&lt;/a&gt;&lt;br /&gt;
-关于char *s错误声明的讲解不错!&lt;br /&gt;
-&lt;a href=&#34;http://stackoverflow.com/questions/17752978/exception-to-array-not-decaying-into-a-pointer&#34;&gt;Exception to array not decaying into a pointer?&lt;/a&gt;&lt;br /&gt;
-在c11 6.3.2.1 Lvalues, arrays, and function designators第3点说明了&lt;br /&gt;
+&lt;p&gt;数组退化的初衷, 可能是K&amp;amp;R当年计算资源紧缺, 导致不允许函数传值copy数组内容.
+总之标准委员会介入之前就决定.
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-1031622-1-1.html&#34;&gt;[C] [原创]数组与指针&amp;mdash;都是&amp;rdquo;退化&amp;rdquo;惹的祸&lt;/a&gt;
+关于char *s错误声明的讲解不错!
+&lt;a href=&#34;http://stackoverflow.com/questions/17752978/exception-to-array-not-decaying-into-a-pointer&#34;&gt;Exception to array not decaying into a pointer?&lt;/a&gt;
+在c11 6.3.2.1 Lvalues, arrays, and function designators第3点说明了
 array不会退化的4种场景. Except when it is&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;the operand of the sizeof operator,&lt;/p&gt;&lt;/li&gt;
@@ -1698,131 +1698,131 @@ array不会退化的4种场景. Except when it is&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;unary &amp;amp; operator, or&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;is a string literal used to initialize an array, an expression that has type&lt;br /&gt;
-‘‘array of type’’ is converted to an expression with type ‘‘pointer to type’’&lt;br /&gt;
-that points to the initial element of the array object and is not an lvalue.&lt;br /&gt;
-If the array object has register storage class, the behavior is undefined.&lt;br /&gt;
-这4种场景之外, 那么array名退化的结果是pointer.&lt;br /&gt;
-这个pointer和我们最常用的pointer如int *p有什么区别呢?&lt;br /&gt;
-首先array decay是type上的转化array -&amp;gt; pointer.&lt;br /&gt;
-其次数组名原来是lvalue -&amp;gt; not an lvalue更谈不上modifiable.&lt;br /&gt;
-type: tyepof(array[0]) *&lt;br /&gt;
-value: &amp;amp;array[0] or array&lt;br /&gt;
-property: not lvalue&lt;br /&gt;
-当然这只是c11上的说明, 我们只要明白为什么不能修改一个decay数组名就行了.&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;is a string literal used to initialize an array, an expression that has type
+‘‘array of type’’ is converted to an expression with type ‘‘pointer to type’’
+that points to the initial element of the array object and is not an lvalue.
+If the array object has register storage class, the behavior is undefined.
+这4种场景之外, 那么array名退化的结果是pointer.
+这个pointer和我们最常用的pointer如int *p有什么区别呢?
+首先array decay是type上的转化array -&amp;gt; pointer.
+其次数组名原来是lvalue -&amp;gt; not an lvalue更谈不上modifiable.
+type: tyepof(array[0]) *
+value: &amp;amp;array[0] or array
+property: not lvalue
+当然这只是c11上的说明, 我们只要明白为什么不能修改一个decay数组名就行了.
 实现的个人猜测是: 根据lvalue的定义decay后数组名还是lvalue, 只不过一直都不是modifiable.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;为什么作为函数形参的数组名可以++, 而作为变量的数组名就不可以.&lt;br /&gt;
-因为形参数组名被当初pointer处理modifiable lvalue, 而实参数组名只是传值而已.&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;为什么作为函数形参的数组名可以++, 而作为变量的数组名就不可以.
+因为形参数组名被当初pointer处理modifiable lvalue, 而实参数组名只是传值而已.
 而普通数组名是一个lvalue,不能修改.&lt;/p&gt;
 
 &lt;h3 id=&#34;why-innermost-dimension-can-be-omit-in-array:9e7166b21e1cf7669599f36f84659158&#34;&gt;Why innermost dimension can be omit in array&lt;/h3&gt;
 
-&lt;p&gt;用不到.&lt;br /&gt;
+&lt;p&gt;用不到.
 In essence, all arrays in C are one-dimensional.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;Because the array will decay to pointer and to calculate offset to&lt;br /&gt;
+&lt;p&gt;Because the array will decay to pointer and to calculate offset to
 the elements of the array you do not need to know the innermost dimension.&lt;/p&gt;
 
-&lt;p&gt;Compiler has to know by how much to increment the pointer when&lt;br /&gt;
+&lt;p&gt;Compiler has to know by how much to increment the pointer when
 indexing on the first dimension for example. So if an int array is named a,&lt;/p&gt;
 
 &lt;h2 id=&#34;integer-promotion:9e7166b21e1cf7669599f36f84659158&#34;&gt;Integer Promotion&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.idryman.org/blog/2012/11/21/integer-promotion/&#34;&gt;Deep C: Integer Promotion&lt;/a&gt;&lt;br /&gt;
-* &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/fc9te331.aspx&#34;&gt;Integral Promotions&lt;/a&gt;&lt;br /&gt;
-0xF int&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.idryman.org/blog/2012/11/21/integer-promotion/&#34;&gt;Deep C: Integer Promotion&lt;/a&gt;
+* &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/fc9te331.aspx&#34;&gt;Integral Promotions&lt;/a&gt;
+0xF int
 0xFFFFFFFF unsigned int&lt;/p&gt;
 
 &lt;h2 id=&#34;scopes-of-identifiers:9e7166b21e1cf7669599f36f84659158&#34;&gt;Scopes of identifiers&lt;/h2&gt;
 
-&lt;p&gt;For each different entity that an identifier designates, the identifier is visible (i.e., can be&lt;br /&gt;
-used) only within a region of program text called its scope.&lt;br /&gt;
-* four kinds of scopes: function, file, block, and function prototype&lt;br /&gt;
-If the declarator or type specifier that declares the identifier&lt;br /&gt;
-appears outside of any block or list of parameters, the identifier has file scope, which&lt;br /&gt;
+&lt;p&gt;For each different entity that an identifier designates, the identifier is visible (i.e., can be
+used) only within a region of program text called its scope.
+* four kinds of scopes: function, file, block, and function prototype
+If the declarator or type specifier that declares the identifier
+appears outside of any block or list of parameters, the identifier has file scope, which
 terminates at the end of the translation unit.&lt;/p&gt;
 
-&lt;p&gt;If the declarator or type specifier that&lt;br /&gt;
-declares the identifier appears inside a block or within the list of parameter declarations in&lt;br /&gt;
-a function definition, the identifier has block scope, which terminates at the end of the&lt;br /&gt;
+&lt;p&gt;If the declarator or type specifier that
+declares the identifier appears inside a block or within the list of parameter declarations in
+a function definition, the identifier has block scope, which terminates at the end of the
 associated block.&lt;/p&gt;
 
-&lt;p&gt;If the declarator or type specifier that declares the identifier appears&lt;br /&gt;
-within the list of parameter declarations in a function prototype (not part of a function&lt;br /&gt;
-definition), the identifier has function prototype scope, which terminates at the end of the&lt;br /&gt;
+&lt;p&gt;If the declarator or type specifier that declares the identifier appears
+within the list of parameter declarations in a function prototype (not part of a function
+definition), the identifier has function prototype scope, which terminates at the end of the
 function declarator.&lt;/p&gt;
 
-&lt;p&gt;If an identifier designates two different entities in the same name&lt;br /&gt;
+&lt;p&gt;If an identifier designates two different entities in the same name
 space, the scopes might overlap.&lt;/p&gt;
 
 &lt;h2 id=&#34;linkages-of-identifiers:9e7166b21e1cf7669599f36f84659158&#34;&gt;linkages of identifiers&lt;/h2&gt;
 
-&lt;p&gt;An identifier declared in different scopes or in the same scope more than once can be&lt;br /&gt;
-made to refer to the same object or function by a process called linkage.&lt;br /&gt;
-* There are three kinds of linkage: external, internal, and none.&lt;br /&gt;
-* There is no linkage between different identifiers.&lt;br /&gt;
-* external linkage&lt;br /&gt;
-In the set of translation units and libraries that constitutes an entire program, each&lt;br /&gt;
-declaration of a particular identifier with external linkage denotes the same object or&lt;br /&gt;
+&lt;p&gt;An identifier declared in different scopes or in the same scope more than once can be
+made to refer to the same object or function by a process called linkage.
+* There are three kinds of linkage: external, internal, and none.
+* There is no linkage between different identifiers.
+* external linkage
+In the set of translation units and libraries that constitutes an entire program, each
+declaration of a particular identifier with external linkage denotes the same object or
 function. &amp;ndash;c11&lt;/p&gt;
 
-&lt;p&gt;If the name has external linkage,&lt;br /&gt;
-the entity that name denotes may be referred to from another translation unit&lt;br /&gt;
-using a distinct declaration for that same name,&lt;br /&gt;
-and from other scopes within the same translation unit using distinct declarations. &amp;ndash;wikipedia&lt;br /&gt;
-* Internal linkage&lt;br /&gt;
-Within one translation unit, each declaration of an identifier with internal&lt;br /&gt;
+&lt;p&gt;If the name has external linkage,
+the entity that name denotes may be referred to from another translation unit
+using a distinct declaration for that same name,
+and from other scopes within the same translation unit using distinct declarations. &amp;ndash;wikipedia
+* Internal linkage
+Within one translation unit, each declaration of an identifier with internal
 linkage denotes the same object or function. &amp;ndash;c11&lt;/p&gt;
 
-&lt;p&gt;Were the name given internal linkage,&lt;br /&gt;
-such a declaration would denote a distinct entity, although using the same name,&lt;br /&gt;
-but its entity could be referred to by distinct declarations within the same translation unit.  &amp;ndash;wikipedia&lt;br /&gt;
-* No linkage&lt;br /&gt;
-Each declaration of an identifier with no linkage denotes a unique entity. &amp;ndash;c11&lt;br /&gt;
-A name that has no linkage at all cannot be referred to from declarations in different scopes,&lt;br /&gt;
+&lt;p&gt;Were the name given internal linkage,
+such a declaration would denote a distinct entity, although using the same name,
+but its entity could be referred to by distinct declarations within the same translation unit.  &amp;ndash;wikipedia
+* No linkage
+Each declaration of an identifier with no linkage denotes a unique entity. &amp;ndash;c11
+A name that has no linkage at all cannot be referred to from declarations in different scopes,
 not even from within the same translation unit. &amp;ndash;wikipedia&lt;/p&gt;
 
 &lt;h2 id=&#34;name-spaces-of-identifiers:9e7166b21e1cf7669599f36f84659158&#34;&gt;Name spaces of identifiers&lt;/h2&gt;
 
 &lt;h2 id=&#34;storage-durations-of-objects:9e7166b21e1cf7669599f36f84659158&#34;&gt;Storage durations of objects&lt;/h2&gt;
 
-&lt;p&gt;An object has a storage duration that determines its lifetime.&lt;br /&gt;
-There are four storage durations: static, thread, automatic, and allocated.&lt;br /&gt;
-The lifetime of an object is the portion of program execution during which storage is&lt;br /&gt;
-guaranteed to be reserved for it.&lt;br /&gt;
-In book 21st Century C, it was named memory mode.&lt;br /&gt;
-* static storage duration&lt;br /&gt;
-An object whose identifier is declared without the storage-class specifier _Thread_local,&lt;br /&gt;
-and either with external or internal linkage or with the storage-class specifier static(for no linkage &amp;ndash;firo),&lt;br /&gt;
+&lt;p&gt;An object has a storage duration that determines its lifetime.
+There are four storage durations: static, thread, automatic, and allocated.
+The lifetime of an object is the portion of program execution during which storage is
+guaranteed to be reserved for it.
+In book 21st Century C, it was named memory mode.
+* static storage duration
+An object whose identifier is declared without the storage-class specifier _Thread_local,
+and either with external or internal linkage or with the storage-class specifier static(for no linkage &amp;ndash;firo),
 has static storage duration.&lt;/p&gt;
 
-&lt;p&gt;Its lifetime is the entire execution of the program and its stored value is initialized only once,&lt;br /&gt;
-prior to program startup.&lt;br /&gt;
-* automatic storage duration&lt;br /&gt;
-An object whose identifier is declared with no linkage and without the storage-class&lt;br /&gt;
-specifier static has automatic storage duration, as do some compound literals.&lt;br /&gt;
-* alloced storage duration&lt;br /&gt;
-The lifetime of an allocated object extends from the allocation until the deallocation.&lt;br /&gt;
-* Thread storage duration&lt;br /&gt;
+&lt;p&gt;Its lifetime is the entire execution of the program and its stored value is initialized only once,
+prior to program startup.
+* automatic storage duration
+An object whose identifier is declared with no linkage and without the storage-class
+specifier static has automatic storage duration, as do some compound literals.
+* alloced storage duration
+The lifetime of an allocated object extends from the allocation until the deallocation.
+* Thread storage duration
 details in c11&lt;/p&gt;
 
 &lt;h2 id=&#34;alignment-of-objects:9e7166b21e1cf7669599f36f84659158&#34;&gt;Alignment of objects&lt;/h2&gt;
 
-&lt;p&gt;An alignment is an implementation-defined integer value representing the number of bytes between&lt;br /&gt;
-successive addresses at which a given object can be allocated.&lt;br /&gt;
+&lt;p&gt;An alignment is an implementation-defined integer value representing the number of bytes between
+successive addresses at which a given object can be allocated.
 More deatils in cs.md&lt;/p&gt;
 
 &lt;h2 id=&#34;declarations:9e7166b21e1cf7669599f36f84659158&#34;&gt;Declarations&lt;/h2&gt;
 
-&lt;p&gt;A declaration specifies the interpretation and attributes of a set of identifiers.&lt;br /&gt;
-A definition of an identifier is a declaration for that identifier that:&lt;br /&gt;
-for an object, causes storage to be reserved for that object;&lt;br /&gt;
-for a function, includes the function body;&lt;br /&gt;
-for an enumeration constant, is the (only) declaration of the identifier;&lt;br /&gt;
-for a typedef name, is the first (or only) declaration of the identifier.&lt;br /&gt;
-The declaration specifiers consist of a sequence of specifiers that indicate the linkage,&lt;br /&gt;
+&lt;p&gt;A declaration specifies the interpretation and attributes of a set of identifiers.
+A definition of an identifier is a declaration for that identifier that:
+for an object, causes storage to be reserved for that object;
+for a function, includes the function body;
+for an enumeration constant, is the (only) declaration of the identifier;
+for a typedef name, is the first (or only) declaration of the identifier.
+The declaration specifiers consist of a sequence of specifiers that indicate the linkage,
 storage duration, and part of the type of the entities that the declarators denote.&lt;/p&gt;
 
 &lt;h2 id=&#34;marco:9e7166b21e1cf7669599f36f84659158&#34;&gt;Marco&lt;/h2&gt;
@@ -1832,7 +1832,7 @@ storage duration, and part of the type of the entities that the declarators deno
 &lt;h2 id=&#34;expressions:9e7166b21e1cf7669599f36f84659158&#34;&gt;Expressions&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;cast&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;cast
 A cast does not yield an lvalue.&lt;/p&gt;
 
 &lt;h2 id=&#34;lexical-element:9e7166b21e1cf7669599f36f84659158&#34;&gt;Lexical element&lt;/h2&gt;
@@ -1845,33 +1845,33 @@ A cast does not yield an lvalue.&lt;/p&gt;
 
 &lt;h2 id=&#34;greedy-lexical-analysis:9e7166b21e1cf7669599f36f84659158&#34;&gt;Greedy lexical analysis&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Write tokens with blank!&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Write tokens with blank!
 x = y/&lt;em&gt;p;  /&lt;/em&gt; oops, hidden error.*/&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Associative&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Associative
 You donot need to remember it! Just use it!&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Precedence&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Precedence
 Need to remember, but if you not sure, parenthess.&lt;/p&gt;
 
 &lt;h2 id=&#34;inline-和宏的区别:9e7166b21e1cf7669599f36f84659158&#34;&gt;inline 和宏的区别&lt;/h2&gt;
 
-&lt;p&gt;inline的好处与坏处&lt;br /&gt;
-没有调用的开销效率很高, 但是调试代码复杂了, 内链函数的实现是拷贝副本消耗内存.&lt;br /&gt;
+&lt;p&gt;inline的好处与坏处
+没有调用的开销效率很高, 但是调试代码复杂了, 内链函数的实现是拷贝副本消耗内存.
 inline有类型检测, 宏没有.&lt;/p&gt;
 
 &lt;h2 id=&#34;c-standard-library:9e7166b21e1cf7669599f36f84659158&#34;&gt;C standard library&lt;/h2&gt;
 
 &lt;h2 id=&#34;faq:9e7166b21e1cf7669599f36f84659158&#34;&gt;FAQ&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Logical operation with signed value? x86!&lt;br /&gt;
-int c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; =&amp;gt; d == f;&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Logical operation with signed value? x86!
+int c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; =&amp;gt; d == f;
 unsigned c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; d!= f;&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;shift beyond bits long?&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;shift beyond bits long?
 c &amp;gt;&amp;gt; 296 == c &amp;gt;&amp;gt; 8&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;变量同名不同类型不同文件, 通过extern, 否则就是multiple definition&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;变量同名不同类型不同文件, 通过extern, 否则就是multiple definition
 这是c语言最为迷糊的地方.简单说来类似union, 具体我也不清楚.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;所有名字引用同一个object&lt;/p&gt;&lt;/li&gt;
@@ -1885,56 +1885,56 @@ c &amp;gt;&amp;gt; 296 == c &amp;gt;&amp;gt; 8&lt;/p&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;string-handling:9e7166b21e1cf7669599f36f84659158&#34;&gt;String handling&lt;/h2&gt;
 
-&lt;p&gt;kernel/lib/string.c&lt;br /&gt;
-* Copying functions&lt;br /&gt;
-memcpy: dest&lt;br /&gt;
-memmove: dest&lt;br /&gt;
-strcpy: dest, 拷贝\0&lt;br /&gt;
-strncpy: dest, if src_len &amp;gt;= n; 0 NULL, if src _len &amp;lt; n; (n - len) NULL;&lt;br /&gt;
-strlcpy: src_len, mini(n -1, src_len -1) + \0, src_len 用你返回啊!&lt;br /&gt;
-* Concatenation functions&lt;br /&gt;
-strcat: dest, overwrite dest \0 with src util src \0&lt;br /&gt;
-strncat: dest, 末尾一定有\0&lt;br /&gt;
-* Comparison functions&lt;br /&gt;
-memcmp: 差值,&lt;br /&gt;
-strcmp: -1, 0, 1, 如果整个s1都比完了NULL or &amp;ndash;n ==0 for strncmp, return 0&lt;br /&gt;
-* Search functions&lt;br /&gt;
-memchr, NULL or p;&lt;br /&gt;
-strchr,ditto, 到\0返回NUll&lt;br /&gt;
-strrchr,ditto, last occurence.&lt;br /&gt;
-strspn: s1开始有多少在s2中.&lt;br /&gt;
-strcspn: s1开始有多少不在s2中.&lt;br /&gt;
-strpbrk: s2中第一次出现的位置&lt;br /&gt;
+&lt;p&gt;kernel/lib/string.c
+* Copying functions
+memcpy: dest
+memmove: dest
+strcpy: dest, 拷贝\0
+strncpy: dest, if src_len &amp;gt;= n; 0 NULL, if src _len &amp;lt; n; (n - len) NULL;
+strlcpy: src_len, mini(n -1, src_len -1) + \0, src_len 用你返回啊!
+* Concatenation functions
+strcat: dest, overwrite dest \0 with src util src \0
+strncat: dest, 末尾一定有\0
+* Comparison functions
+memcmp: 差值,
+strcmp: -1, 0, 1, 如果整个s1都比完了NULL or &amp;ndash;n ==0 for strncmp, return 0
+* Search functions
+memchr, NULL or p;
+strchr,ditto, 到\0返回NUll
+strrchr,ditto, last occurence.
+strspn: s1开始有多少在s2中.
+strcspn: s1开始有多少不在s2中.
+strpbrk: s2中第一次出现的位置
 strstr: 找子串, 用memcmp&lt;/p&gt;
 
 &lt;h1 id=&#34;asm-in-c-code:9e7166b21e1cf7669599f36f84659158&#34;&gt;ASM in c code&lt;/h1&gt;
 
-&lt;p&gt;c语言嵌入汇编这不是c语言的特性是编译器的feature.&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html#Using-Assembly-Language-with-C&#34;&gt;How to Use Inline Assembly Language in C Code&lt;/a&gt;&lt;br /&gt;
-#MIPS&lt;br /&gt;
-bdi 4, 8 delay solt&lt;br /&gt;
-mips instruction size is fixed, 32bit, 4byte.&lt;br /&gt;
-instruction address:  instrction in hex formate    instruction in string formate, 260&lt;br /&gt;
-8002c28c:   8c440104    lw  a0,260(v0)&lt;br /&gt;
-##ASM codes Fixme&lt;br /&gt;
-move &amp;lt;-&lt;br /&gt;
-j long jump&lt;br /&gt;
-b short jump&lt;br /&gt;
-a0, a1&amp;hellip;99% is parameters.&lt;br /&gt;
-##lwr &amp;amp; lwl&lt;br /&gt;
-load a word&lt;br /&gt;
-different with endianess&lt;br /&gt;
-register 63&amp;hellip;..32&amp;hellip;&amp;hellip;0&lt;br /&gt;
-big endian: lwl high bits in b + 0&lt;br /&gt;
-little endian: lwl high in b + off&lt;br /&gt;
+&lt;p&gt;c语言嵌入汇编这不是c语言的特性是编译器的feature.
+&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html#Using-Assembly-Language-with-C&#34;&gt;How to Use Inline Assembly Language in C Code&lt;/a&gt;
+#MIPS
+bdi 4, 8 delay solt
+mips instruction size is fixed, 32bit, 4byte.
+instruction address:  instrction in hex formate    instruction in string formate, 260
+8002c28c:   8c440104    lw  a0,260(v0)
+##ASM codes Fixme
+move &amp;lt;-
+j long jump
+b short jump
+a0, a1&amp;hellip;99% is parameters.
+##lwr &amp;amp; lwl
+load a word
+different with endianess
+register 63&amp;hellip;..32&amp;hellip;&amp;hellip;0
+big endian: lwl high bits in b + 0
+little endian: lwl high in b + off
 向中心&lt;/p&gt;
 
 &lt;h1 id=&#34;x86:9e7166b21e1cf7669599f36f84659158&#34;&gt;x86&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://heather.cs.ucdavis.edu/~matloff/50/PLN/lock.pdf&#34;&gt;Intel’s ‘cmpxchg’ instruction&lt;/a&gt;&lt;br /&gt;
-eax: e stand for 32&lt;br /&gt;
-rax: r stand for 64&lt;br /&gt;
-&lt;a href=&#34;http://x86.renejeschke.de/html/file_module_x86_id_159.html&#34;&gt;lock prefix in x86&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://heather.cs.ucdavis.edu/~matloff/50/PLN/lock.pdf&#34;&gt;Intel’s ‘cmpxchg’ instruction&lt;/a&gt;
+eax: e stand for 32
+rax: r stand for 64
+&lt;a href=&#34;http://x86.renejeschke.de/html/file_module_x86_id_159.html&#34;&gt;lock prefix in x86&lt;/a&gt;
 the lock prefix make instruction atomic!&lt;/p&gt;
 
 &lt;h2 id=&#34;registers-purpose:9e7166b21e1cf7669599f36f84659158&#34;&gt;registers&amp;rsquo; purpose&lt;/h2&gt;
@@ -1942,25 +1942,25 @@ the lock prefix make instruction atomic!&lt;/p&gt;
 &lt;h2 id=&#34;register:9e7166b21e1cf7669599f36f84659158&#34;&gt;Register&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;gs&lt;br /&gt;
-The linux kernel uses GS to access cpu-specific memory.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;gdtr&lt;br /&gt;
-GDT&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;gs
+The linux kernel uses GS to access cpu-specific memory.&lt;/li&gt;
+&lt;li&gt;gdtr
+GDT&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;tr&lt;br /&gt;
-TSS addressing&lt;br /&gt;
-#Wildcards&lt;br /&gt;
-&lt;a href=&#34;http://whatis.techtarget.com/definition/wildcard-character&#34;&gt;A wildcard character is a type of meta character&lt;/a&gt;&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;tr
+TSS addressing
+#Wildcards
+&lt;a href=&#34;http://whatis.techtarget.com/definition/wildcard-character&#34;&gt;A wildcard character is a type of meta character&lt;/a&gt;
 ##Type&lt;/p&gt;
 
 &lt;h3 id=&#34;standard-wildcards-globbing-patterns:9e7166b21e1cf7669599f36f84659158&#34;&gt;Standard Wildcards (globbing patterns)&lt;/h3&gt;
 
-&lt;p&gt;File and directory patterns&lt;br /&gt;
+&lt;p&gt;File and directory patterns
 ?: must stand for a character&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Regular expression&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;SQL&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;SQL
 #Shell&lt;/p&gt;
 
 &lt;h2 id=&#34;test:9e7166b21e1cf7669599f36f84659158&#34;&gt;test&lt;/h2&gt;
@@ -1971,39 +1971,39 @@ TSS addressing&lt;br /&gt;
 
 &lt;h2 id=&#34;ls:9e7166b21e1cf7669599f36f84659158&#34;&gt;ls&lt;/h2&gt;
 
-&lt;p&gt;-l: show hardlinks of file/dir in 2nd column&lt;br /&gt;
-drwsrwsr-T: T stand for sticky bit no other execution bit&lt;br /&gt;
+&lt;p&gt;-l: show hardlinks of file/dir in 2nd column
+drwsrwsr-T: T stand for sticky bit no other execution bit
 ##eval&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;create variable name&lt;br /&gt;
-&lt;strong&gt;var=&amp;ldquo;name&amp;rdquo;&lt;br /&gt;
-eval &amp;ldquo;export &amp;ndash; \&amp;ldquo;$&lt;/strong&gt;var=firo\&amp;ldquo;&amp;rdquo;&lt;br /&gt;
-set | grep firo&lt;br /&gt;
-__var=&amp;lsquo;name&amp;rsquo;&lt;br /&gt;
-bbb=&amp;lsquo;firo&amp;rsquo;&lt;br /&gt;
-##expr&lt;br /&gt;
-expr &amp;ldquo;$name&amp;rdquo; : &amp;lsquo;(.*).conf&amp;rsquo;&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;create variable name
+&lt;strong&gt;var=&amp;ldquo;name&amp;rdquo;
+eval &amp;ldquo;export &amp;ndash; \&amp;ldquo;$&lt;/strong&gt;var=firo\&amp;ldquo;&amp;rdquo;
+set | grep firo
+__var=&amp;lsquo;name&amp;rsquo;
+bbb=&amp;lsquo;firo&amp;rsquo;
+##expr
+expr &amp;ldquo;$name&amp;rdquo; : &amp;lsquo;(.*).conf&amp;rsquo;
 ##find&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;find symbols in object&lt;br /&gt;
-find . -name &amp;lsquo;a.out&amp;rsquo; -exec nm -D {} \; -print&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;find symbols in object
+find . -name &amp;lsquo;a.out&amp;rsquo; -exec nm -D {} \; -print
 find . -name &amp;lsquo;*.o&amp;rsquo; -print0 | xargs -0 nm -A | egrep &amp;lsquo; (i|y)$&amp;rsquo;&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;rm&lt;br /&gt;
-find . -name ‘your_pattern*’ -exec rm -f {} \;&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;rm
+find . -name ‘your_pattern*’ -exec rm -f {} \;
 find . -name ‘your_pattern*’ -delete&lt;/p&gt;
 
 &lt;h2 id=&#34;grep:9e7166b21e1cf7669599f36f84659158&#34;&gt;grep&lt;/h2&gt;
 
-&lt;p&gt;-c: count of match&lt;br /&gt;
-##pipe&lt;br /&gt;
-find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo &amp;ldquo;$cnt $d&amp;rdquo;; done | sort -n &amp;gt;stat&lt;br /&gt;
-#AWK&lt;br /&gt;
-netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;&lt;br /&gt;
-#Regualar expression&lt;br /&gt;
-##Basic&lt;br /&gt;
-##Extend&lt;br /&gt;
-##Vim regex&lt;br /&gt;
+&lt;p&gt;-c: count of match
+##pipe
+find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo &amp;ldquo;$cnt $d&amp;rdquo;; done | sort -n &amp;gt;stat
+#AWK
+netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;
+#Regualar expression
+##Basic
+##Extend
+##Vim regex
 &lt;a href=&#34;http://vimregex.com/&#34;&gt;http://vimregex.com/&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
@@ -2011,76 +2011,76 @@ netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&am
     
     <item>
       <title>Fedora distro 物语</title>
-      <link>http://firoyang.org/cs/fedora/</link>
+      <link>/cs/fedora/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:11 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/fedora/</guid>
+      
+      <guid>/cs/fedora/</guid>
       <description>
 
-&lt;p&gt;#Goagent&lt;br /&gt;
+&lt;p&gt;#Goagent
 139.175.107.84|139.175.107.89|139.175.107.94|139.175.107.99|139.175.107.103|139.175.107.104|139.175.107.108|139.175.107.109|139.175.107.113|139.175.107.118|139.175.107.119|139.175.107.123&lt;/p&gt;
 
-&lt;p&gt;#Nautilus&lt;br /&gt;
-* Sidebar&lt;br /&gt;
-Edit below file to rename dir in place menu of sidebar.&lt;br /&gt;
+&lt;p&gt;#Nautilus
+* Sidebar
+Edit below file to rename dir in place menu of sidebar.
 vim ~/.config/user-dirs.dirs&lt;/p&gt;
 
-&lt;p&gt;#xdg&lt;br /&gt;
-* Specification&lt;br /&gt;
+&lt;p&gt;#xdg
+* Specification
 &lt;a href=&#34;http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html&#34;&gt;http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;#Raspberry pi&lt;br /&gt;
-* Remote viewer&lt;br /&gt;
+&lt;p&gt;#Raspberry pi
+* Remote viewer
 vinagre&lt;/p&gt;
 
-&lt;p&gt;#fedora 22&lt;br /&gt;
-* Check dup and error&lt;br /&gt;
+&lt;p&gt;#fedora 22
+* Check dup and error
 yum check&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;after distro-sync 22 yum/dnf still recognize 21&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;after distro-sync 22 yum/dnf still recognize 21
 yum check must output fedor-relase/repos-21 something like, remove it.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;tty loop login&lt;br /&gt;
-disable selinux&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;tty loop login
+disable selinux
 authconfig update all&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kernel parameter&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;kernel parameter
 audit=0 selinux=0&lt;br /&gt;
-rhgb  redaht graphical boot, show picture&lt;br /&gt;
-quiet: show little message&lt;br /&gt;
+rhgb  redaht graphical boot, show picture
+quiet: show little message
 init=/bin/bash&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;boot stop at update UTMP&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;boot stop at update UTMP
 disable NetworkManager&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#dropbear&lt;br /&gt;
-=generate private key&lt;br /&gt;
-dropbearkey -t rsa -f ~/.ssh/id_rsa.db&lt;br /&gt;
-=yank public key&lt;br /&gt;
-dropbearkey -y -f ~/.ssh/id_rsa.db&lt;br /&gt;
-=login in&lt;br /&gt;
-dbclient -y -i ~/.ssh/id_rsa.db user@ip&lt;br /&gt;
-=trans file&lt;br /&gt;
+&lt;p&gt;#dropbear
+=generate private key
+dropbearkey -t rsa -f ~/.ssh/id_rsa.db
+=yank public key
+dropbearkey -y -f ~/.ssh/id_rsa.db
+=login in
+dbclient -y -i ~/.ssh/id_rsa.db user@ip
+=trans file
 scp -S dbclient -i ~/.ssh/id_rsa fileName user@ip:/dir&lt;/p&gt;
 
 &lt;h1 id=&#34;gpg:7ebe7329b8e4e35c034da6317572557f&#34;&gt;gpg&lt;/h1&gt;
 
-&lt;p&gt;6A6608B8&lt;br /&gt;
-#id3tag&lt;br /&gt;
-id3tag -2 *.mp3&lt;br /&gt;
-for file in *.mp3;do f=$(echo &amp;ldquo;$file&amp;rdquo; |awk -F &amp;lsquo; &amp;rsquo; &amp;lsquo;{print $2}&amp;rsquo; | awk -F &amp;lsquo;.&amp;rsquo; &amp;lsquo;{print $1}&amp;rsquo;); id3tag -s &amp;ldquo;$f&amp;rdquo; &amp;ldquo;$file&amp;rdquo;;  done&lt;br /&gt;
+&lt;p&gt;6A6608B8
+#id3tag
+id3tag -2 *.mp3
+for file in *.mp3;do f=$(echo &amp;ldquo;$file&amp;rdquo; |awk -F &amp;lsquo; &amp;rsquo; &amp;lsquo;{print $2}&amp;rsquo; | awk -F &amp;lsquo;.&amp;rsquo; &amp;lsquo;{print $1}&amp;rsquo;); id3tag -s &amp;ldquo;$f&amp;rdquo; &amp;ldquo;$file&amp;rdquo;;  done
 exiftool -json Baccano!\ 永生之酒(バッカーノ！)\ ORIGINAL\ SOUNDTRACK\ SPIRAL\ MELODIES/12.緩みきった官能のダンス.mp3&lt;/p&gt;
 
-&lt;p&gt;#indent&lt;br /&gt;
-indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs *.c *.h&lt;br /&gt;
-#qemu&lt;br /&gt;
+&lt;p&gt;#indent
+indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs *.c *.h
+#qemu
 qemu -m 512 -kernel bzImage -append “root=/dev/sda” -boot c -hda busybox.img -k en-us&lt;/p&gt;
 
-&lt;p&gt;#rdesktop&lt;br /&gt;
-rdesktop -K -g 1366x700 -r clipboard:PRIMARYCLIPBOARD 192.168.10.200 -r sound:local -u firo -p &amp;ldquo;&amp;rdquo;&lt;br /&gt;
-rdesktop -K -g 1366x700 -r clipboard:CLIPBOAD 192.168.10.200&lt;br /&gt;
+&lt;p&gt;#rdesktop
+rdesktop -K -g 1366x700 -r clipboard:PRIMARYCLIPBOARD 192.168.10.200 -r sound:local -u firo -p &amp;ldquo;&amp;rdquo;
+rdesktop -K -g 1366x700 -r clipboard:CLIPBOAD 192.168.10.200
 nmap  -sP 192.168.10.0/24  | grep &amp;lsquo;Nmap scan&amp;rsquo; | awk &amp;lsquo;{print$5}&amp;rsquo; | while read line; do echo &amp;ldquo;connect to $line&amp;rdquo;;  timeout -s 9 2 rdesktop -K -g 1366x700 -r clipboard:CLIPBOARD $line; done&lt;/p&gt;
 
 &lt;h1 id=&#34;sed:7ebe7329b8e4e35c034da6317572557f&#34;&gt;sed&lt;/h1&gt;

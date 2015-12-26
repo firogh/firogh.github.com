@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/cs/boot/">
+<meta property="og:url" content="/cs/boot/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2015-11-12"/>
 <meta property="article:modified_time" content="2015-11-12"/>
@@ -34,9 +34,9 @@
 
 
 
-    <base href="http://firoyang.org/">
+    <base href="">
     <title> System booting</title>
-    <link rel="canonical" href="http://firoyang.org/cs/boot/">
+    <link rel="canonical" href="/cs/boot/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -130,7 +130,7 @@
         
         <ul id="tags">
           
-            <li> <a href="http://firoyang.org//tags/cs">cs</a> </li>
+            <li> <a href="/tags/cs">cs</a> </li>
           
         </ul>
 
@@ -141,7 +141,7 @@
 
 <meta itemprop="wordCount" content="682">
 <meta itemprop="datePublished" content="2015-11-12">
-<meta itemprop="url" content="http://firoyang.org/cs/boot/">
+<meta itemprop="url" content="/cs/boot/">
 
 
   <div>
@@ -152,130 +152,130 @@
 
 <h1 id="contents:4ccc61562af88da39fe562fcf76d50be">Contents</h1>
 
-<p>What basic initializations should be perfomed when power on?<br />
-How do we load the kernel to memory?<br />
-What does kernel do when kernel boot.<br />
-MBR vs BIOS?<br />
-PC vs embedded<br />
-Kernel init<br />
-before start_kernel<br />
-start_kernel<br />
+<p>What basic initializations should be perfomed when power on?
+How do we load the kernel to memory?
+What does kernel do when kernel boot.
+MBR vs BIOS?
+PC vs embedded
+Kernel init
+before start_kernel
+start_kernel
 reset_init &amp; kernel_init</p>
 
 <h1 id="p4080-board:4ccc61562af88da39fe562fcf76d50be">p4080 Board</h1>
 
-<p>PBL<br />
-1. initialize I2C, SPI, eLBC, eSDHC.<br />
-2. Load RCW and boot init commands from above.<br />
+<p>PBL
+1. initialize I2C, SPI, eLBC, eSDHC.
+2. Load RCW and boot init commands from above.
 3. write date to conf register and memory</p>
 
 <h1 id="config:4ccc61562af88da39fe562fcf76d50be">config</h1>
 
-<p>CCSRBAR -&gt; CCSR<br />
+<p>CCSRBAR -&gt; CCSR
 default is 0x0_FE00_0000<br />
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).<br />
-CCSRBAR always points to itself.<br />
+CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).
+CCSRBAR always points to itself.
 holdoff</p>
 
 <h1 id="u-boot:4ccc61562af88da39fe562fcf76d50be">u-boot</h1>
 
 <p>ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</p>
 
-<p>main_loop-&gt; &hellip;-&gt;./common/bootm_os.c:410:&hellip; do_bootm_states-&gt;<br />
-{<br />
-bootm_find_other-&gt;bootm_find_ramdisk_fdt-&gt;bootm_find_fdt-&gt;boot_get_fdt&amp;set_working_fdt_addr(0x0200000)-&gt;IMAGE_FORMAT_FIT-&gt;<br />
-&amp;<br />
-boot_fn = bootm_os_get_boot_func(images-&gt;os.os)=[IH_OS_LINUX] =<br />
-&amp;<br />
-boot_selected_os-&gt;boot_fn=do_bootm_linux-&gt;boot_body_linux-&gt;image_setup_linux-&gt;image_setup_libfdt-&gt;<br />
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&gt; ft_cpu_setup-&gt;<br />
+<p>main_loop-&gt; &hellip;-&gt;./common/bootm_os.c:410:&hellip; do_bootm_states-&gt;
+{
+bootm_find_other-&gt;bootm_find_ramdisk_fdt-&gt;bootm_find_fdt-&gt;boot_get_fdt&amp;set_working_fdt_addr(0x0200000)-&gt;IMAGE_FORMAT_FIT-&gt;
+&amp;
+boot_fn = bootm_os_get_boot_func(images-&gt;os.os)=[IH_OS_LINUX] =
+&amp;
+boot_selected_os-&gt;boot_fn=do_bootm_linux-&gt;boot_body_linux-&gt;image_setup_linux-&gt;image_setup_libfdt-&gt;
+board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&gt; ft_cpu_setup-&gt;
 }</p>
 
 <h1 id="ppc-multicore-booting:4ccc61562af88da39fe562fcf76d50be">PPC multicore booting</h1>
 
 <ul>
-<li>There are two possibilites to make secondary cores booting failed.<br /></li>
-<li>There is a bug in the code executed by Secondary cores<br /></li>
-<li>The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.<br /></li>
+<li>There are two possibilites to make secondary cores booting failed.</li>
+<li>There is a bug in the code executed by Secondary cores</li>
+<li>The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.</li>
 </ul>
 
-<p>CCSRBAR<br />
-MPC86xx_MCM_OFFSET<br />
+<p>CCSRBAR
+MPC86xx_MCM_OFFSET
 srio_boot_master_release_slave</p>
 
-<p>uboot-&gt;<br />
+<p>uboot-&gt;
 set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.</p>
 
-<p>core0 run, 2nd cores holdoff<br />
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp<br />
-core0 -&gt; arch/powerpc/cpu/mpc85xx/start.S-&gt;_start_e500<br />
-board_init_r-&gt;cpu_init_r-&gt; setup_mp-&gt; {<br />
-<strong>bootpg_addr = (u32)virt_to_phys(&amp;</strong>second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page<br />
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page<br />
-bootpg = BPTR = __secondary_start_page<br />
-plat_mp_up-&gt;kick BRR &amp; Boot Space Translation<br />
-}<br />
-2nd cores holdoff -&gt; <strong>secondary_start_page<br />
-kernel-&gt;<br />
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&rsquo;s spin table by writing  the spin table field with the desired address<br />
-2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle<br />
-arch/powerpc/kernel/head_fsl_booke.S<br />
-U-boot logs:<br />
-Reserving MP boot page to 7ffff000^M^M - &ndash;   -   MP spin table<br />
-address.<br />
-SPAG : fdt_fixup_fman_firmware, 567^M^M<br />
-^M^M<br />
-..r.^M^M<br />
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M<br />
-VDBG: Secondary cores are not held in reset.^M^M<br />
-Kernel Logs:<br />
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M<br />
-smp: failed starting cpu 1 (rc -2)^M^M<br />
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M<br />
-smp: failed starting cpu 2 (rc -2)^M^M<br />
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M<br />
-smp: failed starting cpu 3 (rc -2)^M^M<br />
-Brought up 1 CPUs^M^M<br />
+<p>core0 run, 2nd cores holdoff
+core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp
+core0 -&gt; arch/powerpc/cpu/mpc85xx/start.S-&gt;_start_e500
+board_init_r-&gt;cpu_init_r-&gt; setup_mp-&gt; {
+<strong>bootpg_addr = (u32)virt_to_phys(&amp;</strong>second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page
+__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page
+bootpg = BPTR = __secondary_start_page
+plat_mp_up-&gt;kick BRR &amp; Boot Space Translation
+}
+2nd cores holdoff -&gt; <strong>secondary_start_page
+kernel-&gt;
+core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&rsquo;s spin table by writing  the spin table field with the desired address
+2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle
+arch/powerpc/kernel/head_fsl_booke.S
+U-boot logs:
+Reserving MP boot page to 7ffff000^M^M - &ndash;   -   MP spin table
+address.
+SPAG : fdt_fixup_fman_firmware, 567^M^M
+^M^M
+..r.^M^M
+VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M
+VDBG: Secondary cores are not held in reset.^M^M
+Kernel Logs:
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M
+smp: failed starting cpu 1 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M
+smp: failed starting cpu 2 (rc -2)^M^M
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M
+smp: failed starting cpu 3 (rc -2)^M^M
+Brought up 1 CPUs^M^M
 devtmpfs: initialized^M^M</p>
 
-<p>Note that u-boot can&rsquo;t detect  memory above 2G and we need to check<br />
+<p>Note that u-boot can&rsquo;t detect  memory above 2G and we need to check
 if kernel is accessing at high mem of 2G or 4G.</p>
 
 <p>Here are the logs..</p>
 
 <p>I printed pa in %lx since the outout of <strong>pa(</strong>early_start) is in long unsigned int.</p>
 
-<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0<br />
-Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50<br />
-Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000<br />
-Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000<br />
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack<br />
-smp: failed starting cpu 1 (rc -2)<br />
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0<br />
-Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50<br />
-Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200<br />
-Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200<br />
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack<br />
-smp: failed starting cpu 2 (rc -2)<br />
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0<br />
-Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50<br />
-Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a<br />
-Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a<br />
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack<br />
-smp: failed starting cpu 3 (rc -2)<br />
-I don’t see the following print in u-boot..<br />
- 69                                 fdt_setprop(blob, off, &ldquo;cpu-release-addr&rdquo;,<br />
- 70                                                 &amp;val, sizeof(val));<br />
+<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50
+Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+smp: failed starting cpu 3 (rc -2)
+I don’t see the following print in u-boot..
+ 69                                 fdt_setprop(blob, off, &ldquo;cpu-release-addr&rdquo;,
+ 70                                                 &amp;val, sizeof(val));
 + printf(&ldquo;Firo u-boot:cpu release addr %p, value %x\n&rdquo;, &amp;val, val);</p>
 
-<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0<br />
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack<br />
-smp: failed starting cpu 1 (rc -2)<br />
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0<br />
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack<br />
-smp: failed starting cpu 2 (rc -2)<br />
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0<br />
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack<br />
+<p>Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack
+smp: failed starting cpu 1 (rc -2)
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack
+smp: failed starting cpu 2 (rc -2)
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack
 smp: failed starting cpu 3 (rc -2)</p>
 
         </article>
@@ -284,21 +284,7 @@ smp: failed starting cpu 3 (rc -2)</p>
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/boot\/';
-    var disqus_title = 'System booting';
-    var disqus_url = 'http:\/\/firoyang.org\/cs\/boot\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    
 </aside>
 
 <footer>

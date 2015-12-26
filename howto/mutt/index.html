@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/howto/mutt/">
+<meta property="og:url" content="/howto/mutt/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2015-04-25"/>
 <meta property="article:modified_time" content="2015-04-25"/>
@@ -31,9 +31,9 @@
 
 
 
-    <base href="http://firoyang.org/">
+    <base href="">
     <title> 使用mutt收发邮件</title>
-    <link rel="canonical" href="http://firoyang.org/howto/mutt/">
+    <link rel="canonical" href="/howto/mutt/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -136,65 +136,65 @@
 
 <meta itemprop="wordCount" content="95">
 <meta itemprop="datePublished" content="2015-04-25">
-<meta itemprop="url" content="http://firoyang.org/howto/mutt/">
+<meta itemprop="url" content="/howto/mutt/">
 
 
   <div>
         <article itemprop="articleBody" id="content">
            
 
-<p><img src="http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg" alt="Trigun" /><br />
-###Reference<br />
-昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.<br />
+<p><img src="http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg" alt="Trigun" />
+###Reference
+昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.
 这才想起来社区的mailist只接收:</p>
 
 <blockquote>
 <p>No MIME, no links, no compression, no attachments.  Just plain text</p>
 </blockquote>
 
-<p>我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.<br />
-有点不方便, 今天决定使用mutt.<br />
-需要mutt, fetchmail, procmail, msmtp, proxychains(天朝专用), vim/emacs<br />
-发一个邮件, 需要这么多程序啊, 以前一直以为一个mutt就够了, 还Gmail方便啊.<br />
-mutt的作用类似于胶水, 把其他程序联系起来.<br />
-fetchmail收, procmail过滤spam mail, msmtp 用来发送, proxychains 翻x墙,<br />
+<p>我之前发给社区的邮件是用git sendmail发给maillist, 不会有这个问题.
+有点不方便, 今天决定使用mutt.
+需要mutt, fetchmail, procmail, msmtp, proxychains(天朝专用), vim/emacs
+发一个邮件, 需要这么多程序啊, 以前一直以为一个mutt就够了, 还Gmail方便啊.
+mutt的作用类似于胶水, 把其他程序联系起来.
+fetchmail收, procmail过滤spam mail, msmtp 用来发送, proxychains 翻x墙,
 vim/emacs用来编辑邮件.</p>
 
-<p>###收邮件<br />
-其实, 并不像网上博客中说的那样, fetchmail 和procmail并不是必须的.<br />
-参考mutt官网的<a href="http://dev.mutt.org/trac/wiki/UseCases/Gmail">UserStory/GMailOverIMAP</a><br />
-你就可以想Web gmail一样实时推送邮件到你mutt了.<br />
+<p>###收邮件
+其实, 并不像网上博客中说的那样, fetchmail 和procmail并不是必须的.
+参考mutt官网的<a href="http://dev.mutt.org/trac/wiki/UseCases/Gmail">UserStory/GMailOverIMAP</a>
+你就可以想Web gmail一样实时推送邮件到你mutt了.
 之后在.muttrc中加入:</p>
 
 <pre><code>bind index G imap-fetch-mail
 </code></pre>
 
-<p>这样你就可以用G这个命令在mutt中主动同步gmail了.<br />
+<p>这样你就可以用G这个命令在mutt中主动同步gmail了.
 此时翻墙用户启动mutt, proxychains会输出代理信息过滤到/dev/null</p>
 
 <pre><code>proxychains mutt 2&gt; /dev/null
 </code></pre>
 
-<p>###mutt 与发邮件<br />
+<p>###mutt 与发邮件
 具体的配置看wangcong的<a href="http://wangcong.org/2007/03/09/-e4-bd-bf-e7-94-a8mutt-e5-a4-84-e7-90-86-e7-94-b5-e5-ad-90-e9-82-ae-e4-bb-b6-2/">使用mutt处理电子邮件</a></p>
 
 <h3 id="删邮件:fd4348eee750480c168c18a1c3baf16a">删邮件</h3>
 
-<p>在.muttrc配置如下，你在mutt中delete的mail在gmail的web上看不到了.<br />
-<code>set delete=yes</code><br />
+<p>在.muttrc配置如下，你在mutt中delete的mail在gmail的web上看不到了.
+<code>set delete=yes</code>
 可能需要在mutt中配置gamil trash, 求反馈.</p>
 
-<p>###其他<br />
-* 国内gmail用户要用proxychains 做下代理, 这样就能使用gmail了:<br />
+<p>###其他
+* 国内gmail用户要用proxychains 做下代理, 这样就能使用gmail了:
 <code>set sendmail=&quot;proxychains /usr/bin/msmtp&quot;</code></p>
 
 <ul>
-<li><p>wangcong的blog中的配置&lt;不太符合习惯, 按着习惯和美感应该是:<br />
+<li><p>wangcong的blog中的配置&lt;不太符合习惯, 按着习惯和美感应该是:
 <code>set indent_str=&quot;&gt;&quot;</code></p></li>
 
 <li><p>mutt取消当前命令用ctrl g</p></li>
 
-<li><p>靠gmail 存了两份发送邮件, 把这句注释掉, gmail自己本身会缓存的:<br />
+<li><p>靠gmail 存了两份发送邮件, 把这句注释掉, gmail自己本身会缓存的:
 <code>set record = &quot;+[Gmail]/Sent Mail&quot;</code></p></li>
 </ul>
 
@@ -204,21 +204,7 @@ vim/emacs用来编辑邮件.</p>
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/howto\/mutt\/';
-    var disqus_title = '使用mutt收发邮件';
-    var disqus_url = 'http:\/\/firoyang.org\/howto\/mutt\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    
 </aside>
 
 <footer>

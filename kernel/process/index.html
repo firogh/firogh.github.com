@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/kernel/process/">
+<meta property="og:url" content="/kernel/process/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2015-02-27"/>
 <meta property="article:modified_time" content="2015-02-27"/>
@@ -34,9 +34,9 @@
 
 
 
-    <base href="http://firoyang.org/">
+    <base href="">
     <title> Linux process management</title>
-    <link rel="canonical" href="http://firoyang.org/kernel/process/">
+    <link rel="canonical" href="/kernel/process/">
     
 
     <link href='http://fonts.useso.com/css?family=Fjalla+One|Open+Sans:300' rel='stylesheet' type='text/css'>
@@ -130,7 +130,7 @@
         
         <ul id="tags">
           
-            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
+            <li> <a href="/tags/kernel">kernel</a> </li>
           
         </ul>
 
@@ -141,7 +141,7 @@
 
 <meta itemprop="wordCount" content="583">
 <meta itemprop="datePublished" content="2015-02-27">
-<meta itemprop="url" content="http://firoyang.org/kernel/process/">
+<meta itemprop="url" content="/kernel/process/">
 
 
   <div>
@@ -158,37 +158,37 @@
 
 <h2 id="mode-switch:a0551a02a524ed27c27781d2fca7bf97">Mode switch</h2>
 
-<p>esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。<br />
-读TSS段中进程的内核态指针付给ss和esp。<br />
-把用户态SS和esp指针保存在进程的内核栈上，<br />
-从内核态返回时，弹出进程内核栈上用户态ss和esp值。<br />
+<p>esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。
+读TSS段中进程的内核态指针付给ss和esp。
+把用户态SS和esp指针保存在进程的内核栈上，
+从内核态返回时，弹出进程内核栈上用户态ss和esp值。
 那么TSS段中进程的内核态指针是从哪里来的呢？</p>
 
-<p>cpu -&gt; tr -&gt; tss -&gt; esp0 =&gt; 内核栈-&gt;保存用户态cs eip esp等.<br />
-Hardware context switch.<br />
+<p>cpu -&gt; tr -&gt; tss -&gt; esp0 =&gt; 内核栈-&gt;保存用户态cs eip esp等.
+Hardware context switch.
 pt_regs</p>
 
 <h2 id="kernel-stack:a0551a02a524ed27c27781d2fca7bf97">kernel stack</h2>
 
-<p>从system_call中, 我们可以发现:<br />
+<p>从system_call中, 我们可以发现:
 GET_THREAD_INFO(%ebp)</p>
 
-<p>master idle进程的kernel stack在init/init_task.c:init_thread_union<br />
-其他进程的kernel stack是fork产生.<br />
-this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);<br />
+<p>master idle进程的kernel stack在init/init_task.c:init_thread_union
+其他进程的kernel stack是fork产生.
+this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);
 this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);</p>
 
 <h1 id="schedule-cfs:a0551a02a524ed27c27781d2fca7bf97">Schedule cfs</h1>
 
-<p>sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &gt; 5）<br />
-sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &lt;= 5）<br />
-sysctl_sched_min_granularity = 4ms<br />
-ideal_time = sum_runtime * se.weight/cfs_rq.weight<br />
+<p>sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &gt; 5）
+sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &lt;= 5）
+sysctl_sched_min_granularity = 4ms
+ideal_time = sum_runtime * se.weight/cfs_rq.weight
 vruntime +=  delta * NICE_0_LOAD/ se.weight;(if curr.nice!=NICE_0_LOAD)</p>
 
 <h1 id="idle:a0551a02a524ed27c27781d2fca7bf97">Idle</h1>
 
-<p>主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0<br />
+<p>主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0
 init_idle.</p>
 
 <h1 id="porcess-context:a0551a02a524ed27c27781d2fca7bf97">Porcess context</h1>
@@ -207,20 +207,20 @@ init_idle.</p>
 
 <h2 id="context-switch:a0551a02a524ed27c27781d2fca7bf97">Context switch</h2>
 
-<p>A context switch (also sometimes referred to as a process switch or a task switch)<br />
+<p>A context switch (also sometimes referred to as a process switch or a task switch)
 is the switching of the CPU (central processing unit) from one process or thread to another.</p>
 
 <h2 id="进程切换process-switch:a0551a02a524ed27c27781d2fca7bf97">进程切换process switch</h2>
 
-<p>也叫上下文切换context switch只发生在内核态，必须理解而不是记住。<br />
-一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，<br />
-如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，<br />
-新的培养液进来，旧的培养液也需要保存，以备稍后使用。<br />
-当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。<br />
-应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？<br />
-在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。<br />
-我们所关心的换出的进程的esp指针也保存在thread_struct当中了。<br />
-当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，<br />
+<p>也叫上下文切换context switch只发生在内核态，必须理解而不是记住。
+一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，
+如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，
+新的培养液进来，旧的培养液也需要保存，以备稍后使用。
+当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。
+应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？
+在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。
+我们所关心的换出的进程的esp指针也保存在thread_struct当中了。
+当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，
 也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。</p>
 
 <h2 id="switch-to:a0551a02a524ed27c27781d2fca7bf97">switch_to</h2>
@@ -229,19 +229,19 @@ is the switching of the CPU (central processing unit) from one process or thread
 
 <h3 id="load-tss:a0551a02a524ed27c27781d2fca7bf97">load TSS</h3>
 
-<p>进程切换只发生在内核态<br />
-/<em>将next进程的内核栈指针(next-&gt;thread-&gt;sp0)值更新到当前CPU的TSS中</em>/<br />
-load_sp0(tss, next);<br />
-task_struct.thread.sp0<br />
+<p>进程切换只发生在内核态
+/<em>将next进程的内核栈指针(next-&gt;thread-&gt;sp0)值更新到当前CPU的TSS中</em>/
+load_sp0(tss, next);
+task_struct.thread.sp0
 thread_struct</p>
 
 <h2 id="type-of-context-switch:a0551a02a524ed27c27781d2fca7bf97">type of Context switch</h2>
 
 <ul>
-<li>context switch by hardware<br />
-Old linux kernel<br /></li>
-<li>context switch by software<br />
-kernel 2.6<br /></li>
+<li>context switch by hardware
+Old linux kernel</li>
+<li>context switch by software
+kernel 2.6</li>
 </ul>
 
 <h1 id="common-concepts:a0551a02a524ed27c27781d2fca7bf97">Common concepts</h1>
@@ -256,65 +256,65 @@ kernel 2.6<br /></li>
 
 <h2 id="effective-user-group-id:a0551a02a524ed27c27781d2fca7bf97">Effective user/group ID</h2>
 
-<p>euid:4777<br />
-egid:2777<br />
-chmod u+s cynthia<br />
+<p>euid:4777
+egid:2777
+chmod u+s cynthia
 root进程执行cynthia后euid变为firo, saved user id变为root</p>
 
 <h2 id="example:a0551a02a524ed27c27781d2fca7bf97">Example</h2>
 
-<p>u+s 就可以<br />
-firo@firo tmp$ iptables -L<br />
-iptables v1.4.21: can&rsquo;t initialize iptables table `filter&rsquo;: Permission denied (you must be root)<br />
+<p>u+s 就可以
+firo@firo tmp$ iptables -L
+iptables v1.4.21: can&rsquo;t initialize iptables table `filter&rsquo;: Permission denied (you must be root)
 Perhaps iptables or your kernel needs to be upgraded.</p>
 
 <p>chmod +s /usr/sbin/iptables</p>
 
-<p>firo@firo tmp$ iptables -L<br />
-Chain INPUT (policy ACCEPT)<br />
+<p>firo@firo tmp$ iptables -L
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination</p>
 
-<p>Chain FORWARD (policy ACCEPT)<br />
+<p>Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination</p>
 
-<p>Chain OUTPUT (policy ACCEPT)<br />
+<p>Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination</p>
 
 <p>chmod -s /usr/sbin/iptables</p>
 
-<p>iptables -L<br />
-iptables v1.4.21: can&rsquo;t initialize iptables table `filter&rsquo;: Permission denied (you must be root)<br />
+<p>iptables -L
+iptables v1.4.21: can&rsquo;t initialize iptables table `filter&rsquo;: Permission denied (you must be root)
 Perhaps iptables or your kernel needs to be upgraded.</p>
 
 <h1 id="scheduling-strategies:a0551a02a524ed27c27781d2fca7bf97">Scheduling strategies</h1>
 
-<p>multiprogramming<br />
-time-sharing(multi tasking)<br />
+<p>multiprogramming
+time-sharing(multi tasking)
 real-time</p>
 
 <h1 id="multitasking:a0551a02a524ed27c27781d2fca7bf97">Multitasking</h1>
 
 <h2 id="reference:a0551a02a524ed27c27781d2fca7bf97">Reference</h2>
 
-<p>codes: comments of __schedule()<br />
+<p>codes: comments of __schedule()
 Book: Linux kernel development</p>
 
-<p>##Common concepts<br />
-* The process scheduler decides which process runs, when, and for how long.<br />
-* Multitasking: cooperative and preemptive.<br />
-* Preemption:Involuntarily suspending a running process.<br />
-* Timeslice: a slice of cpu&rsquo;s time.<br />
-* Yielding: The act of a process voluntarily suspending itself.<br />
-* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.<br />
-* Time sharing: is cooperative mutitasking,<br />
-* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!<br />
-so if !CONFIG_PREEMPT* is cooperative!<br />
+<p>##Common concepts
+* The process scheduler decides which process runs, when, and for how long.
+* Multitasking: cooperative and preemptive.
+* Preemption:Involuntarily suspending a running process.
+* Timeslice: a slice of cpu&rsquo;s time.
+* Yielding: The act of a process voluntarily suspending itself.
+* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.
+* Time sharing: is cooperative mutitasking,
+* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!
+so if !CONFIG_PREEMPT* is cooperative!
 * CFS: Pick the task with the smallest vruntime. That&rsquo;s it!</p>
 
-<p>##TIF_NEED_RESCHED<br />
-* The situation of set task need resched<br />
-scheduler_tick()<br />
-try_to_wake_up() when a process that has a higher priority than <em>current</em> is awakened.<br />
+<p>##TIF_NEED_RESCHED
+* The situation of set task need resched
+scheduler_tick()
+try_to_wake_up() when a process that has a higher priority than <em>current</em> is awakened.
 Other?</p>
 
 <h2 id="save-all:a0551a02a524ed27c27781d2fca7bf97">SAVE_ALL</h2>
@@ -325,16 +325,16 @@ Other?</p>
 
 <h2 id="fork-oraphan:a0551a02a524ed27c27781d2fca7bf97">fork, oraphan</h2>
 
-<p>similar &amp;<br />
+<p>similar &amp;
 not a goup leader inherit with parent pgid for setsid</p>
 
 <h2 id="setsid:a0551a02a524ed27c27781d2fca7bf97">setsid</h2>
 
 <ul>
-<li>session leader<br /></li>
-<li>process group leader<br />
-A signal directed to a process group is delivered individually to<br />
-all of the processes that are members of the group.<br /></li>
+<li>session leader</li>
+<li>process group leader
+A signal directed to a process group is delivered individually to
+all of the processes that are members of the group.</li>
 
 <li><p>deatch controlling terminals(confusing)</p>
 
@@ -344,31 +344,31 @@ all of the processes that are members of the group.<br /></li>
 
 <h2 id="deal-with-fd:a0551a02a524ed27c27781d2fca7bf97">deal with fd</h2>
 
-<p>below both output<br />
-守护进程继承了shell的屏幕和键盘输入.<br />
-pid_t pid= fork();<br />
-if (pid != 0) {<br />
-system(&ldquo;sleep 3&rdquo;);<br />
-printf(&ldquo;parent exit\n&rdquo;);<br />
-} else {<br />
-printf(&ldquo;child start\n&rdquo;);<br />
-setsid();<br />
-fprintf(stdout, &ldquo;out child\n&rdquo;);<br />
+<p>below both output
+守护进程继承了shell的屏幕和键盘输入.
+pid_t pid= fork();
+if (pid != 0) {
+system(&ldquo;sleep 3&rdquo;);
+printf(&ldquo;parent exit\n&rdquo;);
+} else {
+printf(&ldquo;child start\n&rdquo;);
+setsid();
+fprintf(stdout, &ldquo;out child\n&rdquo;);
 fprintf(stderr, &ldquo;err child\n&rdquo;);</p>
 
 <p>system(&ldquo;sleep 7&rdquo;);</p>
 
-<p>fprintf(stdout, &ldquo;after out child\n&rdquo;);<br />
-fprintf(stderr, &ldquo;after err child\n&rdquo;);<br />
-printf(&ldquo;child exit\n&rdquo;);<br />
+<p>fprintf(stdout, &ldquo;after out child\n&rdquo;);
+fprintf(stderr, &ldquo;after err child\n&rdquo;);
+printf(&ldquo;child exit\n&rdquo;);
 }</p>
 
 <h1 id="zombie-process:a0551a02a524ed27c27781d2fca7bf97">Zombie process</h1>
 
 <h2 id="defunct:a0551a02a524ed27c27781d2fca7bf97"><defunct></h2>
 
-<p>forked child not reaped by parent will hooked in process list.<br />
-if parent was killed and exit <defunct> will repaped.<br />
+<p>forked child not reaped by parent will hooked in process list.
+if parent was killed and exit <defunct> will repaped.
 <defunct>表明父活着, 但不收尸.</p>
 
 <h2 id="double-fork-for-parent-long-live:a0551a02a524ed27c27781d2fca7bf97">Double fork for parent long live</h2>
@@ -379,10 +379,10 @@ if parent was killed and exit <defunct> will repaped.<br />
 <h1 id="faq:a0551a02a524ed27c27781d2fca7bf97">FAQ</h1>
 
 <ul>
-<li><p>thread_info<br />
+<li><p>thread_info
 可以快速访问task_struct.</p></li>
 
-<li><p>swtch_stack<br />
+<li><p>swtch_stack
 线程切换</p></li>
 </ul>
 
@@ -392,21 +392,7 @@ if parent was killed and exit <defunct> will repaped.<br />
 
 <aside id=comments>
     <div><h2> Comments </h2></div>
-    <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/kernel\/process\/';
-    var disqus_title = 'Linux process management';
-    var disqus_url = 'http:\/\/firoyang.org\/kernel\/process\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    
 </aside>
 
 <footer>

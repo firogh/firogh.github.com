@@ -1,99 +1,99 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Kernel on Firo Notes </title>
+      <title>Kernel on  </title>
       <generator uri="https://gohugo.io">Hugo</generator>
-    <link>http://firoyang.org/tags/kernel/</link>
-    <language>en-us</language>
-    <author>Firo Yang</author>
-    <copyright>Copyright (c) 2015, Nanshu Wang; all rights reserved.</copyright>
+    <link>/tags/kernel/</link>
+    
+    
+    
     <updated>Sun, 24 May 2015 09:52:12 CST</updated>
     
     <item>
       <title>The Journey to RCU</title>
-      <link>http://firoyang.org/kernel/rcu/</link>
+      <link>/kernel/rcu/</link>
       <pubDate>Sun, 24 May 2015 09:52:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/rcu/</guid>
+      
+      <guid>/kernel/rcu/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
 &lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
 
-&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.&lt;br /&gt;
-scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.&lt;br /&gt;
-scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.&lt;br /&gt;
-另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.&lt;br /&gt;
-From wikipedia,  A system whose performance improves after adding hardware,&lt;br /&gt;
-proportionally to the capacity added, is said to be a scalable system.&lt;br /&gt;
-&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;&lt;br /&gt;
-言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.&lt;br /&gt;
-Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;br /&gt;
-* Increase in cost of conventional locks&lt;br /&gt;
-第一个原因也是最重要的, 最根本原因.&lt;br /&gt;
-传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;&lt;br /&gt;
-一种新的锁机制减少访问内存,就成了强烈的需求.&lt;br /&gt;
-* Cache benefits of lock-free reads&lt;br /&gt;
-传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.&lt;br /&gt;
-3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的&lt;br /&gt;
-spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,&lt;br /&gt;
-之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.&lt;br /&gt;
+&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
+scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
+scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
+另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
+From wikipedia,  A system whose performance improves after adding hardware,
+proportionally to the capacity added, is said to be a scalable system.
+&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
+言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
+Read Copy Update HOWTO介绍了当初RCU开发的动机:
+* Increase in cost of conventional locks
+第一个原因也是最重要的, 最根本原因.
+传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
+一种新的锁机制减少访问内存,就成了强烈的需求.
+* Cache benefits of lock-free reads
+传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
+3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
+spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
+之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
 在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
-像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,&lt;br /&gt;
-其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.&lt;br /&gt;
-* Avoiding complicated races&lt;br /&gt;
+像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
+其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
+* Avoiding complicated races
 No deadlock, 减少了开发维护.&lt;/p&gt;
 
 &lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
 
-&lt;p&gt;list rcu&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;list rcu
+&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
 &lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
+&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
+&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
 RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
 
 &lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Publish-Subscribe&lt;br /&gt;
-For updater before synchnization_rcu(); similar to softirq rcu&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Observer&lt;br /&gt;
-For updater to wait For Pre-Existing RCU Readers to Complete&lt;br /&gt;
-Maintain Multiple Versions of Recently Updated Objects&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Publish-Subscribe
+For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
+&lt;li&gt;Observer
+For updater to wait For Pre-Existing RCU Readers to Complete
+Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
 
 &lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
 
-&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules&lt;br /&gt;
-obeyed by the critical sections of pure spinlocks:&lt;br /&gt;
+&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
+obeyed by the critical sections of pure spinlocks:
 blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
 
 &lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
 stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
 
 &lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
 
 &lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
 
-&lt;p&gt;#FAQ&lt;br /&gt;
-* Difference with primitive and atomic&lt;br /&gt;
-* Grace period is synchroinze_rcu or a softirq justment&lt;br /&gt;
+&lt;p&gt;#FAQ
+* Difference with primitive and atomic
+* Grace period is synchroinze_rcu or a softirq justment
 * __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
 
 &lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
@@ -104,31 +104,31 @@ stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
 
-&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.&lt;br /&gt;
-本文不关心RCU的实现.&lt;br /&gt;
-本文的核心目标就是了解如何使用RCU.&lt;br /&gt;
-所有使用RCU代码, 都可以分为4部分:&lt;br /&gt;
-RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.&lt;br /&gt;
-update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;&lt;br /&gt;
-synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.&lt;br /&gt;
-free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.&lt;br /&gt;
-Paul的paper总结了5种用法, 并且附上了代码, 便于理解.&lt;br /&gt;
+&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
+本文不关心RCU的实现.
+本文的核心目标就是了解如何使用RCU.
+所有使用RCU代码, 都可以分为4部分:
+RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
+update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
+synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
+free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
+Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
 理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
 
 &lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
 
-&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施&lt;br /&gt;
-上面的RCU read critical section和synchronize可以构成completion的语义.&lt;br /&gt;
-为什么要用RCU而不是内核自身提供的completion函数呢?&lt;br /&gt;
-Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.&lt;br /&gt;
+&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
+上面的RCU read critical section和synchronize可以构成completion的语义.
+为什么要用RCU而不是内核自身提供的completion函数呢?
+Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
 所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
 
 &lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
 
-&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.&lt;br /&gt;
-但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.&lt;br /&gt;
-Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多&lt;br /&gt;
-同样也会带来性能的损耗,而不是almost zero in his paper.&lt;br /&gt;
+&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
+但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
+Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
+同样也会带来性能的损耗,而不是almost zero in his paper.
 引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
 
 &lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
@@ -141,188 +141,188 @@ Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq
     
     <item>
       <title>Interrupt</title>
-      <link>http://firoyang.org/kernel/interrupt/</link>
+      <link>/kernel/interrupt/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/interrupt/</guid>
+      
+      <guid>/kernel/interrupt/</guid>
       <description>
 
 &lt;h1 id=&#34;the-player:a1a57da4951c1ceae71cfb4abd80b6cf&#34;&gt;The player&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Interrupt &amp;ndash; irq,softirq&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Process &amp;ndash; user process, kernel thread(workqueue)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Interrupt &amp;ndash; irq,softirq&lt;/li&gt;
+&lt;li&gt;Process &amp;ndash; user process, kernel thread(workqueue)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;common-concpets:a1a57da4951c1ceae71cfb4abd80b6cf&#34;&gt;Common concpets&lt;/h1&gt;
 
 &lt;p&gt;userspace: A process executing its own code outside the kernel.&lt;/p&gt;
 
-&lt;p&gt;##What is context?&lt;br /&gt;
-###process context/user context:&lt;br /&gt;
-The kernel executing on behalf of a particular process&lt;br /&gt;
-(ie. a system call or trap) or kernel thread.&lt;br /&gt;
-You can tell which process with the current macro.)&lt;br /&gt;
-Not to be confused with userspace.&lt;br /&gt;
+&lt;p&gt;##What is context?
+###process context/user context:
+The kernel executing on behalf of a particular process
+(ie. a system call or trap) or kernel thread.
+You can tell which process with the current macro.)
+Not to be confused with userspace.
 Can be interrupted by software or hardware interrupts.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;register, kernel task_struct, stack. user text stack heap&lt;br /&gt;
-###interrupt context:&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Firo thinks the key point is interrupt context is irrelevant to process context!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Can not schedule!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;register, maybe interrupt/process stack.&lt;br /&gt;
-###softirq context&lt;br /&gt;
-in the context of whichever process happens to be running at the wrong time;&lt;br /&gt;
-that is the &amp;ldquo;randomly chosen victim&amp;rdquo; aspect that Thomas was talking about.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;register, kernel task_struct, stack. user text stack heap
+###interrupt context:&lt;/li&gt;
+&lt;li&gt;Firo thinks the key point is interrupt context is irrelevant to process context!&lt;/li&gt;
+&lt;li&gt;Can not schedule!&lt;/li&gt;
+&lt;li&gt;register, maybe interrupt/process stack.
+###softirq context
+in the context of whichever process happens to be running at the wrong time;
+that is the &amp;ldquo;randomly chosen victim&amp;rdquo; aspect that Thomas was talking about.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;##Preemption&lt;br /&gt;
-* Linux kernel user mode is always User preemption.&lt;br /&gt;
-When returning to user-space from a system call.&lt;br /&gt;
-When returning to user-space from an interrupt hander.&lt;br /&gt;
-* Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;br /&gt;
-If a task in the kernel explicitly calls schedule()&lt;br /&gt;
-If a task in the kernel blocked (which results in a all to schedule())&lt;br /&gt;
-* Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;br /&gt;
-schedule + blcoked&lt;br /&gt;
-When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+&lt;p&gt;##Preemption
+* Linux kernel user mode is always User preemption.
+When returning to user-space from a system call.
+When returning to user-space from an interrupt hander.
+* Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.
+If a task in the kernel explicitly calls schedule()
+If a task in the kernel blocked (which results in a all to schedule())
+* Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.
+schedule + blcoked
+When an interrupt handler exits, before returning to kernel-space.
 When kernel code becomes preemptible again.&lt;/p&gt;
 
-&lt;p&gt;###Entries of preempt schdule, FIXME&lt;br /&gt;
-1 After Interrupt return,preempt_count_irq.&lt;br /&gt;
-2 cond_resched&lt;br /&gt;
+&lt;p&gt;###Entries of preempt schdule, FIXME
+1 After Interrupt return,preempt_count_irq.
+2 cond_resched
 3 preempt_count&lt;/p&gt;
 
-&lt;p&gt;###What is the PREEMPT_ACTIVE&lt;br /&gt;
-* This sets a flag bit in the preemption counter that has such a large value&lt;br /&gt;
+&lt;p&gt;###What is the PREEMPT_ACTIVE
+* This sets a flag bit in the preemption counter that has such a large value
     that it is never affected by the regular preemption counter increments&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;It indicates to the schedule function that scheduling was not&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;It indicates to the schedule function that scheduling was not
 invoked in the normal way but as a result of a kernel preemption.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;This ensures that the next task is selected as quickly as possible without&lt;br /&gt;
-the hassle of deactivating the current one. If a high-priority task is waiting&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;This ensures that the next task is selected as quickly as possible without
+the hassle of deactivating the current one. If a high-priority task is waiting
 to be scheduled, it will be picked by the scheduler class and will be allowed to run.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;###preempt_count&lt;br /&gt;
-* preempt 8&lt;br /&gt;
-* softirq 8&lt;br /&gt;
-* irq   4&lt;br /&gt;
-* preempt active 1&lt;br /&gt;
+&lt;p&gt;###preempt_count
+* preempt 8
+* softirq 8
+* irq   4
+* preempt active 1
 * nmi 1&lt;/p&gt;
 
 &lt;p&gt;#Interrupt&lt;/p&gt;
 
 &lt;h2 id=&#34;init:a1a57da4951c1ceae71cfb4abd80b6cf&#34;&gt;init&lt;/h2&gt;
 
-&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
+&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;
 irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
 
-&lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
-* in_irq&lt;br /&gt;
-in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!&lt;br /&gt;
+&lt;p&gt;##Interrupt Context terminology
+* in_irq
+in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!
 +irq disable 部设计preempt_cout&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;in_softirq&lt;br /&gt;
-should rename to in_softirq_or_bh_disable()&lt;br /&gt;
-local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;in_softirq
+should rename to in_softirq_or_bh_disable()
+local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)
 __do_softirq use __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET), damn it!&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;in_interrupt&lt;br /&gt;
-一种是irq路径上的do_softirq, 即in_serving_softirq&lt;br /&gt;
-+local_bh_disbale()&lt;br /&gt;
-//not in softirq context!!!&lt;br /&gt;
-+local_bh_enable()&lt;br /&gt;
-硬中断呢?&lt;br /&gt;
-do_IRQ,肯定是.&lt;br /&gt;
-local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;in_interrupt
+一种是irq路径上的do_softirq, 即in_serving_softirq
++local_bh_disbale()
+//not in softirq context!!!
++local_bh_enable()
+硬中断呢?
+do_IRQ,肯定是.
+local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check
 [Question about in_interrupt() semantics with regard to softirqs]()&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;##softirq&lt;br /&gt;
-同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。&lt;br /&gt;
-* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
-current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
-* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
+&lt;p&gt;##softirq
+同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。
+* not allow execute nest but can recusive lock:local_bh_disable
+current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.
+* hardirq on, can&amp;rsquo;t sleep
 * not percpu&lt;/p&gt;
 
 &lt;h2 id=&#34;tasklet-and-kernel-timer-is-based-on-softirq:a1a57da4951c1ceae71cfb4abd80b6cf&#34;&gt;tasklet and kernel timer is based on softirq&lt;/h2&gt;
 
-&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.&lt;br /&gt;
-.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上&lt;br /&gt;
-* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,&lt;br /&gt;
- which run in the context of a randomly chosen victim&lt;br /&gt;
+&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.
+.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上
+* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,
+ which run in the context of a randomly chosen victim
  w/o the ability to put any control on them. &amp;ndash;Thomas Gleixner&lt;/p&gt;
 
-&lt;p&gt;tasklet different with other softirq is run  signal cpu core&lt;br /&gt;
+&lt;p&gt;tasklet different with other softirq is run  signal cpu core
 spinlock_bh wider then spinlock&lt;/p&gt;
 
-&lt;p&gt;###time of softirq&lt;br /&gt;
-* follow hardirq, irq_exit()&lt;br /&gt;
-* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
+&lt;p&gt;###time of softirq
+* follow hardirq, irq_exit()
+* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.
 * ksoftirqd&lt;/p&gt;
 
-&lt;p&gt;###tasklet&lt;br /&gt;
-tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?&lt;br /&gt;
-tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了&lt;br /&gt;
+&lt;p&gt;###tasklet
+tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?
+tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了
 只有一个cpu执行同一时刻.&lt;/p&gt;
 
-&lt;p&gt;#Process&lt;br /&gt;
-##kthread and workqueue&lt;br /&gt;
-kthread do specific func onshot&lt;br /&gt;
-workqueue can dynamic set different specific work&lt;br /&gt;
+&lt;p&gt;#Process
+##kthread and workqueue
+kthread do specific func onshot
+workqueue can dynamic set different specific work
 workqueue is just a coat of kthread&lt;/p&gt;
 
 &lt;h2 id=&#34;differences-between-softirq-and-workqueue:a1a57da4951c1ceae71cfb4abd80b6cf&#34;&gt;Differences between softirq and workqueue&lt;/h2&gt;
 
-&lt;p&gt;Softirq(tasklet)&lt;br /&gt;
-init static:    DECLARE_TASKLET(), DECLARE_TASKLET_DISABLED()&lt;br /&gt;
-init dynamic:   tasklet_init()&lt;br /&gt;
-schedule:   tasklet_schedule()&lt;br /&gt;
-exit:       tasklet_kill()&lt;br /&gt;
+&lt;p&gt;Softirq(tasklet)
+init static:    DECLARE_TASKLET(), DECLARE_TASKLET_DISABLED()
+init dynamic:   tasklet_init()
+schedule:   tasklet_schedule()
+exit:       tasklet_kill()
 pros and cons:  execute in interrupt context, serialization, tasklet blonged to the cpu which tasklet_schedule() it, oneshot&lt;/p&gt;
 
-&lt;p&gt;Workqueue&lt;br /&gt;
-init static:    DECLARE_WORK()&lt;br /&gt;
-init dynamic:   kzalloc() INIT_WORK(), kzalloc() PREPARE_WORK()&lt;br /&gt;
+&lt;p&gt;Workqueue
+init static:    DECLARE_WORK()
+init dynamic:   kzalloc() INIT_WORK(), kzalloc() PREPARE_WORK()
 schedule1:  create_singlethread_workqueue(), create_workqueue()&lt;br /&gt;
-        queue_work()&lt;br /&gt;
-exit1:      flush_workqueue(), destroy_workqueue()&lt;br /&gt;
-schedule2:  schedule_work()&lt;br /&gt;
-exit2:      (none)&lt;br /&gt;
+        queue_work()
+exit1:      flush_workqueue(), destroy_workqueue()
+schedule2:  schedule_work()
+exit2:      (none)
 pros and cons:  execute in process context, workqueue has two type, driver can create workqueue or use system workqueue, oneshot&lt;/p&gt;
 
-&lt;p&gt;#FAQ&lt;br /&gt;
-##When to save irq rather than just disable irq&lt;br /&gt;
-local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+&lt;p&gt;#FAQ
+##When to save irq rather than just disable irq
+local_irq_disable() used in the code path that never disabled interrupts.
 local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 
-&lt;p&gt;##what about irq nested?&lt;br /&gt;
+&lt;p&gt;##what about irq nested?
 &lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;##irq and lock&lt;br /&gt;
-irq and lock are complete different things!&lt;br /&gt;
+&lt;p&gt;##irq and lock
+irq and lock are complete different things!
 when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Linux device driver</title>
-      <link>http://firoyang.org/kernel/dd/</link>
+      <link>/kernel/dd/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/dd/</guid>
+      
+      <guid>/kernel/dd/</guid>
       <description>
 
-&lt;p&gt;#Bibilography&lt;br /&gt;
-Driver porting: Device model overview: &lt;a href=&#34;http://lwn.net/Articles/31185/&#34;&gt;http://lwn.net/Articles/31185/&lt;/a&gt;&lt;br /&gt;
-/Documentation/driver-model&lt;br /&gt;
+&lt;p&gt;#Bibilography
+Driver porting: Device model overview: &lt;a href=&#34;http://lwn.net/Articles/31185/&#34;&gt;http://lwn.net/Articles/31185/&lt;/a&gt;
+/Documentation/driver-model
 The Linux Kernel Driver Model&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;Contents&lt;/h1&gt;
@@ -332,63 +332,63 @@ The Linux Kernel Driver Model&lt;/p&gt;
 &lt;h1 id=&#34;device-tree:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;Device tree&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;What infomation was included in dtb&lt;br /&gt;
-HW platform识别，runtime parameter传递以及硬件设备描述&lt;br /&gt;
-for platform device init see arch/powerpc/platforms/52xx/media5200.c ppc_init&lt;br /&gt;
-mpc52xx_declare_of_platform_devices&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;How does the device tree subsystem read and parse the dts file?&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;What infomation was included in dtb
+HW platform识别，runtime parameter传递以及硬件设备描述
+for platform device init see arch/powerpc/platforms/52xx/media5200.c ppc_init
+mpc52xx_declare_of_platform_devices&lt;/li&gt;
+&lt;li&gt;How does the device tree subsystem read and parse the dts file?&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#Why DDM?&lt;br /&gt;
+&lt;p&gt;#Why DDM?
 The device model was originally intended to make power management tasks easier&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;I/o Architecture
+1 Expansion hardware.
+Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).
+2 Communication with peripherals
+I/O ports
+I/O memory mapping
+Interrupts
+hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;linux-设备驱动模型:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;linux 设备驱动模型&lt;/h1&gt;
 
-&lt;p&gt;分为三层：&lt;br /&gt;
-从结构上看，每一层都有对应的数据结构。&lt;br /&gt;
-1 设备驱动层，驱动开发工程师，也就是码农们，设计的akashadevice  akashadriver 结构体。&lt;br /&gt;
-2 驱动程序核心层 ，是一个通用层，内核中的标准结构，device device_driver bus_type.&lt;br /&gt;
-3 Kobject核心层，也是一个通用层， kobject kobj_type kset 组成。&lt;br /&gt;
+&lt;p&gt;分为三层：
+从结构上看，每一层都有对应的数据结构。
+1 设备驱动层，驱动开发工程师，也就是码农们，设计的akashadevice  akashadriver 结构体。
+2 驱动程序核心层 ，是一个通用层，内核中的标准结构，device device_driver bus_type.
+3 Kobject核心层，也是一个通用层， kobject kobj_type kset 组成。
 其实下面还有一个sys文件系统层。&lt;/p&gt;
 
-&lt;p&gt;从操作上看，也是分为三类，初始化 注册 注销&lt;br /&gt;
-1 初始化，是局限于每一层的。&lt;br /&gt;
+&lt;p&gt;从操作上看，也是分为三类，初始化 注册 注销
+1 初始化，是局限于每一层的。
 2 注册和注销就是贯穿三层的。&lt;/p&gt;
 
-&lt;p&gt;，我们知道其实总线就是铁轨，而各种设备就是北京东站，大连站。&lt;br /&gt;
-我们人呢，就是铁轨上跑的数据。driver还用说就是火车了呗。&lt;br /&gt;
-Bus总线这类设备比较特殊,需要内核对总线支持，即总线的核心层；&lt;br /&gt;
-另一部分在外设的驱动程序中，负责把驱动挂接到总线，如pci_driver, usb_driver, i2c_driver。记住，这是说的总线的驱动。和挂接在总线上的设备驱动不同。&lt;br /&gt;
-就好像open系统调用和驱动程序中file_operations中xxx_open的关系一样。&lt;br /&gt;
-作为中间传输用途的总线设备的驱动是在内核当中，已经写好了，不用像各种总线上的设备一样，再写什么专门服务pci，i2c，spi等&lt;br /&gt;
-总线设备的驱动，这里感谢下内核，又轻松了不少。pci之类的总线的，驱动就是match probe remove的函数，&lt;br /&gt;
-不用专门封装成一个结构体，像我们遇到的block char设备，他们才是真中的外设。总之总线要单独看。&lt;br /&gt;
+&lt;p&gt;，我们知道其实总线就是铁轨，而各种设备就是北京东站，大连站。
+我们人呢，就是铁轨上跑的数据。driver还用说就是火车了呗。
+Bus总线这类设备比较特殊,需要内核对总线支持，即总线的核心层；
+另一部分在外设的驱动程序中，负责把驱动挂接到总线，如pci_driver, usb_driver, i2c_driver。记住，这是说的总线的驱动。和挂接在总线上的设备驱动不同。
+就好像open系统调用和驱动程序中file_operations中xxx_open的关系一样。
+作为中间传输用途的总线设备的驱动是在内核当中，已经写好了，不用像各种总线上的设备一样，再写什么专门服务pci，i2c，spi等
+总线设备的驱动，这里感谢下内核，又轻松了不少。pci之类的总线的，驱动就是match probe remove的函数，
+不用专门封装成一个结构体，像我们遇到的block char设备，他们才是真中的外设。总之总线要单独看。
 作为一个外设的驱动是很不容易除了要完成外设本身功能的部分还要处理好和总线的关系。对于pci总线上设备驱动就是由pci_driver来调和的。&lt;/p&gt;
 
-&lt;p&gt;kobject核心层的注册有点小技巧，他是先在作为参数kobj结构体中指定了，这个结构体属于哪里kset，之后在注册函数里，在kset里把kobj链入。&lt;br /&gt;
-PS：设备注册和驱动注册是分开的。当设备注册后通过udev开始寻找驱动的过程。驱动是通过pci_device_id和相应设备建立关联的，不是major 和minor设备号。&lt;br /&gt;
+&lt;p&gt;kobject核心层的注册有点小技巧，他是先在作为参数kobj结构体中指定了，这个结构体属于哪里kset，之后在注册函数里，在kset里把kobj链入。
+PS：设备注册和驱动注册是分开的。当设备注册后通过udev开始寻找驱动的过程。驱动是通过pci_device_id和相应设备建立关联的，不是major 和minor设备号。
 可别高乱了。&lt;/p&gt;
 
 &lt;h1 id=&#34;sys-文件系统:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;Sys 文件系统&lt;/h1&gt;
 
-&lt;p&gt;bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。&lt;br /&gt;
-class, 类树按功能分类设备。&lt;br /&gt;
+&lt;p&gt;bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。
+class, 类树按功能分类设备。
 device，干货，其他的目录都指向这里。&lt;/p&gt;
 
 &lt;h1 id=&#34;kobject:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;Kobject&lt;/h1&gt;
 
-&lt;p&gt;清0，init，set name，get，put&lt;br /&gt;
+&lt;p&gt;清0，init，set name，get，put
 在sys中是dir，attr 是文件&lt;/p&gt;
 
 &lt;h1 id=&#34;kobj-type:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;kobj_type&lt;/h1&gt;
@@ -401,32 +401,32 @@ device，干货，其他的目录都指向这里。&lt;/p&gt;
 
 &lt;h1 id=&#34;bus-device-driver:f461f7fb6c06186977dc8762a4ec28f8&#34;&gt;Bus, device, driver.&lt;/h1&gt;
 
-&lt;p&gt;#devres&lt;br /&gt;
-* devm_kfree&lt;br /&gt;
-&lt;a href=&#34;http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html&#34;&gt;devm_kfree does not need for fail case of probe function and for remove function.&lt;/a&gt;&lt;br /&gt;
-__device_release_driver&lt;br /&gt;
+&lt;p&gt;#devres
+* devm_kfree
+&lt;a href=&#34;http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html&#34;&gt;devm_kfree does not need for fail case of probe function and for remove function.&lt;/a&gt;
+__device_release_driver
 really_probe&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;a must use devm_kfree Julia Lawall&lt;br /&gt;
-The function at91_dt_node_to_map is ultimately called by the function&lt;br /&gt;
-&amp;gt; pinctrl_get, which is an exported function.  Since it is possible that this&lt;br /&gt;
-&amp;gt; function is not called from within a probe function, for safety, the kfree&lt;br /&gt;
-&amp;gt; is converted to a devm_kfree, to both free the data and remove it from the&lt;br /&gt;
-&amp;gt; device in a failure situation.&lt;br /&gt;
-*for noop devm_kmalloc_release&lt;br /&gt;
-devm_kmalloc()-&amp;gt;dr = alloc_dr(devm_kmalloc_release, size, gfp);&lt;br /&gt;
-see release_nodes() -&amp;gt;kfree(dr);&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;a must use devm_kfree Julia Lawall
+The function at91_dt_node_to_map is ultimately called by the function
+&amp;gt; pinctrl_get, which is an exported function.  Since it is possible that this
+&amp;gt; function is not called from within a probe function, for safety, the kfree
+&amp;gt; is converted to a devm_kfree, to both free the data and remove it from the
+&amp;gt; device in a failure situation.
+*for noop devm_kmalloc_release
+devm_kmalloc()-&amp;gt;dr = alloc_dr(devm_kmalloc_release, size, gfp);
+see release_nodes() -&amp;gt;kfree(dr);&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
     
     <item>
       <title>Linux process management</title>
-      <link>http://firoyang.org/kernel/process/</link>
+      <link>/kernel/process/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/process/</guid>
+      
+      <guid>/kernel/process/</guid>
       <description>
 
 &lt;h1 id=&#34;protection-ring:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Protection ring&lt;/h1&gt;
@@ -439,37 +439,37 @@ see release_nodes() -&amp;gt;kfree(dr);&lt;br /&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;mode-switch:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Mode switch&lt;/h2&gt;
 
-&lt;p&gt;esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。&lt;br /&gt;
-读TSS段中进程的内核态指针付给ss和esp。&lt;br /&gt;
-把用户态SS和esp指针保存在进程的内核栈上，&lt;br /&gt;
-从内核态返回时，弹出进程内核栈上用户态ss和esp值。&lt;br /&gt;
+&lt;p&gt;esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。
+读TSS段中进程的内核态指针付给ss和esp。
+把用户态SS和esp指针保存在进程的内核栈上，
+从内核态返回时，弹出进程内核栈上用户态ss和esp值。
 那么TSS段中进程的内核态指针是从哪里来的呢？&lt;/p&gt;
 
-&lt;p&gt;cpu -&amp;gt; tr -&amp;gt; tss -&amp;gt; esp0 =&amp;gt; 内核栈-&amp;gt;保存用户态cs eip esp等.&lt;br /&gt;
-Hardware context switch.&lt;br /&gt;
+&lt;p&gt;cpu -&amp;gt; tr -&amp;gt; tss -&amp;gt; esp0 =&amp;gt; 内核栈-&amp;gt;保存用户态cs eip esp等.
+Hardware context switch.
 pt_regs&lt;/p&gt;
 
 &lt;h2 id=&#34;kernel-stack:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;kernel stack&lt;/h2&gt;
 
-&lt;p&gt;从system_call中, 我们可以发现:&lt;br /&gt;
+&lt;p&gt;从system_call中, 我们可以发现:
 GET_THREAD_INFO(%ebp)&lt;/p&gt;
 
-&lt;p&gt;master idle进程的kernel stack在init/init_task.c:init_thread_union&lt;br /&gt;
-其他进程的kernel stack是fork产生.&lt;br /&gt;
-this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;br /&gt;
+&lt;p&gt;master idle进程的kernel stack在init/init_task.c:init_thread_union
+其他进程的kernel stack是fork产生.
+this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);
 this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;/p&gt;
 
 &lt;h1 id=&#34;schedule-cfs:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Schedule cfs&lt;/h1&gt;
 
-&lt;p&gt;sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &amp;gt; 5）&lt;br /&gt;
-sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &amp;lt;= 5）&lt;br /&gt;
-sysctl_sched_min_granularity = 4ms&lt;br /&gt;
-ideal_time = sum_runtime * se.weight/cfs_rq.weight&lt;br /&gt;
+&lt;p&gt;sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &amp;gt; 5）
+sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &amp;lt;= 5）
+sysctl_sched_min_granularity = 4ms
+ideal_time = sum_runtime * se.weight/cfs_rq.weight
 vruntime +=  delta * NICE_0_LOAD/ se.weight;(if curr.nice!=NICE_0_LOAD)&lt;/p&gt;
 
 &lt;h1 id=&#34;idle:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Idle&lt;/h1&gt;
 
-&lt;p&gt;主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0&lt;br /&gt;
+&lt;p&gt;主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0
 init_idle.&lt;/p&gt;
 
 &lt;h1 id=&#34;porcess-context:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Porcess context&lt;/h1&gt;
@@ -488,20 +488,20 @@ init_idle.&lt;/p&gt;
 
 &lt;h2 id=&#34;context-switch:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Context switch&lt;/h2&gt;
 
-&lt;p&gt;A context switch (also sometimes referred to as a process switch or a task switch)&lt;br /&gt;
+&lt;p&gt;A context switch (also sometimes referred to as a process switch or a task switch)
 is the switching of the CPU (central processing unit) from one process or thread to another.&lt;/p&gt;
 
 &lt;h2 id=&#34;进程切换process-switch:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;进程切换process switch&lt;/h2&gt;
 
-&lt;p&gt;也叫上下文切换context switch只发生在内核态，必须理解而不是记住。&lt;br /&gt;
-一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，&lt;br /&gt;
-如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，&lt;br /&gt;
-新的培养液进来，旧的培养液也需要保存，以备稍后使用。&lt;br /&gt;
-当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。&lt;br /&gt;
-应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？&lt;br /&gt;
-在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。&lt;br /&gt;
-我们所关心的换出的进程的esp指针也保存在thread_struct当中了。&lt;br /&gt;
-当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，&lt;br /&gt;
+&lt;p&gt;也叫上下文切换context switch只发生在内核态，必须理解而不是记住。
+一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，
+如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，
+新的培养液进来，旧的培养液也需要保存，以备稍后使用。
+当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。
+应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？
+在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。
+我们所关心的换出的进程的esp指针也保存在thread_struct当中了。
+当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，
 也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。&lt;/p&gt;
 
 &lt;h2 id=&#34;switch-to:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;switch_to&lt;/h2&gt;
@@ -510,19 +510,19 @@ is the switching of the CPU (central processing unit) from one process or thread
 
 &lt;h3 id=&#34;load-tss:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;load TSS&lt;/h3&gt;
 
-&lt;p&gt;进程切换只发生在内核态&lt;br /&gt;
-/&lt;em&gt;将next进程的内核栈指针(next-&amp;gt;thread-&amp;gt;sp0)值更新到当前CPU的TSS中&lt;/em&gt;/&lt;br /&gt;
-load_sp0(tss, next);&lt;br /&gt;
-task_struct.thread.sp0&lt;br /&gt;
+&lt;p&gt;进程切换只发生在内核态
+/&lt;em&gt;将next进程的内核栈指针(next-&amp;gt;thread-&amp;gt;sp0)值更新到当前CPU的TSS中&lt;/em&gt;/
+load_sp0(tss, next);
+task_struct.thread.sp0
 thread_struct&lt;/p&gt;
 
 &lt;h2 id=&#34;type-of-context-switch:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;type of Context switch&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;context switch by hardware&lt;br /&gt;
-Old linux kernel&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;context switch by software&lt;br /&gt;
-kernel 2.6&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;context switch by hardware
+Old linux kernel&lt;/li&gt;
+&lt;li&gt;context switch by software
+kernel 2.6&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;common-concepts:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Common concepts&lt;/h1&gt;
@@ -537,65 +537,65 @@ kernel 2.6&lt;br /&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;effective-user-group-id:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Effective user/group ID&lt;/h2&gt;
 
-&lt;p&gt;euid:4777&lt;br /&gt;
-egid:2777&lt;br /&gt;
-chmod u+s cynthia&lt;br /&gt;
+&lt;p&gt;euid:4777
+egid:2777
+chmod u+s cynthia
 root进程执行cynthia后euid变为firo, saved user id变为root&lt;/p&gt;
 
 &lt;h2 id=&#34;example:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Example&lt;/h2&gt;
 
-&lt;p&gt;u+s 就可以&lt;br /&gt;
-firo@firo tmp$ iptables -L&lt;br /&gt;
-iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
+&lt;p&gt;u+s 就可以
+firo@firo tmp$ iptables -L
+iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)
 Perhaps iptables or your kernel needs to be upgraded.&lt;/p&gt;
 
 &lt;p&gt;chmod +s /usr/sbin/iptables&lt;/p&gt;
 
-&lt;p&gt;firo@firo tmp$ iptables -L&lt;br /&gt;
-Chain INPUT (policy ACCEPT)&lt;br /&gt;
+&lt;p&gt;firo@firo tmp$ iptables -L
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination&lt;/p&gt;
 
-&lt;p&gt;Chain FORWARD (policy ACCEPT)&lt;br /&gt;
+&lt;p&gt;Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination&lt;/p&gt;
 
-&lt;p&gt;Chain OUTPUT (policy ACCEPT)&lt;br /&gt;
+&lt;p&gt;Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination&lt;/p&gt;
 
 &lt;p&gt;chmod -s /usr/sbin/iptables&lt;/p&gt;
 
-&lt;p&gt;iptables -L&lt;br /&gt;
-iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
+&lt;p&gt;iptables -L
+iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)
 Perhaps iptables or your kernel needs to be upgraded.&lt;/p&gt;
 
 &lt;h1 id=&#34;scheduling-strategies:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Scheduling strategies&lt;/h1&gt;
 
-&lt;p&gt;multiprogramming&lt;br /&gt;
-time-sharing(multi tasking)&lt;br /&gt;
+&lt;p&gt;multiprogramming
+time-sharing(multi tasking)
 real-time&lt;/p&gt;
 
 &lt;h1 id=&#34;multitasking:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Multitasking&lt;/h1&gt;
 
 &lt;h2 id=&#34;reference:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Reference&lt;/h2&gt;
 
-&lt;p&gt;codes: comments of __schedule()&lt;br /&gt;
+&lt;p&gt;codes: comments of __schedule()
 Book: Linux kernel development&lt;/p&gt;
 
-&lt;p&gt;##Common concepts&lt;br /&gt;
-* The process scheduler decides which process runs, when, and for how long.&lt;br /&gt;
-* Multitasking: cooperative and preemptive.&lt;br /&gt;
-* Preemption:Involuntarily suspending a running process.&lt;br /&gt;
-* Timeslice: a slice of cpu&amp;rsquo;s time.&lt;br /&gt;
-* Yielding: The act of a process voluntarily suspending itself.&lt;br /&gt;
-* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.&lt;br /&gt;
-* Time sharing: is cooperative mutitasking,&lt;br /&gt;
-* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!&lt;br /&gt;
-so if !CONFIG_PREEMPT* is cooperative!&lt;br /&gt;
+&lt;p&gt;##Common concepts
+* The process scheduler decides which process runs, when, and for how long.
+* Multitasking: cooperative and preemptive.
+* Preemption:Involuntarily suspending a running process.
+* Timeslice: a slice of cpu&amp;rsquo;s time.
+* Yielding: The act of a process voluntarily suspending itself.
+* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.
+* Time sharing: is cooperative mutitasking,
+* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!
+so if !CONFIG_PREEMPT* is cooperative!
 * CFS: Pick the task with the smallest vruntime. That&amp;rsquo;s it!&lt;/p&gt;
 
-&lt;p&gt;##TIF_NEED_RESCHED&lt;br /&gt;
-* The situation of set task need resched&lt;br /&gt;
-scheduler_tick()&lt;br /&gt;
-try_to_wake_up() when a process that has a higher priority than &lt;em&gt;current&lt;/em&gt; is awakened.&lt;br /&gt;
+&lt;p&gt;##TIF_NEED_RESCHED
+* The situation of set task need resched
+scheduler_tick()
+try_to_wake_up() when a process that has a higher priority than &lt;em&gt;current&lt;/em&gt; is awakened.
 Other?&lt;/p&gt;
 
 &lt;h2 id=&#34;save-all:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;SAVE_ALL&lt;/h2&gt;
@@ -606,16 +606,16 @@ Other?&lt;/p&gt;
 
 &lt;h2 id=&#34;fork-oraphan:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;fork, oraphan&lt;/h2&gt;
 
-&lt;p&gt;similar &amp;amp;&lt;br /&gt;
+&lt;p&gt;similar &amp;amp;
 not a goup leader inherit with parent pgid for setsid&lt;/p&gt;
 
 &lt;h2 id=&#34;setsid:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;setsid&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;session leader&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;process group leader&lt;br /&gt;
-A signal directed to a process group is delivered individually to&lt;br /&gt;
-all of the processes that are members of the group.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;session leader&lt;/li&gt;
+&lt;li&gt;process group leader
+A signal directed to a process group is delivered individually to
+all of the processes that are members of the group.&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;deatch controlling terminals(confusing)&lt;/p&gt;
 
@@ -625,31 +625,31 @@ all of the processes that are members of the group.&lt;br /&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;deal-with-fd:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;deal with fd&lt;/h2&gt;
 
-&lt;p&gt;below both output&lt;br /&gt;
-守护进程继承了shell的屏幕和键盘输入.&lt;br /&gt;
-pid_t pid= fork();&lt;br /&gt;
-if (pid != 0) {&lt;br /&gt;
-system(&amp;ldquo;sleep 3&amp;rdquo;);&lt;br /&gt;
-printf(&amp;ldquo;parent exit\n&amp;rdquo;);&lt;br /&gt;
-} else {&lt;br /&gt;
-printf(&amp;ldquo;child start\n&amp;rdquo;);&lt;br /&gt;
-setsid();&lt;br /&gt;
-fprintf(stdout, &amp;ldquo;out child\n&amp;rdquo;);&lt;br /&gt;
+&lt;p&gt;below both output
+守护进程继承了shell的屏幕和键盘输入.
+pid_t pid= fork();
+if (pid != 0) {
+system(&amp;ldquo;sleep 3&amp;rdquo;);
+printf(&amp;ldquo;parent exit\n&amp;rdquo;);
+} else {
+printf(&amp;ldquo;child start\n&amp;rdquo;);
+setsid();
+fprintf(stdout, &amp;ldquo;out child\n&amp;rdquo;);
 fprintf(stderr, &amp;ldquo;err child\n&amp;rdquo;);&lt;/p&gt;
 
 &lt;p&gt;system(&amp;ldquo;sleep 7&amp;rdquo;);&lt;/p&gt;
 
-&lt;p&gt;fprintf(stdout, &amp;ldquo;after out child\n&amp;rdquo;);&lt;br /&gt;
-fprintf(stderr, &amp;ldquo;after err child\n&amp;rdquo;);&lt;br /&gt;
-printf(&amp;ldquo;child exit\n&amp;rdquo;);&lt;br /&gt;
+&lt;p&gt;fprintf(stdout, &amp;ldquo;after out child\n&amp;rdquo;);
+fprintf(stderr, &amp;ldquo;after err child\n&amp;rdquo;);
+printf(&amp;ldquo;child exit\n&amp;rdquo;);
 }&lt;/p&gt;
 
 &lt;h1 id=&#34;zombie-process:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Zombie process&lt;/h1&gt;
 
 &lt;h2 id=&#34;defunct:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;&lt;defunct&gt;&lt;/h2&gt;
 
-&lt;p&gt;forked child not reaped by parent will hooked in process list.&lt;br /&gt;
-if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
+&lt;p&gt;forked child not reaped by parent will hooked in process list.
+if parent was killed and exit &lt;defunct&gt; will repaped.
 &lt;defunct&gt;表明父活着, 但不收尸.&lt;/p&gt;
 
 &lt;h2 id=&#34;double-fork-for-parent-long-live:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;Double fork for parent long live&lt;/h2&gt;
@@ -660,10 +660,10 @@ if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
 &lt;h1 id=&#34;faq:a0551a02a524ed27c27781d2fca7bf97&#34;&gt;FAQ&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;thread_info&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;thread_info
 可以快速访问task_struct.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;swtch_stack&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;swtch_stack
 线程切换&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
@@ -671,20 +671,20 @@ if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
     
     <item>
       <title>Power management</title>
-      <link>http://firoyang.org/kernel/pm/</link>
+      <link>/kernel/pm/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/pm/</guid>
+      
+      <guid>/kernel/pm/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.wowotech.net/pm_subsystem/generic_pm_architecture.html&#34;&gt;wowotech&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/384146/&#34;&gt;The cpuidle subsystem&lt;/a&gt;cpuidle—Do nothing, efficiently&lt;br /&gt;
-&lt;a href=&#34;http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF&#34;&gt;Hardware Specifications 9.4&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf&#34;&gt;Functional Specifications 34&lt;/a&gt;&lt;br /&gt;
-Documentation/power&lt;br /&gt;
-Controlling Processor C-State Usage in Linux&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.wowotech.net/pm_subsystem/generic_pm_architecture.html&#34;&gt;wowotech&lt;/a&gt;
+&lt;a href=&#34;https://lwn.net/Articles/384146/&#34;&gt;The cpuidle subsystem&lt;/a&gt;cpuidle—Do nothing, efficiently
+&lt;a href=&#34;http://www.marvell.com/embedded-processors/armada-xp/assets/HW_MV78460_OS.PDF&#34;&gt;Hardware Specifications 9.4&lt;/a&gt;
+&lt;a href=&#34;http://www.marvell.com/embedded-processors/armada-xp/assets/ARMADA-XP-Functional-SpecDatasheet.pdf&#34;&gt;Functional Specifications 34&lt;/a&gt;
+Documentation/power
+Controlling Processor C-State Usage in Linux
 &lt;a href=&#34;http://doc.opensuse.org/documentation/html/openSUSE_114/opensuse-tuning/cha.tuning.power.html&#34;&gt;Chapter 11. Power Management&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;C-states: idle core power state&lt;/p&gt;
@@ -693,65 +693,65 @@ Controlling Processor C-State Usage in Linux&lt;br /&gt;
 
 &lt;ul&gt;
 &lt;li&gt;Interface&lt;br /&gt;
-syscall /sys/power&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;PM core&lt;br /&gt;
-kernel/power&lt;br /&gt;
-main.c suspend.c suspend_test.c console.c process.c&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Device PM&lt;br /&gt;
-driver/base/power &amp;ndash; Power management interface, firo&lt;br /&gt;
-power management 是针对device, bus, driver这部分的. 在suspend_devices_and_enter用到dpm_suspend_start.&lt;br /&gt;
-driver/各种设备的驱动&lt;br /&gt;
-driver/cpuidle &amp;ndash;firo&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Platform PM&lt;br /&gt;
-include/linux/suspend.h&amp;mdash;-定义platform dependent PM有关的操作函数集&lt;br /&gt;
-就是他platform_suspend_ops&lt;br /&gt;
-arch/xxx/mach-xxx/xxx.c or arch/xxx/plat-xxx/xxx.c&amp;mdash;-平台相关的电源管理操作&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;CPU control&lt;br /&gt;&lt;/li&gt;
+syscall /sys/power&lt;/li&gt;
+&lt;li&gt;PM core
+kernel/power
+main.c suspend.c suspend_test.c console.c process.c&lt;/li&gt;
+&lt;li&gt;Device PM
+driver/base/power &amp;ndash; Power management interface, firo
+power management 是针对device, bus, driver这部分的. 在suspend_devices_and_enter用到dpm_suspend_start.
+driver/各种设备的驱动
+driver/cpuidle &amp;ndash;firo&lt;/li&gt;
+&lt;li&gt;Platform PM
+include/linux/suspend.h&amp;mdash;-定义platform dependent PM有关的操作函数集
+就是他platform_suspend_ops
+arch/xxx/mach-xxx/xxx.c or arch/xxx/plat-xxx/xxx.c&amp;mdash;-平台相关的电源管理操作&lt;/li&gt;
+&lt;li&gt;CPU control&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;important-data-structure:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Important data structure&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Platform PM&lt;br /&gt;
-platform_suspend_ops, platform plat-* is equivalent to mach-* and microarchitecture.&lt;br /&gt;
-plat-* is abustruct from mach-*1 and mach-&lt;em&gt;2 and so on.&lt;br /&gt;
-mach-&lt;/em&gt; is more closer to Board!&lt;br /&gt;
-所以这个platform_suspend_ops, 是非常重要的, 他包含了所有BSP底层的内容.&lt;br /&gt;
-竟然是用suspend_ops这个全局变量, 来承载所有platform相关的内容.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Platform PM
+platform_suspend_ops, platform plat-* is equivalent to mach-* and microarchitecture.
+plat-* is abustruct from mach-*1 and mach-&lt;em&gt;2 and so on.
+mach-&lt;/em&gt; is more closer to Board!
+所以这个platform_suspend_ops, 是非常重要的, 他包含了所有BSP底层的内容.
+竟然是用suspend_ops这个全局变量, 来承载所有platform相关的内容.&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Device PM&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Device PM
 dev_pm_ops这个和上面是完全不同的两条调用路线,在suspend_devices_and_enter用到dpm_suspend_start.&lt;/p&gt;
 
 &lt;h1 id=&#34;steps-of-suspend:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Steps of suspend&lt;/h1&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Function steps&lt;br /&gt;
-state_store-&amp;gt;pm_suspend-&amp;gt;enter_state-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-valid_state &amp;amp; suspend_prepare&lt;br /&gt;
-suspend_devices_and_enter-&amp;gt; {&lt;br /&gt;
-    suspend_console &amp;amp; ftrace_stop &amp;amp; dpm_suspend_start&lt;br /&gt;
-    suspend_enter-&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        disable_nonboot_cpus &amp;amp; arch_suspend_disable_irqs&lt;br /&gt;
-    }&lt;br /&gt;
-}&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Function steps
+state_store-&amp;gt;pm_suspend-&amp;gt;enter_state-&amp;gt;
+{
+valid_state &amp;amp; suspend_prepare
+suspend_devices_and_enter-&amp;gt; {
+    suspend_console &amp;amp; ftrace_stop &amp;amp; dpm_suspend_start
+    suspend_enter-&amp;gt;
+    {
+        disable_nonboot_cpus &amp;amp; arch_suspend_disable_irqs
+    }
+}
 }&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;PM core&lt;br /&gt;
-freeze userspace&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;PM core
+freeze userspace
 console&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Device PM&lt;br /&gt;
-suspend device&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Device PM
+suspend device
 before and first part in suspend_enter&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Mass stuffs&lt;br /&gt;
-CPU &amp;amp; IRQ disable&lt;br /&gt;
-syscore&lt;br /&gt;
-Device PM check wakeup pendings&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Mass stuffs
+CPU &amp;amp; IRQ disable
+syscore
+Device PM check wakeup pendings
 middle part in suspend_enter&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Platform PM&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Platform PM
 last part in suspend_enter&lt;/p&gt;
 
 &lt;h1 id=&#34;steps-of-resume:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Steps of resume&lt;/h1&gt;&lt;/li&gt;
@@ -763,23 +763,23 @@ last part in suspend_enter&lt;/p&gt;
 
 &lt;h1 id=&#34;introdution:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Introdution&lt;/h1&gt;
 
-&lt;p&gt;电源管理都涉及到那些内容?&lt;br /&gt;
-PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices&lt;br /&gt;
-Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down&lt;br /&gt;
-* WFI: core power down except snoop and interrupt cache working&lt;br /&gt;
-disable clocks of the CPU&lt;br /&gt;
-snoop other Cores and io agent.&lt;br /&gt;
-only snoop block are temporarily woken up and the block back to WFI mode after complete snoop.&lt;br /&gt;
-can recognize interrupt.&lt;br /&gt;
-* Power down: core power down, l1 flush, cache not mantained/snoop stoped, but l2 &amp;amp; fabric&lt;br /&gt;
+&lt;p&gt;电源管理都涉及到那些内容?
+PMU MP and DEV, CPU cores, L2 cache, Coherency Fabric, Devices
+Core Power Modes: run, idle/WFI/WFE/stadnby, deep idle/power down
+* WFI: core power down except snoop and interrupt cache working
+disable clocks of the CPU
+snoop other Cores and io agent.
+only snoop block are temporarily woken up and the block back to WFI mode after complete snoop.
+can recognize interrupt.
+* Power down: core power down, l1 flush, cache not mantained/snoop stoped, but l2 &amp;amp; fabric
 can not recognize interrupt, recovery is fully depended on MP_PMU&lt;/p&gt;
 
-&lt;p&gt;In hardware layer, we need &lt;a href=&#34;https://en.wikipedia.org/wiki/Power_Management_Unit&#34;&gt;PMU&lt;/a&gt; to complete power management.&lt;br /&gt;
-What is the relation of PMU and CPU?&lt;br /&gt;
-armadaxp的PMU与CPU物理上与逻辑上是独立的.&lt;br /&gt;
-The Power Management functions are provided by two power manager units:&lt;br /&gt;
-The Device Power Management Unit (DEV_PMU)&lt;br /&gt;
-The Multiprocessor Power Management Service Unit (MP_PMU).&lt;br /&gt;
+&lt;p&gt;In hardware layer, we need &lt;a href=&#34;https://en.wikipedia.org/wiki/Power_Management_Unit&#34;&gt;PMU&lt;/a&gt; to complete power management.
+What is the relation of PMU and CPU?
+armadaxp的PMU与CPU物理上与逻辑上是独立的.
+The Power Management functions are provided by two power manager units:
+The Device Power Management Unit (DEV_PMU)
+The Multiprocessor Power Management Service Unit (MP_PMU).
 PMU省电模式:&lt;/p&gt;
 
 &lt;h1 id=&#34;kernel-cpuidle-subsystem:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;kernel cpuidle subsystem&lt;/h1&gt;
@@ -787,61 +787,61 @@ PMU省电模式:&lt;/p&gt;
 &lt;h2 id=&#34;steps-of-cpuilde:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Steps of cpuilde&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;interface&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;interface
 kernel sched and sysfs&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;cpuidle core&lt;br /&gt;
-cpuidle.c、driver.c、governor.c、sysfs.c。&lt;br /&gt;
-抽象出cpuidle device、cpuidle driver、cpuidle governor三个实体&lt;br /&gt;
-一个core对应一个cpuidle device drivers/cpuidle/cpuidle.c.&lt;br /&gt;
-device 和driver隔离, 通过全局变量联系 ifndef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS&lt;br /&gt;
-管理cpuidle driver 和governor&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;cpuidle core
+cpuidle.c、driver.c、governor.c、sysfs.c。
+抽象出cpuidle device、cpuidle driver、cpuidle governor三个实体
+一个core对应一个cpuidle device drivers/cpuidle/cpuidle.c.
+device 和driver隔离, 通过全局变量联系 ifndef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS
+管理cpuidle driver 和governor
 上层sched模块 和sysfs 提供接口&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;cpuidle governors&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;cpuidle drivers&lt;br /&gt;
-drivers/cpudile/cpuidle-xxx.c or&lt;br /&gt;
-arch/arm/plat-armada/cpuidle.c&lt;br /&gt;
-如何进入idle状态&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;cpuidle drivers
+drivers/cpudile/cpuidle-xxx.c or
+arch/arm/plat-armada/cpuidle.c
+如何进入idle状态
 什么条件下会退出&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;source-code-layout:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Source code layout&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;drivers/cpuidle&lt;br /&gt;
-include/linux/cpuidle.h&lt;br /&gt;
-cpuidle core、cpuidle governors和cpuidle drivers三个模块&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;kernel\sched\idle.c&lt;br /&gt;
-kernel sched中的cpuidle entry&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;drivers/cpuidle
+include/linux/cpuidle.h
+cpuidle core、cpuidle governors和cpuidle drivers三个模块&lt;/li&gt;
+&lt;li&gt;kernel\sched\idle.c
+kernel sched中的cpuidle entry&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;important-data-structre:243fc1ea57e1b68ab2b7a4065db2e761&#34;&gt;Important data structre&lt;/h2&gt;
 
-&lt;p&gt;struct cpuidle_driver&lt;br /&gt;
-struct cpuidle_state&lt;br /&gt;
+&lt;p&gt;struct cpuidle_driver
+struct cpuidle_state
 struct cpuidle_device used by ladder or menu&lt;/p&gt;
 
-&lt;p&gt;device_initcall -&amp;gt; armadaxp_init_cpuidle -&amp;gt; cpuidle_register_driver  cpuidle_register_device&lt;br /&gt;
+&lt;p&gt;device_initcall -&amp;gt; armadaxp_init_cpuidle -&amp;gt; cpuidle_register_driver  cpuidle_register_device
 cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Synchronization</title>
-      <link>http://firoyang.org/kernel/synchronization/</link>
+      <link>/kernel/synchronization/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/synchronization/</guid>
+      
+      <guid>/kernel/synchronization/</guid>
       <description>
 
-&lt;p&gt;#Reference&lt;br /&gt;
+&lt;p&gt;#Reference
 Perfbook&lt;/p&gt;
 
 &lt;h1 id=&#34;why-we-need-synchronization:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;Why we need synchronization&lt;/h1&gt;
 
-&lt;p&gt;a critical section is a piece of code that accesses a shared resource&lt;br /&gt;
+&lt;p&gt;a critical section is a piece of code that accesses a shared resource
 (data structure or device) that must not be concurrently accessed by more than one thread of execution.&lt;/p&gt;
 
 &lt;p&gt;This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition.&lt;/p&gt;
@@ -852,44 +852,44 @@ Perfbook&lt;/p&gt;
 
 &lt;h2 id=&#34;common-usage:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;Common usage&lt;/h2&gt;
 
-&lt;p&gt;Protect from interruption by hardware interrupts:&lt;br /&gt;
-        local_irq_disable(int irq) &amp;amp; local_irq_enable(int irq)&lt;br /&gt;
-Protection from software interrupts:&lt;br /&gt;
-        local_bh_disable(void) &amp;amp; local_bh_enable(void)&lt;br /&gt;
-Protection from other CPUs:&lt;br /&gt;
-        spin_lock(spinlock_t *) &amp;amp; spin_unlock(spinlock_t *)&lt;br /&gt;
-Preemption by other user contexts:&lt;br /&gt;
+&lt;p&gt;Protect from interruption by hardware interrupts:
+        local_irq_disable(int irq) &amp;amp; local_irq_enable(int irq)
+Protection from software interrupts:
+        local_bh_disable(void) &amp;amp; local_bh_enable(void)
+Protection from other CPUs:
+        spin_lock(spinlock_t *) &amp;amp; spin_unlock(spinlock_t *)
+Preemption by other user contexts:
         preempt_disable(void) &amp;amp; preempt_enable(void)&lt;/p&gt;
 
 &lt;h1 id=&#34;what-is-synchronization-in-computer-science:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;What is synchronization in computer science&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.etymonline.com/index.php?term=synchronize&#34;&gt;Synchronize&lt;/a&gt;&lt;br /&gt;
-synchronization means be of the same time.&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.etymonline.com/index.php?term=synchronize&#34;&gt;Synchronize&lt;/a&gt;
+synchronization means be of the same time.
 It means &amp;ldquo;make it synchronous&amp;rdquo;, something like coexistence.&lt;/p&gt;
 
-&lt;p&gt;Process synchronization refers to the idea that multiple processes are&lt;br /&gt;
-to join up or handshake at a certain point, in order to reach an&lt;br /&gt;
-agreement or commit to a certain sequence of action.&lt;br /&gt;
-* Mutual exclusion &amp;ndash; only one excution routine in  critical section&lt;br /&gt;
-Readers–writers problem&lt;br /&gt;
-The Producer-Consumer Problem&lt;br /&gt;
-* Cooperative&lt;br /&gt;
-TCP Handshake&lt;br /&gt;
-* Deadlock&lt;br /&gt;
-Dining philosophers problem&lt;br /&gt;
-* Starvation&lt;br /&gt;
-* Prioirty inversion&lt;br /&gt;
+&lt;p&gt;Process synchronization refers to the idea that multiple processes are
+to join up or handshake at a certain point, in order to reach an
+agreement or commit to a certain sequence of action.
+* Mutual exclusion &amp;ndash; only one excution routine in  critical section
+Readers–writers problem
+The Producer-Consumer Problem
+* Cooperative
+TCP Handshake
+* Deadlock
+Dining philosophers problem
+* Starvation
+* Prioirty inversion
 * Busy waiting&lt;/p&gt;
 
 &lt;h1 id=&#34;mutual-exclusion:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;Mutual exclusion&lt;/h1&gt;
 
 &lt;h2 id=&#34;spinlock-unsleepable-mutex:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;spinlock - unsleepable mutex&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;Linux 内核的排队自旋锁FIFO Ticket Spinlock&lt;/a&gt;&lt;br /&gt;
-spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了&lt;br /&gt;
-context switch, 相对semaphore效率高.&lt;br /&gt;
-显然对于little critical section 使用semaphore而不是spinlock,将带来性能&lt;br /&gt;
-上的巨大损耗.&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;Linux 内核的排队自旋锁FIFO Ticket Spinlock&lt;/a&gt;
+spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了
+context switch, 相对semaphore效率高.
+显然对于little critical section 使用semaphore而不是spinlock,将带来性能
+上的巨大损耗.
 * rw_lock&lt;/p&gt;
 
 &lt;h2 id=&#34;mutex:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;Mutex&lt;/h2&gt;
@@ -906,12 +906,12 @@ context switch, 相对semaphore效率高.&lt;br /&gt;
 
 &lt;h2 id=&#34;semaphore:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;semaphore&lt;/h2&gt;
 
-&lt;p&gt;it was implement based on spinlock.&lt;br /&gt;
-it can have more than one holder at any time (the number decided at initialization time),&lt;br /&gt;
-although it is most commonly used as a single-holder lock (a mutex).&lt;br /&gt;
-if you can not get a semaphore, your task will put itself on the wait queue, and be woken&lt;br /&gt;
-up the semaphore is released.&lt;br /&gt;
-sleepable&lt;br /&gt;
+&lt;p&gt;it was implement based on spinlock.
+it can have more than one holder at any time (the number decided at initialization time),
+although it is most commonly used as a single-holder lock (a mutex).
+if you can not get a semaphore, your task will put itself on the wait queue, and be woken
+up the semaphore is released.
+sleepable
 preemptable&lt;/p&gt;
 
 &lt;h2 id=&#34;tcp-handshake:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;TCP handshake&lt;/h2&gt;
@@ -920,36 +920,36 @@ preemptable&lt;/p&gt;
 
 &lt;h2 id=&#34;refernce:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;Refernce&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;
 Documentation/memory-barriers.txt&lt;/p&gt;
 
 &lt;h2 id=&#34;common:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;Common&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping&lt;br /&gt;
-to ensure that the program executes as if all memory operations were performed in the order&lt;br /&gt;
-specified by the programmer (program order), so memory barriers are not necessary.&lt;br /&gt;
-However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor&lt;br /&gt;
-system, or memory mapped peripherals, out-of-order access may affect program behavior.&lt;br /&gt;
-For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping
+to ensure that the program executes as if all memory operations were performed in the order
+specified by the programmer (program order), so memory barriers are not necessary.
+However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor
+system, or memory mapped peripherals, out-of-order access may affect program behavior.
+For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
 
 &lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;The Linux kernel has a variety of different barriers that act at different&lt;/h2&gt;
 
-&lt;p&gt;levels:&lt;br /&gt;
-(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
-(&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
+&lt;p&gt;levels:
+(&lt;em&gt;) Compiler barrier.
+(&lt;/em&gt;) CPU memory barriers.
 (*) MMIO write barrier.&lt;/p&gt;
 
 &lt;h2 id=&#34;access-once:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;ACCESS_ONCE&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Does it work cast a variable to volatile?&lt;br /&gt;
-No, there is no efects on cast a variable to volatile.&lt;br /&gt;
-Because, access variable is before volatile cast! That means you&lt;br /&gt;
-still get a register value. What you do is just conversion a temporary&lt;br /&gt;
-variable&lt;br /&gt;
-Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Does it work cast a variable to volatile?
+No, there is no efects on cast a variable to volatile.
+Because, access variable is before volatile cast! That means you
+still get a register value. What you do is just conversion a temporary
+variable
+Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C
 6.7.3&lt;/p&gt;
 
 &lt;h2 id=&#34;for-volatile:cc60bd9bd60be86fcb916e123f79cf09&#34;&gt;For volatile&lt;/h2&gt;
@@ -961,145 +961,145 @@ Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C
     
     <item>
       <title>filesystem</title>
-      <link>http://firoyang.org/kernel/fs/</link>
+      <link>/kernel/fs/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/fs/</guid>
+      
+      <guid>/kernel/fs/</guid>
       <description>
 
 &lt;h1 id=&#34;open:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;open()&lt;/h1&gt;
 
-&lt;p&gt;最烦, 看什么系统调用参数了.&lt;br /&gt;
-那一大堆很少用到的组合还有undefined, 太扯淡了.&lt;br /&gt;
-也说不上碎碎的问题, 要理解着来, 看man 手册, 贴子显然不是&lt;br /&gt;
-最后的注意还是看实现吧.&lt;br /&gt;
-build_open_flags()还是看不出&lt;br /&gt;
-man里面有一句&lt;br /&gt;
+&lt;p&gt;最烦, 看什么系统调用参数了.
+那一大堆很少用到的组合还有undefined, 太扯淡了.
+也说不上碎碎的问题, 要理解着来, 看man 手册, 贴子显然不是
+最后的注意还是看实现吧.
+build_open_flags()还是看不出
+man里面有一句
  The (undefined) effect of O_RDONLY | O_TRUNC varies among implementations.&lt;br /&gt;
 On many systems the file is actually truncated.&lt;/p&gt;
 
-&lt;p&gt;#Hacks&lt;br /&gt;
+&lt;p&gt;#Hacks
 I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.&lt;/p&gt;
 
-&lt;p&gt;#VFS&lt;br /&gt;
-##Common concepts&lt;br /&gt;
+&lt;p&gt;#VFS
+##Common concepts
 * VFS:Common fs interface plus fs anstraction layer!&lt;/p&gt;
 
 &lt;h2 id=&#34;unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;Unix fs-related abstractions: file, directory entries, inodes, and mount points.&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Filesytem: a hierarchial storage of data adhering to a specific structure.&lt;br /&gt;
-In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file: and ordered string of bytes.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;directory: analogous to a folder and usally contains related files.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry: Each component of a path is called a directory entry.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;supreblock: a data structure containing information about the filesystem as a whole.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Filesytem: a hierarchial storage of data adhering to a specific structure.
+In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.&lt;/li&gt;
+&lt;li&gt;file: and ordered string of bytes.&lt;/li&gt;
+&lt;li&gt;directory: analogous to a folder and usally contains related files.&lt;/li&gt;
+&lt;li&gt;dentry: Each component of a path is called a directory entry.&lt;/li&gt;
+&lt;li&gt;inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!&lt;/li&gt;
+&lt;li&gt;supreblock: a data structure containing information about the filesystem as a whole.&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;vfs-primary-objects-superblock-inode-dentry-file:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;VFS primary objects: superblock, inode, dentry, file.&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;supreblock: a specific mounted filesystem.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inode: unit for fs. all the information needed by the kernel to manipulate a file or directory.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry: accelerate access fs, dcache! a single component of a path, certainly include &lt;em&gt;regular&lt;/em&gt; file.&lt;br /&gt;
-VFS treats directory as non-exist &lt;em&gt;normal&lt;/em&gt; file. directory and dentry is not the same at all, different congitive level!&lt;br /&gt;
-In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file: an open normal file as associated with a process.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;supreblock: a specific mounted filesystem.&lt;/li&gt;
+&lt;li&gt;inode: unit for fs. all the information needed by the kernel to manipulate a file or directory.&lt;/li&gt;
+&lt;li&gt;dentry: accelerate access fs, dcache! a single component of a path, certainly include &lt;em&gt;regular&lt;/em&gt; file.
+VFS treats directory as non-exist &lt;em&gt;normal&lt;/em&gt; file. directory and dentry is not the same at all, different congitive level!
+In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!&lt;/li&gt;
+&lt;li&gt;file: an open normal file as associated with a process.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;##Step of how to use ext2 fs&lt;br /&gt;
-* Register a fs type in kernel.&lt;br /&gt;
+&lt;p&gt;##Step of how to use ext2 fs
+* Register a fs type in kernel.
 struct file_system_type: basic fs driver codes!&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;mkfs.ext2&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;shell mount -&amp;gt; sys_mount -&amp;gt; file_system_type-&amp;gt;mount =&amp;gt; root dentry and dentry-&amp;gt;d_sb!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;sys_open -&amp;gt;&lt;br /&gt;
-path_init()&lt;br /&gt;
+&lt;li&gt;mkfs.ext2&lt;/li&gt;
+&lt;li&gt;shell mount -&amp;gt; sys_mount -&amp;gt; file_system_type-&amp;gt;mount =&amp;gt; root dentry and dentry-&amp;gt;d_sb!&lt;/li&gt;
+&lt;li&gt;sys_open -&amp;gt;
+path_init()
 
 &lt;ol&gt;
-&lt;li&gt;get start point current-&amp;gt;fs{root, pwd}&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)&lt;br /&gt;
-do_last()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;get start point current-&amp;gt;fs{root, pwd}&lt;/li&gt;
+&lt;li&gt;link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)
+do_last()&lt;/li&gt;
+&lt;li&gt;dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;/li&gt;
+&lt;li&gt;file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;/li&gt;
 &lt;/ol&gt;&lt;/li&gt;
-&lt;li&gt;sys_write -&amp;gt;&lt;br /&gt;
-file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;sys_write -&amp;gt;
+file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;##How make dentry&lt;br /&gt;
-d_alloc() alloc new dentry&lt;br /&gt;
-parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;&lt;br /&gt;
+&lt;p&gt;##How make dentry
+d_alloc() alloc new dentry
+parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;
 set inode to dentry&lt;/p&gt;
 
-&lt;p&gt;#Procfs&lt;br /&gt;
-##How many parts does procfs has?&lt;br /&gt;
-* process-specific read only /proc/&lt;pid&gt;/&lt;br /&gt;
-* process tuneable interface. /proc/&lt;pid&gt;/&lt;br /&gt;
-* kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs&amp;hellip;&lt;br /&gt;
-* Read only kernel infomation. /proc&lt;br /&gt;
-##I think, important directory need to know.&lt;br /&gt;
+&lt;p&gt;#Procfs
+##How many parts does procfs has?
+* process-specific read only /proc/&lt;pid&gt;/
+* process tuneable interface. /proc/&lt;pid&gt;/
+* kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs&amp;hellip;
+* Read only kernel infomation. /proc
+##I think, important directory need to know.
 /proc/sys/kernel&lt;/p&gt;
 
-&lt;p&gt;#Sysfs&lt;br /&gt;
+&lt;p&gt;#Sysfs
 sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!&lt;/p&gt;
 
-&lt;p&gt;#Ramfs&lt;br /&gt;
+&lt;p&gt;#Ramfs
 fs/ramfs&lt;/p&gt;
 
-&lt;p&gt;##reference&lt;br /&gt;
+&lt;p&gt;##reference
 &lt;a href=&#34;http://www.thegeekstuff.com/2008/11/overview-of-ramfs-and-tmpfs-on-linux/&#34;&gt;Overview of RAMFS and TMPFS on Linux&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;#tmpfs&lt;br /&gt;
-mm/shmem.c&lt;br /&gt;
+&lt;p&gt;#tmpfs
+mm/shmem.c
 &lt;a href=&#34;http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/&#34;&gt;关于 tmpfs&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;#rootfs&lt;br /&gt;
-init/do_mounts.c&lt;br /&gt;
-init_rootfs()&lt;br /&gt;
-init_mount_tree&lt;br /&gt;
-rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs&lt;br /&gt;
-但是在do_basic_setup才初始化.&lt;br /&gt;
+&lt;p&gt;#rootfs
+init/do_mounts.c
+init_rootfs()
+init_mount_tree
+rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs
+但是在do_basic_setup才初始化.
 rootfs_initcall(populate_rootfs);&lt;/p&gt;
 
-&lt;p&gt;#initramfs&lt;br /&gt;
+&lt;p&gt;#initramfs
 init/initramfs.c&lt;/p&gt;
 
-&lt;p&gt;initrd-&amp;gt;initramfs&lt;br /&gt;
-{&lt;br /&gt;
-    linus&amp;rsquo; ramfs -&amp;gt; /tmpfs&lt;br /&gt;
+&lt;p&gt;initrd-&amp;gt;initramfs
+{
+    linus&amp;rsquo; ramfs -&amp;gt; /tmpfs
 }&lt;/p&gt;
 
-&lt;p&gt;##Difference with initrd&lt;br /&gt;
-initrd is image with specific fs type, like ext2, need driver built-in kernel.&lt;br /&gt;
+&lt;p&gt;##Difference with initrd
+initrd is image with specific fs type, like ext2, need driver built-in kernel.
 initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs&lt;/p&gt;
 
-&lt;p&gt;##request hard drive driver maybe fs driver&lt;br /&gt;
+&lt;p&gt;##request hard drive driver maybe fs driver
 ata_host_register-&amp;gt;ata_scsi_scan_host-&amp;gt;__scsi_add_device-&amp;gt;scsi_probe_and_add_lun -&amp;gt;scsi_add_lun&lt;/p&gt;
 
 &lt;p&gt;subsys_initcall(genhd_device_init);-&amp;gt;kobj_map_init{bdev_map.probe.get = base_probe}&lt;/p&gt;
 
-&lt;p&gt;subsys_initcall(init_scsi);4-&amp;gt;scsi_sysfs_register{autoprobe = 1;}&lt;br /&gt;
-rootfs_initcall(populate_rootfs);-&amp;gt;{unpack_to_rootfs; 解压initramfs到rootfs}&lt;br /&gt;
+&lt;p&gt;subsys_initcall(init_scsi);4-&amp;gt;scsi_sysfs_register{autoprobe = 1;}
+rootfs_initcall(populate_rootfs);-&amp;gt;{unpack_to_rootfs; 解压initramfs到rootfs}
 module_initinit_sd;6-&amp;gt;scsi_register_driver -&amp;gt;driver_register-&amp;gt;bus_add_driver -&amp;gt;driver_attach -&amp;gt;driver_probe_device-&amp;gt; drv-&amp;gt;probe(dev)=sd_probe_async-&amp;gt;add_disk -&amp;gt; register_disk -&amp;gt; get_gendisk -&amp;gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}&lt;/p&gt;
 
-&lt;p&gt;##mount fs&lt;br /&gt;
-kernel_init_freeable-&amp;gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd&lt;br /&gt;
+&lt;p&gt;##mount fs
+kernel_init_freeable-&amp;gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd
 如果/init不可以访问 prepare_namespace{挂在真正的文件系统}&lt;/p&gt;
 
 &lt;h1 id=&#34;faq:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;FAQ&lt;/h1&gt;
 
 &lt;h2 id=&#34;forbid-ln:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;forbid ln&lt;/h2&gt;
 
-&lt;p&gt;hard link to directory, recursive&lt;br /&gt;
+&lt;p&gt;hard link to directory, recursive
 hard link to file accross partitions, may led confilict with inode number.&lt;/p&gt;
 
 &lt;h2 id=&#34;stick-bit:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;stick bit&lt;/h2&gt;
 
-&lt;p&gt;chmod +t&lt;br /&gt;
-1777&lt;br /&gt;
+&lt;p&gt;chmod +t
+1777
 只有owner 和root才能删除这个文件, 用于/tmp&lt;/p&gt;
 
 &lt;h2 id=&#34;time-of-file:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;time of file&lt;/h2&gt;
@@ -1110,7 +1110,7 @@ hard link to file accross partitions, may led confilict with inode number.&lt;/p
 
 &lt;h4 id=&#34;find-relatime-options:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;find relatime options&lt;/h4&gt;
 
-&lt;p&gt;cat /proc/mounts&lt;br /&gt;
+&lt;p&gt;cat /proc/mounts
 man mount&lt;/p&gt;
 
 &lt;h3 id=&#34;chang-time:e7b362f58fb1c46aad455e64848bbc3b&#34;&gt;chang time&lt;/h3&gt;
@@ -1125,38 +1125,38 @@ man mount&lt;/p&gt;
     
     <item>
       <title>kernel</title>
-      <link>http://firoyang.org/kernel/kernel/</link>
+      <link>/kernel/kernel/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/kernel/kernel/</guid>
+      
+      <guid>/kernel/kernel/</guid>
       <description>
 
 &lt;h1 id=&#34;reference:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Kernel_(operating_system&#34;&gt;Kernel in Wikipedia&lt;/a&gt;&lt;br /&gt;
-* Book&lt;br /&gt;
-* Website&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/&#34;&gt;http://lwn.net/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://elinux.org/Kernel_Debugging_Tips&#34;&gt;http://elinux.org/Kernel_Debugging_Tips&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/&#34;&gt;https://www.kernel.org/doc/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;http://kernelnewbies.org/KernelJanitors/Todo&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://eudyptula-challenge.org/&#34;&gt;http://eudyptula-challenge.org/&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Kernel_(operating_system&#34;&gt;Kernel in Wikipedia&lt;/a&gt;
+* Book
+* Website
+&lt;a href=&#34;http://lwn.net/&#34;&gt;http://lwn.net/&lt;/a&gt;
+&lt;a href=&#34;http://elinux.org/Kernel_Debugging_Tips&#34;&gt;http://elinux.org/Kernel_Debugging_Tips&lt;/a&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/&#34;&gt;https://www.kernel.org/doc/&lt;/a&gt;
+&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;http://kernelnewbies.org/KernelJanitors/Todo&lt;/a&gt;
+&lt;a href=&#34;http://eudyptula-challenge.org/&#34;&gt;http://eudyptula-challenge.org/&lt;/a&gt;
 &lt;a href=&#34;http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/&#34;&gt;走近Linux内核&amp;ndash; 王聪&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;cpu-freq:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;CPU freq&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;onset&lt;br /&gt;
-device_initcall: intel_pstate_init-&amp;gt;cpufreq_register_driver&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;onset
+device_initcall: intel_pstate_init-&amp;gt;cpufreq_register_driver&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;nuclus&lt;br /&gt;
-** onset&lt;br /&gt;
-__cpufreq_add_dev -&amp;gt; cpufreq init= intel_pstate_cpu_init-&amp;gt;intel_pstate_init_cpu&lt;br /&gt;
-** coda&lt;br /&gt;
-_cpu_down-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-cpu_notify_nofail(CPU_DEAD | mod, hcpu)-&amp;gt;timer_cpu_notify&lt;br /&gt;
-cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu)-&amp;gt;cpufreq_cpu_callback-&amp;gt;cpufreq exit = intel_pstate_cpu_exit,&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;nuclus
+** onset
+__cpufreq_add_dev -&amp;gt; cpufreq init= intel_pstate_cpu_init-&amp;gt;intel_pstate_init_cpu
+** coda
+_cpu_down-&amp;gt;
+{
+cpu_notify_nofail(CPU_DEAD | mod, hcpu)-&amp;gt;timer_cpu_notify
+cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu)-&amp;gt;cpufreq_cpu_callback-&amp;gt;cpufreq exit = intel_pstate_cpu_exit,
 }&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;coda&lt;/p&gt;&lt;/li&gt;
@@ -1164,63 +1164,63 @@ cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu)-&amp;gt;cpufreq_cpu_callback-&amp;g
 
 &lt;h1 id=&#34;kernel-panic-3-10-62:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;kernel panic 3.10.62&lt;/h1&gt;
 
-&lt;p&gt;general protection fault and page fault&lt;br /&gt;
-1498 errorentry general_protection do_general_protection&lt;br /&gt;
-1499 errorentry page_fault do_page_fault&lt;br /&gt;
-static const struct stacktrace_ops print_trace_ops = {&lt;br /&gt;
-        .stack                  = print_trace_stack,&lt;br /&gt;
-        .address                = print_trace_address,&lt;br /&gt;
-        .walk_stack             = print_context_stack,&lt;br /&gt;
-};&lt;br /&gt;
-no_context-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    show_fault_oops-&amp;gt;&lt;br /&gt;
-    __die-&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        print_modules&lt;br /&gt;
-        show_regs&lt;br /&gt;
-        {&lt;br /&gt;
-            printk(KERN_DEFAULT &amp;ldquo;Stack:\n&amp;rdquo;);&lt;br /&gt;
-            show_stack_log_lvl-&amp;gt;&lt;br /&gt;
-            {&lt;br /&gt;
-                show_trace_log_lvl-&amp;gt;&lt;br /&gt;
-                {&lt;br /&gt;
-                    printk(&amp;ldquo;%sCall Trace:\n&amp;rdquo;, log_lvl);&lt;br /&gt;
-                    // arch/x86/kernel/dumpstack_64.c&lt;br /&gt;
-                    dump_trace-&amp;gt;&amp;amp;print_trace_ops&lt;br /&gt;
-                }&lt;br /&gt;
-            }&lt;br /&gt;
-            printk(KERN_DEFAULT &amp;ldquo;Code: &amp;ldquo;);&lt;br /&gt;
-        }&lt;br /&gt;
-    }&lt;br /&gt;
+&lt;p&gt;general protection fault and page fault
+1498 errorentry general_protection do_general_protection
+1499 errorentry page_fault do_page_fault
+static const struct stacktrace_ops print_trace_ops = {
+        .stack                  = print_trace_stack,
+        .address                = print_trace_address,
+        .walk_stack             = print_context_stack,
+};
+no_context-&amp;gt;
+{
+    show_fault_oops-&amp;gt;
+    __die-&amp;gt;
+    {
+        print_modules
+        show_regs
+        {
+            printk(KERN_DEFAULT &amp;ldquo;Stack:\n&amp;rdquo;);
+            show_stack_log_lvl-&amp;gt;
+            {
+                show_trace_log_lvl-&amp;gt;
+                {
+                    printk(&amp;ldquo;%sCall Trace:\n&amp;rdquo;, log_lvl);
+                    // arch/x86/kernel/dumpstack_64.c
+                    dump_trace-&amp;gt;&amp;amp;print_trace_ops
+                }
+            }
+            printk(KERN_DEFAULT &amp;ldquo;Code: &amp;ldquo;);
+        }
+    }
 }&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;What&amp;rsquo;s the difference between kernel and OS?&lt;br /&gt;
-cpu: syscall, process, ipc, smp&lt;br /&gt;
-memory:  mm&lt;br /&gt;
+&lt;p&gt;What&amp;rsquo;s the difference between kernel and OS?
+cpu: syscall, process, ipc, smp
+memory:  mm
 io: buffer cache, fs, io subsys&lt;/p&gt;
 
 &lt;h1 id=&#34;design-pattern:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Design pattern&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/336224/&#34;&gt;Linux kernel design patterns&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/336224/&#34;&gt;Linux kernel design patterns&lt;/a&gt;
 &lt;a href=&#34;http://www.cs.fsu.edu/~baker/devices/notes/patterns.html#&#34;&gt;Linux Kernel Programming Patterns&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;interface:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Interface&lt;/h1&gt;
 
-&lt;p&gt;Latin inter (prep., adv.) &amp;ldquo;among, between, betwixt, in the midst of,&amp;rdquo; from PIE *enter &amp;ldquo;between, among&amp;rdquo;&lt;br /&gt;
-&lt;a href=&#34;http://www.webopedia.com/TERM/I/interface.html&#34;&gt;Interface&lt;/a&gt;:A boundary across which two independent systems meet and act on or communicate with each other.&lt;br /&gt;
-In computing, an &lt;a href=&#34;https://en.wikipedia.org/wiki/Interface_(computing)&#34;&gt;interface&lt;/a&gt; is a shared boundary across which two separate components of a computer system exchange information.&lt;br /&gt;
-##API&lt;br /&gt;
-system call&lt;br /&gt;
-+ procfs are ultimately accessed via system calls&lt;br /&gt;
-##ABI&lt;br /&gt;
+&lt;p&gt;Latin inter (prep., adv.) &amp;ldquo;among, between, betwixt, in the midst of,&amp;rdquo; from PIE *enter &amp;ldquo;between, among&amp;rdquo;
+&lt;a href=&#34;http://www.webopedia.com/TERM/I/interface.html&#34;&gt;Interface&lt;/a&gt;:A boundary across which two independent systems meet and act on or communicate with each other.
+In computing, an &lt;a href=&#34;https://en.wikipedia.org/wiki/Interface_(computing)&#34;&gt;interface&lt;/a&gt; is a shared boundary across which two separate components of a computer system exchange information.
+##API
+system call
++ procfs are ultimately accessed via system calls
+##ABI
 elf, cpu specific&lt;/p&gt;
 
 &lt;h3 id=&#34;x32-abi:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;x32 ABI&lt;/h3&gt;
 
-&lt;p&gt;ILP32&lt;br /&gt;
+&lt;p&gt;ILP32
 LP64&lt;/p&gt;
 
 &lt;h2 id=&#34;system-call:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;System call&lt;/h2&gt;
@@ -1228,43 +1228,43 @@ LP64&lt;/p&gt;
 &lt;h1 id=&#34;find-bug:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Find bug&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Considered fault types&lt;br /&gt;
-Block “To avoid deadlock, do not call blocking functions with interrupts disabled or a spinlock held.”&lt;br /&gt;
-Null “Check potentially NULL pointers returned from routines”&lt;br /&gt;
-Var “Do not allocate large stack variables (&amp;gt;1K) on the fixed-size kernel stack.”&lt;br /&gt;
-INull “Do not make inconsistent assumptions about whether a pointer is NULL.”&lt;br /&gt;
-Range “Always check bounds of array indices and loop bounds derived from user data.”&lt;br /&gt;
-Lock “Release acquired locks; do not double-acquire locks.”&lt;br /&gt;
-Intr “Restore disabled interrupts.”&lt;br /&gt;
-Free “Do not use freed memory.”&lt;br /&gt;
-Float “Do not use floating point in the kernel.”&lt;br /&gt;
-Size “Allocate enough memory to hold the type for which you are allocating.”&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Considered fault types
+Block “To avoid deadlock, do not call blocking functions with interrupts disabled or a spinlock held.”
+Null “Check potentially NULL pointers returned from routines”
+Var “Do not allocate large stack variables (&amp;gt;1K) on the fixed-size kernel stack.”
+INull “Do not make inconsistent assumptions about whether a pointer is NULL.”
+Range “Always check bounds of array indices and loop bounds derived from user data.”
+Lock “Release acquired locks; do not double-acquire locks.”
+Intr “Restore disabled interrupts.”
+Free “Do not use freed memory.”
+Float “Do not use floating point in the kernel.”
+Size “Allocate enough memory to hold the type for which you are allocating.”&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;##KSM&lt;/p&gt;
 
-&lt;p&gt;#Signal&lt;br /&gt;
-* struct signal_sturct:&lt;br /&gt;
-The &amp;ldquo;struct signal_struct&amp;rdquo; is the random &lt;em&gt;leftovers&lt;/em&gt; from all the other stuff.&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&lt;/a&gt;&lt;br /&gt;
-* sigpending&lt;br /&gt;
-Store blocked signal info&lt;br /&gt;
-* Non-mask signal&lt;br /&gt;
-SIGKILL, SIGSTOP&lt;br /&gt;
-##Generate signal&lt;br /&gt;
-&lt;strong&gt;send_signal();&lt;br /&gt;
-##Process siganl&lt;br /&gt;
-* SIGKILL (may be some other)&lt;br /&gt;
-process in _send_signal()-&amp;gt; complete_signal() tsk-&amp;gt;state |= TASK_WAKEKILL&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/288056/&#34;&gt;http://lwn.net/Articles/288056/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.ibm.com/developerworks/library/l-task-killable/&#34;&gt;http://www.ibm.com/developerworks/library/l-task-killable/&lt;/a&gt;&lt;br /&gt;
-* others&lt;br /&gt;
-each time a switch is made from kernel mode to user mode,&lt;br /&gt;
-arch-specific: entry.S -&amp;gt; do_siganl()&lt;br /&gt;
-{&lt;br /&gt;
-    get_signal_deliver()&lt;br /&gt;
-    {&lt;br /&gt;
-        if fatal -&amp;gt; do_greoup_exit()-&amp;gt;&amp;hellip;&lt;/strong&gt;cleanup_sighand()&lt;br /&gt;
+&lt;p&gt;#Signal
+* struct signal_sturct:
+The &amp;ldquo;struct signal_struct&amp;rdquo; is the random &lt;em&gt;leftovers&lt;/em&gt; from all the other stuff.
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&lt;/a&gt;
+* sigpending
+Store blocked signal info
+* Non-mask signal
+SIGKILL, SIGSTOP
+##Generate signal
+&lt;strong&gt;send_signal();
+##Process siganl
+* SIGKILL (may be some other)
+process in _send_signal()-&amp;gt; complete_signal() tsk-&amp;gt;state |= TASK_WAKEKILL
+&lt;a href=&#34;http://lwn.net/Articles/288056/&#34;&gt;http://lwn.net/Articles/288056/&lt;/a&gt;
+&lt;a href=&#34;http://www.ibm.com/developerworks/library/l-task-killable/&#34;&gt;http://www.ibm.com/developerworks/library/l-task-killable/&lt;/a&gt;
+* others
+each time a switch is made from kernel mode to user mode,
+arch-specific: entry.S -&amp;gt; do_siganl()
+{
+    get_signal_deliver()
+    {
+        if fatal -&amp;gt; do_greoup_exit()-&amp;gt;&amp;hellip;&lt;/strong&gt;cleanup_sighand()
     }&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;handle_signal() -&amp;gt; k-&amp;gt;u(hanle)-sigreturn-&amp;gt;k
@@ -1272,86 +1272,86 @@ arch-specific: entry.S -&amp;gt; do_siganl()&lt;br /&gt;
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;#Netlink&lt;br /&gt;
-* Group&lt;br /&gt;
-enum rtnetlink_groups&lt;br /&gt;
-##What is netlink&lt;br /&gt;
-Networking related kernel configuration and monitoring interfaces.&lt;br /&gt;
-* IPC between kernel and user spacess process.&lt;br /&gt;
-ioctl&lt;br /&gt;
-* prarts&lt;br /&gt;
-    libnl&lt;br /&gt;
-    libnl-route&lt;br /&gt;
-    libnl-genl&lt;br /&gt;
+&lt;p&gt;#Netlink
+* Group
+enum rtnetlink_groups
+##What is netlink
+Networking related kernel configuration and monitoring interfaces.
+* IPC between kernel and user spacess process.
+ioctl
+* prarts
+    libnl
+    libnl-route
+    libnl-genl
     libnl-nf&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;How many parts does libnl-route has?&lt;br /&gt;
-Address,  links, neighboring, routing, TC&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;How many parts does libnl-route has?
+Address,  links, neighboring, routing, TC&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;need-patch:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Need patch&lt;/h2&gt;
 
-&lt;p&gt;skbedit action&lt;br /&gt;
-cgroup classifier&lt;br /&gt;
-tun/tap dev&lt;br /&gt;
-gre tunnel dev&lt;br /&gt;
+&lt;p&gt;skbedit action
+cgroup classifier
+tun/tap dev
+gre tunnel dev
 tc classifier/action&lt;/p&gt;
 
 &lt;p&gt;#Namespace&lt;/p&gt;
 
-&lt;p&gt;#Module&lt;br /&gt;
-##pre-require&lt;br /&gt;
-modules.alias&lt;br /&gt;
+&lt;p&gt;#Module
+##pre-require
+modules.alias
 &lt;a href=&#34;http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html&#34;&gt;http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-22954220-id-4380202.html&#34;&gt;http://blog.chinaunix.net/uid-22954220-id-4380202.html&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-22954220-id-4380202.html&#34;&gt;http://blog.chinaunix.net/uid-22954220-id-4380202.html&lt;/a&gt;
 运行时, 插入u盘也是这样.&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;内核自己加载比如缺少模块的时候 网络协议, fs&lt;br /&gt;
-&lt;a href=&#34;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&#34;&gt;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;内核自己加载比如缺少模块的时候 网络协议, fs
+&lt;a href=&#34;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&#34;&gt;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&lt;/a&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;p&gt;3 rc 里面smartqos之类的.&lt;/p&gt;
 
-&lt;p&gt;##Load module into kernel&lt;br /&gt;
+&lt;p&gt;##Load module into kernel
 vmlinux.lds.h linker scipts include helper macros.&lt;/p&gt;
 
-&lt;p&gt;#Data structures&lt;br /&gt;
-* u32 __u32&lt;br /&gt;
-__u32 is used for user-space. declare a variabe used by icotl. qosmark.&lt;br /&gt;
-u32 is used for kernel.&lt;br /&gt;
+&lt;p&gt;#Data structures
+* u32 __u32
+__u32 is used for user-space. declare a variabe used by icotl. qosmark.
+u32 is used for kernel.
 deatils in ldd3e chapter 10&lt;/p&gt;
 
-&lt;p&gt;#Panic&lt;br /&gt;
+&lt;p&gt;#Panic
 kernel/kernel/panic.c&lt;/p&gt;
 
-&lt;p&gt;#init&lt;br /&gt;
+&lt;p&gt;#init
 ##initcall&lt;/p&gt;
 
-&lt;p&gt;##disk&lt;br /&gt;
-subsys_initcall 4 genhd_device_init with base_probe{ request_module()}&lt;br /&gt;
+&lt;p&gt;##disk
+subsys_initcall 4 genhd_device_init with base_probe{ request_module()}
 module_init 6 -&amp;gt;init_sd-&amp;gt;sync_schedule_domain(sd_probe_async&lt;/p&gt;
 
-&lt;p&gt;##cmdline&lt;br /&gt;
-root= name_to_dev_t, mount_root in prepare_namespace&lt;br /&gt;
-如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.&lt;br /&gt;
+&lt;p&gt;##cmdline
+root= name_to_dev_t, mount_root in prepare_namespace
+如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.
 systemd负责挂在文件系统, 切换.&lt;/p&gt;
 
-&lt;p&gt;#src-tree&lt;br /&gt;
-include/linux: share with userspace&lt;br /&gt;
+&lt;p&gt;#src-tree
+include/linux: share with userspace
 include/net: kernel stuff&lt;/p&gt;
 
 &lt;h1 id=&#34;assembly-in-kernel:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;Assembly in kernel&lt;/h1&gt;
 
-&lt;p&gt;为了简单! 内核修改特权寄存器和指令, 用汇编实现简单.&lt;br /&gt;
+&lt;p&gt;为了简单! 内核修改特权寄存器和指令, 用汇编实现简单.
 尽可能加速. c到汇编, 编译器相对保守,&lt;/p&gt;
 
 &lt;h1 id=&#34;the-principle-of-kernel-driver-backport:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;The principle of kernel &amp;amp; driver backport&lt;/h1&gt;
 
-&lt;p&gt;将高本版kernel的feature移植到低版本的kernel的过程就是backport.&lt;br /&gt;
-1. 尽量保持与mainline的代码一致&lt;br /&gt;
+&lt;p&gt;将高本版kernel的feature移植到低版本的kernel的过程就是backport.
+1. 尽量保持与mainline的代码一致
 2. 做好取舍不要引入太多patch.&lt;/p&gt;
 
 &lt;h2 id=&#34;开发流程:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;开发流程&lt;/h2&gt;
@@ -1362,10 +1362,10 @@ include/net: kernel stuff&lt;/p&gt;
 
 &lt;h2 id=&#34;smp-ops:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;smp_ops&lt;/h2&gt;
 
-&lt;p&gt;Machine: Marvell Armada XP Development Board&lt;br /&gt;
-MACHINE_START(_type,_name)&lt;br /&gt;
-&lt;strong&gt;section&lt;/strong&gt;(&amp;ldquo;.arch.info.init&amp;rdquo;)&lt;br /&gt;
-arch/arm/tools/mach-types&lt;br /&gt;
+&lt;p&gt;Machine: Marvell Armada XP Development Board
+MACHINE_START(_type,_name)
+&lt;strong&gt;section&lt;/strong&gt;(&amp;ldquo;.arch.info.init&amp;rdquo;)
+arch/arm/tools/mach-types
 armada_xp_db            MACH_ARMADA_XP_DB       ARMADA_XP_DB            3036&lt;/p&gt;
 
 &lt;h2 id=&#34;smp:58a3cfc985b676d6d801b8fd6c47f42a&#34;&gt;smp&lt;/h2&gt;
