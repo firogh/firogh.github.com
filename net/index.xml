@@ -19,40 +19,40 @@
 
 &lt;h1 id=&#34;reference:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;&lt;br /&gt;
 man iptables and man iptables-extension&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Introduction to netfilter&lt;/h1&gt;
 
-&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
-Netfilter的本质就是内核协议栈上的Hook的集合.
+&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.&lt;br /&gt;
+Netfilter的本质就是内核协议栈上的Hook的集合.&lt;br /&gt;
 对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
 
 &lt;blockquote&gt;
 &lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
-与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
-Netfilter的历史请查阅wikipedia.
-内核基于netfilter构建了 iptables 和 connection track两套系统.
-从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
-netfilter
-ct| |iptables
-nat,filter,mangle,kproxy,smartqos
+&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.&lt;br /&gt;
+与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.&lt;br /&gt;
+Netfilter的历史请查阅wikipedia.&lt;br /&gt;
+内核基于netfilter构建了 iptables 和 connection track两套系统.&lt;br /&gt;
+从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.&lt;br /&gt;
+netfilter&lt;br /&gt;
+ct| |iptables&lt;br /&gt;
+nat,filter,mangle,kproxy,smartqos&lt;br /&gt;
 当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
 
 &lt;h1 id=&#34;netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;netfilter&lt;/h1&gt;
 
 &lt;h2 id=&#34;source:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;source&lt;/h2&gt;
 
-&lt;p&gt;netfilter 公共: net/netfilter
+&lt;p&gt;netfilter 公共: net/netfilter&lt;br /&gt;
 ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
 
 &lt;h2 id=&#34;init:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h2&gt;
 
-&lt;p&gt;~/linux/net/netfilter/core.c
+&lt;p&gt;~/linux/net/netfilter/core.c&lt;br /&gt;
 netfilter_init()&lt;/p&gt;
 
 &lt;h2 id=&#34;hook-point:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Hook point&lt;/h2&gt;
@@ -61,22 +61,22 @@ netfilter_init()&lt;/p&gt;
 
 &lt;h1 id=&#34;iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Iptables&lt;/h1&gt;
 
-&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).
-iptables 的ip是IP(Internet Protocol).
-xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
+&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).&lt;br /&gt;
+iptables 的ip是IP(Internet Protocol).&lt;br /&gt;
+xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.&lt;br /&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details of iptables&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;iptables command
-直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
-如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT
-特别: 从-p开始到-j 之前这是一个 match!
-更多的match 和 target, please, man iptables-extension
+&lt;li&gt;&lt;p&gt;iptables command&lt;br /&gt;
+直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target&lt;br /&gt;
+如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT&lt;br /&gt;
+特别: 从-p开始到-j 之前这是一个 match!&lt;br /&gt;
+更多的match 和 target, please, man iptables-extension&lt;br /&gt;
 一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kernel code
+&lt;li&gt;&lt;p&gt;kernel code&lt;br /&gt;
 ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -85,19 +85,19 @@ ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&l
 &lt;h3 id=&#34;init-1:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h3&gt;
 
 &lt;ul&gt;
-&lt;li&gt;如mangle表的初始化见iptable_mangle_init
-xt_table: ipt_register_table
-    struct xt_table         *iptable_filter;
-    struct xt_table         *iptable_mangle;
-    struct xt_table         *iptable_raw;
-    struct xt_table         *arptable_filter;
-    struct xt_table         *iptable_security;
-    struct xt_table         *nat_table;&lt;/li&gt;
+&lt;li&gt;如mangle表的初始化见iptable_mangle_init&lt;br /&gt;
+xt_table: ipt_register_table&lt;br /&gt;
+    struct xt_table         *iptable_filter;&lt;br /&gt;
+    struct xt_table         *iptable_mangle;&lt;br /&gt;
+    struct xt_table         *iptable_raw;&lt;br /&gt;
+    struct xt_table         *arptable_filter;&lt;br /&gt;
+    struct xt_table         *iptable_security;&lt;br /&gt;
+    struct xt_table         *nat_table;&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init
+&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init&lt;br /&gt;
 xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init
+&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init&lt;br /&gt;
 xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -111,7 +111,7 @@ xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;init-2:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;init&lt;/h2&gt;
 
-&lt;p&gt;nf_conntrack_standalone_init()
+&lt;p&gt;nf_conntrack_standalone_init()&lt;br /&gt;
 nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
 
 &lt;h2 id=&#34;conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
@@ -120,13 +120,13 @@ nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
 
 &lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
 
-&lt;p&gt;Each Netfilter connection is uniquely identified by a
-(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
+&lt;p&gt;Each Netfilter connection is uniquely identified by a&lt;br /&gt;
+(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple&lt;br /&gt;
 nf_conntrack_tuple nf_conn&lt;/p&gt;
 
 &lt;h2 id=&#34;connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking helper&lt;/h2&gt;
 
-&lt;p&gt;connection tracking can be given knowledge of application-layer protocols
+&lt;p&gt;connection tracking can be given knowledge of application-layer protocols&lt;br /&gt;
 ALG&lt;/p&gt;
 
 &lt;h2 id=&#34;template:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;template&lt;/h2&gt;
@@ -135,22 +135,22 @@ ALG&lt;/p&gt;
 
 &lt;h2 id=&#34;details:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details&lt;/h2&gt;
 
-&lt;p&gt;以上的工作事实上都很简单，基本思路是：
-一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
-这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
+&lt;p&gt;以上的工作事实上都很简单，基本思路是：&lt;br /&gt;
+一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。&lt;br /&gt;
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。&lt;br /&gt;
 徐琛,也这么说!&lt;/p&gt;
 
-&lt;p&gt;#NAT
-&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;
-symmetric nat, 端口不复用, 访问同一个服务器.
+&lt;p&gt;#NAT&lt;br /&gt;
+&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;&lt;br /&gt;
+symmetric nat, 端口不复用, 访问同一个服务器.&lt;br /&gt;
 linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
 
-&lt;p&gt;##init
+&lt;p&gt;##init&lt;br /&gt;
 iptable_nat_init&lt;/p&gt;
 
 &lt;h2 id=&#34;nat-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;NAT helper&lt;/h2&gt;
 
-&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection
+&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection&lt;br /&gt;
 and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
 
 &lt;h2 id=&#34;drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
@@ -159,19 +159,19 @@ and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
 
 &lt;h2 id=&#34;snat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;SNAT&lt;/h2&gt;
 
-&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;
-{
-nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info
-    {
-        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
-        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.
-        orig_orignal-&amp;gt;skb
-        nf_ct_invert_tuplepr(inverse, orig_relply)
-        {
-            ipv4_invert_tuple
-            tcp_invert_tuple
-            For example, orig tuple:
-            original: 192.168.199.132 -&amp;gt; google.com
+&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info&lt;br /&gt;
+    {&lt;br /&gt;
+        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.&lt;br /&gt;
+        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.&lt;br /&gt;
+        orig_orignal-&amp;gt;skb&lt;br /&gt;
+        nf_ct_invert_tuplepr(inverse, orig_relply)&lt;br /&gt;
+        {&lt;br /&gt;
+            ipv4_invert_tuple&lt;br /&gt;
+            tcp_invert_tuple&lt;br /&gt;
+            For example, orig tuple:&lt;br /&gt;
+            original: 192.168.199.132 -&amp;gt; google.com&lt;br /&gt;
             reply: google.com -&amp;gt; 192.168.199.132 //this is orig_relpy&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;        inverse tuple:
@@ -195,26 +195,26 @@ nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//上面ct改完了该改skb了.
-    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
+&lt;p&gt;//上面ct改完了该改skb了.&lt;br /&gt;
+    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;SNAT nftables
+&lt;li&gt;&lt;p&gt;SNAT nftables&lt;br /&gt;
 nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;De-NAT
-最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
+&lt;li&gt;&lt;p&gt;De-NAT&lt;br /&gt;
+最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？&lt;br /&gt;
 我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp;amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了
+&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了&lt;br /&gt;
 发包-POSTROUTING -&amp;gt;SNAT -&amp;gt;修改ct: nf_nat_setup_info-&amp;gt;　ct-&amp;gt;status |= IPS_SRC_NAT;-&amp;gt;修改skb:nf_nat_packet&lt;/p&gt;
 
-&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet
-{
+&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet&lt;br /&gt;
+{&lt;br /&gt;
     enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);&lt;br /&gt;
     //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.&lt;/p&gt;
 
@@ -235,19 +235,19 @@ if (ct-&amp;gt;status &amp;amp; statusbit) {
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;#ipset
+&lt;p&gt;#ipset&lt;br /&gt;
 salist for iptables&lt;/p&gt;
 
-&lt;p&gt;#SYN proxy
-SYNPROXY target makes handling of large SYN floods possible without
-the large performance penalties imposed by the connection tracking in such cases.
-On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
+&lt;p&gt;#SYN proxy&lt;br /&gt;
+SYNPROXY target makes handling of large SYN floods possible without&lt;br /&gt;
+the large performance penalties imposed by the connection tracking in such cases.&lt;br /&gt;
+On 3 November 2013, SYN proxy functionality was merged into the Netfilter,&lt;br /&gt;
 with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
 
 &lt;p&gt;#nftables&lt;/p&gt;
 
-&lt;p&gt;#FAQ
-* 如何查看某个table 具体在那几个hook点.
+&lt;p&gt;#FAQ&lt;br /&gt;
+* 如何查看某个table 具体在那几个hook点.&lt;br /&gt;
 去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
 </description>
     </item>
@@ -260,115 +260,115 @@ with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
       <guid>http://firoyang.org/net/l2/</guid>
       <description>
 
-&lt;p&gt;#data link layer
-##Reference
-* IEEE 802 suite
-IEEE 802.1—概述、体系结构和网络互连，以及网络管理和性能测量。
-IEEE 802.2—逻辑链路控制LLC。最高层协议与任何一种局域网MAC子层的接口。
-IEEE 802.3—CSMA/CD网络，定义CSMA/CD总线网的MAC子层和物理层的规范。
-IEEE 802.4—令牌总线网。定义令牌传递总线网的MAC子层和物理层的规范。
-IEEE 802.5—令牌环形网。定义令牌传递环形网的MAC子层和物理层的规范。
-IEEE 802.6—城域网。
-IEEE 802.7—宽带技术。
-IEEE 802.8—光纤技术。
-IEEE 802.9—综合话音数据局域网。
-IEEE 802.10—可互操作的局域网的安全。
-IEEE 802.11—无线局域网。
-IEEE 802.12—优先高速局域网(100Mb/s)。
+&lt;p&gt;#data link layer&lt;br /&gt;
+##Reference&lt;br /&gt;
+* IEEE 802 suite&lt;br /&gt;
+IEEE 802.1—概述、体系结构和网络互连，以及网络管理和性能测量。&lt;br /&gt;
+IEEE 802.2—逻辑链路控制LLC。最高层协议与任何一种局域网MAC子层的接口。&lt;br /&gt;
+IEEE 802.3—CSMA/CD网络，定义CSMA/CD总线网的MAC子层和物理层的规范。&lt;br /&gt;
+IEEE 802.4—令牌总线网。定义令牌传递总线网的MAC子层和物理层的规范。&lt;br /&gt;
+IEEE 802.5—令牌环形网。定义令牌传递环形网的MAC子层和物理层的规范。&lt;br /&gt;
+IEEE 802.6—城域网。&lt;br /&gt;
+IEEE 802.7—宽带技术。&lt;br /&gt;
+IEEE 802.8—光纤技术。&lt;br /&gt;
+IEEE 802.9—综合话音数据局域网。&lt;br /&gt;
+IEEE 802.10—可互操作的局域网的安全。&lt;br /&gt;
+IEEE 802.11—无线局域网。&lt;br /&gt;
+IEEE 802.12—优先高速局域网(100Mb/s)。&lt;br /&gt;
 IEEE 802.13—有线电视(Cable-TV)。&lt;/p&gt;
 
-&lt;p&gt;##Common concepts
-* The link layer
+&lt;p&gt;##Common concepts&lt;br /&gt;
+* The link layer&lt;br /&gt;
 is the group of methods and communications protocols that only operate on the link that a host is physically connected to.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;The link
+&lt;li&gt;&lt;p&gt;The link&lt;br /&gt;
 is the physical and logical network component used to interconnect hosts or nodes in the network&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;a link protocol
-is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment
+&lt;li&gt;&lt;p&gt;a link protocol&lt;br /&gt;
+is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment&lt;br /&gt;
 or a wide area network connection.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;MTU
-This limits the number of bytes of data to 1500(Ethernet II) and 1492(IEEE 802), respectively.
+&lt;li&gt;&lt;p&gt;MTU&lt;br /&gt;
+This limits the number of bytes of data to 1500(Ethernet II) and 1492(IEEE 802), respectively.&lt;br /&gt;
 This characteristic of the link layer is called the MTU, its maximum transmission unit.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;PMTU
-/proc/sys/net/ipv4/ip_no_pmtu_disc
+&lt;li&gt;&lt;p&gt;PMTU&lt;br /&gt;
+/proc/sys/net/ipv4/ip_no_pmtu_disc&lt;br /&gt;
 0 enable, 1 disable&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;cat /proc/sys/net/core/warnings&lt;/p&gt;
 
-&lt;p&gt;/proc/sys/net/ipv4/tcp_mtu_probing
-!0 enable tcp_mtu_probing()
-If you are using Jumbo Frames, we recommend setting tcp_mtu_probing = 1 to
+&lt;p&gt;/proc/sys/net/ipv4/tcp_mtu_probing&lt;br /&gt;
+!0 enable tcp_mtu_probing()&lt;br /&gt;
+If you are using Jumbo Frames, we recommend setting tcp_mtu_probing = 1 to&lt;br /&gt;
 help avoid the problem of MTU black holes. Setting it to 2 sometimes causes performance problems.&lt;/p&gt;
 
-&lt;p&gt;net/ipv4/icmp.c
-icmp_unreach(
-type 3, code 4
-icmph-&amp;gt;type == ICMP_DEST_UNREACH //3
-case ICMP_FRAG_NEEDED //4
+&lt;p&gt;net/ipv4/icmp.c&lt;br /&gt;
+icmp_unreach(&lt;br /&gt;
+type 3, code 4&lt;br /&gt;
+icmph-&amp;gt;type == ICMP_DEST_UNREACH //3&lt;br /&gt;
+case ICMP_FRAG_NEEDED //4&lt;br /&gt;
 icmp_err,&lt;/p&gt;
 
 &lt;h2 id=&#34;frame:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;Frame&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.infocellar.com/networks/ethernet/frame.htm&#34;&gt;Ethernet Frame&lt;/a&gt;
-+ 一种不太确定的非严格的真实划分
-TCP/IP -&amp;gt; Ethenet II frame
-IPX/APPLETALK -&amp;gt; 802.3/LLC(802.2), SNAP, mac 发来的包走这条路.
+&lt;p&gt;&lt;a href=&#34;http://www.infocellar.com/networks/ethernet/frame.htm&#34;&gt;Ethernet Frame&lt;/a&gt;&lt;br /&gt;
++ 一种不太确定的非严格的真实划分&lt;br /&gt;
+TCP/IP -&amp;gt; Ethenet II frame&lt;br /&gt;
+IPX/APPLETALK -&amp;gt; 802.3/LLC(802.2), SNAP, mac 发来的包走这条路.&lt;br /&gt;
 * jumbo frame?&lt;/p&gt;
 
-&lt;p&gt;#net_device
-link -&amp;gt; net&lt;em&gt;device -&amp;gt; if
-driver -&amp;gt; manipulate dev-&amp;gt;state through netif&lt;/em&gt;*_on/off -&amp;gt; dev-&amp;gt;flags
-+rfc2863
-+ &lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/operstates.txt&#34;&gt;operational state&lt;/a&gt;
-+ &lt;a href=&#34;https://support.cumulusnetworks.com/hc/en-us/articles/202693826-Monitoring-Interface-Administrative-State-and-Physical-State-on-Cumulus-Linux&#34;&gt;Monitoring Interface Administrative State and Physical State on Cumulus Linux&lt;/a&gt;
-* dev-&amp;gt;operstate
-admin state is if flag
-operate state is link_state
-Administrative state is the result of &amp;ldquo;ip link set dev
-&lt;dev&gt; up or down&amp;rdquo; and reflects whether the administrator wants to use
-the device for traffic.
-enp9s0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000
-operate is DOWN, amdin is UP&amp;gt;
- Operational state
-shows the ability of an interface to transmit this user data.
-    &amp;ldquo;UNKNOWN&amp;rdquo;, &amp;ldquo;NOTPRESENT&amp;rdquo;, &amp;ldquo;DOWN&amp;rdquo;, &amp;ldquo;LOWERLAYERDOWN&amp;rdquo;,
-    &amp;ldquo;TESTING&amp;rdquo;, &amp;ldquo;DORMANT&amp;rdquo;,    &amp;ldquo;UP&amp;rdquo;
-IF_OPER_UNKNOWN,
+&lt;p&gt;#net_device&lt;br /&gt;
+link -&amp;gt; net&lt;em&gt;device -&amp;gt; if&lt;br /&gt;
+driver -&amp;gt; manipulate dev-&amp;gt;state through netif&lt;/em&gt;*_on/off -&amp;gt; dev-&amp;gt;flags&lt;br /&gt;
++rfc2863&lt;br /&gt;
++ &lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/operstates.txt&#34;&gt;operational state&lt;/a&gt;&lt;br /&gt;
++ &lt;a href=&#34;https://support.cumulusnetworks.com/hc/en-us/articles/202693826-Monitoring-Interface-Administrative-State-and-Physical-State-on-Cumulus-Linux&#34;&gt;Monitoring Interface Administrative State and Physical State on Cumulus Linux&lt;/a&gt;&lt;br /&gt;
+* dev-&amp;gt;operstate&lt;br /&gt;
+admin state is if flag&lt;br /&gt;
+operate state is link_state&lt;br /&gt;
+Administrative state is the result of &amp;ldquo;ip link set dev&lt;br /&gt;
+&lt;dev&gt; up or down&amp;rdquo; and reflects whether the administrator wants to use&lt;br /&gt;
+the device for traffic.&lt;br /&gt;
+enp9s0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000&lt;br /&gt;
+operate is DOWN, amdin is UP&amp;gt;&lt;br /&gt;
+ Operational state&lt;br /&gt;
+shows the ability of an interface to transmit this user data.&lt;br /&gt;
+    &amp;ldquo;UNKNOWN&amp;rdquo;, &amp;ldquo;NOTPRESENT&amp;rdquo;, &amp;ldquo;DOWN&amp;rdquo;, &amp;ldquo;LOWERLAYERDOWN&amp;rdquo;,&lt;br /&gt;
+    &amp;ldquo;TESTING&amp;rdquo;, &amp;ldquo;DORMANT&amp;rdquo;,    &amp;ldquo;UP&amp;rdquo;&lt;br /&gt;
+IF_OPER_UNKNOWN,&lt;br /&gt;
 see rfc2863&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;dev-&amp;gt;link_mode
-IF_LINK_MODE_DORMANT wifi
-IF_LINK_MODE_DEFAULT wire
+&lt;li&gt;&lt;p&gt;dev-&amp;gt;link_mode&lt;br /&gt;
+IF_LINK_MODE_DORMANT wifi&lt;br /&gt;
+IF_LINK_MODE_DEFAULT wire&lt;br /&gt;
 对应dev-&amp;gt;operstate in 转化方法rfc2863_policy()&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;dev-&amp;gt;state
+&lt;li&gt;&lt;p&gt;dev-&amp;gt;state&lt;br /&gt;
 &lt;strong&gt;LINK_STATE_START,     这是内核自身的标记位&lt;/strong&gt;dev_open init_dummy_netdev __dev_close_many&lt;br /&gt;
-__LINK_STATE_PRESENT,         也是内核自己的, 用的比 START早
+__LINK_STATE_PRESENT,         也是内核自己的, 用的比 START早&lt;br /&gt;
 __LINK_STATE_NOCARRIER,&lt;br /&gt;
-__LINK_STATE_LINKWATCH_PENDING, 也是辅助状态不明, nocarrier和dormant都可接收的
+__LINK_STATE_LINKWATCH_PENDING, 也是辅助状态不明, nocarrier和dormant都可接收的&lt;br /&gt;
 __LINK_STATE_DORMANT&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;dev-&amp;gt;flags dev_get_flags()&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;if flags form man netdevice or or kernel src codes
-/sys/class/net/&lt;dev&gt;/flags
-          IFF_UP            Interface is running.
-          IFF_BROADCAST     Valid broadcast address set.
-          IFF_DEBUG         Internal debugging flag.
-          IFF_LOOPBACK      Interface is a loopback interface.
-          IFF_POINTOPOINT   Interface is a point-to-point link.
-          IFF_RUNNING       Resources allocated.
-          IFF_NOARP         No arp protocol, L2 destination address not set.
-          IFF_PROMISC       Interface is in promiscuous mode.
-          IFF_NOTRAILERS    Avoid use of trailers.
-          IFF_ALLMULTI      Receive all multicast packets.
-          IFF_MASTER        Master of a load balancing bundle.
+&lt;li&gt;&lt;p&gt;if flags form man netdevice or or kernel src codes&lt;br /&gt;
+/sys/class/net/&lt;dev&gt;/flags&lt;br /&gt;
+          IFF_UP            Interface is running.&lt;br /&gt;
+          IFF_BROADCAST     Valid broadcast address set.&lt;br /&gt;
+          IFF_DEBUG         Internal debugging flag.&lt;br /&gt;
+          IFF_LOOPBACK      Interface is a loopback interface.&lt;br /&gt;
+          IFF_POINTOPOINT   Interface is a point-to-point link.&lt;br /&gt;
+          IFF_RUNNING       Resources allocated.&lt;br /&gt;
+          IFF_NOARP         No arp protocol, L2 destination address not set.&lt;br /&gt;
+          IFF_PROMISC       Interface is in promiscuous mode.&lt;br /&gt;
+          IFF_NOTRAILERS    Avoid use of trailers.&lt;br /&gt;
+          IFF_ALLMULTI      Receive all multicast packets.&lt;br /&gt;
+          IFF_MASTER        Master of a load balancing bundle.&lt;br /&gt;
           IFF_SLAVE         Slave of a load balancing bundle.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;      IFF_MULTICAST     Supports multicast
@@ -381,165 +381,165 @@ __LINK_STATE_DORMANT&lt;/p&gt;&lt;/li&gt;
       IFF_ECHO          Echo sent packets (since Linux 2.6.25)
 &lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;netdev_queue-&amp;gt;state
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/709444/focus=714632&#34;&gt;Understand __QUEUE_STATE_FROZEN&lt;/a&gt;
-__QUEUE_STATE_DRV_XOFF,     netif_tx_stop_queue
+&lt;li&gt;&lt;p&gt;netdev_queue-&amp;gt;state&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/709444/focus=714632&#34;&gt;Understand __QUEUE_STATE_FROZEN&lt;/a&gt;&lt;br /&gt;
+__QUEUE_STATE_DRV_XOFF,     netif_tx_stop_queue&lt;br /&gt;
 __QUEUE_STATE_STACK_XOFF,&lt;br /&gt;
-__QUEUE_STATE_FROZEN,
+__QUEUE_STATE_FROZEN,&lt;br /&gt;
 可以确定这个frozen这个标志位就是为了dev_watchdog服务, 从所有内核态代码调用的位置得出的.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;dev_watchdog,&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#Neighbor
-* ip_output_finish2 -&amp;gt; __neigh_create -&amp;gt; tbl-&amp;gt;constructor -&amp;gt; arp_constructor{
-if !dev-&amp;gt;header_ops   //slip is the case, see sl_setup
-    neigh-&amp;gt;ops = &amp;amp;arp_direct_ops
-    neigh-&amp;gt;output = neigh_direct_output
-else if ARPHRD_ROSE/AX25/NETROM
-    arp_broken_ops
-    neigh-&amp;gt;ops-&amp;gt;output
-else if dev-&amp;gt;header_ops-&amp;gt;cache
-    neigh-&amp;gt;ops = &amp;amp;arp_hh_ops
-else
+&lt;p&gt;#Neighbor&lt;br /&gt;
+* ip_output_finish2 -&amp;gt; __neigh_create -&amp;gt; tbl-&amp;gt;constructor -&amp;gt; arp_constructor{&lt;br /&gt;
+if !dev-&amp;gt;header_ops   //slip is the case, see sl_setup&lt;br /&gt;
+    neigh-&amp;gt;ops = &amp;amp;arp_direct_ops&lt;br /&gt;
+    neigh-&amp;gt;output = neigh_direct_output&lt;br /&gt;
+else if ARPHRD_ROSE/AX25/NETROM&lt;br /&gt;
+    arp_broken_ops&lt;br /&gt;
+    neigh-&amp;gt;ops-&amp;gt;output&lt;br /&gt;
+else if dev-&amp;gt;header_ops-&amp;gt;cache&lt;br /&gt;
+    neigh-&amp;gt;ops = &amp;amp;arp_hh_ops&lt;br /&gt;
+else&lt;br /&gt;
     arp_generic_ops&lt;/p&gt;
 
 &lt;p&gt;if (neigh-&amp;gt;nud_state &amp;amp; NUD_VALID)&lt;br /&gt;
     neigh-&amp;gt;output = neigh-&amp;gt;ops-&amp;gt;connected_output;&lt;br /&gt;
 else&lt;br /&gt;
-    neigh-&amp;gt;output = neigh-&amp;gt;ops-&amp;gt;output;
+    neigh-&amp;gt;output = neigh-&amp;gt;ops-&amp;gt;output;&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;ip_output_finish2 -&amp;gt; dst_neigh_output -&amp;gt; neigh_resolve_output&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;ipv4 Neighbor output instance of ethernet
-see alloc_etherdev_mqs-&amp;gt; ether_setup{
-dev-&amp;gt;header_ops = &amp;amp;eth_header_ops;
-dev-&amp;gt;type       = ARPHRD_ETHER;
-eth_header_ops.cache = eth_header_cache
-}
+&lt;li&gt;&lt;p&gt;ipv4 Neighbor output instance of ethernet&lt;br /&gt;
+see alloc_etherdev_mqs-&amp;gt; ether_setup{&lt;br /&gt;
+dev-&amp;gt;header_ops = &amp;amp;eth_header_ops;&lt;br /&gt;
+dev-&amp;gt;type       = ARPHRD_ETHER;&lt;br /&gt;
+eth_header_ops.cache = eth_header_cache&lt;br /&gt;
+}&lt;br /&gt;
 so neigh-&amp;gt;ops = &amp;amp;arp_hh_ops; neigh-&amp;gt;output = neigh_resolve_output in arp_hh_ops&lt;/p&gt;
 
-&lt;p&gt;//tg3_init_one
-dev-&amp;gt;netdev_ops = &amp;amp;tg3_netdev_ops;
-dev-&amp;gt;ethtool_ops = &amp;amp;tg3_ethtool_ops;
+&lt;p&gt;//tg3_init_one&lt;br /&gt;
+dev-&amp;gt;netdev_ops = &amp;amp;tg3_netdev_ops;&lt;br /&gt;
+dev-&amp;gt;ethtool_ops = &amp;amp;tg3_ethtool_ops;&lt;br /&gt;
 dev-&amp;gt;watchdog_timeo = TG3_TX_TIMEOUT;&lt;/p&gt;
 
-&lt;p&gt;//In ppp
-static void ppp_setup(struct nethernetet_device *dev)
+&lt;p&gt;//In ppp&lt;br /&gt;
+static void ppp_setup(struct nethernetet_device *dev)&lt;br /&gt;
 {&lt;br /&gt;
 dev-&amp;gt;netdev_ops = &amp;amp;ppp_netdev_ops;&lt;br /&gt;
 dev-&amp;gt;hard_header_len = PPP_HDRLEN;&lt;br /&gt;
-dev-&amp;gt;mtu = PPP_MRU;
+dev-&amp;gt;mtu = PPP_MRU;&lt;br /&gt;
 dev-&amp;gt;addr_len = 0;&lt;br /&gt;
-dev-&amp;gt;tx_queue_len = 3
-dev-&amp;gt;type = ARPHRD_PPP
+dev-&amp;gt;tx_queue_len = 3&lt;br /&gt;
+dev-&amp;gt;type = ARPHRD_PPP&lt;br /&gt;
 }&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;#PPP SLIP&lt;/p&gt;
 
-&lt;p&gt;#Data Framing
+&lt;p&gt;#Data Framing&lt;br /&gt;
 dst_neigh_output-&amp;gt;dev_hard_header -&amp;gt;  eth_header&lt;/p&gt;
 
-&lt;p&gt;#TC Qdisc
-##Bibliography
-&lt;a href=&#34;http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html&#34;&gt;http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html&lt;/a&gt;
-lartc.rog
+&lt;p&gt;#TC Qdisc&lt;br /&gt;
+##Bibliography&lt;br /&gt;
+&lt;a href=&#34;http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html&#34;&gt;http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html&lt;/a&gt;&lt;br /&gt;
+lartc.rog&lt;br /&gt;
 &lt;a href=&#34;http://ace-host.stuart.id.au/russell/files/tc/&#34;&gt;http://ace-host.stuart.id.au/russell/files/tc/&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;##Common concepts
-Shaping: Shapers delay packets to meet a desired rate.
-Scheduling: Schedulers arrange and/or rearrange packets for output.
-Classifying: Classifiers sort or separate traffic into queues.
-Policing: Policers measure and limit traffic in a particular queue.
-Dropping: Dropping discards an entire packet, flow or classification.
+&lt;p&gt;##Common concepts&lt;br /&gt;
+Shaping: Shapers delay packets to meet a desired rate.&lt;br /&gt;
+Scheduling: Schedulers arrange and/or rearrange packets for output.&lt;br /&gt;
+Classifying: Classifiers sort or separate traffic into queues.&lt;br /&gt;
+Policing: Policers measure and limit traffic in a particular queue.&lt;br /&gt;
+Dropping: Dropping discards an entire packet, flow or classification.&lt;br /&gt;
 Marking: Marking is a mechanism by which the packet is altered.&lt;/p&gt;
 
-&lt;p&gt;##Add new qdisc
+&lt;p&gt;##Add new qdisc&lt;br /&gt;
 RTM_NEWQDISC -&amp;gt; tc_modify_qdisc&lt;/p&gt;
 
 &lt;p&gt;##The execution of u32 tc rule&lt;/p&gt;
 
 &lt;h3 id=&#34;user-space-tc-qidsc-add:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;user space tc qidsc add&lt;/h3&gt;
 
-&lt;p&gt;u32_parse_opt
-{
-    -&amp;gt; parse_selector -&amp;gt;&amp;hellip;-&amp;gt; parse_ip
-    struct nlmsghdr *n
-    rta = NLMSG_TAIL(n)
+&lt;p&gt;u32_parse_opt&lt;br /&gt;
+{&lt;br /&gt;
+    -&amp;gt; parse_selector -&amp;gt;&amp;hellip;-&amp;gt; parse_ip&lt;br /&gt;
+    struct nlmsghdr *n&lt;br /&gt;
+    rta = NLMSG_TAIL(n)&lt;br /&gt;
     rta-&amp;gt;type = TCA_U32_SEL&lt;/p&gt;
 
 &lt;p&gt;}&lt;/p&gt;
 
 &lt;h3 id=&#34;kernel-space:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;kernel space&lt;/h3&gt;
 
-&lt;p&gt;NETLINK_ROUTE -&amp;gt; RTM_NEWTFILTER: see tc_filter_init -&amp;gt; tc_ctl_tfilter-&amp;gt;(tp-&amp;gt;ops-&amp;gt;change = u32_change in net/sched/cls_u32.c)
-tcf_exts_validate: init police and action of this shel tc command,
-put sel in tc_u_knode;
-tc_u_knode insert in tc_u_hnode
-root is tcf_proto 入殓 by prior.
-tcf_proto -&amp;gt; tc_u_hnode -&amp;gt; tc_u_knode -&amp;gt; sel
-也就是用户太的selector没变存到内核中了.
-enqueue -&amp;gt; filter_list -&amp;gt;u32-&amp;gt;classify() this classify is implement by u32!
-tcf_proto_ops-&amp;gt;.kind = &amp;ldquo;u32&amp;rdquo;, .classify   =   u32_classify,
+&lt;p&gt;NETLINK_ROUTE -&amp;gt; RTM_NEWTFILTER: see tc_filter_init -&amp;gt; tc_ctl_tfilter-&amp;gt;(tp-&amp;gt;ops-&amp;gt;change = u32_change in net/sched/cls_u32.c)&lt;br /&gt;
+tcf_exts_validate: init police and action of this shel tc command,&lt;br /&gt;
+put sel in tc_u_knode;&lt;br /&gt;
+tc_u_knode insert in tc_u_hnode&lt;br /&gt;
+root is tcf_proto 入殓 by prior.&lt;br /&gt;
+tcf_proto -&amp;gt; tc_u_hnode -&amp;gt; tc_u_knode -&amp;gt; sel&lt;br /&gt;
+也就是用户太的selector没变存到内核中了.&lt;br /&gt;
+enqueue -&amp;gt; filter_list -&amp;gt;u32-&amp;gt;classify() this classify is implement by u32!&lt;br /&gt;
+tcf_proto_ops-&amp;gt;.kind = &amp;ldquo;u32&amp;rdquo;, .classify   =   u32_classify,&lt;br /&gt;
 police and action invoke in tcf_action_exec , act register by tcf_register_action.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;TCA_U32_CLASSID in u32_set_parms
-filter classid and flowid is the same meaning in russell tc doc&lt;/li&gt;
-&lt;li&gt;TCA_KIND in filter is u32&amp;hellip;register_tcf_proto_ops&lt;/li&gt;
+&lt;li&gt;TCA_U32_CLASSID in u32_set_parms&lt;br /&gt;
+filter classid and flowid is the same meaning in russell tc doc&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;TCA_KIND in filter is u32&amp;hellip;register_tcf_proto_ops&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;##FAQ
-* conflict tc qidsc del with softnet_data-&amp;gt;softnet_data
- [PATCH] pkt_sched: Destroy gen estimators under rtnl_lock().
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/102444/focus=102592&#34;&gt;http://thread.gmane.org/gmane.linux.network/102444/focus=102592&lt;/a&gt;
-After synchronize_rcu() in dev_deactivate() we are sure any qdisc_run(),
-from dev_queue_xmit() or net_tx_action() can only see and lock noop_qdisc.
-This was happened in dev_deactivate_many()
-* difference between synchronize_net and  synchronize_rcu?
-&lt;a href=&#34;http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle&#34;&gt;http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle&lt;/a&gt;
+&lt;p&gt;##FAQ&lt;br /&gt;
+* conflict tc qidsc del with softnet_data-&amp;gt;softnet_data&lt;br /&gt;
+ [PATCH] pkt_sched: Destroy gen estimators under rtnl_lock().&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/102444/focus=102592&#34;&gt;http://thread.gmane.org/gmane.linux.network/102444/focus=102592&lt;/a&gt;&lt;br /&gt;
+After synchronize_rcu() in dev_deactivate() we are sure any qdisc_run(),&lt;br /&gt;
+from dev_queue_xmit() or net_tx_action() can only see and lock noop_qdisc.&lt;br /&gt;
+This was happened in dev_deactivate_many()&lt;br /&gt;
+* difference between synchronize_net and  synchronize_rcu?&lt;br /&gt;
+&lt;a href=&#34;http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle&#34;&gt;http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle&lt;/a&gt;&lt;br /&gt;
 In this patch, we replace synchronize_rcu with synchronize_net().&lt;/p&gt;
 
-&lt;p&gt;#LLC (TCP/IP rarely use this sub layer)
-* ptype MAC layer 之上, 可能是data link(llc) or network layer(ip)
-定义了所有从驱动上来的packet接收函数, 这里有ip_rcv 还有pppoe_rcv,llc_rcv, NO snap_rcv
-dev_add_pack
-llc_rcv{snap_rcv}
+&lt;p&gt;#LLC (TCP/IP rarely use this sub layer)&lt;br /&gt;
+* ptype MAC layer 之上, 可能是data link(llc) or network layer(ip)&lt;br /&gt;
+定义了所有从驱动上来的packet接收函数, 这里有ip_rcv 还有pppoe_rcv,llc_rcv, NO snap_rcv&lt;br /&gt;
+dev_add_pack&lt;br /&gt;
+llc_rcv{snap_rcv}&lt;br /&gt;
 netif_receive_skb -&amp;gt;ip/llc_rcv&lt;/p&gt;
 
 &lt;h1 id=&#34;netpoll:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;Netpoll&lt;/h1&gt;
 
-&lt;p&gt;可以说是linker层的netfilter 更raw
-netconsole就是基于他, 屌炸天.
+&lt;p&gt;可以说是linker层的netfilter 更raw&lt;br /&gt;
+netconsole就是基于他, 屌炸天.&lt;br /&gt;
 不走协议栈, 中断完蛋了, 也能用, 纯poll.&lt;/p&gt;
 
 &lt;h1 id=&#34;napi:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;NAPI&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-24148050-id-464587.html&#34;&gt;网络数据包收发流程(一)：从驱动到协议栈&lt;/a&gt;
-New API (NAPI) is an interface to use interrupt mitigation techniques for networking devices in the Linux kernel.
-Such an approach is intended to reduce the overhead of packet receiving.
-类似机制, Add &lt;a href=&#34;https://lwn.net/Articles/346187/&#34;&gt;blk-iopoll&lt;/a&gt;, a NAPI like approach for block devices
-1. dirver: device-&amp;gt;DMA-&amp;gt;ring
-2. IRQ: disable irq, napi schedule
-do_IRQ-&amp;gt;handler = gfar_receive{
-    disable irq
-    __netif_rx_schedule
+&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-24148050-id-464587.html&#34;&gt;网络数据包收发流程(一)：从驱动到协议栈&lt;/a&gt;&lt;br /&gt;
+New API (NAPI) is an interface to use interrupt mitigation techniques for networking devices in the Linux kernel.&lt;br /&gt;
+Such an approach is intended to reduce the overhead of packet receiving.&lt;br /&gt;
+类似机制, Add &lt;a href=&#34;https://lwn.net/Articles/346187/&#34;&gt;blk-iopoll&lt;/a&gt;, a NAPI like approach for block devices&lt;br /&gt;
+1. dirver: device-&amp;gt;DMA-&amp;gt;ring&lt;br /&gt;
+2. IRQ: disable irq, napi schedule&lt;br /&gt;
+do_IRQ-&amp;gt;handler = gfar_receive{&lt;br /&gt;
+    disable irq&lt;br /&gt;
+    __netif_rx_schedule&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;softirq:driver function, clean ring buffer, netif_receive_skb
--&amp;gt;net_rx_action {
-n-&amp;gt;poll = gfar_poll
-{
-gfar_clean_rx_ring-&amp;gt;gfar_process_frame
-{
-    skb-&amp;gt;protocol = eth_type_trans(skb, dev);
-    netif_receive_skb
-}
-enable irq&lt;/li&gt;
+&lt;li&gt;softirq:driver function, clean ring buffer, netif_receive_skb&lt;br /&gt;
+-&amp;gt;net_rx_action {&lt;br /&gt;
+n-&amp;gt;poll = gfar_poll&lt;br /&gt;
+{&lt;br /&gt;
+gfar_clean_rx_ring-&amp;gt;gfar_process_frame&lt;br /&gt;
+{&lt;br /&gt;
+    skb-&amp;gt;protocol = eth_type_trans(skb, dev);&lt;br /&gt;
+    netif_receive_skb&lt;br /&gt;
+}&lt;br /&gt;
+enable irq&lt;br /&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;h1 id=&#34;rps:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;RPS&lt;/h1&gt;
@@ -547,20 +547,20 @@ enable irq&lt;/li&gt;
 &lt;h1 id=&#34;driver:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;Driver&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;skb-&amp;gt;protocol&lt;/li&gt;
-&lt;li&gt;assignment in ip_output by = htons(ETH_P_IP)&lt;/li&gt;
-&lt;li&gt;assignment in driver by = eth_type_trans()&lt;/li&gt;
+&lt;li&gt;skb-&amp;gt;protocol&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;assignment in ip_output by = htons(ETH_P_IP)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;assignment in driver by = eth_type_trans()&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;mac:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;MAC&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Addressing,LAN switching&lt;/li&gt;
+&lt;li&gt;Addressing,LAN switching&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;relations-of-concept:a08e647099ab02a1c7b8e91ceb4c21b2&#34;&gt;relations of concept&lt;/h1&gt;
 
-&lt;p&gt;Qdisc &amp;ndash; NET_XMIT_SUCCESS
+&lt;p&gt;Qdisc &amp;ndash; NET_XMIT_SUCCESS&lt;br /&gt;
 dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
 </description>
     </item>
@@ -573,14 +573,14 @@ dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
       <guid>http://firoyang.org/net/net/</guid>
       <description>
 
-&lt;p&gt;#Reference
+&lt;p&gt;#Reference&lt;br /&gt;
 &lt;a href=&#34;http://www.protocols.com/pbook/tcpip1.htm&#34;&gt;TCP/IP Reference Page&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;network:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Network&lt;/h1&gt;
 
 &lt;h2 id=&#34;为什么internet产生:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;为什么Internet产生?&lt;/h2&gt;
 
-&lt;p&gt;就好比问, 色情片为什么出现一样. 人类的发明都是对自身需求的回应.
+&lt;p&gt;就好比问, 色情片为什么出现一样. 人类的发明都是对自身需求的回应.&lt;br /&gt;
 Internet 解决信息传递的问题.信息传递只是手段, 古已有之, 比如信鸽, 狼烟等.&lt;/p&gt;
 
 &lt;h2 id=&#34;internet-都能做什么:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Internet 都能做什么?&lt;/h2&gt;
@@ -589,218 +589,218 @@ Internet 解决信息传递的问题.信息传递只是手段, 古已有之, 比
 
 &lt;h2 id=&#34;什么是internet:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;什么是Internet&lt;/h2&gt;
 
-&lt;p&gt;英文&lt;a href=&#34;http://keithbriggs.info/network.html&#34;&gt;network&lt;/a&gt;, 其中work, 构造之意.
-etymonline 给出结缔成网之意, net-like arrangement of threads, wires, etc.
+&lt;p&gt;英文&lt;a href=&#34;http://keithbriggs.info/network.html&#34;&gt;network&lt;/a&gt;, 其中work, 构造之意.&lt;br /&gt;
+etymonline 给出结缔成网之意, net-like arrangement of threads, wires, etc.&lt;br /&gt;
 Network -&amp;gt; Telecommunications network -&amp;gt; Computer network -&amp;gt; Internet&lt;/p&gt;
 
-&lt;p&gt;The Internet is a global system of interconnected computer networks that use
-the standard Internet protocol suite (TCP/IP) to link several billion devices worldwide.
+&lt;p&gt;The Internet is a global system of interconnected computer networks that use&lt;br /&gt;
+the standard Internet protocol suite (TCP/IP) to link several billion devices worldwide.&lt;br /&gt;
 Internet protocol suite,是结网的策略方法核心.&lt;/p&gt;
 
 &lt;h1 id=&#34;internet-protocol-suite:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Internet protocol suite&lt;/h1&gt;
 
-&lt;p&gt;The Internet protocol suite is the computer networking model and set of
+&lt;p&gt;The Internet protocol suite is the computer networking model and set of&lt;br /&gt;
 communications protocols used on the Internet and similar computer networks.&lt;/p&gt;
 
-&lt;p&gt;Network stack严格的表述是network protocol stack.
-通常简称&lt;a href=&#34;http://en.wikipedia.org/wiki/Protocol_stack&#34;&gt;protocol stack&lt;/a&gt;, 即协议栈
-The protocol stack is an implementation of a computer networking protocol suite.
+&lt;p&gt;Network stack严格的表述是network protocol stack.&lt;br /&gt;
+通常简称&lt;a href=&#34;http://en.wikipedia.org/wiki/Protocol_stack&#34;&gt;protocol stack&lt;/a&gt;, 即协议栈&lt;br /&gt;
+The protocol stack is an implementation of a computer networking protocol suite.&lt;br /&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Internet_protocol_suite&#34;&gt;Internet protocol suite &amp;ndash; TCP/IP&lt;/a&gt;就是一种&lt;a href=&#34;http://en.wikipedia.org/wiki/List_of_network_protocol_stacks&#34;&gt;protocol stack.&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;为什么协议要分层-怎么分:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;为什么协议要分层? 怎么分?&lt;/h2&gt;
 
-&lt;p&gt;这是非常有深度的问题! 可以说本文价值所在.
-这里讨论的是如何设计一套网络协议.
-抛开TCP/IP, 如果要让我门自己设计一套 network protocol, 有什么思路?
-发送方, 接收方, 信息. 这是所有信息传递的要素, 无论是, 狼烟, 信鸽, 还是书信.
-不同的是, 信息传递的方式.狼烟这种大范围视觉方式, 关心的最少, 敌人来犯点着烟就行了.
-那么信鸽了, 信鸽的英文叫做Homing pigeon, 信鸽的归巢本能, 为我指定了信息的接收房.
-抛开隐私, 我们能把信放大到天空那么大, 收信人抬下头也能收到信息.
+&lt;p&gt;这是非常有深度的问题! 可以说本文价值所在.&lt;br /&gt;
+这里讨论的是如何设计一套网络协议.&lt;br /&gt;
+抛开TCP/IP, 如果要让我门自己设计一套 network protocol, 有什么思路?&lt;br /&gt;
+发送方, 接收方, 信息. 这是所有信息传递的要素, 无论是, 狼烟, 信鸽, 还是书信.&lt;br /&gt;
+不同的是, 信息传递的方式.狼烟这种大范围视觉方式, 关心的最少, 敌人来犯点着烟就行了.&lt;br /&gt;
+那么信鸽了, 信鸽的英文叫做Homing pigeon, 信鸽的归巢本能, 为我指定了信息的接收房.&lt;br /&gt;
+抛开隐私, 我们能把信放大到天空那么大, 收信人抬下头也能收到信息.&lt;br /&gt;
 对于书信的方式, 在信息不能广泛的传递给每个人的时候, 我们需要把信送到特定的人手里.&lt;br /&gt;
-信的地址就成了必选. 信息传输的方法决定了, 接收者的特征集合.
-protocol暗指communications protocol, protocol词源上便指diplomatic rules of etiquette
-一种合适的交流手段. 而The Internet protocol suite的定义中明确指明了computer networking model.
-也就是源于方法决定对象的经验结论, wikipedia上的定义是非常有见地的.
-所以回到计算机框架下的信息传输设计. 受限于计算机数据的交互方法, 我们必须指明信息的接收方.
-所以我来设计一套network protocol, 第一点, 就是如何表示每个计算机收信方, 也就是地址.
-地址成了网络协议的本体!有了地址后, 如何寻址就是个问题了, 这属于衍生的问题, 没什么意思了.
-我们假装, 已经设计出一套惊天地泣鬼神的寻路方法, 还是叫寻址更好, 寻找目的地址.
-我们只是道出了, 网络协议的基本的要素接收方的本质属性, 也就是model. 那么, 我们怎么定义方法呢?
-传输无外乎, 你有消息, 给我发个信, 再有消息, 再发, 当然我也可以给你发. 结合到实际的计算机领域,
-假如, 我们只有地址和寻址方法的寒酸网络协议, 在一个小函数里搞定了.
-为什么OSI和TCP/IP都搞得那么复杂?
-下面才是为什么要&lt;a href=&#34;http://en.wikipedia.org/wiki/Abstraction_layer&#34;&gt;分层&lt;/a&gt;, 和怎么分的问题.
-是什么导致了分层? 哲学上, 分乃是不同的存在.也就是说存在我们寒酸的网络协议不同的存在.
-我们现在把linux内核的协议栈替换称我们的poor network protocol, (你现在, 应该知道为什么osi中
-network layer的名字来源了, 正因为他代表了整个网络协议的实质, 所以名字逼格才这么高!)
-显然, 还是不能运行, 为什么?我们缺少和应用层以及底层硬件的交互.也就是空中楼阁!
-加一个poor bsd socket,  poor application layer来了.加一个和底层硬件交互, poor linker layer也来了.
-我靠, 我的协议也有3层了, 拿去用吧.
-我现在把传输层也意淫进来. 显然, 传输层不是这么随便的, 他的存在肯定有着合理的理由.
-事物存在的理由不在于自身! 我认为汉语传输层(transport)是一个被严重误读了的名字, 这不同于人的名字,
-人类的名字是一个标示系统, 比如你叫马机霸, 你就一定要长得像马jb. 而学术领域的, 名字则具有
+信的地址就成了必选. 信息传输的方法决定了, 接收者的特征集合.&lt;br /&gt;
+protocol暗指communications protocol, protocol词源上便指diplomatic rules of etiquette&lt;br /&gt;
+一种合适的交流手段. 而The Internet protocol suite的定义中明确指明了computer networking model.&lt;br /&gt;
+也就是源于方法决定对象的经验结论, wikipedia上的定义是非常有见地的.&lt;br /&gt;
+所以回到计算机框架下的信息传输设计. 受限于计算机数据的交互方法, 我们必须指明信息的接收方.&lt;br /&gt;
+所以我来设计一套network protocol, 第一点, 就是如何表示每个计算机收信方, 也就是地址.&lt;br /&gt;
+地址成了网络协议的本体!有了地址后, 如何寻址就是个问题了, 这属于衍生的问题, 没什么意思了.&lt;br /&gt;
+我们假装, 已经设计出一套惊天地泣鬼神的寻路方法, 还是叫寻址更好, 寻找目的地址.&lt;br /&gt;
+我们只是道出了, 网络协议的基本的要素接收方的本质属性, 也就是model. 那么, 我们怎么定义方法呢?&lt;br /&gt;
+传输无外乎, 你有消息, 给我发个信, 再有消息, 再发, 当然我也可以给你发. 结合到实际的计算机领域,&lt;br /&gt;
+假如, 我们只有地址和寻址方法的寒酸网络协议, 在一个小函数里搞定了.&lt;br /&gt;
+为什么OSI和TCP/IP都搞得那么复杂?&lt;br /&gt;
+下面才是为什么要&lt;a href=&#34;http://en.wikipedia.org/wiki/Abstraction_layer&#34;&gt;分层&lt;/a&gt;, 和怎么分的问题.&lt;br /&gt;
+是什么导致了分层? 哲学上, 分乃是不同的存在.也就是说存在我们寒酸的网络协议不同的存在.&lt;br /&gt;
+我们现在把linux内核的协议栈替换称我们的poor network protocol, (你现在, 应该知道为什么osi中&lt;br /&gt;
+network layer的名字来源了, 正因为他代表了整个网络协议的实质, 所以名字逼格才这么高!)&lt;br /&gt;
+显然, 还是不能运行, 为什么?我们缺少和应用层以及底层硬件的交互.也就是空中楼阁!&lt;br /&gt;
+加一个poor bsd socket,  poor application layer来了.加一个和底层硬件交互, poor linker layer也来了.&lt;br /&gt;
+我靠, 我的协议也有3层了, 拿去用吧.&lt;br /&gt;
+我现在把传输层也意淫进来. 显然, 传输层不是这么随便的, 他的存在肯定有着合理的理由.&lt;br /&gt;
+事物存在的理由不在于自身! 我认为汉语传输层(transport)是一个被严重误读了的名字, 这不同于人的名字,&lt;br /&gt;
+人类的名字是一个标示系统, 比如你叫马机霸, 你就一定要长得像马jb. 而学术领域的, 名字则具有&lt;br /&gt;
 另外一个重要的属性就是:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;概念性or推理性的认知.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;即从名字中可以推理出相关属性; 在汉语当中, 我第一次看谢希仁《计算机网络第五版》教材时,
-就感觉这个名字好晕啊!他和传输有半毛钱关系, 传输不是链路层网卡网线的事吗?
-记得老师说了句, 这是一种抽象, 问题旧搁置了.当年未能深入问题, 非常遗憾. 今天补上!
-TCP中的T是transmission和transport中的都被翻译成了汉语的传输!
-有很长一段时间, 我都认为传输层,应该叫做传输控制层, 因为他, 看上去真的更像控制啊!
-那么transmission和transport的区别到底事什么呢?
-看wikipedia的解释, 立马明白了, 这分明说的是传输层的本质啊:
-Transport or transportation is the movement of people, animals and goods from one location to another.
-相信不用看etymonline你也知道transport是怎么来的trans + port, 这里的port是名词港口之意.
-现在, 就明白了为什么port端口号, 虽然实质是地址的含义, 却不属于network层.
-传输层有卸货的含义, 干脆就叫转港层吧!
-transport layer 的巨大意义, 就被显示出来了, 他是必须的.
-实质上我们也应该看到无论是port还是ip address都是地址的含义, 这也是协议栈模型的本质.
-下面我们来讨论, 信息发送的方法问题.
-网络协议栈的每一层都有着不同协议, 也就是不同方法.即便是一个协议自身也是众多方法的集合.
-理解这些协议程度, 就成为network 工程师能力差异, 下面我们会逐层意淫, 绝不是什么分析理解.
-回到最初的问题, 实际上我们已经解决了怎么分层的问题了.
-我们现在还差一个, 为什么分层.
-简单说这是个设计问题. 设计的好会影响的设计本身与实现.这里是模块化的设计思路.
-优点如维基所说:
-Because each protocol module usually communicates with two others,
-they are commonly imagined as layers in a stack of protocols.
+&lt;p&gt;即从名字中可以推理出相关属性; 在汉语当中, 我第一次看谢希仁《计算机网络第五版》教材时,&lt;br /&gt;
+就感觉这个名字好晕啊!他和传输有半毛钱关系, 传输不是链路层网卡网线的事吗?&lt;br /&gt;
+记得老师说了句, 这是一种抽象, 问题旧搁置了.当年未能深入问题, 非常遗憾. 今天补上!&lt;br /&gt;
+TCP中的T是transmission和transport中的都被翻译成了汉语的传输!&lt;br /&gt;
+有很长一段时间, 我都认为传输层,应该叫做传输控制层, 因为他, 看上去真的更像控制啊!&lt;br /&gt;
+那么transmission和transport的区别到底事什么呢?&lt;br /&gt;
+看wikipedia的解释, 立马明白了, 这分明说的是传输层的本质啊:&lt;br /&gt;
+Transport or transportation is the movement of people, animals and goods from one location to another.&lt;br /&gt;
+相信不用看etymonline你也知道transport是怎么来的trans + port, 这里的port是名词港口之意.&lt;br /&gt;
+现在, 就明白了为什么port端口号, 虽然实质是地址的含义, 却不属于network层.&lt;br /&gt;
+传输层有卸货的含义, 干脆就叫转港层吧!&lt;br /&gt;
+transport layer 的巨大意义, 就被显示出来了, 他是必须的.&lt;br /&gt;
+实质上我们也应该看到无论是port还是ip address都是地址的含义, 这也是协议栈模型的本质.&lt;br /&gt;
+下面我们来讨论, 信息发送的方法问题.&lt;br /&gt;
+网络协议栈的每一层都有着不同协议, 也就是不同方法.即便是一个协议自身也是众多方法的集合.&lt;br /&gt;
+理解这些协议程度, 就成为network 工程师能力差异, 下面我们会逐层意淫, 绝不是什么分析理解.&lt;br /&gt;
+回到最初的问题, 实际上我们已经解决了怎么分层的问题了.&lt;br /&gt;
+我们现在还差一个, 为什么分层.&lt;br /&gt;
+简单说这是个设计问题. 设计的好会影响的设计本身与实现.这里是模块化的设计思路.&lt;br /&gt;
+优点如维基所说:&lt;br /&gt;
+Because each protocol module usually communicates with two others,&lt;br /&gt;
+they are commonly imagined as layers in a stack of protocols.&lt;br /&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Communications_protocol#Layering&#34;&gt;更完整的陈述&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;design-of-communications-protocol-http-en-wikipedia-org-wiki-communications-protocol:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Design of &lt;a href=&#34;http://en.wikipedia.org/wiki/Communications_protocol&#34;&gt;Communications protocol&lt;/a&gt;&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://ccr.sigcomm.org/archive/1995/jan95/ccr-9501-clark.pdf&#34;&gt;The Design Philosophy of the DARPA Internet Protocols&lt;/a&gt;
-&lt;a href=&#34;http://www.cs.rice.edu/~eugeneng/teaching/s04/comp629/reviews/Cla88.txt&#34;&gt;Reviews from RICE edu&lt;/a&gt;
-&lt;a href=&#34;http://zoo.cs.yale.edu/classes/cs633/Reviews/Cla88.msl38.html&#34;&gt;Reviews of Michael S. Liu Yale&lt;/a&gt;
-我们在这里探讨的是通用的信息交换协议, 也就是说UDP, TCP, IP共有的性质, 之后我们会结合Stevens的
-书籍和linux 内核的实现, 去探讨这些协议具体的差异, 当然是偏重为什么导致这种差异.
-方法还是思考(意淫).
-我们还是从地址开始，
-Address formate: 有了地址我们就要有地址的具体格式如哪个街道，哪个小区几号楼几室。
-Route: 找到收信人, 计算机网络包括linker, network 和transportlayer
-Data formate: 接下来就是信封格式，对应头部。
-Reliability:发的信可能丢了，要在写一封吗？
-Detection of transmission errors:如信被人篡改了,如&lt;a href=&#34;http://www.iqiyi.com/dianshiju/20110608/3773df277f51d210.html&#34;&gt;浔阳楼宋江题反诗，梁山泊戴宗传假信&lt;/a&gt;
-这些都是信息交换常见的问题场景.还有一些和计算机相关的问题.
-Connection-oriented communication: in order and connect-wared
-Flow control
-Congestion control
-信息交换协议, 基本上就是解决这些问题.TCP, UDP, IP这些协议也全是为了解决这些问题.
-另外, 用户态用stream socket指代了connection-oriented, realiability等问题.
+&lt;p&gt;&lt;a href=&#34;http://ccr.sigcomm.org/archive/1995/jan95/ccr-9501-clark.pdf&#34;&gt;The Design Philosophy of the DARPA Internet Protocols&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.cs.rice.edu/~eugeneng/teaching/s04/comp629/reviews/Cla88.txt&#34;&gt;Reviews from RICE edu&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://zoo.cs.yale.edu/classes/cs633/Reviews/Cla88.msl38.html&#34;&gt;Reviews of Michael S. Liu Yale&lt;/a&gt;&lt;br /&gt;
+我们在这里探讨的是通用的信息交换协议, 也就是说UDP, TCP, IP共有的性质, 之后我们会结合Stevens的&lt;br /&gt;
+书籍和linux 内核的实现, 去探讨这些协议具体的差异, 当然是偏重为什么导致这种差异.&lt;br /&gt;
+方法还是思考(意淫).&lt;br /&gt;
+我们还是从地址开始，&lt;br /&gt;
+Address formate: 有了地址我们就要有地址的具体格式如哪个街道，哪个小区几号楼几室。&lt;br /&gt;
+Route: 找到收信人, 计算机网络包括linker, network 和transportlayer&lt;br /&gt;
+Data formate: 接下来就是信封格式，对应头部。&lt;br /&gt;
+Reliability:发的信可能丢了，要在写一封吗？&lt;br /&gt;
+Detection of transmission errors:如信被人篡改了,如&lt;a href=&#34;http://www.iqiyi.com/dianshiju/20110608/3773df277f51d210.html&#34;&gt;浔阳楼宋江题反诗，梁山泊戴宗传假信&lt;/a&gt;&lt;br /&gt;
+这些都是信息交换常见的问题场景.还有一些和计算机相关的问题.&lt;br /&gt;
+Connection-oriented communication: in order and connect-wared&lt;br /&gt;
+Flow control&lt;br /&gt;
+Congestion control&lt;br /&gt;
+信息交换协议, 基本上就是解决这些问题.TCP, UDP, IP这些协议也全是为了解决这些问题.&lt;br /&gt;
+另外, 用户态用stream socket指代了connection-oriented, realiability等问题.&lt;br /&gt;
 是一个高度复杂的概念, 用户态可以通过sock的类型安排协议, 传输层和网络层都不是必须.&lt;/p&gt;
 
 &lt;h1 id=&#34;kernel-network-infrastructure:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Kernel network infrastructure&lt;/h1&gt;
 
 &lt;h2 id=&#34;skb-http-vger-kernel-org-davem-skb-html:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;&lt;a href=&#34;http://vger.kernel.org/~davem/skb.html&#34;&gt;skb&lt;/a&gt;&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.skbuff.net/skbbasic.html&#34;&gt;Basic functions for sk_buff&lt;/a&gt;
-&lt;a href=&#34;http://vger.kernel.org/~davem/skb_data.html&#34;&gt;SKB data area handling&lt;/a&gt;
-&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;Things that need to get done in the Linux kernel networking&lt;/a&gt;
-现在poor network stack 基本功能已经实现了, 用户要在twitter上分享一个心机婊的自拍照.
-另外, 我认为心机婊还是非常可爱的一群人.协议栈接到用户态的数据后,
-内核要用一个buff存储照片, 好了把照片copy进去.我们走道了transport layer.
-我们要encapuslate一个poor transport header. 靠忘记在照片数据前面留点空间给头部了.
-可以遇见的往下走的网络层和linker也会遇到这问题, 留大点.
-每encapuslate都应该有一个pointer指向这个header, 便于下次加头部时候能
-推算((char *)old header pointer - new header len)出写入到buff的起始地址.
-同样我们也应该知道这个buffer的起始地址.
-当我们穿过协议栈时, 我们需要一个list成员, 把这个数据放到相应协议层处理队列上去.
-实际内存区域buff, 指向buff的各种表明位置的指针, 还有一个关联buff的list成员.
-如何组织他们?这里把实际的报文数据和管理相关的数据分开管理最合适了.
+&lt;p&gt;&lt;a href=&#34;http://www.skbuff.net/skbbasic.html&#34;&gt;Basic functions for sk_buff&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://vger.kernel.org/~davem/skb_data.html&#34;&gt;SKB data area handling&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;Things that need to get done in the Linux kernel networking&lt;/a&gt;&lt;br /&gt;
+现在poor network stack 基本功能已经实现了, 用户要在twitter上分享一个心机婊的自拍照.&lt;br /&gt;
+另外, 我认为心机婊还是非常可爱的一群人.协议栈接到用户态的数据后,&lt;br /&gt;
+内核要用一个buff存储照片, 好了把照片copy进去.我们走道了transport layer.&lt;br /&gt;
+我们要encapuslate一个poor transport header. 靠忘记在照片数据前面留点空间给头部了.&lt;br /&gt;
+可以遇见的往下走的网络层和linker也会遇到这问题, 留大点.&lt;br /&gt;
+每encapuslate都应该有一个pointer指向这个header, 便于下次加头部时候能&lt;br /&gt;
+推算((char *)old header pointer - new header len)出写入到buff的起始地址.&lt;br /&gt;
+同样我们也应该知道这个buffer的起始地址.&lt;br /&gt;
+当我们穿过协议栈时, 我们需要一个list成员, 把这个数据放到相应协议层处理队列上去.&lt;br /&gt;
+实际内存区域buff, 指向buff的各种表明位置的指针, 还有一个关联buff的list成员.&lt;br /&gt;
+如何组织他们?这里把实际的报文数据和管理相关的数据分开管理最合适了.&lt;br /&gt;
 就有了内核sk_buff这个结构了.&lt;/p&gt;
 
-&lt;p&gt;我们再来看看发包的过程,
-在申请发送数据的缓存区, 我们也要为管理数据sk_buff申请空间.
-我们已经设计好了, 不是吗? alloc_skb跟我们的想法一致.
-接下来, 我们为了不在吃苦头, 我们需要为各层留个header的空间.
-我们先来看看skb_reverve 和skb_put 这个两个函数都修改了tail这个成员
-那么这个data 和tail代表什么涵义呢? 代表实际有效数据的起始和结尾!
-这个语义非常重要, 必须理解记忆!
-我们如何知道改刘多少呢? 另外, 实际上我们先加头和先加数据都是可以的.
-读了上面的design philosophy你就应该知道, transport和network层原来
-是一个东西.对于头部大小的确定, 显然, 如果不是固定的大小,
-由不同协议自身来定使最好的, 像tcp 和ip这种时不时还毛出个option, 显然
-你是无法在最开始旧reserve出来空间大小的. 那copy用户态数据也要延迟了&amp;hellip;.
-ip_ufo_append_data函数中我们可以看到skb_reverve是为linker header留了空间.
-而udp和ip是通过skb_put来计算tail的偏移.
-skb_reserve的comment上面写明只能用在没有有效数据sk buff.
-现在, 我们看看skb_push与skb_put的比较语义研究.
-skb的data和tai标志有效数据的起始位置.
-skb_push关注data, skb_put关注tail. push和put都有往里放的涵义.
-push有promote 提升含义. 隐含扩大data的涵义.
-put是常见的放在什么上的涵义.是建立在已有数据的接触上, 显然skb_put就是
-做这样的事情, 放一个在旧的上之后增加tail
-好吧这算是意淫.我只想让你知道data和tail的语义非常重要.
-如果我们要是按照先添加报文header再添加数据, 就是一个个skb_put, copy操作.
-如果你是事前reserve了那就是skb_push.
-往前加是push, 后加是put, easy.
-真实的协议栈header数msg的添加, 会有很多不同的实现, 也就是put和push多种使用方法.
-就这样, 我门算是把头部和数据加到了skb中.
-有一个问题比如我们的照片太大了20MB, 而一个skb通常的内核肯定不能分除这么大那么.
-就有多个skb的来存储了.
-&lt;a href=&#34;http://people.sissa.it/~inno/pubs/skb.pdf&#34;&gt;Skbuffs - A tutorial&lt;/a&gt;
-&lt;a href=&#34;http://people.sissa.it/~inno/pubs/skb-reduced.pdf&#34;&gt;Network buffers The BSD, Unix SVR4 and Linux approaches&lt;/a&gt;
-&lt;a href=&#34;http://marc.info/?l=linux-netdev&amp;amp;m=115508038817177&amp;amp;w=2&#34;&gt;skb_shared_info&lt;/a&gt;
-This &amp;ldquo;shared info&amp;rdquo; (so called because it can be shared among copies of the skb
-within the networking code)  &amp;ndash;LDD3 17.10
-关于&lt;a href=&#34;http://stackoverflow.com/questions/10039744/difference-between-skbuff-frags-and-frag-list/&#34;&gt; frags 和 frag_list &lt;/a&gt; 看我的答案
-现在我们的skb 就填好了.
-有一个问题当你把skb 加到某个队列时, 你应该主义到.skb用的不是标准的kernel style list!
-而是
-struct sk_buff      *next;
-struct sk_buff      *prev;
-这就是传统c风格(名字不确定, 我这么叫)的链表.
-不用怀疑, 这里肯定有猫腻!
-1. 不需要pointer -&amp;gt; entry转化了
-2. skb的list操作多数需要返回entry, list_head是不支持的如skb_dqueue_tail.
-所以, 自己动手丰衣足食.
-在有了一个他填满poor network stack的报文后, 我们就可以做一些操作了.
-实际存报文的内存叫skb data.其他的名字head rom, tail rom, paged data, head data
-也应该知道.有了paged data整个结构看上去有点像章鱼, 所以有了head, 强行解释:-)
-dataref标识的仅仅head data共享的次数也就是skb_clone.
-而frags 是get_page, frag_list 是skb_get.
+&lt;p&gt;我们再来看看发包的过程,&lt;br /&gt;
+在申请发送数据的缓存区, 我们也要为管理数据sk_buff申请空间.&lt;br /&gt;
+我们已经设计好了, 不是吗? alloc_skb跟我们的想法一致.&lt;br /&gt;
+接下来, 我们为了不在吃苦头, 我们需要为各层留个header的空间.&lt;br /&gt;
+我们先来看看skb_reverve 和skb_put 这个两个函数都修改了tail这个成员&lt;br /&gt;
+那么这个data 和tail代表什么涵义呢? 代表实际有效数据的起始和结尾!&lt;br /&gt;
+这个语义非常重要, 必须理解记忆!&lt;br /&gt;
+我们如何知道改刘多少呢? 另外, 实际上我们先加头和先加数据都是可以的.&lt;br /&gt;
+读了上面的design philosophy你就应该知道, transport和network层原来&lt;br /&gt;
+是一个东西.对于头部大小的确定, 显然, 如果不是固定的大小,&lt;br /&gt;
+由不同协议自身来定使最好的, 像tcp 和ip这种时不时还毛出个option, 显然&lt;br /&gt;
+你是无法在最开始旧reserve出来空间大小的. 那copy用户态数据也要延迟了&amp;hellip;.&lt;br /&gt;
+ip_ufo_append_data函数中我们可以看到skb_reverve是为linker header留了空间.&lt;br /&gt;
+而udp和ip是通过skb_put来计算tail的偏移.&lt;br /&gt;
+skb_reserve的comment上面写明只能用在没有有效数据sk buff.&lt;br /&gt;
+现在, 我们看看skb_push与skb_put的比较语义研究.&lt;br /&gt;
+skb的data和tai标志有效数据的起始位置.&lt;br /&gt;
+skb_push关注data, skb_put关注tail. push和put都有往里放的涵义.&lt;br /&gt;
+push有promote 提升含义. 隐含扩大data的涵义.&lt;br /&gt;
+put是常见的放在什么上的涵义.是建立在已有数据的接触上, 显然skb_put就是&lt;br /&gt;
+做这样的事情, 放一个在旧的上之后增加tail&lt;br /&gt;
+好吧这算是意淫.我只想让你知道data和tail的语义非常重要.&lt;br /&gt;
+如果我们要是按照先添加报文header再添加数据, 就是一个个skb_put, copy操作.&lt;br /&gt;
+如果你是事前reserve了那就是skb_push.&lt;br /&gt;
+往前加是push, 后加是put, easy.&lt;br /&gt;
+真实的协议栈header数msg的添加, 会有很多不同的实现, 也就是put和push多种使用方法.&lt;br /&gt;
+就这样, 我门算是把头部和数据加到了skb中.&lt;br /&gt;
+有一个问题比如我们的照片太大了20MB, 而一个skb通常的内核肯定不能分除这么大那么.&lt;br /&gt;
+就有多个skb的来存储了.&lt;br /&gt;
+&lt;a href=&#34;http://people.sissa.it/~inno/pubs/skb.pdf&#34;&gt;Skbuffs - A tutorial&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://people.sissa.it/~inno/pubs/skb-reduced.pdf&#34;&gt;Network buffers The BSD, Unix SVR4 and Linux approaches&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://marc.info/?l=linux-netdev&amp;amp;m=115508038817177&amp;amp;w=2&#34;&gt;skb_shared_info&lt;/a&gt;&lt;br /&gt;
+This &amp;ldquo;shared info&amp;rdquo; (so called because it can be shared among copies of the skb&lt;br /&gt;
+within the networking code)  &amp;ndash;LDD3 17.10&lt;br /&gt;
+关于&lt;a href=&#34;http://stackoverflow.com/questions/10039744/difference-between-skbuff-frags-and-frag-list/&#34;&gt; frags 和 frag_list &lt;/a&gt; 看我的答案&lt;br /&gt;
+现在我们的skb 就填好了.&lt;br /&gt;
+有一个问题当你把skb 加到某个队列时, 你应该主义到.skb用的不是标准的kernel style list!&lt;br /&gt;
+而是&lt;br /&gt;
+struct sk_buff      *next;&lt;br /&gt;
+struct sk_buff      *prev;&lt;br /&gt;
+这就是传统c风格(名字不确定, 我这么叫)的链表.&lt;br /&gt;
+不用怀疑, 这里肯定有猫腻!&lt;br /&gt;
+1. 不需要pointer -&amp;gt; entry转化了&lt;br /&gt;
+2. skb的list操作多数需要返回entry, list_head是不支持的如skb_dqueue_tail.&lt;br /&gt;
+所以, 自己动手丰衣足食.&lt;br /&gt;
+在有了一个他填满poor network stack的报文后, 我们就可以做一些操作了.&lt;br /&gt;
+实际存报文的内存叫skb data.其他的名字head rom, tail rom, paged data, head data&lt;br /&gt;
+也应该知道.有了paged data整个结构看上去有点像章鱼, 所以有了head, 强行解释:-)&lt;br /&gt;
+dataref标识的仅仅head data共享的次数也就是skb_clone.&lt;br /&gt;
+而frags 是get_page, frag_list 是skb_get.&lt;br /&gt;
 内核的命名方式, 有时糟糕透了, 完全不符合:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;概念性or推理性的认知.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;skb-&amp;gt;data_len这个成员就非常不直观!他是paged-data的长度.
-data_len= len - (tail-data)
-难道, data到tail这段就不是数据了吗? 非常杀脑细胞.
-继续吐槽, skb_get,skb_put根本就不是一会事啊.
-还是kref_get/put看着顺眼.
-就好比标准库的strcpy, strlcpy, strncpy. 我们要看看内核这几个得到skb的函数using case.
-首先看明白kfree_skb结合上面的函数分析, 你就知道这几个函数基本区别了.
-了解这些函数的使用场景将成为, 本文的第二个亮点, 应为这以为着, 你讲对内核的数据流转
-过程非常清楚.本文的第一个亮点, 揭示了网络协议是如何创建的.
-本文还将有两个亮点!第三个是: 我将从内核提供的功能角度如napi, rps, netfilter这些角度.
-解释为什么内核这么实现这些功能, 起始这些和协议就没什么关系了.
- 第四个亮点, 我们将回到协议栈本身, 谈谈为什么linux内核网络栈是怎么实现的.
-现在是周日凌晨1点09距离周一还有23个小时, 哎.
-好, 我们开始探索协议栈的数据流也就是报文生命周期的问题.
-为了更好的理解协议栈的数据流walkthrough, 我们先看看skb_get/clone/copy, pskb_copy这几
-个函数的使用特征, 也就是什么时候该使用什么函数.
-先从最简答的skb_get开始, skb_get背后的技术&lt;a href=&#34;http://en.wikipedia.org/wiki/Reference_counting&#34;&gt;reference counting&lt;/a&gt;引用计数.
-严格说来, 引用计数不是一种synchronization方法! 对数据并发依然需要同步方法.
-引用计数, 最常用在内存对象的生命周期管理, 在c里面, 对象有三种周期, auto, static, allocate.
-引用计数就是管理allocate, 动态分配的heap上的内存. 引用计数, 保证数据的可访问.
-但是访问共享数据依然需要同步方法避免竞态的出现.
-所以skb_get, 使用场景readonly, 也就是不能修改报文的所有skb, skb data都不可以.
+&lt;p&gt;skb-&amp;gt;data_len这个成员就非常不直观!他是paged-data的长度.&lt;br /&gt;
+data_len= len - (tail-data)&lt;br /&gt;
+难道, data到tail这段就不是数据了吗? 非常杀脑细胞.&lt;br /&gt;
+继续吐槽, skb_get,skb_put根本就不是一会事啊.&lt;br /&gt;
+还是kref_get/put看着顺眼.&lt;br /&gt;
+就好比标准库的strcpy, strlcpy, strncpy. 我们要看看内核这几个得到skb的函数using case.&lt;br /&gt;
+首先看明白kfree_skb结合上面的函数分析, 你就知道这几个函数基本区别了.&lt;br /&gt;
+了解这些函数的使用场景将成为, 本文的第二个亮点, 应为这以为着, 你讲对内核的数据流转&lt;br /&gt;
+过程非常清楚.本文的第一个亮点, 揭示了网络协议是如何创建的.&lt;br /&gt;
+本文还将有两个亮点!第三个是: 我将从内核提供的功能角度如napi, rps, netfilter这些角度.&lt;br /&gt;
+解释为什么内核这么实现这些功能, 起始这些和协议就没什么关系了.&lt;br /&gt;
+ 第四个亮点, 我们将回到协议栈本身, 谈谈为什么linux内核网络栈是怎么实现的.&lt;br /&gt;
+现在是周日凌晨1点09距离周一还有23个小时, 哎.&lt;br /&gt;
+好, 我们开始探索协议栈的数据流也就是报文生命周期的问题.&lt;br /&gt;
+为了更好的理解协议栈的数据流walkthrough, 我们先看看skb_get/clone/copy, pskb_copy这几&lt;br /&gt;
+个函数的使用特征, 也就是什么时候该使用什么函数.&lt;br /&gt;
+先从最简答的skb_get开始, skb_get背后的技术&lt;a href=&#34;http://en.wikipedia.org/wiki/Reference_counting&#34;&gt;reference counting&lt;/a&gt;引用计数.&lt;br /&gt;
+严格说来, 引用计数不是一种synchronization方法! 对数据并发依然需要同步方法.&lt;br /&gt;
+引用计数, 最常用在内存对象的生命周期管理, 在c里面, 对象有三种周期, auto, static, allocate.&lt;br /&gt;
+引用计数就是管理allocate, 动态分配的heap上的内存. 引用计数, 保证数据的可访问.&lt;br /&gt;
+但是访问共享数据依然需要同步方法避免竞态的出现.&lt;br /&gt;
+所以skb_get, 使用场景readonly, 也就是不能修改报文的所有skb, skb data都不可以.&lt;br /&gt;
 一个错误的使用场景:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;git show 18fa11efc279c20af5eefff2bbe814ca067
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;在dev_queue_xmit, 一进来就修改了skb-&amp;gt;mac_header in skb_reset_mac_header().
-接下来还有skb_update_prio(). 总之很多修改, 在skb_get之后, 再有两个以上的并发
-访问修改skb, 就是并发访问, 因为所有的skb成员mac_header priority都是共享数据啊!
-首先, 你使用skb_get就以为着你知道, 可定存在着另一个进程 or 中断会对这个skb进行访问.
-使用skb_get的情况就是, 你能肯定, 其他流程, 包括你这个流程没有修改skb的内容, or
-对并发访问做了良好的同步处理.显然后面这种并发的处理通常是不合适的, 一个skb的内容依靠
-获取锁的顺序, 显然是令人难以接收的. 我现在是4.0的代码,通过cscope只看到了87次skb_get
-的使用, 近35次是driver, net/irda占了30次, 另外net/nfc, net/llc占了13次,
-也就是说内核协议栈很少使用这个方法!我会把其他几个重点看下:
+&lt;p&gt;在dev_queue_xmit, 一进来就修改了skb-&amp;gt;mac_header in skb_reset_mac_header().&lt;br /&gt;
+接下来还有skb_update_prio(). 总之很多修改, 在skb_get之后, 再有两个以上的并发&lt;br /&gt;
+访问修改skb, 就是并发访问, 因为所有的skb成员mac_header priority都是共享数据啊!&lt;br /&gt;
+首先, 你使用skb_get就以为着你知道, 可定存在着另一个进程 or 中断会对这个skb进行访问.&lt;br /&gt;
+使用skb_get的情况就是, 你能肯定, 其他流程, 包括你这个流程没有修改skb的内容, or&lt;br /&gt;
+对并发访问做了良好的同步处理.显然后面这种并发的处理通常是不合适的, 一个skb的内容依靠&lt;br /&gt;
+获取锁的顺序, 显然是令人难以接收的. 我现在是4.0的代码,通过cscope只看到了87次skb_get&lt;br /&gt;
+的使用, 近35次是driver, net/irda占了30次, 另外net/nfc, net/llc占了13次,&lt;br /&gt;
+也就是说内核协议栈很少使用这个方法!我会把其他几个重点看下:&lt;br /&gt;
 net/netlink/af_netlink.c&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;if (skb_shared(p-&amp;gt;skb)) {
@@ -811,8 +811,8 @@ net/netlink/af_netlink.c&lt;/p&gt;
 netlink_broadcast_deliver(sk, p-&amp;gt;skb2)//这个函数修改了skb
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这段代码,如果被多个人共享, 显然要clone一个;反之, 到现在只有我们一个user.
-按照通常, 我们就直接修改了, 想想这样对吗?你直接改了, 那么别人也可以这么干.
+&lt;p&gt;这段代码,如果被多个人共享, 显然要clone一个;反之, 到现在只有我们一个user.&lt;br /&gt;
+按照通常, 我们就直接修改了, 想想这样对吗?你直接改了, 那么别人也可以这么干.&lt;br /&gt;
 所以skb_get 第一种使用方法就是:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;如果不是共享的skb_get, 后直修改使用.
@@ -820,11 +820,11 @@ netlink_broadcast_deliver(sk, p-&amp;gt;skb2)//这个函数修改了skb
 这么做的好处是减少了一次skb_clone, 只有在第二个人修改时才clone.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这是skb_get在修改的情况使用, 在这里我们使用的技巧是, 节省了一次clone的使用.
-我们在这里使用了skb_get, 却做了修改. 这有反于, 我门通常认识的skb_get的使用.
-但要记住这里不是并发访问!我们是可以修改的.为什么使用skb_get是为了在并发的情况
-节省一次skb_clone.
-貌似fast open很火啊
+&lt;p&gt;这是skb_get在修改的情况使用, 在这里我们使用的技巧是, 节省了一次clone的使用.&lt;br /&gt;
+我们在这里使用了skb_get, 却做了修改. 这有反于, 我门通常认识的skb_get的使用.&lt;br /&gt;
+但要记住这里不是并发访问!我们是可以修改的.为什么使用skb_get是为了在并发的情况&lt;br /&gt;
+节省一次skb_clone.&lt;br /&gt;
+貌似fast open很火啊&lt;br /&gt;
 net/ipv4/tcp_fastopen.c tcp_fastopen_create_child()这个函数:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;if (unlikely(skb_shared(skb)))
@@ -833,17 +833,17 @@ net/ipv4/tcp_fastopen.c tcp_fastopen_create_child()这个函数:&lt;/p&gt;
             skb2 = skb_get(skb);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;使用了同样的技巧!
+&lt;p&gt;使用了同样的技巧!&lt;br /&gt;
 同样代码出现在net/packet/af_packet.c tpacket_rcv()&lt;/p&gt;
 
-&lt;p&gt;第二种用法
-net/core/skbuff.c skb_clone_fraglist这个函数
-就是skb_get最原始的用法, 不修改这是保证对象存活.
-net/tipc/msg.h &amp;lt;&lt;tipc_skb_peek&gt;&amp;gt;, 也是这种用法.
-这种方法, 实际上是最为复杂, 因为他暗含着某处代码会把skb是放掉!
+&lt;p&gt;第二种用法&lt;br /&gt;
+net/core/skbuff.c skb_clone_fraglist这个函数&lt;br /&gt;
+就是skb_get最原始的用法, 不修改这是保证对象存活.&lt;br /&gt;
+net/tipc/msg.h &amp;lt;&lt;tipc_skb_peek&gt;&amp;gt;, 也是这种用法.&lt;br /&gt;
+这种方法, 实际上是最为复杂, 因为他暗含着某处代码会把skb是放掉!&lt;br /&gt;
 就看到这里吧, 或许, 还有其他的方法.&lt;/p&gt;
 
-&lt;p&gt;再看skb_clone, 上面也涉及到了.还是看些对比的用法.
+&lt;p&gt;再看skb_clone, 上面也涉及到了.还是看些对比的用法.&lt;br /&gt;
 tcp_transmit_skb这个函数:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;if (unlikely(skb_cloned(skb)))
@@ -852,32 +852,32 @@ tcp_transmit_skb这个函数:&lt;/p&gt;
             skb = skb_clone(skb, gfp_mask);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;用到了类似的skb_get的模式.
-skb_shared 很好理解users &amp;gt; 1 is true.
+&lt;p&gt;用到了类似的skb_get的模式.&lt;br /&gt;
+skb_shared 很好理解users &amp;gt; 1 is true.&lt;br /&gt;
 skb_cloned 就有点复杂了:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;return skb-&amp;gt;cloned &amp;amp;&amp;amp;
            (atomic_read(&amp;amp;skb_shinfo(skb)-&amp;gt;dataref) &amp;amp; SKB_DATAREF_MASK) != 1;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这里的问题是, 我们为什么不能通过skb-&amp;gt;cloned表明是否是cloned的skb, 我们知道
-skb_clone会n-&amp;gt;cloned = 1;把new oldskb都置cloned标志.
-这里还检测了dataref是否&amp;gt;1. 我们摘掉clone后dataref是被加1的, 那什么情况cloned有,
-但dataref不是&amp;lt; 2;那就是clone后一个报文kfree_skb了, kfree_skb虽然能释放一个clone出
-来的skb却对另一个clone的skb爱莫能助. 所以虽然, cloned标志位存在但clone实质已无;
-Got it?回到tcp_transmit_skb, 这里如果我们没有cloned 就clone一个如果cloneed.
-这是什么逻辑?这里的差异是否创造一个skb head data的副本.
-答案在这里&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/206211/focus=206215&#34;&gt;pskb_copy() in tcp_transmit_skb()&lt;/a&gt;
-我们仅从pskb_copy 和skb_clone函数的语义是不可能知道这个答案, 这超出了函数能表达的
-涵义范围, 此时我们只能了解整个函数栈的数据流图才行.
-tcp_transmit_skb我们要对skb 和skb data 都要修改, 这是目标.
-如果cloned我们对skb data修改势必造成早先cloned出来的skb corruption!可能里面的
-各种header指针不对了.在AF_PACKET这种情况就是, tcpdump希望收到原始的报文, 因为
-我们的retransmit是修改了skb data造成AF PACKET收到的将不是他希望的就报文, 有可能
-tcpdump收到的是一个修改一般的报文, 更糟.
-什么也不管直接pskb copy, consume掉就的skb, 是可以的.所以这里还是换汤不换药,为了
-节省一次pskb copy!
-这里我们发现了三条数据流, 发送, 重传, af packet, 下面会再次探索.
+&lt;p&gt;这里的问题是, 我们为什么不能通过skb-&amp;gt;cloned表明是否是cloned的skb, 我们知道&lt;br /&gt;
+skb_clone会n-&amp;gt;cloned = 1;把new oldskb都置cloned标志.&lt;br /&gt;
+这里还检测了dataref是否&amp;gt;1. 我们摘掉clone后dataref是被加1的, 那什么情况cloned有,&lt;br /&gt;
+但dataref不是&amp;lt; 2;那就是clone后一个报文kfree_skb了, kfree_skb虽然能释放一个clone出&lt;br /&gt;
+来的skb却对另一个clone的skb爱莫能助. 所以虽然, cloned标志位存在但clone实质已无;&lt;br /&gt;
+Got it?回到tcp_transmit_skb, 这里如果我们没有cloned 就clone一个如果cloneed.&lt;br /&gt;
+这是什么逻辑?这里的差异是否创造一个skb head data的副本.&lt;br /&gt;
+答案在这里&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/206211/focus=206215&#34;&gt;pskb_copy() in tcp_transmit_skb()&lt;/a&gt;&lt;br /&gt;
+我们仅从pskb_copy 和skb_clone函数的语义是不可能知道这个答案, 这超出了函数能表达的&lt;br /&gt;
+涵义范围, 此时我们只能了解整个函数栈的数据流图才行.&lt;br /&gt;
+tcp_transmit_skb我们要对skb 和skb data 都要修改, 这是目标.&lt;br /&gt;
+如果cloned我们对skb data修改势必造成早先cloned出来的skb corruption!可能里面的&lt;br /&gt;
+各种header指针不对了.在AF_PACKET这种情况就是, tcpdump希望收到原始的报文, 因为&lt;br /&gt;
+我们的retransmit是修改了skb data造成AF PACKET收到的将不是他希望的就报文, 有可能&lt;br /&gt;
+tcpdump收到的是一个修改一般的报文, 更糟.&lt;br /&gt;
+什么也不管直接pskb copy, consume掉就的skb, 是可以的.所以这里还是换汤不换药,为了&lt;br /&gt;
+节省一次pskb copy!&lt;br /&gt;
+这里我们发现了三条数据流, 发送, 重传, af packet, 下面会再次探索.&lt;br /&gt;
 所以这些skb_get/clone/copy, pskb用法:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;都是结合skb_cloned skb_shared一起用的, 当然不绝对如
@@ -885,125 +885,125 @@ skb_get就可以用引用计数器那种. 具体怎么用还是要结合代码�
 貌似skb_copy 和 pskb_copy, 应该是一个差不多的用法见skb_unshare这个函数.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;还有一个问题, skb_get和 skb_clone pskb_copy, 这三种算法如果重叠着用会出现什么问题?
-比如先skb_get了一下, 之后有clone了.是完全不相干的逻辑, 在skb_clone时考虑到这点所以
+&lt;p&gt;还有一个问题, skb_get和 skb_clone pskb_copy, 这三种算法如果重叠着用会出现什么问题?&lt;br /&gt;
+比如先skb_get了一下, 之后有clone了.是完全不相干的逻辑, 在skb_clone时考虑到这点所以&lt;br /&gt;
 调用的是atomic_set(&amp;amp;n-&amp;gt;users, 1);, 没有直接复制.&lt;/p&gt;
 
-&lt;p&gt;也差不多该分析, 协议栈的数据流图, 在这之前先挑重点总结下linux/skbuff.h里面的函数
-先整体分析下类:
-申请skb 空间: alloc_skb, build_skb, __napi_alloc_skb, __alloc_rx_skb
-frag fraglist相关:
-skb释放: kfree_skb, consume_skb等等
-协议相关的: vlan checksum, memcpy_from_msg等
-链表操作:
-操纵skb 和skb data: get clone copy put push
-skb成员赋值的操作: 比较多余, 可能比较工整写, 模块化.
-还有一些比较附在的操作函数, 在这里分析一下:
-* skb_pull
-和skb_push, 相对, 应该是拆包的时候用的.
-* __skb_trim: 重新设置了 len.不是坚守也可能变大.非线性什么不做, 给个警告.
-* ___pskb_trim: 考虑了paged data.
-* skb_header_pointer: 这个函数在smartqos里面用过, 主要就是考虑大nonlinear区的问题.
-用来在skb去一块数据, 如果数据大小在headlen里面最容易了, 直接返回data + offset.
-否则skb_copy_bits
-* skb_copy_bits: WARNING fraglist藏在skb_walk_frags里面.
-核心就是一个frags的for循环一点点小心翼翼的copy就行了.
-要注意这里有个kmap_atomic的操作!这是加深对page理解的千载难逢的机会.
-kmap_atomic如果是直接映射区的页表由cpu主动完成.从一个page里面copy东西的时候.
-低端页返回地址, 高端页映射到kmap_pte.之后开始copy.copy完了kunmap_atomic.
-这里的问题是为什么要在这里做这种映射?
-可能是用户态的高端page传到内核, &lt;strong&gt;ip_append_data里面的&lt;/strong&gt;skb_fill_page_desc
-会把page存到frags[i]里面.可能在进程上下文这些页面ok, 但是到了内核态切不是相关
-进程的上下文, 这时候高端页,的映射页表就不对了, 因为每个进程的页表是不同的, 所以
-要用kmap_atomic来一下.
-* page_address这个函数如果已经映射page_solt里面取, pas保证了多个vaddr 映射到paddr.
-继续看, 下面看三个非常复杂的三个函数, 好吧是因为我之前没看过.
-___pskb_trim, pskb_pull, pskb_expand_head;
-* 最核心的就是pskb_expand_head.
-先把他看了, 函数注释说sk_buff不变, 且返回后需要重新reload. 改的是skb 的head data.
-如何sk_buff shared BUG()!显然pskb是针对private non-shared, 如果针对shared改了那么
-别的执行流上sk_buff的成员都失效, 有可能coredump!所以直接BUG()了.
-还有nhead &amp;lt; 0 直接BUG, why? 因为下面的memcpy
-显示申请新空间, ok.之后旧的数据copy过来. ok
-之后是shinfo, 为了性能优化考了nr frags个, 屌.
-这里copy shinfo时dst是data+size, 这个size是slab的对应obj的size不是
-上面申请时的size为什么这么做? obj 的size 应该大于申请的size.
-这里是尽量利用所有空间了.更新下sk_buff相应成员OK了.
-期间还处理skb_cloned的情况为什么? shared直接BUG
-如果cloned则在多个sk_buff之间共享frags, skb_orphan_frags, 先把frags copy到现申请内核page
-之后put user page, 在把内核page装入frags, 在get 内核page.
-expand之后, 包括frags旧都是内核数据了.之后把旧的skb head data数据释放掉.
-也就是说, 为什么我们不能直接把用户的frags, fill到新的head data的shinfo呢?
-* skb_orphan_frags 大哥问号.
-反正expand后head 大了, frags 内核page了, frag list 也get了.
-* pskb_pull:我不看了, 函数注释很明确.
-     The function makes a sense only on a fragmented &amp;amp;sk_buff,
-       it expands header moving its tail forward and copying necessary
-       data from fragmented part.
-* pskb_trim:基本上看懂就是加上了paged 数据的处理
-* skb_unclone: pskb_expand_head(skb, 0, 0, pri);
-* skb_copy:之后全都线性了.  pskb_expand_head(skb, 0, 0, pri); identical to old data.
+&lt;p&gt;也差不多该分析, 协议栈的数据流图, 在这之前先挑重点总结下linux/skbuff.h里面的函数&lt;br /&gt;
+先整体分析下类:&lt;br /&gt;
+申请skb 空间: alloc_skb, build_skb, __napi_alloc_skb, __alloc_rx_skb&lt;br /&gt;
+frag fraglist相关:&lt;br /&gt;
+skb释放: kfree_skb, consume_skb等等&lt;br /&gt;
+协议相关的: vlan checksum, memcpy_from_msg等&lt;br /&gt;
+链表操作:&lt;br /&gt;
+操纵skb 和skb data: get clone copy put push&lt;br /&gt;
+skb成员赋值的操作: 比较多余, 可能比较工整写, 模块化.&lt;br /&gt;
+还有一些比较附在的操作函数, 在这里分析一下:&lt;br /&gt;
+* skb_pull&lt;br /&gt;
+和skb_push, 相对, 应该是拆包的时候用的.&lt;br /&gt;
+* __skb_trim: 重新设置了 len.不是坚守也可能变大.非线性什么不做, 给个警告.&lt;br /&gt;
+* ___pskb_trim: 考虑了paged data.&lt;br /&gt;
+* skb_header_pointer: 这个函数在smartqos里面用过, 主要就是考虑大nonlinear区的问题.&lt;br /&gt;
+用来在skb去一块数据, 如果数据大小在headlen里面最容易了, 直接返回data + offset.&lt;br /&gt;
+否则skb_copy_bits&lt;br /&gt;
+* skb_copy_bits: WARNING fraglist藏在skb_walk_frags里面.&lt;br /&gt;
+核心就是一个frags的for循环一点点小心翼翼的copy就行了.&lt;br /&gt;
+要注意这里有个kmap_atomic的操作!这是加深对page理解的千载难逢的机会.&lt;br /&gt;
+kmap_atomic如果是直接映射区的页表由cpu主动完成.从一个page里面copy东西的时候.&lt;br /&gt;
+低端页返回地址, 高端页映射到kmap_pte.之后开始copy.copy完了kunmap_atomic.&lt;br /&gt;
+这里的问题是为什么要在这里做这种映射?&lt;br /&gt;
+可能是用户态的高端page传到内核, &lt;strong&gt;ip_append_data里面的&lt;/strong&gt;skb_fill_page_desc&lt;br /&gt;
+会把page存到frags[i]里面.可能在进程上下文这些页面ok, 但是到了内核态切不是相关&lt;br /&gt;
+进程的上下文, 这时候高端页,的映射页表就不对了, 因为每个进程的页表是不同的, 所以&lt;br /&gt;
+要用kmap_atomic来一下.&lt;br /&gt;
+* page_address这个函数如果已经映射page_solt里面取, pas保证了多个vaddr 映射到paddr.&lt;br /&gt;
+继续看, 下面看三个非常复杂的三个函数, 好吧是因为我之前没看过.&lt;br /&gt;
+___pskb_trim, pskb_pull, pskb_expand_head;&lt;br /&gt;
+* 最核心的就是pskb_expand_head.&lt;br /&gt;
+先把他看了, 函数注释说sk_buff不变, 且返回后需要重新reload. 改的是skb 的head data.&lt;br /&gt;
+如何sk_buff shared BUG()!显然pskb是针对private non-shared, 如果针对shared改了那么&lt;br /&gt;
+别的执行流上sk_buff的成员都失效, 有可能coredump!所以直接BUG()了.&lt;br /&gt;
+还有nhead &amp;lt; 0 直接BUG, why? 因为下面的memcpy&lt;br /&gt;
+显示申请新空间, ok.之后旧的数据copy过来. ok&lt;br /&gt;
+之后是shinfo, 为了性能优化考了nr frags个, 屌.&lt;br /&gt;
+这里copy shinfo时dst是data+size, 这个size是slab的对应obj的size不是&lt;br /&gt;
+上面申请时的size为什么这么做? obj 的size 应该大于申请的size.&lt;br /&gt;
+这里是尽量利用所有空间了.更新下sk_buff相应成员OK了.&lt;br /&gt;
+期间还处理skb_cloned的情况为什么? shared直接BUG&lt;br /&gt;
+如果cloned则在多个sk_buff之间共享frags, skb_orphan_frags, 先把frags copy到现申请内核page&lt;br /&gt;
+之后put user page, 在把内核page装入frags, 在get 内核page.&lt;br /&gt;
+expand之后, 包括frags旧都是内核数据了.之后把旧的skb head data数据释放掉.&lt;br /&gt;
+也就是说, 为什么我们不能直接把用户的frags, fill到新的head data的shinfo呢?&lt;br /&gt;
+* skb_orphan_frags 大哥问号.&lt;br /&gt;
+反正expand后head 大了, frags 内核page了, frag list 也get了.&lt;br /&gt;
+* pskb_pull:我不看了, 函数注释很明确.&lt;br /&gt;
+     The function makes a sense only on a fragmented &amp;amp;sk_buff,&lt;br /&gt;
+       it expands header moving its tail forward and copying necessary&lt;br /&gt;
+       data from fragmented part.&lt;br /&gt;
+* pskb_trim:基本上看懂就是加上了paged 数据的处理&lt;br /&gt;
+* skb_unclone: pskb_expand_head(skb, 0, 0, pri);&lt;br /&gt;
+* skb_copy:之后全都线性了.  pskb_expand_head(skb, 0, 0, pri); identical to old data.&lt;br /&gt;
 其他的以后再看吧, 这些够用了.&lt;/p&gt;
 
 &lt;h2 id=&#34;fclone-fast-clone:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;fclone &amp;ndash; fast clone&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=d179cd12928443f3ec29cfbc3567439644bd0afc&#34;&gt;NET Implement SKB fast cloning.&lt;/a&gt;
-&lt;a href=&#34;http://lwn.net/Articles/140552/&#34;&gt;Fast SKB cloning, continued&lt;/a&gt;
-use in skb_clone function
-use case 1: tcpdump and network stack
-fclones-&amp;gt;fclone_ref 这就是引用, 用处见skb_clone
-skbuff_head_cache alloc的skb对应n-&amp;gt;fclone = SKB_FCLONE_UNAVAILABLE;
-* pskb_pull &amp;ndash; p abbrivated from oprivate
-* truesize &amp;ndash; len of sk_buff + head_len + frags + frag_list
-* data_len &amp;ndash; len of frags + frag_list
+&lt;p&gt;&lt;a href=&#34;http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=d179cd12928443f3ec29cfbc3567439644bd0afc&#34;&gt;NET Implement SKB fast cloning.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/140552/&#34;&gt;Fast SKB cloning, continued&lt;/a&gt;&lt;br /&gt;
+use in skb_clone function&lt;br /&gt;
+use case 1: tcpdump and network stack&lt;br /&gt;
+fclones-&amp;gt;fclone_ref 这就是引用, 用处见skb_clone&lt;br /&gt;
+skbuff_head_cache alloc的skb对应n-&amp;gt;fclone = SKB_FCLONE_UNAVAILABLE;&lt;br /&gt;
+* pskb_pull &amp;ndash; p abbrivated from oprivate&lt;br /&gt;
+* truesize &amp;ndash; len of sk_buff + head_len + frags + frag_list&lt;br /&gt;
+* data_len &amp;ndash; len of frags + frag_list&lt;br /&gt;
 * len &amp;ndash; head_len + frgas + frag_list&lt;/p&gt;
 
 &lt;p&gt;正文开始&lt;/p&gt;
 
 &lt;h1 id=&#34;linux-network-stack-workthrough:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Linux network stack workthrough&lt;/h1&gt;
 
-&lt;p&gt;skb的流向和socket有关skb就是在socket中流的.
-所以找到socket就行了.
-&lt;a href=&#34;http://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough&#34;&gt;DevConf 2014 Kernel Networking Walkthrough&lt;/a&gt;
-&lt;a href=&#34;http://www.slideshare.net/minibobo/linux-tcp-ip?related=1&#34;&gt;introduction to linux kernel tcp/ip ptocotol stack&lt;/a&gt;
-taobao的第5也说明了问题.
-这是通常的skb的流向. 就是在socket里面按着协议走, 包括tcp的重传.
-还有一种, 就是想kproxy那种, 人为的干扰skb的走向, netif_receive_skb就是一个点.
-netif_receive_skb之后就是标准的内核协议栈的事情了包括bonding啊, vlan, bridge这些什么的.
-我觉得这么说还是不够深度, 我们确实在探索skb在协议栈中的流转.
-我们都知道协议栈中skb按着协议走的, 如果能指出什么时候我们可以合法地让报文转个向.
-就能打到我们的目的, 多少能提升下对workthrough的理解的深度;)
-* af_packet相关的
-dev_queue_xmit的dev_queue_xmit_nit中clone后deliver_skb送上去.
-netif_receive_skb 的__netif_receive_skb_core 的deliver_skb. 有个问题?
-为什么skb直接送上去了没有skb_get之类的.原来每个deliver_skb都有
-atomic_inc(&amp;amp;skb-&amp;gt;users);为什么不是skb_get
-* 主动调用netif_receive_skb
-很多pptp协议就是这么干的.
-其实最经典还是pskb_copy和clone的那个场景!
-这个应该多积累, 我感觉挺重要的.
-&lt;a href=&#34;http://www.cubrid.org/blog/dev-platform/understanding-tcp-ip-network-stack/&#34;&gt;Understanding TCP/IP Network Stack &amp;amp; Writing Network Apps&lt;/a&gt;
-这篇文章的介绍很好.
+&lt;p&gt;skb的流向和socket有关skb就是在socket中流的.&lt;br /&gt;
+所以找到socket就行了.&lt;br /&gt;
+&lt;a href=&#34;http://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough&#34;&gt;DevConf 2014 Kernel Networking Walkthrough&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.slideshare.net/minibobo/linux-tcp-ip?related=1&#34;&gt;introduction to linux kernel tcp/ip ptocotol stack&lt;/a&gt;&lt;br /&gt;
+taobao的第5也说明了问题.&lt;br /&gt;
+这是通常的skb的流向. 就是在socket里面按着协议走, 包括tcp的重传.&lt;br /&gt;
+还有一种, 就是想kproxy那种, 人为的干扰skb的走向, netif_receive_skb就是一个点.&lt;br /&gt;
+netif_receive_skb之后就是标准的内核协议栈的事情了包括bonding啊, vlan, bridge这些什么的.&lt;br /&gt;
+我觉得这么说还是不够深度, 我们确实在探索skb在协议栈中的流转.&lt;br /&gt;
+我们都知道协议栈中skb按着协议走的, 如果能指出什么时候我们可以合法地让报文转个向.&lt;br /&gt;
+就能打到我们的目的, 多少能提升下对workthrough的理解的深度;)&lt;br /&gt;
+* af_packet相关的&lt;br /&gt;
+dev_queue_xmit的dev_queue_xmit_nit中clone后deliver_skb送上去.&lt;br /&gt;
+netif_receive_skb 的__netif_receive_skb_core 的deliver_skb. 有个问题?&lt;br /&gt;
+为什么skb直接送上去了没有skb_get之类的.原来每个deliver_skb都有&lt;br /&gt;
+atomic_inc(&amp;amp;skb-&amp;gt;users);为什么不是skb_get&lt;br /&gt;
+* 主动调用netif_receive_skb&lt;br /&gt;
+很多pptp协议就是这么干的.&lt;br /&gt;
+其实最经典还是pskb_copy和clone的那个场景!&lt;br /&gt;
+这个应该多积累, 我感觉挺重要的.&lt;br /&gt;
+&lt;a href=&#34;http://www.cubrid.org/blog/dev-platform/understanding-tcp-ip-network-stack/&#34;&gt;Understanding TCP/IP Network Stack &amp;amp; Writing Network Apps&lt;/a&gt;&lt;br /&gt;
+这篇文章的介绍很好.&lt;br /&gt;
 好吧我是有这个传统的很早以前, 我就喜欢这么搞&amp;hellip;.&lt;/p&gt;
 
 &lt;h2 id=&#34;out:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;out&lt;/h2&gt;
 
-&lt;p&gt;inet_stream_ops-&amp;gt;tcp_sendmsg()-&amp;gt;tcp_push()-&amp;gt;&lt;strong&gt;tcp_push_pending_frames()-&amp;gt;tcp_write_xmit()-&amp;gt;tcp_transmit_skb()-&amp;gt;ipv4_specific.ip_queue_xmit()-&amp;gt;
-ip_local_out()-&amp;gt;&lt;/strong&gt;ip_local_out()-&amp;gt;NF_INET_LOCAL_OUT-&amp;gt;dst_output()-&amp;gt;
-ip_output()
-{
-    //set in ip_mkroute_output
-    skb-&amp;gt;dev = dev = skb_dst(skb)-&amp;gt;dev; //!!!
-    skb-&amp;gt;protocol = htons(ETH_P_IP);
+&lt;p&gt;inet_stream_ops-&amp;gt;tcp_sendmsg()-&amp;gt;tcp_push()-&amp;gt;&lt;strong&gt;tcp_push_pending_frames()-&amp;gt;tcp_write_xmit()-&amp;gt;tcp_transmit_skb()-&amp;gt;ipv4_specific.ip_queue_xmit()-&amp;gt;&lt;br /&gt;
+ip_local_out()-&amp;gt;&lt;/strong&gt;ip_local_out()-&amp;gt;NF_INET_LOCAL_OUT-&amp;gt;dst_output()-&amp;gt;&lt;br /&gt;
+ip_output()&lt;br /&gt;
+{&lt;br /&gt;
+    //set in ip_mkroute_output&lt;br /&gt;
+    skb-&amp;gt;dev = dev = skb_dst(skb)-&amp;gt;dev; //!!!&lt;br /&gt;
+    skb-&amp;gt;protocol = htons(ETH_P_IP);&lt;br /&gt;
 }-&amp;gt;NF_INET_POST_ROUTING-&amp;gt;ip_finish_output()-&amp;gt;&lt;/p&gt;
 
-&lt;p&gt;ip_finish_output2-&amp;gt; dst_neigh_output
-{
-    neigh_hh_output // hh already in below:-)
-    or
-    n-&amp;gt;output = neigh_resolve_output{dev_hard_header}
-}
--&amp;gt;dev_queue_xmit()
+&lt;p&gt;ip_finish_output2-&amp;gt; dst_neigh_output&lt;br /&gt;
+{&lt;br /&gt;
+    neigh_hh_output // hh already in below:-)&lt;br /&gt;
+    or&lt;br /&gt;
+    n-&amp;gt;output = neigh_resolve_output{dev_hard_header}&lt;br /&gt;
+}&lt;br /&gt;
+-&amp;gt;dev_queue_xmit()&lt;br /&gt;
 {&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;__dev_xmit_skb-&amp;gt;__qdisc_run-&amp;gt;qdisc_restart()-&amp;gt;dev_hard_start_xmit()
@@ -1012,11 +1012,11 @@ validate_xmit_skb-&amp;gt;skb_gso_segment-&amp;gt;skb_mac_gso_segment-&amp;gt; p
 dev_hard_start_xmit()
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;}
-xmit_one-&amp;gt;
-{
-    dev_queue_xmit_nit is Sun&amp;rsquo;s Network Interface Tap (NIT)
-    netdev_start_xmit-&amp;gt;ops-&amp;gt;ndo_start_xmit{this functions is init in createing device} = e100_xmit_frame
+&lt;p&gt;}&lt;br /&gt;
+xmit_one-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    dev_queue_xmit_nit is Sun&amp;rsquo;s Network Interface Tap (NIT)&lt;br /&gt;
+    netdev_start_xmit-&amp;gt;ops-&amp;gt;ndo_start_xmit{this functions is init in createing device} = e100_xmit_frame&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;p&gt;softirq:net_tx_action()-&amp;gt;qdisc_run()&lt;/p&gt;
@@ -1024,169 +1024,169 @@ xmit_one-&amp;gt;
 &lt;h2 id=&#34;in-forward:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;in &amp;amp; forward&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;NAPI poll_list net_device
-driver intr add skb to private queue -&amp;gt; e100_intr()-&amp;gt;&lt;strong&gt;netif_rx_schedule()-&amp;gt;&lt;/strong&gt;napi_schedule(netdev,nic-&amp;gt;napi)-&amp;gt;:
-add napi to poll_list and __raise_softirq_irqoff()
-do_softirq-&amp;gt;net_rx_action()-&amp;gt;
-+netdev-&amp;gt;poll()=e100_poll()private function-&amp;gt;e100_rx_clean()&amp;hellip;-&amp;gt;
-netif_receive_skb()-&amp;gt;deliver_skb-&amp;gt;
+&lt;li&gt;&lt;p&gt;NAPI poll_list net_device&lt;br /&gt;
+driver intr add skb to private queue -&amp;gt; e100_intr()-&amp;gt;&lt;strong&gt;netif_rx_schedule()-&amp;gt;&lt;/strong&gt;napi_schedule(netdev,nic-&amp;gt;napi)-&amp;gt;:&lt;br /&gt;
+add napi to poll_list and __raise_softirq_irqoff()&lt;br /&gt;
+do_softirq-&amp;gt;net_rx_action()-&amp;gt;&lt;br /&gt;
++netdev-&amp;gt;poll()=e100_poll()private function-&amp;gt;e100_rx_clean()&amp;hellip;-&amp;gt;&lt;br /&gt;
+netif_receive_skb()-&amp;gt;deliver_skb-&amp;gt;&lt;br /&gt;
 private queue and private function&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Non-NAPI input_pkt_queue skb
-driver intr vortex_rx()-&amp;gt;netif_rx()-&amp;gt;add skb to SD input_pkt_queue-&amp;gt;napi_schedule(backlog)-&amp;gt;add backlog to SD poll_list __raise_softirq_irqoff()
-async:net_rx_action()-&amp;gt;
-+backlog-&amp;gt;poll()=process_backlog()
--&amp;gt;netif_receive_skb()-&amp;gt;deliver_skb-&amp;gt;
+&lt;li&gt;&lt;p&gt;Non-NAPI input_pkt_queue skb&lt;br /&gt;
+driver intr vortex_rx()-&amp;gt;netif_rx()-&amp;gt;add skb to SD input_pkt_queue-&amp;gt;napi_schedule(backlog)-&amp;gt;add backlog to SD poll_list __raise_softirq_irqoff()&lt;br /&gt;
+async:net_rx_action()-&amp;gt;&lt;br /&gt;
++backlog-&amp;gt;poll()=process_backlog()&lt;br /&gt;
+-&amp;gt;netif_receive_skb()-&amp;gt;deliver_skb-&amp;gt;&lt;br /&gt;
 skb to sd input_pkt_queue process&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;common path
-pt_prev-&amp;gt;func=ip_rcv()-&amp;gt;NF_INET_PRE_ROUTING-&amp;gt;ip_rcv_finish()-&amp;gt;
-ip_route_input()-&amp;gt;ip_route_input_slow()
-{
-local_input dst.input??=ip_local_deliver()
-or
-ip_mkroute_input()-&amp;gt;__mkroute_input():dst.input=ip_forward() 紧接着dst.output??=ip_output()
-}
-dst_input()-&amp;gt;
-{
-ip_local_deliver()-&amp;gt;NF_INET_LOCAL_IN-&amp;gt;ip_local_deliver_finish()-&amp;gt;inet_protos.tcp_v4_rcv()
-or
-ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()见上。
+&lt;li&gt;&lt;p&gt;common path&lt;br /&gt;
+pt_prev-&amp;gt;func=ip_rcv()-&amp;gt;NF_INET_PRE_ROUTING-&amp;gt;ip_rcv_finish()-&amp;gt;&lt;br /&gt;
+ip_route_input()-&amp;gt;ip_route_input_slow()&lt;br /&gt;
+{&lt;br /&gt;
+local_input dst.input??=ip_local_deliver()&lt;br /&gt;
+or&lt;br /&gt;
+ip_mkroute_input()-&amp;gt;__mkroute_input():dst.input=ip_forward() 紧接着dst.output??=ip_output()&lt;br /&gt;
+}&lt;br /&gt;
+dst_input()-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+ip_local_deliver()-&amp;gt;NF_INET_LOCAL_IN-&amp;gt;ip_local_deliver_finish()-&amp;gt;inet_protos.tcp_v4_rcv()&lt;br /&gt;
+or&lt;br /&gt;
+ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()见上。&lt;br /&gt;
 }&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Differences
-1 NAPI has not netif_rx():input_pkt_queue.
-2 NAPI and Non-NAPI used different napi-&amp;gt;poll 决定本质上的区别。
+&lt;li&gt;&lt;p&gt;Differences&lt;br /&gt;
+1 NAPI has not netif_rx():input_pkt_queue.&lt;br /&gt;
+2 NAPI and Non-NAPI used different napi-&amp;gt;poll 决定本质上的区别。&lt;br /&gt;
 3 vortex_rx() 多，e100_rx_clean()多！这点可以看出不同优势来。&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Need clean
-net_tx_action-&amp;gt;output_queue/每个设备的qdisc and  clear_bit__QDISC_STATE_SCHED qdisc_run add back
-__QDISC_STATE_SCHED是否加入softdata
-qdisc_restart: 如果队列有数据就返回大于零 继续减小weight_p
-__qdisc_run queue no data __QDISC_STATE_SCHED not set, only in this case!
+&lt;li&gt;&lt;p&gt;Need clean&lt;br /&gt;
+net_tx_action-&amp;gt;output_queue/每个设备的qdisc and  clear_bit__QDISC_STATE_SCHED qdisc_run add back&lt;br /&gt;
+__QDISC_STATE_SCHED是否加入softdata&lt;br /&gt;
+qdisc_restart: 如果队列有数据就返回大于零 继续减小weight_p&lt;br /&gt;
+__qdisc_run queue no data __QDISC_STATE_SCHED not set, only in this case!&lt;br /&gt;
 driver tx, stack xmit&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;linux-network-technical-feature:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Linux network technical feature&lt;/h1&gt;
 
-&lt;p&gt;内核协议栈(包含底层设备链路层)提供了很多技术机制, 比如
-SG I/O, TSO, RPS, NAPI等等. 这些技术的目的都是什么呢?
-这个问题重要到, 如果你知道了他, 这些技术就不再那么高深么测了, 神秘感全无.
-最为重要的就是, 你再也不用为了记住这些技术而头疼了.
-首先协议栈本身, 就是完成信息交换这个简单的目的. 搞出那么多名堂来是为什么呢?
-就内核提供这些技术而言, 基本上都是为了提高性能!
+&lt;p&gt;内核协议栈(包含底层设备链路层)提供了很多技术机制, 比如&lt;br /&gt;
+SG I/O, TSO, RPS, NAPI等等. 这些技术的目的都是什么呢?&lt;br /&gt;
+这个问题重要到, 如果你知道了他, 这些技术就不再那么高深么测了, 神秘感全无.&lt;br /&gt;
+最为重要的就是, 你再也不用为了记住这些技术而头疼了.&lt;br /&gt;
+首先协议栈本身, 就是完成信息交换这个简单的目的. 搞出那么多名堂来是为什么呢?&lt;br /&gt;
+就内核提供这些技术而言, 基本上都是为了提高性能!&lt;br /&gt;
 我严格区分性能提高, 功能实现. 虽然很多技术的疆界不是那么明晰.&lt;/p&gt;
 
 &lt;h2 id=&#34;sg-io:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;SG IO&lt;/h2&gt;
 
-&lt;p&gt;如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!
-p_append_data
+&lt;p&gt;如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!&lt;br /&gt;
+p_append_data&lt;br /&gt;
 这是设备的一个feature. 内核和协议栈只是小角色, 边角料.&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/153666&#34;&gt;NETIF_F_FRAGLIST and NETIF_F_SG difference&lt;/a&gt;
-validate_xmit_skb()-&amp;gt;__skb_linearize()
-ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.
-如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.
+&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/153666&#34;&gt;NETIF_F_FRAGLIST and NETIF_F_SG difference&lt;/a&gt;&lt;br /&gt;
+validate_xmit_skb()-&amp;gt;__skb_linearize()&lt;br /&gt;
+ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.&lt;br /&gt;
+如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.&lt;br /&gt;
 compound page&lt;/p&gt;
 
 &lt;h2 id=&#34;offload:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;offload&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;TSO in tcp_v4_connect
-&lt;a href=&#34;https://tejparkash.wordpress.com/2010/03/06/tso-explained/&#34;&gt;TSO Explained&lt;/a&gt;
-One Liner says: It is a method to reduce cpu workload of packet cutting in 1500byte and asking hardware to perform the same functionality.&lt;/li&gt;
-&lt;li&gt;GSO
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/37287&#34;&gt;GSO: Generic Segmentation Offload&lt;/a&gt;
-TSO = GSO_TCPV4
-frags = sg I/O
-frag_list
-*GRO
-napi -&amp;gt; dev -&amp;gt;inet-&amp;gt;skb&lt;/li&gt;
+&lt;li&gt;TSO in tcp_v4_connect&lt;br /&gt;
+&lt;a href=&#34;https://tejparkash.wordpress.com/2010/03/06/tso-explained/&#34;&gt;TSO Explained&lt;/a&gt;&lt;br /&gt;
+One Liner says: It is a method to reduce cpu workload of packet cutting in 1500byte and asking hardware to perform the same functionality.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;GSO&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/37287&#34;&gt;GSO: Generic Segmentation Offload&lt;/a&gt;&lt;br /&gt;
+TSO = GSO_TCPV4&lt;br /&gt;
+frags = sg I/O&lt;br /&gt;
+frag_list&lt;br /&gt;
+*GRO&lt;br /&gt;
+napi -&amp;gt; dev -&amp;gt;inet-&amp;gt;skb&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;inet:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;INET&lt;/h1&gt;
 
-&lt;p&gt;现在我们来看具体的network stack的实现.
-linux kernel的tcp/ip实现是有自己的名字的就叫INET!
+&lt;p&gt;现在我们来看具体的network stack的实现.&lt;br /&gt;
+linux kernel的tcp/ip实现是有自己的名字的就叫INET!&lt;br /&gt;
 An implementation of the TCP/IP protocol suite for the LINUX operating system.&lt;br /&gt;
-INET is implemented using the  BSD Socket interface as the means of communication
+INET is implemented using the  BSD Socket interface as the means of communication&lt;br /&gt;
 with the user level.&lt;/p&gt;
 
 &lt;h2 id=&#34;内核协议栈的代码可以分为:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;内核协议栈的代码可以分为:&lt;/h2&gt;
 
 &lt;ol&gt;
-&lt;li&gt;协议相关, bsd socket也算是吧, qdisc也是.&lt;/li&gt;
-&lt;li&gt;内核提供的基础架构skb&lt;/li&gt;
-&lt;li&gt;内核的优化rss, rps, gso, napi之类的.&lt;/li&gt;
+&lt;li&gt;协议相关, bsd socket也算是吧, qdisc也是.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;内核提供的基础架构skb&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;内核的优化rss, rps, gso, napi之类的.&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;增强功能af_packet, netlink, netfilter, 不属于协议的, 也算不上内核的东西,只是
-一个外界的需求抓包哎, 防火墙之类的.
-接下来要看看具体的linux TCP/IP network stack的实现了.
-有些实现看似夹着协议的前缀如__ip_append_data实际上内核优化frags的体现, 不要眯了眼.
+&lt;li&gt;&lt;p&gt;增强功能af_packet, netlink, netfilter, 不属于协议的, 也算不上内核的东西,只是&lt;br /&gt;
+一个外界的需求抓包哎, 防火墙之类的.&lt;br /&gt;
+接下来要看看具体的linux TCP/IP network stack的实现了.&lt;br /&gt;
+有些实现看似夹着协议的前缀如__ip_append_data实际上内核优化frags的体现, 不要眯了眼.&lt;br /&gt;
 但是, 通过这些隐含的功能去探索, 标注,理解代码却非常赞!&lt;/p&gt;
 
 &lt;h2 id=&#34;协议栈运行的本质:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;协议栈运行的本质?&lt;/h2&gt;
 
-&lt;p&gt;出去一层层依据协议类型和参数&lt;a href=&#34;http://en.wikipedia.org/wiki/Encapsulation_(networking)&#34;&gt;Encapuslation&lt;/a&gt;
+&lt;p&gt;出去一层层依据协议类型和参数&lt;a href=&#34;http://en.wikipedia.org/wiki/Encapsulation_(networking)&#34;&gt;Encapuslation&lt;/a&gt;&lt;br /&gt;
 进来一层层decapuslation 报文头部, 根据头部, 协议, 还有参数进行操作.&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;h2 id=&#34;package-name-in-different-layer:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;package name in different layer&lt;/h2&gt;
 
-&lt;p&gt;An individual package of transmitted data is commonly called a frame on the link layer, L2;
+&lt;p&gt;An individual package of transmitted data is commonly called a frame on the link layer, L2;&lt;br /&gt;
 a packet on the network layer; a segment on the transport layer; and a message on the application layer.&lt;/p&gt;
 
 &lt;h2 id=&#34;fixme-implemention-of-protocols:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;FIXME Implemention of protocols&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;inet_create
-sock-&amp;gt;ops = inet_protosw-&amp;gt;ops = inet_stream_ops&lt;/li&gt;
-&lt;li&gt;proto&lt;em&gt;ops &amp;ndash; fops
-is a good name stand for all PF&lt;/em&gt;*, all 协议族, but sock_generic_ops is better 具体协议与BSD socket api的通用接口&lt;/li&gt;
-&lt;li&gt;proto, &amp;ndash; specific fs, like ext,  btfs in &lt;em&gt;inetsw&lt;/em&gt;
-sock的lab决定具体的slab, 如tcp_sock/udp_sock, 根本的发送方法tcp_sendmsg, 协议的真正实体!&lt;/li&gt;
-&lt;li&gt;越来越具体
-BSD socket api -&amp;gt;proto_ops(sock type base)协议通用api -&amp;gt;proto (udp/tcp_prot)
-sys_bind -&amp;gt; inet_stream_ops -&amp;gt;inet_bind -&amp;gt;sk_prot-&amp;gt;bind(likely, is NULL)
-write-&amp;gt;inet_stream_ops-&amp;gt;sendmsg-&amp;gt;tcp_sendmsg&lt;/li&gt;
-&lt;li&gt;inet_connection_sock_af_ops
-icsk-&amp;gt;icsk_af_ops&lt;/li&gt;
-&lt;li&gt;net_protocol &amp;ndash; l4 rcv in &lt;em&gt;inet_protos&lt;/em&gt;
-是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos&lt;/li&gt;
-&lt;li&gt;packet_type &amp;ndash; l3 rcv in ptype_all and ptype_base
-pt_prev-&amp;gt;func&lt;/li&gt;
+&lt;li&gt;inet_create&lt;br /&gt;
+sock-&amp;gt;ops = inet_protosw-&amp;gt;ops = inet_stream_ops&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;proto&lt;em&gt;ops &amp;ndash; fops&lt;br /&gt;
+is a good name stand for all PF&lt;/em&gt;*, all 协议族, but sock_generic_ops is better 具体协议与BSD socket api的通用接口&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;proto, &amp;ndash; specific fs, like ext,  btfs in &lt;em&gt;inetsw&lt;/em&gt;&lt;br /&gt;
+sock的lab决定具体的slab, 如tcp_sock/udp_sock, 根本的发送方法tcp_sendmsg, 协议的真正实体!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;越来越具体&lt;br /&gt;
+BSD socket api -&amp;gt;proto_ops(sock type base)协议通用api -&amp;gt;proto (udp/tcp_prot)&lt;br /&gt;
+sys_bind -&amp;gt; inet_stream_ops -&amp;gt;inet_bind -&amp;gt;sk_prot-&amp;gt;bind(likely, is NULL)&lt;br /&gt;
+write-&amp;gt;inet_stream_ops-&amp;gt;sendmsg-&amp;gt;tcp_sendmsg&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;inet_connection_sock_af_ops&lt;br /&gt;
+icsk-&amp;gt;icsk_af_ops&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;net_protocol &amp;ndash; l4 rcv in &lt;em&gt;inet_protos&lt;/em&gt;&lt;br /&gt;
+是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;packet_type &amp;ndash; l3 rcv in ptype_all and ptype_base&lt;br /&gt;
+pt_prev-&amp;gt;func&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;bsd-socket-layer:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;BSD socket layer&lt;/h1&gt;
 
-&lt;p&gt;Details and skills in Stevens Unix network programming.
-我们现在开始探索linux 网络协议栈的socket layer.
-以socket()这个系统调用开始.
-我门首先要了解什么是socket. 就好像, 小时候拿两个纸杯中间用线连起来,
-模拟电话传消息一样. socket 起始也这么会事, 可以说socket也是一种
-communication protocol, 和network layer 一样地址就是最重要的, 也是第一位的.
-What is socket in wikipedia?
-A socket is one endpoint of a two-way communication link between two programs
-running on the network. An Internet socket is characterized by at least the following :
-Local socket address: Local IP address and port number
-Protocol: A transport protocol (e.g., TCP, UDP, raw IP, or others).
-Remote socket address, if connected to another socket.
-我们在用户态这头有endpoint, 套接字的一头. 还需要另外一头.
-没错!我们要找到另外一头. 怎么找? 比如你和小伙伴, 那么纸杯+线的就够了.
-如果你要给异地的情人 or 亲人通话, 那个破纸杯肯定不够了. 这时候你就需要真的电话了
-玩cs野战的时候, 对讲机就够了.所以说, 从通信手段上就决定了我们的另一头的位置.
-这样说有些本末倒置, 毕竟, 你是先有了说话的对象之后决定具体用什么方法.
-那在网络世界, 所谓的说话对象是什么呢? 其实是, network layers.
-正是layer, 才是网络世界的真正实体, 比如抓包你像和自己的linker层建立一个socket
-电话线, 用来私语.比如ping你想和另外一台主机的network 层眉目传情.
-最常见的就是应用层的信息交互, 也就是常见的tcp or udp socket.
+&lt;p&gt;Details and skills in Stevens Unix network programming.&lt;br /&gt;
+我们现在开始探索linux 网络协议栈的socket layer.&lt;br /&gt;
+以socket()这个系统调用开始.&lt;br /&gt;
+我门首先要了解什么是socket. 就好像, 小时候拿两个纸杯中间用线连起来,&lt;br /&gt;
+模拟电话传消息一样. socket 起始也这么会事, 可以说socket也是一种&lt;br /&gt;
+communication protocol, 和network layer 一样地址就是最重要的, 也是第一位的.&lt;br /&gt;
+What is socket in wikipedia?&lt;br /&gt;
+A socket is one endpoint of a two-way communication link between two programs&lt;br /&gt;
+running on the network. An Internet socket is characterized by at least the following :&lt;br /&gt;
+Local socket address: Local IP address and port number&lt;br /&gt;
+Protocol: A transport protocol (e.g., TCP, UDP, raw IP, or others).&lt;br /&gt;
+Remote socket address, if connected to another socket.&lt;br /&gt;
+我们在用户态这头有endpoint, 套接字的一头. 还需要另外一头.&lt;br /&gt;
+没错!我们要找到另外一头. 怎么找? 比如你和小伙伴, 那么纸杯+线的就够了.&lt;br /&gt;
+如果你要给异地的情人 or 亲人通话, 那个破纸杯肯定不够了. 这时候你就需要真的电话了&lt;br /&gt;
+玩cs野战的时候, 对讲机就够了.所以说, 从通信手段上就决定了我们的另一头的位置.&lt;br /&gt;
+这样说有些本末倒置, 毕竟, 你是先有了说话的对象之后决定具体用什么方法.&lt;br /&gt;
+那在网络世界, 所谓的说话对象是什么呢? 其实是, network layers.&lt;br /&gt;
+正是layer, 才是网络世界的真正实体, 比如抓包你像和自己的linker层建立一个socket&lt;br /&gt;
+电话线, 用来私语.比如ping你想和另外一台主机的network 层眉目传情.&lt;br /&gt;
+最常见的就是应用层的信息交互, 也就是常见的tcp or udp socket.&lt;br /&gt;
 所以回头来看看我们的socket系统调用:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;int socket(int domain, int type, int protocol);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;你看到没有socket的第一个参数是叫domain, 不是狭隘的protocol协议族之类的!
-什么叫domain, 就是领域, 范围的意思, 这完全符合socket作为一个工具的性质!
+&lt;p&gt;你看到没有socket的第一个参数是叫domain, 不是狭隘的protocol协议族之类的!&lt;br /&gt;
+什么叫domain, 就是领域, 范围的意思, 这完全符合socket作为一个工具的性质!&lt;br /&gt;
 你要先确定你沟通的范围, man手册给出的例子, 注意这里是以AF开头, 明白了吧:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;       Name                Purpose                          Man page
@@ -1203,76 +1203,76 @@ Remote socket address, if connected to another socket.
    AF_ALG              Interface to kernel crypto API
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;AF_UNIX/LOCAL: 你在同一台电脑上的应用层通信.
-AF_NETLINK: 应用层和内核通信(linker, ip, tcp等多层, 甚至是非网络的内容).
-AF_APPLETALK: 这个主要是苹果的设备进行通信, 具体不了解.
-AF_PACKET: 这个就是dev_queue_xmit和netif_receive_skb照顾的接口, 应用层与linker层通信.
-AF_INET: 这个是应用层与internet网络上的主机进行通信, 范围很广,遍布互联网,多个层.
-现实中通信质量是有区别的, 就好比你是用上世界哔哔机, 大哥大还是现在android 苹果.
-socket的第2个参数, 就是确定通信质量的.
+&lt;p&gt;AF_UNIX/LOCAL: 你在同一台电脑上的应用层通信.&lt;br /&gt;
+AF_NETLINK: 应用层和内核通信(linker, ip, tcp等多层, 甚至是非网络的内容).&lt;br /&gt;
+AF_APPLETALK: 这个主要是苹果的设备进行通信, 具体不了解.&lt;br /&gt;
+AF_PACKET: 这个就是dev_queue_xmit和netif_receive_skb照顾的接口, 应用层与linker层通信.&lt;br /&gt;
+AF_INET: 这个是应用层与internet网络上的主机进行通信, 范围很广,遍布互联网,多个层.&lt;br /&gt;
+现实中通信质量是有区别的, 就好比你是用上世界哔哔机, 大哥大还是现在android 苹果.&lt;br /&gt;
+socket的第2个参数, 就是确定通信质量的.&lt;br /&gt;
        SOCK_STREAM     Provides sequenced, reliable, two-way, connection-based byte streams.&lt;br /&gt;
-            An out-of-band data transmission  mechanism  may  be supported.
-       SOCK_DGRAM      Supports datagrams (connectionless, unreliable messages of a fixed maximum length).
-       SOCK_SEQPACKET  Provides  a  sequenced,  reliable, two-way connection-based data transmission path
-            for datagrams of fixed maximum length; a consumer is required to read
-            an entire packet with each input system call.
-       SOCK_RAW        Provides raw network protocol access.
-       SOCK_RDM        Provides a reliable datagram layer that does not guarantee ordering.
-       SOCK_PACKET     Obsolete and should not be used in new programs; see packet(7).
-SOCK_RDM完全没有听过啊, 不过注意RDM表示reliable, 但是不代表有序ordering,
-也就是说, 包不会丢失有重传, 但收到顺序不保证.这里想说的是, 一个socket的各种性质是分开的.
-而这些性质就是所谓的通信质量! You buy a bog, 顺序反了就成a bog buy you.
-我见过的就是stream, dgram, raw三种.
-现在我们来探索下所谓的raw和stream, dgram到底有什么区别.这些都是非常基本的概念,
-之前都被我忽略掉了.
-man手册上 A raw socket receives or sends the raw datagram not including link level headers.
-加上对于af packet我们知道他是在dev_queue_xmit和netif_receive_skb处得到, 所以这个raw是相对来说.
-他包含了一些协议的头部, 但同时限于ip往上的头部.
-而stream和dgram. 看上去和dgram很像, 但raw可能收到重复的packet而dgram缺不会(就原始协议来讲)
+            An out-of-band data transmission  mechanism  may  be supported.&lt;br /&gt;
+       SOCK_DGRAM      Supports datagrams (connectionless, unreliable messages of a fixed maximum length).&lt;br /&gt;
+       SOCK_SEQPACKET  Provides  a  sequenced,  reliable, two-way connection-based data transmission path&lt;br /&gt;
+            for datagrams of fixed maximum length; a consumer is required to read&lt;br /&gt;
+            an entire packet with each input system call.&lt;br /&gt;
+       SOCK_RAW        Provides raw network protocol access.&lt;br /&gt;
+       SOCK_RDM        Provides a reliable datagram layer that does not guarantee ordering.&lt;br /&gt;
+       SOCK_PACKET     Obsolete and should not be used in new programs; see packet(7).&lt;br /&gt;
+SOCK_RDM完全没有听过啊, 不过注意RDM表示reliable, 但是不代表有序ordering,&lt;br /&gt;
+也就是说, 包不会丢失有重传, 但收到顺序不保证.这里想说的是, 一个socket的各种性质是分开的.&lt;br /&gt;
+而这些性质就是所谓的通信质量! You buy a bog, 顺序反了就成a bog buy you.&lt;br /&gt;
+我见过的就是stream, dgram, raw三种.&lt;br /&gt;
+现在我们来探索下所谓的raw和stream, dgram到底有什么区别.这些都是非常基本的概念,&lt;br /&gt;
+之前都被我忽略掉了.&lt;br /&gt;
+man手册上 A raw socket receives or sends the raw datagram not including link level headers.&lt;br /&gt;
+加上对于af packet我们知道他是在dev_queue_xmit和netif_receive_skb处得到, 所以这个raw是相对来说.&lt;br /&gt;
+他包含了一些协议的头部, 但同时限于ip往上的头部.&lt;br /&gt;
+而stream和dgram. 看上去和dgram很像, 但raw可能收到重复的packet而dgram缺不会(就原始协议来讲)&lt;br /&gt;
 ping就是用的这种socket:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;为什么要用这种, 我说的协议的语义上.stream和dgram不行吗?
-原因是ping连接到的是icmp 他是在network层. 而另另外的stream 和dgram都是封装了
-transport layer的内容后直接到的network 层的ip, 我们没有办法访问到icmp协议.
-raw的另外一个特性, 就是允许跨国transport layer自己构建包.
-这让我想起了电影里面钻到电线里面的情节, 没错你的能力够你也可以.
-从没有保证这点看raw和dgram很像. 而dgram就是传输层的raw!
-下面我们来看看, 到底一个高质量的通信线路是什么样的, 具有什么性质.
-stream 是一个非常重要, 且牛x的概念, 我在I/O部分, 解释过.
-这里简单说一句, stream最牛b的地方在于他在数学上是有专门的定义!
-那么在这里stream 表示的是复合的概念, 对于tcp实现就是:
-connection-oriented, reliability, error-check, flow control, congestion control
-记住这五个概念这是所有高质量传输的共性.
+&lt;p&gt;为什么要用这种, 我说的协议的语义上.stream和dgram不行吗?&lt;br /&gt;
+原因是ping连接到的是icmp 他是在network层. 而另另外的stream 和dgram都是封装了&lt;br /&gt;
+transport layer的内容后直接到的network 层的ip, 我们没有办法访问到icmp协议.&lt;br /&gt;
+raw的另外一个特性, 就是允许跨国transport layer自己构建包.&lt;br /&gt;
+这让我想起了电影里面钻到电线里面的情节, 没错你的能力够你也可以.&lt;br /&gt;
+从没有保证这点看raw和dgram很像. 而dgram就是传输层的raw!&lt;br /&gt;
+下面我们来看看, 到底一个高质量的通信线路是什么样的, 具有什么性质.&lt;br /&gt;
+stream 是一个非常重要, 且牛x的概念, 我在I/O部分, 解释过.&lt;br /&gt;
+这里简单说一句, stream最牛b的地方在于他在数学上是有专门的定义!&lt;br /&gt;
+那么在这里stream 表示的是复合的概念, 对于tcp实现就是:&lt;br /&gt;
+connection-oriented, reliability, error-check, flow control, congestion control&lt;br /&gt;
+记住这五个概念这是所有高质量传输的共性.&lt;br /&gt;
 接下来简单的说一下.&lt;/p&gt;
 
 &lt;h2 id=&#34;connection-based:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;connection-based&lt;/h2&gt;
 
-&lt;p&gt;到底什么是面向连接的网上只有wikipedia给的解释最合理, 其他的扯到了别的性质.
+&lt;p&gt;到底什么是面向连接的网上只有wikipedia给的解释最合理, 其他的扯到了别的性质.&lt;br /&gt;
 两点: session and in order.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Session
-In computer science, in particular networking, a session is a semi-permanent
-interactive information interchange.
-session，中文经常翻译为会话，其本来的含义是指*有始有终*的一系列动作/消息
-&lt;a href=&#34;http://www.scottklement.com/rpg/socktut/overview.html&#34;&gt;Instance of tcp session in BSD socket&lt;/a&gt;
-&lt;a href=&#34;http://www.dummies.com/how-to/content/network-basics-tcp-session-establishment-handshaki.html&#34;&gt;TCP Session - Handshaking in protocol&lt;/a&gt;
-这个对应tcp的三次握手, 4次挥手,&lt;/li&gt;
-&lt;li&gt;in order
-涉及到的另外一个概念Virtul circuit
-A virtual circuit (VC) is a means of transporting data over a packet switched
-computer network in such a way that it appears as though there is a dedicated
-physical layer link between the source and destination end systems of this data.
-对应tcp 的接收队列, seq number&lt;/li&gt;
+&lt;li&gt;Session&lt;br /&gt;
+In computer science, in particular networking, a session is a semi-permanent&lt;br /&gt;
+interactive information interchange.&lt;br /&gt;
+session，中文经常翻译为会话，其本来的含义是指*有始有终*的一系列动作/消息&lt;br /&gt;
+&lt;a href=&#34;http://www.scottklement.com/rpg/socktut/overview.html&#34;&gt;Instance of tcp session in BSD socket&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.dummies.com/how-to/content/network-basics-tcp-session-establishment-handshaki.html&#34;&gt;TCP Session - Handshaking in protocol&lt;/a&gt;&lt;br /&gt;
+这个对应tcp的三次握手, 4次挥手,&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;in order&lt;br /&gt;
+涉及到的另外一个概念Virtul circuit&lt;br /&gt;
+A virtual circuit (VC) is a means of transporting data over a packet switched&lt;br /&gt;
+computer network in such a way that it appears as though there is a dedicated&lt;br /&gt;
+physical layer link between the source and destination end systems of this data.&lt;br /&gt;
+对应tcp 的接收队列, seq number&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;reliability:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Reliability&lt;/h2&gt;
 
-&lt;p&gt;sliding window
-ARQ(go back n)
+&lt;p&gt;sliding window&lt;br /&gt;
+ARQ(go back n)&lt;br /&gt;
 显然seq number这些也是需要的.&lt;/p&gt;
 
 &lt;h2 id=&#34;error-check:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;error-check&lt;/h2&gt;
@@ -1285,126 +1285,126 @@ ARQ(go back n)
 
 &lt;h2 id=&#34;congestion-control:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;congestion control&lt;/h2&gt;
 
-&lt;p&gt;cubic, reno这些.
+&lt;p&gt;cubic, reno这些.&lt;br /&gt;
 slow start&lt;/p&gt;
 
-&lt;p&gt;之于第三个socket()参数嘛, android还有国产天语阿里云和google nexus 6之分.
-socket的参数protocol不是指trnasport layer,而是domain的一个instance(ETH_P_IP)
-另外socket的第一个参数被称为domain而不是协议族, 暗含像PF_PACKET这种定义.
-但实际上PF_Packet只是一种socket, 参见man 7 packet.
+&lt;p&gt;之于第三个socket()参数嘛, android还有国产天语阿里云和google nexus 6之分.&lt;br /&gt;
+socket的参数protocol不是指trnasport layer,而是domain的一个instance(ETH_P_IP)&lt;br /&gt;
+另外socket的第一个参数被称为domain而不是协议族, 暗含像PF_PACKET这种定义.&lt;br /&gt;
+但实际上PF_Packet只是一种socket, 参见man 7 packet.&lt;br /&gt;
 PF前缀这里体现了内核定义的混乱! 他不符合protocol layer的定义, 所以不是protocol!&lt;/p&gt;
 
-&lt;p&gt;介绍完socket()接口后我们进一步, 来看看这个socket()产生的具体&amp;rsquo;纸杯线&amp;rsquo;
-也就是所谓的sock, 文章的质量是不能降低, 不仅意味着, 不能吸引到读者更重要的是
-浪费了自己的时间. 所以再开始sock的探索前, 要明确我们要的是什么? 这很难.
-FIXME, 我不知道, 先看着吧.好吧先看workthough, 之后看下address, 就完了.就这么定了.
-显示alloc sock: sock_alloc 这和alloc_skb没什么本质差异.这个socket就是&lt;a href=&#34;http://movie.douban.com/subject/5308201/&#34;&gt;霸王的卵&lt;/a&gt;
-这里有个问题内核使用sockfs来完成socket结构的申请, 把sock和一个inode放到一起了.
-为什么? 这事为了使其它的read write close之类的也能对socket fd生效.
+&lt;p&gt;介绍完socket()接口后我们进一步, 来看看这个socket()产生的具体&amp;rsquo;纸杯线&amp;rsquo;&lt;br /&gt;
+也就是所谓的sock, 文章的质量是不能降低, 不仅意味着, 不能吸引到读者更重要的是&lt;br /&gt;
+浪费了自己的时间. 所以再开始sock的探索前, 要明确我们要的是什么? 这很难.&lt;br /&gt;
+FIXME, 我不知道, 先看着吧.好吧先看workthough, 之后看下address, 就完了.就这么定了.&lt;br /&gt;
+显示alloc sock: sock_alloc 这和alloc_skb没什么本质差异.这个socket就是&lt;a href=&#34;http://movie.douban.com/subject/5308201/&#34;&gt;霸王的卵&lt;/a&gt;&lt;br /&gt;
+这里有个问题内核使用sockfs来完成socket结构的申请, 把sock和一个inode放到一起了.&lt;br /&gt;
+为什么? 这事为了使其它的read write close之类的也能对socket fd生效.&lt;br /&gt;
 要知道网络这几个接口, 脑袋是有反骨的, 死活没有融合到unix的哲学当中:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;一切皆文件
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;愣是多了几个socket, bin connect, accept才降服, open弱爆了.
-&lt;a href=&#34;http://isomerica.net/~dpn/socket_vfs.pdf&#34;&gt;Linux Sockets and the Virtual Filesystem&lt;/a&gt;
+&lt;p&gt;愣是多了几个socket, bin connect, accept才降服, open弱爆了.&lt;br /&gt;
+&lt;a href=&#34;http://isomerica.net/~dpn/socket_vfs.pdf&#34;&gt;Linux Sockets and the Virtual Filesystem&lt;/a&gt;&lt;br /&gt;
 这一句非常屌:　&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;sock-&amp;gt;type = type;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;申请完sock后就是, &lt;a href=&#34;http://en.wikipedia.org/wiki/Incarnation&#34;&gt;incarnation&lt;/a&gt; a sock, 这个需要dominator的帮助.
+&lt;p&gt;申请完sock后就是, &lt;a href=&#34;http://en.wikipedia.org/wiki/Incarnation&#34;&gt;incarnation&lt;/a&gt; a sock, 这个需要dominator的帮助.&lt;br /&gt;
 domainator在内核叫net_proto_family, 也没什么错. 因为角度不同:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;struct net_proto_family __rcu *net_families[NPROTO] __read_mostly;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;通过sock_register注册一共三十几个全在这呢, cscope全能看到.这表明我们还在sock层.
-挑几个重要的:inet_create, netlink_create, unix_create, packet_create
-到现在你应该明白, 整个socket就是一个&lt;a href=&#34;http://movie.douban.com/subject/7051375/&#34;&gt;受肉仪式&lt;/a&gt;
-妈妈生孩子是受肉, 格里菲斯鲜红的贝黑利特也是.我们先看inet_create()
-这里用到了inetsw(和inetsw_array本质一样)是个链表数组表头是SOCK_RAW/STREAM/DGRAM/MAX
-这些, node是inet_protosw结构包含proto, type, protocol等.
-proto就是protocol对应的协议, 这个必须记住!
-struct proto_ops inet_stream_ops.这里是对应的sock的操作. 我们思考一下.
-感觉上我们只要有一个proto就够了, 为什么多了一个proto_ops为什么?
-我直观上认为proto 本身就是ops了!
-实际上这些proto_ops是proto的抽象, 中间层, 最终还是要调用proto, 如tcp_prot
-只能怪proto_ops名字起地不好.更好的名字是:
-proto_ops -&amp;gt; inet_ops(内核里真没这个名字)
-proto -&amp;gt; proto_ops
-算了.
+&lt;p&gt;通过sock_register注册一共三十几个全在这呢, cscope全能看到.这表明我们还在sock层.&lt;br /&gt;
+挑几个重要的:inet_create, netlink_create, unix_create, packet_create&lt;br /&gt;
+到现在你应该明白, 整个socket就是一个&lt;a href=&#34;http://movie.douban.com/subject/7051375/&#34;&gt;受肉仪式&lt;/a&gt;&lt;br /&gt;
+妈妈生孩子是受肉, 格里菲斯鲜红的贝黑利特也是.我们先看inet_create()&lt;br /&gt;
+这里用到了inetsw(和inetsw_array本质一样)是个链表数组表头是SOCK_RAW/STREAM/DGRAM/MAX&lt;br /&gt;
+这些, node是inet_protosw结构包含proto, type, protocol等.&lt;br /&gt;
+proto就是protocol对应的协议, 这个必须记住!&lt;br /&gt;
+struct proto_ops inet_stream_ops.这里是对应的sock的操作. 我们思考一下.&lt;br /&gt;
+感觉上我们只要有一个proto就够了, 为什么多了一个proto_ops为什么?&lt;br /&gt;
+我直观上认为proto 本身就是ops了!&lt;br /&gt;
+实际上这些proto_ops是proto的抽象, 中间层, 最终还是要调用proto, 如tcp_prot&lt;br /&gt;
+只能怪proto_ops名字起地不好.更好的名字是:&lt;br /&gt;
+proto_ops -&amp;gt; inet_ops(内核里真没这个名字)&lt;br /&gt;
+proto -&amp;gt; proto_ops&lt;br /&gt;
+算了.&lt;br /&gt;
 受肉开始:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;sock-&amp;gt;ops = answer-&amp;gt;ops;sock是socket, ops是proto_ops如inet_stream_ops
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;此时socket对应的是domain和type抽象结合的ops, 如inet_stream_ops. 这就是亮点.
-实际上是属于socket layer的ops!应为落脚点是stream/sockraw这些
+&lt;p&gt;此时socket对应的是domain和type抽象结合的ops, 如inet_stream_ops. 这就是亮点.&lt;br /&gt;
+实际上是属于socket layer的ops!应为落脚点是stream/sockraw这些&lt;br /&gt;
 接下来申请真正的sock结构&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;sk = sk_prot_alloc(prot
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;交织的线
-socket -&amp;gt; sock
-proto_ops -&amp;gt; proto
-sock这个结构是真正属于domain的, 不同于socket. socket和sock是指针的关系.
-而sock和tcp/inet sock这些是千面神的关系, 一个本体.
+&lt;p&gt;交织的线&lt;br /&gt;
+socket -&amp;gt; sock&lt;br /&gt;
+proto_ops -&amp;gt; proto&lt;br /&gt;
+sock这个结构是真正属于domain的, 不同于socket. socket和sock是指针的关系.&lt;br /&gt;
+而sock和tcp/inet sock这些是千面神的关系, 一个本体.&lt;br /&gt;
 申请后就是处世化, 先是inet 层, 之后是具体的proto 如sk-&amp;gt;sk_prot-&amp;gt;init&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;tcp_v4_init_sock
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这是和协议相关的, 这里inet_connection_sock *icsk = inet_csk(sk);
+&lt;p&gt;这是和协议相关的, 这里inet_connection_sock *icsk = inet_csk(sk);&lt;br /&gt;
 先获得tcp connect的属性的sock, 初始化这个ops:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;icsk-&amp;gt;icsk_af_ops = &amp;amp;ipv4_specific;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;我们详细看看, 这个函数的语义, icsk_af_ops这里指定了, 所谓的基于连接的
-socket的ops方法.这是什么语义呢? 或者说为什么来了个这个.
-为什么叫这个名字, 首先能确认的是icsk_af_ops都是和ip相关的也就是&amp;rdquo;地址&amp;rdquo;了.
-显然纵观tcp的5个属性只有icsk这个是和地址关系最为密切的!所以network层相关的
-放到这里ok!
-我们看到了一个熟悉的面孔tcp_transmit_skb() 就是skb_clone和pskb遇到的.
-这个函数调用了icsk-&amp;gt;icsk_af_ops-&amp;gt;queue_xmit=ip_queue_xmit
-这下子就全明白了, tcp的下面的疆界是icsk_af_ops!!!
-这也是ip的起始之地, 轮回的广场!
-我们来回忆一下整个受肉的过程.
-先是sockfs那里申请socket 拿到proto_ops.
-之后是申请sock, inet_sock初始化, tcp初始化和icsk-&amp;gt;icsk_af_ops = &amp;amp;ipv4_specific;
-完了.
-socket和inode放到一起.
-下面几个tcp/inet/icsk sock 一初始化就完了. 起始很简单.
-接下来, socket和fd关联下就完了, 这就是walkthrough啊:
+&lt;p&gt;我们详细看看, 这个函数的语义, icsk_af_ops这里指定了, 所谓的基于连接的&lt;br /&gt;
+socket的ops方法.这是什么语义呢? 或者说为什么来了个这个.&lt;br /&gt;
+为什么叫这个名字, 首先能确认的是icsk_af_ops都是和ip相关的也就是&amp;rdquo;地址&amp;rdquo;了.&lt;br /&gt;
+显然纵观tcp的5个属性只有icsk这个是和地址关系最为密切的!所以network层相关的&lt;br /&gt;
+放到这里ok!&lt;br /&gt;
+我们看到了一个熟悉的面孔tcp_transmit_skb() 就是skb_clone和pskb遇到的.&lt;br /&gt;
+这个函数调用了icsk-&amp;gt;icsk_af_ops-&amp;gt;queue_xmit=ip_queue_xmit&lt;br /&gt;
+这下子就全明白了, tcp的下面的疆界是icsk_af_ops!!!&lt;br /&gt;
+这也是ip的起始之地, 轮回的广场!&lt;br /&gt;
+我们来回忆一下整个受肉的过程.&lt;br /&gt;
+先是sockfs那里申请socket 拿到proto_ops.&lt;br /&gt;
+之后是申请sock, inet_sock初始化, tcp初始化和icsk-&amp;gt;icsk_af_ops = &amp;amp;ipv4_specific;&lt;br /&gt;
+完了.&lt;br /&gt;
+socket和inode放到一起.&lt;br /&gt;
+下面几个tcp/inet/icsk sock 一初始化就完了. 起始很简单.&lt;br /&gt;
+接下来, socket和fd关联下就完了, 这就是walkthrough啊:&lt;br /&gt;
 sock_map_fd这个函数是真正关联read和socket的!&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;sock_alloc_file 关联socket_file_ops到file!read就是这里取的.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;看下connect
-sock = sockfd_lookup_light(fd,
+&lt;p&gt;看下connect&lt;br /&gt;
+sock = sockfd_lookup_light(fd,&lt;br /&gt;
 完了, sock是socket.&lt;/p&gt;
 
-&lt;p&gt;看下read
-file-&amp;gt;f_op-&amp;gt;read_iter =sock_read_iter-&amp;gt; sock-&amp;gt;ops-&amp;gt;recvmsg
-其中struct socket *sock = file-&amp;gt;private_data;
-那么这个inode有毛用啊?可能是inode保存了, mode, u/gid为了权限吧.貌似这样.FIXME!
-好吧这样 bsd socket layer就结束了.
-显示申请socket 和inode 初始化proto_ops.
-申请sock附上proto, 之后是inet_sock, 再是具体协议相关的tcp_sock,
- 和icsk_af_ops = &amp;amp;ipv4_specific
-之后是file结构和对应socket_file_ops没了, 真的完了.
-换了raw 和icmp呢?kao,竟然就叫ping_prot, 这他妈逼格也太高了吧.
-直接通过socket_file_ops连接到了ping_v4_sendmsg 直接ipv4了
-收的化是用户态&amp;amp;sk-&amp;gt;sk_receive_queue. ping_recvmsg-&amp;gt;skb_recv_datagram
-底层是icmp_rcv-&amp;gt; icmp_pointers-&amp;gt;ping_rcv -&amp;gt;sock_queue_rcv_skb到sk_receive_queue
-ping可以用dgram和raw两种方法实现.
-看来这就是netstat看不到ping的原因.虽然不是端口
-发送的时候inet_sendmsg -&amp;gt; ping_get_port-&amp;gt;inet_num, 竟然是ping table比较ping的地址
-再看一言PF packet
-po的名字太恶心叫 p_sock 不好吗?
+&lt;p&gt;看下read&lt;br /&gt;
+file-&amp;gt;f_op-&amp;gt;read_iter =sock_read_iter-&amp;gt; sock-&amp;gt;ops-&amp;gt;recvmsg&lt;br /&gt;
+其中struct socket *sock = file-&amp;gt;private_data;&lt;br /&gt;
+那么这个inode有毛用啊?可能是inode保存了, mode, u/gid为了权限吧.貌似这样.FIXME!&lt;br /&gt;
+好吧这样 bsd socket layer就结束了.&lt;br /&gt;
+显示申请socket 和inode 初始化proto_ops.&lt;br /&gt;
+申请sock附上proto, 之后是inet_sock, 再是具体协议相关的tcp_sock,&lt;br /&gt;
+ 和icsk_af_ops = &amp;amp;ipv4_specific&lt;br /&gt;
+之后是file结构和对应socket_file_ops没了, 真的完了.&lt;br /&gt;
+换了raw 和icmp呢?kao,竟然就叫ping_prot, 这他妈逼格也太高了吧.&lt;br /&gt;
+直接通过socket_file_ops连接到了ping_v4_sendmsg 直接ipv4了&lt;br /&gt;
+收的化是用户态&amp;amp;sk-&amp;gt;sk_receive_queue. ping_recvmsg-&amp;gt;skb_recv_datagram&lt;br /&gt;
+底层是icmp_rcv-&amp;gt; icmp_pointers-&amp;gt;ping_rcv -&amp;gt;sock_queue_rcv_skb到sk_receive_queue&lt;br /&gt;
+ping可以用dgram和raw两种方法实现.&lt;br /&gt;
+看来这就是netstat看不到ping的原因.虽然不是端口&lt;br /&gt;
+发送的时候inet_sendmsg -&amp;gt; ping_get_port-&amp;gt;inet_num, 竟然是ping table比较ping的地址&lt;br /&gt;
+再看一言PF packet&lt;br /&gt;
+po的名字太恶心叫 p_sock 不好吗?&lt;br /&gt;
         po-&amp;gt;prot_hook.func = packet_rcv;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;    if (sock-&amp;gt;type == SOCK_PACKET)
@@ -1415,62 +1415,62 @@ po的名字太恶心叫 p_sock 不好吗?
 
 &lt;p&gt;这就是packet的真相, 实现的不错!&lt;/p&gt;
 
-&lt;p&gt;那么socket layer还有什么
-sk_backlog_rcv 是在!sock_owned_by_user(sk)调用的.貌似用户态在ioctl吧.
-暂时backlog 收包.那么l2tp_ip_recv 调sk_receive_skb-&amp;gt;他 做什么用呢?
-原来是所谓的l2tpcontrol报文啊.
-proto是l2tp_ip_prot
-也就是说sock 层可以暂存报文.
-没了
-感觉sock就是初始化sock, 之后收包找sock, 发包ping需要bind port就完了.
+&lt;p&gt;那么socket layer还有什么&lt;br /&gt;
+sk_backlog_rcv 是在!sock_owned_by_user(sk)调用的.貌似用户态在ioctl吧.&lt;br /&gt;
+暂时backlog 收包.那么l2tp_ip_recv 调sk_receive_skb-&amp;gt;他 做什么用呢?&lt;br /&gt;
+原来是所谓的l2tpcontrol报文啊.&lt;br /&gt;
+proto是l2tp_ip_prot&lt;br /&gt;
+也就是说sock 层可以暂存报文.&lt;br /&gt;
+没了&lt;br /&gt;
+感觉sock就是初始化sock, 之后收包找sock, 发包ping需要bind port就完了.&lt;br /&gt;
 收发包用什么队列还是proto自己说了算的.&lt;/p&gt;
 
 &lt;h2 id=&#34;faq:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;FAQ&lt;/h2&gt;
 
 &lt;h3 id=&#34;socket-lock:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;socket lock&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.spinics.net/lists/netdev/msg136306.html&#34;&gt;lock_sock or sock_hold&lt;/a&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.spinics.net/lists/netdev/msg136306.html&#34;&gt;lock_sock or sock_hold&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.linuxfoundation.org/collaborate/workgroups/networking/socket_locks&#34;&gt;bh_lock_sock&lt;/a&gt;&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;FIXME sock-&amp;gt;pfmemealloc
-Yes, I only wanted to drop the packet if we were under pressure
-when skb was allocated. If we hit pressure between when skb was
-allocated and when __netdev_alloc_page is called,
-+in sk_filter
-&lt;a href=&#34;https://groups.google.com/forum/#!msg/linux_net/-YtWB66adxY/Qqm_y4U09IAJ&#34;&gt;netvm: Allow skb allocation to use PFMEMALLOC reserves&lt;/a&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;netvm: Allow skb allocation to use PFMEMALLOC reserves - gmane 08/14&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;FIXME sock-&amp;gt;pfmemealloc&lt;br /&gt;
+Yes, I only wanted to drop the packet if we were under pressure&lt;br /&gt;
+when skb was allocated. If we hit pressure between when skb was&lt;br /&gt;
+allocated and when __netdev_alloc_page is called,&lt;br /&gt;
++in sk_filter&lt;br /&gt;
+&lt;a href=&#34;https://groups.google.com/forum/#!msg/linux_net/-YtWB66adxY/Qqm_y4U09IAJ&#34;&gt;netvm: Allow skb allocation to use PFMEMALLOC reserves&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;netvm: Allow skb allocation to use PFMEMALLOC reserves - gmane 08/14&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;socket是跟协议族绑定的概念, 所以要用inet_create, netlink_create&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;FIXME inet_timewait_sock
+&lt;li&gt;&lt;p&gt;FIXME inet_timewait_sock&lt;br /&gt;
 deal heavily loaded servers without violating the protocol specification&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;sk_set_memalloc
-SOCK_MEMALLOC, sock has feature mem alloc for free memory.
-只有到了sock层才能分辨, sock是否是memalloc的.
-sk_filter
+&lt;li&gt;&lt;p&gt;sk_set_memalloc&lt;br /&gt;
+SOCK_MEMALLOC, sock has feature mem alloc for free memory.&lt;br /&gt;
+只有到了sock层才能分辨, sock是否是memalloc的.&lt;br /&gt;
+sk_filter&lt;br /&gt;
 在socket layer, 我们看到我们有linker以上的收发包的能力, 内核栈还是很灵活的.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;下面进入到核心tcp 和 ip协议.
-#Transport layer
-不涉及具体的协议内容:), 只是看看内核都做了哪些优化, 变种特工.
-tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb
-上面主要是和cork和nagle有关
-完了
+&lt;p&gt;下面进入到核心tcp 和 ip协议.&lt;br /&gt;
+#Transport layer&lt;br /&gt;
+不涉及具体的协议内容:), 只是看看内核都做了哪些优化, 变种特工.&lt;br /&gt;
+tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb&lt;br /&gt;
+上面主要是和cork和nagle有关&lt;br /&gt;
+完了&lt;br /&gt;
 在tcp协议的5点基础属性, 后世对tcp做了很多优化!&lt;/p&gt;
 
-&lt;p&gt;Details in l4.md
-#Network layer
-ip_append_data 和ip_push_pending_frames弄frag_list
-ip_push_pending_frames -&amp;gt; __ip_make_skb &amp;amp; ip_send_skb -&amp;gt;ip_local_out
-把&amp;amp;sk-&amp;gt;sk_write_queue上的数据最后编程skb链表变成了, 还skb pull掉了潜在的ip 头部
-第一个skb-&amp;gt;frag_list的成员. 用的不太多啊.
-ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!
-否则就生成一串skb挂到&amp;amp;sk-&amp;gt;sk_write_queue上,
+&lt;p&gt;Details in l4.md&lt;br /&gt;
+#Network layer&lt;br /&gt;
+ip_append_data 和ip_push_pending_frames弄frag_list&lt;br /&gt;
+ip_push_pending_frames -&amp;gt; __ip_make_skb &amp;amp; ip_send_skb -&amp;gt;ip_local_out&lt;br /&gt;
+把&amp;amp;sk-&amp;gt;sk_write_queue上的数据最后编程skb链表变成了, 还skb pull掉了潜在的ip 头部&lt;br /&gt;
+第一个skb-&amp;gt;frag_list的成员. 用的不太多啊.&lt;br /&gt;
+ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&lt;br /&gt;
+否则就生成一串skb挂到&amp;amp;sk-&amp;gt;sk_write_queue上,&lt;br /&gt;
 Details in l3.md&lt;/p&gt;
 
 &lt;h1 id=&#34;data-link-layer:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Data link layer&lt;/h1&gt;
@@ -1480,34 +1480,34 @@ Details in l3.md&lt;/p&gt;
 &lt;h1 id=&#34;physical-layer-phy:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;Physical layer &amp;ndash; PHY&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Physical Coding Sublayer&lt;/li&gt;
-&lt;li&gt;Physical Medium Attachment Sublayer&lt;/li&gt;
-&lt;li&gt;Physical Medium Dependent Sublayer&lt;/li&gt;
+&lt;li&gt;Physical Coding Sublayer&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Physical Medium Attachment Sublayer&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Physical Medium Dependent Sublayer&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#Net initialization
-start_kernel-&amp;gt; parse_early_param irq timers softirq -&amp;gt; rest_init(): kthread
-{
+&lt;p&gt;#Net initialization&lt;br /&gt;
+start_kernel-&amp;gt; parse_early_param irq timers softirq -&amp;gt; rest_init(): kthread&lt;br /&gt;
+{&lt;br /&gt;
     do_basic_setup()&lt;br /&gt;
-    {
-        driver_init
-        sock_init
-        do_initcalls()
-        {
-            net_dev_init: Initializing the Device Handling Layer
-            {
-                per-CPU
-                proc
-                sysfs
-                ptype_base
-                dst_init
-                softirq: net_rx/tx_action
-                dev_cpu_callback: CPU hotplug.
-            }
-        }
-    }
-    free_init_mem()
-    run_init_process()
+    {&lt;br /&gt;
+        driver_init&lt;br /&gt;
+        sock_init&lt;br /&gt;
+        do_initcalls()&lt;br /&gt;
+        {&lt;br /&gt;
+            net_dev_init: Initializing the Device Handling Layer&lt;br /&gt;
+            {&lt;br /&gt;
+                per-CPU&lt;br /&gt;
+                proc&lt;br /&gt;
+                sysfs&lt;br /&gt;
+                ptype_base&lt;br /&gt;
+                dst_init&lt;br /&gt;
+                softirq: net_rx/tx_action&lt;br /&gt;
+                dev_cpu_callback: CPU hotplug.&lt;br /&gt;
+            }&lt;br /&gt;
+        }&lt;br /&gt;
+    }&lt;br /&gt;
+    free_init_mem()&lt;br /&gt;
+    run_init_process()&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;h2 id=&#34;network-init:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;network init&lt;/h2&gt;
@@ -1517,10 +1517,10 @@ start_kernel-&amp;gt; parse_early_param irq timers softirq -&amp;gt; rest_init()
 &lt;h2 id=&#34;net-device-init:d6e700e0c45a22a9cedfe621a200acaa&#34;&gt;net device init&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;net_dev_init&lt;/li&gt;
-&lt;li&gt;nic init
-e100_init_module    pci_register_driver:构建结构    driver_regiser:注册到内核    really_probe()drv-&amp;gt;probe:初始化。
-vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册到内核    dev-&amp;gt;init():初始化&lt;/li&gt;
+&lt;li&gt;net_dev_init&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;nic init&lt;br /&gt;
+e100_init_module    pci_register_driver:构建结构    driver_regiser:注册到内核    really_probe()drv-&amp;gt;probe:初始化。&lt;br /&gt;
+vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册到内核    dev-&amp;gt;init():初始化&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -1542,94 +1542,94 @@ vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册�
 &lt;h2 id=&#34;hiwifi:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Hiwifi&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Disable network(netifd) in hiwifi openwrt
-root@Hiwifi:/# ip ad
-1: lo: &lt;LOOPBACK&gt; mtu 16436 qdisc noop state DOWN
-link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-2: eth2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff
-3: ra0: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000
-link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
-4: sit0: &lt;NOARP&gt; mtu 1480 qdisc noop state DOWN
-link/sit 0.0.0.0 brd 0.0.0.0
-5: gre0: &lt;NOARP&gt; mtu 1476 qdisc noop state DOWN
+&lt;li&gt;&lt;p&gt;Disable network(netifd) in hiwifi openwrt&lt;br /&gt;
+root@Hiwifi:/# ip ad&lt;br /&gt;
+1: lo: &lt;LOOPBACK&gt; mtu 16436 qdisc noop state DOWN&lt;br /&gt;
+link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00&lt;br /&gt;
+2: eth2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
+link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+3: ra0: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
+link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+4: sit0: &lt;NOARP&gt; mtu 1480 qdisc noop state DOWN&lt;br /&gt;
+link/sit 0.0.0.0 brd 0.0.0.0&lt;br /&gt;
+5: gre0: &lt;NOARP&gt; mtu 1476 qdisc noop state DOWN&lt;br /&gt;
 link/gre 0.0.0.0 brd 0.0.0.0&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Enable network(netifd) in hiwifi openwrt
-1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 16436 qdisc noqueue state UNKNOWN
-link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-inet 127.0.0.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;8&lt;/sub&gt; scope host lo
-inet6 ::&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;128&lt;/sub&gt; scope host
-   valid_lft forever preferred_lft forever
-2: eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UNKNOWN qlen 1000
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff
-inet6 fe80::d6ee:7ff:fe07:75c2/64 scope link
-   valid_lft forever preferred_lft forever
-3: ra0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast master br-lan state UNKNOWN qlen 1000
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff
-4: sit0: &lt;NOARP&gt; mtu 1480 qdisc noop state DOWN
-link/sit 0.0.0.0 brd 0.0.0.0
-5: gre0: &lt;NOARP&gt; mtu 1476 qdisc noop state DOWN
-link/gre 0.0.0.0 brd 0.0.0.0
-6: br-lan: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff
-inet 10.1.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;24&lt;/sub&gt; brd 10.1.1.255 scope global br-lan
-inet6 fe80::d6ee:7ff:fe07:75c2/64 scope link
-   valid_lft forever preferred_lft forever
-7: eth2.1@eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue master br-lan state UP
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff
-8: eth2.2@eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP
-link/ether d4:ee:07:07:75:c3 brd ff:ff:ff:ff:ff:ff
-inet 192.168.199.&lt;sup&gt;223&lt;/sup&gt;&amp;frasl;&lt;sub&gt;24&lt;/sub&gt; brd 192.168.199.255 scope global eth2.2
-inet6 fe80::d6ee:7ff:fe07:75c3/64 scope link
-   valid_lft forever preferred_lft forever
-9: ra1: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000
-link/ether d6:ee:07:04:75:c2 brd ff:ff:ff:ff:ff:ff
-10: apcli0: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000
+&lt;li&gt;&lt;p&gt;Enable network(netifd) in hiwifi openwrt&lt;br /&gt;
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 16436 qdisc noqueue state UNKNOWN&lt;br /&gt;
+link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00&lt;br /&gt;
+inet 127.0.0.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;8&lt;/sub&gt; scope host lo&lt;br /&gt;
+inet6 ::&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;128&lt;/sub&gt; scope host&lt;br /&gt;
+   valid_lft forever preferred_lft forever&lt;br /&gt;
+2: eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UNKNOWN qlen 1000&lt;br /&gt;
+link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+inet6 fe80::d6ee:7ff:fe07:75c2/64 scope link&lt;br /&gt;
+   valid_lft forever preferred_lft forever&lt;br /&gt;
+3: ra0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast master br-lan state UNKNOWN qlen 1000&lt;br /&gt;
+link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+4: sit0: &lt;NOARP&gt; mtu 1480 qdisc noop state DOWN&lt;br /&gt;
+link/sit 0.0.0.0 brd 0.0.0.0&lt;br /&gt;
+5: gre0: &lt;NOARP&gt; mtu 1476 qdisc noop state DOWN&lt;br /&gt;
+link/gre 0.0.0.0 brd 0.0.0.0&lt;br /&gt;
+6: br-lan: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP&lt;br /&gt;
+link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+inet 10.1.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;24&lt;/sub&gt; brd 10.1.1.255 scope global br-lan&lt;br /&gt;
+inet6 fe80::d6ee:7ff:fe07:75c2/64 scope link&lt;br /&gt;
+   valid_lft forever preferred_lft forever&lt;br /&gt;
+7: eth2.1@eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue master br-lan state UP&lt;br /&gt;
+link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+8: eth2.2@eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP&lt;br /&gt;
+link/ether d4:ee:07:07:75:c3 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+inet 192.168.199.&lt;sup&gt;223&lt;/sup&gt;&amp;frasl;&lt;sub&gt;24&lt;/sub&gt; brd 192.168.199.255 scope global eth2.2&lt;br /&gt;
+inet6 fe80::d6ee:7ff:fe07:75c3/64 scope link&lt;br /&gt;
+   valid_lft forever preferred_lft forever&lt;br /&gt;
+9: ra1: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
+link/ether d6:ee:07:04:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
+10: apcli0: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
 link/ether d6:ee:07:05:75:c2 brd ff:ff:ff:ff:ff:ff&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#Bridging
-* A bridge behaves like a virtual network switch, 一样.
-Bridging is a router using MAC address at L2 in essence.
-A bridge transparently relays traffic between multiple network interfaces.
+&lt;p&gt;#Bridging&lt;br /&gt;
+* A bridge behaves like a virtual network switch, 一样.&lt;br /&gt;
+Bridging is a router using MAC address at L2 in essence.&lt;br /&gt;
+A bridge transparently relays traffic between multiple network interfaces.&lt;br /&gt;
 In plain English this means that a bridge connects two or more physical Ethernets together to form one bigger (logical) Ethernet.&lt;/p&gt;
 
 &lt;h2 id=&#34;spanning-tree-protocol-rapid-stp-multiple-stp:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Spanning tree protocol(Rapid STP,Multiple STP)&lt;/h2&gt;
 
-&lt;p&gt;the algorithm is not executed on a single host that later distributes the result to all the others;
+&lt;p&gt;the algorithm is not executed on a single host that later distributes the result to all the others;&lt;br /&gt;
 instead, this is a distributed protocol.&lt;/p&gt;
 
 &lt;h2 id=&#34;bpud-bridge-protocol-data-units:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;BPUD Bridge protocol data units&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Configuration BPDU
-Used to define the loop-free topology.
-Topology Change Notification (TCN) BPDU
+&lt;li&gt;&lt;p&gt;Configuration BPDU&lt;br /&gt;
+Used to define the loop-free topology.&lt;br /&gt;
+Topology Change Notification (TCN) BPDU&lt;br /&gt;
 Used by a bridge to notify the root bridge about a detected topology change.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;BPDU Aging
+&lt;li&gt;&lt;p&gt;BPDU Aging&lt;br /&gt;
 On a stable network, the time depends mainly on how loaded the bridges are and how fast they can process BPDUs.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Root Bridge
-The root bridge is the only bridge that generates BPDUs
+&lt;li&gt;&lt;p&gt;Root Bridge&lt;br /&gt;
+The root bridge is the only bridge that generates BPDUs&lt;br /&gt;
 The root bridge makes sure each bridge in the network comes to know about a topology change when one occurs&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Designated Bridges
-While each tree has only one root bridge, there is one designated bridge for each LAN,
-which becomes the bridge all hosts and bridges on the LAN use to reach the root.
+&lt;li&gt;&lt;p&gt;Designated Bridges&lt;br /&gt;
+While each tree has only one root bridge, there is one designated bridge for each LAN,&lt;br /&gt;
+which becomes the bridge all hosts and bridges on the LAN use to reach the root.&lt;br /&gt;
 The designated bridge is chosen by determining which bridge on the LAN has the lowest path cost to the root bridge.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Bridge Port
+&lt;li&gt;&lt;p&gt;Bridge Port&lt;br /&gt;
 While root ports lead toward the root of the tree (i.e., the root bridge), designated ports lead toward the leaves.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;function:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Function&lt;/h2&gt;
 
-&lt;p&gt;Rassive learning
-Flooding
-Aging
-Bridging Loops
+&lt;p&gt;Rassive learning&lt;br /&gt;
+Flooding&lt;br /&gt;
+Aging&lt;br /&gt;
+Bridging Loops&lt;br /&gt;
 Switch:&lt;/p&gt;
 
 &lt;h2 id=&#34;details:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Details&lt;/h2&gt;
@@ -1638,8 +1638,8 @@ Switch:&lt;/p&gt;
 
 &lt;h1 id=&#34;vlan:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;vlan&lt;/h1&gt;
 
-&lt;p&gt;Vlans are a way to split up a layer2 broadcasting domain, VLANs allow you to create multiple separated networks with only a single switch.
-In a vlan-capable network there are 2 types of connections : &amp;ldquo;access&amp;rdquo; connections and &amp;ldquo;trunk&amp;rdquo; connections
+&lt;p&gt;Vlans are a way to split up a layer2 broadcasting domain, VLANs allow you to create multiple separated networks with only a single switch.&lt;br /&gt;
+In a vlan-capable network there are 2 types of connections : &amp;ldquo;access&amp;rdquo; connections and &amp;ldquo;trunk&amp;rdquo; connections&lt;br /&gt;
 Vlan packet&lt;/p&gt;
 
 &lt;h2 id=&#34;vlan-packet:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Vlan packet&lt;/h2&gt;
@@ -1652,20 +1652,20 @@ Vlan packet&lt;/p&gt;
 
 &lt;h2 id=&#34;access-connection:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Access connection&lt;/h2&gt;
 
-&lt;p&gt;An access connection looks like a normal connection to an ethernet switch,
-only that switch will only forward your packets within the same vlan, so they will not be able to reach ports that are in a different vlan.
+&lt;p&gt;An access connection looks like a normal connection to an ethernet switch,&lt;br /&gt;
+only that switch will only forward your packets within the same vlan, so they will not be able to reach ports that are in a different vlan.&lt;br /&gt;
 For access ports, the switch will add (or overwrite) this tag value on any incoming(it means transfer out of host) packet before forwarding&lt;/p&gt;
 
 &lt;h2 id=&#34;trunk-connnection:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Trunk connnection&lt;/h2&gt;
 
-&lt;p&gt;&amp;ldquo;Trunk&amp;rdquo; ports can communicate with multiple vlans, but you need to send special packets that contain
-both the packet and an indication in what vlan they are to be forwarded.
+&lt;p&gt;&amp;ldquo;Trunk&amp;rdquo; ports can communicate with multiple vlans, but you need to send special packets that contain&lt;br /&gt;
+both the packet and an indication in what vlan they are to be forwarded.&lt;br /&gt;
 For trunk ports, the value is supposed to be present. If it is not, the value of the &amp;ldquo;native vlan&amp;rdquo; will be added.&lt;/p&gt;
 
 &lt;h2 id=&#34;split-up-a-layer2-broadcasting-domain:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Split up a layer2 broadcasting domain&lt;/h2&gt;
 
-&lt;p&gt;vlan 什么都别想, 你总的有个vlan吧. 对上来就创建一个vlan-device.
-vconfig add eth0 vid
+&lt;p&gt;vlan 什么都别想, 你总的有个vlan吧. 对上来就创建一个vlan-device.&lt;br /&gt;
+vconfig add eth0 vid&lt;br /&gt;
 for trunk routing between the different vlans we need ip_forward&lt;/p&gt;
 
 &lt;h2 id=&#34;details-of-implemention:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;Details of implemention&lt;/h2&gt;
@@ -1674,16 +1674,16 @@ for trunk routing between the different vlans we need ip_forward&lt;/p&gt;
 
 &lt;h3 id=&#34;initialize:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;initialize&lt;/h3&gt;
 
-&lt;p&gt;vlan_proto_init()
+&lt;p&gt;vlan_proto_init()&lt;br /&gt;
 这个函数最重要的是映射了iocctl函数， 因为接下来的所有操作都要用到ioctl。&lt;/p&gt;
 
 &lt;h3 id=&#34;application:cd0f928d10f3bb2c8d02882e98d253ef&#34;&gt;application&lt;/h3&gt;
 
-&lt;p&gt;vconfig eth0 1
-vlan_ioctl_handler()-&amp;gt;register_vlan_device():
-alloc net_device.
-vlan_setup()函数非常重要，设置dev-&amp;gt;priv_flags 为 802.1q！tx queue 为0.
-设置open函数为vlan_dev_open;
+&lt;p&gt;vconfig eth0 1&lt;br /&gt;
+vlan_ioctl_handler()-&amp;gt;register_vlan_device():&lt;br /&gt;
+alloc net_device.&lt;br /&gt;
+vlan_setup()函数非常重要，设置dev-&amp;gt;priv_flags 为 802.1q！tx queue 为0.&lt;br /&gt;
+设置open函数为vlan_dev_open;&lt;br /&gt;
 register_vlan_dev(）把这个设备注册到内核。&lt;/p&gt;
 </description>
     </item>
@@ -1696,54 +1696,54 @@ register_vlan_dev(）把这个设备注册到内核。&lt;/p&gt;
       <guid>http://firoyang.org/net/l3/</guid>
       <description>
 
-&lt;p&gt;#Network layer
-* Error detection, unreliable
-Best effort service,IP has a simple error handling algorithm:
-throw away the datagram and try to send an ICMP message back to the source
+&lt;p&gt;#Network layer&lt;br /&gt;
+* Error detection, unreliable&lt;br /&gt;
+Best effort service,IP has a simple error handling algorithm:&lt;br /&gt;
+throw away the datagram and try to send an ICMP message back to the source&lt;br /&gt;
 * Host addressing&lt;/p&gt;
 
-&lt;p&gt;#IP
-* IP Packet Fragmentation/Defragmentation
-* MSS tcp_sock-&amp;gt;mss_cache in tcp_sync_mss not minus SACK option
-    in &lt;em&gt;tcp_current_mss&lt;/em&gt; minus SACK option
-rfc1122
-+ IP option is  fixed in a session icsk-&amp;gt;icsk_ext_hdr_len;
-+ is network header icsk-&amp;gt;icsk_af_ops-&amp;gt;net_header_len
-+ tcp_sock-&amp;gt;tcp_header_len all except SACK option (Not sure)
-##Reference
+&lt;p&gt;#IP&lt;br /&gt;
+* IP Packet Fragmentation/Defragmentation&lt;br /&gt;
+* MSS tcp_sock-&amp;gt;mss_cache in tcp_sync_mss not minus SACK option&lt;br /&gt;
+    in &lt;em&gt;tcp_current_mss&lt;/em&gt; minus SACK option&lt;br /&gt;
+rfc1122&lt;br /&gt;
++ IP option is  fixed in a session icsk-&amp;gt;icsk_ext_hdr_len;&lt;br /&gt;
++ is network header icsk-&amp;gt;icsk_af_ops-&amp;gt;net_header_len&lt;br /&gt;
++ tcp_sock-&amp;gt;tcp_header_len all except SACK option (Not sure)&lt;br /&gt;
+##Reference&lt;br /&gt;
 &lt;a href=&#34;http://www.tecmint.com/ipv4-and-ipv6-comparison/&#34;&gt;What’s wrong with IPv4 and Why we are moving to IPv6&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;classless-inter-domain-routing:10d7995fb42b579d290ea390f0c13a88&#34;&gt;Classless Inter-Domain Routing&lt;/h2&gt;
 
-&lt;p&gt;CIDR is a method for allocating IP addresses and routing Internet Protocol packets.
-IETF introduced CIDR in 1993 to replace the classful network.
-* prefix/length
+&lt;p&gt;CIDR is a method for allocating IP addresses and routing Internet Protocol packets.&lt;br /&gt;
+IETF introduced CIDR in 1993 to replace the classful network.&lt;br /&gt;
+* prefix/length&lt;br /&gt;
 * Prefix aggregation&lt;/p&gt;
 
-&lt;p&gt;##Supernetwork
-prefix/route aggregation
+&lt;p&gt;##Supernetwork&lt;br /&gt;
+prefix/route aggregation&lt;br /&gt;
 decrease the memroy and the time of search route table.&lt;/p&gt;
 
 &lt;h2 id=&#34;private-network:10d7995fb42b579d290ea390f0c13a88&#34;&gt;Private network&lt;/h2&gt;
 
 &lt;p&gt;In the Internet addressing architecture, a private network is a network that uses private IP address space.&lt;/p&gt;
 
-&lt;p&gt;##IP fragmention/defragmention
-iphdr-&amp;gt;id, iphdr-&amp;gt;frag_off
-skb_shared_info-&amp;gt;frag_list
-ip_fragment/ip_defrag
+&lt;p&gt;##IP fragmention/defragmention&lt;br /&gt;
+iphdr-&amp;gt;id, iphdr-&amp;gt;frag_off&lt;br /&gt;
+skb_shared_info-&amp;gt;frag_list&lt;br /&gt;
+ip_fragment/ip_defrag&lt;br /&gt;
 &lt;a href=&#34;http://tools.ietf.org/html/rfc6864&#34;&gt;Updated Specification of the IPv4 ID Field&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;route:10d7995fb42b579d290ea390f0c13a88&#34;&gt;Route&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;state structure
-fib_info:route info
-fib_config:&lt;/li&gt;
-&lt;li&gt;add new rule
-iproute2 &amp;hellip;-&amp;gt;inet_rtm_newroute()-&amp;gt;fib_new_table()-&amp;gt;fib_hash_table()&lt;/li&gt;
+&lt;li&gt;state structure&lt;br /&gt;
+fib_info:route info&lt;br /&gt;
+fib_config:&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;add new rule&lt;br /&gt;
+iproute2 &amp;hellip;-&amp;gt;inet_rtm_newroute()-&amp;gt;fib_new_table()-&amp;gt;fib_hash_table()&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Multi-time line
+&lt;li&gt;&lt;p&gt;Multi-time line&lt;br /&gt;
 fib_create_info(): create a fib_info&lt;/p&gt;
 
 &lt;h2 id=&#34;netfilter:10d7995fb42b579d290ea390f0c13a88&#34;&gt;Netfilter&lt;/h2&gt;&lt;/li&gt;
@@ -1761,16 +1761,16 @@ fib_create_info(): create a fib_info&lt;/p&gt;
 
 &lt;h1 id=&#34;rfc:90dde891494f7c922f22925d795590fb&#34;&gt;RFC&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://tools.ietf.org/html/rfc7414&#34;&gt;A Roadmap for Transmission Control Protocol (TCP) Specification Documents&lt;/a&gt;
-&lt;a href=&#34;https://tools.ietf.org/html/rfc1122&#34;&gt;Requirements for Internet Hosts &amp;ndash; Communication Layers&lt;/a&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc793&#34;&gt;TRANSMISSION CONTROL PROTOCOL 1981&lt;/a&gt;
-&lt;a href=&#34;http://www.rfc-editor.org/errata_search.php?rfc=1122&amp;amp;rec_status=15&amp;amp;presentation=records&#34;&gt;RFC Errata 一切都有改口的余地&lt;/a&gt;
+&lt;p&gt;&lt;a href=&#34;http://tools.ietf.org/html/rfc7414&#34;&gt;A Roadmap for Transmission Control Protocol (TCP) Specification Documents&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://tools.ietf.org/html/rfc1122&#34;&gt;Requirements for Internet Hosts &amp;ndash; Communication Layers&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc793&#34;&gt;TRANSMISSION CONTROL PROTOCOL 1981&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.rfc-editor.org/errata_search.php?rfc=1122&amp;amp;rec_status=15&amp;amp;presentation=records&#34;&gt;RFC Errata 一切都有改口的余地&lt;/a&gt;&lt;br /&gt;
 793的errata建议阅读1122.&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction:90dde891494f7c922f22925d795590fb&#34;&gt;Introduction&lt;/h1&gt;
 
-&lt;p&gt;本文主要关注tcp这一类的可靠的传输层协议.
-在之前的推理过程中, 我们已经能够明白, tcp的核心性质, 远没有想象
+&lt;p&gt;本文主要关注tcp这一类的可靠的传输层协议.&lt;br /&gt;
+在之前的推理过程中, 我们已经能够明白, tcp的核心性质, 远没有想象&lt;br /&gt;
 中那么复杂:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;multiplex, 这是传输层的本质, 标志用户地址, 也就是端口
@@ -1781,28 +1781,28 @@ flow control, 流控, 保证对端可以良好稳定接收到报文.免得想双
 数据校验, 防止传输过程导致数据出错. 我常会想起水浒传中, 戴总送信那段.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;对tcp就是围绕这6个核心的性质开始设计, 实现的.
-无论你是看tcp的头部啊, 还是协议栈的代码基本上都逃不出这六点.
-我不建议直接去看内核的tcp实现, 我是吃过苦头的.
-1. 很容易让人掉进去代码里面, 而忘了初衷.
+&lt;p&gt;对tcp就是围绕这6个核心的性质开始设计, 实现的.&lt;br /&gt;
+无论你是看tcp的头部啊, 还是协议栈的代码基本上都逃不出这六点.&lt;br /&gt;
+我不建议直接去看内核的tcp实现, 我是吃过苦头的.&lt;br /&gt;
+1. 很容易让人掉进去代码里面, 而忘了初衷.&lt;br /&gt;
 2. 内核的实现有很多工程性的问题, 这和tcp本身是无关的.比如tcp seq回绕的问题.&lt;/p&gt;
 
 &lt;h1 id=&#34;大话tcp-头部:90dde891494f7c922f22925d795590fb&#34;&gt;大话TCP 头部&lt;/h1&gt;
 
-&lt;p&gt;从上往下, 这也标志了重要性.
-先是, 源目的端口, 属于multiplex.
-接着sequence number, 这是面向连接, 数据有序
-接着是ack, 这是可靠性
-再往下是, offset 处于数据管理需要和tcp无关,
-tcp flags涉及到了多个性质,主要是握手和拥塞
-之后window size, 这是流控.
-之后是checksum, 保证传输过程中不会修改数据.
-你看tcp真的不复杂, 我们只是没有遇到一个好的解读角度, tcp是有鼻子有眼
+&lt;p&gt;从上往下, 这也标志了重要性.&lt;br /&gt;
+先是, 源目的端口, 属于multiplex.&lt;br /&gt;
+接着sequence number, 这是面向连接, 数据有序&lt;br /&gt;
+接着是ack, 这是可靠性&lt;br /&gt;
+再往下是, offset 处于数据管理需要和tcp无关,&lt;br /&gt;
+tcp flags涉及到了多个性质,主要是握手和拥塞&lt;br /&gt;
+之后window size, 这是流控.&lt;br /&gt;
+之后是checksum, 保证传输过程中不会修改数据.&lt;br /&gt;
+你看tcp真的不复杂, 我们只是没有遇到一个好的解读角度, tcp是有鼻子有眼&lt;br /&gt;
 很生动的.&lt;/p&gt;
 
 &lt;h1 id=&#34;multiplexing:90dde891494f7c922f22925d795590fb&#34;&gt;Multiplexing&lt;/h1&gt;
 
-&lt;p&gt;Ports can provide multiple endpoints on a single node.
+&lt;p&gt;Ports can provide multiple endpoints on a single node.&lt;br /&gt;
 inet_hash_connect()&lt;/p&gt;
 
 &lt;h1 id=&#34;flow-control:90dde891494f7c922f22925d795590fb&#34;&gt;Flow control&lt;/h1&gt;
@@ -1815,10 +1815,10 @@ inet_hash_connect()&lt;/p&gt;
 
 &lt;p&gt;首先滑动窗口本身就是一个协议&lt;/p&gt;
 
-&lt;p&gt;Sliding window protocols are used where reliable in-order delivery of packets is required.
-For every ack packet received, the window slides by one packet (logically) to transmit one new packet.
-发送方的发送窗口, 由发送了但没ack和 可用的发送空间,这个通常有对端的receive windowsize指定.
-如果发送了一个可用的发送空间 = receive windowsize - 那个报文大小, 新来报文更新串口.
+&lt;p&gt;Sliding window protocols are used where reliable in-order delivery of packets is required.&lt;br /&gt;
+For every ack packet received, the window slides by one packet (logically) to transmit one new packet.&lt;br /&gt;
+发送方的发送窗口, 由发送了但没ack和 可用的发送空间,这个通常有对端的receive windowsize指定.&lt;br /&gt;
+如果发送了一个可用的发送空间 = receive windowsize - 那个报文大小, 新来报文更新串口.&lt;br /&gt;
 接收端的窗口就是最后收到连续到不连续的位置.&lt;/p&gt;
 
 &lt;h1 id=&#34;detection-of-transmission-errors:90dde891494f7c922f22925d795590fb&#34;&gt;Detection of transmission errors&lt;/h1&gt;
@@ -1830,123 +1830,123 @@ For every ack packet received, the window slides by one packet (logically) to tr
 &lt;h2 id=&#34;handshak:90dde891494f7c922f22925d795590fb&#34;&gt;Handshak&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;kproxy reorder
-chome -&amp;gt;syn(kproxy reocrd syn) -&amp;gt; firoyang.org
-firoyang.org -&amp;gt;sync ack -&amp;gt; chrome
-chrome -&amp;gt; ack -&amp;gt; firoyang.org
-chrome -&amp;gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&amp;gt;nginx
-nginx -&amp;gt; tcp send fake syn ack-&amp;gt;chrome
-chrome -&amp;gt; ack -&amp;gt; nginx(then -&amp;gt; firoyang.org)
-tcp_v4_do_rcv{
-sk-&amp;gt;sk_state == TCP_ESTABLISHED
-tcp_rcv_established{
-len &amp;lt;= tcp_header_len =&amp;gt;
-tcp_ack -&amp;gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&amp;gt; nginx
-}
-}
-nginx-&amp;gt;GET -&amp;gt;firoyang.org
+&lt;li&gt;&lt;p&gt;kproxy reorder&lt;br /&gt;
+chome -&amp;gt;syn(kproxy reocrd syn) -&amp;gt; firoyang.org&lt;br /&gt;
+firoyang.org -&amp;gt;sync ack -&amp;gt; chrome&lt;br /&gt;
+chrome -&amp;gt; ack -&amp;gt; firoyang.org&lt;br /&gt;
+chrome -&amp;gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&amp;gt;nginx&lt;br /&gt;
+nginx -&amp;gt; tcp send fake syn ack-&amp;gt;chrome&lt;br /&gt;
+chrome -&amp;gt; ack -&amp;gt; nginx(then -&amp;gt; firoyang.org)&lt;br /&gt;
+tcp_v4_do_rcv{&lt;br /&gt;
+sk-&amp;gt;sk_state == TCP_ESTABLISHED&lt;br /&gt;
+tcp_rcv_established{&lt;br /&gt;
+len &amp;lt;= tcp_header_len =&amp;gt;&lt;br /&gt;
+tcp_ack -&amp;gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&amp;gt; nginx&lt;br /&gt;
+}&lt;br /&gt;
+}&lt;br /&gt;
+nginx-&amp;gt;GET -&amp;gt;firoyang.org&lt;br /&gt;
 firoyang.org-&amp;gt;nginx-&amp;gt;chrome&lt;/p&gt;
 
 &lt;h2 id=&#34;syn-flood:90dde891494f7c922f22925d795590fb&#34;&gt;syn flood&lt;/h2&gt;
 
-&lt;p&gt;首先syn 也有超时5次指数1 2 4 8 16 32(第五次超时), 如果client发了一个syn就没了,
-会被黑客利用. 解决办法是tcp_syncookies, 在syn队列满了的时候, 构造一个特别isn,
+&lt;p&gt;首先syn 也有超时5次指数1 2 4 8 16 32(第五次超时), 如果client发了一个syn就没了,&lt;br /&gt;
+会被黑客利用. 解决办法是tcp_syncookies, 在syn队列满了的时候, 构造一个特别isn,&lt;br /&gt;
 丢掉syn entry, 等待ack,校验合法直接accpet.好像incomplete队列无限大一般.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h2 id=&#34;深入理解seq-和ack:90dde891494f7c922f22925d795590fb&#34;&gt;深入理解seq 和ack&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://serverfault.com/questions/593037/tcp-sequence-acknowledgment-numbers&#34;&gt;TCP Sequence &amp;amp; Acknowledgment numbers&lt;/a&gt;
-这种问题就是咬住定义就完了.
-The sequence number of the first data octet in this segment (except
-    when SYN is present). If SYN is present the sequence number is the
-    initial sequence number (ISN) and the first data octet is ISN+1.
-If the ACK control bit is set this field contains the value of the
-    next sequence number the sender of the segment is expecting to
-    receive.  Once a connection is established this is always sent.
-ACK最简单了, 整个tcp session只有一个segement没有ack number就是第一个syn.
-其他情况, ack都是对面发来的seq + len + 1. (排除reorder包问题)
-这里的问题是第三次握手的时候, 单独一个ack, 没有数据, 这时候segement的seq
-应该是多少呢?RFC给出的是ISN + 1.但这个ack segment是个空数据.
-也就出现了下面发一个GET的时seq 和ack number和这个ack segement一致.
-那么如果交互过程中出现了空的ack呢?原理和这里是一样的. 空的ack 的seq也是
-标志下一个segement的byte序号, 但是如果no data, 下一个segment的seq还是这个.
-知道有数据了.
-这里想说的是, seq确实是标注segment的data, 知识偶尔因为空ack导致了假象, 会
-被后面的有数据的segement还原真相.
-总结:
-    syn 和 ack, 还有fin这种都不是数据, 不计算在seq里面.
-    seq的计算只和实际的数据有关.
+&lt;p&gt;&lt;a href=&#34;http://serverfault.com/questions/593037/tcp-sequence-acknowledgment-numbers&#34;&gt;TCP Sequence &amp;amp; Acknowledgment numbers&lt;/a&gt;&lt;br /&gt;
+这种问题就是咬住定义就完了.&lt;br /&gt;
+The sequence number of the first data octet in this segment (except&lt;br /&gt;
+    when SYN is present). If SYN is present the sequence number is the&lt;br /&gt;
+    initial sequence number (ISN) and the first data octet is ISN+1.&lt;br /&gt;
+If the ACK control bit is set this field contains the value of the&lt;br /&gt;
+    next sequence number the sender of the segment is expecting to&lt;br /&gt;
+    receive.  Once a connection is established this is always sent.&lt;br /&gt;
+ACK最简单了, 整个tcp session只有一个segement没有ack number就是第一个syn.&lt;br /&gt;
+其他情况, ack都是对面发来的seq + len + 1. (排除reorder包问题)&lt;br /&gt;
+这里的问题是第三次握手的时候, 单独一个ack, 没有数据, 这时候segement的seq&lt;br /&gt;
+应该是多少呢?RFC给出的是ISN + 1.但这个ack segment是个空数据.&lt;br /&gt;
+也就出现了下面发一个GET的时seq 和ack number和这个ack segement一致.&lt;br /&gt;
+那么如果交互过程中出现了空的ack呢?原理和这里是一样的. 空的ack 的seq也是&lt;br /&gt;
+标志下一个segement的byte序号, 但是如果no data, 下一个segment的seq还是这个.&lt;br /&gt;
+知道有数据了.&lt;br /&gt;
+这里想说的是, seq确实是标注segment的data, 知识偶尔因为空ack导致了假象, 会&lt;br /&gt;
+被后面的有数据的segement还原真相.&lt;br /&gt;
+总结:&lt;br /&gt;
+    syn 和 ack, 还有fin这种都不是数据, 不计算在seq里面.&lt;br /&gt;
+    seq的计算只和实际的数据有关.&lt;br /&gt;
     小心处理no data这种情况, 就OK了.&lt;/p&gt;
 
 &lt;h2 id=&#34;time-wait:90dde891494f7c922f22925d795590fb&#34;&gt;Time wait&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://blog.csdn.net/dog250/article/details/13760985&#34;&gt;TCP的TIME_WAIT快速回收与重用&lt;/a&gt;
-双工, 被动关闭收到ack就%100圆满了.而clinet就不能确认被动关闭是否收到ack,
+&lt;p&gt;&lt;a href=&#34;http://blog.csdn.net/dog250/article/details/13760985&#34;&gt;TCP的TIME_WAIT快速回收与重用&lt;/a&gt;&lt;br /&gt;
+双工, 被动关闭收到ack就%100圆满了.而clinet就不能确认被动关闭是否收到ack,&lt;br /&gt;
 显然被动关闭方不能在ack了, 如果下去, 还有个完, 所以两害相权, 取其轻.clinet来吧.&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;为了server考虑, server的session 链接必须别正常正确的关闭!
-如果没有time wait, 而且client的ack丢了, server 重传fin ack, clinet的linux
-发现这个fin对应的sock不存在, 直接RST, server异常关闭, 应用程序会检测到错误.
+&lt;li&gt;&lt;p&gt;为了server考虑, server的session 链接必须别正常正确的关闭!&lt;br /&gt;
+如果没有time wait, 而且client的ack丢了, server 重传fin ack, clinet的linux&lt;br /&gt;
+发现这个fin对应的sock不存在, 直接RST, server异常关闭, 应用程序会检测到错误.&lt;br /&gt;
 不友好.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;为了clinet, 不受旧server 干扰.
+&lt;li&gt;&lt;p&gt;为了clinet, 不受旧server 干扰.&lt;br /&gt;
 这也是为什么要等2MSL&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;tcp_timestamps tcp_tw_recycle
-tcp_time_wait
+&lt;li&gt;&lt;p&gt;tcp_timestamps tcp_tw_recycle&lt;br /&gt;
+tcp_time_wait&lt;br /&gt;
 一起用如果recycle 不ok就是time wait就是TCP_TIMEWAIT_LEN（60s）&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;两种方法可以进入time wait 状态 tw_substate做区分.
-FIN_WAIT_2 收到fin 见tcp_fin()这个函数
-这个, time wait 如果没有设置recycle就是TCP_TIMEWAIT_LEN,设置了就是rto
+&lt;p&gt;两种方法可以进入time wait 状态 tw_substate做区分.&lt;br /&gt;
+FIN_WAIT_2 收到fin 见tcp_fin()这个函数&lt;br /&gt;
+这个, time wait 如果没有设置recycle就是TCP_TIMEWAIT_LEN,设置了就是rto&lt;br /&gt;
 可以说rto的值真的要比TCP_TIMEWAIT_LEN要小.&lt;/p&gt;
 
-&lt;p&gt;FIN_WAIT_2 超时假的time wait状态.貌似tcp_keepalive_timer()
-没有遵从协议但是没有break协议,是个优化.
-tcp_sock结构占用的资源要比tcp_timewait_sock结构占用的资源多, tcp_done干掉sock.
-在TIME_WAIT下也可以处理连接的关闭。
-这个,还一样time_wait是和rto TCP_TIMEWAIT_LEN有关.
+&lt;p&gt;FIN_WAIT_2 超时假的time wait状态.貌似tcp_keepalive_timer()&lt;br /&gt;
+没有遵从协议但是没有break协议,是个优化.&lt;br /&gt;
+tcp_sock结构占用的资源要比tcp_timewait_sock结构占用的资源多, tcp_done干掉sock.&lt;br /&gt;
+在TIME_WAIT下也可以处理连接的关闭。&lt;br /&gt;
+这个,还一样time_wait是和rto TCP_TIMEWAIT_LEN有关.&lt;br /&gt;
 inet_twsk_schedule设置等的时间.&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;tcp_tw_reuse
-貌似很激进.
-FIXME
-server 端玩蛋去, 本身像80, 自带重用技能&amp;hellip;
+&lt;li&gt;&lt;p&gt;tcp_tw_reuse&lt;br /&gt;
+貌似很激进.&lt;br /&gt;
+FIXME&lt;br /&gt;
+server 端玩蛋去, 本身像80, 自带重用技能&amp;hellip;&lt;br /&gt;
 用在clinet段inet_hash_connect检查是否可以重用TIME_WAIT状态的套接字的端口.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;tcp_fin_timeout
-这个参数是FIN_WAIT_2 转到TIME_WAIT的时间.
-跟time wait时间, 没有直接联系! 好多blog都直接说成time wait的时间.
-这里是间接作用.
-FIXME&amp;hellip;
-而time wait的时间看代码, 要不然是rto 要不然就是TCP_TIMEWAIT_LEN(60s)
-tcp_time_wait
-            if (recycle_ok) {
+&lt;li&gt;&lt;p&gt;tcp_fin_timeout&lt;br /&gt;
+这个参数是FIN_WAIT_2 转到TIME_WAIT的时间.&lt;br /&gt;
+跟time wait时间, 没有直接联系! 好多blog都直接说成time wait的时间.&lt;br /&gt;
+这里是间接作用.&lt;br /&gt;
+FIXME&amp;hellip;&lt;br /&gt;
+而time wait的时间看代码, 要不然是rto 要不然就是TCP_TIMEWAIT_LEN(60s)&lt;br /&gt;
+tcp_time_wait&lt;br /&gt;
+            if (recycle_ok) {&lt;br /&gt;
                     tw-&amp;gt;tw_timeout = rto;&lt;br /&gt;
-            } else {
-                    tw-&amp;gt;tw_timeout = TCP_TIMEWAIT_LEN;
-                    if (state == TCP_TIME_WAIT)
-                            timeo = TCP_TIMEWAIT_LEN;
-            }
-如果启用recycle 就是rto, 这个rto是const int rto = (icsk-&amp;gt;icsk_rto &amp;lt;&amp;lt; 2) - (icsk-&amp;gt;icsk_rto &amp;gt;&amp;gt; 1);
-3.5倍的icsk_rto
+            } else {&lt;br /&gt;
+                    tw-&amp;gt;tw_timeout = TCP_TIMEWAIT_LEN;&lt;br /&gt;
+                    if (state == TCP_TIME_WAIT)&lt;br /&gt;
+                            timeo = TCP_TIMEWAIT_LEN;&lt;br /&gt;
+            }&lt;br /&gt;
+如果启用recycle 就是rto, 这个rto是const int rto = (icsk-&amp;gt;icsk_rto &amp;lt;&amp;lt; 2) - (icsk-&amp;gt;icsk_rto &amp;gt;&amp;gt; 1);&lt;br /&gt;
+3.5倍的icsk_rto&lt;br /&gt;
 在FIN_WAIT_2状态下没有接收到FIN包就进入TIME_WAIT的情况下，如果tcp_fin_timeout的值设置的太小，可能会导致TIME_WAIT套接字（子状态为FIN_WAIT_2）过早地被释放，这样对端发送的FIN（短暂地延迟或者本来就是正常的时间到达）到达时就没有办法处理，导致连接不正常关闭，所以tcp_fin_timeout参数的值并不是越小越好，通常设置为30S比较合适。&lt;/p&gt;
 
 &lt;h1 id=&#34;reliability:90dde891494f7c922f22925d795590fb&#34;&gt;Reliability&lt;/h1&gt;
 
 &lt;h2 id=&#34;rtt:90dde891494f7c922f22925d795590fb&#34;&gt;RTT&lt;/h2&gt;
 
-&lt;p&gt;计算发送和返回ack的时间差.
+&lt;p&gt;计算发送和返回ack的时间差.&lt;br /&gt;
 tcp_rtt_estimator()&lt;/p&gt;
 
 &lt;h2 id=&#34;arq:90dde891494f7c922f22925d795590fb&#34;&gt;ARQ&lt;/h2&gt;
 
-&lt;p&gt;ack and timeout
-Sliding window protocol is based on automatic repeat request/ARQ
+&lt;p&gt;ack and timeout&lt;br /&gt;
+Sliding window protocol is based on automatic repeat request/ARQ&lt;br /&gt;
 My conclusion: in practice TCP is a mixture between both GBN and SR.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Go-Back-N&lt;/p&gt;&lt;/li&gt;
@@ -1956,115 +1956,115 @@ My conclusion: in practice TCP is a mixture between both GBN and SR.&lt;/p&gt;&l
 
 &lt;h1 id=&#34;congestion-control:90dde891494f7c922f22925d795590fb&#34;&gt;Congestion control&lt;/h1&gt;
 
-&lt;p&gt;icsk_ca_ops;
-tcp_ack {
-tcp_cong_avoid
-tcp_fastretrans_alert
-tcp_slow_start}
-TCP send queue len /proc/sys/net/core/wmem_default
-今天想聊一聊, tcp的拥塞控制, 13年那会, 走自己一个人非常偏执的想把整个协议栈都看完.
-当时看得书不好, 加上自己脑袋已经僵化, 书看得很死性.
-一个人的青春时光不长, 大家要好好珍惜.
-所谓拥塞, 现实生活中也能经常遇到, 比如北京早本的交通, taobao双11的快递物流.
-所以tcp的拥塞控制, 可以说是这一类问题的最为理想化的工程场景.
-简单来看, 为什么会拥塞?发的报文太多了, 网络设备传输不过来了.
-改怎么办? 现实社会中, 可以通过单双号现行的方法, 来减少出行的车辆, 尽量避免交通拥堵.
-或者, 等待时间慢慢流逝, 上班堵车的时候就这么干的, 可是效率非常低啊. 我从镶黄旗去中关村
-不堵车,也就20~30分钟, 一堵车就要40 ~50分钟了.
-在计算机的世界, 我们可以控制发送报文的数量, 而不像真实生活一样, 有车的人出行开车与否,
-都是要依据个人意愿的,很难控制.
-这里, 我直接说tcp, 是如何解决的.
-我们下载电影, 升级系统的时候, 你会发现速度是一点点变快, 最终停留在一个较为固定速度值.
-没错这里就暗含这tcp的拥塞控制思想, tcp的想法是, 我不知道网络带宽到底是多少, 我不能贸然的
-向网络发太多的数据包, 有可能网络本来就很糟了, 更是雪上加霜. 当然运气好, 就没问题了.
-但linux的实现是保守的! 我一点点慢慢的浸满网络, 也就是slow start, 这个方法一点也不满,
-这是个指数增长的算法, 一开始发一个, 网络好, 发2个, 4个.所以增长速度很快的.slow是只起点低.
-但终极这么个长法, 早晚会浸满网络, 之后你再发包, 网络就不通常了.
-tcp既要保守, 又想获取更多的网络带宽.slow start一直长,不加控制, 拥塞是早晚的事, 即便这种方法
-能够在某些时候带来, 快速网络带宽利用, 但是最终确实也很快让网络拥塞了.
-所以tcp, 没有让slow start一直持续着, 相对潜在快速发包, 他们更怕拥塞.
-所以slow start控制的发包数量涨到一点阶段, 就停了. 网上找到的这个临界点是ssthresh的值是65536byte.
-ss就是slow start的缩写, 我没有验证过这个值.
-涨到这个值之后, tcp就谨小慎微地控制发包数量的增长了, 线下的增加发包数量, 指数式不敢再用了.
-即便是这样的增长, 早晚还是要触发拥塞. 拥塞了怎么办?
-已经出去的报文, 你控制不了了. 只能控制将要发送的报文, tcp是直接把当前速度削半作为ssthresh.
-实际又回到slow start 从1 开始一点点的从新晚上增长, 慢慢的等待网络变好.
-这套思想就叫AIMD原则，即加法增大、乘法减小.
-我这里只是,通俗的介绍了拥塞控制,以上帝视角来看一切都是那么合理.
-不过, 做学问有一点, 就是要追根溯源, 这几乎和实践验证同等重要.
-&lt;a href=&#34;http://ee.lbl.gov/papers/congavoid.pdf&#34;&gt;Congestion Avoidance and Control&lt;/a&gt;
-这个paper道出了拥塞控制的初衷, 先驱不是神, 他也踩着坑过来的!
-86年10月LBL to UC Berkeley的网络带宽速率从32 Kbps 降到 40 bps, 才促使了拥塞控制的开始.
-到底传输的流量多少和网络整体传输速度有什么关系呢? 也就是说, 我什么都不做就让整个网络的报文
-一点点的变多, 看看网络的性能是如何变化?
-&lt;a href=&#34;http://www.cs.virginia.edu/~cs757/slidespdf/757-13-congestion.pdf&#34;&gt;Transport Level Congestion Control&lt;/a&gt;
-这个paper将的比较好.
+&lt;p&gt;icsk_ca_ops;&lt;br /&gt;
+tcp_ack {&lt;br /&gt;
+tcp_cong_avoid&lt;br /&gt;
+tcp_fastretrans_alert&lt;br /&gt;
+tcp_slow_start}&lt;br /&gt;
+TCP send queue len /proc/sys/net/core/wmem_default&lt;br /&gt;
+今天想聊一聊, tcp的拥塞控制, 13年那会, 走自己一个人非常偏执的想把整个协议栈都看完.&lt;br /&gt;
+当时看得书不好, 加上自己脑袋已经僵化, 书看得很死性.&lt;br /&gt;
+一个人的青春时光不长, 大家要好好珍惜.&lt;br /&gt;
+所谓拥塞, 现实生活中也能经常遇到, 比如北京早本的交通, taobao双11的快递物流.&lt;br /&gt;
+所以tcp的拥塞控制, 可以说是这一类问题的最为理想化的工程场景.&lt;br /&gt;
+简单来看, 为什么会拥塞?发的报文太多了, 网络设备传输不过来了.&lt;br /&gt;
+改怎么办? 现实社会中, 可以通过单双号现行的方法, 来减少出行的车辆, 尽量避免交通拥堵.&lt;br /&gt;
+或者, 等待时间慢慢流逝, 上班堵车的时候就这么干的, 可是效率非常低啊. 我从镶黄旗去中关村&lt;br /&gt;
+不堵车,也就20~30分钟, 一堵车就要40 ~50分钟了.&lt;br /&gt;
+在计算机的世界, 我们可以控制发送报文的数量, 而不像真实生活一样, 有车的人出行开车与否,&lt;br /&gt;
+都是要依据个人意愿的,很难控制.&lt;br /&gt;
+这里, 我直接说tcp, 是如何解决的.&lt;br /&gt;
+我们下载电影, 升级系统的时候, 你会发现速度是一点点变快, 最终停留在一个较为固定速度值.&lt;br /&gt;
+没错这里就暗含这tcp的拥塞控制思想, tcp的想法是, 我不知道网络带宽到底是多少, 我不能贸然的&lt;br /&gt;
+向网络发太多的数据包, 有可能网络本来就很糟了, 更是雪上加霜. 当然运气好, 就没问题了.&lt;br /&gt;
+但linux的实现是保守的! 我一点点慢慢的浸满网络, 也就是slow start, 这个方法一点也不满,&lt;br /&gt;
+这是个指数增长的算法, 一开始发一个, 网络好, 发2个, 4个.所以增长速度很快的.slow是只起点低.&lt;br /&gt;
+但终极这么个长法, 早晚会浸满网络, 之后你再发包, 网络就不通常了.&lt;br /&gt;
+tcp既要保守, 又想获取更多的网络带宽.slow start一直长,不加控制, 拥塞是早晚的事, 即便这种方法&lt;br /&gt;
+能够在某些时候带来, 快速网络带宽利用, 但是最终确实也很快让网络拥塞了.&lt;br /&gt;
+所以tcp, 没有让slow start一直持续着, 相对潜在快速发包, 他们更怕拥塞.&lt;br /&gt;
+所以slow start控制的发包数量涨到一点阶段, 就停了. 网上找到的这个临界点是ssthresh的值是65536byte.&lt;br /&gt;
+ss就是slow start的缩写, 我没有验证过这个值.&lt;br /&gt;
+涨到这个值之后, tcp就谨小慎微地控制发包数量的增长了, 线下的增加发包数量, 指数式不敢再用了.&lt;br /&gt;
+即便是这样的增长, 早晚还是要触发拥塞. 拥塞了怎么办?&lt;br /&gt;
+已经出去的报文, 你控制不了了. 只能控制将要发送的报文, tcp是直接把当前速度削半作为ssthresh.&lt;br /&gt;
+实际又回到slow start 从1 开始一点点的从新晚上增长, 慢慢的等待网络变好.&lt;br /&gt;
+这套思想就叫AIMD原则，即加法增大、乘法减小.&lt;br /&gt;
+我这里只是,通俗的介绍了拥塞控制,以上帝视角来看一切都是那么合理.&lt;br /&gt;
+不过, 做学问有一点, 就是要追根溯源, 这几乎和实践验证同等重要.&lt;br /&gt;
+&lt;a href=&#34;http://ee.lbl.gov/papers/congavoid.pdf&#34;&gt;Congestion Avoidance and Control&lt;/a&gt;&lt;br /&gt;
+这个paper道出了拥塞控制的初衷, 先驱不是神, 他也踩着坑过来的!&lt;br /&gt;
+86年10月LBL to UC Berkeley的网络带宽速率从32 Kbps 降到 40 bps, 才促使了拥塞控制的开始.&lt;br /&gt;
+到底传输的流量多少和网络整体传输速度有什么关系呢? 也就是说, 我什么都不做就让整个网络的报文&lt;br /&gt;
+一点点的变多, 看看网络的性能是如何变化?&lt;br /&gt;
+&lt;a href=&#34;http://www.cs.virginia.edu/~cs757/slidespdf/757-13-congestion.pdf&#34;&gt;Transport Level Congestion Control&lt;/a&gt;&lt;br /&gt;
+这个paper将的比较好.&lt;br /&gt;
 下面说tcp的优化.&lt;/p&gt;
 
 &lt;h2 id=&#34;fast-retrans:90dde891494f7c922f22925d795590fb&#34;&gt;Fast retrans&lt;/h2&gt;
 
-&lt;p&gt;这个解决丢包timeout太慢的问题.
-tcp认为收到3个重复确认相同ack序号的报文, 就认为有报文丢了, 我要重传了.
-比如1 2 3 4 5, 发了这个5个报文, 他收到了3个1序号的ack, 那么他就认为2 丢失了就重传.
-这比等超时, 要快.所以叫快重传. 为什么快重传, 收到重复ack, 说明网络很可能是好的.
-那其实, 我们也没必要再来次slow start了. 而是进入了拥塞避免阶段了, 这个叫做快速恢复.
-我说的比较粗, 细节还是要看rfc和协议栈实现, 但是大致的道理是这样的.
-现在, 我们回过头总结一下:
-协议栈的拥塞算法宏观上看是, slow start, 拥塞避免, 拥塞控制.
-而且目标是让状态机维持在拥塞避免这个状态附近.
+&lt;p&gt;这个解决丢包timeout太慢的问题.&lt;br /&gt;
+tcp认为收到3个重复确认相同ack序号的报文, 就认为有报文丢了, 我要重传了.&lt;br /&gt;
+比如1 2 3 4 5, 发了这个5个报文, 他收到了3个1序号的ack, 那么他就认为2 丢失了就重传.&lt;br /&gt;
+这比等超时, 要快.所以叫快重传. 为什么快重传, 收到重复ack, 说明网络很可能是好的.&lt;br /&gt;
+那其实, 我们也没必要再来次slow start了. 而是进入了拥塞避免阶段了, 这个叫做快速恢复.&lt;br /&gt;
+我说的比较粗, 细节还是要看rfc和协议栈实现, 但是大致的道理是这样的.&lt;br /&gt;
+现在, 我们回过头总结一下:&lt;br /&gt;
+协议栈的拥塞算法宏观上看是, slow start, 拥塞避免, 拥塞控制.&lt;br /&gt;
+而且目标是让状态机维持在拥塞避免这个状态附近.&lt;br /&gt;
 就到这里了.&lt;/p&gt;
 
 &lt;h2 id=&#34;sack-and-dsack:90dde891494f7c922f22925d795590fb&#34;&gt;SACK and DSACK&lt;/h2&gt;
 
 &lt;p&gt;看cool shell就够了, 其实很好理解.&lt;/p&gt;
 
-&lt;p&gt;#FAQ
-* What about TCP sequence number warp around
-PAWS use timestamp and RTT to solve this problem.
-##Timer
-*sk_timer
-listen: synack
-estblished: keepalive
+&lt;p&gt;#FAQ&lt;br /&gt;
+* What about TCP sequence number warp around&lt;br /&gt;
+PAWS use timestamp and RTT to solve this problem.&lt;br /&gt;
+##Timer&lt;br /&gt;
+*sk_timer&lt;br /&gt;
+listen: synack&lt;br /&gt;
+estblished: keepalive&lt;br /&gt;
 timewait:&lt;/p&gt;
 
 &lt;h1 id=&#34;optimization:90dde891494f7c922f22925d795590fb&#34;&gt;optimization&lt;/h1&gt;
 
 &lt;h2 id=&#34;nagle:90dde891494f7c922f22925d795590fb&#34;&gt;Nagle&lt;/h2&gt;
 
-&lt;p&gt;Nagle算法并没有阻止发送小包，它只是阻止了发送大量的小包！
-Nagle算法的初衷：避免发送大量的小包，防止小包泛滥于网络，理想情况下，
-对于一个TCP连接而言，网络上每次只能一个小包存在。它更多的是端到端意义上的优化。
+&lt;p&gt;Nagle算法并没有阻止发送小包，它只是阻止了发送大量的小包！&lt;br /&gt;
+Nagle算法的初衷：避免发送大量的小包，防止小包泛滥于网络，理想情况下，&lt;br /&gt;
+对于一个TCP连接而言，网络上每次只能一个小包存在。它更多的是端到端意义上的优化。&lt;br /&gt;
 正是交互式应用引入了大量的小包，Nagle算法所作用的正是交互式应用！&lt;/p&gt;
 
 &lt;h2 id=&#34;cork:90dde891494f7c922f22925d795590fb&#34;&gt;Cork&lt;/h2&gt;
 
-&lt;p&gt;CORK算法的初衷：提高网络利用率，理想情况下，完全避免发送小包，仅仅发送满包以及不得不发的小包。
+&lt;p&gt;CORK算法的初衷：提高网络利用率，理想情况下，完全避免发送小包，仅仅发送满包以及不得不发的小包。&lt;br /&gt;
 CORK的真正初衷是提高载荷率，提高网络利用率&lt;/p&gt;
 
 &lt;h2 id=&#34;tso:90dde891494f7c922f22925d795590fb&#34;&gt;TSO&lt;/h2&gt;
 
-&lt;p&gt;搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文,
-当然skb-&amp;gt;len得大于mss_now才有意义.
+&lt;p&gt;搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文,&lt;br /&gt;
+当然skb-&amp;gt;len得大于mss_now才有意义.&lt;br /&gt;
 tcp_set_skb_tso_segs&lt;/p&gt;
 
 &lt;h2 id=&#34;fixme:90dde891494f7c922f22925d795590fb&#34;&gt;FIXME&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Create TCP options
-tcp_syn_build_options()&lt;/li&gt;
-&lt;li&gt;Receive ack
-tcp_ack()
-记录ack的数据大小mss or tcp abc
-update snd_wl1 and snd_una
-slow path update mtu mss tcp_skb_cb.sacked&lt;/li&gt;
-&lt;li&gt;Active send data
-tcp_sendpage()/tcp_sendmsg()-&amp;gt;tcp_write_xmit()/tcp_push_one()-&amp;gt;tcp_transmit_skb&lt;/li&gt;
-&lt;li&gt;Timer expiring retransmiter
-tcp_retransmiter_timer()&amp;hellip;-&amp;gt;tcp_transmit_skb()&lt;/li&gt;
-&lt;li&gt;reponse for receiving an ACK
-tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;/li&gt;
-&lt;li&gt;tcp_v4_rcv
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/85613/focus=85614&#34;&gt;skb-&amp;gt;dev = NULL;&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Create TCP options&lt;br /&gt;
+tcp_syn_build_options()&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Receive ack&lt;br /&gt;
+tcp_ack()&lt;br /&gt;
+记录ack的数据大小mss or tcp abc&lt;br /&gt;
+update snd_wl1 and snd_una&lt;br /&gt;
+slow path update mtu mss tcp_skb_cb.sacked&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Active send data&lt;br /&gt;
+tcp_sendpage()/tcp_sendmsg()-&amp;gt;tcp_write_xmit()/tcp_push_one()-&amp;gt;tcp_transmit_skb&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Timer expiring retransmiter&lt;br /&gt;
+tcp_retransmiter_timer()&amp;hellip;-&amp;gt;tcp_transmit_skb()&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;reponse for receiving an ACK&lt;br /&gt;
+tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;tcp_v4_rcv&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/85613/focus=85614&#34;&gt;skb-&amp;gt;dev = NULL;&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -2077,8 +2077,8 @@ tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;/li&gt;
       <guid>http://firoyang.org/net/tunnel/</guid>
       <description>
 
-&lt;p&gt;#class
-network layer over network layer: gre
+&lt;p&gt;#class&lt;br /&gt;
+network layer over network layer: gre&lt;br /&gt;
 link layer over network layer: l2tp, pptp&lt;/p&gt;
 
 &lt;h1 id=&#34;proxy:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;Proxy&lt;/h1&gt;
@@ -2095,150 +2095,150 @@ link layer over network layer: l2tp, pptp&lt;/p&gt;
 
 &lt;h2 id=&#34;透明代理:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;透明代理&lt;/h2&gt;
 
-&lt;p&gt;hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.
+&lt;p&gt;hiwifi router kproxy nginx, kproxy 是更细粒度的iptables.&lt;br /&gt;
 所谓透明代理就是正向代理且client零配置.&lt;/p&gt;
 
 &lt;h2 id=&#34;dmz:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;DMZ&lt;/h2&gt;
 
-&lt;p&gt;Demilitarized zone, 解除军事武装区 or 非军事区!
-这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.
-为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.
+&lt;p&gt;Demilitarized zone, 解除军事武装区 or 非军事区!&lt;br /&gt;
+这个跨领域的名字听上去, 好叼叼的, 现实中南极洲和三八线都是非军事区.&lt;br /&gt;
+为什么叫这个名字, 暗指firewall没有设置太多限制规则的一部分网络地址空间.&lt;br /&gt;
 内网和外网是争端的主角, 而DMZ是个缓冲区.&lt;/p&gt;
 
 &lt;h3 id=&#34;simplest-sample:76e7252b2d04b0b5161bfb0dbf64d663&#34;&gt;simplest sample&lt;/h3&gt;
 
-&lt;p&gt;iptables -A INPUT -p tcp -d 10.42.0.52 &amp;ndash;dport 53 -j ACCEPT
-iptables -A FORWARD -p tcp -d 192.168.1.2 &amp;ndash;dport 53 -j ACCEPT
-iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &amp;ndash;dport 53 -j DNAT &amp;ndash;to 192.168.1.2:53
-我们就知道了dmz有整体有两部分构成ACCEPT and DNAT
+&lt;p&gt;iptables -A INPUT -p tcp -d 10.42.0.52 &amp;ndash;dport 53 -j ACCEPT&lt;br /&gt;
+iptables -A FORWARD -p tcp -d 192.168.1.2 &amp;ndash;dport 53 -j ACCEPT&lt;br /&gt;
+iptabltes -t nat -A PREOUTTING -p -tcp 10.42.0.52 &amp;ndash;dport 53 -j DNAT &amp;ndash;to 192.168.1.2:53&lt;br /&gt;
+我们就知道了dmz有整体有两部分构成ACCEPT and DNAT&lt;br /&gt;
 同时涉及到一个dmz地址空间{dmzwan10.42.0.52:53, dmzlan:192.168.1.2:53}&lt;/p&gt;
 
-&lt;p&gt;#Basic concepts
-* VPN is created by establishing a virtual point-to-point connection through the use of
-1. dedicated connections(permanent)
-2. virtual tunneling protocols
-traffic encryptions and authentication
+&lt;p&gt;#Basic concepts&lt;br /&gt;
+* VPN is created by establishing a virtual point-to-point connection through the use of&lt;br /&gt;
+1. dedicated connections(permanent)&lt;br /&gt;
+2. virtual tunneling protocols&lt;br /&gt;
+traffic encryptions and authentication&lt;br /&gt;
 + connection(tunnel) + secure&lt;/p&gt;
 
-&lt;p&gt;#Tunnel proctocol
-* pptp
-data-link header | PPP | IP &amp;hellip;
-data-link header | IP | GRE | PPP | IP&amp;hellip;
-rfc2637
-&lt;a href=&#34;http://pptpclient.sourceforge.net/diagrams.phtml&#34;&gt;http://pptpclient.sourceforge.net/diagrams.phtml&lt;/a&gt;
-* pppd -&amp;gt; /dev/ppp
-/dev/ppp (see ppp_init) 下发密码, 加密之类的.
-ppp_netdev_ops (see ppp_create_interface)
+&lt;p&gt;#Tunnel proctocol&lt;br /&gt;
+* pptp&lt;br /&gt;
+data-link header | PPP | IP &amp;hellip;&lt;br /&gt;
+data-link header | IP | GRE | PPP | IP&amp;hellip;&lt;br /&gt;
+rfc2637&lt;br /&gt;
+&lt;a href=&#34;http://pptpclient.sourceforge.net/diagrams.phtml&#34;&gt;http://pptpclient.sourceforge.net/diagrams.phtml&lt;/a&gt;&lt;br /&gt;
+* pppd -&amp;gt; /dev/ppp&lt;br /&gt;
+/dev/ppp (see ppp_init) 下发密码, 加密之类的.&lt;br /&gt;
+ppp_netdev_ops (see ppp_create_interface)&lt;br /&gt;
 ppp_wirte-&amp;gt;ppp_xmit_process-&amp;gt;ppp_send_frame-&amp;gt;ppp_push-&amp;gt;|pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit()=pppoe_xmit-&amp;gt;__pppoe_xmit&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;init
-pptp -&amp;gt; pptp server -&amp;gt; generate PPP connection and PPP0(interface)&lt;/li&gt;
-&lt;li&gt;input
-eth -&amp;gt; ppptp(remove gre header)-&amp;gt;PPP header-&amp;gt; pty(device) -&amp;gt; PPP0(interface) -&amp;gt;&lt;/li&gt;
+&lt;li&gt;init&lt;br /&gt;
+pptp -&amp;gt; pptp server -&amp;gt; generate PPP connection and PPP0(interface)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;input&lt;br /&gt;
+eth -&amp;gt; ppptp(remove gre header)-&amp;gt;PPP header-&amp;gt; pty(device) -&amp;gt; PPP0(interface) -&amp;gt;&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;output
+&lt;li&gt;&lt;p&gt;output&lt;br /&gt;
 -&amp;gt; PPP0(interface) -&amp;gt; PPP header -&amp;gt; pty -&amp;gt; PPPT(add gre header) -&amp;gt; raw socket -&amp;gt; eth&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;shadowsocks
+&lt;li&gt;&lt;p&gt;shadowsocks&lt;br /&gt;
 user -&amp;gt; iptables -&amp;gt; shadowsocks(redir.c (struct server)-&amp;gt;(struct remote)) -&amp;gt; server&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;ssh redsocks
+&lt;p&gt;ssh redsocks&lt;br /&gt;
 user -&amp;gt; iptables -&amp;gt; redsocks -&amp;gt; ssh -&amp;gt; server&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;pppoe
-pppoe 的sk-&amp;gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket
-pppoe_rcv_core -&amp;gt;　netif_rx
-从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!
-对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!
-pppoe报文会经过两次sk_filter()
-&lt;a href=&#34;http://blog.csdn.net/osnetdev/article/details/8958058&#34;&gt;http://blog.csdn.net/osnetdev/article/details/8958058&lt;/a&gt;
-&amp;amp;pppoe_chan_ops;&lt;/li&gt;
+&lt;li&gt;pppoe&lt;br /&gt;
+pppoe 的sk-&amp;gt;sk_backlog_rcv是在pppoe_create中确定的, 这点却别与tcp socket&lt;br /&gt;
+pppoe_rcv_core -&amp;gt;　netif_rx&lt;br /&gt;
+从sk_receive_skb来看pppoe 和tcp都对应一个session or sock!&lt;br /&gt;
+对比inet_create 和 pppoe_create, 而pppoe很屌是在链路层的sock厉害!&lt;br /&gt;
+pppoe报文会经过两次sk_filter()&lt;br /&gt;
+&lt;a href=&#34;http://blog.csdn.net/osnetdev/article/details/8958058&#34;&gt;http://blog.csdn.net/osnetdev/article/details/8958058&lt;/a&gt;&lt;br /&gt;
+&amp;amp;pppoe_chan_ops;&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;+ppp header
-is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!
-ppp-wan-&amp;gt;ndo_start_xmit()=ppp_start_xmit()-&amp;gt;ppp_xmit_process()-&amp;gt;ppp_send_frame()
--&amp;gt;
-{
-    __skb_push(skb, sizeof(*ph));
-    skb_reset_network_header(skb);
-    //add pppoe_hdr no header???
-    dev_queue_xmit(skb);
+&lt;p&gt;+ppp header&lt;br /&gt;
+is added in ppp_start_xmit to ppp_send_frame NO ppp_hdr struct!&lt;br /&gt;
+ppp-wan-&amp;gt;ndo_start_xmit()=ppp_start_xmit()-&amp;gt;ppp_xmit_process()-&amp;gt;ppp_send_frame()&lt;br /&gt;
+-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    __skb_push(skb, sizeof(*ph));&lt;br /&gt;
+    skb_reset_network_header(skb);&lt;br /&gt;
+    //add pppoe_hdr no header???&lt;br /&gt;
+    dev_queue_xmit(skb);&lt;br /&gt;
 }&lt;/p&gt;
 
-&lt;p&gt;#PPP
+&lt;p&gt;#PPP&lt;br /&gt;
 &lt;a href=&#34;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&#34;&gt;http://www.cnitblog.com/liaoqingshan/archive/2013/06/13/52906.html&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;#GRE
+&lt;p&gt;#GRE&lt;br /&gt;
 include/net/gre.h&lt;/p&gt;
 
-&lt;p&gt;#L2tp
+&lt;p&gt;#L2tp&lt;br /&gt;
 IP -&amp;gt; UDP -&amp;gt; L2TP -&amp;gt; PPP&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;source files
-net/l2tp/
-├── Kconfig
-├── l2tp_core.c
-├── l2tp_core.h
-├── l2tp_debugfs.c
-├── l2tp_eth.c
-├── l2tp_ip.c
-├── l2tp_netlink.c
-├── l2tp_ppp.c
-└── Makefile&lt;/li&gt;
+&lt;li&gt;source files&lt;br /&gt;
+net/l2tp/&lt;br /&gt;
+├── Kconfig&lt;br /&gt;
+├── l2tp_core.c&lt;br /&gt;
+├── l2tp_core.h&lt;br /&gt;
+├── l2tp_debugfs.c&lt;br /&gt;
+├── l2tp_eth.c&lt;br /&gt;
+├── l2tp_ip.c&lt;br /&gt;
+├── l2tp_netlink.c&lt;br /&gt;
+├── l2tp_ppp.c&lt;br /&gt;
+└── Makefile&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;include/uapi/linux/ppp_defs.h&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Functions
-l2tp_recv_common &amp;hellip;recv_skb=pppol2tp_recv()
-l2tp_xmit_core&lt;/li&gt;
+&lt;li&gt;Functions&lt;br /&gt;
+l2tp_recv_common &amp;hellip;recv_skb=pppol2tp_recv()&lt;br /&gt;
+l2tp_xmit_core&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#PPTP
-##Route ip-list to pptp-vpn
-11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3
-    link/ppp
-    inet 192.168.1.60 peer 192.168.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;32&lt;/sub&gt; scope global pptp-vpn
-root@Hiwifi:~# route -n
-Kernel IP routing table
-Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn
-123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2
-192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn
-192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2
+&lt;p&gt;#PPTP&lt;br /&gt;
+##Route ip-list to pptp-vpn&lt;br /&gt;
+11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3&lt;br /&gt;
+    link/ppp&lt;br /&gt;
+    inet 192.168.1.60 peer 192.168.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;32&lt;/sub&gt; scope global pptp-vpn&lt;br /&gt;
+root@Hiwifi:~# route -n&lt;br /&gt;
+Kernel IP routing table&lt;br /&gt;
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface&lt;br /&gt;
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 pptp-vpn&lt;br /&gt;
+123.121.94.19   192.168.10.254  255.255.255.255 UGH   0      0        0 eth2.2&lt;br /&gt;
+192.168.1.1     0.0.0.0         255.255.255.255 UH    0      0        0 pptp-vpn&lt;br /&gt;
+192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2&lt;br /&gt;
 192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan&lt;/p&gt;
 
-&lt;p&gt;##pptp header
+&lt;p&gt;##pptp header&lt;br /&gt;
 IP | GRE | pptp_gre_header | PPP | IP&lt;/p&gt;
 
-&lt;p&gt;##input
-ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip
-ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&amp;gt;inet_protos.gre_rcv -&amp;gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&amp;gt; sk_receive_skb -&amp;gt;sk_backlog_rcv -&amp;gt; pptp_rcv_core -&amp;gt; ppp_input -&amp;gt; ppp_do_recv
--&amp;gt; ppp_receive_frame -&amp;gt; ppp_receive_nonmp_frame -&amp;gt; netif_rx -&amp;gt; netif_rx_internal -&amp;gt; enqueue_to_backlog -&amp;gt; ____napi_schedule(sd, &amp;amp;sd-&amp;gt;backlog);
+&lt;p&gt;##input&lt;br /&gt;
+ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip&lt;br /&gt;
+ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&amp;gt;inet_protos.gre_rcv -&amp;gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&amp;gt; sk_receive_skb -&amp;gt;sk_backlog_rcv -&amp;gt; pptp_rcv_core -&amp;gt; ppp_input -&amp;gt; ppp_do_recv&lt;br /&gt;
+-&amp;gt; ppp_receive_frame -&amp;gt; ppp_receive_nonmp_frame -&amp;gt; netif_rx -&amp;gt; netif_rx_internal -&amp;gt; enqueue_to_backlog -&amp;gt; ____napi_schedule(sd, &amp;amp;sd-&amp;gt;backlog);&lt;br /&gt;
 -&amp;gt; netif_receive_skb&amp;hellip;&lt;/p&gt;
 
-&lt;p&gt;##output
-ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push
--&amp;gt;pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit=pptp_xmit -&amp;gt; add gre and ip header. -&amp;gt; ip_local_out -&amp;gt;
-+another send skb functions is ip_build_and_send_pkt()
-{ this functions hook is init in pptp_connect() -&amp;gt; ppp_register_channel(&amp;amp;po-&amp;gt;chan) }
-{ppp_connect()&amp;rsquo;s init functions is pptp_create, see pptp_init_module -&amp;gt;
-register_pppox_proto(PX_PROTO_PPTP, &amp;amp;pppox_pptp_proto) pptp_create.}
+&lt;p&gt;##output&lt;br /&gt;
+ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push&lt;br /&gt;
+-&amp;gt;pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit=pptp_xmit -&amp;gt; add gre and ip header. -&amp;gt; ip_local_out -&amp;gt;&lt;br /&gt;
++another send skb functions is ip_build_and_send_pkt()&lt;br /&gt;
+{ this functions hook is init in pptp_connect() -&amp;gt; ppp_register_channel(&amp;amp;po-&amp;gt;chan) }&lt;br /&gt;
+{ppp_connect()&amp;rsquo;s init functions is pptp_create, see pptp_init_module -&amp;gt;&lt;br /&gt;
+register_pppox_proto(PX_PROTO_PPTP, &amp;amp;pppox_pptp_proto) pptp_create.}&lt;br /&gt;
 when invoke pptp_create? socket()!&lt;/p&gt;
 
 &lt;p&gt;if layer 4 protocol is gre then pass.&lt;/p&gt;
 
-&lt;p&gt;##PPTP &amp;amp; NAT
-* Forward package
-br-lan(PREROUTING orginal packet NAT old)
-(route -&amp;gt; pptp-vpn) = ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()
-pptp-vpn -&amp;gt; ndo_start_xmit -&amp;gt; add some headers -&amp;gt; local_out NAT new -&amp;gt; tc dequeue_qdisc(this is maybe eth2.2&amp;rsquo;s routing result! see top)
+&lt;p&gt;##PPTP &amp;amp; NAT&lt;br /&gt;
+* Forward package&lt;br /&gt;
+br-lan(PREROUTING orginal packet NAT old)&lt;br /&gt;
+(route -&amp;gt; pptp-vpn) = ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()&lt;br /&gt;
+pptp-vpn -&amp;gt; ndo_start_xmit -&amp;gt; add some headers -&amp;gt; local_out NAT new -&amp;gt; tc dequeue_qdisc(this is maybe eth2.2&amp;rsquo;s routing result! see top)&lt;br /&gt;
 so we need to do is just find original skb in PPTP packet header!&lt;/p&gt;
 
 &lt;p&gt;##PPTP &amp;amp; GRE &amp;amp; Conntrack&lt;/p&gt;
@@ -2247,8 +2247,8 @@ so we need to do is just find original skb in PPTP packet header!&lt;/p&gt;
 
 &lt;p&gt;kernel vpn just one session.&lt;/p&gt;
 
-&lt;p&gt;##ppp-&amp;gt; pptp code.
-ppp_send_frame()
+&lt;p&gt;##ppp-&amp;gt; pptp code.&lt;br /&gt;
+ppp_send_frame()&lt;br /&gt;
 {&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;//below is ok 132 is output!
@@ -2286,13 +2286,13 @@ ppp-&amp;gt;xmit_pending = skb;
 ppp_push(ppp);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//dmesg
-[  304.600000] ct 132, 132, 0, 33
-[  304.610000] hit b 132
-[  304.610000] hit a 0
-[  304.610000] befor push 0 132
-[  304.610000] out chan 132
-[  304.620000] chan ok132
+&lt;p&gt;//dmesg&lt;br /&gt;
+[  304.600000] ct 132, 132, 0, 33&lt;br /&gt;
+[  304.610000] hit b 132&lt;br /&gt;
+[  304.610000] hit a 0&lt;br /&gt;
+[  304.610000] befor push 0 132&lt;br /&gt;
+[  304.610000] out chan 132&lt;br /&gt;
+[  304.620000] chan ok132&lt;br /&gt;
 [  304.620000] qosmark132 132&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;so we need backup qosmark be for invoking this function then restore it.
@@ -2300,10 +2300,10 @@ ppp_push(ppp);
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;ppp_push(struct ppp *ppp)
-{
-    struct list_head *list;
-    struct channel *pch;
+&lt;p&gt;ppp_push(struct ppp *ppp)&lt;br /&gt;
+{&lt;br /&gt;
+    struct list_head *list;&lt;br /&gt;
+    struct channel *pch;&lt;br /&gt;
     struct sk_buff *skb = ppp-&amp;gt;xmit_pending;&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;if (!skb)

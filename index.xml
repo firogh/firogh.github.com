@@ -29,63 +29,63 @@
 
 &lt;h1 id=&#34;about-the-design:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;About the design&lt;/h1&gt;
 
-&lt;p&gt;Why dose we use /dev/xxx to represent the &amp;ldquo;tty&amp;rdquo; device?
-&amp;gt; The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some
-&amp;gt; random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;
-&amp;gt; have nothing to do with each other), &lt;em&gt;but the fact that you can use common&lt;/em&gt;
-&amp;gt; &lt;em&gt;tools to operate on different things&lt;/em&gt;. &amp;ndash; Linus
-So we got the key point!
-In order to use the common tools, file ops and vfs layer, the tty device is &amp;ldquo;abstructed&amp;rdquo; to
-files by us. Addnationaly, we must assurance that is the files is &lt;em&gt;different&lt;/em&gt;. What does
-the word &amp;ldquo;dirrerent&amp;rdquo; means is not that you have some random different filename, but the
-fact that you can access the real device through the different.
-&amp;gt; From wikipedia:
-&amp;gt; In mathematics, injections, surjections and bijections are classes of functions distinguished
-&amp;gt; by the manner in which arguments (input expressions from the domain) and images
-&amp;gt; (output expressions from the codomain) are related or mapped to each other.
-I got an insight that abstruction is a non-injective, right?
-But non-injective may not be a anstruction.
-An asbstruction should come from manipulating different objects.
-Non-injective, 多对一; Multiplex, 一对多.
-So we can use mathematical language to describe the linux subsystem.
-From real life device to a filesystem file.
-* Abstruction: Non-injective, Multiplex(not partial function).
-* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!
+&lt;p&gt;Why dose we use /dev/xxx to represent the &amp;ldquo;tty&amp;rdquo; device?&lt;br /&gt;
+&amp;gt; The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some&lt;br /&gt;
+&amp;gt; random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&lt;br /&gt;
+&amp;gt; have nothing to do with each other), &lt;em&gt;but the fact that you can use common&lt;/em&gt;&lt;br /&gt;
+&amp;gt; &lt;em&gt;tools to operate on different things&lt;/em&gt;. &amp;ndash; Linus&lt;br /&gt;
+So we got the key point!&lt;br /&gt;
+In order to use the common tools, file ops and vfs layer, the tty device is &amp;ldquo;abstructed&amp;rdquo; to&lt;br /&gt;
+files by us. Addnationaly, we must assurance that is the files is &lt;em&gt;different&lt;/em&gt;. What does&lt;br /&gt;
+the word &amp;ldquo;dirrerent&amp;rdquo; means is not that you have some random different filename, but the&lt;br /&gt;
+fact that you can access the real device through the different.&lt;br /&gt;
+&amp;gt; From wikipedia:&lt;br /&gt;
+&amp;gt; In mathematics, injections, surjections and bijections are classes of functions distinguished&lt;br /&gt;
+&amp;gt; by the manner in which arguments (input expressions from the domain) and images&lt;br /&gt;
+&amp;gt; (output expressions from the codomain) are related or mapped to each other.&lt;br /&gt;
+I got an insight that abstruction is a non-injective, right?&lt;br /&gt;
+But non-injective may not be a anstruction.&lt;br /&gt;
+An asbstruction should come from manipulating different objects.&lt;br /&gt;
+Non-injective, 多对一; Multiplex, 一对多.&lt;br /&gt;
+So we can use mathematical language to describe the linux subsystem.&lt;br /&gt;
+From real life device to a filesystem file.&lt;br /&gt;
+* Abstruction: Non-injective, Multiplex(not partial function).&lt;br /&gt;
+* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!&lt;br /&gt;
 Abstruction -&amp;gt; Control abstruction and data abstruction -&amp;gt; Abstruction layer&lt;/p&gt;
 
-&lt;p&gt;软件设计的两个主要目的.
-1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.
+&lt;p&gt;软件设计的两个主要目的.&lt;br /&gt;
+1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.&lt;br /&gt;
 2. Separation of concerns, modular(abstruciton in layer), 笛卡尔划分的思想&lt;/p&gt;
 
 &lt;h1 id=&#34;tty-struct-disc-data:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;tty_struct-&amp;gt;disc_data&lt;/h1&gt;
 
-&lt;p&gt;tty_init_dev-&amp;gt;
-{
-    initialize_tty_struct-&amp;gt;tty_ldisc_init
-    tty_ldisc_setup-&amp;gt;tty_ldisc_open-&amp;gt;n_tty_open-&amp;gt; tty-&amp;gt;disc_data = ldata;
-}
-sys_vhangup-&amp;gt;tty_vhangup_self-&amp;gt;__tty_hangup-&amp;gt;tty_ldisc_hangup-&amp;gt;tty_ldisc_reinit
+&lt;p&gt;tty_init_dev-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    initialize_tty_struct-&amp;gt;tty_ldisc_init&lt;br /&gt;
+    tty_ldisc_setup-&amp;gt;tty_ldisc_open-&amp;gt;n_tty_open-&amp;gt; tty-&amp;gt;disc_data = ldata;&lt;br /&gt;
+}&lt;br /&gt;
+sys_vhangup-&amp;gt;tty_vhangup_self-&amp;gt;__tty_hangup-&amp;gt;tty_ldisc_hangup-&amp;gt;tty_ldisc_reinit&lt;br /&gt;
 vfs_write-&amp;gt;redirected_tty_write-&amp;gt;tty_write-&amp;gt;n_tty_write-&amp;gt;process_output&lt;/p&gt;
 
 &lt;h1 id=&#34;early-con:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;early_con&lt;/h1&gt;
 
-&lt;p&gt;EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);
-setup_earlycon-&amp;gt;
-{
-    parse_options-&amp;gt;
-    {
-        parse earlycon_device-&amp;gt;port-&amp;gt;uartclk and
-        earlycon_device-&amp;gt;baud
-    }
-    setup = early_serial8250_setup-&amp;gt; init_port(device);
-    register_console(early_console_dev.con)
+&lt;p&gt;EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);&lt;br /&gt;
+setup_earlycon-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    parse_options-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        parse earlycon_device-&amp;gt;port-&amp;gt;uartclk and&lt;br /&gt;
+        earlycon_device-&amp;gt;baud&lt;br /&gt;
+    }&lt;br /&gt;
+    setup = early_serial8250_setup-&amp;gt; init_port(device);&lt;br /&gt;
+    register_console(early_console_dev.con)&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;h1 id=&#34;earlyprintk:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;earlyprintk&lt;/h1&gt;
 
-&lt;p&gt;early_param(&amp;ldquo;earlyprintk&amp;rdquo;, setup_early_printk)-&amp;gt;
-{
-    early_serial_init-&amp;gt;
+&lt;p&gt;early_param(&amp;ldquo;earlyprintk&amp;rdquo;, setup_early_printk)-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    early_serial_init-&amp;gt;&lt;br /&gt;
     {&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;}
@@ -97,15 +97,15 @@ early_console_register(&amp;amp;early_serial_console, keep);
 &lt;h1 id=&#34;cpu-hotplug:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;cpu hotplug&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;onset
-static struct smp_hotplug_thread softirq_threads {
-.thread_fn              = run_ksoftirqd
-};
-early_initcall(spawn_ksoftirqd)-&amp;gt;mpboot_register_percpu_thread(&amp;amp;softirq_threads)&lt;/li&gt;
-&lt;li&gt;nucles onset
-suspend_enter-&amp;gt;enable_nonboot_cpus-&amp;gt;_cpu_up-&amp;gt;smpboot_create_threads-&amp;gt;&lt;strong&gt;smpboot_create_thread(&amp;amp;hotplug_threads)-&amp;gt;
-kthread_create_on_cpu(smpboot_thread_fn-&amp;gt; ht-&amp;gt;thread_fn(td-&amp;gt;cpu)= run_ksoftirqd-&amp;gt;&lt;/strong&gt;do_softirq-&amp;gt;h-&amp;gt;action(h) = run_timer_softirq-&amp;gt;
-__run_timers-&amp;gt;call_timer_fn)&lt;/li&gt;
+&lt;li&gt;onset&lt;br /&gt;
+static struct smp_hotplug_thread softirq_threads {&lt;br /&gt;
+.thread_fn              = run_ksoftirqd&lt;br /&gt;
+};&lt;br /&gt;
+early_initcall(spawn_ksoftirqd)-&amp;gt;mpboot_register_percpu_thread(&amp;amp;softirq_threads)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;nucles onset&lt;br /&gt;
+suspend_enter-&amp;gt;enable_nonboot_cpus-&amp;gt;_cpu_up-&amp;gt;smpboot_create_threads-&amp;gt;&lt;strong&gt;smpboot_create_thread(&amp;amp;hotplug_threads)-&amp;gt;&lt;br /&gt;
+kthread_create_on_cpu(smpboot_thread_fn-&amp;gt; ht-&amp;gt;thread_fn(td-&amp;gt;cpu)= run_ksoftirqd-&amp;gt;&lt;/strong&gt;do_softirq-&amp;gt;h-&amp;gt;action(h) = run_timer_softirq-&amp;gt;&lt;br /&gt;
+__run_timers-&amp;gt;call_timer_fn)&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;vt 就是个tty也有tty_driver 叫console_driver.&lt;/p&gt;
@@ -114,43 +114,43 @@ __run_timers-&amp;gt;call_timer_fn)&lt;/li&gt;
 
 &lt;h1 id=&#34;contents:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal&#34;&gt;What is the difference between shell, console, and terminal?&lt;/a&gt;
-What does console do in kernel or u-boot?
-Linux console?
-Computer terminal: keyboard + dispaly
+&lt;p&gt;&lt;a href=&#34;http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal&#34;&gt;What is the difference between shell, console, and terminal?&lt;/a&gt;&lt;br /&gt;
+What does console do in kernel or u-boot?&lt;br /&gt;
+Linux console?&lt;br /&gt;
+Computer terminal: keyboard + dispaly&lt;br /&gt;
 Terminal emulator:&lt;/p&gt;
 
 &lt;h1 id=&#34;get-a-glance-on-u-boot:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;get a glance on u-boot&lt;/h1&gt;
 
-&lt;p&gt;start.S:board_init_r
-init_sequence_f: -&amp;gt;init_baud_rate; serial_init; console_init_f
-serial_init -&amp;gt;&amp;amp;eserial1_device-&amp;gt;start=eserial##port##_init-&amp;gt;NS16550_init: UART divisor init.
-Firstly, the struct of serial define some input and output funtion.
-It&amp;rsquo;s basic function of serial, put or get!
-console_init_f: just gd-&amp;gt;have_console = 1;
-init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,
-initr_serial: just register &amp;amp;eserial1_device to serial_devices
-stdio_add_devices: drv_system_init, serial_stdio_init
-drv_system_init: register default serial dev to devs.list.
-serial_stdio_init: register &amp;amp;eserial1_device to devs.list. Duplicate, but serial dev &amp;ldquo;eserial0&amp;rdquo;  and system &amp;ldquo;serial&amp;rdquo;.
-console_init_r: console_doenv -&amp;gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &amp;ldquo;serial&amp;rdquo;, but they may be KBD!
-看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?
+&lt;p&gt;start.S:board_init_r&lt;br /&gt;
+init_sequence_f: -&amp;gt;init_baud_rate; serial_init; console_init_f&lt;br /&gt;
+serial_init -&amp;gt;&amp;amp;eserial1_device-&amp;gt;start=eserial##port##_init-&amp;gt;NS16550_init: UART divisor init.&lt;br /&gt;
+Firstly, the struct of serial define some input and output funtion.&lt;br /&gt;
+It&amp;rsquo;s basic function of serial, put or get!&lt;br /&gt;
+console_init_f: just gd-&amp;gt;have_console = 1;&lt;br /&gt;
+init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,&lt;br /&gt;
+initr_serial: just register &amp;amp;eserial1_device to serial_devices&lt;br /&gt;
+stdio_add_devices: drv_system_init, serial_stdio_init&lt;br /&gt;
+drv_system_init: register default serial dev to devs.list.&lt;br /&gt;
+serial_stdio_init: register &amp;amp;eserial1_device to devs.list. Duplicate, but serial dev &amp;ldquo;eserial0&amp;rdquo;  and system &amp;ldquo;serial&amp;rdquo;.&lt;br /&gt;
+console_init_r: console_doenv -&amp;gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &amp;ldquo;serial&amp;rdquo;, but they may be KBD!&lt;br /&gt;
+看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?&lt;br /&gt;
 main_loop:cli_loop: getc!&lt;/p&gt;
 
 &lt;h1 id=&#34;what-is-platform-device-or-driver:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;what is platform device or driver?&lt;/h1&gt;
 
 &lt;h1 id=&#34;a-reallife-serial8250:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;A reallife serial8250&lt;/h1&gt;
 
-&lt;p&gt;drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port
-module_init-&amp;gt;
-{
-    serial8250_init-&amp;gt;serial8250_isa_init_ports-&amp;gt;serial8250_ports[i].port.ops = &amp;amp;serial8250_pops; //insidious
-    boca_init-&amp;gt;platform_device_register(&amp;amp;boca_device); //register platform device and data.
-}
+&lt;p&gt;drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port&lt;br /&gt;
+module_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    serial8250_init-&amp;gt;serial8250_isa_init_ports-&amp;gt;serial8250_ports[i].port.ops = &amp;amp;serial8250_pops; //insidious&lt;br /&gt;
+    boca_init-&amp;gt;platform_device_register(&amp;amp;boca_device); //register platform device and data.&lt;br /&gt;
+}&lt;br /&gt;
 * uart_port-&amp;gt;tty_port&lt;/p&gt;
 
-&lt;p&gt;serial8250_probe(plat_serial8250_port)-&amp;gt;serial8250_register_8250_port(uart_8250_port)-&amp;gt;
-uart_add_one_port(&amp;amp;serial8250_reg, &amp;amp;uart-&amp;gt;port=uart_port)-&amp;gt;
+&lt;p&gt;serial8250_probe(plat_serial8250_port)-&amp;gt;serial8250_register_8250_port(uart_8250_port)-&amp;gt;&lt;br /&gt;
+uart_add_one_port(&amp;amp;serial8250_reg, &amp;amp;uart-&amp;gt;port=uart_port)-&amp;gt;&lt;br /&gt;
 {&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;uart_configure_port-&amp;gt;
@@ -175,32 +175,32 @@ tty_port_register_device_attr-&amp;gt;
 
 &lt;h1 id=&#34;simple-conceptions:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Simple conceptions&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.linusakesson.net/programming/tty/&#34;&gt;You must read this -&amp;gt; The TTY demystified&lt;/a&gt;
-System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.
-        UART
-        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)
-* System console
-Virtual termial, Terminal emulator/telnet/ssh -&amp;gt; pts ,Physical terminal
-You need at least one virtual terminal device in order to make use of your keyboard and monitor.
-VT combine keyboard and display see con_init
-con_init init a virtual terminal like gnome-terminal but in kernel.
-con_init mainly init display.
-vty_init mainly init kbd
-They all can be system console.(Exception pts??), if you enable it.
-Console is the entry of linux system.
-* Console driver &amp;ndash; banckends of  console
-struct console 指定了console的结构.
-* Console config
-If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.
-If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.
-How to explain this phenomena?
-From show_cons_active, we know /dev/console should come from console_drivers.
-/dev/console is really the pointer.
-Now, let&amp;rsquo;s inspect open /dev/console.
-* Open /dev/console
-Fisrt, it&amp;rsquo;s the very last place of booting kernel.
-start_kernel-&amp;gt;rest_init-&amp;gt;kernel_init-&amp;gt;kernel_init_freeable-&amp;gt;sys_open((const char __user *) &amp;ldquo;/dev/console&amp;rdquo;, O_RDWR, 0)-&amp;gt;&amp;hellip;-&amp;gt;
-console_fops-&amp;gt;tty_open-&amp;gt;
+&lt;p&gt;&lt;a href=&#34;http://www.linusakesson.net/programming/tty/&#34;&gt;You must read this -&amp;gt; The TTY demystified&lt;/a&gt;&lt;br /&gt;
+System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.&lt;br /&gt;
+        UART&lt;br /&gt;
+        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)&lt;br /&gt;
+* System console&lt;br /&gt;
+Virtual termial, Terminal emulator/telnet/ssh -&amp;gt; pts ,Physical terminal&lt;br /&gt;
+You need at least one virtual terminal device in order to make use of your keyboard and monitor.&lt;br /&gt;
+VT combine keyboard and display see con_init&lt;br /&gt;
+con_init init a virtual terminal like gnome-terminal but in kernel.&lt;br /&gt;
+con_init mainly init display.&lt;br /&gt;
+vty_init mainly init kbd&lt;br /&gt;
+They all can be system console.(Exception pts??), if you enable it.&lt;br /&gt;
+Console is the entry of linux system.&lt;br /&gt;
+* Console driver &amp;ndash; banckends of  console&lt;br /&gt;
+struct console 指定了console的结构.&lt;br /&gt;
+* Console config&lt;br /&gt;
+If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.&lt;br /&gt;
+If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.&lt;br /&gt;
+How to explain this phenomena?&lt;br /&gt;
+From show_cons_active, we know /dev/console should come from console_drivers.&lt;br /&gt;
+/dev/console is really the pointer.&lt;br /&gt;
+Now, let&amp;rsquo;s inspect open /dev/console.&lt;br /&gt;
+* Open /dev/console&lt;br /&gt;
+Fisrt, it&amp;rsquo;s the very last place of booting kernel.&lt;br /&gt;
+start_kernel-&amp;gt;rest_init-&amp;gt;kernel_init-&amp;gt;kernel_init_freeable-&amp;gt;sys_open((const char __user *) &amp;ldquo;/dev/console&amp;rdquo;, O_RDWR, 0)-&amp;gt;&amp;hellip;-&amp;gt;&lt;br /&gt;
+console_fops-&amp;gt;tty_open-&amp;gt;&lt;br /&gt;
 {&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;// Sitiuations: disbale VT CONSOLE byt enable SERIAL8250_CONSOLE.
@@ -282,19 +282,19 @@ tty-&amp;gt;ops-&amp;gt;open(tty, filp)-&amp;gt;//ops = &amp;amp;uart_ops
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;}
+&lt;p&gt;}&lt;br /&gt;
 // At present, we understand the flow of open /dev/console to serial console&lt;/p&gt;
 
 &lt;h1 id=&#34;what-about-opening-dev-console-to-vt-console:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about opening /dev/console to vt console&lt;/h1&gt;
 
-&lt;p&gt;sys_open(/dev/console)-&amp;gt; &amp;hellip; tty_open -&amp;gt;
-{
-    tty_lookup_driver-&amp;gt; get tty_driver=console_driver,
-    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!
-    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.
-    // system console就有了, printk也就有了归处. In other words, you registered, you got printed
-    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.
-    // 那么在kernel_init中sys_open又是什么鬼呢?
+&lt;p&gt;sys_open(/dev/console)-&amp;gt; &amp;hellip; tty_open -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    tty_lookup_driver-&amp;gt; get tty_driver=console_driver,&lt;br /&gt;
+    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!&lt;br /&gt;
+    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.&lt;br /&gt;
+    // system console就有了, printk也就有了归处. In other words, you registered, you got printed&lt;br /&gt;
+    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.&lt;br /&gt;
+    // 那么在kernel_init中sys_open又是什么鬼呢?&lt;br /&gt;
     // dev/tty 是专门真对进程的, 就是进程之前打开了一个tty就存在singnal里, 这个dev/tty就是取出来的.&lt;/p&gt;
 
 &lt;p&gt;}&lt;/p&gt;
@@ -303,61 +303,61 @@ tty-&amp;gt;ops-&amp;gt;open(tty, filp)-&amp;gt;//ops = &amp;amp;uart_ops
 
 &lt;h1 id=&#34;这和-dev-tty-dev-ttys-从tty-drivers-差不多:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.&lt;/h1&gt;
 
-&lt;p&gt;// 这么输出为什么不会打窜了?
-// How ctrl alt Fn work?
-// echo xxx /dev/tty in serial tty_lookup_driver
+&lt;p&gt;// 这么输出为什么不会打窜了?&lt;br /&gt;
+// How ctrl alt Fn work?&lt;br /&gt;
+// echo xxx /dev/tty in serial tty_lookup_driver&lt;br /&gt;
 // 另一个问题, serial 的terminal?&lt;/p&gt;
 
 &lt;h1 id=&#34;the-perspective:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;The perspective&lt;/h1&gt;
 
-&lt;p&gt;/dev/*
-vfs
-chrdev
-tty_fops&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;gt;tty core
-    ld_ops &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty line discipline(for read, write)
-tty_driver con_ops/uart_ops&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty driver and tty_operations
-HW
-There are three different types of tty drivers: console, serial port, and pty.
-serial8250_default_handle_irq
-UART console
-              |&amp;mdash;- Virtual terminal &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash; VT console
-              |                 | &amp;ndash; VT console
-              |&amp;mdash;-
-        Terminal&amp;ndash;|
+&lt;p&gt;/dev/*&lt;br /&gt;
+vfs&lt;br /&gt;
+chrdev&lt;br /&gt;
+tty_fops&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;gt;tty core&lt;br /&gt;
+    ld_ops &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty line discipline(for read, write)&lt;br /&gt;
+tty_driver con_ops/uart_ops&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty driver and tty_operations&lt;br /&gt;
+HW&lt;br /&gt;
+There are three different types of tty drivers: console, serial port, and pty.&lt;br /&gt;
+serial8250_default_handle_irq&lt;br /&gt;
+UART console&lt;br /&gt;
+              |&amp;mdash;- Virtual terminal &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash; VT console&lt;br /&gt;
+              |                 | &amp;ndash; VT console&lt;br /&gt;
+              |&amp;mdash;-&lt;br /&gt;
+        Terminal&amp;ndash;|&lt;br /&gt;
               |&amp;mdash;-&lt;/p&gt;
 
 &lt;h1 id=&#34;what-about-console:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about console?&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;early_con
+&lt;li&gt;&lt;p&gt;early_con&lt;br /&gt;
 start_kernel or setup_arch(arm)-&amp;gt;parse_early_param-&amp;gt;do_early_param-&amp;gt;p-&amp;gt;setup_func()= setup_early_printk-&amp;gt;register_console&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;vga_con
-start_kerenl-&amp;gt;
-{
-// All about vga console
-set_arch-&amp;gt; conswitchp = &amp;amp;vga_con; or conswitchp = &amp;amp;dummy_con;
-console_init-&amp;gt;
-{
-    con_init-&amp;gt;
-    {
-        // vc-&amp;gt;vc_sw-&amp;gt;con_putcs is DUMMY
-        //内存映射64KB or 32KB的VGA区域. 启动VGA
-        conswitchp-&amp;gt;con_startup = vgacon_startup -&amp;gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);
-        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间
-        // 核心内容!
-        for (currcons = 0; currcons &amp;lt; MIN_NR_CONSOLES; currcons++) {
-            // 给vc_cons[currcons].d分配内存
-            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);
-            INIT_WORK(&amp;amp;vc_cons[currcons].SAK_work, vc_SAK);
-            //初始化vc_cons[currcons].d
-            tty_port_init(&amp;amp;vc-&amp;gt;port);
-            // 继续初始化, 主要是确定screenbuf size
-            visual_init(vc, currcons, 1);
-            // 给vc_screenbuf分配内存
-            vc-&amp;gt;vc_screenbuf = kzalloc(vc-&amp;gt;vc_screenbuf_size, GFP_NOWAIT);
-            vc_init(vc, vc-&amp;gt;vc_rows, vc-&amp;gt;vc_cols,
-                currcons || !vc-&amp;gt;vc_sw-&amp;gt;con_save_screen);
+&lt;li&gt;&lt;p&gt;vga_con&lt;br /&gt;
+start_kerenl-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+// All about vga console&lt;br /&gt;
+set_arch-&amp;gt; conswitchp = &amp;amp;vga_con; or conswitchp = &amp;amp;dummy_con;&lt;br /&gt;
+console_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    con_init-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        // vc-&amp;gt;vc_sw-&amp;gt;con_putcs is DUMMY&lt;br /&gt;
+        //内存映射64KB or 32KB的VGA区域. 启动VGA&lt;br /&gt;
+        conswitchp-&amp;gt;con_startup = vgacon_startup -&amp;gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);&lt;br /&gt;
+        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间&lt;br /&gt;
+        // 核心内容!&lt;br /&gt;
+        for (currcons = 0; currcons &amp;lt; MIN_NR_CONSOLES; currcons++) {&lt;br /&gt;
+            // 给vc_cons[currcons].d分配内存&lt;br /&gt;
+            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);&lt;br /&gt;
+            INIT_WORK(&amp;amp;vc_cons[currcons].SAK_work, vc_SAK);&lt;br /&gt;
+            //初始化vc_cons[currcons].d&lt;br /&gt;
+            tty_port_init(&amp;amp;vc-&amp;gt;port);&lt;br /&gt;
+            // 继续初始化, 主要是确定screenbuf size&lt;br /&gt;
+            visual_init(vc, currcons, 1);&lt;br /&gt;
+            // 给vc_screenbuf分配内存&lt;br /&gt;
+            vc-&amp;gt;vc_screenbuf = kzalloc(vc-&amp;gt;vc_screenbuf_size, GFP_NOWAIT);&lt;br /&gt;
+            vc_init(vc, vc-&amp;gt;vc_rows, vc-&amp;gt;vc_cols,&lt;br /&gt;
+                currcons || !vc-&amp;gt;vc_sw-&amp;gt;con_save_screen);&lt;br /&gt;
         }&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;    [    0.000000] Console: colour VGA+ 80x25
@@ -367,34 +367,34 @@ serial8250_console_init-&amp;gt;register_console(&amp;amp;serial8250_console) to
 [    0.000000] console [tty0] enabled
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;}
-module_init(serial8250_init);??
+&lt;p&gt;}&lt;br /&gt;
+module_init(serial8250_init);??&lt;br /&gt;
 }&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;fbcon
-register_framebuffer-&amp;gt; do_take_over_console -&amp;gt;
-{
-do_register_con_driver-&amp;gt;csw-&amp;gt;con_startup();registered_con_driver
-do_bind_con_driver -&amp;gt;
-{
-    [    3.882220] Console: switching to colour dummy device 80x25
-    [    4.720732] Console: switching to colour frame buffer device 170x48
-}
+&lt;li&gt;&lt;p&gt;fbcon&lt;br /&gt;
+register_framebuffer-&amp;gt; do_take_over_console -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+do_register_con_driver-&amp;gt;csw-&amp;gt;con_startup();registered_con_driver&lt;br /&gt;
+do_bind_con_driver -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    [    3.882220] Console: switching to colour dummy device 80x25&lt;br /&gt;
+    [    4.720732] Console: switching to colour frame buffer device 170x48&lt;br /&gt;
+}&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;h2 id=&#34;vga-text-console-printk-write:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;VGA text console printk &amp;amp; write&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kernel space
+&lt;li&gt;&lt;p&gt;kernel space&lt;br /&gt;
 printk-&amp;gt; &amp;hellip;-&amp;gt;log_buf&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;userspace for ttyN
+&lt;li&gt;&lt;p&gt;userspace for ttyN&lt;br /&gt;
 tty_fops-&amp;gt;write=tty_write-&amp;gt; tty_ldisc_N_TTY-&amp;gt;write=n_tty_write-&amp;gt; tty_driver-&amp;gt;ops=con_ops-&amp;gt;write=con_write-&amp;gt;do_con_write&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;agent
-console_drivers-&amp;gt;vt_console_driver-&amp;gt;serial8250_console-&amp;gt;NULL
-console_unlock-&amp;gt;..-&amp;gt;__call_console_drivers-&amp;gt; console_drivers-&amp;gt;write = vt_console_print
-{
-//保存到screen buf, vga_con也什么不做啊.
+&lt;li&gt;&lt;p&gt;agent&lt;br /&gt;
+console_drivers-&amp;gt;vt_console_driver-&amp;gt;serial8250_console-&amp;gt;NULL&lt;br /&gt;
+console_unlock-&amp;gt;..-&amp;gt;__call_console_drivers-&amp;gt; console_drivers-&amp;gt;write = vt_console_print&lt;br /&gt;
+{&lt;br /&gt;
+//保存到screen buf, vga_con也什么不做啊.&lt;br /&gt;
 scr_writew((vc-&amp;gt;vc_attr &amp;lt;&amp;lt; 8) + c, (unsigned short *)vc-&amp;gt;vc_pos);&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -403,119 +403,119 @@ scr_writew((vc-&amp;gt;vc_attr &amp;lt;&amp;lt; 8) + c, (unsigned short *)vc-&am
 &lt;h1 id=&#34;what-about-tty:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about tty&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;onset
-console_init-&amp;gt;tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);
-N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;
-fs_initcall:chr_dev_init-&amp;gt;drivers/tty/tty_io.c: tty_init-&amp;gt;
+&lt;li&gt;&lt;p&gt;onset&lt;br /&gt;
+console_init-&amp;gt;tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
+N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;&lt;br /&gt;
+fs_initcall:chr_dev_init-&amp;gt;drivers/tty/tty_io.c: tty_init-&amp;gt;&lt;br /&gt;
 {&lt;/p&gt;
 
-&lt;p&gt;/* /dev/tty0 = /dev/console console_ops &lt;em&gt;/
+&lt;p&gt;/* /dev/tty0 = /dev/console console_ops &lt;em&gt;/&lt;br /&gt;
 /&lt;/em&gt; /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */&lt;/p&gt;
 
-&lt;p&gt;//&amp;ldquo;/dev/tty&amp;rdquo;,
-cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);
-&amp;ldquo;/dev/console&amp;rdquo;
-cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);
-vty_init-&amp;gt;
-{
+&lt;p&gt;//&amp;ldquo;/dev/tty&amp;rdquo;,&lt;br /&gt;
+cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);&lt;br /&gt;
+&amp;rdquo;/dev/console&amp;rdquo;&lt;br /&gt;
+cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);&lt;br /&gt;
+vty_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
     //&amp;ldquo;dev/tty0&amp;rdquo;&lt;br /&gt;
-    cdev_init(&amp;amp;vc0_cdev, console_fops);
-    //&amp;ldquo;/dev/ttyN&amp;rdquo;
-    tty_register_driver-&amp;gt;
-    {
-        // What does tty_register_driver do ?
-        // Alloc and register chr dev region.
-        // Add cdev with tty_ops and above region.
-        // Register tty device
-        // Why do we register tty devices?
-        // These devices must be used in some place.
-        // After registering itself, the driver registers the devices it controls through the tty_register_device function.
-        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.
-        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
-        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
-        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)
-        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct
-        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.
-        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
-    }
-    kbd_init
-}
-}
-device_init:serial8250_init-&amp;gt;
-{
-// In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;
-// dmesg |grep Serial
-// [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled
-// serial8250.c -&amp;gt; tty_io.c
-serial8250_reg.nr = UART_NR;
-ret = uart_register_driver(&amp;amp;serial8250_reg);
-tty_driver set to uart_driver by uart_register_driver -&amp;gt;
-{
-    drv-&amp;gt;state = kzalloc        //uart_state
-    normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg
-    tty_set_operations(normal, &amp;amp;uart_ops);
-    struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port
-    tty_port_init(port);
-    port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port
-    // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.
-    static struct uart_driver serial8250_reg = {
-        .owner                  = THIS_MODULE,
-        .driver_name            = &amp;ldquo;serial&amp;rdquo;,
-        .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,
-        .major                  = TTY_MAJOR,
-        .minor                  = 64,
-        .cons                   = SERIAL8250_CONSOLE,
-    };
+    cdev_init(&amp;amp;vc0_cdev, console_fops);&lt;br /&gt;
+    //&amp;ldquo;/dev/ttyN&amp;rdquo;&lt;br /&gt;
+    tty_register_driver-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        // What does tty_register_driver do ?&lt;br /&gt;
+        // Alloc and register chr dev region.&lt;br /&gt;
+        // Add cdev with tty_ops and above region.&lt;br /&gt;
+        // Register tty device&lt;br /&gt;
+        // Why do we register tty devices?&lt;br /&gt;
+        // These devices must be used in some place.&lt;br /&gt;
+        // After registering itself, the driver registers the devices it controls through the tty_register_device function.&lt;br /&gt;
+        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.&lt;br /&gt;
+        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);&lt;br /&gt;
+        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class&lt;br /&gt;
+        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)&lt;br /&gt;
+        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct&lt;br /&gt;
+        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.&lt;br /&gt;
+        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);&lt;br /&gt;
+    }&lt;br /&gt;
+    kbd_init&lt;br /&gt;
+}&lt;br /&gt;
+}&lt;br /&gt;
+device_init:serial8250_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+// In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;&lt;br /&gt;
+// dmesg |grep Serial&lt;br /&gt;
+// [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled&lt;br /&gt;
+// serial8250.c -&amp;gt; tty_io.c&lt;br /&gt;
+serial8250_reg.nr = UART_NR;&lt;br /&gt;
+ret = uart_register_driver(&amp;amp;serial8250_reg);&lt;br /&gt;
+tty_driver set to uart_driver by uart_register_driver -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    drv-&amp;gt;state = kzalloc        //uart_state&lt;br /&gt;
+    normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg&lt;br /&gt;
+    tty_set_operations(normal, &amp;amp;uart_ops);&lt;br /&gt;
+    struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port&lt;br /&gt;
+    tty_port_init(port);&lt;br /&gt;
+    port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port&lt;br /&gt;
+    // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.&lt;br /&gt;
+    static struct uart_driver serial8250_reg = {&lt;br /&gt;
+        .owner                  = THIS_MODULE,&lt;br /&gt;
+        .driver_name            = &amp;ldquo;serial&amp;rdquo;,&lt;br /&gt;
+        .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,&lt;br /&gt;
+        .major                  = TTY_MAJOR,&lt;br /&gt;
+        .minor                  = 64,&lt;br /&gt;
+        .cons                   = SERIAL8250_CONSOLE,&lt;br /&gt;
+    };&lt;br /&gt;
     retval = tty_register_driver(normal); -&amp;gt; register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name) //32, ttyS?*? should be tty_ops&lt;/p&gt;
 
-&lt;p&gt;}
-serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);
+&lt;p&gt;}&lt;br /&gt;
+serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);&lt;br /&gt;
 }&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;nucleus
-tty_write-&amp;gt;ld-&amp;gt;ops-&amp;gt;write=n_tty_write-&amp;gt;(tty_struct tty-&amp;gt;ops-&amp;gt;write)=uart_write-&amp;gt;
-{
-struct uart_state *state = tty-&amp;gt;driver_data;
-port = state-&amp;gt;uart_port;
-circ = &amp;amp;state-&amp;gt;xmit;
-memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);
-uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??
+&lt;li&gt;&lt;p&gt;nucleus&lt;br /&gt;
+tty_write-&amp;gt;ld-&amp;gt;ops-&amp;gt;write=n_tty_write-&amp;gt;(tty_struct tty-&amp;gt;ops-&amp;gt;write)=uart_write-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+struct uart_state *state = tty-&amp;gt;driver_data;&lt;br /&gt;
+port = state-&amp;gt;uart_port;&lt;br /&gt;
+circ = &amp;amp;state-&amp;gt;xmit;&lt;br /&gt;
+memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);&lt;br /&gt;
+uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??&lt;br /&gt;
 }&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;what-about-pseudoterminal:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about Pseudoterminal&lt;/h1&gt;
 
-&lt;p&gt;/dev/ptmx is the &amp;ldquo;pseudo-terminal master multiplexer&amp;rdquo;. from wikipedia
-static struct tty_driver *ptm_driver;
-static struct tty_driver *pts_driver;
-module_init(pty_init)-&amp;gt;unix98_pty_init-&amp;gt;
-{
-    tty_set_operations(ptm_driver, &amp;amp;ptm_unix98_ops);
-    tty_register_driver(ptm_driver)
-    tty_set_operations(pts_driver, &amp;amp;pty_unix98_ops);
-    tty_register_driver(pts_driver)
-    ptmx_fops = tty_fops;
-    ptmx_fops.open = ptmx_open;
-    cdev_init(&amp;amp;ptmx_cdev, &amp;amp;ptmx_fops);
+&lt;p&gt;/dev/ptmx is the &amp;ldquo;pseudo-terminal master multiplexer&amp;rdquo;. from wikipedia&lt;br /&gt;
+static struct tty_driver *ptm_driver;&lt;br /&gt;
+static struct tty_driver *pts_driver;&lt;br /&gt;
+module_init(pty_init)-&amp;gt;unix98_pty_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    tty_set_operations(ptm_driver, &amp;amp;ptm_unix98_ops);&lt;br /&gt;
+    tty_register_driver(ptm_driver)&lt;br /&gt;
+    tty_set_operations(pts_driver, &amp;amp;pty_unix98_ops);&lt;br /&gt;
+    tty_register_driver(pts_driver)&lt;br /&gt;
+    ptmx_fops = tty_fops;&lt;br /&gt;
+    ptmx_fops.open = ptmx_open;&lt;br /&gt;
+    cdev_init(&amp;amp;ptmx_cdev, &amp;amp;ptmx_fops);&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;How to use ptmx?&lt;/li&gt;
+&lt;li&gt;How to use ptmx?&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;tty-drivers:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;tty drivers&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;cat /proc/tty/drivers
-/dev/tty             /dev/tty        5       0 system:/dev/tty
-/dev/console         /dev/console    5       1 system:console
-/dev/ptmx            /dev/ptmx       5       2 system
-/dev/vc/0            /dev/vc/0       4       0 system:vtmaster
-usbserial            /dev/ttyUSB   188 0-511 serial
-serial               /dev/ttyS       4 64-95 serial
-pty_slave            /dev/pts      136 0-1048575 pty:slave
-pty_master           /dev/ptm      128 0-1048575 pty:master
-unknown              /dev/tty        4 1-63 console&lt;/li&gt;
+&lt;li&gt;cat /proc/tty/drivers&lt;br /&gt;
+/dev/tty             /dev/tty        5       0 system:/dev/tty&lt;br /&gt;
+/dev/console         /dev/console    5       1 system:console&lt;br /&gt;
+/dev/ptmx            /dev/ptmx       5       2 system&lt;br /&gt;
+/dev/vc/0            /dev/vc/0       4       0 system:vtmaster&lt;br /&gt;
+usbserial            /dev/ttyUSB   188 0-511 serial&lt;br /&gt;
+serial               /dev/ttyS       4 64-95 serial&lt;br /&gt;
+pty_slave            /dev/pts      136 0-1048575 pty:slave&lt;br /&gt;
+pty_master           /dev/ptm      128 0-1048575 pty:master&lt;br /&gt;
+unknown              /dev/tty        4 1-63 console&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;question:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Question?&lt;/h1&gt;
@@ -524,13 +524,13 @@ unknown              /dev/tty        4 1-63 console&lt;/li&gt;
 
 &lt;h1 id=&#34;backup:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;Backup&lt;/h1&gt;
 
-&lt;p&gt;./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &amp;ldquo;/dev/vc/0&amp;rdquo;) &amp;lt; 0)
-./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &amp;ldquo;vcs&amp;rdquo;, &amp;amp;vcs_fops))
-./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name);
-./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&amp;gt;num);
-./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&amp;gt;major, driver-&amp;gt;minor_start),
-./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)
-./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)
+&lt;p&gt;./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &amp;ldquo;/dev/vc/0&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
+./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &amp;ldquo;vcs&amp;rdquo;, &amp;amp;vcs_fops))&lt;br /&gt;
+./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name);&lt;br /&gt;
+./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&amp;gt;num);&lt;br /&gt;
+./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&amp;gt;major, driver-&amp;gt;minor_start),&lt;br /&gt;
+./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
+./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
 ./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
 </description>
     </item>
@@ -547,130 +547,130 @@ unknown              /dev/tty        4 1-63 console&lt;/li&gt;
 
 &lt;h1 id=&#34;contents:4ccc61562af88da39fe562fcf76d50be&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;What basic initializations should be perfomed when power on?
-How do we load the kernel to memory?
-What does kernel do when kernel boot.
-MBR vs BIOS?
-PC vs embedded
-Kernel init
-before start_kernel
-start_kernel
+&lt;p&gt;What basic initializations should be perfomed when power on?&lt;br /&gt;
+How do we load the kernel to memory?&lt;br /&gt;
+What does kernel do when kernel boot.&lt;br /&gt;
+MBR vs BIOS?&lt;br /&gt;
+PC vs embedded&lt;br /&gt;
+Kernel init&lt;br /&gt;
+before start_kernel&lt;br /&gt;
+start_kernel&lt;br /&gt;
 reset_init &amp;amp; kernel_init&lt;/p&gt;
 
 &lt;h1 id=&#34;p4080-board:4ccc61562af88da39fe562fcf76d50be&#34;&gt;p4080 Board&lt;/h1&gt;
 
-&lt;p&gt;PBL
-1. initialize I2C, SPI, eLBC, eSDHC.
-2. Load RCW and boot init commands from above.
+&lt;p&gt;PBL&lt;br /&gt;
+1. initialize I2C, SPI, eLBC, eSDHC.&lt;br /&gt;
+2. Load RCW and boot init commands from above.&lt;br /&gt;
 3. write date to conf register and memory&lt;/p&gt;
 
 &lt;h1 id=&#34;config:4ccc61562af88da39fe562fcf76d50be&#34;&gt;config&lt;/h1&gt;
 
-&lt;p&gt;CCSRBAR -&amp;gt; CCSR
+&lt;p&gt;CCSRBAR -&amp;gt; CCSR&lt;br /&gt;
 default is 0x0_FE00_0000&lt;br /&gt;
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).
-CCSRBAR always points to itself.
+CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).&lt;br /&gt;
+CCSRBAR always points to itself.&lt;br /&gt;
 holdoff&lt;/p&gt;
 
 &lt;h1 id=&#34;u-boot:4ccc61562af88da39fe562fcf76d50be&#34;&gt;u-boot&lt;/h1&gt;
 
 &lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
 
-&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;
-{
-bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;
-&amp;amp;
-boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =
-&amp;amp;
-boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;
+&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;&lt;br /&gt;
+&amp;amp;&lt;br /&gt;
+boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =&lt;br /&gt;
+&amp;amp;&lt;br /&gt;
+boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;&lt;br /&gt;
+board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;h1 id=&#34;ppc-multicore-booting:4ccc61562af88da39fe562fcf76d50be&#34;&gt;PPC multicore booting&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;/li&gt;
-&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;/li&gt;
-&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;/li&gt;
+&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;CCSRBAR
-MPC86xx_MCM_OFFSET
+&lt;p&gt;CCSRBAR&lt;br /&gt;
+MPC86xx_MCM_OFFSET&lt;br /&gt;
 srio_boot_master_release_slave&lt;/p&gt;
 
-&lt;p&gt;uboot-&amp;gt;
+&lt;p&gt;uboot-&amp;gt;&lt;br /&gt;
 set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
 
-&lt;p&gt;core0 run, 2nd cores holdoff
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp
-core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500
-board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {
-&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page
-bootpg = BPTR = __secondary_start_page
-plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation
-}
-2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page
-kernel-&amp;gt;
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address
-2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle
-arch/powerpc/kernel/head_fsl_booke.S
-U-boot logs:
-Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table
-address.
-SPAG : fdt_fixup_fman_firmware, 567^M^M
-^M^M
-..r.^M^M
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M
-VDBG: Secondary cores are not held in reset.^M^M
-Kernel Logs:
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M
-smp: failed starting cpu 1 (rc -2)^M^M
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M
-smp: failed starting cpu 2 (rc -2)^M^M
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M
-smp: failed starting cpu 3 (rc -2)^M^M
-Brought up 1 CPUs^M^M
+&lt;p&gt;core0 run, 2nd cores holdoff&lt;br /&gt;
+core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp&lt;br /&gt;
+core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500&lt;br /&gt;
+board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {&lt;br /&gt;
+&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page&lt;br /&gt;
+__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page&lt;br /&gt;
+bootpg = BPTR = __secondary_start_page&lt;br /&gt;
+plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation&lt;br /&gt;
+}&lt;br /&gt;
+2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page&lt;br /&gt;
+kernel-&amp;gt;&lt;br /&gt;
+core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address&lt;br /&gt;
+2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle&lt;br /&gt;
+arch/powerpc/kernel/head_fsl_booke.S&lt;br /&gt;
+U-boot logs:&lt;br /&gt;
+Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table&lt;br /&gt;
+address.&lt;br /&gt;
+SPAG : fdt_fixup_fman_firmware, 567^M^M&lt;br /&gt;
+^M^M&lt;br /&gt;
+..r.^M^M&lt;br /&gt;
+VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M&lt;br /&gt;
+VDBG: Secondary cores are not held in reset.^M^M&lt;br /&gt;
+Kernel Logs:&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M&lt;br /&gt;
+smp: failed starting cpu 1 (rc -2)^M^M&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M&lt;br /&gt;
+smp: failed starting cpu 2 (rc -2)^M^M&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M&lt;br /&gt;
+smp: failed starting cpu 3 (rc -2)^M^M&lt;br /&gt;
+Brought up 1 CPUs^M^M&lt;br /&gt;
 devtmpfs: initialized^M^M&lt;/p&gt;
 
-&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check
+&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check&lt;br /&gt;
 if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
 
 &lt;p&gt;Here are the logs..&lt;/p&gt;
 
 &lt;p&gt;I printed pa in %lx since the outout of &lt;strong&gt;pa(&lt;/strong&gt;early_start) is in long unsigned int.&lt;/p&gt;
 
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
-Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50
-Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
-Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack
-smp: failed starting cpu 1 (rc -2)
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
-Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50
-Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
-Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack
-smp: failed starting cpu 2 (rc -2)
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
-Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50
-Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
-Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack
-smp: failed starting cpu 3 (rc -2)
-I don’t see the following print in u-boot..
- 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,
- 70                                                 &amp;amp;val, sizeof(val));
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0&lt;br /&gt;
+Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50&lt;br /&gt;
+Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000&lt;br /&gt;
+Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack&lt;br /&gt;
+smp: failed starting cpu 1 (rc -2)&lt;br /&gt;
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0&lt;br /&gt;
+Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50&lt;br /&gt;
+Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200&lt;br /&gt;
+Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack&lt;br /&gt;
+smp: failed starting cpu 2 (rc -2)&lt;br /&gt;
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0&lt;br /&gt;
+Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50&lt;br /&gt;
+Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a&lt;br /&gt;
+Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack&lt;br /&gt;
+smp: failed starting cpu 3 (rc -2)&lt;br /&gt;
+I don’t see the following print in u-boot..&lt;br /&gt;
+ 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,&lt;br /&gt;
+ 70                                                 &amp;amp;val, sizeof(val));&lt;br /&gt;
 + printf(&amp;ldquo;Firo u-boot:cpu release addr %p, value %x\n&amp;rdquo;, &amp;amp;val, val);&lt;/p&gt;
 
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack
-smp: failed starting cpu 1 (rc -2)
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack
-smp: failed starting cpu 2 (rc -2)
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack
+&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 1 to ack&lt;br /&gt;
+smp: failed starting cpu 1 (rc -2)&lt;br /&gt;
+Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 2 to ack&lt;br /&gt;
+smp: failed starting cpu 2 (rc -2)&lt;br /&gt;
+Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0&lt;br /&gt;
+smp_85xx_kick_cpu: timeout waiting for core 3 to ack&lt;br /&gt;
 smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
 </description>
     </item>
@@ -689,13 +689,13 @@ smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:aba878e576894cc4457876fdf276811e&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;Why complier can manipulate the address of vriables?
+&lt;p&gt;Why complier can manipulate the address of vriables?&lt;br /&gt;
 What is the address in lds(??) file?&lt;/p&gt;
 
 &lt;h1 id=&#34;build-automation:aba878e576894cc4457876fdf276811e&#34;&gt;Build automation&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Make
+&lt;li&gt;&lt;p&gt;Make&lt;br /&gt;
 make cynthia&lt;/p&gt;
 
 &lt;h2 id=&#34;kbuild:aba878e576894cc4457876fdf276811e&#34;&gt;kbuild&lt;/h2&gt;&lt;/li&gt;
@@ -712,47 +712,47 @@ make cynthia&lt;/p&gt;
 
 &lt;h2 id=&#34;yocto:aba878e576894cc4457876fdf276811e&#34;&gt;yocto&lt;/h2&gt;
 
-&lt;p&gt;make ARCH=arm menuconfig
-##build signle kernel module
-make menuconfig
-make oldconfig &amp;amp;&amp;amp; make prepare
-make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1
+&lt;p&gt;make ARCH=arm menuconfig&lt;br /&gt;
+##build signle kernel module&lt;br /&gt;
+make menuconfig&lt;br /&gt;
+make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
+make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
 make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
 
 &lt;h1 id=&#34;compile-construction:aba878e576894cc4457876fdf276811e&#34;&gt;Compile construction&lt;/h1&gt;
 
-&lt;p&gt;Understand pl deeply
+&lt;p&gt;Understand pl deeply&lt;br /&gt;
 how to translate it into machine code for specific CPU&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;gcc
--E -S -c
--I -L -l
--ansi
--fsyntax-only
--Werror
--save-temps
--H: show all header used
--v
--Wall
--fPIC: for shared library
--Q: print function and statisc?
--Wextra: 用处不大.
--U: undefine a preprocessor macro.
--pipe: make compilation faster, replace xx.S with |
--Wpadded: we can rearrange the fields of structure to make the structure smaller
--time
--x c: c language
--: stdin
-asmlinkage
-However, for C functions invoked from assembly code,
-we should explicitly declare the function&amp;rsquo;s calling convention,
-because the parameter passing code in assembly side has been fixed.
-##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;
+&lt;li&gt;&lt;p&gt;gcc&lt;br /&gt;
+-E -S -c&lt;br /&gt;
+-I -L -l&lt;br /&gt;
+-ansi&lt;br /&gt;
+-fsyntax-only&lt;br /&gt;
+-Werror&lt;br /&gt;
+-save-temps&lt;br /&gt;
+-H: show all header used&lt;br /&gt;
+-v&lt;br /&gt;
+-Wall&lt;br /&gt;
+-fPIC: for shared library&lt;br /&gt;
+-Q: print function and statisc?&lt;br /&gt;
+-Wextra: 用处不大.&lt;br /&gt;
+-U: undefine a preprocessor macro.&lt;br /&gt;
+-pipe: make compilation faster, replace xx.S with |&lt;br /&gt;
+-Wpadded: we can rearrange the fields of structure to make the structure smaller&lt;br /&gt;
+-time&lt;br /&gt;
+-x c: c language&lt;br /&gt;
+-: stdin&lt;br /&gt;
+asmlinkage&lt;br /&gt;
+However, for C functions invoked from assembly code,&lt;br /&gt;
+we should explicitly declare the function&amp;rsquo;s calling convention,&lt;br /&gt;
+because the parameter passing code in assembly side has been fixed.&lt;br /&gt;
+##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;&lt;br /&gt;
 ##Symbol table&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;System.map less
-When you compile the kernel
-nm vmlinux
+&lt;li&gt;&lt;p&gt;System.map less&lt;br /&gt;
+When you compile the kernel&lt;br /&gt;
+nm vmlinux&lt;br /&gt;
 readelf -s&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;
@@ -774,16 +774,16 @@ readelf -s&lt;/p&gt;&lt;/li&gt;
       <guid>http://firoyang.org/review/book_list/</guid>
       <description>
 
-&lt;p&gt;我在大连民族学院学的本科计算机专业,主攻哲学,毕业3年工作2年左右.
+&lt;p&gt;我在大连民族学院学的本科计算机专业,主攻哲学,毕业3年工作2年左右.&lt;br /&gt;
 推荐一些我觉得好的书.&lt;/p&gt;
 
 &lt;h1 id=&#34;computer-science:55cb7bf81f2a4f67e449fcf14cb41572&#34;&gt;Computer science&lt;/h1&gt;
 
-&lt;p&gt;Code: The hidden language of computer hardware and software
+&lt;p&gt;Code: The hidden language of computer hardware and software&lt;br /&gt;
 Digital Design and Computer Architecture 2nd Edition&lt;/p&gt;
 
-&lt;p&gt;未看口碑好:
-Computer Organization and Design, Fifth Edition
+&lt;p&gt;未看口碑好:&lt;br /&gt;
+Computer Organization and Design, Fifth Edition&lt;br /&gt;
 ARM System-on-Chip Architecture (2nd Edition)&lt;/p&gt;
 
 &lt;h1 id=&#34;philosophy:55cb7bf81f2a4f67e449fcf14cb41572&#34;&gt;Philosophy&lt;/h1&gt;
@@ -800,128 +800,128 @@ ARM System-on-Chip Architecture (2nd Edition)&lt;/p&gt;
       <guid>http://firoyang.org/cs/arch/</guid>
       <description>
 
-&lt;p&gt;##Reference
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存
-《模拟电子技术基础 童诗白 第四版》第一章前半部分
-Structured Computer Organization 6th Edition
-Digital Design and Computer Architecture 2nd Edition
-Computer Organization and Design 5th Edition
-Write Great Code: Volume 1: Understanding the Machine
-See MIPS run
+&lt;p&gt;##Reference&lt;br /&gt;
+Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
+《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
+Structured Computer Organization 6th Edition&lt;br /&gt;
+Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;
+Computer Organization and Design 5th Edition&lt;br /&gt;
+Write Great Code: Volume 1: Understanding the Machine&lt;br /&gt;
+See MIPS run&lt;br /&gt;
 Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
 Microelectronics&lt;/p&gt;
 
 &lt;h1 id=&#34;computer-architecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer architecture&lt;/h1&gt;
 
-&lt;p&gt;cpu
-memory
+&lt;p&gt;cpu&lt;br /&gt;
+memory&lt;br /&gt;
 I/O&lt;/p&gt;
 
 &lt;h1 id=&#34;contents:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Contents&lt;/h1&gt;
 
-&lt;p&gt;I/O IC
-Assembly language
-Interrupt
-ISA
-Machine language
-Interpreting Machine Language Code
-Microarchitecture
-Digital Logic circuit(Logic gates)
-ALU
-Computer memory
-Register/Flip-flop
-Cache/SRAM
-DRAM/capacitor
-Analog Circuit
+&lt;p&gt;I/O IC&lt;br /&gt;
+Assembly language&lt;br /&gt;
+Interrupt&lt;br /&gt;
+ISA&lt;br /&gt;
+Machine language&lt;br /&gt;
+Interpreting Machine Language Code&lt;br /&gt;
+Microarchitecture&lt;br /&gt;
+Digital Logic circuit(Logic gates)&lt;br /&gt;
+ALU&lt;br /&gt;
+Computer memory&lt;br /&gt;
+Register/Flip-flop&lt;br /&gt;
+Cache/SRAM&lt;br /&gt;
+DRAM/capacitor&lt;br /&gt;
+Analog Circuit&lt;br /&gt;
 BJT FET Didoe&lt;/p&gt;
 
 &lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
 
-&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle
-Semantics in computer science: In programming language theory, semantics is the field concerned
-with the rigorous mathematical study of the meaning of programming languages.
-Language primitive
-ISA: memory model, registers, data types, instructions, word size(?).
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.
-The interface between hardware and software.
-Arm v7
-word = instruction
+&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle&lt;br /&gt;
+Semantics in computer science: In programming language theory, semantics is the field concerned&lt;br /&gt;
+with the rigorous mathematical study of the meaning of programming languages.&lt;br /&gt;
+Language primitive&lt;br /&gt;
+ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;br /&gt;
+The interface between hardware and software.&lt;br /&gt;
+Arm v7&lt;br /&gt;
+word = instruction&lt;br /&gt;
 vocabulary = instruction set&lt;/p&gt;
 
 &lt;h2 id=&#34;microarchitecture:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture&lt;/h2&gt;
 
-&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.
-control unit/decoder
-Microcode
-How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?
-What is the pipeline?
+&lt;p&gt;datapath: memories, registers, ALUs, multiplexers.&lt;br /&gt;
+control unit/decoder&lt;br /&gt;
+Microcode&lt;br /&gt;
+How to gurante that every control signal arrive the destnations before the data that will also pass through the destination?&lt;br /&gt;
+What is the pipeline?&lt;br /&gt;
 architectural state (the program counter and registers&lt;/p&gt;
 
 &lt;h1 id=&#34;logic-circuit:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Logic circuit&lt;/h1&gt;
 
-&lt;p&gt;Sequential logic
+&lt;p&gt;Sequential logic&lt;br /&gt;
 Combinational logic&lt;/p&gt;
 
 &lt;h2 id=&#34;computer-memory:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Computer memory&lt;/h2&gt;
 
-&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys
-What is NOR gates?
+&lt;p&gt;flip-flops &amp;amp; latches, register files(?), memorys&lt;br /&gt;
+What is NOR gates?&lt;br /&gt;
 What is the implement of gate?&lt;/p&gt;
 
-&lt;p&gt;data type
-instructions: 算术, 控制, 数据传送
-register file
-addressing modes(include memory mode)
-interrupt and exception handling,
+&lt;p&gt;data type&lt;br /&gt;
+instructions: 算术, 控制, 数据传送&lt;br /&gt;
+register file&lt;br /&gt;
+addressing modes(include memory mode)&lt;br /&gt;
+interrupt and exception handling,&lt;br /&gt;
 external I/O&lt;/p&gt;
 
-&lt;p&gt;#x86 Interrupt
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.
-##Hardware interrupts
-are used by devices to communicate that they require attention from the operating system.
-asynchronus
-more details in init_IRQ() or set_irq() in driver.
-##software interrupt
-synchronus
-more details in trap_init().
-* exception or trap
-is caused either by an exceptional condition in the processor itself,
-divide zero painc?
-* special instruction, for example INT 0x80
+&lt;p&gt;#x86 Interrupt&lt;br /&gt;
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
+##Hardware interrupts&lt;br /&gt;
+are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
+asynchronus&lt;br /&gt;
+more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
+##software interrupt&lt;br /&gt;
+synchronus&lt;br /&gt;
+more details in trap_init().&lt;br /&gt;
+* exception or trap&lt;br /&gt;
+is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
+divide zero painc?&lt;br /&gt;
+* special instruction, for example INT 0x80&lt;br /&gt;
 or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
 
 &lt;h2 id=&#34;microarchitecture-1:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Microarchitecture.&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC
-IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.
-结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.
-数据冒险, 指令件参数依赖造成的问题.
-控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;/li&gt;
-&lt;li&gt;branch prediction.
-dsp用条件执行替代跳转.&lt;/li&gt;
-&lt;li&gt;out-of-order
-乱序执行相对于顺序执行.
-无关指令可以任意执行.&lt;/li&gt;
-&lt;li&gt;superscalar
-instruction cycle, 什么是cycle.&lt;/li&gt;
-&lt;li&gt;data level parallelism&lt;/li&gt;
-&lt;li&gt;thread level parallelism
-超线程, 同步问题.&lt;/li&gt;
+&lt;li&gt;pipeline, 为什么流水工作效率高?复用? 一整条流水线对应一种指令:运算指令(算术 控制) or 数据传输指令(load sotre)对于RISC&lt;br /&gt;
+IF阶段也可以访问存储器,要和load sotre分开. IF是对指令的读取. load store是对数据, 这是icache和dcache产生的原因, FIXME.&lt;br /&gt;
+结构冒险说的就是i/dcache没分开, IF 和MEM冲突了.&lt;br /&gt;
+数据冒险, 指令件参数依赖造成的问题.&lt;br /&gt;
+控制冒险, 流水越深,危害越大.软件排空流水的方法是加nop, x86硬件排空,分支预测减少危害.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;branch prediction.&lt;br /&gt;
+dsp用条件执行替代跳转.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;out-of-order&lt;br /&gt;
+乱序执行相对于顺序执行.&lt;br /&gt;
+无关指令可以任意执行.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;superscalar&lt;br /&gt;
+instruction cycle, 什么是cycle.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;data level parallelism&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;thread level parallelism&lt;br /&gt;
+超线程, 同步问题.&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;cache
-cache miss
-住要看cache, 乱序, 还有lock对执行的影响.
-temporal locality: for icache
-spatial locality: array
-第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.
-##Cache
-a cache is a component that stores data so future requests for that data can be served faster;
-the data stored in a cache might be the results of an earlier computation,
-or the duplicates of data stored elsewhere.
-###CPU cache
-A CPU cache is a cache used by the central processing unit (CPU) of a computer
+&lt;li&gt;&lt;p&gt;cache&lt;br /&gt;
+cache miss&lt;br /&gt;
+住要看cache, 乱序, 还有lock对执行的影响.&lt;br /&gt;
+temporal locality: for icache&lt;br /&gt;
+spatial locality: array&lt;br /&gt;
+第一次访问内存里arry[0]很慢, 可被load cacheline 后其他数组成员访问延时就飞了.&lt;br /&gt;
+##Cache&lt;br /&gt;
+a cache is a component that stores data so future requests for that data can be served faster;&lt;br /&gt;
+the data stored in a cache might be the results of an earlier computation,&lt;br /&gt;
+or the duplicates of data stored elsewhere.&lt;br /&gt;
+###CPU cache&lt;br /&gt;
+A CPU cache is a cache used by the central processing unit (CPU) of a computer&lt;br /&gt;
 to reduce the average time to access data from the main memory.&lt;/p&gt;
 
 &lt;h4 id=&#34;associativity-cpu-cache-algorithms:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Associativity - CPU Cache algorithms&lt;/h4&gt;&lt;/li&gt;
@@ -930,47 +930,47 @@ to reduce the average time to access data from the main memory.&lt;/p&gt;
 
 &lt;h4 id=&#34;cache-coherence:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Cache coherence&lt;/h4&gt;
 
-&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.
+&lt;p&gt;Cache coherence is the consistency of shared resource data that ends up stored in multiple local caches.&lt;br /&gt;
 Cache conerence is mantained by mostly archtecure like cpu&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;MSI
+&lt;li&gt;&lt;p&gt;MSI&lt;br /&gt;
 ####Cache type&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Instructin cache&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Data cache&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer
-###GPU cache
-###Disk cache
+&lt;li&gt;&lt;p&gt;TLB - Translation lookaside buffer&lt;br /&gt;
+###GPU cache&lt;br /&gt;
+###Disk cache&lt;br /&gt;
 ###Web cache&lt;/p&gt;
 
 &lt;h2 id=&#34;fixme-concepts:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;FIXME concepts&lt;/h2&gt;
 
-&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码
-Numeral system: 手指头　-&amp;gt; 二进制
-logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农
-A Symbolic Analysis of Relay and Switching Circuits
-The Mathematical Theory of Communication
-触发器 英国射电物理学家 William Henry Eccles
+&lt;p&gt;code: 手电筒 -&amp;gt;　莫尔斯码&lt;br /&gt;
+Numeral system: 手指头　-&amp;gt; 二进制&lt;br /&gt;
+logic: 三段论 -&amp;gt; bool -&amp;gt; 电路开关 亚里士多德 布尔 香农&lt;br /&gt;
+A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
+The Mathematical Theory of Communication&lt;br /&gt;
+触发器 英国射电物理学家 William Henry Eccles&lt;br /&gt;
 晶体管&lt;/p&gt;
 
 &lt;h1 id=&#34;phy-the-physical-layer:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;PHY &amp;ndash; The physical layer&lt;/h1&gt;
 
 &lt;h2 id=&#34;introductions:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Introductions&lt;/h2&gt;
 
-&lt;p&gt;Fromwikipedia:
-&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]
-&amp;gt; The implementation of this layer is often termed PHY.
-&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;
-PCS
+&lt;p&gt;Fromwikipedia:&lt;br /&gt;
+&amp;gt; In the seven-layer OSI model of computer networking, the physical layer or layer 1 is the first (lowest) layer.[1]&lt;br /&gt;
+&amp;gt; The implementation of this layer is often termed PHY.&lt;br /&gt;
+&amp;gt; The physical layer consists of the basic networking hardware transmission technologies of a network.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/phy.txt&#34;&gt;https://www.kernel.org/doc/Documentation/networking/phy.txt&lt;/a&gt;&lt;br /&gt;
+PCS&lt;br /&gt;
 PMD&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
 
-&lt;p&gt;serial communication: UART(16550) + RS-232
+&lt;p&gt;serial communication: UART(16550) + RS-232&lt;br /&gt;
 parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
 </description>
     </item>
@@ -985,23 +985,23 @@ parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
 
 &lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
 
-&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.
-一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,
-*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态
-那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全
+&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.&lt;br /&gt;
+一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,&lt;br /&gt;
+*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态&lt;br /&gt;
+那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全&lt;br /&gt;
 转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
                         — William Gibson
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.
-想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在
+&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.&lt;br /&gt;
+想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在&lt;br /&gt;
 时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
 
-&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.
-UTC/GMT
-Based on caesium microwave atomic clock
+&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.&lt;br /&gt;
+UTC/GMT&lt;br /&gt;
+Based on caesium microwave atomic clock&lt;br /&gt;
 Leap second&lt;/p&gt;
 
 &lt;h2 id=&#34;genus-differentia-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;Genus-differentia definition&lt;/h2&gt;
@@ -1010,69 +1010,69 @@ Leap second&lt;/p&gt;
 
 &lt;h2 id=&#34;功用定义:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;功用定义&lt;/h2&gt;
 
-&lt;p&gt;获取时间
-timer
-sleep ?
+&lt;p&gt;获取时间&lt;br /&gt;
+timer&lt;br /&gt;
+sleep ?&lt;br /&gt;
 update sched info&lt;/p&gt;
 
 &lt;h2 id=&#34;发生定义-设计-etymology-history-operational-definition:eefdcd66b28c2b86ef84bba398f2d59a&#34;&gt;发生定义/设计   etymology, history Operational definition&lt;/h2&gt;
 
-&lt;p&gt;timekeeping/计时:时刻．
-clock source: 时间之源, 表针之力.
-clock event: 闹铃之力, 经过tick展现能力.
-tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.
-tickless:
-for timer: use HW timer one shot, set next.
-for update time: in above HW timer, not good
-for sched: for priority distributed in time slice, use timer.
-dynamic tick/no HZ:
-No HZ in idle
-No HZ while only 1 process running for HPC.
-tick devies 就是clock event包了层虎皮.
-tick broadcast framework:  based on tick device
-clock: 可记录时间, 表盘.利用timekeeping
-timer: use clock. what about timer_list?
-timer_list: do in softirq
-* timekeeping aspect
-onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; \
-kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))
-nucleus:used by clock see init_posix_timers and update_wall_time and sys_time
+&lt;p&gt;timekeeping/计时:时刻．&lt;br /&gt;
+clock source: 时间之源, 表针之力.&lt;br /&gt;
+clock event: 闹铃之力, 经过tick展现能力.&lt;br /&gt;
+tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.&lt;br /&gt;
+tickless:&lt;br /&gt;
+for timer: use HW timer one shot, set next.&lt;br /&gt;
+for update time: in above HW timer, not good&lt;br /&gt;
+for sched: for priority distributed in time slice, use timer.&lt;br /&gt;
+dynamic tick/no HZ:&lt;br /&gt;
+No HZ in idle&lt;br /&gt;
+No HZ while only 1 process running for HPC.&lt;br /&gt;
+tick devies 就是clock event包了层虎皮.&lt;br /&gt;
+tick broadcast framework:  based on tick device&lt;br /&gt;
+clock: 可记录时间, 表盘.利用timekeeping&lt;br /&gt;
+timer: use clock. what about timer_list?&lt;br /&gt;
+timer_list: do in softirq&lt;br /&gt;
+* timekeeping aspect&lt;br /&gt;
+onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; \&lt;br /&gt;
+kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))&lt;br /&gt;
+nucleus:used by clock see init_posix_timers and update_wall_time and sys_time&lt;br /&gt;
 coda:&lt;/p&gt;
 
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;clock source aspect&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;tick device layer aspect
-per_cpu(tick_cpu_device, cpu)
-onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device
+&lt;li&gt;&lt;p&gt;tick device layer aspect&lt;br /&gt;
+per_cpu(tick_cpu_device, cpu)&lt;br /&gt;
+onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device&lt;br /&gt;
 nucleus: a38x_timer_interrupt-&amp;gt;a38x_clkevt.event_handler&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;tick broadcast framework
+&lt;li&gt;&lt;p&gt;tick broadcast framework&lt;br /&gt;
 onset:&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;clock aspect
-k_clock
-onset:init_posix_timers &amp;amp; init_posix_cpu_timers
+&lt;li&gt;&lt;p&gt;clock aspect&lt;br /&gt;
+k_clock&lt;br /&gt;
+onset:init_posix_timers &amp;amp; init_posix_cpu_timers&lt;br /&gt;
 nucleus: 用户-&amp;gt; posix_clock-&amp;gt;timepkeeping-&amp;gt;clock_socurce&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;timer aspect
-onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
-nucleus: common_timer_set
+&lt;li&gt;&lt;p&gt;timer aspect&lt;br /&gt;
+onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);&lt;br /&gt;
+nucleus: common_timer_set&lt;br /&gt;
 hrtimer_interrupt | (tick_handle_periodic-&amp;gt; tick_periodic-&amp;gt; update_process_times-&amp;gt;run_local_timers-&amp;gt;hrtimer_run_queues)-&amp;gt;__run_hrtimer-&amp;gt;timer.function = posix_timer_fn;(set in common_timer_set)&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;计算机概念
-system clock CLOCK_REALTIME CLOCK_MONOTONIC
+&lt;p&gt;计算机概念&lt;br /&gt;
+system clock CLOCK_REALTIME CLOCK_MONOTONIC&lt;br /&gt;
 time.h time_t=tm=timeval=timespec calendar time  clock_t&lt;/p&gt;
 
-&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function
-clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,
-clock event 通过timer来体现自己, timer面向使用者的onset,
-而clock event 则是偏向于nucleus and coda.
-timer: 标记不能立即执行的变化.
-clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.
-* kernel requirement
-linux的时间子系统要求硬件timer提供下面两种能力：
+&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function&lt;br /&gt;
+clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,&lt;br /&gt;
+clock event 通过timer来体现自己, timer面向使用者的onset,&lt;br /&gt;
+而clock event 则是偏向于nucleus and coda.&lt;br /&gt;
+timer: 标记不能立即执行的变化.&lt;br /&gt;
+clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.&lt;br /&gt;
+* kernel requirement&lt;br /&gt;
+linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
 一是free running的counter，此外需要能够在指定的counter值上产生中断的能力。&lt;/p&gt;
 </description>
     </item>
@@ -1117,144 +1117,144 @@ linux的时间子系统要求硬件timer提供下面两种能力：
 
 &lt;h2 id=&#34;top-conceptions:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Top conceptions&lt;/h2&gt;
 
-&lt;p&gt;因果律
-世界处在不稳定的状态. &amp;ndash; Firo
-世界的普遍不确定性 &amp;ndash; Firo Soros
-认知的unit是概念. &amp;ndash; Firo
-世界是复杂的, 不能仅仅一条道理就讲明白. &amp;ndash; Firo
-A theory is a perspective of understanding this world. Get more perspective to understanding the world:-)&amp;ndash; Firo
-In genearl, 认知过程就是一种perspective 转换到另一种perspective. &amp;ndash; Firo
-For example, mathematics, logic, computer science are all the theory and perspective:-) 这三种思维都要养成, 慢慢来. &amp;ndash; Firo
+&lt;p&gt;因果律&lt;br /&gt;
+世界处在不稳定的状态. &amp;ndash; Firo&lt;br /&gt;
+世界的普遍不确定性 &amp;ndash; Firo Soros&lt;br /&gt;
+认知的unit是概念. &amp;ndash; Firo&lt;br /&gt;
+世界是复杂的, 不能仅仅一条道理就讲明白. &amp;ndash; Firo&lt;br /&gt;
+A theory is a perspective of understanding this world. Get more perspective to understanding the world:-)&amp;ndash; Firo&lt;br /&gt;
+In genearl, 认知过程就是一种perspective 转换到另一种perspective. &amp;ndash; Firo&lt;br /&gt;
+For example, mathematics, logic, computer science are all the theory and perspective:-) 这三种思维都要养成, 慢慢来. &amp;ndash; Firo&lt;br /&gt;
 compile就是这样一种转换. &amp;ndash; Firo&lt;/p&gt;
 
 &lt;h2 id=&#34;criteria-and-benchmark-or-protype:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Criteria and benchmark or protype&lt;/h2&gt;
 
-&lt;p&gt;To attain perfect clearness in our thoughts of an object, then,
-we need only consider what conceivable effects of a practical kind the object
-may involve—what sensations we are to expect from it,
-and what reactions we must prepare. (1907: 29)
-        &amp;ndash; James,Pragmatism: A New Name for an Old way of Thinking
-视野要广能有多广要多广.
-你不需要掌握所有的内容, 你需要的是基础的general,重要的,常用的. Bound to James Pragmatism &amp;ndash; Firo
-准确的定义你的问题 &amp;ndash; Firo
-More rationality, less obseravtions. e.g. delete state_count of cpuidle_device. &amp;ndash; Firo
-Accept as true only what is indubitable. &amp;ndash; Descartes
-Falsifiability可证伪性 &amp;ndash; Popper
-批判性, 你所学的一切都是暂时性的,任何所学都有改口 驳斥 质疑的余地 &amp;ndash;Aaron Swartz,25:20
-一一性  &amp;ndash; Moritz Schlick
-合理性. &amp;ndash; Firo
-方法的可行性. &amp;ndash; Firo
-简单, 易操作, 可长久做下去. &amp;ndash; Engflunt
-容易理解, 易推导. &amp;ndash; Firo
-逻辑等价 &amp;ndash; Firo
-Completeness, consistency &amp;ndash; Logic
-繁忙的工作生活会令人身心愉悦 &amp;ndash; Firo
-Plan and record  &amp;ndash; Firo
-Multitasking  &amp;ndash; CS
-怎么样才算是学到了知识呢?
-1. 所有知识都不是stand alone的,孤立的知识是死知识,必须和你了解熟悉的知识建立等价的认知关系. &amp;ndash;Firo
-可以确认这个潜在可以和众多知识建立联系的知识就是逻辑,数学, 生活. &amp;ndash; Firo
-2. 要有醍醐灌顶的感觉.
-Quick!
+&lt;p&gt;To attain perfect clearness in our thoughts of an object, then,&lt;br /&gt;
+we need only consider what conceivable effects of a practical kind the object&lt;br /&gt;
+may involve—what sensations we are to expect from it,&lt;br /&gt;
+and what reactions we must prepare. (1907: 29)&lt;br /&gt;
+        &amp;ndash; James,Pragmatism: A New Name for an Old way of Thinking&lt;br /&gt;
+视野要广能有多广要多广.&lt;br /&gt;
+你不需要掌握所有的内容, 你需要的是基础的general,重要的,常用的. Bound to James Pragmatism &amp;ndash; Firo&lt;br /&gt;
+准确的定义你的问题 &amp;ndash; Firo&lt;br /&gt;
+More rationality, less obseravtions. e.g. delete state_count of cpuidle_device. &amp;ndash; Firo&lt;br /&gt;
+Accept as true only what is indubitable. &amp;ndash; Descartes&lt;br /&gt;
+Falsifiability可证伪性 &amp;ndash; Popper&lt;br /&gt;
+批判性, 你所学的一切都是暂时性的,任何所学都有改口 驳斥 质疑的余地 &amp;ndash;Aaron Swartz,25:20&lt;br /&gt;
+一一性  &amp;ndash; Moritz Schlick&lt;br /&gt;
+合理性. &amp;ndash; Firo&lt;br /&gt;
+方法的可行性. &amp;ndash; Firo&lt;br /&gt;
+简单, 易操作, 可长久做下去. &amp;ndash; Engflunt&lt;br /&gt;
+容易理解, 易推导. &amp;ndash; Firo&lt;br /&gt;
+逻辑等价 &amp;ndash; Firo&lt;br /&gt;
+Completeness, consistency &amp;ndash; Logic&lt;br /&gt;
+繁忙的工作生活会令人身心愉悦 &amp;ndash; Firo&lt;br /&gt;
+Plan and record  &amp;ndash; Firo&lt;br /&gt;
+Multitasking  &amp;ndash; CS&lt;br /&gt;
+怎么样才算是学到了知识呢?&lt;br /&gt;
+1. 所有知识都不是stand alone的,孤立的知识是死知识,必须和你了解熟悉的知识建立等价的认知关系. &amp;ndash;Firo&lt;br /&gt;
+可以确认这个潜在可以和众多知识建立联系的知识就是逻辑,数学, 生活. &amp;ndash; Firo&lt;br /&gt;
+2. 要有醍醐灌顶的感觉.&lt;br /&gt;
+Quick!&lt;br /&gt;
 如果dd做同样的事情, 他会怎么做了?&lt;/p&gt;
 
 &lt;h2 id=&#34;adverse-factors-of-congition:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Adverse factors of congition&lt;/h2&gt;
 
-&lt;p&gt;认知的缺陷, imperfect-understand, 彻底可错性. &amp;ndash;Firo Soros Popper
-别人(自己存在)认识的谬误性. &amp;ndash; Firo Soros
-个人 or Government 积累掩盖篡改历史的真相.
-越是大型的魔术表演，其门道往往就越是简单！人们认定不可能发生这种事的常识，固定观念往往孕育出盲点！&amp;ndash; 唐吉诃德·多弗朗明哥
-正义会胜？那是当然的吧，只有胜者，才是正义啊！&amp;ndash; 唐吉诃德·多弗朗明哥
+&lt;p&gt;认知的缺陷, imperfect-understand, 彻底可错性. &amp;ndash;Firo Soros Popper&lt;br /&gt;
+别人(自己存在)认识的谬误性. &amp;ndash; Firo Soros&lt;br /&gt;
+个人 or Government 积累掩盖篡改历史的真相.&lt;br /&gt;
+越是大型的魔术表演，其门道往往就越是简单！人们认定不可能发生这种事的常识，固定观念往往孕育出盲点！&amp;ndash; 唐吉诃德·多弗朗明哥&lt;br /&gt;
+正义会胜？那是当然的吧，只有胜者，才是正义啊！&amp;ndash; 唐吉诃德·多弗朗明哥&lt;br /&gt;
 基于问题思考可以客服重复, 用处小的知识信息耽误时间, 也能解决脱离实际, 学了很多无用功. &amp;ndash; Firo&lt;/p&gt;
 
 &lt;h2 id=&#34;object:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Object&lt;/h2&gt;
 
-&lt;p&gt;认知思考的对象一点不能超出思维的连贯性. &amp;ndash;Firo
-首先这个知识是个复杂的具体的内容且是隔离的独立的知识比如x86的lds. 直接看就很不舒服.  &amp;ndash;Firo
-应该看的是gnu ld关于script的基础还有地址relocation. &amp;ndash;Firo
+&lt;p&gt;认知思考的对象一点不能超出思维的连贯性. &amp;ndash;Firo&lt;br /&gt;
+首先这个知识是个复杂的具体的内容且是隔离的独立的知识比如x86的lds. 直接看就很不舒服.  &amp;ndash;Firo&lt;br /&gt;
+应该看的是gnu ld关于script的基础还有地址relocation. &amp;ndash;Firo&lt;br /&gt;
 这里就是要去看他的origin, foundation. &amp;ndash; Firo&lt;/p&gt;
 
 &lt;h2 id=&#34;aspect:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Aspect&lt;/h2&gt;
 
-&lt;p&gt;自己思考. 不要上来就读, 你要思考这个过程! 相信自己.&amp;ndash; Firo
-From ground, from zero, from origin. &amp;ndash; Firo
-Pragmatism Question the beginning of mind. &amp;ndash; Firo
-掌控好大方向, 安心的一点点做起, 需求不是想出来的. 要做什么事是实际遇到的, 不能规划
-的太详细, 可以有个大方向时间点. 大概是因为彻底可错, 认知的不完美. 记住需求来自实际不是想出来的. &amp;ndash; Firo
-如果有些重要的事, 我一生都无法实现怎么办?我不能一直这样下去, 到头来, 人生都毁了.
+&lt;p&gt;自己思考. 不要上来就读, 你要思考这个过程! 相信自己.&amp;ndash; Firo&lt;br /&gt;
+From ground, from zero, from origin. &amp;ndash; Firo&lt;br /&gt;
+Pragmatism Question the beginning of mind. &amp;ndash; Firo&lt;br /&gt;
+掌控好大方向, 安心的一点点做起, 需求不是想出来的. 要做什么事是实际遇到的, 不能规划&lt;br /&gt;
+的太详细, 可以有个大方向时间点. 大概是因为彻底可错, 认知的不完美. 记住需求来自实际不是想出来的. &amp;ndash; Firo&lt;br /&gt;
+如果有些重要的事, 我一生都无法实现怎么办?我不能一直这样下去, 到头来, 人生都毁了.&lt;br /&gt;
 所以认真过好每一天, 这很重要. 也是认知的缺陷导致的. &amp;ndash; Firo&lt;/p&gt;
 
-&lt;p&gt;建立非常很究极的理性(Rational)的逻辑系统, 不怕出错.More rationality, less observation!
-准确定义问题. &amp;ndash; Firo
-把事闹大. Broaden the horizons. Framework/pattern is the incarnation of mind.&amp;ndash; Firo
-学会问题转换这非常重要. &amp;ndash; Firo
-Knowledge degree of target, 必须区别对待知识.
-学会多角度看待问题. &amp;ndash; Firo
-如鱼得水. 如果问题难, 不好下手就划分小的(内核只关注console init, 内存映射, cpu 初始化这些), 减小难度(语速编码).&amp;ndash; Firo
-认知的方法, 海绵式，　淘金式，对抗式, 后面来个都应该用来认知. 因为
-Known and unknown/question - the complete vision. &amp;ndash; Firo
-Pragmatism questions:
-Why does it appear? What problem does it solve? What happend if it does not exist?
-How does it solve this problem in generalization and different sesanations level?
-Is it good or bad? What is the feedback?
+&lt;p&gt;建立非常很究极的理性(Rational)的逻辑系统, 不怕出错.More rationality, less observation!&lt;br /&gt;
+准确定义问题. &amp;ndash; Firo&lt;br /&gt;
+把事闹大. Broaden the horizons. Framework/pattern is the incarnation of mind.&amp;ndash; Firo&lt;br /&gt;
+学会问题转换这非常重要. &amp;ndash; Firo&lt;br /&gt;
+Knowledge degree of target, 必须区别对待知识.&lt;br /&gt;
+学会多角度看待问题. &amp;ndash; Firo&lt;br /&gt;
+如鱼得水. 如果问题难, 不好下手就划分小的(内核只关注console init, 内存映射, cpu 初始化这些), 减小难度(语速编码).&amp;ndash; Firo&lt;br /&gt;
+认知的方法, 海绵式，　淘金式，对抗式, 后面来个都应该用来认知. 因为&lt;br /&gt;
+Known and unknown/question - the complete vision. &amp;ndash; Firo&lt;br /&gt;
+Pragmatism questions:&lt;br /&gt;
+Why does it appear? What problem does it solve? What happend if it does not exist?&lt;br /&gt;
+How does it solve this problem in generalization and different sesanations level?&lt;br /&gt;
+Is it good or bad? What is the feedback?&lt;br /&gt;
 Question about what is the important, foundation, most useful, minimal cached? &amp;ndash; Firo&lt;/p&gt;
 
-&lt;p&gt;做好模式类比!至少有两个模式, 一个background, 一个是problem.
-就那debug和英语, 都要有基础的background, 之后的problem就要根据具体场景, 找办法.
-简单说来一个事情-&amp;gt;模式-&amp;gt;问题 &amp;amp; 方法.
-所谓模式就是一条执行的过程. 多是逻辑上的.
-比如模式background, 在逻辑上就是先架构上的, 之后在具体上的.topdown.
+&lt;p&gt;做好模式类比!至少有两个模式, 一个background, 一个是problem.&lt;br /&gt;
+就那debug和英语, 都要有基础的background, 之后的problem就要根据具体场景, 找办法.&lt;br /&gt;
+简单说来一个事情-&amp;gt;模式-&amp;gt;问题 &amp;amp; 方法.&lt;br /&gt;
+所谓模式就是一条执行的过程. 多是逻辑上的.&lt;br /&gt;
+比如模式background, 在逻辑上就是先架构上的, 之后在具体上的.topdown.&lt;br /&gt;
 而模式problem, 在逻辑上就是笛卡尔方法, 复杂细分成小的部分, 之后在从简单开始做, 另外就是不断用真实的实践去做calculus-update.&lt;/p&gt;
 
-&lt;p&gt;解决问题的方法往往是多种多样的.
-General problem solving methods, how many method we can use to get answer:
-1. sovle problem by self, you need to know the most things.(For unsimilar things, Not recomend!)
-2. Does anyone solve the same problem?
-3. Does anyone solve the similar things?(这需要提取一些共有的信息比如fsl, usb3320.
-Divide every question into manageable parts. &amp;ndash; Descartes
-一种快速构建pattern 或者达成初级认知的方法是, 先到主体, 确定主体后, 在建立之间的关系. &amp;ndash;Firo
-Modularity, &amp;ndash; Computer science
+&lt;p&gt;解决问题的方法往往是多种多样的.&lt;br /&gt;
+General problem solving methods, how many method we can use to get answer:&lt;br /&gt;
+1. sovle problem by self, you need to know the most things.(For unsimilar things, Not recomend!)&lt;br /&gt;
+2. Does anyone solve the same problem?&lt;br /&gt;
+3. Does anyone solve the similar things?(这需要提取一些共有的信息比如fsl, usb3320.&lt;br /&gt;
+Divide every question into manageable parts. &amp;ndash; Descartes&lt;br /&gt;
+一种快速构建pattern 或者达成初级认知的方法是, 先到主体, 确定主体后, 在建立之间的关系. &amp;ndash;Firo&lt;br /&gt;
+Modularity, &amp;ndash; Computer science&lt;br /&gt;
 Begin with the simplest issues and ascend to the more complex. &amp;ndash; Descartes&lt;/p&gt;
 
-&lt;p&gt;语言分析, 是我认知的重要工具, 甚至是主要工具. &amp;ndash; Firo, Saussure
-* 抽象明确概念所属的范畴,从而正确的定义理解问题.
-* 内涵定义: Genus-differentia definition 属加种差定义: 发生定义(设计), 关系定义, 功用定义, 摹状定义
-* 充要定义, Real and nominal definitions
-* Classes of extensional definitions: enumerative definition
-* &lt;a href=&#34;http://plato.stanford.edu/entries/definitions/&#34;&gt;Definitions Stanford Encyclopedia of Philosophy&lt;/a&gt;
-Comparison reflection abstraction &amp;ndash; concept in Wikipedia
+&lt;p&gt;语言分析, 是我认知的重要工具, 甚至是主要工具. &amp;ndash; Firo, Saussure&lt;br /&gt;
+* 抽象明确概念所属的范畴,从而正确的定义理解问题.&lt;br /&gt;
+* 内涵定义: Genus-differentia definition 属加种差定义: 发生定义(设计), 关系定义, 功用定义, 摹状定义&lt;br /&gt;
+* 充要定义, Real and nominal definitions&lt;br /&gt;
+* Classes of extensional definitions: enumerative definition&lt;br /&gt;
+* &lt;a href=&#34;http://plato.stanford.edu/entries/definitions/&#34;&gt;Definitions Stanford Encyclopedia of Philosophy&lt;/a&gt;&lt;br /&gt;
+Comparison reflection abstraction &amp;ndash; concept in Wikipedia&lt;br /&gt;
 语言必须被还原到实际的生活场景  &amp;ndash; 维特根斯坦&lt;/p&gt;
 
-&lt;p&gt;Autonomous decision &amp;ndash; Firo
-问题的答案是常识.每一次认知都是积累pattern的过程. &amp;ndash; Firo
-君子生非异也，善假于物也。 &amp;ndash;荀子 劝学
+&lt;p&gt;Autonomous decision &amp;ndash; Firo&lt;br /&gt;
+问题的答案是常识.每一次认知都是积累pattern的过程. &amp;ndash; Firo&lt;br /&gt;
+君子生非异也，善假于物也。 &amp;ndash;荀子 劝学&lt;br /&gt;
 Change-of-state calculus &amp;ndash;Von Wright’s approach&lt;/p&gt;
 
-&lt;p&gt;学以致用 实践 &amp;ndash; Firo 胡适
-Self-correcting. &amp;ndash; Firo
-Review frequently enough to retain the whole argument at once &amp;ndash; Descartes
-第一是不要害怕冒险，第二是冒险时不要押上全部家当  &amp;ndash; Soros
+&lt;p&gt;学以致用 实践 &amp;ndash; Firo 胡适&lt;br /&gt;
+Self-correcting. &amp;ndash; Firo&lt;br /&gt;
+Review frequently enough to retain the whole argument at once &amp;ndash; Descartes&lt;br /&gt;
+第一是不要害怕冒险，第二是冒险时不要押上全部家当  &amp;ndash; Soros&lt;br /&gt;
 改造的反射性, 反射原理. &amp;ndash; Soros&lt;/p&gt;
 
 &lt;h2 id=&#34;instances:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Instances&lt;/h2&gt;
 
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;对陌生语言问题(技术)的认知&lt;br /&gt;
-依照Wittgenstein, 语言要还原到生活中.会发现这是一个反过程, 实际变成了, 生活映射到语言词汇的过程. &amp;ndash; Firo
-通过对被还原到生活的语言词汇(有些时候我们需要修改那些不适当的词汇名字), 来从新认识他在问题中的语义意义. &amp;ndash;Firo
-比如内核时间子系统的, timekeeping, 还原到生活是日晷, 沙漏, 钟表. 再次回到程序中, 虽然只是个struct数据结构却携带这涵义丰富生活语义.&amp;ndash;Firo
+依照Wittgenstein, 语言要还原到生活中.会发现这是一个反过程, 实际变成了, 生活映射到语言词汇的过程. &amp;ndash; Firo&lt;br /&gt;
+通过对被还原到生活的语言词汇(有些时候我们需要修改那些不适当的词汇名字), 来从新认识他在问题中的语义意义. &amp;ndash;Firo&lt;br /&gt;
+比如内核时间子系统的, timekeeping, 还原到生活是日晷, 沙漏, 钟表. 再次回到程序中, 虽然只是个struct数据结构却携带这涵义丰富生活语义.&amp;ndash;Firo&lt;br /&gt;
 这是为什么好的命名, 对于程序理解的重要性.想较于使用不同语言的计算机程序开发者在源码中寻找词汇的original的来说, 社会生活中etymology要复杂多. &amp;ndash;Firo&lt;/p&gt;
 
 &lt;h1 id=&#34;模式-结构-关系-原理:007041aa20bf44bd43eba68b5f650c57&#34;&gt;模式 &amp;ndash; 结构 关系 原理&lt;/h1&gt;
 
-&lt;p&gt;这里所说的模式是事物某种既定的认知, 而方法是来揭示模式的.
-定位问题, 一定要从全局触发. 如果一直wfi问题, 先看下3.2sdk的config, 就done了.
-问题总是复杂的, 解决方法总是简单的  &amp;ndash;xiaolai.li
-computer first pattern: init onset,  running nuclus,  exit, coda
-溯因推理abduction
-Theory &amp;amp; application
-In &amp;amp; output
-Ideal &amp;amp; real
+&lt;p&gt;这里所说的模式是事物某种既定的认知, 而方法是来揭示模式的.&lt;br /&gt;
+定位问题, 一定要从全局触发. 如果一直wfi问题, 先看下3.2sdk的config, 就done了.&lt;br /&gt;
+问题总是复杂的, 解决方法总是简单的  &amp;ndash;xiaolai.li&lt;br /&gt;
+computer first pattern: init onset,  running nuclus,  exit, coda&lt;br /&gt;
+溯因推理abduction&lt;br /&gt;
+Theory &amp;amp; application&lt;br /&gt;
+In &amp;amp; output&lt;br /&gt;
+Ideal &amp;amp; real&lt;br /&gt;
 Asynchronous &amp;amp; synchronous&lt;/p&gt;
 
 &lt;h2 id=&#34;pragmatism-sensations:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Pragmatism sensations&lt;/h2&gt;
@@ -1264,142 +1264,142 @@ Asynchronous &amp;amp; synchronous&lt;/p&gt;
 
 &lt;h1 id=&#34;aaron-swartz:007041aa20bf44bd43eba68b5f650c57&#34;&gt;Aaron Swartz&lt;/h1&gt;
 
-&lt;p&gt;I feel very strongly that it&amp;rsquo;s not enough to just live in the world as it is, it&amp;rsquo;s just kind of take what you are given,
-and you know follow the things that adults told you to do,and that your parents told you to do, and that society tells to do.
-I think you should always be questioning.I take this very scientific attitude that
-every thing you&amp;rsquo;ve learned  is just provisional, you know, it&amp;rsquo;s always open to recantation or refutation or questioning,
-and I think  the same applies to society. Once I realized that there were real serious problems, fundamental problems
+&lt;p&gt;I feel very strongly that it&amp;rsquo;s not enough to just live in the world as it is, it&amp;rsquo;s just kind of take what you are given,&lt;br /&gt;
+and you know follow the things that adults told you to do,and that your parents told you to do, and that society tells to do.&lt;br /&gt;
+I think you should always be questioning.I take this very scientific attitude that&lt;br /&gt;
+every thing you&amp;rsquo;ve learned  is just provisional, you know, it&amp;rsquo;s always open to recantation or refutation or questioning,&lt;br /&gt;
+and I think  the same applies to society. Once I realized that there were real serious problems, fundamental problems&lt;br /&gt;
 that I could do something to address, I didnt see a way to forget that, I didnt see a way not to.&lt;/p&gt;
 
 &lt;h1 id=&#34;胡适日记全集-第三册-1921年7月10一则:007041aa20bf44bd43eba68b5f650c57&#34;&gt;胡适日记全集 第三册，1921年7月10一则&lt;/h1&gt;
 
-&lt;p&gt;杜威先生不曾给我们一些关于特别问题的特别主张，——如共产主义，无政府主义，自由恋爱之类，——他只给了我们一个哲学方法，
-使我们用这个方法去解决我们自己的特别问题。
-* （1）历史的方法——“祖孙的方法”   the genetic method, why xxx?
-他从来不把一个制度或学说，看做一个孤立的东西，总被他看做一个中段；一头是他所以发生的原因，一头是他自己发生的效果；上头有他的祖父，下头有他的孙子。捉住了这两头，他再也逃不出去了！这个方法的应用，一方面是很忠厚宽恕的，因为他处处指出一个制度或学说所以发生的原因，指出他历史的背景，故能了解他在历史上的地位和价值，故不致有过分的苛责。一方面，这个方法又是很严厉的，最带有革命性质的。因为他处处拿一个学说或制度发生的结果，来评判他本身的价值，故最公平，又最利害。这种方法，是一切带有评判（Critical）精神的运动的一个武器。
-* （2）实验的方法　　实验的方法，至少注重三件事：
-（一）从具体的事实与境地下手；
-（二）一切学说理想，一切知识，都只是待证的假设，并非天经地义；
-（三）一切学说与理想，都须用实行来试验过。实验是真理的唯一试金石。
-第一件，——注意具体的境地——使我们免去许多无谓的问题，省去许多无意识的争论。
-第二件，——一切学理都看做假设——可以解放许多“古人的奴隶”。
-第三件，——实验——可以稍稍限制那上天下地的妄想冥想。实验主义只承认那一点一滴做到的进步，步步有智慧的指导，步步有自动的实验——才是真进化。
-所谓实验的方法应该看成实证主义, 而不是更宽泛的实用主义. 维也纳小组, 即是逻辑实证主义.
-#Philosophy
-物自体-&amp;gt;感知-&amp;gt;经验对象-&amp;gt;认知-&amp;gt;概念
-我们所做的乃是把词从形而上学的使用带回到日常的使用上来”。
-我们能够陈述的只是语言的“外部事实”，我们对语言的误解来自对词的使用的不清——“我们的语法缺乏这种清晰性”。面对不清晰的语法，“哲学的任务并不是通过数学或逻辑数学的发现去解决矛盾，而是使我们有可能看清楚给我们造成麻烦的数学的现状：在矛盾解决之前的事态”，哲学的身份是“只把一切都摆在我们面前，既不作说明也不作推论”。
-##Foundations
-+ 认识是人脑对外界事物的反映
-+ 认识的对象
-* 存在就是不同.
-+ 认识的方法
-* 划分就是要从混沌中找出不同
-=现象与根本
-* 现象不同的存在
-* 根本相同的存在
-=静态与动态
-=宏观与微观
-宏观是指从整体、全局来看;微观是指从个体、局部来看
-系统是由相互作用的元素所构成的整体;元素是系统的组成部分
-宏观的存在称为事物,构成该事物的微观的存在称为该事物的来源
+&lt;p&gt;杜威先生不曾给我们一些关于特别问题的特别主张，——如共产主义，无政府主义，自由恋爱之类，——他只给了我们一个哲学方法，&lt;br /&gt;
+使我们用这个方法去解决我们自己的特别问题。&lt;br /&gt;
+* （1）历史的方法——“祖孙的方法”   the genetic method, why xxx?&lt;br /&gt;
+他从来不把一个制度或学说，看做一个孤立的东西，总被他看做一个中段；一头是他所以发生的原因，一头是他自己发生的效果；上头有他的祖父，下头有他的孙子。捉住了这两头，他再也逃不出去了！这个方法的应用，一方面是很忠厚宽恕的，因为他处处指出一个制度或学说所以发生的原因，指出他历史的背景，故能了解他在历史上的地位和价值，故不致有过分的苛责。一方面，这个方法又是很严厉的，最带有革命性质的。因为他处处拿一个学说或制度发生的结果，来评判他本身的价值，故最公平，又最利害。这种方法，是一切带有评判（Critical）精神的运动的一个武器。&lt;br /&gt;
+* （2）实验的方法　　实验的方法，至少注重三件事：&lt;br /&gt;
+（一）从具体的事实与境地下手；&lt;br /&gt;
+（二）一切学说理想，一切知识，都只是待证的假设，并非天经地义；&lt;br /&gt;
+（三）一切学说与理想，都须用实行来试验过。实验是真理的唯一试金石。&lt;br /&gt;
+第一件，——注意具体的境地——使我们免去许多无谓的问题，省去许多无意识的争论。&lt;br /&gt;
+第二件，——一切学理都看做假设——可以解放许多“古人的奴隶”。&lt;br /&gt;
+第三件，——实验——可以稍稍限制那上天下地的妄想冥想。实验主义只承认那一点一滴做到的进步，步步有智慧的指导，步步有自动的实验——才是真进化。&lt;br /&gt;
+所谓实验的方法应该看成实证主义, 而不是更宽泛的实用主义. 维也纳小组, 即是逻辑实证主义.&lt;br /&gt;
+#Philosophy&lt;br /&gt;
+物自体-&amp;gt;感知-&amp;gt;经验对象-&amp;gt;认知-&amp;gt;概念&lt;br /&gt;
+我们所做的乃是把词从形而上学的使用带回到日常的使用上来”。&lt;br /&gt;
+我们能够陈述的只是语言的“外部事实”，我们对语言的误解来自对词的使用的不清——“我们的语法缺乏这种清晰性”。面对不清晰的语法，“哲学的任务并不是通过数学或逻辑数学的发现去解决矛盾，而是使我们有可能看清楚给我们造成麻烦的数学的现状：在矛盾解决之前的事态”，哲学的身份是“只把一切都摆在我们面前，既不作说明也不作推论”。&lt;br /&gt;
+##Foundations&lt;br /&gt;
++ 认识是人脑对外界事物的反映&lt;br /&gt;
++ 认识的对象&lt;br /&gt;
+* 存在就是不同.&lt;br /&gt;
++ 认识的方法&lt;br /&gt;
+* 划分就是要从混沌中找出不同&lt;br /&gt;
+=现象与根本&lt;br /&gt;
+* 现象不同的存在&lt;br /&gt;
+* 根本相同的存在&lt;br /&gt;
+=静态与动态&lt;br /&gt;
+=宏观与微观&lt;br /&gt;
+宏观是指从整体、全局来看;微观是指从个体、局部来看&lt;br /&gt;
+系统是由相互作用的元素所构成的整体;元素是系统的组成部分&lt;br /&gt;
+宏观的存在称为事物,构成该事物的微观的存在称为该事物的来源&lt;br /&gt;
 事物是客观存在的一切物体及其表现出的现象，比如原子是“物”，原子的行为表现是其“现象”，统合在一起，就是原子这么个“事物”。&lt;/p&gt;
 
-&lt;p&gt;=实体与作用
-主体是目的实体,就是被作为目的的实体
+&lt;p&gt;=实体与作用&lt;br /&gt;
+主体是目的实体,就是被作为目的的实体&lt;br /&gt;
 客体是手段实体,就是被作为手段的实体&lt;/p&gt;
 
-&lt;p&gt;作用就是影响,实体对实体影响就叫做作用
-属性实际上就是外在表现角度的实体的作用
+&lt;p&gt;作用就是影响,实体对实体影响就叫做作用&lt;br /&gt;
+属性实际上就是外在表现角度的实体的作用&lt;br /&gt;
 事物之间的相互作用就叫做关系&lt;/p&gt;
 
 &lt;p&gt;客体对主体的作用叫做功用; 主体对客体的作用叫做利用&lt;/p&gt;
 
-&lt;p&gt;功用就是价值
-=形式与内容
-内容指构成事物的一切内在要素的总和；
+&lt;p&gt;功用就是价值&lt;br /&gt;
+=形式与内容&lt;br /&gt;
+内容指构成事物的一切内在要素的总和；&lt;br /&gt;
 形式指事物内在要素的结构或表现方式。&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;区别是对已经存在的多个事物进行比较,找出它们之间的不同之处,现象&lt;/li&gt;
-&lt;li&gt;联系是对已经存在的多个事物进行比较,找出它们之间的相同之处,根本&lt;/li&gt;
+&lt;li&gt;区别是对已经存在的多个事物进行比较,找出它们之间的不同之处,现象&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;联系是对已经存在的多个事物进行比较,找出它们之间的相同之处,根本&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;+静态存在
-事物实体的形式——结构,结构是事物内部诸元素之间的空间关系
-事物实体的内容——质料
-事物作用的形式一般被称为方式。
-事物作用的内容是输入与输出。
-事物关系的形式一般就叫做形式
-事物关系的内容是交换
-事物功用的形式——价值,哲学价值就是形式价值,使用价值就是内容价值(美／面包）
-事物功用的内容就是功能
-事物利用的形式是技术
+&lt;p&gt;+静态存在&lt;br /&gt;
+事物实体的形式——结构,结构是事物内部诸元素之间的空间关系&lt;br /&gt;
+事物实体的内容——质料&lt;br /&gt;
+事物作用的形式一般被称为方式。&lt;br /&gt;
+事物作用的内容是输入与输出。&lt;br /&gt;
+事物关系的形式一般就叫做形式&lt;br /&gt;
+事物关系的内容是交换&lt;br /&gt;
+事物功用的形式——价值,哲学价值就是形式价值,使用价值就是内容价值(美／面包）&lt;br /&gt;
+事物功用的内容就是功能&lt;br /&gt;
+事物利用的形式是技术&lt;br /&gt;
 事物利用的内容是生产&lt;/p&gt;
 
-&lt;p&gt;事物的根本结构(形式)——层级结构
+&lt;p&gt;事物的根本结构(形式)——层级结构&lt;br /&gt;
 事物的根本内容——需要&lt;/p&gt;
 
-&lt;p&gt;事物的根本价值——好
-事物的根本功能——满足主体需要
-事物的根本技术——妙
-事物的根本生产——满足客体需要
-事物之间的根本作用是价值作用、利益作用,也就是对需要的作用——满足或者不满足对方需要的作用。
-事物之间的根本关系是利益关系
-+ 动态的存在
-+ 根本划分
-静态的根本称为法则,动态的根本称为规律。
-事物的根本就叫做根本。根本的来源叫做本原,事物的根本元素就是事物的本原
-根本的实体称为本体,根本的属性称为本性。
-根本的形式,称为本形;非根本的形式,称为末形;
-根本的内容,称为本质;非根本的内容,称为末质。
-+ 认识的成果
-* 概念是外界事物在人脑中的抽象反映
-* 外延是反映在概念中的事物的现象
-* 内涵是反映在概念中的事物的根本
-+ 认识的目的
-* 真理是人脑对外界事物的正确反映。
-* 谬误是人脑对外界存在的错误反映
-* 根本性的真理就是真谛,
+&lt;p&gt;事物的根本价值——好&lt;br /&gt;
+事物的根本功能——满足主体需要&lt;br /&gt;
+事物的根本技术——妙&lt;br /&gt;
+事物的根本生产——满足客体需要&lt;br /&gt;
+事物之间的根本作用是价值作用、利益作用,也就是对需要的作用——满足或者不满足对方需要的作用。&lt;br /&gt;
+事物之间的根本关系是利益关系&lt;br /&gt;
++ 动态的存在&lt;br /&gt;
++ 根本划分&lt;br /&gt;
+静态的根本称为法则,动态的根本称为规律。&lt;br /&gt;
+事物的根本就叫做根本。根本的来源叫做本原,事物的根本元素就是事物的本原&lt;br /&gt;
+根本的实体称为本体,根本的属性称为本性。&lt;br /&gt;
+根本的形式,称为本形;非根本的形式,称为末形;&lt;br /&gt;
+根本的内容,称为本质;非根本的内容,称为末质。&lt;br /&gt;
++ 认识的成果&lt;br /&gt;
+* 概念是外界事物在人脑中的抽象反映&lt;br /&gt;
+* 外延是反映在概念中的事物的现象&lt;br /&gt;
+* 内涵是反映在概念中的事物的根本&lt;br /&gt;
++ 认识的目的&lt;br /&gt;
+* 真理是人脑对外界事物的正确反映。&lt;br /&gt;
+* 谬误是人脑对外界存在的错误反映&lt;br /&gt;
+* 根本性的真理就是真谛,&lt;br /&gt;
 * 非根本性的真理就是俗谛&lt;/p&gt;
 
-&lt;p&gt;#Gerneral theroy of knowledge &amp;ndash; Moritz Schlik
-##Common concepts
+&lt;p&gt;#Gerneral theroy of knowledge &amp;ndash; Moritz Schlik&lt;br /&gt;
+##Common concepts&lt;br /&gt;
 ###认知是再认识or再发现&lt;/p&gt;
 
 &lt;h3 id=&#34;知识就是把一种东西-现象-归结位另一种东西-原则:007041aa20bf44bd43eba68b5f650c57&#34;&gt;知识就是把一种东西(现象)归结位另一种东西(原则).&lt;/h3&gt;
 
 &lt;ul&gt;
-&lt;li&gt;给狗一个名字, 那不是知识是见识!&lt;/li&gt;
-&lt;li&gt;有同一个原则解释的现象越多, 用来解释整个现象的所需的原则数目越少.&lt;/li&gt;
-&lt;li&gt;知识的水平用解释性原则的数目多少来衡量.&lt;/li&gt;
-&lt;li&gt;认知的最终任务就是使这个最低限度的数目尽可能的小.why?
-###科学知识的两个条件&lt;/li&gt;
-&lt;li&gt;完全规定个体(in/extension)&lt;/li&gt;
-&lt;li&gt;通过归结为最一般的东西来实现这种规定
-###知识的拥有与增长.&lt;/li&gt;
-&lt;li&gt;任何学科,开始工作之前, 必须对研究主题形成确定概念(in/extension).在探究之前界定研究的领域.研究什么?希望的回答是什么?&lt;/li&gt;
-&lt;li&gt;主题的定义会随着展开关系, 变得明确, 但必须有最初的定义, 如光的定义.
-###Type fo 问题&lt;/li&gt;
-&lt;li&gt;把所要知道的东西归结为什么样的因素(法则)?
-一个学科的发展, 如物理学不断发展到现在的量子力学和相对论
-计算机unix linux google 移动互联网 物联网&lt;/li&gt;
-&lt;li&gt;采取什么样的途径来实现这种归结?
-天体运动归结为universal gravitation(因素/法则)
-气象-&amp;gt;热力学(因素/法则)&lt;/li&gt;
+&lt;li&gt;给狗一个名字, 那不是知识是见识!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;有同一个原则解释的现象越多, 用来解释整个现象的所需的原则数目越少.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;知识的水平用解释性原则的数目多少来衡量.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;认知的最终任务就是使这个最低限度的数目尽可能的小.why?&lt;br /&gt;
+###科学知识的两个条件&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;完全规定个体(in/extension)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;通过归结为最一般的东西来实现这种规定&lt;br /&gt;
+###知识的拥有与增长.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;任何学科,开始工作之前, 必须对研究主题形成确定概念(in/extension).在探究之前界定研究的领域.研究什么?希望的回答是什么?&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;主题的定义会随着展开关系, 变得明确, 但必须有最初的定义, 如光的定义.&lt;br /&gt;
+###Type fo 问题&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;把所要知道的东西归结为什么样的因素(法则)?&lt;br /&gt;
+一个学科的发展, 如物理学不断发展到现在的量子力学和相对论&lt;br /&gt;
+计算机unix linux google 移动互联网 物联网&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;采取什么样的途径来实现这种归结?&lt;br /&gt;
+天体运动归结为universal gravitation(因素/法则)&lt;br /&gt;
+气象-&amp;gt;热力学(因素/法则)&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;诚然, 对于求助于哪些因素作为解释性原则, 我们常常犯错, 因而被容易被某些捉摸不定的东西引向迷途.
+&lt;li&gt;&lt;p&gt;诚然, 对于求助于哪些因素作为解释性原则, 我们常常犯错, 因而被容易被某些捉摸不定的东西引向迷途.&lt;br /&gt;
 ##知识的性质&lt;/p&gt;
 
 &lt;h3 id=&#34;认识论的意义:007041aa20bf44bd43eba68b5f650c57&#34;&gt;认识论的意义&lt;/h3&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;清谬
-运动本身不需要了解, 生理学知识, 也行.但病变的肢体就需要这些知识恢复.
+&lt;li&gt;&lt;p&gt;清谬&lt;br /&gt;
+运动本身不需要了解, 生理学知识, 也行.但病变的肢体就需要这些知识恢复.&lt;br /&gt;
 同样, 悖谬时, 认识论澄清不合理.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;深刻认知
-另外, 科学的训练需要生理学知识, 高效的学习也同样学习epistemmology.
-个门学科的展开不需要认识论的基础, 但除非经过认识论, 我们绝不会深刻的理解这些学科.
+&lt;li&gt;&lt;p&gt;深刻认知&lt;br /&gt;
+另外, 科学的训练需要生理学知识, 高效的学习也同样学习epistemmology.&lt;br /&gt;
+个门学科的展开不需要认识论的基础, 但除非经过认识论, 我们绝不会深刻的理解这些学科.&lt;br /&gt;
 Helmholtz, every thing lead us to philosophy.&lt;/p&gt;
 
 &lt;h3 id=&#34;日常生活中的认知:007041aa20bf44bd43eba68b5f650c57&#34;&gt;日常生活中的认知&lt;/h3&gt;&lt;/li&gt;
@@ -1412,13 +1412,13 @@ Helmholtz, every thing lead us to philosophy.&lt;/p&gt;
 
 &lt;li&gt;&lt;p&gt;光, 两种法则相同&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;亚里士多德和手稿, 知识的核心都是再发现,
+&lt;li&gt;&lt;p&gt;亚里士多德和手稿, 知识的核心都是再发现,&lt;br /&gt;
 ###通过意象的认知&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;记忆意象是一种极为模糊, 变动不居, 容易像云雾那样消散的结构.
-这就是我之前的学习状态, 所有东西都停留在意象层次, 根本不是细节的问题.
-###通过概念的认知
-属性称为概念的特性or特征
+&lt;li&gt;&lt;p&gt;记忆意象是一种极为模糊, 变动不居, 容易像云雾那样消散的结构.&lt;br /&gt;
+这就是我之前的学习状态, 所有东西都停留在意象层次, 根本不是细节的问题.&lt;br /&gt;
+###通过概念的认知&lt;br /&gt;
+属性称为概念的特性or特征&lt;br /&gt;
 逻辑学, 概念的特征的总合叫概念的内涵/内容.概念所指的对象集合叫做概念的外延.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
@@ -1432,12 +1432,12 @@ Helmholtz, every thing lead us to philosophy.&lt;/p&gt;
       <guid>http://firoyang.org/firo/firo/</guid>
       <description>
 
-&lt;p&gt;人与世界最主要的两个方面: 生存 与 成全自己
-人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.
-轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.
-欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.
-Career, Finance, Physical exercise, Clothing, Hygiene, Diet,
-Language, CS.
+&lt;p&gt;人与世界最主要的两个方面: 生存 与 成全自己&lt;br /&gt;
+人生的持续乐趣来自于劳动创造. 特别是自己找到兴趣点后, 不断的探索.&lt;br /&gt;
+轻松安逸的生活让我内心倦怠无比, 我更适应有挑战, 忙碌的生活.&lt;br /&gt;
+欲望能奴役人, 也让人更充实. 我要给自己设立一个很高的目标.  Be busy.&lt;br /&gt;
+Career, Finance, Physical exercise, Clothing, Hygiene, Diet,&lt;br /&gt;
+Language, CS.&lt;br /&gt;
 I am Darwinism, Liberalism, maybe Mohism.&lt;/p&gt;
 
 &lt;h1 id=&#34;life-key-concepts:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Life key concepts&lt;/h1&gt;
@@ -1453,61 +1453,61 @@ I am Darwinism, Liberalism, maybe Mohism.&lt;/p&gt;
 爱, 心底尊重他人，有礼貌，抱有善的平和理念.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;在漫长的人生之路上, 这要具有这些底蕴身后的力量, 会支持着我们走下去.
-这些修为和气度, 德行, 气质, 品格, 要远比你掌握某些知识, 更为珍贵.
-人要养成如大海一般底蕴.历史上那些了不起的人, 他们是如何成长起来.
+&lt;p&gt;在漫长的人生之路上, 这要具有这些底蕴身后的力量, 会支持着我们走下去.&lt;br /&gt;
+这些修为和气度, 德行, 气质, 品格, 要远比你掌握某些知识, 更为珍贵.&lt;br /&gt;
+人要养成如大海一般底蕴.历史上那些了不起的人, 他们是如何成长起来.&lt;br /&gt;
 黄金精神的另一个实质:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;内心平静, 对的时间做合适的事. pace walker. 心态要端正.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;用平静的内心, 去对待外界, 操控这些力量, 不会过分偏执被吞噬,
+&lt;p&gt;用平静的内心, 去对待外界, 操控这些力量, 不会过分偏执被吞噬,&lt;br /&gt;
 亦不应过分消沉, 慢待了时光.&lt;/p&gt;
 
 &lt;h1 id=&#34;人生:213dd4826e16cd3f137912c1a443e25a&#34;&gt;人生&lt;/h1&gt;
 
-&lt;p&gt;人们一边浪费自己的时间, 一边希望获得更久一些.
-人生没有目标, 也要好好活着!
-10点睡觉, 洗澡, 锻炼健身, 时间统计.
-不做無異事，一日當三日，人活五十年，我活百五年。 (我以为少做 &amp;ndash;firo.)
-讀古人的書，一方面要知道古人聰明到怎樣，一方面也要知道古人傻到怎樣。
-人生的大病根本在於不肯睜開眼睛來看世間的真實現狀.
-不受人惑 &amp;ndash; 胡适
-做人莫不可失了做事之心态&amp;ndash; firo
-人如果不沉醉于某些东西,估计都撑不下去吧.
+&lt;p&gt;人们一边浪费自己的时间, 一边希望获得更久一些.&lt;br /&gt;
+人生没有目标, 也要好好活着!&lt;br /&gt;
+10点睡觉, 洗澡, 锻炼健身, 时间统计.&lt;br /&gt;
+不做無異事，一日當三日，人活五十年，我活百五年。 (我以为少做 &amp;ndash;firo.)&lt;br /&gt;
+讀古人的書，一方面要知道古人聰明到怎樣，一方面也要知道古人傻到怎樣。&lt;br /&gt;
+人生的大病根本在於不肯睜開眼睛來看世間的真實現狀.&lt;br /&gt;
+不受人惑 &amp;ndash; 胡适&lt;br /&gt;
+做人莫不可失了做事之心态&amp;ndash; firo&lt;br /&gt;
+人如果不沉醉于某些东西,估计都撑不下去吧.&lt;br /&gt;
 所有人都是某些东西的奴隶 &amp;ndash; 进击的巨人&lt;/p&gt;
 
 &lt;h1 id=&#34;society:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Society&lt;/h1&gt;
 
-&lt;p&gt;生活就是同傻逼的战争!
-每个人都有自己内心的弱点, 不必害怕他们.
-Love the persons that love me, absolutely, included myself and girl friend!
-他人即地狱,世界是荒诞的.
-出来卖, 活一定要好.
+&lt;p&gt;生活就是同傻逼的战争!&lt;br /&gt;
+每个人都有自己内心的弱点, 不必害怕他们.&lt;br /&gt;
+Love the persons that love me, absolutely, included myself and girl friend!&lt;br /&gt;
+他人即地狱,世界是荒诞的.&lt;br /&gt;
+出来卖, 活一定要好.&lt;br /&gt;
 人类是一种急功近利的生物，总是想用最小的付出获得最大的受益。&lt;/p&gt;
 
 &lt;h1 id=&#34;growing-up-人最重要的是会成长:213dd4826e16cd3f137912c1a443e25a&#34;&gt;Growing up &amp;ndash; 人最重要的是会成长!&lt;/h1&gt;
 
-&lt;p&gt;生长需要滋润.  生活作息必须规律, 要不然要影响其他生活. 今天,就到这里吧, 让生活井井有条, 滋润.
-* 成长开始于注意到缺陷, 疑问
-那种概念模糊的地方就是有问题, 比如两个指针相加.
-成长不同阶段, 比如页表回收又算法,也有具体的代码实现. 我们只要知道算法就可以了.
-Listen, the key is to just&amp;hellip; relax. Don&amp;rsquo;t worry about the numbers, don&amp;rsquo;t worry about what the other guys are thinking.
-Dont think&amp;hellip; just feel
-所谓的自我认知不是达成一切，不是什么事情都要做到完美，而是知道自己所能做到力所能及的事情和无能为力的事情，我要说的是，要学会原谅自己的无能为力
-当缺点和不足出现了, 你意识到它, 并且有意识地去思考这种不足的原因,你就在成长中! 有自己的想法, 这才是成长的本质, 其他都不算成长.
-+ 很多时候其实我们的忙碌都是做着自己并不在乎的事情！
-一个有创造力的人把太多的时间耗在阅读上，是一种浪费 &amp;ndash;尼采
-对于一个哲学家来说，最重要的是独立思考，自己来创造，说出非他不能说出的话来。
+&lt;p&gt;生长需要滋润.  生活作息必须规律, 要不然要影响其他生活. 今天,就到这里吧, 让生活井井有条, 滋润.&lt;br /&gt;
+* 成长开始于注意到缺陷, 疑问&lt;br /&gt;
+那种概念模糊的地方就是有问题, 比如两个指针相加.&lt;br /&gt;
+成长不同阶段, 比如页表回收又算法,也有具体的代码实现. 我们只要知道算法就可以了.&lt;br /&gt;
+Listen, the key is to just&amp;hellip; relax. Don&amp;rsquo;t worry about the numbers, don&amp;rsquo;t worry about what the other guys are thinking.&lt;br /&gt;
+Dont think&amp;hellip; just feel&lt;br /&gt;
+所谓的自我认知不是达成一切，不是什么事情都要做到完美，而是知道自己所能做到力所能及的事情和无能为力的事情，我要说的是，要学会原谅自己的无能为力&lt;br /&gt;
+当缺点和不足出现了, 你意识到它, 并且有意识地去思考这种不足的原因,你就在成长中! 有自己的想法, 这才是成长的本质, 其他都不算成长.&lt;br /&gt;
++ 很多时候其实我们的忙碌都是做着自己并不在乎的事情！&lt;br /&gt;
+一个有创造力的人把太多的时间耗在阅读上，是一种浪费 &amp;ndash;尼采&lt;br /&gt;
+对于一个哲学家来说，最重要的是独立思考，自己来创造，说出非他不能说出的话来。&lt;br /&gt;
 不要以为努力过后, 就会得到, 永远也不要这样想.&lt;/p&gt;
 
 &lt;h3 id=&#34;自我认知-cirtical-introspection:213dd4826e16cd3f137912c1a443e25a&#34;&gt;自我认知 cirtical introspection&lt;/h3&gt;
 
-&lt;p&gt;批判性思考与反思
-非常重要, 却被忽视的一点是, 自我! 也就是说, 我们将过多的精力放在学习对象上,
-而忽视了自身. 人不是为解决问题而活!解决问题是来服务人的.到底学习过后,
-我们能得到什么? 少有人问津.如果将这个问题放到一段时间看, 这就是成长. 人的苦难,
-往往来自于自身认识的不足, 对自身有足够的认识之后, 成长本身就成了填空题.
+&lt;p&gt;批判性思考与反思&lt;br /&gt;
+非常重要, 却被忽视的一点是, 自我! 也就是说, 我们将过多的精力放在学习对象上,&lt;br /&gt;
+而忽视了自身. 人不是为解决问题而活!解决问题是来服务人的.到底学习过后,&lt;br /&gt;
+我们能得到什么? 少有人问津.如果将这个问题放到一段时间看, 这就是成长. 人的苦难,&lt;br /&gt;
+往往来自于自身认识的不足, 对自身有足够的认识之后, 成长本身就成了填空题.&lt;br /&gt;
 我们需要自身评估, 发现自我:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;个人的成长永远是第一位的, 找到成长的路径吧!
@@ -1515,8 +1515,8 @@ Dont think&amp;hellip; just feel
 我需要什么, 更注重什么, 轻视什么, 忽略什么? 目标是什么?
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;没有什么方法是万能的, 也没有永恒的方法, 只有不断反思, 前进.很多时候,
-不是一上来就找到对的方法, 需要反复探索反思. 如果路走不通, 就换一条; 不能一直死磕.
+&lt;p&gt;没有什么方法是万能的, 也没有永恒的方法, 只有不断反思, 前进.很多时候,&lt;br /&gt;
+不是一上来就找到对的方法, 需要反复探索反思. 如果路走不通, 就换一条; 不能一直死磕.&lt;br /&gt;
 这就是批判思维的核心:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;问题解决不了, 说明方法不对, 要反思, 并找到新的方法, 才不会被反噬.
@@ -1525,8 +1525,8 @@ Dont think&amp;hellip; just feel
 君子性非异也,善假于物也
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;关于方法的寻找, 本身这是一个问题, 而所有问题都可以基于本文论述的其他方法, 找到答案.
-问题与方法相互转换. 答案或者认知是之于问题的. 而方法则是之于人, 人的成长.
+&lt;p&gt;关于方法的寻找, 本身这是一个问题, 而所有问题都可以基于本文论述的其他方法, 找到答案.&lt;br /&gt;
+问题与方法相互转换. 答案或者认知是之于问题的. 而方法则是之于人, 人的成长.&lt;br /&gt;
 所以方法的选取要考虑到人:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;人生的道路应该是快乐幸福的, 你没必要苦了自己.更不能被所谓理想绑架.
@@ -1534,38 +1534,38 @@ Dont think&amp;hellip; just feel
 的思考, 那么你就应该放弃他.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;所以方法在不能解决问题和对人不友好的时候, 都是你反思的时机.
-人生就是不断寻找方法解决问题, 也许有些问题当下解决不了, 你应该暂时放下, 人的一生会
+&lt;p&gt;所以方法在不能解决问题和对人不友好的时候, 都是你反思的时机.&lt;br /&gt;
+人生就是不断寻找方法解决问题, 也许有些问题当下解决不了, 你应该暂时放下, 人的一生会&lt;br /&gt;
 遇到很多问题, 有些事情很重要, 有些问题不重要, 有些问题很小但却不能忽视:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;生命所不能承受之轻!
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;比如很多人类似我从小学到大学二年级, 人生的一大半时光都先给了游戏和漫画, 体验到了丰富
-多彩的世界, 尤其是龙珠这部漫画, 悟空不断赵越自我, 深刻影响到了我. 如果从头再来一次,
-显然, 我后悔了, 我希望去做一些其他的事情. 毕业之后, 我又染上了英雄联盟这个游戏, 我幡然
-悔悟只是已是三年过去了. 这都是生命所不能承受之轻. 生命在一点点耗散.
-之于人生的其他事情, 也要拿捏好轻重缓急, 不能放任自留.
-    轻重厉害, 要自己权衡.
-    重要的事都是, 一件件小事,积累的. 很多时候把重要的小事都做了,
-    大的重要的事就迎刃而解了.
-比如英语健身这种重要的事情, 就是贵在坚持, 而非一朝一夕一蹴而就.
-还有日间的活动也是, 坐在办公室要常动一动.
-人每天的精力都是有限的, 而为了第二天, 你要适时的好好休息, 保养自己.
-    生命的成长是需要滋润的.
+&lt;p&gt;比如很多人类似我从小学到大学二年级, 人生的一大半时光都先给了游戏和漫画, 体验到了丰富&lt;br /&gt;
+多彩的世界, 尤其是龙珠这部漫画, 悟空不断赵越自我, 深刻影响到了我. 如果从头再来一次,&lt;br /&gt;
+显然, 我后悔了, 我希望去做一些其他的事情. 毕业之后, 我又染上了英雄联盟这个游戏, 我幡然&lt;br /&gt;
+悔悟只是已是三年过去了. 这都是生命所不能承受之轻. 生命在一点点耗散.&lt;br /&gt;
+之于人生的其他事情, 也要拿捏好轻重缓急, 不能放任自留.&lt;br /&gt;
+    轻重厉害, 要自己权衡.&lt;br /&gt;
+    重要的事都是, 一件件小事,积累的. 很多时候把重要的小事都做了,&lt;br /&gt;
+    大的重要的事就迎刃而解了.&lt;br /&gt;
+比如英语健身这种重要的事情, 就是贵在坚持, 而非一朝一夕一蹴而就.&lt;br /&gt;
+还有日间的活动也是, 坐在办公室要常动一动.&lt;br /&gt;
+人每天的精力都是有限的, 而为了第二天, 你要适时的好好休息, 保养自己.&lt;br /&gt;
+    生命的成长是需要滋润的.&lt;br /&gt;
     如果你不遵从生命节奏, 生命终将枯萎.&lt;/p&gt;
 
-&lt;p&gt;#Birthday
-Mama
-06 25 1963
-09 24 1963 Household register
-Present:
-Baba
-02 28 1968
-02 29 1968 Household register
-Present:
-Brother
-01 06 1991
+&lt;p&gt;#Birthday&lt;br /&gt;
+Mama&lt;br /&gt;
+06 25 1963&lt;br /&gt;
+09 24 1963 Household register&lt;br /&gt;
+Present:&lt;br /&gt;
+Baba&lt;br /&gt;
+02 28 1968&lt;br /&gt;
+02 29 1968 Household register&lt;br /&gt;
+Present:&lt;br /&gt;
+Brother&lt;br /&gt;
+01 06 1991&lt;br /&gt;
 Present:&lt;/p&gt;
 </description>
     </item>
@@ -1578,12 +1578,12 @@ Present:&lt;/p&gt;
       <guid>http://firoyang.org/firo/career/</guid>
       <description>
 
-&lt;p&gt;无论是位高权重的政治家, 富贵显荣的商人, 亦或是蝇营狗苟的市侩之人等等, 所有芸芸众生
-每日莫不是为了谋生而奔走. 长久的活着是一种负担.
+&lt;p&gt;无论是位高权重的政治家, 富贵显荣的商人, 亦或是蝇营狗苟的市侩之人等等, 所有芸芸众生&lt;br /&gt;
+每日莫不是为了谋生而奔走. 长久的活着是一种负担.&lt;br /&gt;
 忙碌的生活, 难以审视自己的人生. 今天坐下来, 谈谈这个话题.&lt;/p&gt;
 
-&lt;p&gt;毫无已问, 从小到大, 即便是为曾到达的未来, 工作都占据了我们据大多数时间, 当然X二代
-不在此列. 在这个社会, 即便每日辛劳的工作, 绝大多数人, 依然连自己卑微的梦想都无法实现.
+&lt;p&gt;毫无已问, 从小到大, 即便是为曾到达的未来, 工作都占据了我们据大多数时间, 当然X二代&lt;br /&gt;
+不在此列. 在这个社会, 即便每日辛劳的工作, 绝大多数人, 依然连自己卑微的梦想都无法实现.&lt;br /&gt;
 今天, 我不谈政治层面的原因. 只想从个人角度, 去剖析人与工作之间的关系.&lt;/p&gt;
 
 &lt;p&gt;英文&lt;a href=&#34;https://en.wikipedia.org/wiki/Career&#34;&gt;career&lt;/a&gt;, 在维基给出了基本的解释:&lt;/p&gt;
@@ -1591,77 +1591,77 @@ Present:&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;A career is an individual&#39;s journey through learning, work and other aspects of life.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;词源上是由马车引出的人生之路的涵义. 而中文, 生涯出自《庄子·养生主》：“吾生也有涯，而知也无涯。”
-我们今天主要谈两个问题, 人生的马车和人生的&amp;rdquo;涯&amp;rdquo;.
-我的职业生涯始于大学, 童年时期热爱电子游戏, 导致大学选择了计算机科学这个行业. 到今天整整过去了
-7个年头, 不短了. 本人只敢自称勤奋之人, 大学伊始至今, 绝大多数时光都在勤奋治学, 未曾懈怠.
-大学毕业三年, 依然没有实现自己当初的愿望, a remote kernel hacker. 这个目标完全是个人喜好, 性格使然.
-同时也受限于我个人的视野.
-1. 我喜欢自由, 所以不希望自己被束缚在办公室里面, 我期望那种一边旅行一边工作的生活.
-所以纯个人脑力的工作是我的第一选择, programmer, 作家,都在此列, 而且我也很喜欢且擅长这样的工作.
-2. 我喜欢开放的东西, 开源的软件就成了我的选择, kernel, openstack, 都是那时的选择.
-3. 我喜欢有挑战的事情, 11年一起在sina实习的同学, 现在是openstack的remote开发者了,
-当初我们一起去的, 我最后选择了kernel, 源于我认为kernel会更靠近计算机科学.
-我对web相关的技术有偏见,觉得缺乏深度且很多与用户体验相关.
-其实很多&lt;a href=&#34;http://careers.stackoverflow.com/jobs/remote&#34;&gt;职位&lt;/a&gt;都是可以remote的不限于open source的, 而且相对于
-kernel和openstack的remote工作机会更多.
-4. 我认为社会风气不好, 会对计算机这个行业有影响, 我更侧重选择纯技术的方向, 原理web, 具体业务.
-这就是当时的思考, 当初的视野太狭隘了,主观臆断太严重.
-这个时候薪资都不在考虑之列, 以为做喜欢的事就很开心了.
-大学4年都在逃课, 专业知识, 都是仿照MIT和Computer ScienceCurriculum 2008自己设计出来的.
-大学一年级, 看各种游戏的书,
-大学二年级做机器人的比赛还有和艺术学院合作的事情,
-大二下学期开始基础linux,看apue 还有unp这些书, 开始搞搜索引擎
-大三的时候看了csapp, 还有组合数学
-大四上学期基本上没干什么事, 10月份就去sina实习了, 下学期开始看内核.
-虽然一直都很忙, 但是没学到什么东西.
-我放弃了sina的offer, 毕业(12年7月)后整整有一年时间没有工作了.
-一直到次年13年的9月才开始去极路由工作.到今年15年5月离职.
-现在以外包的形式在windriver的ccm team 工作.
+&lt;p&gt;词源上是由马车引出的人生之路的涵义. 而中文, 生涯出自《庄子·养生主》：“吾生也有涯，而知也无涯。”&lt;br /&gt;
+我们今天主要谈两个问题, 人生的马车和人生的&amp;rdquo;涯&amp;rdquo;.&lt;br /&gt;
+我的职业生涯始于大学, 童年时期热爱电子游戏, 导致大学选择了计算机科学这个行业. 到今天整整过去了&lt;br /&gt;
+7个年头, 不短了. 本人只敢自称勤奋之人, 大学伊始至今, 绝大多数时光都在勤奋治学, 未曾懈怠.&lt;br /&gt;
+大学毕业三年, 依然没有实现自己当初的愿望, a remote kernel hacker. 这个目标完全是个人喜好, 性格使然.&lt;br /&gt;
+同时也受限于我个人的视野.&lt;br /&gt;
+1. 我喜欢自由, 所以不希望自己被束缚在办公室里面, 我期望那种一边旅行一边工作的生活.&lt;br /&gt;
+所以纯个人脑力的工作是我的第一选择, programmer, 作家,都在此列, 而且我也很喜欢且擅长这样的工作.&lt;br /&gt;
+2. 我喜欢开放的东西, 开源的软件就成了我的选择, kernel, openstack, 都是那时的选择.&lt;br /&gt;
+3. 我喜欢有挑战的事情, 11年一起在sina实习的同学, 现在是openstack的remote开发者了,&lt;br /&gt;
+当初我们一起去的, 我最后选择了kernel, 源于我认为kernel会更靠近计算机科学.&lt;br /&gt;
+我对web相关的技术有偏见,觉得缺乏深度且很多与用户体验相关.&lt;br /&gt;
+其实很多&lt;a href=&#34;http://careers.stackoverflow.com/jobs/remote&#34;&gt;职位&lt;/a&gt;都是可以remote的不限于open source的, 而且相对于&lt;br /&gt;
+kernel和openstack的remote工作机会更多.&lt;br /&gt;
+4. 我认为社会风气不好, 会对计算机这个行业有影响, 我更侧重选择纯技术的方向, 原理web, 具体业务.&lt;br /&gt;
+这就是当时的思考, 当初的视野太狭隘了,主观臆断太严重.&lt;br /&gt;
+这个时候薪资都不在考虑之列, 以为做喜欢的事就很开心了.&lt;br /&gt;
+大学4年都在逃课, 专业知识, 都是仿照MIT和Computer ScienceCurriculum 2008自己设计出来的.&lt;br /&gt;
+大学一年级, 看各种游戏的书,&lt;br /&gt;
+大学二年级做机器人的比赛还有和艺术学院合作的事情,&lt;br /&gt;
+大二下学期开始基础linux,看apue 还有unp这些书, 开始搞搜索引擎&lt;br /&gt;
+大三的时候看了csapp, 还有组合数学&lt;br /&gt;
+大四上学期基本上没干什么事, 10月份就去sina实习了, 下学期开始看内核.&lt;br /&gt;
+虽然一直都很忙, 但是没学到什么东西.&lt;br /&gt;
+我放弃了sina的offer, 毕业(12年7月)后整整有一年时间没有工作了.&lt;br /&gt;
+一直到次年13年的9月才开始去极路由工作.到今年15年5月离职.&lt;br /&gt;
+现在以外包的形式在windriver的ccm team 工作.&lt;br /&gt;
 这就是我职业生涯的7年时光, 过得很坎坷.&lt;/p&gt;
 
 &lt;h1 id=&#34;plan:7e6e72851422b97b7259805ca91208dc&#34;&gt;Plan&lt;/h1&gt;
 
-&lt;p&gt;0916, 0515, 8 months
-Go abroad &amp;amp; HB1
-English: 3w
-Work achievement: 6w
-Problem solving/Pattern or estemology: 3w
+&lt;p&gt;0916, 0515, 8 months&lt;br /&gt;
+Go abroad &amp;amp; HB1&lt;br /&gt;
+English: 3w&lt;br /&gt;
+Work achievement: 6w&lt;br /&gt;
+Problem solving/Pattern or estemology: 3w&lt;br /&gt;
 Kernel patches 500 commits, 10w&lt;/p&gt;
 
 &lt;h1 id=&#34;interview:7e6e72851422b97b7259805ca91208dc&#34;&gt;Interview&lt;/h1&gt;
 
 &lt;h2 id=&#34;关于薪资问题:7e6e72851422b97b7259805ca91208dc&#34;&gt;关于薪资问题&lt;/h2&gt;
 
-&lt;p&gt;全面回答包括股票期权.
-real background.
-期望的薪资别说太低, 往上也别说的太死, 比预期要高.
+&lt;p&gt;全面回答包括股票期权.&lt;br /&gt;
+real background.&lt;br /&gt;
+期望的薪资别说太低, 往上也别说的太死, 比预期要高.&lt;br /&gt;
 说更关注职业发展.&lt;/p&gt;
 
 &lt;h2 id=&#34;想面试公司提出的问题:7e6e72851422b97b7259805ca91208dc&#34;&gt;想面试公司提出的问题&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;NO1. 我所应聘的这个职位为什么会出现空缺？
-如果空, 空多长时间, 因为什么原因空的.
-如果这个职位是新近才出现的，或许你就拥有了一个理想的、开辟属于自己的道路的机会。&lt;/li&gt;
-&lt;li&gt;NO2. 请问贵公司最成功的员工为公司做出了什么样的贡献？
-谁对公司贡献最大, 谁领导之类的, 做了什么? 有那些优秀品质. 了解公司文化.
-面试管, 可能认为你是志在成功公司最优秀的员工之一.&lt;/li&gt;
-&lt;li&gt;NO3.如何评估自己在三个月试用期内的工作表现？何种标准算成功？
-该职位遇到的最大的挑战是什么?
-了解公司做事风格, 是否稳重成熟. 排除不靠谱公司, 谁知道半年后他们
-能干出什么? 谨慎对待抛出橄榄枝.&lt;/li&gt;
-&lt;li&gt;NO5.目前公司所面对的最大的挑战有哪些？
-这个编程比如说内核在公司的位置, 是否是中心.&lt;/li&gt;
-&lt;li&gt;NO6.公司如何来保证人才不流失？
-长期的意愿, 这个问题比较屌.&lt;/li&gt;
-&lt;li&gt;NO7.请问您为什么要为这家公司工作呢？
-连面试官自己都不知道为什么要为这家公司工作，你觉得这样的公司会给员工提供多少机会呢？
-去面试工作，是一个相互合作的过程，并不是说哪一方成为主导。你为公司工作，公司给你报酬。&lt;/li&gt;
+&lt;li&gt;NO1. 我所应聘的这个职位为什么会出现空缺？&lt;br /&gt;
+如果空, 空多长时间, 因为什么原因空的.&lt;br /&gt;
+如果这个职位是新近才出现的，或许你就拥有了一个理想的、开辟属于自己的道路的机会。&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;NO2. 请问贵公司最成功的员工为公司做出了什么样的贡献？&lt;br /&gt;
+谁对公司贡献最大, 谁领导之类的, 做了什么? 有那些优秀品质. 了解公司文化.&lt;br /&gt;
+面试管, 可能认为你是志在成功公司最优秀的员工之一.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;NO3.如何评估自己在三个月试用期内的工作表现？何种标准算成功？&lt;br /&gt;
+该职位遇到的最大的挑战是什么?&lt;br /&gt;
+了解公司做事风格, 是否稳重成熟. 排除不靠谱公司, 谁知道半年后他们&lt;br /&gt;
+能干出什么? 谨慎对待抛出橄榄枝.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;NO5.目前公司所面对的最大的挑战有哪些？&lt;br /&gt;
+这个编程比如说内核在公司的位置, 是否是中心.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;NO6.公司如何来保证人才不流失？&lt;br /&gt;
+长期的意愿, 这个问题比较屌.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;NO7.请问您为什么要为这家公司工作呢？&lt;br /&gt;
+连面试官自己都不知道为什么要为这家公司工作，你觉得这样的公司会给员工提供多少机会呢？&lt;br /&gt;
+去面试工作，是一个相互合作的过程，并不是说哪一方成为主导。你为公司工作，公司给你报酬。&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;而对所有公司来说它总希望找到那一种类似合作伙伴的员工而不是仅仅是来打工的。
-所以，在面试的时候除了展示你自身特长和文化外，还要表现出一个对公司前景关心和一种参与者的心态来。
+&lt;p&gt;而对所有公司来说它总希望找到那一种类似合作伙伴的员工而不是仅仅是来打工的。&lt;br /&gt;
+所以，在面试的时候除了展示你自身特长和文化外，还要表现出一个对公司前景关心和一种参与者的心态来。&lt;br /&gt;
 这样能让公司的管理者对你更有好感！这不仅为了进入这个公司也为了以后的发展&lt;/p&gt;
 </description>
     </item>
@@ -1672,10 +1672,10 @@ real background.
       <pubDate>Wed, 24 Jun 2015 15:46:11 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/history/china_a_century_of_revolution/</guid>
-      <description>&lt;p&gt;毛泽东的时代
+      <description>&lt;p&gt;毛泽东的时代&lt;br /&gt;
 &lt;iframe width=&#34;420&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/GMaXSKH2w3c&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;&lt;/p&gt;
 
-&lt;p&gt;建国后出生的新一代
+&lt;p&gt;建国后出生的新一代&lt;br /&gt;
 &lt;iframe width=&#34;420&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/qsmJXJcvG3g&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;&lt;/p&gt;
 </description>
     </item>
@@ -1688,22 +1688,22 @@ real background.
       <guid>http://firoyang.org/kernel/virt/</guid>
       <description>
 
-&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.
-已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!
-现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和
-他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与
-空间去体验到不同生命历程.
-今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;
-如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.
-显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.
-法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是
-词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是
-influencing by physical virtues or capabilities,
-effective with respect to inherent natural qualities
-受某种实在的长处能力影响, 源自本质的效用.
-这里从两种角度理解virtual, 受影响者, 影响者本身.
-所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.
+&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.&lt;br /&gt;
+已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!&lt;br /&gt;
+现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.&lt;br /&gt;
+看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和&lt;br /&gt;
+他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与&lt;br /&gt;
+空间去体验到不同生命历程.&lt;br /&gt;
+今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;&lt;br /&gt;
+如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.&lt;br /&gt;
+显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.&lt;br /&gt;
+法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是&lt;br /&gt;
+词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是&lt;br /&gt;
+influencing by physical virtues or capabilities,&lt;br /&gt;
+effective with respect to inherent natural qualities&lt;br /&gt;
+受某种实在的长处能力影响, 源自本质的效用.&lt;br /&gt;
+这里从两种角度理解virtual, 受影响者, 影响者本身.&lt;br /&gt;
+所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.&lt;br /&gt;
 这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;virtual 音节划分：vir▪tual
@@ -1712,101 +1712,101 @@ adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;
 虚；虚拟艺术；虚拟的；模拟帐户
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!
-话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.
-很多事情, 在我们出生前就决定了, 我是89年9月出生的.
-我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.
-如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.
-没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.
-好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?
-没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?
-所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.
-那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!
-我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.
-终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora
+&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!&lt;br /&gt;
+话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.&lt;br /&gt;
+很多事情, 在我们出生前就决定了, 我是89年9月出生的.&lt;br /&gt;
+我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.&lt;br /&gt;
+如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.&lt;br /&gt;
+没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.&lt;br /&gt;
+好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?&lt;br /&gt;
+没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?&lt;br /&gt;
+所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.&lt;br /&gt;
+那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!&lt;br /&gt;
+我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.&lt;br /&gt;
+终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora&lt;br /&gt;
 之上.&lt;/p&gt;
 
 &lt;h2 id=&#34;fkvm:d29da9244342e72819e84d5dee753d17&#34;&gt;FKVM&lt;/h2&gt;
 
-&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!
-首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel
-运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!
-因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!
-你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.
-怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行
-start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的
-cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.
-也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.
-在内核初始化的时候, 会用调用bios的中断来获取内存信息.
-也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.
-开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.
-现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是
-高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.
-只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?
-我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.
-就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.
-也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.
-如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.
-这里需要很多底层的知识. 先看点资料再回来.
-看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.
-访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.
-探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.
-无论别人说的多么好, 我们必须要有自己的思路.
-总结下所得:
-控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.
-虚拟化一块内存.
-我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.
-由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.
+&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!&lt;br /&gt;
+首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel&lt;br /&gt;
+运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!&lt;br /&gt;
+因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!&lt;br /&gt;
+你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.&lt;br /&gt;
+怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行&lt;br /&gt;
+start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的&lt;br /&gt;
+cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.&lt;br /&gt;
+也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.&lt;br /&gt;
+在内核初始化的时候, 会用调用bios的中断来获取内存信息.&lt;br /&gt;
+也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.&lt;br /&gt;
+开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.&lt;br /&gt;
+现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是&lt;br /&gt;
+高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.&lt;br /&gt;
+只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?&lt;br /&gt;
+我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.&lt;br /&gt;
+就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.&lt;br /&gt;
+也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.&lt;br /&gt;
+如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.&lt;br /&gt;
+这里需要很多底层的知识. 先看点资料再回来.&lt;br /&gt;
+看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.&lt;br /&gt;
+访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.&lt;br /&gt;
+探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.&lt;br /&gt;
+无论别人说的多么好, 我们必须要有自己的思路.&lt;br /&gt;
+总结下所得:&lt;br /&gt;
+控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.&lt;br /&gt;
+虚拟化一块内存.&lt;br /&gt;
+我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.&lt;br /&gt;
+由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.&lt;br /&gt;
 同时乐趣也会减少.&lt;/p&gt;
 
 &lt;h1 id=&#34;kvm-qemu:d29da9244342e72819e84d5dee753d17&#34;&gt;KVM QEMU&lt;/h1&gt;
 
-&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;
-探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.
-千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然
-是我们自己, 别人的知识只是辅助. 那好我们开始.
-首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.
-往往初学者, 很容易被绕进去.
-从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.
-为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.
-Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供
-全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的
-洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.
-Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.
-至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.
-从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.
-这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.
-Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.
-类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.
-Operating-system-level virtualization
-这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.
-但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.
-比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.
-这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.
-比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,
-他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.
-这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.
-在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,
-网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.
-我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.
-首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?
+&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;&lt;br /&gt;
+探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.&lt;br /&gt;
+千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然&lt;br /&gt;
+是我们自己, 别人的知识只是辅助. 那好我们开始.&lt;br /&gt;
+首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.&lt;br /&gt;
+往往初学者, 很容易被绕进去.&lt;br /&gt;
+从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.&lt;br /&gt;
+为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.&lt;br /&gt;
+Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供&lt;br /&gt;
+全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的&lt;br /&gt;
+洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.&lt;br /&gt;
+Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.&lt;br /&gt;
+至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.&lt;br /&gt;
+从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.&lt;br /&gt;
+这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.&lt;br /&gt;
+Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.&lt;br /&gt;
+类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.&lt;br /&gt;
+Operating-system-level virtualization&lt;br /&gt;
+这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.&lt;br /&gt;
+但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.&lt;br /&gt;
+比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.&lt;br /&gt;
+这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.&lt;br /&gt;
+比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,&lt;br /&gt;
+他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.&lt;br /&gt;
+这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.&lt;br /&gt;
+在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,&lt;br /&gt;
+网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.&lt;br /&gt;
+我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.&lt;br /&gt;
+首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?&lt;br /&gt;
 官网的解释:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;QEMU is a generic and open source machine emulator and virtualizer.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.
-qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.
-我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.
-那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.
-毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的
-虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.
-据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情
-补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.
-不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂
-肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.
-内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.
-下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.
+&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.&lt;br /&gt;
+qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.&lt;br /&gt;
+我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.&lt;br /&gt;
+那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.&lt;br /&gt;
+毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的&lt;br /&gt;
+虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.&lt;br /&gt;
+据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情&lt;br /&gt;
+补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.&lt;br /&gt;
+不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂&lt;br /&gt;
+肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.&lt;br /&gt;
+内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.&lt;br /&gt;
+下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.&lt;br /&gt;
 我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.&lt;/p&gt;
 
 &lt;p&gt;下面是设备的虚拟化, 这个还是看书去吧.&lt;/p&gt;
@@ -1814,15 +1814,15 @@ qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.
 &lt;h1 id=&#34;代码实现:d29da9244342e72819e84d5dee753d17&#34;&gt;代码实现&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;KVM architecture&lt;/li&gt;
-&lt;li&gt;Kernel running flow
-svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;/li&gt;
-&lt;li&gt;File
-svm.c vmx.c kvm_main.c kvm_svm.h&lt;/li&gt;
-&lt;li&gt;Function&lt;/li&gt;
-&lt;li&gt;Struct
-kvm_x86_ops x86.h
-vcpu_svm    kvm_svm.h&lt;/li&gt;
+&lt;li&gt;KVM architecture&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Kernel running flow&lt;br /&gt;
+svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;File&lt;br /&gt;
+svm.c vmx.c kvm_main.c kvm_svm.h&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Function&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Struct&lt;br /&gt;
+kvm_x86_ops x86.h&lt;br /&gt;
+vcpu_svm    kvm_svm.h&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -1837,119 +1837,119 @@ vcpu_svm    kvm_svm.h&lt;/li&gt;
 
 &lt;h1 id=&#34;reference:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;
-Algorithms: Design Techniques and Analysis
+&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;&lt;br /&gt;
+Algorithms: Design Techniques and Analysis&lt;br /&gt;
 kernel/algorithm.md&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;Introduction&lt;/h1&gt;
 
-&lt;p&gt;说实话, 这年头想要做点学问还是需要点定力的.
-就拿内核中的数据结构与算法来说, 也不是说, 别人来了句, 我靠, awesome!
-你也过来瞅两眼, 也能心生感慨, what the fuck! how can this be true?
-我说的定力, 不是两耳闻听窗外事, 一心还读圣贤书!而是思维的能力.
+&lt;p&gt;说实话, 这年头想要做点学问还是需要点定力的.&lt;br /&gt;
+就拿内核中的数据结构与算法来说, 也不是说, 别人来了句, 我靠, awesome!&lt;br /&gt;
+你也过来瞅两眼, 也能心生感慨, what the fuck! how can this be true?&lt;br /&gt;
+我说的定力, 不是两耳闻听窗外事, 一心还读圣贤书!而是思维的能力.&lt;br /&gt;
 这是见真章的地方, 不动脑子是玩不转的, 最终浮于表面, 不得所获.&lt;/p&gt;
 
-&lt;p&gt;kfifo 和lock-less list 是kernel中两个基础的数据结构, 用得也不多.
-说实在的这些都不是什么特别难的技术, 但是这种较真的东西使最能考察一个人的能力的.
-什么能力? 写个链表, 队列谁不会? 这里考察的是人的创造力!
+&lt;p&gt;kfifo 和lock-less list 是kernel中两个基础的数据结构, 用得也不多.&lt;br /&gt;
+说实在的这些都不是什么特别难的技术, 但是这种较真的东西使最能考察一个人的能力的.&lt;br /&gt;
+什么能力? 写个链表, 队列谁不会? 这里考察的是人的创造力!&lt;br /&gt;
 所谓创造力就是一种组合的能力.拆分也是一种组合.&lt;/p&gt;
 
-&lt;p&gt;今天, 我们来聊一聊算法. 数据结构在我看来是算法的一种.
-到底是什么呢? algorithm这个词来自中古拉丁文algorismus音译自一位阿拉伯数学家的名字
-al-Khwarizmi, 这只是一个姓, 类似中文赵钱孙李, al-Khwarizmi这个姓表示
-&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E8%8A%B1%E5%89%8C%E5%AD%90%E6%A8%A1&#34;&gt;花剌子模&lt;/a&gt;地方的人.数学家的全名是Abū ‘Abdallāh Muḥammad ibn Mūsā al-Khwārizmī
-花剌子模有太阳升起之地之意源于这个国家被大量沙漠围住, 气候干燥. 而lowland, 则是因为其海拔很低.
-显然, 这不是我们关心的算法本质. 那么, 为什么欧洲人会把al-Khwarizmi, 作为算法的称谓呢?
-al-Khwarizmi向西方引入了10进制计数法和代数. 同时他的名字慢慢被赋予了现代算法的涵义.
-也就是algorithm的涵义是慢慢衍生出来的.
+&lt;p&gt;今天, 我们来聊一聊算法. 数据结构在我看来是算法的一种.&lt;br /&gt;
+到底是什么呢? algorithm这个词来自中古拉丁文algorismus音译自一位阿拉伯数学家的名字&lt;br /&gt;
+al-Khwarizmi, 这只是一个姓, 类似中文赵钱孙李, al-Khwarizmi这个姓表示&lt;br /&gt;
+&lt;a href=&#34;https://zh.wikipedia.org/wiki/%E8%8A%B1%E5%89%8C%E5%AD%90%E6%A8%A1&#34;&gt;花剌子模&lt;/a&gt;地方的人.数学家的全名是Abū ‘Abdallāh Muḥammad ibn Mūsā al-Khwārizmī&lt;br /&gt;
+花剌子模有太阳升起之地之意源于这个国家被大量沙漠围住, 气候干燥. 而lowland, 则是因为其海拔很低.&lt;br /&gt;
+显然, 这不是我们关心的算法本质. 那么, 为什么欧洲人会把al-Khwarizmi, 作为算法的称谓呢?&lt;br /&gt;
+al-Khwarizmi向西方引入了10进制计数法和代数. 同时他的名字慢慢被赋予了现代算法的涵义.&lt;br /&gt;
+也就是algorithm的涵义是慢慢衍生出来的.&lt;br /&gt;
 那我们能否给算法下一个定义呢:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;An informal definition could be &amp;quot;a set of rules that precisely defines a sequence of operations.&amp;quot;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;简单说, 就是一个执行序列. 这有点太概况了.我们需要一个更精准的定义.
-同时, 我并不把他限制在计算机科学内.
-如果你读过石里克的&lt;a href=&#34;http://book.douban.com/subject/1443472/&#34;&gt;普通认识论&lt;/a&gt;你就会知道, 光的定义也是一波三折.
-所谓的定义, 实际上事物某些属性的集合!
-我们来考察算法的属性.诚如前面的定义算法是一个执行序列.
-那么算法的表现形式呢? 他是抽象的, 根植于人类的思维逻辑当中. 而人的逻辑是通过
-语言表述的.所以算法的重要属性就是他是语言这种形式表现出来的.
-所以我们的定义, 变成一个被执行的语言序列.
-我们还是不满足, 你难道就让我去用这么一句话, 去面对面试时候的各种算法题吗?
-现在我们从算法解决的问题入手? 这是算法的目的. 我的目的是让算法更加的通俗易懂.
-不是让人们说道, 算法就会去向排序, 二叉树. 这跳跃太大了, 在算法的基础定义和实际的算法之间,
+&lt;p&gt;简单说, 就是一个执行序列. 这有点太概况了.我们需要一个更精准的定义.&lt;br /&gt;
+同时, 我并不把他限制在计算机科学内.&lt;br /&gt;
+如果你读过石里克的&lt;a href=&#34;http://book.douban.com/subject/1443472/&#34;&gt;普通认识论&lt;/a&gt;你就会知道, 光的定义也是一波三折.&lt;br /&gt;
+所谓的定义, 实际上事物某些属性的集合!&lt;br /&gt;
+我们来考察算法的属性.诚如前面的定义算法是一个执行序列.&lt;br /&gt;
+那么算法的表现形式呢? 他是抽象的, 根植于人类的思维逻辑当中. 而人的逻辑是通过&lt;br /&gt;
+语言表述的.所以算法的重要属性就是他是语言这种形式表现出来的.&lt;br /&gt;
+所以我们的定义, 变成一个被执行的语言序列.&lt;br /&gt;
+我们还是不满足, 你难道就让我去用这么一句话, 去面对面试时候的各种算法题吗?&lt;br /&gt;
+现在我们从算法解决的问题入手? 这是算法的目的. 我的目的是让算法更加的通俗易懂.&lt;br /&gt;
+不是让人们说道, 算法就会去向排序, 二叉树. 这跳跃太大了, 在算法的基础定义和实际的算法之间,&lt;br /&gt;
 还有一些内容, 值得我们挖掘.我们考察排序和二叉树, 这两种算法:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;A sorting algorithm is an algorithm that puts elements of a list in a certain order.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;从排序算法的定义中, 我们窥探到了算法的一些本质属性. 使对象具备某种属性.这里面有序就是一种属性.
+&lt;p&gt;从排序算法的定义中, 我们窥探到了算法的一些本质属性. 使对象具备某种属性.这里面有序就是一种属性.&lt;br /&gt;
 再来看二叉树:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;a binary tree is a tree data structure in which each node has at most two children, 
 which are referred to as the left child and the right child.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;无论是二叉树, 还是排序, 我们都能感受到, 算法在展现一种魔法, 使用元素的建立某种空间结构/关系.
-也就是说, 我们的思维本身就具有某种抽象意义上的空间搬运能力.我门知道空间关系, 在确定了个提之后
+&lt;p&gt;无论是二叉树, 还是排序, 我们都能感受到, 算法在展现一种魔法, 使用元素的建立某种空间结构/关系.&lt;br /&gt;
+也就是说, 我们的思维本身就具有某种抽象意义上的空间搬运能力.我门知道空间关系, 在确定了个提之后&lt;br /&gt;
 是十分清晰的前后左右上下, 这样, 现在我们能进一步的定义算法:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;算法是使对象具备某种空间关系的而被执行的语言序列
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这里的对象显然是语言层面的.我们的定义是否恰当能呢? 是否所有的算法都是让对象具备某种空间关系吗?
-在比如找到两个数组中相同的元素, 类似常见的字符串查找, 也是不具有所谓的空间的关系, 而是更为抽象的序关系.
-什么是序关系? c语言的比较操作符 &amp;lt; &amp;gt; = 这些都是序关系, 准确说是二元关系.
-而空间关系, 我们也可以通过坐标抽象, 得到数学上的需关系.显然有些时候空间关系更为生动, 但你知道这可以
-用order theory解释.
-作为最古老的算法gcd, 最大公约数, 不是上面的所谓的序关系结构. 他就是一种纯粹的数学定义.
-这个算法的目的不在是一个多个元素的整体了, 只是单独挑出符合性质的其中的元素. 但是在界gcd问题时
-我们依然可以把他转换为同过序关系得到答案.而欧几里得的方法, 确不是用gcd定义的方法解的而是用求余的
-方法. 求余依然是序的关系, 只不过方法不一样, 一个循环比较一个是通过求余加速了答案的发现.
-我们现在姑且认为, 所有算法的最终结果都是为了得到一种序的关系.
+&lt;p&gt;这里的对象显然是语言层面的.我们的定义是否恰当能呢? 是否所有的算法都是让对象具备某种空间关系吗?&lt;br /&gt;
+在比如找到两个数组中相同的元素, 类似常见的字符串查找, 也是不具有所谓的空间的关系, 而是更为抽象的序关系.&lt;br /&gt;
+什么是序关系? c语言的比较操作符 &amp;lt; &amp;gt; = 这些都是序关系, 准确说是二元关系.&lt;br /&gt;
+而空间关系, 我们也可以通过坐标抽象, 得到数学上的需关系.显然有些时候空间关系更为生动, 但你知道这可以&lt;br /&gt;
+用order theory解释.&lt;br /&gt;
+作为最古老的算法gcd, 最大公约数, 不是上面的所谓的序关系结构. 他就是一种纯粹的数学定义.&lt;br /&gt;
+这个算法的目的不在是一个多个元素的整体了, 只是单独挑出符合性质的其中的元素. 但是在界gcd问题时&lt;br /&gt;
+我们依然可以把他转换为同过序关系得到答案.而欧几里得的方法, 确不是用gcd定义的方法解的而是用求余的&lt;br /&gt;
+方法. 求余依然是序的关系, 只不过方法不一样, 一个循环比较一个是通过求余加速了答案的发现.&lt;br /&gt;
+我们现在姑且认为, 所有算法的最终结果都是为了得到一种序的关系.&lt;br /&gt;
 我们现在来整理下算法的定义:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;算法是使对象具备某种序关系的而被执行的语言序列
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;我们现在来考察, 算法的对象, 我们能感觉到他可以具有任何形态.
-暂略.
-我们来看算法的核心&amp;ndash; 语言序列, 对象, 执行的目的某种序关系, 三者之间的关系.
-同时为了更好的理解语言序列.
-我们先探索一些重要且常见的思路, 也就是语言序列的patterns.
-我们学过的一些算法, 可以用递归的方式解, 而且很简单. 比如二叉树翻转, 二叉树遍历,
+&lt;p&gt;我们现在来考察, 算法的对象, 我们能感觉到他可以具有任何形态.&lt;br /&gt;
+暂略.&lt;br /&gt;
+我们来看算法的核心&amp;ndash; 语言序列, 对象, 执行的目的某种序关系, 三者之间的关系.&lt;br /&gt;
+同时为了更好的理解语言序列.&lt;br /&gt;
+我们先探索一些重要且常见的思路, 也就是语言序列的patterns.&lt;br /&gt;
+我们学过的一些算法, 可以用递归的方式解, 而且很简单. 比如二叉树翻转, 二叉树遍历,&lt;br /&gt;
 快排等等, 作为一种解问题的思路也就是, 语言序列的模式. 我们要彻底的搞懂倒地什么才是&lt;/p&gt;
 
 &lt;h2 id=&#34;递归-为什么递归可以很好的解决问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;递归? 为什么递归可以很好的解决问题.&lt;/h2&gt;
 
-&lt;p&gt;&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Droste.jpg/220px-Droste.jpg&#34; alt=&#34;递归图&#34; /&gt;
-就是这种感觉, 你总能看到自己的样子, 每个尽头. 可是计算机的递归是有终止条件, 否则程序就跑飞了.
-所以, 无论脑洞多大, 都要想到如何停止递归调用.
+&lt;p&gt;&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Droste.jpg/220px-Droste.jpg&#34; alt=&#34;递归图&#34; /&gt;&lt;br /&gt;
+就是这种感觉, 你总能看到自己的样子, 每个尽头. 可是计算机的递归是有终止条件, 否则程序就跑飞了.&lt;br /&gt;
+所以, 无论脑洞多大, 都要想到如何停止递归调用.&lt;br /&gt;
 就和我们写个for循环for (i=0; i &amp;lt; 10; i++) 一个道理, 本质都是在重复. 递归定义:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;通俗说函数调用自身, 都是递归.一个合格的递归, 有终止条件和非终止条件.非终止条件必须可以通过递归变成终止条件.
-现在我们来看下两类经典的算法排序和二叉树.先说二叉树, 各种遍历啊翻转都是用递归实现的.
-先不考虑递归的问题, 就比方说我们要把二叉树的所有点都打印出来, 随便打不要管什么深度广度中序啊. 你会怎么办?
-一个for循环把所有最left都打出来了, 其他点呢? 没出来.怎么办?为什么二叉树这么难处理啊?
-我们之前打印数组or链表一个循环就ok了. 二叉树的和他们的区别是一个点有2个后继.
-那么2个后继对我们造成什么影响. for通过单个指针只能得到线性的关系. 那如何得到树式的关系呢?
-我们可以从最简单的开始考察空树, 1,2层的树都好办. 3层呢, 就不好办了? 怎么不好办了.
-如果我们知识在白板上把每个节点, 画个对号, 就算输出的话, 我们很轻松, 就画完了.
-可是在计算机内部, 比如我们现在100层的树我们在left子树上输出, 我们就没有办法知道丛root开始
-的right子树的信息了, 我们一条路走到黑, 回不去了. 我门必要track住所谓的right节点的信息.
-这很明显, 咋么track住呢?还是以3层树为例我们可以轻而易举的输出上面两层.
-如果按层输出, 我们输出当前node把子nodes存到queue里面, 每次都这么干. 我们track住了其他节点的信息了
-而链表这种线性结构则是自身就可以track住后继节点的信息, 这就是差别, 多了一个node我们就要
-多个地方存他, 在我们的场景你都不需要关系存的顺序, 因为我们就是随便输出, 全输出就可以了.
-回过头, 我们来看, 这个解法和递归之间的关系. 只要最终能终止就可以用递归解, 我们这个问题能吗?
-显然可以, 停在最底层节点.
-void bin_recur(node)
-{
-    //这是内核的标准风格
-    if(!node)
+&lt;p&gt;通俗说函数调用自身, 都是递归.一个合格的递归, 有终止条件和非终止条件.非终止条件必须可以通过递归变成终止条件.&lt;br /&gt;
+现在我们来看下两类经典的算法排序和二叉树.先说二叉树, 各种遍历啊翻转都是用递归实现的.&lt;br /&gt;
+先不考虑递归的问题, 就比方说我们要把二叉树的所有点都打印出来, 随便打不要管什么深度广度中序啊. 你会怎么办?&lt;br /&gt;
+一个for循环把所有最left都打出来了, 其他点呢? 没出来.怎么办?为什么二叉树这么难处理啊?&lt;br /&gt;
+我们之前打印数组or链表一个循环就ok了. 二叉树的和他们的区别是一个点有2个后继.&lt;br /&gt;
+那么2个后继对我们造成什么影响. for通过单个指针只能得到线性的关系. 那如何得到树式的关系呢?&lt;br /&gt;
+我们可以从最简单的开始考察空树, 1,2层的树都好办. 3层呢, 就不好办了? 怎么不好办了.&lt;br /&gt;
+如果我们知识在白板上把每个节点, 画个对号, 就算输出的话, 我们很轻松, 就画完了.&lt;br /&gt;
+可是在计算机内部, 比如我们现在100层的树我们在left子树上输出, 我们就没有办法知道丛root开始&lt;br /&gt;
+的right子树的信息了, 我们一条路走到黑, 回不去了. 我门必要track住所谓的right节点的信息.&lt;br /&gt;
+这很明显, 咋么track住呢?还是以3层树为例我们可以轻而易举的输出上面两层.&lt;br /&gt;
+如果按层输出, 我们输出当前node把子nodes存到queue里面, 每次都这么干. 我们track住了其他节点的信息了&lt;br /&gt;
+而链表这种线性结构则是自身就可以track住后继节点的信息, 这就是差别, 多了一个node我们就要&lt;br /&gt;
+多个地方存他, 在我们的场景你都不需要关系存的顺序, 因为我们就是随便输出, 全输出就可以了.&lt;br /&gt;
+回过头, 我们来看, 这个解法和递归之间的关系. 只要最终能终止就可以用递归解, 我们这个问题能吗?&lt;br /&gt;
+显然可以, 停在最底层节点.&lt;br /&gt;
+void bin_recur(node)&lt;br /&gt;
+{&lt;br /&gt;
+    //这是内核的标准风格&lt;br /&gt;
+    if(!node)&lt;br /&gt;
         return&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;print(node);
@@ -1959,19 +1959,19 @@ bin_recur(node-&amp;gt;right);
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;完了这就是我们的随意树遍历法, 记住我们只要求输出全部节点就ok了. 至于, node之间的关系, 就随他去吧.哈哈.
-无论递归多么简洁, track nrightnode信息一个也不能少, 知识没有眼睛的计算机的眼睛, 就好像盲人的盲文一样.
-这个递归的和我们的for循环的结果不一样.不用queue用stack结果就一直了.
-广度优先不可以用递归形式, 这是我们知道的第一个不能用递归解的问题.
-1. 接下来我们聊3个问题, 什么问题不能用递归解
-2. 递归 和非递归如何转换
+&lt;p&gt;完了这就是我们的随意树遍历法, 记住我们只要求输出全部节点就ok了. 至于, node之间的关系, 就随他去吧.哈哈.&lt;br /&gt;
+无论递归多么简洁, track nrightnode信息一个也不能少, 知识没有眼睛的计算机的眼睛, 就好像盲人的盲文一样.&lt;br /&gt;
+这个递归的和我们的for循环的结果不一样.不用queue用stack结果就一直了.&lt;br /&gt;
+广度优先不可以用递归形式, 这是我们知道的第一个不能用递归解的问题.&lt;br /&gt;
+1. 接下来我们聊3个问题, 什么问题不能用递归解&lt;br /&gt;
+2. 递归 和非递归如何转换&lt;br /&gt;
 3. 结合二叉树排序算法探讨递归如何可能.&lt;/p&gt;
 
 &lt;h3 id=&#34;先看第三个问题-同时我们也知道gcd也是递归算法实现的:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;先看第三个问题, 同时我们也知道gcd也是递归算法实现的.&lt;/h3&gt;
 
-&lt;p&gt;在这里我们要达成的是递归为什么能解问题. 遇到一个问题时我们我们如何用递归曲解.
-我们要用另外一种思想去解释递归, 且最好是生活化的例子.
-搜了半天也没有即通俗又深刻的讲解.
+&lt;p&gt;在这里我们要达成的是递归为什么能解问题. 遇到一个问题时我们我们如何用递归曲解.&lt;br /&gt;
+我们要用另外一种思想去解释递归, 且最好是生活化的例子.&lt;br /&gt;
+搜了半天也没有即通俗又深刻的讲解.&lt;br /&gt;
 我们按着递归的定义来:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;递归指由一种（或多种）简单的基本情况定义的一类对象或方法，并规定其他所有情况都能被还原为其基本情况。
@@ -1982,7 +1982,7 @@ bin_recur(node-&amp;gt;right);
 &lt;pre&gt;&lt;code&gt;To Iterate is Human, to Recurse, Divine
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;定义中明确说明了基本情况可以不止一种, 意识到这点很重要. 那么下面我们来看一个递归函数都有什么.
+&lt;p&gt;定义中明确说明了基本情况可以不止一种, 意识到这点很重要. 那么下面我们来看一个递归函数都有什么.&lt;br /&gt;
 通过定义, 我们知道递归函数只要两部分内容, 基本情况 + 还原到基本情况两部分:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;int depth(Tree t){
@@ -1994,8 +1994,8 @@ bin_recur(node-&amp;gt;right);
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;求二叉树深度,这个函数的目标就是返回int值树深度
-我们试图通过这么小的一个递归函数, 完成我们对所有递归的认知!
+&lt;p&gt;求二叉树深度,这个函数的目标就是返回int值树深度&lt;br /&gt;
+我们试图通过这么小的一个递归函数, 完成我们对所有递归的认知!&lt;br /&gt;
 基本情况:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;return 0 和return (a&amp;gt;b)?(a+1):(b+1);
@@ -2007,16 +2007,16 @@ bin_recur(node-&amp;gt;right);
 int b=depth(t.left);
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;现在我们要当一回弗兰肯斯坦, 原料都有了, 那我们如何把他组成一个会动且名字叫做递归函数的人呢?
-代码本身就是执行序列, 而这些序列的先后关系非常重要.基本情况和还原基本情况具备哪些关系呢?
-这是我们要完整认知递归, 所必须面对的问题.
-在这个例子当中, 我们可以把基本情况和还原情况分类两类, 从基本情况看:
-不需要依赖还原情况和依赖还原情况的基本情况两类.
-所以我们主要关注, 基本情况就好了, 我们把基本情况排好了还原情况就不是问题了.
-我们总对看不到事物, 不放心,那么还原情况的代码是如何是生效的呢, 怎么就能保证整个程序是我们想要的
-正确结果? 也就是说我们必须证明他!如何证明呢?
-我们只看第一次调用, 显然如果两次depth调用时正确的, 我们最上面这次也是千真万确的!
-也就是说当前的结果正确性依赖于子函数调用的正确性.那么现在问题就变成了, 还原情况是否能
+&lt;p&gt;现在我们要当一回弗兰肯斯坦, 原料都有了, 那我们如何把他组成一个会动且名字叫做递归函数的人呢?&lt;br /&gt;
+代码本身就是执行序列, 而这些序列的先后关系非常重要.基本情况和还原基本情况具备哪些关系呢?&lt;br /&gt;
+这是我们要完整认知递归, 所必须面对的问题.&lt;br /&gt;
+在这个例子当中, 我们可以把基本情况和还原情况分类两类, 从基本情况看:&lt;br /&gt;
+不需要依赖还原情况和依赖还原情况的基本情况两类.&lt;br /&gt;
+所以我们主要关注, 基本情况就好了, 我们把基本情况排好了还原情况就不是问题了.&lt;br /&gt;
+我们总对看不到事物, 不放心,那么还原情况的代码是如何是生效的呢, 怎么就能保证整个程序是我们想要的&lt;br /&gt;
+正确结果? 也就是说我们必须证明他!如何证明呢?&lt;br /&gt;
+我们只看第一次调用, 显然如果两次depth调用时正确的, 我们最上面这次也是千真万确的!&lt;br /&gt;
+也就是说当前的结果正确性依赖于子函数调用的正确性.那么现在问题就变成了, 还原情况是否能&lt;br /&gt;
 够真正意义上的收敛到基本情况:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;int factorial(int n)
@@ -2027,125 +2027,125 @@ int b=depth(t.left);
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这个函数是一个递归函数, 却不能收敛!最后程序直接跑飞了.所以说不是递归就是正确的.
-这严格的依赖于你的实现的语言序列!上面这个例子, 只有去没有回!
-只有保证了去和回的程序才是合理的! 进一步, 我们的基本情况,可以说都是在还原情况的去和回的路径上.
-使用数学归纳法, 我们可以证明递归函数的是否正确!
-现在我们更细致的考察基本情况和去回路径的关系.如果基本情况在去的路径上我们就收他是一种independent
-情况. 反之, 在回来的路径上, 我们就说他是dependent情况. 不用费心, 去想什么那些基本情况是independent哪些
-是dependent这个和具体业务,算法内容相关的.
-下面我们看下排序算法以期更加透彻的理解基本情况!先说快排!
-不知道你还记得吗, 我早都忘了.哈哈.快排的效率是nlogn,why?简单分析下就知道了.
-起始所有的算法都是分治, 只不过分的程度不一样. 快排的思想就是, 又粗到细逐步排序.
-显示选一个特定的元素, 之后把其他元素分列这个元素左右, 之后在分别对左右的元素执行相同的动作.
-用递归怎么实现呢?
-先确定基本情况
-小于2个elements不需要排序
-if ( (first &amp;gt;= last)
-    return;
-这样independent就确定了.
-pivot= array[first]
-while( low &amp;lt;  high){
-    while ( a[high] &amp;gt; pivot  )
-        high&amp;ndash;;
-    a[low]= a[hgih]
-    while ( a[low] &amp;lt; pivot)
-        low++;
-    a[high] = a[low]
-}
-a[low] = pivot
-qs(a, first, low -1)
+&lt;p&gt;这个函数是一个递归函数, 却不能收敛!最后程序直接跑飞了.所以说不是递归就是正确的.&lt;br /&gt;
+这严格的依赖于你的实现的语言序列!上面这个例子, 只有去没有回!&lt;br /&gt;
+只有保证了去和回的程序才是合理的! 进一步, 我们的基本情况,可以说都是在还原情况的去和回的路径上.&lt;br /&gt;
+使用数学归纳法, 我们可以证明递归函数的是否正确!&lt;br /&gt;
+现在我们更细致的考察基本情况和去回路径的关系.如果基本情况在去的路径上我们就收他是一种independent&lt;br /&gt;
+情况. 反之, 在回来的路径上, 我们就说他是dependent情况. 不用费心, 去想什么那些基本情况是independent哪些&lt;br /&gt;
+是dependent这个和具体业务,算法内容相关的.&lt;br /&gt;
+下面我们看下排序算法以期更加透彻的理解基本情况!先说快排!&lt;br /&gt;
+不知道你还记得吗, 我早都忘了.哈哈.快排的效率是nlogn,why?简单分析下就知道了.&lt;br /&gt;
+起始所有的算法都是分治, 只不过分的程度不一样. 快排的思想就是, 又粗到细逐步排序.&lt;br /&gt;
+显示选一个特定的元素, 之后把其他元素分列这个元素左右, 之后在分别对左右的元素执行相同的动作.&lt;br /&gt;
+用递归怎么实现呢?&lt;br /&gt;
+先确定基本情况&lt;br /&gt;
+小于2个elements不需要排序&lt;br /&gt;
+if ( (first &amp;gt;= last)&lt;br /&gt;
+    return;&lt;br /&gt;
+这样independent就确定了.&lt;br /&gt;
+pivot= array[first]&lt;br /&gt;
+while( low &amp;lt;  high){&lt;br /&gt;
+    while ( a[high] &amp;gt; pivot  )&lt;br /&gt;
+        high&amp;ndash;;&lt;br /&gt;
+    a[low]= a[hgih]&lt;br /&gt;
+    while ( a[low] &amp;lt; pivot)&lt;br /&gt;
+        low++;&lt;br /&gt;
+    a[high] = a[low]&lt;br /&gt;
+}&lt;br /&gt;
+a[low] = pivot&lt;br /&gt;
+qs(a, first, low -1)&lt;br /&gt;
 qs(a, low + 1, last)&lt;/p&gt;
 
-&lt;p&gt;从这个算法, 我们可以看出全都是independent的基本情况, 都是还原情况依赖基本情况.
-也就是说, 上层的正确性,
-我们在前序二叉树遍历也遇到这种, 全是independent的情况.
-我们来总结下qsort的基本情况:
-他的基本情况是数据的区间.最基本的就是不排序这种
-之后是下面这种通用形式. 瞄准一个区间.基本+通用类似归纳法.
-那我们现在明白了排除最基本的形态作为终止条件. 其他的基本情况和还原情况表明了这个
-算法的核心本质也就是自顶向下top down还是自底向下bottom up的的方法这是最根本的本质.
-要比我们之前说的由粗到细逐步排序, 要准确深刻许多!
-我们再看归并排序.归并是什么思想呢?正好相反, 它依赖底层的排序.
-也就是bottom up的方式, 我们看下msort的代码
-merge sort是基于合并,
-if (len &amp;lt;= 1)
+&lt;p&gt;从这个算法, 我们可以看出全都是independent的基本情况, 都是还原情况依赖基本情况.&lt;br /&gt;
+也就是说, 上层的正确性,&lt;br /&gt;
+我们在前序二叉树遍历也遇到这种, 全是independent的情况.&lt;br /&gt;
+我们来总结下qsort的基本情况:&lt;br /&gt;
+他的基本情况是数据的区间.最基本的就是不排序这种&lt;br /&gt;
+之后是下面这种通用形式. 瞄准一个区间.基本+通用类似归纳法.&lt;br /&gt;
+那我们现在明白了排除最基本的形态作为终止条件. 其他的基本情况和还原情况表明了这个&lt;br /&gt;
+算法的核心本质也就是自顶向下top down还是自底向下bottom up的的方法这是最根本的本质.&lt;br /&gt;
+要比我们之前说的由粗到细逐步排序, 要准确深刻许多!&lt;br /&gt;
+我们再看归并排序.归并是什么思想呢?正好相反, 它依赖底层的排序.&lt;br /&gt;
+也就是bottom up的方式, 我们看下msort的代码&lt;br /&gt;
+merge sort是基于合并,&lt;br /&gt;
+if (len &amp;lt;= 1)&lt;br /&gt;
     return&lt;/p&gt;
 
-&lt;p&gt;ms(a, first, len/2)
-ms(a, len/2 + 1, last)
-merge(a, first, last)
-这次是通用情况在最下面.
-那我们在来看, 二叉树的的遍历. 前序遍历是top down的思想吗?
-先print root, 之后是最左的一排, 从底往上从左往右一次输出left子树
-之后, 类似方法输出right子树.但是为什么不是层序遍历的效果呢?这里是收到了树结构的影响.
-在排序的例子, 我们以数据的宽度大小得出topdown的思路.
-在遍历二叉树, 我们是node的高度和左右作为top的衡量.
-这里就不是topdown的思想而是先处理谁后处理谁的问题, 我们反过来看排序算法, topdown
-bottomup 似乎也只是一种巧合, 那么我们能不能在qsort的时候只处理两个元素, 之后在递归呢
-就好比二叉树中从root到leaf一样之后从leaf到root, 以此往复, 在用递归处理排序是遵从从多到少的去,
-从少到多.
-二叉树: root-&amp;gt;left leaf -&amp;gt;root-&amp;gt;right leaf
-排序:大范围-&amp;gt;个体-&amp;gt;大范围　这也是递归解问题的标准方法逐渐减小问题．
-那么我们能否从最小的地方, 之后逐渐变大, 想当然是可以的.回来路径上的mergesort就是一个.
-其他的呢插入排序的递归版?
-insert sort
-if ( len = 1)
-    return
-isort(a, len -1)
-for(i=0; i&amp;lt; len;i++
-    sort insert alen
-对比非递归版, 我们发现递归给我门提供了两个潜在的for循环.
-如果是从bottom up这种方式接的问题, 递归是放在回来的路径.
-当然递归也是允许你在取得路径上慢慢扩大处理的问题
-插入排序的终止条件编程了len &amp;gt; maxlen.
-qsort和msort 一去一回.
-我们已经考察递归差不多了,总结下
-1. 一去一回, 两个非嵌套循环
-2. 最好遵从, 去的是逐渐减小任务. 回时增大.
+&lt;p&gt;ms(a, first, len/2)&lt;br /&gt;
+ms(a, len/2 + 1, last)&lt;br /&gt;
+merge(a, first, last)&lt;br /&gt;
+这次是通用情况在最下面.&lt;br /&gt;
+那我们在来看, 二叉树的的遍历. 前序遍历是top down的思想吗?&lt;br /&gt;
+先print root, 之后是最左的一排, 从底往上从左往右一次输出left子树&lt;br /&gt;
+之后, 类似方法输出right子树.但是为什么不是层序遍历的效果呢?这里是收到了树结构的影响.&lt;br /&gt;
+在排序的例子, 我们以数据的宽度大小得出topdown的思路.&lt;br /&gt;
+在遍历二叉树, 我们是node的高度和左右作为top的衡量.&lt;br /&gt;
+这里就不是topdown的思想而是先处理谁后处理谁的问题, 我们反过来看排序算法, topdown&lt;br /&gt;
+bottomup 似乎也只是一种巧合, 那么我们能不能在qsort的时候只处理两个元素, 之后在递归呢&lt;br /&gt;
+就好比二叉树中从root到leaf一样之后从leaf到root, 以此往复, 在用递归处理排序是遵从从多到少的去,&lt;br /&gt;
+从少到多.&lt;br /&gt;
+二叉树: root-&amp;gt;left leaf -&amp;gt;root-&amp;gt;right leaf&lt;br /&gt;
+排序:大范围-&amp;gt;个体-&amp;gt;大范围　这也是递归解问题的标准方法逐渐减小问题．&lt;br /&gt;
+那么我们能否从最小的地方, 之后逐渐变大, 想当然是可以的.回来路径上的mergesort就是一个.&lt;br /&gt;
+其他的呢插入排序的递归版?&lt;br /&gt;
+insert sort&lt;br /&gt;
+if ( len = 1)&lt;br /&gt;
+    return&lt;br /&gt;
+isort(a, len -1)&lt;br /&gt;
+for(i=0; i&amp;lt; len;i++&lt;br /&gt;
+    sort insert alen&lt;br /&gt;
+对比非递归版, 我们发现递归给我门提供了两个潜在的for循环.&lt;br /&gt;
+如果是从bottom up这种方式接的问题, 递归是放在回来的路径.&lt;br /&gt;
+当然递归也是允许你在取得路径上慢慢扩大处理的问题&lt;br /&gt;
+插入排序的终止条件编程了len &amp;gt; maxlen.&lt;br /&gt;
+qsort和msort 一去一回.&lt;br /&gt;
+我们已经考察递归差不多了,总结下&lt;br /&gt;
+1. 一去一回, 两个非嵌套循环&lt;br /&gt;
+2. 最好遵从, 去的是逐渐减小任务. 回时增大.&lt;br /&gt;
 3. 去回可以互相转换.如isort, 当不是所有的都是要稳定性.&lt;/p&gt;
 
 &lt;h3 id=&#34;接下来看递归和非递归的转换:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;接下来看递归和非递归的转换.&lt;/h3&gt;
 
-&lt;p&gt;bubble sort
-if len &amp;lt; 2
-    return
-sort maxer
-bulle sort(len -1)
-冒泡的递归很简单
-那么qsort的非递归版呢
-首先递归给了一个for我们得自己补上
-for
-接下来递归编程压栈就可以了,
+&lt;p&gt;bubble sort&lt;br /&gt;
+if len &amp;lt; 2&lt;br /&gt;
+    return&lt;br /&gt;
+sort maxer&lt;br /&gt;
+bulle sort(len -1)&lt;br /&gt;
+冒泡的递归很简单&lt;br /&gt;
+那么qsort的非递归版呢&lt;br /&gt;
+首先递归给了一个for我们得自己补上&lt;br /&gt;
+for&lt;br /&gt;
+接下来递归编程压栈就可以了,&lt;br /&gt;
 下面的问题答案也是本问题的答案.&lt;/p&gt;
 
 &lt;h3 id=&#34;最后一个问题什么问题不能用递归解:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;最后一个问题什么问题不能用递归解?&lt;/h3&gt;
 
-&lt;p&gt;二叉树层序遍历递归搞不定.
-这个问题实际转换成, 非递归版什么问题搞定什么问题
-我简单的认为
-1. 问题可被还原.
-2. 必要时, 需要stack 信息追踪
-没了. 好关于递归就到这里.
-在考察语言序列的顺序问题.递归的顺序我们很清楚了.但我们似乎还迷茫.
-实际上我们接触的问题都不是用递归解的.
-比如内核的伙伴系统, page cache这些算法. 实际上是这些结构的延伸.
-所有的函数方法都是为了让操作对象, 保持相应结构的性质.
-也就是说这种算法的核心与目的就是结构, 使数据保持这种结构, 算法的目的达到了.
-重点在于维护结构整体, 这点看来和排序算法一样, 一个是侧重空间关系, 一个数值关系.
+&lt;p&gt;二叉树层序遍历递归搞不定.&lt;br /&gt;
+这个问题实际转换成, 非递归版什么问题搞定什么问题&lt;br /&gt;
+我简单的认为&lt;br /&gt;
+1. 问题可被还原.&lt;br /&gt;
+2. 必要时, 需要stack 信息追踪&lt;br /&gt;
+没了. 好关于递归就到这里.&lt;br /&gt;
+在考察语言序列的顺序问题.递归的顺序我们很清楚了.但我们似乎还迷茫.&lt;br /&gt;
+实际上我们接触的问题都不是用递归解的.&lt;br /&gt;
+比如内核的伙伴系统, page cache这些算法. 实际上是这些结构的延伸.&lt;br /&gt;
+所有的函数方法都是为了让操作对象, 保持相应结构的性质.&lt;br /&gt;
+也就是说这种算法的核心与目的就是结构, 使数据保持这种结构, 算法的目的达到了.&lt;br /&gt;
+重点在于维护结构整体, 这点看来和排序算法一样, 一个是侧重空间关系, 一个数值关系.&lt;br /&gt;
 可以说都是在保证空间性质的前提, 完成量的性质:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;我们得到两个基本概念, 描述数据个体的量, 与整体的空间结构.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;空间结构是框架, 量则是内容.
-现在我们来看一个实际的算法问题, 如何判断两边是否有环, 这里说的主要是空间结构.
-这个问题主要关注数据的空间结构, 最简单的加个访问标志位.不加呢, 别的方法呢?
-再加一个指针, 也能解决.通过辅助数据结构两个指针解决了这个问题. 现在回想问题.
-我们判断环, 实质上是找到一个等价的条件, 这个条件, 要不然是 ==, 要不然是 !=
-这和具体逻辑有关. 但是我们一定可以确定的就是我们需要right 和left两个operand.
-需要至少两个对比的对象.而这个对象本质就是量. 这里想提供解决问题的通用方式.
-判断问题要有两个量. 而这两个量.
+&lt;p&gt;空间结构是框架, 量则是内容.&lt;br /&gt;
+现在我们来看一个实际的算法问题, 如何判断两边是否有环, 这里说的主要是空间结构.&lt;br /&gt;
+这个问题主要关注数据的空间结构, 最简单的加个访问标志位.不加呢, 别的方法呢?&lt;br /&gt;
+再加一个指针, 也能解决.通过辅助数据结构两个指针解决了这个问题. 现在回想问题.&lt;br /&gt;
+我们判断环, 实质上是找到一个等价的条件, 这个条件, 要不然是 ==, 要不然是 !=&lt;br /&gt;
+这和具体逻辑有关. 但是我们一定可以确定的就是我们需要right 和left两个operand.&lt;br /&gt;
+需要至少两个对比的对象.而这个对象本质就是量. 这里想提供解决问题的通用方式.&lt;br /&gt;
+判断问题要有两个量. 而这两个量.&lt;br /&gt;
 这里揭示了算法的核心, 就是在完成特定的问题or 结构, 我们需要辅助的结构:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;常见的辅助结构:变量/flag之类, 指针, 队列, stack, 不限制使用数量.
@@ -2156,8 +2156,8 @@ for
 &lt;pre&gt;&lt;code&gt;指针的速度是个很重要的解决问题的因素, 如上面的环问题的两个不同指针.
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;这也是解决比较问题的, 常见方法.
-选好辅助数据结构就是, 运用了. 运用的主要原则就是找到基本情况. 把具备的互斥特征的
+&lt;p&gt;这也是解决比较问题的, 常见方法.&lt;br /&gt;
+选好辅助数据结构就是, 运用了. 运用的主要原则就是找到基本情况. 把具备的互斥特征的&lt;br /&gt;
 基本情况找到, 并应用辅助数据结构解决问题.&lt;/p&gt;
 
 &lt;h2 id=&#34;动态规划问题:0410937a83f6b2d022d3a1c190b257c8&#34;&gt;动态规划问题&lt;/h2&gt;
@@ -2176,81 +2176,81 @@ for
 
 &lt;h1 id=&#34;reference:ccb822b6795f419b08737308491f6183&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;
+&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;why-do-need-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Why do need RCU&lt;/h1&gt;
 
-&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.
-scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.
-scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.
-另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.
-From wikipedia,  A system whose performance improves after adding hardware,
-proportionally to the capacity added, is said to be a scalable system.
-&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;
-言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.
-Read Copy Update HOWTO介绍了当初RCU开发的动机:
-* Increase in cost of conventional locks
-第一个原因也是最重要的, 最根本原因.
-传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;
-一种新的锁机制减少访问内存,就成了强烈的需求.
-* Cache benefits of lock-free reads
-传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.
-3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的
-spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,
-之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.
+&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.&lt;br /&gt;
+scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.&lt;br /&gt;
+scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.&lt;br /&gt;
+另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.&lt;br /&gt;
+From wikipedia,  A system whose performance improves after adding hardware,&lt;br /&gt;
+proportionally to the capacity added, is said to be a scalable system.&lt;br /&gt;
+&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;&lt;br /&gt;
+言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.&lt;br /&gt;
+Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;br /&gt;
+* Increase in cost of conventional locks&lt;br /&gt;
+第一个原因也是最重要的, 最根本原因.&lt;br /&gt;
+传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;&lt;br /&gt;
+一种新的锁机制减少访问内存,就成了强烈的需求.&lt;br /&gt;
+* Cache benefits of lock-free reads&lt;br /&gt;
+传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.&lt;br /&gt;
+3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的&lt;br /&gt;
+spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,&lt;br /&gt;
+之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.&lt;br /&gt;
 在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
-像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,
-其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.
-* Avoiding complicated races
+像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,&lt;br /&gt;
+其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.&lt;br /&gt;
+* Avoiding complicated races&lt;br /&gt;
 No deadlock, 减少了开发维护.&lt;/p&gt;
 
 &lt;h1 id=&#34;how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;How to use RCU&lt;/h1&gt;
 
-&lt;p&gt;list rcu
-&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;
+&lt;p&gt;list rcu&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;what-is-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;What is RCU&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;
-&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;
-&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;&lt;br /&gt;
 RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
 
 &lt;h2 id=&#34;design-pattern:ccb822b6795f419b08737308491f6183&#34;&gt;Design pattern&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Publish-Subscribe
-For updater before synchnization_rcu(); similar to softirq rcu&lt;/li&gt;
-&lt;li&gt;Observer
-For updater to wait For Pre-Existing RCU Readers to Complete
-Maintain Multiple Versions of Recently Updated Objects&lt;/li&gt;
+&lt;li&gt;Publish-Subscribe&lt;br /&gt;
+For updater before synchnization_rcu(); similar to softirq rcu&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Observer&lt;br /&gt;
+For updater to wait For Pre-Existing RCU Readers to Complete&lt;br /&gt;
+Maintain Multiple Versions of Recently Updated Objects&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;positivism-implementions:ccb822b6795f419b08737308491f6183&#34;&gt;Positivism Implementions&lt;/h1&gt;
 
 &lt;h2 id=&#34;classic-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Classic RCU&lt;/h2&gt;
 
-&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules
-obeyed by the critical sections of pure spinlocks:
+&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules&lt;br /&gt;
+obeyed by the critical sections of pure spinlocks:&lt;br /&gt;
 blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
 
 &lt;h2 id=&#34;preemtible-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Preemtible RCU&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
 stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
 
 &lt;h2 id=&#34;tree-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Tree RCU&lt;/h2&gt;
 
 &lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
 
-&lt;p&gt;#FAQ
-* Difference with primitive and atomic
-* Grace period is synchroinze_rcu or a softirq justment
+&lt;p&gt;#FAQ&lt;br /&gt;
+* Difference with primitive and atomic&lt;br /&gt;
+* Grace period is synchroinze_rcu or a softirq justment&lt;br /&gt;
 * __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
 
 &lt;h1 id=&#34;below-is-how-to-use-rcu:ccb822b6795f419b08737308491f6183&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
@@ -2261,31 +2261,31 @@ stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction:ccb822b6795f419b08737308491f6183&#34;&gt;Introduction&lt;/h1&gt;
 
-&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.
-本文不关心RCU的实现.
-本文的核心目标就是了解如何使用RCU.
-所有使用RCU代码, 都可以分为4部分:
-RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.
-update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;
-synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.
-free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.
-Paul的paper总结了5种用法, 并且附上了代码, 便于理解.
+&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.&lt;br /&gt;
+本文不关心RCU的实现.&lt;br /&gt;
+本文的核心目标就是了解如何使用RCU.&lt;br /&gt;
+所有使用RCU代码, 都可以分为4部分:&lt;br /&gt;
+RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.&lt;br /&gt;
+update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;&lt;br /&gt;
+synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.&lt;br /&gt;
+free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.&lt;br /&gt;
+Paul的paper总结了5种用法, 并且附上了代码, 便于理解.&lt;br /&gt;
 理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
 
 &lt;h1 id=&#34;wait-for-completion:ccb822b6795f419b08737308491f6183&#34;&gt;Wait for Completion&lt;/h1&gt;
 
-&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施
-上面的RCU read critical section和synchronize可以构成completion的语义.
-为什么要用RCU而不是内核自身提供的completion函数呢?
-Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.
+&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施&lt;br /&gt;
+上面的RCU read critical section和synchronize可以构成completion的语义.&lt;br /&gt;
+为什么要用RCU而不是内核自身提供的completion函数呢?&lt;br /&gt;
+Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.&lt;br /&gt;
 所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
 
 &lt;h1 id=&#34;reference-counting:ccb822b6795f419b08737308491f6183&#34;&gt;Reference Counting&lt;/h1&gt;
 
-&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.
-但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.
-Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多
-同样也会带来性能的损耗,而不是almost zero in his paper.
+&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.&lt;br /&gt;
+但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.&lt;br /&gt;
+Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多&lt;br /&gt;
+同样也会带来性能的损耗,而不是almost zero in his paper.&lt;br /&gt;
 引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
 
 &lt;h1 id=&#34;type-safe-memory:ccb822b6795f419b08737308491f6183&#34;&gt;Type Safe Memory&lt;/h1&gt;
@@ -2306,40 +2306,40 @@ Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq
 
 &lt;h1 id=&#34;reference:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;
-&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;&lt;br /&gt;
 man iptables and man iptables-extension&lt;/p&gt;
 
 &lt;h1 id=&#34;introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Introduction to netfilter&lt;/h1&gt;
 
-&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.
-Netfilter的本质就是内核协议栈上的Hook的集合.
+&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.&lt;br /&gt;
+Netfilter的本质就是内核协议栈上的Hook的集合.&lt;br /&gt;
 对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
 
 &lt;blockquote&gt;
 &lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.
-与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.
-Netfilter的历史请查阅wikipedia.
-内核基于netfilter构建了 iptables 和 connection track两套系统.
-从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.
-netfilter
-ct| |iptables
-nat,filter,mangle,kproxy,smartqos
+&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.&lt;br /&gt;
+与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.&lt;br /&gt;
+Netfilter的历史请查阅wikipedia.&lt;br /&gt;
+内核基于netfilter构建了 iptables 和 connection track两套系统.&lt;br /&gt;
+从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.&lt;br /&gt;
+netfilter&lt;br /&gt;
+ct| |iptables&lt;br /&gt;
+nat,filter,mangle,kproxy,smartqos&lt;br /&gt;
 当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
 
 &lt;h1 id=&#34;netfilter:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;netfilter&lt;/h1&gt;
 
 &lt;h2 id=&#34;source:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;source&lt;/h2&gt;
 
-&lt;p&gt;netfilter 公共: net/netfilter
+&lt;p&gt;netfilter 公共: net/netfilter&lt;br /&gt;
 ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
 
 &lt;h2 id=&#34;init:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h2&gt;
 
-&lt;p&gt;~/linux/net/netfilter/core.c
+&lt;p&gt;~/linux/net/netfilter/core.c&lt;br /&gt;
 netfilter_init()&lt;/p&gt;
 
 &lt;h2 id=&#34;hook-point:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Hook point&lt;/h2&gt;
@@ -2348,22 +2348,22 @@ netfilter_init()&lt;/p&gt;
 
 &lt;h1 id=&#34;iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Iptables&lt;/h1&gt;
 
-&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).
-iptables 的ip是IP(Internet Protocol).
-xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.
+&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).&lt;br /&gt;
+iptables 的ip是IP(Internet Protocol).&lt;br /&gt;
+xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.&lt;br /&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details of iptables&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;iptables command
-直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target
-如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT
-特别: 从-p开始到-j 之前这是一个 match!
-更多的match 和 target, please, man iptables-extension
+&lt;li&gt;&lt;p&gt;iptables command&lt;br /&gt;
+直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target&lt;br /&gt;
+如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT&lt;br /&gt;
+特别: 从-p开始到-j 之前这是一个 match!&lt;br /&gt;
+更多的match 和 target, please, man iptables-extension&lt;br /&gt;
 一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kernel code
+&lt;li&gt;&lt;p&gt;kernel code&lt;br /&gt;
 ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -2372,19 +2372,19 @@ ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&l
 &lt;h3 id=&#34;init-1:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Init&lt;/h3&gt;
 
 &lt;ul&gt;
-&lt;li&gt;如mangle表的初始化见iptable_mangle_init
-xt_table: ipt_register_table
-    struct xt_table         *iptable_filter;
-    struct xt_table         *iptable_mangle;
-    struct xt_table         *iptable_raw;
-    struct xt_table         *arptable_filter;
-    struct xt_table         *iptable_security;
-    struct xt_table         *nat_table;&lt;/li&gt;
+&lt;li&gt;如mangle表的初始化见iptable_mangle_init&lt;br /&gt;
+xt_table: ipt_register_table&lt;br /&gt;
+    struct xt_table         *iptable_filter;&lt;br /&gt;
+    struct xt_table         *iptable_mangle;&lt;br /&gt;
+    struct xt_table         *iptable_raw;&lt;br /&gt;
+    struct xt_table         *arptable_filter;&lt;br /&gt;
+    struct xt_table         *iptable_security;&lt;br /&gt;
+    struct xt_table         *nat_table;&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init
+&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init&lt;br /&gt;
 xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init
+&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init&lt;br /&gt;
 xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -2398,7 +2398,7 @@ xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
 
 &lt;h2 id=&#34;init-2:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;init&lt;/h2&gt;
 
-&lt;p&gt;nf_conntrack_standalone_init()
+&lt;p&gt;nf_conntrack_standalone_init()&lt;br /&gt;
 nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
 
 &lt;h2 id=&#34;conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
@@ -2407,13 +2407,13 @@ nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
 
 &lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
 
-&lt;p&gt;Each Netfilter connection is uniquely identified by a
-(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple
+&lt;p&gt;Each Netfilter connection is uniquely identified by a&lt;br /&gt;
+(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple&lt;br /&gt;
 nf_conntrack_tuple nf_conn&lt;/p&gt;
 
 &lt;h2 id=&#34;connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Connection tracking helper&lt;/h2&gt;
 
-&lt;p&gt;connection tracking can be given knowledge of application-layer protocols
+&lt;p&gt;connection tracking can be given knowledge of application-layer protocols&lt;br /&gt;
 ALG&lt;/p&gt;
 
 &lt;h2 id=&#34;template:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;template&lt;/h2&gt;
@@ -2422,22 +2422,22 @@ ALG&lt;/p&gt;
 
 &lt;h2 id=&#34;details:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Details&lt;/h2&gt;
 
-&lt;p&gt;以上的工作事实上都很简单，基本思路是：
-一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。
-这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。
+&lt;p&gt;以上的工作事实上都很简单，基本思路是：&lt;br /&gt;
+一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。&lt;br /&gt;
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。&lt;br /&gt;
 徐琛,也这么说!&lt;/p&gt;
 
-&lt;p&gt;#NAT
-&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;
-symmetric nat, 端口不复用, 访问同一个服务器.
+&lt;p&gt;#NAT&lt;br /&gt;
+&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;&lt;br /&gt;
+symmetric nat, 端口不复用, 访问同一个服务器.&lt;br /&gt;
 linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
 
-&lt;p&gt;##init
+&lt;p&gt;##init&lt;br /&gt;
 iptable_nat_init&lt;/p&gt;
 
 &lt;h2 id=&#34;nat-helper:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;NAT helper&lt;/h2&gt;
 
-&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection
+&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection&lt;br /&gt;
 and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
 
 &lt;h2 id=&#34;drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
@@ -2446,19 +2446,19 @@ and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
 
 &lt;h2 id=&#34;snat:e2689587120d0b6ef78b8a3e3eecfbca&#34;&gt;SNAT&lt;/h2&gt;
 
-&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;
-{
-nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info
-    {
-        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.
-        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.
-        orig_orignal-&amp;gt;skb
-        nf_ct_invert_tuplepr(inverse, orig_relply)
-        {
-            ipv4_invert_tuple
-            tcp_invert_tuple
-            For example, orig tuple:
-            original: 192.168.199.132 -&amp;gt; google.com
+&lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info&lt;br /&gt;
+    {&lt;br /&gt;
+        无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.&lt;br /&gt;
+        但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.&lt;br /&gt;
+        orig_orignal-&amp;gt;skb&lt;br /&gt;
+        nf_ct_invert_tuplepr(inverse, orig_relply)&lt;br /&gt;
+        {&lt;br /&gt;
+            ipv4_invert_tuple&lt;br /&gt;
+            tcp_invert_tuple&lt;br /&gt;
+            For example, orig tuple:&lt;br /&gt;
+            original: 192.168.199.132 -&amp;gt; google.com&lt;br /&gt;
             reply: google.com -&amp;gt; 192.168.199.132 //this is orig_relpy&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;        inverse tuple:
@@ -2482,26 +2482,26 @@ nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//上面ct改完了该改skb了.
-    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
+&lt;p&gt;//上面ct改完了该改skb了.&lt;br /&gt;
+    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;SNAT nftables
+&lt;li&gt;&lt;p&gt;SNAT nftables&lt;br /&gt;
 nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;De-NAT
-最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？
+&lt;li&gt;&lt;p&gt;De-NAT&lt;br /&gt;
+最简单的路由器 在postrouting 做了snat（masquade）那么回来的报文怎么unsnat呢？&lt;br /&gt;
 我看了九贱的帖子，一笔带过了。 我不太懂的地方是在nat_packet这个函数里面在发现是rely的报文，要判断ct→status &amp;amp; IPS_DST_NAT 为真 才修改skb里的IP port，我不清楚reply的报文何时给ct→status打的DST_NAT的标记位，看代码好象是prerouting的ip_nat_setup_info这个函数，可是我看到必须改了ct的tuple才能给ct→status打标记位，反复的修改ct，我觉得自己想的不对。&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了
+&lt;p&gt;*答案3.17的代码和原来没多大变化就是函数名字变了&lt;br /&gt;
 发包-POSTROUTING -&amp;gt;SNAT -&amp;gt;修改ct: nf_nat_setup_info-&amp;gt;　ct-&amp;gt;status |= IPS_SRC_NAT;-&amp;gt;修改skb:nf_nat_packet&lt;/p&gt;
 
-&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet
-{
+&lt;p&gt;收报-PREOUTING-&amp;gt; DNAT-&amp;gt;修改skb:nf_nat_packet&lt;br /&gt;
+{&lt;br /&gt;
     enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);&lt;br /&gt;
     //因为是在PREROUTING, 所以是DNAT, 我以前一直以为, de-snat在postrouting中做的.&lt;/p&gt;
 
@@ -2522,19 +2522,19 @@ if (ct-&amp;gt;status &amp;amp; statusbit) {
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;#ipset
+&lt;p&gt;#ipset&lt;br /&gt;
 salist for iptables&lt;/p&gt;
 
-&lt;p&gt;#SYN proxy
-SYNPROXY target makes handling of large SYN floods possible without
-the large performance penalties imposed by the connection tracking in such cases.
-On 3 November 2013, SYN proxy functionality was merged into the Netfilter,
+&lt;p&gt;#SYN proxy&lt;br /&gt;
+SYNPROXY target makes handling of large SYN floods possible without&lt;br /&gt;
+the large performance penalties imposed by the connection tracking in such cases.&lt;br /&gt;
+On 3 November 2013, SYN proxy functionality was merged into the Netfilter,&lt;br /&gt;
 with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
 
 &lt;p&gt;#nftables&lt;/p&gt;
 
-&lt;p&gt;#FAQ
-* 如何查看某个table 具体在那几个hook点.
+&lt;p&gt;#FAQ&lt;br /&gt;
+* 如何查看某个table 具体在那几个hook点.&lt;br /&gt;
 去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
 </description>
     </item>
