@@ -142,7 +142,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="917">
+<meta itemprop="wordCount" content="998">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -151,7 +151,30 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.</p>
+<p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
+The explaination type of a Bug is named Bug type, generally.<br />
+坊间, 流传这样一句话:&ldquo;能复现的Bug, 都不算Bug.&rdquo;, 言外之意就是能复现就能解.<br />
+可见Bug复现,对解Bug的重要性. <a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">BUG type of Jim Gray</a>,除了Bohrbug,其他都不太好解.<br />
+The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及它.<br />
+<a href="https://nvd.nist.gov/cwe.cfm">CWE Cross Section Mapped into by NVD</a> 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!<br />
+wikipedia的条目就相形见绌了<a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
+
+<p>解Bug的过程就是不断通过observations先判断出Bug type, 之后在具现化这个Bug的从而<br />
+得出explanation的过程. 所以两点<br />
+1. 收集observations.<br />
+2. 确定Bug type, 具体原因.<br />
+最终得出explanation. Bug type本身具有验证推测的重要能力.<br />
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在<br />
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.<br />
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace<br />
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.<br />
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及<br />
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来<br />
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而<br />
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use<br />
+after free的问题是够了, 以后用到这类问题基本可以妙解了.</p>
 
 <h1 id="reference:9df68a0e9ceffd0ef168c5e5e50c9f94">Reference</h1>
 
@@ -174,16 +197,7 @@ Method 1: cp&hellip;</p>
 
 <h2 id="gernel-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Gernel Bug types</h2>
 
-<h2 id="cwe-common-weakness-enumeration-https-nvd-nist-gov-cwe-cfm:9df68a0e9ceffd0ef168c5e5e50c9f94"><a href="https://nvd.nist.gov/cwe.cfm">CWE - Common Weakness Enumeration</a></h2>
-
-<h2 id="bug-type-of-jimgray-http-www-opensourceforu-com-2010-10-joy-of-programming-types-of-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94"><a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs/">BUG type of JimGray</a></h2>
-
-<p>Bohrbug, can be reproduce.<br />
-Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了<br />
-Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律<br />
-Schroedinbug</p>
-
-<h2 id="common-types-of-computer-bugs-in-wikipedia-https-en-wikipedia-org-wiki-software-bug-common-types-of-computer-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94"><a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a></h2>
+<h2 id="toc_4:9df68a0e9ceffd0ef168c5e5e50c9f94">##</h2>
 
 <p>Arithmetic bugs<br />
 syntax error<br />
@@ -230,7 +244,7 @@ panic 则是programmer 感知到的是防御式编程assertion的体现.<br />
 #BUG made by me<br />
 * print_signal_info wrong pritk parameters position<br />
         printk(KERN_NOTICE &ldquo;K %d : %d -&gt; %s %d %s %d\n&rdquo;, sig, q-&gt;info.si_code,<br />
-                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));<br />
+                ss<a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">2</a>, ss<a href="https://nvd.nist.gov/cwe.cfm">3</a>, task_tgid_vnr(r_t), task_tgid_vnr(r_p));<br />
  Watch compile warning info can be avoid of this bug.<br />
 * spin_lock(sighand) invoke down_sem and cond_resched&hellip;<br />
     __send_signal()</p>

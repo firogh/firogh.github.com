@@ -1305,7 +1305,30 @@ procmail&lt;/p&gt;&lt;/li&gt;
       <guid>http://firoyang.org/cs/debugging/</guid>
       <description>
 
-&lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
+The explaination type of a Bug is named Bug type, generally.&lt;br /&gt;
+坊间, 流传这样一句话:&amp;ldquo;能复现的Bug, 都不算Bug.&amp;rdquo;, 言外之意就是能复现就能解.&lt;br /&gt;
+可见Bug复现,对解Bug的重要性. &lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
+The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及它.&lt;br /&gt;
+&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt; 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!&lt;br /&gt;
+wikipedia的条目就相形见绌了&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;解Bug的过程就是不断通过observations先判断出Bug type, 之后在具现化这个Bug的从而&lt;br /&gt;
+得出explanation的过程. 所以两点&lt;br /&gt;
+1. 收集observations.&lt;br /&gt;
+2. 确定Bug type, 具体原因.&lt;br /&gt;
+最终得出explanation. Bug type本身具有验证推测的重要能力.&lt;br /&gt;
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.&lt;br /&gt;
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations&lt;br /&gt;
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在&lt;br /&gt;
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.&lt;br /&gt;
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace&lt;br /&gt;
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.&lt;br /&gt;
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及&lt;br /&gt;
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来&lt;br /&gt;
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而&lt;br /&gt;
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use&lt;br /&gt;
+after free的问题是够了, 以后用到这类问题基本可以妙解了.&lt;/p&gt;
 
 &lt;h1 id=&#34;reference:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Reference&lt;/h1&gt;
 
@@ -1328,16 +1351,7 @@ Method 1: cp&amp;hellip;&lt;/p&gt;
 
 &lt;h2 id=&#34;gernel-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Gernel Bug types&lt;/h2&gt;
 
-&lt;h2 id=&#34;cwe-common-weakness-enumeration-https-nvd-nist-gov-cwe-cfm:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE - Common Weakness Enumeration&lt;/a&gt;&lt;/h2&gt;
-
-&lt;h2 id=&#34;bug-type-of-jimgray-http-www-opensourceforu-com-2010-10-joy-of-programming-types-of-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs/&#34;&gt;BUG type of JimGray&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;Bohrbug, can be reproduce.&lt;br /&gt;
-Heisenbug 不论你用多少的时间和精力来试图让bug重现，bug就是人间蒸发了&lt;br /&gt;
-Mandelbug 当bug产生的原因过于复杂而难以理解时，bug的出现也变得没有规律&lt;br /&gt;
-Schroedinbug&lt;/p&gt;
-
-&lt;h2 id=&#34;common-types-of-computer-bugs-in-wikipedia-https-en-wikipedia-org-wiki-software-bug-common-types-of-computer-bugs:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;&lt;/h2&gt;
+&lt;h2 id=&#34;toc_4:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;##&lt;/h2&gt;
 
 &lt;p&gt;Arithmetic bugs&lt;br /&gt;
 syntax error&lt;br /&gt;
@@ -1384,7 +1398,7 @@ panic 则是programmer 感知到的是防御式编程assertion的体现.&lt;br /
 #BUG made by me&lt;br /&gt;
 * print_signal_info wrong pritk parameters position&lt;br /&gt;
         printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-                ss[2], ss[3], task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
+                ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
  Watch compile warning info can be avoid of this bug.&lt;br /&gt;
 * spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
     __send_signal()&lt;/p&gt;
