@@ -142,7 +142,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="859">
+<meta itemprop="wordCount" content="851">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -168,9 +168,11 @@ Debug Kernel bug<br />
 How to use your customed debug library without cp system original corespon library? Set a path prefix?<br />
 Method 1: cp&hellip;</p>
 
+<h1 id="debugging-and-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Debugging and Bug types</h1>
+
 <p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
 The explaination type of a Bug is named Bug type, generally.<br />
-坊间, 流传这样一句话:&ldquo;能复现的Bug, 都不算Bug.&rdquo;, 言外之意就是能复现就能解.<br />
+坊间流传这样一句话:&ldquo;能复现的Bug, 都不算Bug.&rdquo;, 言外之意就是能复现就能解.<br />
 可见Bug复现,对解Bug的重要性. <a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">BUG type of Jim Gray</a>,除了Bohrbug,其他都不太好解.<br />
 The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,<br />
 他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.<br />
@@ -178,12 +180,38 @@ NVD的Bug分类也采用类似的构建方式.<a href="https://nvd.nist.gov/cwe.
 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了<br />
 <a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
 
-<p>解Bug的过程就是不断通过observations先判断出Bug type, 之后在具现化这个Bug的从而<br />
-得出explanation的过程. 所以两点<br />
-1. 收集observations.<br />
-2. 确定Bug type, 具体原因.<br />
-最终得出explanation. Bug type本身具有验证推测的重要能力.<br />
-我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
+<h1 id="bugs-in-linux-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Bugs in Linux kernel</h1>
+
+<p>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br />
+<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a><br />
+<a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a><br />
+<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic</p>
+
+<h1 id="general-debugging-steps:9df68a0e9ceffd0ef168c5e5e50c9f94">General debugging steps</h1>
+
+<p>Debugging的逻辑过程是<a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>. 我们以此进行推导.<br />
+T: Theory 也就是我们的background, cs的知识技术, 出问题的程序与代码.<br />
+O: Observations 是Bug发生的现场以及相应的log, 现象.<br />
+E: Explanation 是最终定位的结论.<br />
+E ⊆ T; O ⊆ T; E ⊃ (E ∩ O);<br />
+if E = (E ∩ O); then debugging is done.<br />
+T, E 与 O理论上都是从0开始,且O =&gt; E;<br />
+E: 0 -&gt; Bug type(可能经过是多种Bug types的过渡状态) -&gt; Explanation<br />
+很多时候O也会扩大T.所以O成为debugging的关键.<br />
+下面严格区分T 和 O. 我们得到O就要不断地结合T进行理性分析.<br />
+&gt; Another perespective,<br />
+&gt; the process of debugging is use O to minimize T to E instance.<br />
+&gt; T is solutions space, E <a href="https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1">locates</a> in T. O is the address to find E.</p>
+
+<ul>
+<li><p>如何收集Observations</p></li>
+
+<li><p>如何收集Theory</p></li>
+</ul>
+
+<h1 id="examples:9df68a0e9ceffd0ef168c5e5e50c9f94">Examples</h1>
+
+<p>我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
 首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
 within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在<br />
 就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.<br />
@@ -194,26 +222,6 @@ log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓
 保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而<br />
 确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use<br />
 after free的问题是够了, 以后用到这类问题基本可以妙解了.</p>
-
-<h1 id="bugs-in-linux-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Bugs in Linux kernel</h1>
-
-<p>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br />
-<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a><br />
-<a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a><br />
-<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic</p>
-
-<h1 id="general-debugging-steps-abductive-reasoning-https-en-wikipedia-org-wiki-abductive-reasoning:9df68a0e9ceffd0ef168c5e5e50c9f94">General debugging steps &ndash; <a href="https://en.wikipedia.org/wiki/Abductive_reasoning">Abductive reasoning</a></h1>
-
-<p>T + O =&gt; E; //Theory + observations =&gt; explanation<br />
-E is the sub-set of T, O is the result of E under the T.<br />
-The process of debugging is use O to minimize T to E instance.<br />
-0. Reproduce?<br />
-kernel version<br />
-ask reporter for the .config<br />
-1. Find the bug type and definations what the bug belong to.<br />
-The bug type is the broad outline of the Expaination of the specific bug&rsquo;s Observation.<br />
-2. 结合实际环境get more observations and deuce the explanation/cause.<br />
-3. Fix it.</p>
 
 <h1 id="get-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations</h1>
 
