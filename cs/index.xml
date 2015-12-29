@@ -1305,13 +1305,32 @@ procmail&lt;/p&gt;&lt;/li&gt;
       <guid>http://firoyang.org/cs/debugging/</guid>
       <description>
 
+&lt;h1 id=&#34;reference:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;Reverse engineering&lt;/p&gt;
+
+&lt;h1 id=&#34;contents:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;Bug types&lt;br /&gt;
+Bug made by me&lt;br /&gt;
+Anti-debuging&lt;br /&gt;
+General debugging steps&lt;br /&gt;
+Get observations&lt;br /&gt;
+Specific observations&lt;br /&gt;
+Debugging experience&lt;br /&gt;
+Debug Kernel bug&lt;br /&gt;
+How to use your customed debug library without cp system original corespon library? Set a path prefix?&lt;br /&gt;
+Method 1: cp&amp;hellip;&lt;/p&gt;
+
 &lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
 The explaination type of a Bug is named Bug type, generally.&lt;br /&gt;
 坊间, 流传这样一句话:&amp;ldquo;能复现的Bug, 都不算Bug.&amp;rdquo;, 言外之意就是能复现就能解.&lt;br /&gt;
 可见Bug复现,对解Bug的重要性. &lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
-The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及它.&lt;br /&gt;
-&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt; 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!&lt;br /&gt;
-wikipedia的条目就相形见绌了&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
+The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,&lt;br /&gt;
+他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.&lt;br /&gt;
+NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt;&lt;br /&gt;
+涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;解Bug的过程就是不断通过observations先判断出Bug type, 之后在具现化这个Bug的从而&lt;br /&gt;
 得出explanation的过程. 所以两点&lt;br /&gt;
@@ -1330,89 +1349,14 @@ log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓
 确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use&lt;br /&gt;
 after free的问题是够了, 以后用到这类问题基本可以妙解了.&lt;/p&gt;
 
-&lt;h1 id=&#34;reference:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;bugs-in-linux-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Bugs in Linux kernel&lt;/h1&gt;
 
-&lt;p&gt;Reverse engineering&lt;/p&gt;
-
-&lt;h1 id=&#34;contents:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Bug types&lt;br /&gt;
-Bug made by me&lt;br /&gt;
-Anti-debuging&lt;br /&gt;
-General debugging steps&lt;br /&gt;
-Get observations&lt;br /&gt;
-Specific observations&lt;br /&gt;
-Debugging experience&lt;br /&gt;
-Debug Kernel bug&lt;br /&gt;
-How to use your customed debug library without cp system original corespon library? Set a path prefix?&lt;br /&gt;
-Method 1: cp&amp;hellip;&lt;/p&gt;
-
-&lt;h1 id=&#34;bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Bug types&lt;/h1&gt;
-
-&lt;h2 id=&#34;gernel-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Gernel Bug types&lt;/h2&gt;
-
-&lt;h2 id=&#34;toc_4:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;##&lt;/h2&gt;
-
-&lt;p&gt;Arithmetic bugs&lt;br /&gt;
-syntax error&lt;br /&gt;
-Logic error&lt;br /&gt;
-&amp;gt; Incorrect Bounds-Checking&lt;br /&gt;
-&amp;gt; off-by-one bug&lt;br /&gt;
-&amp;gt; Skipping Null-Termination Issues&lt;br /&gt;
-Resource bugs&lt;br /&gt;
-&amp;gt; uninitialized/nonvalidated/corrupted pointer dereference.&lt;br /&gt;
-&amp;gt; Segmentation fault in userspace&lt;br /&gt;
-&amp;gt; Kernel oops,&lt;a href=&#34;http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf&#34;&gt;When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.&lt;/a&gt;&lt;br /&gt;
-&amp;gt; Buffer overflow/踩内存&lt;br /&gt;
-&amp;gt; &lt;a href=&#34;http://lwn.net/Articles/174494/&#34;&gt;Double kfree errors&lt;/a&gt;&lt;br /&gt;
-&amp;gt; The devm_* series functions introduce more double free error in driver code.&lt;br /&gt;
-Race condition bug&lt;br /&gt;
-&amp;gt; Multi-threading programming bugs(parallel problems)&lt;br /&gt;
-&amp;gt; deadlock&lt;br /&gt;
-Interfacing bugs&lt;br /&gt;
-Performance bugs&lt;br /&gt;
-Teamworking bugs&lt;br /&gt;
-Vulnerable bugs&lt;br /&gt;
-&amp;gt; unbounded memory manipulation functions&lt;br /&gt;
-&amp;gt; strcpy&lt;br /&gt;
-&amp;gt; Non-Null Termination Issues&lt;br /&gt;
-&amp;gt; non terminaed string&lt;br /&gt;
-&amp;gt; Formate string&lt;br /&gt;
-&amp;gt; &lt;a href=&#34;https://www.owasp.org/index.php/Format_string_attack&#34;&gt;Format Strings attacker&lt;/a&gt; or &lt;a href=&#34;https://en.wikipedia.org/wiki/Uncontrolled_format_string&#34;&gt;Uncontrolled format string&lt;/a&gt;&lt;br /&gt;
-&amp;gt; integer issues&lt;br /&gt;
-&amp;gt; integer overflow&lt;br /&gt;
-&amp;gt; Signed Comparison Vulnerabilities&lt;br /&gt;
-Special BUG&lt;br /&gt;
-&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;kenrel lockup&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;taxonomy-of-kernel-bug:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Taxonomy of Kernel BUG&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugClassification&#34;&gt;oops, WARN_ON, or kernel panic&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops&lt;/a&gt;/warn/panic&lt;br /&gt;
-狭隘的认为oops等价于内存地址出问题了, oops 本质上是__die(&amp;ldquo;Oops&amp;rdquo;&lt;br /&gt;
-__die 却可以表明很多错误 &amp;ldquo;Bad pagetable&amp;rdquo;, &amp;ldquo;Oops - badmode&amp;rdquo;&lt;br /&gt;
-arm_notify_die(&amp;ldquo;Oops - undefined instruction&amp;rdquo; 等等..&lt;br /&gt;
-oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.&lt;br /&gt;
-panic 则是programmer 感知到的是防御式编程assertion的体现.&lt;br /&gt;
-&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification&#34;&gt;Source of BUG&lt;/a&gt;, driver or subsystem and so on.&lt;br /&gt;
-#BUG made by me&lt;br /&gt;
-* print_signal_info wrong pritk parameters position&lt;br /&gt;
-        printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-                ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
- Watch compile warning info can be avoid of this bug.&lt;br /&gt;
-* spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
-    __send_signal()&lt;/p&gt;
-
-&lt;h1 id=&#34;anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Anti-debugging&lt;/h1&gt;
-
-&lt;h2 id=&#34;syntax-checking:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Syntax checking&lt;/h2&gt;
-
-&lt;p&gt;gcc -Wall&lt;br /&gt;
-bash -n&lt;/p&gt;
-
-&lt;h2 id=&#34;static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;static code analysis&lt;/h2&gt;
-
-&lt;p&gt;smatch&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Kernel oops,&lt;a href=&#34;http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf&#34;&gt;When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;kenrel lockup&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugClassification&#34;&gt;oops, WARN_ON, or kernel panic&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops&lt;/a&gt;/warn/panic&lt;/p&gt;
+&lt;/blockquote&gt;
 
 &lt;h1 id=&#34;general-debugging-steps-abductive-reasoning-https-en-wikipedia-org-wiki-abductive-reasoning:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;General debugging steps &amp;ndash; &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning&#34;&gt;Abductive reasoning&lt;/a&gt;&lt;/h1&gt;
 
@@ -1629,6 +1573,28 @@ f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;debug-intel-system-studio:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Debug Intel system studio&lt;/h1&gt;
+
+&lt;h1 id=&#34;bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;BUG made by me&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
+    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
+            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
+Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
+__send_signal()&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Anti-debugging&lt;/h1&gt;
+
+&lt;h2 id=&#34;syntax-checking:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Syntax checking&lt;/h2&gt;
+
+&lt;p&gt;gcc -Wall&lt;br /&gt;
+bash -n&lt;/p&gt;
+
+&lt;h2 id=&#34;static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;static code analysis&lt;/h2&gt;
+
+&lt;p&gt;smatch&lt;/p&gt;
 </description>
     </item>
     

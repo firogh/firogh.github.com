@@ -142,7 +142,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="998">
+<meta itemprop="wordCount" content="859">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -150,31 +150,6 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
-
-<p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
-The explaination type of a Bug is named Bug type, generally.<br />
-坊间, 流传这样一句话:&ldquo;能复现的Bug, 都不算Bug.&rdquo;, 言外之意就是能复现就能解.<br />
-可见Bug复现,对解Bug的重要性. <a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">BUG type of Jim Gray</a>,除了Bohrbug,其他都不太好解.<br />
-The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及它.<br />
-<a href="https://nvd.nist.gov/cwe.cfm">CWE Cross Section Mapped into by NVD</a> 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!<br />
-wikipedia的条目就相形见绌了<a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
-
-<p>解Bug的过程就是不断通过observations先判断出Bug type, 之后在具现化这个Bug的从而<br />
-得出explanation的过程. 所以两点<br />
-1. 收集observations.<br />
-2. 确定Bug type, 具体原因.<br />
-最终得出explanation. Bug type本身具有验证推测的重要能力.<br />
-我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
-首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
-within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在<br />
-就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.<br />
-可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace<br />
-log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.<br />
-这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及<br />
-记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来<br />
-保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而<br />
-确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use<br />
-after free的问题是够了, 以后用到这类问题基本可以妙解了.</p>
 
 <h1 id="reference:9df68a0e9ceffd0ef168c5e5e50c9f94">Reference</h1>
 
@@ -193,72 +168,41 @@ Debug Kernel bug<br />
 How to use your customed debug library without cp system original corespon library? Set a path prefix?<br />
 Method 1: cp&hellip;</p>
 
-<h1 id="bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Bug types</h1>
+<p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
+The explaination type of a Bug is named Bug type, generally.<br />
+坊间, 流传这样一句话:&ldquo;能复现的Bug, 都不算Bug.&rdquo;, 言外之意就是能复现就能解.<br />
+可见Bug复现,对解Bug的重要性. <a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">BUG type of Jim Gray</a>,除了Bohrbug,其他都不太好解.<br />
+The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,<br />
+他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.<br />
+NVD的Bug分类也采用类似的构建方式.<a href="https://nvd.nist.gov/cwe.cfm">CWE Cross Section Mapped into by NVD</a><br />
+涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了<br />
+<a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
 
-<h2 id="gernel-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Gernel Bug types</h2>
+<p>解Bug的过程就是不断通过observations先判断出Bug type, 之后在具现化这个Bug的从而<br />
+得出explanation的过程. 所以两点<br />
+1. 收集observations.<br />
+2. 确定Bug type, 具体原因.<br />
+最终得出explanation. Bug type本身具有验证推测的重要能力.<br />
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在<br />
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.<br />
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace<br />
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.<br />
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及<br />
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来<br />
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而<br />
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use<br />
+after free的问题是够了, 以后用到这类问题基本可以妙解了.</p>
 
-<h2 id="toc_4:9df68a0e9ceffd0ef168c5e5e50c9f94">##</h2>
+<h1 id="bugs-in-linux-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Bugs in Linux kernel</h1>
 
-<p>Arithmetic bugs<br />
-syntax error<br />
-Logic error<br />
-&gt; Incorrect Bounds-Checking<br />
-&gt; off-by-one bug<br />
-&gt; Skipping Null-Termination Issues<br />
-Resource bugs<br />
-&gt; uninitialized/nonvalidated/corrupted pointer dereference.<br />
-&gt; Segmentation fault in userspace<br />
-&gt; Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br />
-&gt; Buffer overflow/踩内存<br />
-&gt; <a href="http://lwn.net/Articles/174494/">Double kfree errors</a><br />
-&gt; The devm_* series functions introduce more double free error in driver code.<br />
-Race condition bug<br />
-&gt; Multi-threading programming bugs(parallel problems)<br />
-&gt; deadlock<br />
-Interfacing bugs<br />
-Performance bugs<br />
-Teamworking bugs<br />
-Vulnerable bugs<br />
-&gt; unbounded memory manipulation functions<br />
-&gt; strcpy<br />
-&gt; Non-Null Termination Issues<br />
-&gt; non terminaed string<br />
-&gt; Formate string<br />
-&gt; <a href="https://www.owasp.org/index.php/Format_string_attack">Format Strings attacker</a> or <a href="https://en.wikipedia.org/wiki/Uncontrolled_format_string">Uncontrolled format string</a><br />
-&gt; integer issues<br />
-&gt; integer overflow<br />
-&gt; Signed Comparison Vulnerabilities<br />
-Special BUG<br />
-<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a></p>
-
-<h2 id="taxonomy-of-kernel-bug:9df68a0e9ceffd0ef168c5e5e50c9f94">Taxonomy of Kernel BUG</h2>
-
-<p><a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a><br />
-<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic<br />
-狭隘的认为oops等价于内存地址出问题了, oops 本质上是__die(&ldquo;Oops&rdquo;<br />
-__die 却可以表明很多错误 &ldquo;Bad pagetable&rdquo;, &ldquo;Oops - badmode&rdquo;<br />
-arm_notify_die(&ldquo;Oops - undefined instruction&rdquo; 等等..<br />
-oops 是超出programmer 之外的错误,属于不可控风险, 其实更危险比panic.<br />
-panic 则是programmer 感知到的是防御式编程assertion的体现.<br />
-<a href="http://fedoraproject.org/wiki/KernelBugTriage#Kernel_Bug_Classification">Source of BUG</a>, driver or subsystem and so on.<br />
-#BUG made by me<br />
-* print_signal_info wrong pritk parameters position<br />
-        printk(KERN_NOTICE &ldquo;K %d : %d -&gt; %s %d %s %d\n&rdquo;, sig, q-&gt;info.si_code,<br />
-                ss<a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">2</a>, ss<a href="https://nvd.nist.gov/cwe.cfm">3</a>, task_tgid_vnr(r_t), task_tgid_vnr(r_p));<br />
- Watch compile warning info can be avoid of this bug.<br />
-* spin_lock(sighand) invoke down_sem and cond_resched&hellip;<br />
-    __send_signal()</p>
-
-<h1 id="anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94">Anti-debugging</h1>
-
-<h2 id="syntax-checking:9df68a0e9ceffd0ef168c5e5e50c9f94">Syntax checking</h2>
-
-<p>gcc -Wall<br />
-bash -n</p>
-
-<h2 id="static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94">static code analysis</h2>
-
-<p>smatch</p>
+<blockquote>
+<p>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br />
+<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a><br />
+<a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a><br />
+<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic</p>
+</blockquote>
 
 <h1 id="general-debugging-steps-abductive-reasoning-https-en-wikipedia-org-wiki-abductive-reasoning:9df68a0e9ceffd0ef168c5e5e50c9f94">General debugging steps &ndash; <a href="https://en.wikipedia.org/wiki/Abductive_reasoning">Abductive reasoning</a></h1>
 
@@ -475,6 +419,28 @@ f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx</p></li>
 </ul>
 
 <h1 id="debug-intel-system-studio:9df68a0e9ceffd0ef168c5e5e50c9f94">Debug Intel system studio</h1>
+
+<h1 id="bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94">BUG made by me</h1>
+
+<ul>
+<li>print_signal_info wrong pritk parameters position<br />
+    printk(KERN_NOTICE &ldquo;K %d : %d -&gt; %s %d %s %d\n&rdquo;, sig, q-&gt;info.si_code,<br />
+            ss<a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">2</a>, ss<a href="https://nvd.nist.gov/cwe.cfm">3</a>, task_tgid_vnr(r_t), task_tgid_vnr(r_p));<br />
+Watch compile warning info can be avoid of this bug.<br /></li>
+<li>spin_lock(sighand) invoke down_sem and cond_resched&hellip;<br />
+__send_signal()<br /></li>
+</ul>
+
+<h1 id="anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94">Anti-debugging</h1>
+
+<h2 id="syntax-checking:9df68a0e9ceffd0ef168c5e5e50c9f94">Syntax checking</h2>
+
+<p>gcc -Wall<br />
+bash -n</p>
+
+<h2 id="static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94">static code analysis</h2>
+
+<p>smatch</p>
 
 		</article>
 	  </div>
