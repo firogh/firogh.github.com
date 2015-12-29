@@ -142,7 +142,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="851">
+<meta itemprop="wordCount" content="543">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -155,19 +155,6 @@
 
 <p>Reverse engineering</p>
 
-<h1 id="contents:9df68a0e9ceffd0ef168c5e5e50c9f94">Contents</h1>
-
-<p>Bug types<br />
-Bug made by me<br />
-Anti-debuging<br />
-General debugging steps<br />
-Get observations<br />
-Specific observations<br />
-Debugging experience<br />
-Debug Kernel bug<br />
-How to use your customed debug library without cp system original corespon library? Set a path prefix?<br />
-Method 1: cp&hellip;</p>
-
 <h1 id="debugging-and-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Debugging and Bug types</h1>
 
 <p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
@@ -179,6 +166,8 @@ The National Vulnerability Database是一个非常有用的网站, 国内鲜少�
 NVD的Bug分类也采用类似的构建方式.<a href="https://nvd.nist.gov/cwe.cfm">CWE Cross Section Mapped into by NVD</a><br />
 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了<br />
 <a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
+
+<p>use after free</p>
 
 <h1 id="bugs-in-linux-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Bugs in Linux kernel</h1>
 
@@ -195,236 +184,86 @@ O: Observations 是Bug发生的现场以及相应的log, 现象.<br />
 E: Explanation 是最终定位的结论.<br />
 E ⊆ T; O ⊆ T; E ⊃ (E ∩ O);<br />
 if E = (E ∩ O); then debugging is done.<br />
-T, E 与 O理论上都是从0开始,且O =&gt; E;<br />
-E: 0 -&gt; Bug type(可能经过是多种Bug types的过渡状态) -&gt; Explanation<br />
-很多时候O也会扩大T.所以O成为debugging的关键.<br />
+T, E 与 O理论上都是从∅开始,且O =&gt; E;<br />
+E: ∅ -&gt; Bug type(可能经过是多种Bug types的过渡状态) -&gt; Explanation<br />
+很多时候O也会使T扩大.所以O成为debugging的关键.<br />
 下面严格区分T 和 O. 我们得到O就要不断地结合T进行理性分析.<br />
 &gt; Another perespective,<br />
 &gt; the process of debugging is use O to minimize T to E instance.<br />
 &gt; T is solutions space, E <a href="https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1">locates</a> in T. O is the address to find E.</p>
 
-<ul>
-<li><p>如何收集Observations</p></li>
+<p>对于Software Bug而言, Debugging可以认为是从observations到source code再到人的逻辑的过程.<br />
+observations -&gt; source code -&gt; mind logic<br />
+基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.</p>
 
-<li><p>如何收集Theory</p></li>
+<h3 id="get-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations</h3>
+
+<p>首先我们要理清中间的各个流程, 以及相关的observations:<br />
+* coding</p>
+
+<ul>
+<li>compilation<br />
+make kernel/sched.s V=1<br />
+readelf, objdump<br />
+c++filt<br />
+addr2line -f -C -a 0xxxx -e ooo.bin<br />
+./scripts/decodecode &lt; Oops.txt<br /></li>
+<li>load software<br />
+LD_TRACE_LOADED_OBJECTS=1 git<br />
+ldd /usr/bin/git<br /></li>
+
+<li><p>software running<br />
+&gt; #define debugme(fmt, args&hellip;) do{FILE *fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); \<br />
+&gt; fprintf(fdebug,&ldquo;%s,%s,%d:&ldquo;fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)<br />
+lsof, ltrace, strace, bash -x, coredump</p>
+
+<ul>
+<li>kernel specific<br />
+putstr early_printk vs printk pr_debug vs dev_debug dump_stack<br />
+Linux serial-port driver is interrupt driven, if irq-off console will not work!<br />
+ioctl/netlink, SysRq, ftrace expect,kgtp, lockdep, kdump, kgdboc<br />
+CONFIG_DYNAMIC_DEBUG, <debugfs>/dynamic_debug/control<br />
+print signal This is just a hiwifi wonderful kernel patch #931<br /></li>
+<li>network specific<br />
+tcpdump netstat iptables wireshark<br /></li>
+<li>u-boot<br />
+print_tlb<br /></li>
+<li>make specific<br />
+-s, -n, -p, &ndash;warn-undefined-variables<br />
+$(warning &hellip;)<br /></li>
+<li>有的类型的Bug会阻止我们收集observations<br />
+这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.<br />
+这时要扩大目标struct的大小, 把observations加进去.<br /></li>
+</ul></li>
+
+<li><p>software imediately stop<br />
+Use atexit() register a stackdump or a wrapped print</p></li>
 </ul>
 
-<h1 id="examples:9df68a0e9ceffd0ef168c5e5e50c9f94">Examples</h1>
+<h1 id="一些比较通用的调试工具:9df68a0e9ceffd0ef168c5e5e50c9f94">一些比较通用的调试工具</h1>
 
-<p>我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
-首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
-within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在<br />
-就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.<br />
-可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace<br />
-log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.<br />
-这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及<br />
-记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来<br />
-保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而<br />
-确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use<br />
-after free的问题是够了, 以后用到这类问题基本可以妙解了.</p>
-
-<h1 id="get-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations</h1>
-
-<h2 id="get-observations-from-excute-binary-maybe-source-file:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from excute binary(maybe source file)</h2>
-
-<p>DWARF<br />
-ELF header, readelf -h<br />
-Program header table, readelf -l<br />
-Segments, readelf &ndash;segments<br />
-Sections, readelf &ndash;sections<br />
-Section header table, readelf -S<br />
-objdump -S<br />
-make kernel/sched.s V=1<br />
-c++filt<br />
-addr2line -f -C -a xxx -e ooo<br />
-/home/build/x/ab/mips-openwrt-linux-addr2line -C -f -e /data/logs/hwf-health-chk/debug-root/HC6361/0.9005.5384s/debugfs/tmp/data/usr/bin/aria2c  0x00607188<br />
-aria2::ZeroBtMessage::~ZeroBtMessage()</p>
-
-<h3 id="tips-for-binary-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Tips for binary observations</h3>
-
-<p><a href="http://www.stlinux.com/devel/debug/jtag/build?q=node/82">Tips on debugging optimized code</a><br />
-* code reordering<br />
-* inlining<br />
-* Optimized-away variables<br />
-* Tailcall optimization</p>
-
-<h2 id="get-observations-from-program:9df68a0e9ceffd0ef168c5e5e50c9f94">Get Observations from program</h2>
-
-<blockquote>
-<p>#define debugme(fmt, args&hellip;) do{FILE *fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); \<br />
-fprintf(fdebug,&ldquo;%s,%s,%d:&ldquo;fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)<br />
-Before kernel decompress use putstr<br />
-Linux serial-port driver is interrupt driven, if irq-off console will not work!<br />
-early_printk vs printk<br />
-dump_stack<br />
-ioctl/netlink<br />
-Use atexit() register a stackdump or a wrapped print</p>
-
-<h3 id="debuger-gdb-kdb-kgdb:9df68a0e9ceffd0ef168c5e5e50c9f94">Debuger Gdb kdb kgdb</h3>
-
-<p>gdb /usr/src/linux/vmlinux /proc/kcore<br />
-    bt<br />
-    x/100a<br />
-thread apply all bt full<br />
-* How to use gdb debug loaded kernel module(maybe kernel its self)<br />
+<ul>
+<li>gdb<br />
 gdb vmlinux /proc/kcore<br />
-core-file /proc/kcore<br />
 p jiffies_64<br />
 text_addr=$(cat /sys/module/char-read-write/sections/.text)<br />
 add-symbol-file /home/nkhare/char-read-write.ko $text_addr<br />
-* how to get the offset of member in struct<br />
-gdb ./vmlinux<br />
-print &amp;((struct kmem_cache *)0)-&gt;offset</p>
-</blockquote>
-
-<h2 id="get-observations-from-application:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from application</h2>
-
-<p>lsof<br />
-strace<br />
-bash  -x for shell<br />
-coredump</p>
-
-<h1 id="get-obervations-from-make:9df68a0e9ceffd0ef168c5e5e50c9f94">Get obervations from make</h1>
-
-<ul>
-<li>Just print echo<br />
-make -s<br /></li>
-<li>Print shell command<br />
-make -n<br /></li>
-<li>Print all variables. not really execute. Wired-name variable is useful to debug<br />
-make -p<br /></li>
-<li>Pirnt a message<br />
-$(warning &hellip;)<br /></li>
-
-<li><p>Etc<br />
-&ndash;warn-undefined-variables</p>
-
-<h2 id="get-observations-from-library:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from library</h2>
-
-<p>ltrace<br />
-library dependencies of a ELF/bin<br />
-LD_TRACE_LOADED_OBJECTS=1 git<br />
-ldd /usr/bin/git</p>
-
-<h2 id="get-observations-from-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations from kernel</h2>
-
-<p>dmesg<br />
-SysRq<br />
-/proc (specially /proc/sys/) and /sys<br />
-ftrace<br />
-<a href="http://lwn.net/Articles/291091/">http://lwn.net/Articles/291091/</a><br />
-<a href="http://lwn.net/Articles/330402/">http://lwn.net/Articles/330402/</a><br />
-<a href="http://lwn.net/Articles/379903/">http://lwn.net/Articles/379903/</a><br />
-<a href="http://lwn.net/Articles/381064/">http://lwn.net/Articles/381064/</a><br />
-<a href="http://lwn.net/Articles/383362/">http://lwn.net/Articles/383362/</a><br />
-<a href="http://lwn.net/Articles/346470/">http://lwn.net/Articles/346470/</a><br />
-CONFIG_DYNAMIC_DEBUG<br />
-pr_debug vs dev_debug<br />
-<debugfs>/dynamic_debug/control<br />
-print signal This is just a hiwifi wonderful kernel patch #931<br />
-kgtp?<br />
-lockdep<br />
-kdump<br />
-./scripts/decodecode &lt; Oops.txt</p></li>
-
-<li><p>kgdboc<br />
-file vmlinux<br />
-set remotebaud 115200<br />
-target remote /dev/ttyS0</p></li>
-
-<li><p>how to get module text address<br />
-firo@firo module$ cat /sys/module/wmi/sections/.text<br />
-0xffffffffa023b000<br />
-firo@firo module$ cat /proc/modules | grep wmi<br />
-wmi 18820 0 - Live 0xffffffffa023b000<br />
-int bss_var;<br />
-static int hello_init(void)<br />
-{printk(KERN_ALERT &ldquo;Text location .text(Code Segment):%p\n&rdquo;,hello_init);<br />
-static int data_var=0;<br />
-printk(KERN_ALERT &ldquo;Data Location .data(Data Segment):%p\n&rdquo;,&amp;data_var);<br />
-printk(KERN_ALERT &ldquo;BSS Location: .bss(BSS Segment):%p\n&rdquo;,&amp;bss_var);<br />
-……}<br />
-Module_init(hello_init);</p>
-
-<h2 id="tips-for-kernel-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Tips for kernel observations</h2>
-
-<p>General track down case</p></li>
-
-<li><p>If an page oops close to zero, for example 0xfffffff4<br />
-It maybe ERR_PTR(-12);</p></li>
-
-<li><p>smartqos custom qdisc - self inferrence<br />
-要自己推测除几种可能, 之后按着思路去找, 不能汪洋大海, 乱砍.</p></li>
-
-<li><p>追BUG实际上就是, 找关联度最高的, 最好不要从头开始推理, 太耗时.</p>
-
-<h2 id="observations-of-network:9df68a0e9ceffd0ef168c5e5e50c9f94">Observations of network</h2>
-
-<p>tcpdump netstat iptables wireshark</p>
-
-<h1 id="specific-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Specific observations</h1>
-
-<h2 id="backtrace-s-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Backtrace&rsquo;s observations</h2></li>
-
-<li><p>gdb bt(Strongly, recommand), break continue bt</p></li>
-
-<li><p>backtrace / dumpstack</p></li>
-
-<li><p>read source code</p></li>
-
-<li><p>print log</p></li>
-
-<li><p>Timer backtrace, Just for funny, the foolish of me.</p></li>
-
-<li><p>examine codes in oops</p>
-
-<h1 id="debug-kernel-oops:9df68a0e9ceffd0ef168c5e5e50c9f94">Debug kernel oops</h1>
-
-<p>##From oops to ASM</p></li>
-
-<li><p>Fast way maybe???</p></li>
-
-<li><p>make kernel/xx.s</p></li>
-
-<li><p>grep &ldquo;code in oops.txt&rdquo; kernel/xx.s</p>
-
-<h2 id="from-asm-to-c-language:9df68a0e9ceffd0ef168c5e5e50c9f94">From ASM to c language</h2>
-
-<p><a href="http://yarchive.net/comp/linux/oops_decoding.html">lkml-Linus-Al-Viro-oops-debug</a></p></li>
-
-<li><p>expand inline function</p></li>
-
-<li><p>locate <strong>asm</strong>() 内嵌汇编, 能快速定位代码! 但很少! slhc_uncompress()</p></li>
-
-<li><p>找常量!</p></li>
-
-<li><p>找loop codes formate!</p></li>
-
-<li><p>通过.config or CONFIG_判断具体是那个相同函数.</p></li>
-
-<li><p>字符的数字敏感<br />
-0000000034333545 doesnt have a bit 7 set in any byte.<br />
-+ef8:   00a01021    move    v0,a1<br />
-efc:   88440003    lwl a0,3(v0)<br />
-f00:   24450004    addiu   a1,v0,4<br />
-f04:   98440000    lwr a0,0(v0)<br />
-f08:   00641821    addu    v1,v1,a0<br />
-f0c:   0064202b    sltu    a0,v1,a0<br />
-+f10:   14a7fff9    bne a1,a3,ef8 <slhc_uncompress+0x444><br />
-f14:   00831821    addu    v1,a0,v1</p>
-
-<h2 id="from-asm-to-c-language-x86:9df68a0e9ceffd0ef168c5e5e50c9f94">From ASM to c language x86</h2></li>
-
-<li><p>local_irq_save/disable<br />
-c: 9c                    pushfq      //not sure<br />
-d: 5d                    pop    %rbp //not sure<br />
-e: fa                    cli</p></li>
-
-<li><p>per-CPU<br />
-f: 65 48 8b 14 25 a8 d1  mov    %gs:0xd1a8,%rdx</p></li>
+print &amp;((struct kmem_cache *)0)-&gt;offset<br /></li>
 </ul>
 
-<h1 id="debug-intel-system-studio:9df68a0e9ceffd0ef168c5e5e50c9f94">Debug Intel system studio</h1>
+<h1 id="inference:9df68a0e9ceffd0ef168c5e5e50c9f94">Inference</h1>
+
+<p>From observatons to source code/mind<br />
+追BUG实际上就是, 找关联度最高的.<br />
+* tips<br />
+If an page oops close to zero, for example 0xfffffff4<br />
+It maybe ERR_PTR(-12);<br />
+<a href="http://www.stlinux.com/devel/debug/jtag/build?q=node/82">Tips on debugging optimized code</a><br />
+code reordering inlining Optimized-away variables Tailcall optimization<br />
+* oops<br />
+From ASM to c language<br />
+<a href="http://yarchive.net/comp/linux/oops_decoding.html">lkml-Linus-Al-Viro-oops-debug</a><br />
+<strong>asm</strong>(), 常量, loop codes format, char *, ip</p>
 
 <h1 id="bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94">BUG made by me</h1>
 
@@ -447,6 +286,33 @@ bash -n</p>
 <h2 id="static-code-analysis:9df68a0e9ceffd0ef168c5e5e50c9f94">static code analysis</h2>
 
 <p>smatch</p>
+
+<h1 id="examples:9df68a0e9ceffd0ef168c5e5e50c9f94">Examples</h1>
+
+<ul>
+<li><p>timer_list-&gt;function = NULL<br />
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在<br />
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.<br />
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace<br />
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.<br />
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及<br />
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来<br />
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而<br />
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use<br />
+after free的问题是够了, 以后用到这类问题基本可以妙解了.</p></li>
+
+<li><p>module text address<br />
+firo@firo module$ cat /sys/module/wmi/sections/.text<br />
+firo@firo module$ cat /proc/modules | grep wmi<br />
+int bss_var;<br />
+static int hello_init(void)<br />
+{printk(KERN_ALERT &ldquo;Text location .text(Code Segment):%p\n&rdquo;,hello_init);<br />
+static int data_var=0;<br />
+printk(KERN_ALERT &ldquo;Data Location .data(Data Segment):%p\n&rdquo;,&amp;data_var);<br />
+printk(KERN_ALERT &ldquo;BSS Location: .bss(BSS Segment):%p\n&rdquo;,&amp;bss_var);}</p></li>
+</ul>
 
 		</article>
 	  </div>
