@@ -1396,17 +1396,6 @@ $(warning &amp;hellip;)&lt;br /&gt;&lt;/li&gt;
 Use atexit() register a stackdump or a wrapped print&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;一些比较通用的调试工具:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;gdb&lt;br /&gt;
-gdb vmlinux /proc/kcore&lt;br /&gt;
-p jiffies_64&lt;br /&gt;
-text_addr=/sys/module/char-read-write/sections/.text&lt;br /&gt;
-add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
-print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
 &lt;h1 id=&#34;inference:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Inference&lt;/h1&gt;
 
 &lt;p&gt;From observatons to source code/mind&lt;br /&gt;
@@ -1424,15 +1413,15 @@ From ASM to c language&lt;br /&gt;
 &lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;BUG made by me&lt;/h1&gt;
+&lt;h1 id=&#34;一些比较通用的调试工具:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
-    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
-Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
-__send_signal()&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;gdb&lt;br /&gt;
+gdb vmlinux /proc/kcore&lt;br /&gt;
+p jiffies_64&lt;br /&gt;
+text_addr=/sys/module/char-read-write/sections/.text&lt;br /&gt;
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
+print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Anti-debugging&lt;/h1&gt;
@@ -1445,9 +1434,19 @@ bash -n&lt;br /&gt;&lt;/li&gt;
 smatch&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;examples:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Examples&lt;/h1&gt;
+&lt;h1 id=&#34;bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;BUG made by me&lt;/h1&gt;
 
 &lt;ul&gt;
+&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
+    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
+            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
+Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
+__send_signal()&lt;/p&gt;
+
+&lt;h1 id=&#34;examples:9df68a0e9ceffd0ef168c5e5e50c9f94&#34;&gt;Examples&lt;/h1&gt;&lt;/li&gt;
+
 &lt;li&gt;&lt;p&gt;timer_list-&amp;gt;function = NULL&lt;br /&gt;
 我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.&lt;br /&gt;
 首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations&lt;br /&gt;

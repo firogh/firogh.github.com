@@ -242,17 +242,6 @@ $(warning &hellip;)<br /></li>
 Use atexit() register a stackdump or a wrapped print</p></li>
 </ul>
 
-<h1 id="一些比较通用的调试工具:9df68a0e9ceffd0ef168c5e5e50c9f94">一些比较通用的调试工具</h1>
-
-<ul>
-<li>gdb<br />
-gdb vmlinux /proc/kcore<br />
-p jiffies_64<br />
-text_addr=/sys/module/char-read-write/sections/.text<br />
-add-symbol-file /home/nkhare/char-read-write.ko $text_addr<br />
-print &amp;((struct kmem_cache *)0)-&gt;offset<br /></li>
-</ul>
-
 <h1 id="inference:9df68a0e9ceffd0ef168c5e5e50c9f94">Inference</h1>
 
 <p>From observatons to source code/mind<br />
@@ -270,15 +259,15 @@ From ASM to c language<br />
 <strong>asm</strong>(), 常量, loop codes format, char *, ip<br /></li>
 </ul>
 
-<h1 id="bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94">BUG made by me</h1>
+<h1 id="一些比较通用的调试工具:9df68a0e9ceffd0ef168c5e5e50c9f94">一些比较通用的调试工具</h1>
 
 <ul>
-<li>print_signal_info wrong pritk parameters position<br />
-    printk(KERN_NOTICE &ldquo;K %d : %d -&gt; %s %d %s %d\n&rdquo;, sig, q-&gt;info.si_code,<br />
-            ss<a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">2</a>, ss<a href="https://nvd.nist.gov/cwe.cfm">3</a>, task_tgid_vnr(r_t), task_tgid_vnr(r_p));<br />
-Watch compile warning info can be avoid of this bug.<br /></li>
-<li>spin_lock(sighand) invoke down_sem and cond_resched&hellip;<br />
-__send_signal()<br /></li>
+<li>gdb<br />
+gdb vmlinux /proc/kcore<br />
+p jiffies_64<br />
+text_addr=/sys/module/char-read-write/sections/.text<br />
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr<br />
+print &amp;((struct kmem_cache *)0)-&gt;offset<br /></li>
 </ul>
 
 <h1 id="anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94">Anti-debugging</h1>
@@ -291,9 +280,19 @@ bash -n<br /></li>
 smatch<br /></li>
 </ul>
 
-<h1 id="examples:9df68a0e9ceffd0ef168c5e5e50c9f94">Examples</h1>
+<h1 id="bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94">BUG made by me</h1>
 
 <ul>
+<li>print_signal_info wrong pritk parameters position<br />
+    printk(KERN_NOTICE &ldquo;K %d : %d -&gt; %s %d %s %d\n&rdquo;, sig, q-&gt;info.si_code,<br />
+            ss<a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">2</a>, ss<a href="https://nvd.nist.gov/cwe.cfm">3</a>, task_tgid_vnr(r_t), task_tgid_vnr(r_p));<br />
+Watch compile warning info can be avoid of this bug.<br /></li>
+
+<li><p>spin_lock(sighand) invoke down_sem and cond_resched&hellip;<br />
+__send_signal()</p>
+
+<h1 id="examples:9df68a0e9ceffd0ef168c5e5e50c9f94">Examples</h1></li>
+
 <li><p>timer_list-&gt;function = NULL<br />
 我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />
 首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations<br />
