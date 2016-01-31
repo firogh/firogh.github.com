@@ -7,3 +7,21 @@ Programmable logic device: PLA, PAL, FPGA, Macrocell
 ASCI: Macrocell
 ULPI: wrapper of UTMI
 
+# eUSB
+subsys_initcall->mv_usb_init->platform_device_register(mv_usb_dev_ptr)
+module_init->ehci_hcd_init->platform_driver_register(ehci_marvell_driver)-> probe
+{
+	usb_create_hcd
+	usb_hcd{driver = ehci_marvell_hc_driver;dev = mv_usb_dev_ptr->dev);
+	usb_add_hcd
+	{
+		usb_register_bus
+		hcd->driver->start(hcd);
+		register_root_hub
+
+	}
+
+}
+
+# asrl
+get_unmapped_area -> mm->get_unmapped_area = arch_get_unmapped_area_topdown;
