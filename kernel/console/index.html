@@ -142,7 +142,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1924">
+<meta itemprop="wordCount" content="1948">
 <meta itemprop="datePublished" content="2015-12-05">
 <meta itemprop="url" content="http://firoyang.org/kernel/console/">
 
@@ -150,6 +150,10 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<p>343 line<br />
+1. /dev/console 指向正在运行的tty 和tty0 一样ttyN not pts, console 佬变.<br />
+2. /dev/tty 一直指向所在的那个不变.</p>
 
 <h1 id="about-the-design:49ed33abd1f8adafccaa91748bb495b5">About the design</h1>
 
@@ -466,6 +470,9 @@ start_kerenl-&gt;<br />
 set_arch-&gt; conswitchp = &amp;vga_con; or conswitchp = &amp;dummy_con;<br />
 console_init-&gt;<br />
 {<br />
+        tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br />
+    console_initcall(con_init);<br />
+console_initcall(serial8250_console_init)<br />
     con_init-&gt;<br />
     {<br />
         // vc-&gt;vc_sw-&gt;con_putcs is DUMMY<br />
@@ -530,85 +537,94 @@ scr_writew((vc-&gt;vc_attr &lt;&lt; 8) + c, (unsigned short *)vc-&gt;vc_pos);</p
 <h1 id="what-about-tty:49ed33abd1f8adafccaa91748bb495b5">What about tty</h1>
 
 <ul>
-<li><p>onset<br />
-console_init-&gt;tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br />
-N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html">Serial Drivers by Alessandro Rubini</a><br />
+<li>onset<br />
+console_init-&gt;<br />
+{<br />
+tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br />
+console_initcall(con_init);<br />
+console_initcall(serial8250_console_init)<br />
+}<br /></li>
+</ul>
+
+<p>N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html">Serial Drivers by Alessandro Rubini</a><br />
 fs_initcall:chr_dev_init-&gt;drivers/tty/tty_io.c: tty_init-&gt;<br />
 {</p>
 
-<p>/* /dev/tty0 = /dev/console console_ops <em>/<br />
-/</em> /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */</p>
+<pre><code>/* /dev/tty0 = /dev/console console_ops */
+/* /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */
 
-<p>//&ldquo;/dev/tty&rdquo;,<br />
-cdev_init(&amp;tty_cdev, &amp;tty_fops);<br />
-&rdquo;/dev/console&rdquo;<br />
-cdev_init(&amp;console_cdev, &amp;console_fops);<br />
-vty_init-&gt;<br />
-{<br />
-    //&ldquo;dev/tty0&rdquo;<br />
-    cdev_init(&amp;vc0_cdev, console_fops);<br />
-    //&ldquo;/dev/ttyN&rdquo;<br />
-    tty_register_driver-&gt;<br />
-    {<br />
-        // What does tty_register_driver do ?<br />
-        // Alloc and register chr dev region.<br />
-        // Add cdev with tty_ops and above region.<br />
-        // Register tty device<br />
-        // Why do we register tty devices?<br />
-        // These devices must be used in some place.<br />
-        // After registering itself, the driver registers the devices it controls through the tty_register_device function.<br />
-        // 原来是把major 和minor做成dev_t放到driver-&gt;cdevs[index].dev里面了.<br />
-        // 也就是说driver-&gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);<br />
-        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class<br />
-        // tty_register_device_attr-&gt;device_register-&gt;device_add-&gt;klist_add_tail(&amp;dev-&gt;knode_class,&amp;dev-&gt;class-&gt;p-&gt;klist_devices)<br />
-        // 果然是在open tty-&gt;dev = tty_get_device(tty);在alloc_tty_struct<br />
-        // 不知道这个tty-&gt;dev在哪里用, 不管他了.<br />
-        tty_register_device(_attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);<br />
-    }<br />
-    kbd_init<br />
-}<br />
-}<br />
-device_init:serial8250_init-&gt;<br />
-{<br />
-// In this function we decide &ldquo;/dev/ttyS*&rdquo;<br />
-// dmesg |grep Serial<br />
-// [    0.696341] Serial: <sup>8250</sup>&frasl;<sub>16550</sub> driver, 32 ports, IRQ sharing enabled<br />
-// serial8250.c -&gt; tty_io.c<br />
-serial8250_reg.nr = UART_NR;<br />
-ret = uart_register_driver(&amp;serial8250_reg);<br />
-tty_driver set to uart_driver by uart_register_driver -&gt;<br />
-{<br />
-    drv-&gt;state = kzalloc        //uart_state<br />
-    normal-&gt;driver_state    = drv; //args struct uart_driver *drv = &amp;serial8250_reg<br />
-    tty_set_operations(normal, &amp;uart_ops);<br />
-    struct tty_port <em>port = &amp;state-&gt;port<br />
-    tty_port_init(port);<br />
-    port-&gt;ops = &amp;uart_port_ops; //tty_port<br />
-    // We register &ldquo;/dev/ttyS</em>&rdquo; files here.<br />
-    static struct uart_driver serial8250_reg = {<br />
-        .owner                  = THIS_MODULE,<br />
-        .driver_name            = &ldquo;serial&rdquo;,<br />
-        .dev_name               = &ldquo;ttyS&rdquo;,<br />
-        .major                  = TTY_MAJOR,<br />
-        .minor                  = 64,<br />
-        .cons                   = SERIAL8250_CONSOLE,<br />
-    };<br />
-    retval = tty_register_driver(normal); -&gt; register_chrdev_region(dev, driver-&gt;num, driver-&gt;name) //32, ttyS?*? should be tty_ops</p>
+//&quot;/dev/tty&quot;,
+cdev_init(&amp;tty_cdev, &amp;tty_fops);
+&quot;/dev/console&quot;
+cdev_init(&amp;console_cdev, &amp;console_fops);
+vty_init-&gt;
+{
+    //&quot;dev/tty0&quot;    
+    cdev_init(&amp;vc0_cdev, console_fops); 
+    //&quot;/dev/ttyN&quot;
+    tty_register_driver-&gt;
+    {
+        // What does tty_register_driver do ?
+        // Alloc and register chr dev region.
+        // Add cdev with tty_ops and above region.
+        // Register tty device
+        // Why do we register tty devices?
+        // These devices must be used in some place.
+        // After registering itself, the driver registers the devices it controls through the tty_register_device function. 
+        // 原来是把major 和minor做成dev_t放到driver-&gt;cdevs[index].dev里面了.
+        // 也就是说driver-&gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
+        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
+        // tty_register_device_attr-&gt;device_register-&gt;device_add-&gt;klist_add_tail(&amp;dev-&gt;knode_class,&amp;dev-&gt;class-&gt;p-&gt;klist_devices)
+        // 果然是在open tty-&gt;dev = tty_get_device(tty);在alloc_tty_struct
+        // 不知道这个tty-&gt;dev在哪里用, 不管他了.
+        tty_register_device(_attr) -&gt;tty_cdev_add-&gt; cdev_init(&amp;driver-&gt;cdevs[index], &amp;tty_fops);
+    }
+    kbd_init
+}
+</code></pre>
 
 <p>}<br />
-serial8250_register_ports(&amp;serial8250_reg, &amp;serial8250_isa_devs-&gt;dev);<br />
-}</p></li>
+device_init:serial8250_init-&gt;<br />
+{<br />
+    // In this function we decide &ldquo;/dev/ttyS*&rdquo;<br />
+    // dmesg |grep Serial<br />
+    // [    0.696341] Serial: <sup>8250</sup>&frasl;<sub>16550</sub> driver, 32 ports, IRQ sharing enabled<br />
+    // serial8250.c -&gt; tty_io.c<br />
+    serial8250_reg.nr = UART_NR;<br />
+    ret = uart_register_driver(&amp;serial8250_reg);<br />
+    tty_driver set to uart_driver by uart_register_driver -&gt;<br />
+    {<br />
+        drv-&gt;state = kzalloc        //uart_state<br />
+        normal-&gt;driver_state    = drv; //args struct uart_driver *drv = &amp;serial8250_reg<br />
+        tty_set_operations(normal, &amp;uart_ops);<br />
+        struct tty_port <em>port = &amp;state-&gt;port<br />
+        tty_port_init(port);<br />
+        port-&gt;ops = &amp;uart_port_ops; //tty_port<br />
+        // We register &ldquo;/dev/ttyS</em>&rdquo; files here.<br />
+        static struct uart_driver serial8250_reg = {<br />
+            .owner                  = THIS_MODULE,<br />
+            .driver_name            = &ldquo;serial&rdquo;,<br />
+            .dev_name               = &ldquo;ttyS&rdquo;,<br />
+            .major                  = TTY_MAJOR,<br />
+            .minor                  = 64,<br />
+            .cons                   = SERIAL8250_CONSOLE,<br />
+        };<br />
+        retval = tty_register_driver(normal); -&gt; register_chrdev_region(dev, driver-&gt;num, driver-&gt;name) //32, ttyS?*? should be tty_ops</p>
 
-<li><p>nucleus<br />
+<pre><code>}
+serial8250_register_ports(&amp;serial8250_reg, &amp;serial8250_isa_devs-&gt;dev);
+</code></pre>
+
+<p>}<br />
+* nucleus<br />
 tty_write-&gt;ld-&gt;ops-&gt;write=n_tty_write-&gt;(tty_struct tty-&gt;ops-&gt;write)=uart_write-&gt;<br />
 {<br />
-struct uart_state *state = tty-&gt;driver_data;<br />
-port = state-&gt;uart_port;<br />
-circ = &amp;state-&gt;xmit;<br />
-memcpy(circ-&gt;buf + circ-&gt;head, buf, c);<br />
-uart_start-&gt;__uart_start-&gt;(uart_port-&gt;ops-&gt;start_tx(port)); //&amp;uart_port_ops ?? uart_ops??<br />
-}</p></li>
-</ul>
+    struct uart_state *state = tty-&gt;driver_data;<br />
+    port = state-&gt;uart_port;<br />
+    circ = &amp;state-&gt;xmit;<br />
+    memcpy(circ-&gt;buf + circ-&gt;head, buf, c);<br />
+    uart_start-&gt;__uart_start-&gt;(uart_port-&gt;ops-&gt;start_tx(port)); //&amp;uart_port_ops ?? uart_ops??<br />
+}</p>
 
 <h1 id="what-about-pseudoterminal:49ed33abd1f8adafccaa91748bb495b5">What about Pseudoterminal</h1>
 

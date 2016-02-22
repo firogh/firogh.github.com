@@ -15,7 +15,15 @@
       <pubDate>Wed, 17 Feb 2016 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/philosophy/knowledge_map/</guid>
-      <description>&lt;p&gt;根据依赖关系组织的知识&lt;/p&gt;
+      <description>
+
+&lt;h1 id=&#34;根据依赖关系组织-展示的知识:260b1b4cb8a9fd578dd92738bfffb93b&#34;&gt;根据依赖关系组织, 展示的知识&lt;/h1&gt;
+
+&lt;p&gt;知识之间都是相互依赖的.&lt;br /&gt;
+Logic: 最为基础且被用的多的知识&lt;br /&gt;
+propositional logic-&amp;gt; first-order logic-&amp;gt;second-order logic -&amp;gt; higher-order logic and type theory&lt;br /&gt;
+Language: 自然语言和计算机语言．&lt;br /&gt;
+Math:&lt;/p&gt;
 </description>
     </item>
     
@@ -46,6 +54,10 @@
       <author>Firo Yang</author>
       <guid>http://firoyang.org/kernel/console/</guid>
       <description>
+
+&lt;p&gt;343 line&lt;br /&gt;
+1. /dev/console 指向正在运行的tty 和tty0 一样ttyN not pts, console 佬变.&lt;br /&gt;
+2. /dev/tty 一直指向所在的那个不变.&lt;/p&gt;
 
 &lt;h1 id=&#34;about-the-design:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;About the design&lt;/h1&gt;
 
@@ -362,6 +374,9 @@ start_kerenl-&amp;gt;&lt;br /&gt;
 set_arch-&amp;gt; conswitchp = &amp;amp;vga_con; or conswitchp = &amp;amp;dummy_con;&lt;br /&gt;
 console_init-&amp;gt;&lt;br /&gt;
 {&lt;br /&gt;
+        tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
+    console_initcall(con_init);&lt;br /&gt;
+console_initcall(serial8250_console_init)&lt;br /&gt;
     con_init-&amp;gt;&lt;br /&gt;
     {&lt;br /&gt;
         // vc-&amp;gt;vc_sw-&amp;gt;con_putcs is DUMMY&lt;br /&gt;
@@ -426,85 +441,94 @@ scr_writew((vc-&amp;gt;vc_attr &amp;lt;&amp;lt; 8) + c, (unsigned short *)vc-&am
 &lt;h1 id=&#34;what-about-tty:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about tty&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;onset&lt;br /&gt;
-console_init-&amp;gt;tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
-N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;&lt;br /&gt;
+&lt;li&gt;onset&lt;br /&gt;
+console_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
+console_initcall(con_init);&lt;br /&gt;
+console_initcall(serial8250_console_init)&lt;br /&gt;
+}&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;&lt;br /&gt;
 fs_initcall:chr_dev_init-&amp;gt;drivers/tty/tty_io.c: tty_init-&amp;gt;&lt;br /&gt;
 {&lt;/p&gt;
 
-&lt;p&gt;/* /dev/tty0 = /dev/console console_ops &lt;em&gt;/&lt;br /&gt;
-/&lt;/em&gt; /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;/* /dev/tty0 = /dev/console console_ops */
+/* /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */
 
-&lt;p&gt;//&amp;ldquo;/dev/tty&amp;rdquo;,&lt;br /&gt;
-cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);&lt;br /&gt;
-&amp;rdquo;/dev/console&amp;rdquo;&lt;br /&gt;
-cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);&lt;br /&gt;
-vty_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    //&amp;ldquo;dev/tty0&amp;rdquo;&lt;br /&gt;
-    cdev_init(&amp;amp;vc0_cdev, console_fops);&lt;br /&gt;
-    //&amp;ldquo;/dev/ttyN&amp;rdquo;&lt;br /&gt;
-    tty_register_driver-&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        // What does tty_register_driver do ?&lt;br /&gt;
-        // Alloc and register chr dev region.&lt;br /&gt;
-        // Add cdev with tty_ops and above region.&lt;br /&gt;
-        // Register tty device&lt;br /&gt;
-        // Why do we register tty devices?&lt;br /&gt;
-        // These devices must be used in some place.&lt;br /&gt;
-        // After registering itself, the driver registers the devices it controls through the tty_register_device function.&lt;br /&gt;
-        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.&lt;br /&gt;
-        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);&lt;br /&gt;
-        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class&lt;br /&gt;
-        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)&lt;br /&gt;
-        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct&lt;br /&gt;
-        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.&lt;br /&gt;
-        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);&lt;br /&gt;
-    }&lt;br /&gt;
-    kbd_init&lt;br /&gt;
-}&lt;br /&gt;
-}&lt;br /&gt;
-device_init:serial8250_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-// In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;&lt;br /&gt;
-// dmesg |grep Serial&lt;br /&gt;
-// [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled&lt;br /&gt;
-// serial8250.c -&amp;gt; tty_io.c&lt;br /&gt;
-serial8250_reg.nr = UART_NR;&lt;br /&gt;
-ret = uart_register_driver(&amp;amp;serial8250_reg);&lt;br /&gt;
-tty_driver set to uart_driver by uart_register_driver -&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    drv-&amp;gt;state = kzalloc        //uart_state&lt;br /&gt;
-    normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg&lt;br /&gt;
-    tty_set_operations(normal, &amp;amp;uart_ops);&lt;br /&gt;
-    struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port&lt;br /&gt;
-    tty_port_init(port);&lt;br /&gt;
-    port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port&lt;br /&gt;
-    // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.&lt;br /&gt;
-    static struct uart_driver serial8250_reg = {&lt;br /&gt;
-        .owner                  = THIS_MODULE,&lt;br /&gt;
-        .driver_name            = &amp;ldquo;serial&amp;rdquo;,&lt;br /&gt;
-        .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,&lt;br /&gt;
-        .major                  = TTY_MAJOR,&lt;br /&gt;
-        .minor                  = 64,&lt;br /&gt;
-        .cons                   = SERIAL8250_CONSOLE,&lt;br /&gt;
-    };&lt;br /&gt;
-    retval = tty_register_driver(normal); -&amp;gt; register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name) //32, ttyS?*? should be tty_ops&lt;/p&gt;
+//&amp;quot;/dev/tty&amp;quot;,
+cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);
+&amp;quot;/dev/console&amp;quot;
+cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);
+vty_init-&amp;gt;
+{
+    //&amp;quot;dev/tty0&amp;quot;    
+    cdev_init(&amp;amp;vc0_cdev, console_fops); 
+    //&amp;quot;/dev/ttyN&amp;quot;
+    tty_register_driver-&amp;gt;
+    {
+        // What does tty_register_driver do ?
+        // Alloc and register chr dev region.
+        // Add cdev with tty_ops and above region.
+        // Register tty device
+        // Why do we register tty devices?
+        // These devices must be used in some place.
+        // After registering itself, the driver registers the devices it controls through the tty_register_device function. 
+        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.
+        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
+        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
+        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)
+        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct
+        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.
+        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
+    }
+    kbd_init
+}
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;}&lt;br /&gt;
-serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);&lt;br /&gt;
-}&lt;/p&gt;&lt;/li&gt;
+device_init:serial8250_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    // In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;&lt;br /&gt;
+    // dmesg |grep Serial&lt;br /&gt;
+    // [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled&lt;br /&gt;
+    // serial8250.c -&amp;gt; tty_io.c&lt;br /&gt;
+    serial8250_reg.nr = UART_NR;&lt;br /&gt;
+    ret = uart_register_driver(&amp;amp;serial8250_reg);&lt;br /&gt;
+    tty_driver set to uart_driver by uart_register_driver -&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        drv-&amp;gt;state = kzalloc        //uart_state&lt;br /&gt;
+        normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg&lt;br /&gt;
+        tty_set_operations(normal, &amp;amp;uart_ops);&lt;br /&gt;
+        struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port&lt;br /&gt;
+        tty_port_init(port);&lt;br /&gt;
+        port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port&lt;br /&gt;
+        // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.&lt;br /&gt;
+        static struct uart_driver serial8250_reg = {&lt;br /&gt;
+            .owner                  = THIS_MODULE,&lt;br /&gt;
+            .driver_name            = &amp;ldquo;serial&amp;rdquo;,&lt;br /&gt;
+            .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,&lt;br /&gt;
+            .major                  = TTY_MAJOR,&lt;br /&gt;
+            .minor                  = 64,&lt;br /&gt;
+            .cons                   = SERIAL8250_CONSOLE,&lt;br /&gt;
+        };&lt;br /&gt;
+        retval = tty_register_driver(normal); -&amp;gt; register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name) //32, ttyS?*? should be tty_ops&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;nucleus&lt;br /&gt;
+&lt;pre&gt;&lt;code&gt;}
+serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;br /&gt;
+* nucleus&lt;br /&gt;
 tty_write-&amp;gt;ld-&amp;gt;ops-&amp;gt;write=n_tty_write-&amp;gt;(tty_struct tty-&amp;gt;ops-&amp;gt;write)=uart_write-&amp;gt;&lt;br /&gt;
 {&lt;br /&gt;
-struct uart_state *state = tty-&amp;gt;driver_data;&lt;br /&gt;
-port = state-&amp;gt;uart_port;&lt;br /&gt;
-circ = &amp;amp;state-&amp;gt;xmit;&lt;br /&gt;
-memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);&lt;br /&gt;
-uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??&lt;br /&gt;
-}&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+    struct uart_state *state = tty-&amp;gt;driver_data;&lt;br /&gt;
+    port = state-&amp;gt;uart_port;&lt;br /&gt;
+    circ = &amp;amp;state-&amp;gt;xmit;&lt;br /&gt;
+    memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);&lt;br /&gt;
+    uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??&lt;br /&gt;
+}&lt;/p&gt;
 
 &lt;h1 id=&#34;what-about-pseudoterminal:49ed33abd1f8adafccaa91748bb495b5&#34;&gt;What about Pseudoterminal&lt;/h1&gt;
 
@@ -1189,14 +1213,24 @@ kernel和openstack的remote工作机会更多.&lt;br /&gt;
 现在以外包的形式在windriver的ccm team 工作.&lt;br /&gt;
 这就是我职业生涯的7年时光, 过得很坎坷.&lt;/p&gt;
 
-&lt;h1 id=&#34;plan:7e6e72851422b97b7259805ca91208dc&#34;&gt;Plan&lt;/h1&gt;
+&lt;h1 id=&#34;work-style:7e6e72851422b97b7259805ca91208dc&#34;&gt;Work style&lt;/h1&gt;
 
-&lt;p&gt;0916, 0515, 8 months&lt;br /&gt;
-Go abroad &amp;amp; HB1&lt;br /&gt;
+&lt;ul&gt;
+&lt;li&gt;Plan the day.&lt;br /&gt;
+What need to do.&lt;br /&gt;
+Prioritization.&lt;br /&gt;
+Focus on.&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;yet-another-plan:7e6e72851422b97b7259805ca91208dc&#34;&gt;Yet another plan&lt;/h1&gt;
+
+&lt;p&gt;Passport&lt;br /&gt;
 English: 3w&lt;br /&gt;
+Kernel patches 500 commits, 10w&lt;br /&gt;
 Work achievement: 6w&lt;br /&gt;
-Problem solving/Pattern or estemology: 3w&lt;br /&gt;
-Kernel patches 500 commits, 10w&lt;/p&gt;
+Problem solving/pattern ??: 3w&lt;br /&gt;
+Offer and HB1&lt;br /&gt;
+FIXME in knowledge_map.md&lt;/p&gt;
 
 &lt;h1 id=&#34;interview:7e6e72851422b97b7259805ca91208dc&#34;&gt;Interview&lt;/h1&gt;
 
