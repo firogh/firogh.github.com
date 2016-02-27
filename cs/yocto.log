@@ -1,0 +1,28 @@
+
+
+# Bundle kernel modules into one rpm
+./layers/oe-core/meta/classes/kernel-module-split.bbclass
+split_kernel_module_packages
+
+./layers/oe-core/meta/classes/package.bbclass
+do_split_packages
+
+NB:
+postrm = '#!/bin/sh\n' + postrm + '\n'
+
+layers/oe-core/meta/lib/oe/package_manager.py
+install()
+
+./layers/oe-core/meta/lib/oe/rootfs.py
+create_rootfs()->RpmRootfs(d, manifest_dir).create()->_create(){
+ self.pm.install(pkgs)
+}
+
+./layers/oe-core/meta/classes/image.bbclass
+fakeroot python do_rootfs ()->create_rootfs(d)//from oe.rootfs import create_rootfs
+
+# File
+            fname = '/tmp/f.log'
+            fx = open(name, 'a')
+            fx.write("%s\n" % )
+            fx.close()
