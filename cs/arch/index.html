@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="0">
+<meta itemprop="wordCount" content="501">
 <meta itemprop="datePublished" content="2015-10-13">
 <meta itemprop="url" content="http://firoyang.org/cs/arch/">
 
@@ -173,6 +173,133 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<p>##Reference<br />
+<a href="https://youtu.be/cNN_tTXABUA">How a CPU Works</a><br />
+Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存<br />
+《模拟电子技术基础 童诗白 第四版》第一章前半部分<br />
+Structured Computer Organization 6th Edition<br />
+Digital Design and Computer Architecture 2nd Edition<br />
+Computer Organization and Design 5th Edition<br />
+Write Great Code: Volume 1: Understanding the Machine<br />
+See MIPS run<br />
+Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide<br />
+Microelectronics</p>
+
+<h2 id="isa:db4e8bc0878d0c9c387c4ffab2ea87af">ISA</h2>
+
+<p>model: 1570s, &ldquo;likeness made to scale; architect&rsquo;s set of designs,&rdquo; from Middle French modelle<br />
+Semantics in computer science: In programming language theory, semantics is the field concerned<br />
+with the rigorous mathematical study of the meaning of programming languages.<br />
+Language primitive<br />
+ISA: memory model, registers, data types, instructions, word size(?).<br />
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&rsquo;s semantics.<br />
+#x86 Interrupt<br />
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.<br />
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.<br />
+##Hardware interrupts<br />
+are used by devices to communicate that they require attention from the operating system.<br />
+asynchronus<br />
+more details in init_IRQ() or set_irq() in driver.<br />
+##software interrupt<br />
+synchronus<br />
+more details in trap_init().<br />
+* exception or trap<br />
+is caused either by an exceptional condition in the processor itself,<br />
+divide zero painc?<br />
+* special instruction, for example INT 0x80<br />
+or a special instruction in the instruction set which causes an interrupt when it is executed.</p>
+
+<h1 id="i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af">I/O IC</h1>
+
+<p>serial communication: UART(16550) + RS-232<br />
+parallel communication: SCSI, ISA, ATA, PCI, FSB</p>
+
+<h1 id="data-struct-aligment:db4e8bc0878d0c9c387c4ffab2ea87af">Data struct aligment</h1>
+
+<p><a href="http://www.catb.org/esr/structure-packing/">The Lost Art of C Structure Packing</a><br />
+<a href="http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86">Typical alignment of C structs on x86</a></p>
+
+<h2 id="为什么需要结构体对齐:db4e8bc0878d0c9c387c4ffab2ea87af">为什么需要结构体对齐?</h2>
+
+<p>struct foo {<br />
+char c;<br />
+int i;};<br />
+如果是32位, cpu 一次取4byte a word 数据.<br />
+如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.<br />
+那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.<br />
+如果我们把i单独放到4byte 对齐的地址, 那么我们只需要一次cpu读取.fast!</p>
+
+<h2 id="产生非对齐访问的场景:db4e8bc0878d0c9c387c4ffab2ea87af">产生非对齐访问的场景</h2>
+
+<ol>
+<li>Casting variables to types of different lengths, 比如char * 到int *<br /></li>
+
+<li><p>Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.</p>
+
+<h2 id="我们做什么:db4e8bc0878d0c9c387c4ffab2ea87af">我们做什么?</h2></li>
+
+<li><p>什么也不干, 按默认对齐来Natural alignment</p></li>
+
+<li><p>为了不影响性能, 同时减少内存使用, 编程时最好显示reorder.</p></li>
+
+<li><p>get/put_unaligned  to avoid analigned access.</p></li>
+
+<li><p>通过attribute aligned指定对齐要求.</p></li>
+
+<li><p>数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed<br />
+也就是说不对齐, 不同平台对齐可能不同, 我们不能让数据corruption.</p>
+
+<h2 id="如果数据不对齐有什么-cpu怎么办:db4e8bc0878d0c9c387c4ffab2ea87af">如果数据不对齐有什么, cpu怎么办?</h2>
+
+<p><a href="https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt">必读UNALIGNED MEMORY ACCESSES</a></p></li>
+
+<li><p>如果用了packed, 编译器会生成extra代码阻止非对齐访问, performance loss.</p></li>
+
+<li><p>cpu呢? 可能正确处理raise a exception to fix it with performance loss.</p>
+
+<h2 id="calculate-the-sizeof-of-aligned-c-struct:db4e8bc0878d0c9c387c4ffab2ea87af">Calculate the sizeof of aligned c struct</h2>
+
+<p>Data alignment means putting the data at a memory address equal to some multiple of the word size,<br />
+which increases the system&rsquo;s performance due to the way the CPU handles memory.</p></li>
+
+<li><p>find the widest scalar member and attribute( aligned(x)) to determin alignment.<br />
+找到结构体内scalar和attribute最大的对齐要求.</p></li>
+
+<li><p>fill the member to alignement without wrap<br />
+把结构的成员一次填满对齐宽度, 不够的填到下个对齐宽度, 空出来留着padding</p></li>
+
+<li><p>Pading to alignment<br />
+填上所有空.</p></li>
+</ol>
+
+<h1 id="endianess:db4e8bc0878d0c9c387c4ffab2ea87af">Endianess</h1>
+
+<p><a href="http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html">Endianness: Big and Little Endian Byte Order</a><br />
+应该说bit endianess 实际存储只有MSB &hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.<br />
+这篇文章<a href="http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/">再谈C语言位域</a>,<br />
+之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!<br />
+* <a href="https://en.wikipedia.org/wiki/Bit_numbering">bit endianness</a><br />
+这样就可以更好的理解iphdr:<br />
+#if defined(__LITTLE_ENDIAN_BITFIELD)<br />
+    <strong>u8    ihl:4,<br />
+        version:4;<br />
+#elif defined (</strong>BIG_ENDIAN_BITFIELD)<br />
+    __u8    version:4,<br />
+        ihl:4;<br />
+#else<br />
+#error  &ldquo;Please fix <asm/byteorder.h>&ldquo;<br />
+#endif<br />
+ipv4 header的拓扑<br />
+version ihl<br />
+0100 0101<br />
+因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl<br />
+而be的cpu是 msb first, 从最右开始所以version开头.<br />
+而使用unsigned char ver_ihl<br />
+(ver_ihl &amp; 0xf0)&gt;&gt; 4 = version<br />
+ver_ihl &amp; 0x0f = ihl<br />
+是无关cpu读取顺序的.</p>
+
 		</article>
 	  </div>
 	</section>

@@ -258,7 +258,134 @@ readelf -s&lt;/p&gt;&lt;/li&gt;
       <pubDate>Tue, 13 Oct 2015 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/arch/</guid>
-      <description></description>
+      <description>
+
+&lt;p&gt;##Reference&lt;br /&gt;
+&lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
+Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
+《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
+Structured Computer Organization 6th Edition&lt;br /&gt;
+Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;
+Computer Organization and Design 5th Edition&lt;br /&gt;
+Write Great Code: Volume 1: Understanding the Machine&lt;br /&gt;
+See MIPS run&lt;br /&gt;
+Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
+Microelectronics&lt;/p&gt;
+
+&lt;h2 id=&#34;isa:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;ISA&lt;/h2&gt;
+
+&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle&lt;br /&gt;
+Semantics in computer science: In programming language theory, semantics is the field concerned&lt;br /&gt;
+with the rigorous mathematical study of the meaning of programming languages.&lt;br /&gt;
+Language primitive&lt;br /&gt;
+ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;br /&gt;
+#x86 Interrupt&lt;br /&gt;
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
+##Hardware interrupts&lt;br /&gt;
+are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
+asynchronus&lt;br /&gt;
+more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
+##software interrupt&lt;br /&gt;
+synchronus&lt;br /&gt;
+more details in trap_init().&lt;br /&gt;
+* exception or trap&lt;br /&gt;
+is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
+divide zero painc?&lt;br /&gt;
+* special instruction, for example INT 0x80&lt;br /&gt;
+or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
+
+&lt;h1 id=&#34;i-o-ic:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;I/O IC&lt;/h1&gt;
+
+&lt;p&gt;serial communication: UART(16550) + RS-232&lt;br /&gt;
+parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
+
+&lt;h1 id=&#34;data-struct-aligment:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Data struct aligment&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86&#34;&gt;Typical alignment of C structs on x86&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;为什么需要结构体对齐:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;为什么需要结构体对齐?&lt;/h2&gt;
+
+&lt;p&gt;struct foo {&lt;br /&gt;
+char c;&lt;br /&gt;
+int i;};&lt;br /&gt;
+如果是32位, cpu 一次取4byte a word 数据.&lt;br /&gt;
+如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.&lt;br /&gt;
+那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.&lt;br /&gt;
+如果我们把i单独放到4byte 对齐的地址, 那么我们只需要一次cpu读取.fast!&lt;/p&gt;
+
+&lt;h2 id=&#34;产生非对齐访问的场景:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;产生非对齐访问的场景&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Casting variables to types of different lengths, 比如char * 到int *&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.&lt;/p&gt;
+
+&lt;h2 id=&#34;我们做什么:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;我们做什么?&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;什么也不干, 按默认对齐来Natural alignment&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;为了不影响性能, 同时减少内存使用, 编程时最好显示reorder.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;get/put_unaligned  to avoid analigned access.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;通过attribute aligned指定对齐要求.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed&lt;br /&gt;
+也就是说不对齐, 不同平台对齐可能不同, 我们不能让数据corruption.&lt;/p&gt;
+
+&lt;h2 id=&#34;如果数据不对齐有什么-cpu怎么办:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;如果数据不对齐有什么, cpu怎么办?&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt&#34;&gt;必读UNALIGNED MEMORY ACCESSES&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;如果用了packed, 编译器会生成extra代码阻止非对齐访问, performance loss.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;cpu呢? 可能正确处理raise a exception to fix it with performance loss.&lt;/p&gt;
+
+&lt;h2 id=&#34;calculate-the-sizeof-of-aligned-c-struct:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Calculate the sizeof of aligned c struct&lt;/h2&gt;
+
+&lt;p&gt;Data alignment means putting the data at a memory address equal to some multiple of the word size,&lt;br /&gt;
+which increases the system&amp;rsquo;s performance due to the way the CPU handles memory.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;find the widest scalar member and attribute( aligned(x)) to determin alignment.&lt;br /&gt;
+找到结构体内scalar和attribute最大的对齐要求.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;fill the member to alignement without wrap&lt;br /&gt;
+把结构的成员一次填满对齐宽度, 不够的填到下个对齐宽度, 空出来留着padding&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Pading to alignment&lt;br /&gt;
+填上所有空.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;endianess:db4e8bc0878d0c9c387c4ffab2ea87af&#34;&gt;Endianess&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;&lt;br /&gt;
+应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.&lt;br /&gt;
+这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,&lt;br /&gt;
+之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;br /&gt;
+* &lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;br /&gt;
+这样就可以更好的理解iphdr:&lt;br /&gt;
+#if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
+    &lt;strong&gt;u8    ihl:4,&lt;br /&gt;
+        version:4;&lt;br /&gt;
+#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)&lt;br /&gt;
+    __u8    version:4,&lt;br /&gt;
+        ihl:4;&lt;br /&gt;
+#else&lt;br /&gt;
+#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;&lt;br /&gt;
+#endif&lt;br /&gt;
+ipv4 header的拓扑&lt;br /&gt;
+version ihl&lt;br /&gt;
+0100 0101&lt;br /&gt;
+因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl&lt;br /&gt;
+而be的cpu是 msb first, 从最右开始所以version开头.&lt;br /&gt;
+而使用unsigned char ver_ihl&lt;br /&gt;
+(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version&lt;br /&gt;
+ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
+是无关cpu读取顺序的.&lt;/p&gt;
+</description>
     </item>
     
     <item>
@@ -289,6 +416,10 @@ kernel/algorithm.md&lt;/p&gt;
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
 
+&lt;h1 id=&#34;reference:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;the-architecture-of-computer-science:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;The Architecture of Computer science&lt;/h1&gt;
 
 &lt;p&gt;Process: algorithm, TOC, Design Pattern, SICP&lt;br /&gt;
@@ -302,111 +433,60 @@ os, architecture是作为process的辅助.&lt;/p&gt;
 
 &lt;h1 id=&#34;process:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Process&lt;/h1&gt;
 
-&lt;p&gt;Algorithm:&lt;/p&gt;
-
-&lt;h1 id=&#34;automata:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Automata&lt;/h1&gt;
-
-&lt;p&gt;Finite automata:&lt;br /&gt;
-A finite automaton is a mathematical&lt;br /&gt;
-machine for determining whether a string&lt;br /&gt;
+&lt;p&gt;Algorithm:&lt;br /&gt;
+Computation: TOC Model of computation&lt;br /&gt;
+Finite automata:&lt;br /&gt;
+A finite automaton is a mathematical machine for determining whether a string&lt;br /&gt;
 is contained within some language.&lt;br /&gt;
-Turing machine&lt;br /&gt;
-Thinkpad X1 or Nexus 5 -&amp;gt; Automata: for simplicity&lt;br /&gt;
 * Regular expression&lt;br /&gt;
-&lt;a href=&#34;http://vimregex.com/&#34;&gt;http://vimregex.com/&lt;/a&gt;&lt;/p&gt;
+vimregex.com/&lt;br /&gt;
+&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;&lt;br /&gt;
+貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.&lt;/p&gt;
 
-&lt;h1 id=&#34;architecutre:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Architecutre&lt;/h1&gt;
-
-&lt;p&gt;given a symbol level, the architecture is the description of the system in&lt;br /&gt;
-whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81&lt;br /&gt;
-&lt;a href=&#34;https://news.ycombinator.com/item?id=9844090&#34;&gt;Ask HN: How to learn about the history of computing?&lt;/a&gt;&lt;br /&gt;
-* Control&lt;br /&gt;
-Cogwheel control&lt;br /&gt;
-electromechanical magnet plugging control&lt;br /&gt;
-control sequence points&lt;/p&gt;
-
-&lt;h1 id=&#34;the-theory-of-computation:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;The Theory of Computation&lt;/h1&gt;
-
-&lt;p&gt;Automa ⊃ Finite automaton ∪ context-free grammar&lt;br /&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;The Theory of Computation&lt;br /&gt;
+Automa ⊃ Finite automaton ∪ context-free grammar&lt;br /&gt;
 Computability ⊃ solvable or not&lt;br /&gt;
-Complexity ⊃ easy or hard&lt;/p&gt;
+Complexity ⊃ easy or hard&lt;/p&gt;&lt;/li&gt;
 
-&lt;h1 id=&#34;top-goal:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Top goal&lt;/h1&gt;
+&lt;li&gt;&lt;p&gt;Top method&lt;br /&gt;
+Abstruction&lt;br /&gt;
+Combination&lt;br /&gt;
+Virtualization&lt;br /&gt;
+Exchange time and space&lt;br /&gt;
+Isolation&lt;/p&gt;&lt;/li&gt;
 
-&lt;p&gt;Easy to use&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;Top goal&lt;br /&gt;
+Easy to use&lt;br /&gt;
 Efficiency&lt;br /&gt;
 Protection&lt;br /&gt;
 Reliability&lt;br /&gt;
 Security&lt;br /&gt;
-Energy-efficiency&lt;/p&gt;
+Energy-efficiency&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;h1 id=&#34;top-method:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Top method&lt;/h1&gt;
+&lt;h1 id=&#34;programming:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Programming&lt;/h1&gt;
 
-&lt;p&gt;Abstruction&lt;br /&gt;
-Virtualization&lt;br /&gt;
-Exchange time and space&lt;br /&gt;
-Isolation&lt;/p&gt;
+&lt;p&gt;Interface&lt;/p&gt;
 
-&lt;h1 id=&#34;plan:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Plan&lt;/h1&gt;
+&lt;p&gt;##Compile link File formate&lt;br /&gt;
+ELF &amp;ndash; ELF executable and linkable format.&lt;br /&gt;
+Used for Relocatable file(object file, kernel moudle), Executable file, Dynamic library, Core dump.&lt;br /&gt;
+###Relocatable file(object file, kernel module)&lt;br /&gt;
+ELF header.&lt;br /&gt;
+Sections.&lt;br /&gt;
+Section header table.&lt;/p&gt;
 
-&lt;p&gt;logic circut -&amp;gt; ma-&amp;gt; isa -&amp;gt; as -&amp;gt; compile -&amp;gt; pl -&amp;gt; c -&amp;gt; lisp haskell&lt;br /&gt;
-as -&amp;gt; c&lt;br /&gt;
-logic circurt -&amp;gt; network device -&amp;gt; network protocol -&amp;gt; network stack&lt;br /&gt;
-logic circurt -&amp;gt; ma-&amp;gt; system devices controllers(bus, mm, nand, nor, network)-&amp;gt;os-&amp;gt; kernel&lt;/p&gt;
+&lt;h3 id=&#34;executeable-file-dynamic-library:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Executeable file, dynamic library&lt;/h3&gt;
 
-&lt;h1 id=&#34;computer-architecture:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Computer architecture&lt;/h1&gt;
-
-&lt;p&gt;∅ ⊢ Computer&lt;br /&gt;
-Computer ⊃ CPU ∪ Memory ∪ Bus ∪ Peripheral&lt;br /&gt;
-Computer → I/O&lt;/p&gt;
-
-&lt;p&gt;∅ ⊢ CPU&lt;br /&gt;
-CPU ⊃ Instruction set architecture ∪ Microarchitecture ∪ ?&lt;br /&gt;
-Instruction set architecture ⊃ Memory model ∪ ISA Registers ∪ Data types ∪ Instructions&lt;br /&gt;
-Instruction set architecture(extension)  ⊃ RISC ∪ CISC&lt;br /&gt;
-Memory model ⊃ Byte ∪ Words ∪ Address space ∪ Memory semantics&lt;br /&gt;
-ISA Registers ⊃ Special-purpose registers ∪ General-purpose registers ∪ Control registers&lt;br /&gt;
-Data types ⊃ Numeric ∪ Nonnumeric&lt;br /&gt;
-Numeric data types ⊃ Integer&lt;br /&gt;
-Instructions ⊃ Instruction formats ∪ Instruction length ∪ Addressing mode ∪ Comparisons ∪ Branches ∪ Procedure Call&lt;br /&gt;
-Instruction formats ⊃ opcode&lt;br /&gt;
-Instructions(extension) ⊃ Data transfer ∪ Arithmetic ∪ Logic ∪ Control flow&lt;/p&gt;
-
-&lt;p&gt;RISC ⊃ Fixed instruct length ∪ Few instruction formats ∪ Load/Store architecture&lt;/p&gt;
-
-&lt;p&gt;Microarchitecture ⊃ Data path ∪ Control path ∪ MMU ∪ CPU cache ∪ Oscillator crystal ∪ Clock generator&lt;br /&gt;
-Microarchitecture → Instruction cycle ∪ Instruction pipeline ∪ Out-of-order&lt;br /&gt;
-Instruction pipeline ⊃ Branch prediction ∪ Hazard ∪ Parallel&lt;br /&gt;
-Data path ⊃ ALU ∪ FPU ∪ Registers ∪ Bus&lt;br /&gt;
-ALU ⊃ Adder ∪ Multiplexor&lt;br /&gt;
-Adder ⊃ Logic gate&lt;br /&gt;
-Logic gate ⊃ diodes or transistors&lt;br /&gt;
-Transistor ⊃&lt;/p&gt;
-
-&lt;p&gt;MMU ⊃ TLB&lt;/p&gt;
-
-&lt;p&gt;CPU register ⊃ not same with SRAM ∪ Synchronous circuit&lt;/p&gt;
-
-&lt;p&gt;CPU cache ⊃ SRAM ∪ Synchronous circuit&lt;br /&gt;
-SRAM ⊃ MOSFET ∪ Computer organization and design page B-59&lt;br /&gt;
-CPU cache → Cache coherence ∪ Associativity ∪ Cache miss&lt;br /&gt;
-Cache coherence ⊃ MSI&lt;/p&gt;
-
-&lt;p&gt;Oscillator crystal&lt;/p&gt;
-
-&lt;p&gt;Clock generator ⊃ frequency divider ∪ clock multiplier&lt;br /&gt;
-Clock generator → Clock rate&lt;/p&gt;
-
-&lt;p&gt;∅ ⊢ Memory&lt;br /&gt;
-// No matter physical or virtual address both are relative continuity.&lt;br /&gt;
-// What is memory? Simplely, a large number of identifier and 1 byte infomation.&lt;br /&gt;
-// What is address space is the methmatical set of identifiers of memory.&lt;br /&gt;
-Memory ⊃ Sequencial logic circuit ∪ Memory controller ∪ Bank&lt;br /&gt;
-Memory controller ⊃&lt;/p&gt;
-
-&lt;p&gt;∅ ⊢ Bus&lt;/p&gt;
-
-&lt;p&gt;∅ ⊢ Peripheral&lt;/p&gt;
+&lt;p&gt;ELF header.&lt;br /&gt;
+Program header table.&lt;br /&gt;
+Segments.&lt;br /&gt;
+Section header table.&lt;br /&gt;
+.symtab, Symbol table store index of string&lt;br /&gt;
+.strtab, String table is a array of all strings split by \0&lt;br /&gt;
+.hash, utiliy for quire symbols&lt;br /&gt;
+.shstrtab, Section header string table store section name for ELF, like .text, .data&amp;hellip;&lt;/p&gt;
 
 &lt;h1 id=&#34;os:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;OS&lt;/h1&gt;
 
@@ -417,119 +497,6 @@ There are some great historical papers and books we should read before fully und
 &lt;a href=&#34;http://research.microsoft.com/en-us/um/people/gbell/CGB%20Files/Computer%20Structures%20Readings%20and%20Examples%201971.pdf&#34;&gt;Computer Structures: Readings and Examples &lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://research.microsoft.com/en-us/um/people/gbell/Computer_Structures_Principles_and_Examples/contents.html&#34;&gt;Computer Structures: Readings and Examples html version&lt;/a&gt;&lt;br /&gt;
 Chapter 10 One-level storage system is the first implemention of virtual memory mind.&lt;/p&gt;
-
-&lt;h1 id=&#34;abstruction-layers:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Abstruction layers&lt;/h1&gt;
-
-&lt;h1 id=&#34;conception:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Conception&lt;/h1&gt;
-
-&lt;p&gt;Cache&lt;/p&gt;
-
-&lt;h1 id=&#34;book-list:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Book list&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
-A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
-The Mathematical Theory of Communication&lt;br /&gt;
-##Reference&lt;br /&gt;
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
-《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
-Structured Computer Organization 6th Edition&lt;br /&gt;
-Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;
-Computer Organization and Design 5th Edition&lt;br /&gt;
-Write Great Code: Volume 1: Understanding the Machine&lt;br /&gt;
-See MIPS run&lt;br /&gt;
-Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
-Microelectronics&lt;/p&gt;
-
-&lt;h2 id=&#34;isa:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;ISA&lt;/h2&gt;
-
-&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle&lt;br /&gt;
-Semantics in computer science: In programming language theory, semantics is the field concerned&lt;br /&gt;
-with the rigorous mathematical study of the meaning of programming languages.&lt;br /&gt;
-Language primitive&lt;br /&gt;
-ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;br /&gt;
-#x86 Interrupt&lt;br /&gt;
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
-##Hardware interrupts&lt;br /&gt;
-are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
-asynchronus&lt;br /&gt;
-more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
-##software interrupt&lt;br /&gt;
-synchronus&lt;br /&gt;
-more details in trap_init().&lt;br /&gt;
-* exception or trap&lt;br /&gt;
-is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
-divide zero painc?&lt;br /&gt;
-* special instruction, for example INT 0x80&lt;br /&gt;
-or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
-
-&lt;h1 id=&#34;i-o-ic:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O IC&lt;/h1&gt;
-
-&lt;p&gt;serial communication: UART(16550) + RS-232&lt;br /&gt;
-parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
-
-&lt;h1 id=&#34;reference:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://book.douban.com/subject/1494026/&#34;&gt;Code The Hidden Language of Computer Hardware and Software&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/XsW0QfVYgg4&#34;&gt;Google groups&lt;/a&gt;&lt;br /&gt;
-For programming reference programming.md&lt;br /&gt;
-Graphviz + CodeViz&lt;br /&gt;
-&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;contents-of-computer-science:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Contents of computer science&lt;/h1&gt;
-
-&lt;p&gt;What is the address.&lt;br /&gt;
-Is the address generated by compiler physical or virtual?&lt;br /&gt;
-What&amp;rsquo;s the difference between eprom falsh ssd?&lt;br /&gt;
-What is UART USB serial/prallel port&lt;br /&gt;
-How to find UART prot to print log?&lt;br /&gt;
-programming&lt;br /&gt;
-compile&lt;br /&gt;
-computer&lt;br /&gt;
-Interface&lt;/p&gt;
-
-&lt;h1 id=&#34;interface:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Interface&lt;/h1&gt;
-
-&lt;p&gt;ABI: calling convetion&lt;/p&gt;
-
-&lt;h1 id=&#34;system-boot:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;System boot&lt;/h1&gt;
-
-&lt;h1 id=&#34;terminal:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;terminal&lt;/h1&gt;
-
-&lt;p&gt;NS16550_putc&lt;/p&gt;
-
-&lt;h1 id=&#34;layers-of-computer:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Layers of computer&lt;/h1&gt;
-
-&lt;p&gt;Applications&lt;br /&gt;
-Operating system&lt;br /&gt;
-ISA&lt;br /&gt;
-Micro-architecture&lt;br /&gt;
-Logical gate&lt;br /&gt;
-Digital circuits&lt;br /&gt;
-Analog circuits&lt;br /&gt;
-Electronic component&lt;br /&gt;
-Physics&lt;/p&gt;
-
-&lt;h1 id=&#34;计算机科学启示录:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;计算机科学启示录&lt;/h1&gt;
-
-&lt;p&gt;计算机是人与世界的一种关系.&lt;br /&gt;
-人&amp;lt;-&amp;gt; Computer &amp;lt;-&amp;gt; 世界.&lt;br /&gt;
-人意志-&amp;gt;思维逻辑-&amp;gt;电信号-&amp;gt;物理世界&lt;br /&gt;
-人类的思维语言-&amp;gt;人-&amp;gt;计算机语言-&amp;gt;编译器-&amp;gt;机器语言-&amp;gt;Microarchitecture(datapath, control unit)logic 电路-&amp;gt;模拟电路电信号-&amp;gt;物理世界.&lt;br /&gt;
-思维-&amp;gt;电信号, 外部世界的改变(for good life)&lt;br /&gt;
-人类物理世界-&amp;gt;思维世界-&amp;gt; 物理世界&lt;br /&gt;
-人类思维与语言, 计算机语言, 数字电路, 模拟电路, 世界.&lt;br /&gt;
-每一个sensation都有自己的内部规则, &amp;ldquo;语言&amp;rdquo;,pattern, paradigm, theory. 这是他们不同的地方.&lt;br /&gt;
-作为程序员要理解认知这每一种paradigm, 似乎需要寻找到一种通用的语言, 来更好的理解他们. 有必要吗?&lt;br /&gt;
-当然逻辑思维好的人, 容易看到问题的本质. 数学和逻辑, 严密且语法简单适用其他paradigm的表述.&lt;br /&gt;
-语言总归是用来表述的媒介, 重要的还是内容. 统一的语言更容易看到联系, 相似的逻辑.&lt;br /&gt;
-也就是说, 有意识的用数学和逻辑表示pattern.&lt;br /&gt;
-Two point:&lt;br /&gt;
-不同sensation level之间的抽象类比, 方向人-&amp;gt;物理世界.&lt;br /&gt;
-不同sensation level不同or相同的抽象. 具体的形而下-&amp;gt;形而上数学与逻辑&lt;/p&gt;
-
-&lt;h1 id=&#34;os-1:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;OS&lt;/h1&gt;
 
 &lt;h2 id=&#34;process-management:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Process management&lt;/h2&gt;
 
@@ -588,6 +555,22 @@ LRU&lt;/p&gt;
 
 &lt;p&gt;中断的概念，中断处理，I/O控制方式，缓冲区管理，设备驱动，磁盘调度和高速缓存&lt;/p&gt;
 
+&lt;h2 id=&#34;i-o:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.cs.uwm.edu/classes/cs458/Lecture/HTML/ch11s02.html&#34;&gt;Methods for designing a CPU&amp;rsquo;s I/O interface generally fall into one of the following categories:&lt;/a&gt;&lt;br /&gt;
+Completely separate memory and I/O. buses DMA?&lt;br /&gt;
+Common buses, separate control lines. Port-I/O&lt;br /&gt;
+Common buses and control line. Memroy-maped I/O&lt;br /&gt;
+###Higher level implemention of I/O&lt;br /&gt;
+device or partion of device/memory -&amp;gt; file&lt;br /&gt;
+io -&amp;gt; stream&lt;br /&gt;
+####&lt;a href=&#34;https://en.wikipedia.org/wiki/Stream_(computing&#34;&gt;stream&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Standard_streams&#34;&gt;Standard streams&lt;/a&gt;&lt;br /&gt;
+interface is stdio library or the kernel version.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;codata&lt;/p&gt;
+
 &lt;h3 id=&#34;low-i-o-type:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Low I/O type&lt;/h3&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Programmed I/O/Polling&lt;/p&gt;&lt;/li&gt;
@@ -606,25 +589,7 @@ LRU&lt;/p&gt;
 &lt;li&gt;&lt;p&gt;synchronous I/O multiplexing and I/O event notification facility&lt;br /&gt;
 select/poll/epoll&lt;br /&gt;
 For the ease of use, the select loop is implemented as an &lt;em&gt;event loop&lt;/em&gt; with callbacks.&lt;br /&gt;
-libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.&lt;br /&gt;
-##File formate&lt;br /&gt;
-ELF &amp;ndash; ELF executable and linkable format.&lt;br /&gt;
-Used for Relocatable file(object file, kernel moudle), Executable file, Dynamic library, Core dump.&lt;br /&gt;
-###Relocatable file(object file, kernel module)&lt;br /&gt;
-ELF header.&lt;br /&gt;
-Sections.&lt;br /&gt;
-Section header table.&lt;/p&gt;
-
-&lt;h3 id=&#34;executeable-file-dynamic-library:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Executeable file, dynamic library&lt;/h3&gt;
-
-&lt;p&gt;ELF header.&lt;br /&gt;
-Program header table.&lt;br /&gt;
-Segments.&lt;br /&gt;
-Section header table.&lt;br /&gt;
-.symtab, Symbol table store index of string&lt;br /&gt;
-.strtab, String table is a array of all strings split by \0&lt;br /&gt;
-.hash, utiliy for quire symbols&lt;br /&gt;
-.shstrtab, Section header string table store section name for ELF,like .text, .data&amp;hellip;&lt;/p&gt;
+libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.&lt;/p&gt;
 
 &lt;h2 id=&#34;file-system:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;File system&lt;/h2&gt;
 
@@ -633,9 +598,6 @@ Section header table.&lt;br /&gt;
 &lt;h2 id=&#34;system-calls:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;System calls&lt;/h2&gt;
 
 &lt;p&gt;系统调用的概念，系统调用的处理，系统调用类型&lt;br /&gt;
-#I/O&lt;br /&gt;
-CPU and main memory is the brain of a computer.&lt;br /&gt;
-Any transfer of information to or from the CPU/memory combo, for example by reading data from a disk drive, is considered I/O.&lt;br /&gt;
 ##CPU-device I/O&lt;/p&gt;
 
 &lt;h3 id=&#34;memory-mapped-i-o:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Memory-mapped I/O&lt;/h3&gt;
@@ -671,170 +633,88 @@ IO不是由我们的进程完成而是别的进程完成, 是谁呢,是内核线
 假如都没货, 你有等不下去, 怎么办? 你又不能一会儿去这家问下书怎么样? 一会儿去衣服店询问.&lt;br /&gt;
 这太累人了. 最好的方式, 你告诉店家我要什么, 到货了给我打个电话, 我在过来.&lt;br /&gt;
 这就是io多路复用. 可是还有更高明的方法, 没错就是京东了, 我网上下订单, 第二天直接送到家了.&lt;br /&gt;
-京东, 为什么成功? 你知道了吧.用户省心啊.对应异步io&lt;br /&gt;
-##Interface&lt;br /&gt;
-&lt;a href=&#34;http://www.cs.uwm.edu/classes/cs458/Lecture/HTML/ch11s02.html&#34;&gt;Methods for designing a CPU&amp;rsquo;s I/O interface generally fall into one of the following categories:&lt;/a&gt;&lt;br /&gt;
-Completely separate memory and I/O. buses DMA?&lt;br /&gt;
-Common buses, separate control lines. Port-I/O&lt;br /&gt;
-Common buses and control line. Memroy-maped I/O&lt;br /&gt;
-###Higher level implemention&lt;br /&gt;
-device or partion of device/memory -&amp;gt; file&lt;br /&gt;
-io -&amp;gt; stream&lt;br /&gt;
-####&lt;a href=&#34;https://en.wikipedia.org/wiki/Stream_(computing&#34;&gt;stream&lt;/a&gt;)&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Standard_streams&#34;&gt;Standard streams&lt;/a&gt;&lt;br /&gt;
-interface is stdio library or the kernel version.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;codata&lt;br /&gt;
-#Buffer&lt;br /&gt;
-a data buffer (or just buffer) is a region of a physical memory storage&lt;br /&gt;
-used to temporarily store data while it is being moved from one place to another.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Page cache, Buffer head&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pipe&lt;/p&gt;
-
-&lt;h1 id=&#34;data-struct-aligment:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Data struct aligment&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86&#34;&gt;Typical alignment of C structs on x86&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;为什么需要结构体对齐:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;为什么需要结构体对齐?&lt;/h2&gt;
-
-&lt;p&gt;struct foo {&lt;br /&gt;
-char c;&lt;br /&gt;
-int i;};&lt;br /&gt;
-如果是32位, cpu 一次取4byte a word 数据.&lt;br /&gt;
-如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.&lt;br /&gt;
-那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.&lt;br /&gt;
-如果我们把i单独放到4byte 对齐的地址, 那么我们只需要一次cpu读取.fast!&lt;/p&gt;
-
-&lt;h2 id=&#34;产生非对齐访问的场景:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;产生非对齐访问的场景&lt;/h2&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Casting variables to types of different lengths, 比如char * 到int *&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.&lt;/p&gt;
-
-&lt;h2 id=&#34;我们做什么:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;我们做什么?&lt;/h2&gt;&lt;/li&gt;
-&lt;/ol&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;什么也不干, 按默认对齐来Natural alignment&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为了不影响性能, 同时减少内存使用, 编程时最好显示reorder.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;get/put_unaligned  to avoid analigned access.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;通过attribute aligned指定对齐要求.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed&lt;br /&gt;
-也就是说不对齐, 不同平台对齐可能不同, 我们不能让数据corruption.&lt;/p&gt;
-
-&lt;h2 id=&#34;如果数据不对齐有什么-cpu怎么办:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;如果数据不对齐有什么, cpu怎么办?&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt&#34;&gt;必读UNALIGNED MEMORY ACCESSES&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如果用了packed, 编译器会生成extra代码阻止非对齐访问, performance loss.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;cpu呢? 可能正确处理raise a exception to fix it with performance loss.&lt;/p&gt;
-
-&lt;h2 id=&#34;calculate-the-sizeof-of-aligned-c-struct:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Calculate the sizeof of aligned c struct&lt;/h2&gt;
-
-&lt;p&gt;Data alignment means putting the data at a memory address equal to some multiple of the word size,&lt;br /&gt;
-which increases the system&amp;rsquo;s performance due to the way the CPU handles memory.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;find the widest scalar member and attribute( aligned(x)) to determin alignment.&lt;br /&gt;
-找到结构体内scalar和attribute最大的对齐要求.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fill the member to alignement without wrap&lt;br /&gt;
-把结构的成员一次填满对齐宽度, 不够的填到下个对齐宽度, 空出来留着padding&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;pading to alignment&lt;br /&gt;
-填上所有空.&lt;/p&gt;
-
-&lt;h2 id=&#34;关于kernel中put-get-unaligned实现:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;关于kernel中put/get_unaligned实现&lt;/h2&gt;
-
-&lt;p&gt;access_ok, do nothing in essence&lt;br /&gt;
-byteshift, 移位每次访问u8,&lt;br /&gt;
-packed_struct: 交给gcc&lt;br /&gt;
-memove, byte-wise copy&lt;/p&gt;
-
-&lt;h2 id=&#34;faq:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Faq&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How does gcc attribute((aligned)) work?&lt;br /&gt;
-struct S1 { short f; short f1; short f2;char a; char c;} &lt;strong&gt;attribute&lt;/strong&gt; ((aligned ));&lt;br /&gt;
-sizeof S1 = 16 in 64-bit&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;In what situation can unaligned accesss make a kernel panic?&lt;br /&gt;
-may be arch/mips/kernel/unaligned.c&lt;/p&gt;
-
-&lt;h1 id=&#34;scheduling:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Scheduling&lt;/h1&gt;
-
-&lt;h2 id=&#34;process-scheduler:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Process scheduler&lt;/h2&gt;
-
-&lt;h2 id=&#34;network-scheduler:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Network scheduler&lt;/h2&gt;
-
-&lt;h2 id=&#34;i-o-scheduling-1:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;I/O scheduling&lt;/h2&gt;
-
-&lt;h1 id=&#34;endianess:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Endianess&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;&lt;br /&gt;
-应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.&lt;br /&gt;
-这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,&lt;br /&gt;
-之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;br /&gt;
-这样就可以更好的理解iphdr:&lt;br /&gt;
-#if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
-&lt;strong&gt;u8    ihl:4,&lt;br /&gt;
-    version:4;&lt;br /&gt;
-#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)&lt;br /&gt;
-__u8    version:4,&lt;br /&gt;
-    ihl:4;&lt;br /&gt;
-#else&lt;br /&gt;
-#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;&lt;br /&gt;
-#endif&lt;br /&gt;
-ipv4 header的拓扑&lt;br /&gt;
-version ihl&lt;br /&gt;
-0100 0101&lt;br /&gt;
-因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl&lt;br /&gt;
-而be的cpu是 msb first, 从最右开始所以version开头.&lt;br /&gt;
-而使用unsigned char ver_ihl&lt;br /&gt;
-(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version&lt;br /&gt;
-ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
-是无关cpu读取顺序的.&lt;/p&gt;
-
-&lt;h3 id=&#34;endianess-in-build:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Endianess in build&lt;/h3&gt;
-
-&lt;p&gt;cpu -&amp;gt; toolchain&lt;br /&gt;
-ar71xx big&lt;br /&gt;
-ralink little&lt;/p&gt;
-
-&lt;h1 id=&#34;introdution:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Introdution&lt;/h1&gt;
-
-&lt;p&gt;我们先看ISA. 我们都知道语言有个范式, 汇编语言的范式是什么呢?&lt;br /&gt;
-&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;&lt;br /&gt;
-貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.&lt;br /&gt;
-换个角度理解, &lt;a href=&#34;http://202.116.24.124/computer/content/theory/web/Chap04/4.1.3.HTM&#34;&gt;低级语言与硬件结构的关系&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+京东, 为什么成功? 你知道了吧.用户省心啊.对应异步io&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;old-cs-faq:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;old cs faq&lt;/h1&gt;
+&lt;h1 id=&#34;computer-architecutre:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Computer Architecutre&lt;/h1&gt;
 
-&lt;h1 id=&#34;cs:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;CS&lt;/h1&gt;
+&lt;p&gt;∅ ⊢ Computer&lt;br /&gt;
+Computer ⊃ CPU ∪ Memory ∪ Bus ∪ Peripheral&lt;br /&gt;
+Computer → I/O&lt;/p&gt;
+
+&lt;p&gt;∅ ⊢ CPU&lt;br /&gt;
+CPU ⊃ Instruction set architecture ∪ Microarchitecture ∪ ?&lt;br /&gt;
+Instruction set architecture ⊃ Memory model ∪ ISA Registers ∪ Data types ∪ Instructions&lt;br /&gt;
+Instruction set architecture(extension)  ⊃ RISC ∪ CISC&lt;br /&gt;
+Memory model ⊃ Byte ∪ Words ∪ Address space ∪ Memory semantics&lt;br /&gt;
+ISA Registers ⊃ Special-purpose registers ∪ General-purpose registers ∪ Control registers&lt;br /&gt;
+Data types ⊃ Numeric ∪ Nonnumeric&lt;br /&gt;
+Numeric data types ⊃ Integer&lt;br /&gt;
+Instructions ⊃ Instruction formats ∪ Instruction length ∪ Addressing mode ∪ Comparisons ∪ Branches ∪ Procedure Call&lt;br /&gt;
+Instruction formats ⊃ opcode&lt;br /&gt;
+Instructions(extension) ⊃ Data transfer ∪ Arithmetic ∪ Logic ∪ Control flow&lt;/p&gt;
+
+&lt;p&gt;RISC ⊃ Fixed instruct length ∪ Few instruction formats ∪ Load/Store architecture&lt;/p&gt;
+
+&lt;p&gt;Microarchitecture ⊃ Data path ∪ Control path ∪ MMU ∪ CPU cache ∪ Oscillator crystal ∪ Clock generator&lt;br /&gt;
+Microarchitecture → Instruction cycle ∪ Instruction pipeline ∪ Out-of-order&lt;br /&gt;
+Instruction pipeline ⊃ Branch prediction ∪ Hazard ∪ Parallel&lt;br /&gt;
+Data path ⊃ ALU ∪ FPU ∪ Registers ∪ Bus&lt;br /&gt;
+ALU ⊃ Adder ∪ Multiplexor&lt;br /&gt;
+Adder ⊃ Logic gate&lt;br /&gt;
+Logic gate ⊃ diodes or transistors&lt;br /&gt;
+Transistor ⊃&lt;/p&gt;
+
+&lt;p&gt;MMU ⊃ TLB&lt;/p&gt;
+
+&lt;p&gt;CPU register ⊃ not same with SRAM ∪ Synchronous circuit&lt;/p&gt;
+
+&lt;p&gt;CPU cache ⊃ SRAM ∪ Synchronous circuit&lt;br /&gt;
+SRAM ⊃ MOSFET ∪ Computer organization and design page B-59&lt;br /&gt;
+CPU cache → Cache coherence ∪ Associativity ∪ Cache miss&lt;br /&gt;
+Cache coherence ⊃ MSI&lt;/p&gt;
+
+&lt;p&gt;Oscillator crystal&lt;/p&gt;
+
+&lt;p&gt;Clock generator ⊃ frequency divider ∪ clock multiplier&lt;br /&gt;
+Clock generator → Clock rate&lt;/p&gt;
+
+&lt;p&gt;∅ ⊢ Memory&lt;br /&gt;
+// No matter physical or virtual address both are relative continuity.&lt;br /&gt;
+// What is memory? Simplely, a large number of identifier and 1 byte infomation.&lt;br /&gt;
+// What is address space is the methmatical set of identifiers of memory.&lt;br /&gt;
+Memory ⊃ Sequencial logic circuit ∪ Memory controller ∪ Bank&lt;br /&gt;
+Memory controller ⊃&lt;br /&gt;
+∅ ⊢ Bus&lt;br /&gt;
+∅ ⊢ Peripheral&lt;/p&gt;
+
+&lt;p&gt;Digital circuits&lt;br /&gt;
+Analog circuits&lt;/p&gt;
+
+&lt;h1 id=&#34;physical-computation-phenomenon:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Physical computation phenomenon&lt;/h1&gt;
+
+&lt;p&gt;A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
+The Mathematical Theory of Communication&lt;br /&gt;
+Given a symbol level, the architecture is the description of the system in&lt;br /&gt;
+whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81&lt;br /&gt;
+&lt;a href=&#34;https://news.ycombinator.com/item?id=9844090&#34;&gt;Ask HN: How to learn about the history of computing?&lt;/a&gt;&lt;br /&gt;
+* Control&lt;br /&gt;
+Cogwheel control&lt;br /&gt;
+electromechanical magnet plugging control&lt;br /&gt;
+control sequence points&lt;/p&gt;
+
+&lt;h1 id=&#34;faq:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Faq&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;Memory&lt;br /&gt;
-the framework of memroy from logic to malloc.&lt;br /&gt;
-What&amp;rsquo;s results  will be generated for cache when manipulate variable?&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Device driver model&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;How does gcc attribute((aligned)) work?&lt;br /&gt;
+struct S1 { short f; short f1; short f2;char a; char c;} &lt;strong&gt;attribute&lt;/strong&gt; ((aligned ));&lt;br /&gt;
+sizeof S1 = 16 in 64-bit&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;In what situation can unaligned accesss make a kernel panic?&lt;br /&gt;
+may be arch/mips/kernel/unaligned.c&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Is the address generated by compiler physical or virtual?&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;computer-architecture-1:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;Computer architecture&lt;/h2&gt;
-
-&lt;p&gt;The theroy, 比如我可以更好的理解cpu, 中断上下文,cache,内存,netdevice怎么工作的.&lt;br /&gt;
-How does a program execute from asm language expression to physics?&lt;br /&gt;
-Does cache belong to computer architecture not OS?&lt;br /&gt;
-What make of cache and memory in digital physics?&lt;/p&gt;
+&lt;p&gt;Graphviz + CodeViz&lt;/p&gt;
 </description>
     </item>
     
