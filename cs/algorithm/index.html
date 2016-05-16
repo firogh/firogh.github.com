@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="292">
+<meta itemprop="wordCount" content="746">
 <meta itemprop="datePublished" content="2015-05-27">
 <meta itemprop="url" content="http://firoyang.org/cs/algorithm/">
 
@@ -184,7 +184,8 @@ The Algorithm Design Manual 2nd Edition</p>
 
 <p>being(4), abyss(0)<br />
 material(1) change, quality, quantity, relation, space, time<br />
-process(2), tansfer, truth, signifier(3), bijection, Causality, structure</p>
+process(2), tansfer, truth, signifier(3), bijection, Causality, structure<br />
+connectivity</p>
 
 <h1 id="排序算法的分析:0410937a83f6b2d022d3a1c190b257c8">排序算法的分析</h1>
 
@@ -231,7 +232,8 @@ merge sort: 从全部的个体单元开始的开始有序度增多, bottomup过�
 
 <h1 id="查找算法的分析-searching-algorithm:0410937a83f6b2d022d3a1c190b257c8">查找算法的分析 searching algorithm</h1>
 
-<p>查找是在a set of objects, 找到特定的目标. the structure of the set of objects可能是任意的.<br />
+<p>搜索的效率完全在于搜索路径的长短.<br />
+查找是在a set of objects, 找到特定的目标. the structure of the set of objects可能是任意的.<br />
 计算机中如线性的linked list, array, tree, graph. structure并不只是量之间的quality, relation.<br />
 还包括了, change, 即operation, access/get也是一种change, 效果是没有change.<br />
 那么What is the form causality of searching?上面分析sorting的时候, 我们没有分析sorting算法的效率.<br />
@@ -252,7 +254,129 @@ a) 查找本身就是做order判断.<br />
 b)  而有序的数据潜在做完了判断.<br />
 也就是还有一个判断读的问题 or orderness. 那么final reachness的最大值就是描述在不同的数据结构中, 得到target经历的quantity.<br />
 if orderness = 0. every structure&rsquo;s final reachness = max space.<br />
-else final reachness &lt; max space; // maybe half of max space</p>
+else final reachness &lt; max space; // maybe half of max space<br />
+那么树形结构和linear 结构有什么区别呢? 结构上的已经清楚了.实际上, 我们知道计算机中树就是用linear实现的.<br />
+无序的链表和无序的tree是一样的.可以说无序的树是无意义的.<br />
+树是链表的超集. 有什么事树可以, 链表不可以.二分查找和二叉树查找是一样的.<br />
+但是二分只能应用到array上. 主要是因为没办法找到中间点.如果我们加个指针指向有序链表中间向他变成了什么?<br />
+没错树, 这应该就是树的重要本质了, accessable &ldquo;中间&rdquo;的quantity.除了叶节点职位的quantity都是内部&rdquo;中间&rdquo;quantity.<br />
+tree的两个后继则是边缘的一种展示.相比链表, 我们能第一时间知道正set of quantities的中间quantities.<br />
+实际上, 顺着middle pointer我们能够找到所有的interior middle quantities; 意外吧. 但是我们想知道其他的<br />
+中间节点时间耗费就是增多了.比如2049个节点. dfs只要最多8次就能找到任意&rdquo;interior middle pointer&rdquo;可是link list<br />
+全是512次啊tree有效的控制了reachness. 当然树是完全平衡的二叉树.<br />
+我现在到底在说什么呢? 我们试图用reachness和orderness描述tree, 我们辨析了tree和链表在reachness上的差异, 前提full order.<br />
+tree毫无疑问有link list来的.也就是说我们现在把searching 等价成了tree的结构.<br />
+那么维持reachness在较低值就是算法优劣关键. 那么如何保持reachness最小, 也就是orderness最大.<br />
+是什么让tree在reachness比link list优势这么大? 是存在于tree中隐式的判断.链式是一点点线性的变化, 而tree中的隐式判断确实二分的.<br />
+orderness小于1的tree没有意义.<br />
+记下来看看:avl tree, redblack tree, treap, splay tree, Size Balanced Tree, B-tree, B+ tree. but Trie or 霍夫曼树.<br />
+也就是说我们现在要考察这些tree structure. 基本考察完, 我的算法就同了. 后面还有DP, 贪婪, 数值, PNP之类都是思想了.<br />
+所以基本上本周5能把algorithm, 完事, 周6 设计模式. 周日开始sicp.<br />
+开始, 树结构的分析, 因为尽管是有形的visible structure, 我们依然无法给霍夫曼树和red black一个合理分析视角,<br />
+根本原因就是他们的form causality or 目的因不同.由上面可知orderness和reachness是我门刻画binary balance tree的quantities.<br />
+我们前面也分析了如何从link list到链表. 确定小, 中, 大,即 left, root, right这种模式下所有set of quantities的构成tree有多种可能.<br />
+如 1 2 3 4 5; left subtree 可以是 NULL, 1, 2, 还可以是1, 2, NULL.常见的旋转可以打到前者的情况. or不旋转:<br />
+5是root. 之后3是left 也是subtree的root, 1是left, 4是right,  1是root 2是right.<br />
+有序的link list和二叉树在插入删除是都做order判断调整, 由此一点我们不能判断出书有效的. 那什么是树比link list有效的呢?当然前提是<br />
+整个set 是order的.对1 2 3 4 5, reachness可能是5也可能是3. 对与1024个数据可能是1024, 可能是9.<br />
+树的高度height能有效衡量reachness.现在我们知道了, avl, red black, trap, splay这些tree的目标都是height的最小化.<br />
+但同时, 我们也知道height是一个描述最终结果.并不是process quantity. 我们找到与process动态同步的quantity.<br />
+这个process准确说就是构建balance tree的过程. 那么这个量就是描述balance tree.如 1 2 3 4 5 6 7 8 9, 5做root,<br />
+1 2 3 4 全是left child, 6 7 8 9全是right child. 二叉树的最raw的形态应该是link list那种.也就是说除了leaf node, 每个node至少<br />
+和两个node相连.也就是天然的形态. 那么我们把同时连着两个的node的connectivity作为1. 反之为0.链表起始是right side tree,<br />
+我的天, 这样链表的connectivity就是0啊.比如1,2,3,4,5,6,7的connectivity在0~3, 这是strict connectivity.那么bold connectivity就是<br />
+只要有连着就行link list对于1 to 7 这种情况是6.和二叉树没差. 比如 1 2 3 4 5. connectivity是1 or 2对search是没有影响的.<br />
+饶了一圈发现还是height最好用.那如何保证height最小. 看来还差树的form是保证height=(logN+1向上取整)<br />
+现在searching问题就转换成了二叉树构造的问题了.成了一个动态的过程了.<br />
+我们现在完全不考虑算法实现. 只是单纯的考虑一个过程前后两个state的差异, 类似蒙太奇手法.<br />
+重点是确认前后的两个state是什么? 前一个状态是raw, 我们不关心具体什么, 因为他可以是二叉树可能存在的各种状态.那么后一个状态呢?<br />
+我们期望的是什么. 我们可以为binary tree的各种形态用数值量化表示. 我们不用complete binary tree来表示理性的便于搜索的二叉树.<br />
+因为在最右在层, leaf node是否连续, 对searching的worst-case time O(log n) 没影响.所以我们叫piled tree.</p>
+
+<p>如果存在3个点向来的情况就认为 connectivity is 1。整个树的connectivity 是每个点的加和结果。<br />
+比如1到7的set那么max connectivity<br />
+4<br />
+<sup>2</sup>&frasl;<sub>5</sub><br />
+<sup>13</sup>&frasl;<sub>67</sub><br />
+所以是3这种情况也就是最有利于searching的。<br />
+同样1到7。<br />
+4<br />
+<sup>3</sup>&frasl;<sub>5</sub><br />
+<sup>1</sup>&frasl;<sub>67</sub><br />
+2<br />
+这种情况connectivity不是max，是2。也对应不是对searching最优的结构。<br />
+how to prove the consistency between connectivity and searching effiency？<br />
+Delay this job to future。<br />
+So oncemore we transfer our hunting target to how to build a  binary tree that with max connectivity.<br />
+In other words, all the popular self banlancing tree inherit this intrsic.<br />
+what we can do to modify the structure of  binary searching tree.<br />
+1 link  or unlink<br />
+2 counterclockwise weight inreasing<br />
+3 right shift(left roation); left shift(right roation)<br />
+4 只有insert和delete会影响.<br />
+尝试这却理解redblack tree.<br />
+逐一分析性质:<br />
+分出red black, 根叶都是黑.<br />
+red node不联通.<br />
+每个路径上黑node个数相同.<br />
+如果对于特定数量的nodes, 我们确认他能构成一定数量对应height在log(N+1), 也就是最优的searching.<br />
+所以说specific number nodes可以组成很多种binary searching tree.按照node的height在log(N+1)的数量.<br />
+avl 要严格rb-tree.这就是bst的form. 我们来总结下.<br />
+numbers of node &lt; log(N +1) 取上.<br />
+那么rb是如何保证logN呢?<br />
+一个潜在的性质是插入是红.红永远小于黑,</p>
+
+<p><a href="http://gregfjohnson.com/cgi-bin/redblackbuilder">http://gregfjohnson.com/cgi-bin/redblackbuilder</a> 生成1 2 3 4 5 6逐一插入的算法.<br />
+                                                                             2  (b)<br />
+                                                                               |<br />
+                                                                   +&mdash;&mdash;&mdash;&ndash;+&mdash;&mdash;&mdash;-+<br />
+                                                                   |                      |<br />
+                                                                 1  (b)                 4  &reg;<br />
+                                                                                          |<br />
+                                                                                  +&mdash;&mdash;-+&mdash;&mdash;-+<br />
+                                                                                  |               |<br />
+                                                                                3  (b)          5  (b)<br />
+                                                                                                  |<br />
+                                                                                                  +&mdash;-+<br />
+                                                                                                       |<br />
+                                                                                                     6  &reg;<br />
+insert 7:</p>
+
+<pre><code>                                                                         2  (b)                                 
+                                                                           |                                    
+                                                              +------------+------------+                       
+                                                              |                         |                       
+                                                            1  (b)                    4  (r)                    
+                                                                                        |                       
+                                                                             +----------+----------+            
+                                                                             |                     |            
+                                                                           3  (b)                6  (b)         
+                                                                                                   |            
+                                                                                            +------+------+     
+                                                                                            |             |     
+                                                                                          5  (r)        7  (r) 
+</code></pre>
+
+<p>insert 8:<br />
+                                                                             4  (b)<br />
+                                                                               |<br />
+                                                                 +&mdash;&mdash;&mdash;&mdash;-+&mdash;&mdash;&mdash;&mdash;&ndash;+<br />
+                                                                 |                            |<br />
+                                                               2  &reg;                       6  &reg;<br />
+                                                                 |                            |<br />
+                                                          +&mdash;&mdash;+&mdash;&mdash;+             +&mdash;&mdash;-+&mdash;&mdash;-+<br />
+                                                          |             |             |               |<br />
+                                                        1  (b)        3  (b)        5  (b)          7  (b)<br />
+                                                                                                      |<br />
+                                                                                                      +&mdash;-+<br />
+                                                                                                           |<br />
+                                                                                                         8  &reg;<br />
+从6和7我们能看出来rb tree不是严格小于log(N+1) 分别有1和2个node height超过(logN+1), 第一个插入的是4那么就能保证complete了.<br />
+那么rb tree是如何保证每条路径上黑node相同呢?貌似是个副产品.可是非常重要.<br />
+如果父和叔都是r, 都变b, 祖父r.<br />
+如果叔是黑, 父黑, 祖父r. 父变root.<br />
+删除:<br />
+要复杂很多.</p>
 
 		</article>
 	  </div>
