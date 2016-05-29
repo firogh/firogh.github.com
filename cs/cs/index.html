@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1392">
+<meta itemprop="wordCount" content="2134">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/cs/">
 
@@ -320,7 +320,178 @@ concurrent是design pattern等价的.<br />
 另一方面结合具体的实现开始kernel相关的(可能涉及到hard ware), 分布式系统理解.<br />
 还有一个link load interpreter这方面的工作.</p>
 
-<h1 id="process:067ec0f34de866d1b35db70204ef4b7d">Process</h1>
+<h1 id="programming:067ec0f34de866d1b35db70204ef4b7d">programming</h1>
+
+<p>Abstraction is vital in helping us to cope with the complexity of<br />
+large systems.<br />
+Effective program synthesis also requires organizational principles that<br />
+can guide us in formulating the overall design of a program.<br />
+orgnizational principles应该是architecture pattern.<br />
+我理解的programming的核心应该是modeling, modeling最直接的体现就是architecture pattern.<br />
+相较于design pattern, ap更注重整体?<br />
+不对, 这块不能把ap直接加进来, 逻辑不严密, 不完整.就先叫op吧.<br />
+why modular,we are not creating something.<br />
+It&rsquo;s just about the being.<br />
+abstraction is vital in helping us to cope with the complexity of<br />
+large systems. 通过抽象构造的material层级, 逐级清晰.<br />
+世界以我们所认为的那样方式运行着.<br />
+modular , that is, so that they can be divided “naturally” into co-<br />
+herent parts that can be separately developed and maintained.<br />
+I think it&rsquo;s because of the form.<br />
+model as modeled, action in local.<br />
+object-based approach and the stream-processing approach<br />
+objec is the form of this world. what about stream?</p>
+
+<p>The difficulties of dealing with objects, change, and identity are a fundamental<br />
+consequence of the need to grapple with time in our computational models.<br />
+Concurrent 增加了更多的难度, 但只是double的关系不是quality上的.</p>
+
+<p>The stream approach can be most<br />
+fully exploited when we decouple simulated time in our model from the<br />
+order of the events that take place in the computer during evaluation.<br />
+We will accomplish this using a technique known as delayed evaluation .<br />
+stream 解耦了我模拟的时间和event的order.event有orderbut no time.<br />
+We don&rsquo;t care time. 隐约中我们引入了另一个origin of world, time.<br />
+我想还是需要关心时间的只是在stream的form里面不存在时间了.<br />
+leak of causal is abstraction.<br />
+second origin, state, An object is said to “have<br />
+state” if its behavior is influenced by its history.<br />
+We can characterize an object’s state by one or more state vari-<br />
+ables.<br />
+有很多objects, 一些objects可能影响others&rsquo;s state, couple the state variables.<br />
+modular 需要decomposed into computational objects modeling actual objects.<br />
+model指整体如substitution 和environment.<br />
+Each computational object must have its own lo-<br />
+cal state variables describing the actual object’s state.<br />
+我们用computational object model actual, 每个 computational object must have its own local state variales.<br />
+local state variables 描述actual object&rsquo;s state. why local?</p>
+
+<p>If we choose to model the flow of time in the system by the elapsed time<br />
+in the computer, then we must have a way to construct computational<br />
+objects whose behaviors change as our programs run. In particular, if<br />
+we wish to model state variables by ordinary symbolic names in the<br />
+programming language, then the language must provide an assignment<br />
+operator to enable us to change the value associated with a name.<br />
+从state variables 扯到 assignment operator.<br />
+因为state variables是记录actual objects的state的, state可能随时间改变.<br />
+我们必须改变state variables, 就需要assignment operator.表述一个关系, change.<br />
+一个对象自己的state variables 被称为 local?<br />
+形参?<br />
+massage passing 类似strategy pattern</p>
+
+<p>From the point of view of one part of a complex process, the other<br />
+parts appear to change with time. They have hidden time-varying local<br />
+state. If we wish to write computer programs whose structure reflects<br />
+this decomposition, we make computational objects (such as bank ac-<br />
+counts and random-number generators) whose behavior changes with<br />
+time. We model state with local state variables, and we model the changes<br />
+of state with assignments to those variables.<br />
+整体上, a process, one part 看另外一面是<br />
+A process hide time-varying local state in modular, but with a changes behavior. encapuslation.<br />
+= changes, variable states</p>
+
+<p>In general, programming with assignment forces us to carefully consider the relative orders<br />
+of the assignments to make sure that each statement is using the correct<br />
+version of the variables that have been changed. is issue simply does<br />
+not arise in functional programs.</p>
+
+<p>函数调用对应的是substitution model<br />
+model of evaluation<br />
+environments<br />
+An environment is a sequence of frames . Each frame is a table (pos-<br />
+sibly empty) of bindings , which associate variable names with their cor-<br />
+responding values. (A single frame may contain at most one binding<br />
+for any variable.) Each frame also has a pointer to its enclosing environ-<br />
+ment , unless, for the purposes of discussion, the frame is considered to<br />
+be global . e value of a variable with respect to an environment is the<br />
+value given by the binding of the variable in the first frame in the en-<br />
+vironment that contains a binding for that variable. If no frame in the<br />
+sequence specifies a binding for the variable, then the variable is said to<br />
+be unbound in the environment.<br />
+所以programming实际讨论的是意义的问题.不是某种形式<br />
+3.4<br />
+e central issue lurking beneath the complexity of state, sameness,<br />
+and change is that by introducing assignment we are forced to admit<br />
+time into our computational models. Before we introduced assignment,<br />
+all our programs were timeless, in the sense that any expression that<br />
+has a value always has the same value.<br />
+so time is changing.<br />
+the execution of assignment<br />
+statements delineates<br />
+moments in time when values change. e result of evaluating an ex-<br />
+pression depends not only on the expression itself, but also on whether<br />
+the evaluation occurs before or aer these moments. Building models<br />
+in terms of computational objects with local state forces us to confront<br />
+time as an essential concept in programming.<br />
+we use assignmnet to record state/history.<br />
+We implemented the time variation of the states of the model objects in the computer<br />
+with assignments to the local variables of the model objects.<br />
+必须意识到change被modeled 到assignment.<br />
+model change in terms of sequences<br />
+list sequence is inefficient than the standard iterative style.<br />
+Streams are a clever idea that allows one to use sequence manipu-<br />
+lations without incurring the costs of manipulating sequences as lists.<br />
+With streams we can achieve the best of both worlds: We can formu-<br />
+late programs elegantly as sequence manipulations, while aaining the<br />
+efficiency of incremental computation.<br />
+stream 比list好,elegantly as sequence manipulation, efficiency as incremental computation.<br />
+(delay ⟨ exp ⟩ ) delayed object很有趣, 类似Brandon的enhanced greensight.连接是空, 穿越时空.</p>
+
+<h1 id="chapter-4-metalinguistic-abstraction:067ec0f34de866d1b35db70204ef4b7d">Chapter 4 Metalinguistic abstraction</h1>
+
+<p>It is no exaggeration to regard this as the most fundamental idea in<br />
+programming:<br />
+e evaluator, which determines the meaning of expres-<br />
+sions in a programming language, is just another program.</p>
+
+<p>SICP, 暂时看到这里.<br />
+programming 是modeling. 看了sicp差不多了.<br />
+interpreter:<br />
+EOPL<br />
+PLAI<br />
+<a href="http://papl.cs.brown.edu/2016/">http://papl.cs.brown.edu/2016/</a><br />
+另外PL也到这里吧.<br />
+source code写出来如何让run?<br />
+<a href="https://www.zhihu.com/question/19918532">弱类型、强类型、动态类型、静态类型语言的区别是什么？</a><br />
+c语言是弱类型语言的意思是：它的类型是给编译器看的，让编译器在初次分配内存的时候好分配一个指定大小的空间。在实际操作中你可以随意更改变量的类型（强制或自动）。<br />
+c语言实际是对内存直接操作的一门语言。也就是说如果给你四个字节的内存，你喜欢把它当成int来操作也行，当成四个char操作也行，随你喜欢。<br />
+<a href="http://stackoverflow.com/questions/430182/is-c-strongly-typed">Is C strongly typed?</a><br />
+I spent a few weeks, about a year ago, trying to sort out the terminology of &ldquo;strongly typed,&rdquo; &ldquo;statically typed,&rdquo; &ldquo;safe,&rdquo; etc., and found it amazingly difficult. As your message points out, the usage of these terms is so various as to render them almost useless. &ndash;Benjamin C. Pierce</p>
+
+<h1 id="program-execution:067ec0f34de866d1b35db70204ef4b7d">program execution</h1>
+
+<p>run的目的是source code 对应到ISA.<br />
+最容易想到的就是compilation.<br />
+我们把compilation和interpreter当成从source code 到runnable program之间的某种form的变化.<br />
+先略过compilation, 也就是我们现在编译出了最简单形式的一个程序foo 输出hello world用到了一个新lib.<br />
+<a href="https://lwn.net/Articles/631631/">How programs get run: ELF binaries</a><br />
+我们知道了个大概, 那么我们最关心的事, 现在lib和foo都进入内存了, 那么foo是如何调用到lib的函数.<br />
+原来是直接利用address_space 最memory map private就共享了.<br />
+不需要显示维护library的list列表的.<br />
+这样程序就运行起来了.<br />
+硬件可以理解为programs的的interpreter. 理解为model of computations, 由set of changs and state/quantaties and relations 组成.<br />
+所以硬件也可以看成是抽象的! 只不过不能自动.<br />
+研究memory的是时候我们会区分到RAM和SRAM到电容和logic gates.也就是最终的实现.<br />
+这个时候, 我们发现material成了我们理解问题的所必须考虑的方面了.<br />
+也就是说理解到了电路这个层次, 我们就完成了standalone, Completeness的.<br />
+也就是hardware的material完成了我们的认知, 就是认知闭环了.<br />
+所以已经关注很多cpu的和process运行相关的指令, 对于理解lock锁(包括所谓的lockfree无锁)理解到硬件的material也是应该的.<br />
+为什么这么说? 如果不用关心到logic完整的material, 实际上我们不需要理解什么语言啊, computation model. 设计模式啊, 操作系统啊.<br />
+只要脑子想就够了.可是material也是being存在.也是有form的存在.<br />
+所以另外的, 很重要的就是, 我们不是理解hardware本身, 我们理解的是hardware背后的form!<br />
+form的内容就很少了.所以说学习要特别注意两点, form和completeness.<br />
+记住我们关心的不是hardware的material而是hardware的form.<br />
+所以说我们是为了完整complete form而不是material.<br />
+而实际上, 当我意识到所谓的form的存在的时候, hardware本身就成一种自然的延伸了.自然的被包括进学习的范围目标里面了(FIXME).</p>
+
+<h1 id="os:067ec0f34de866d1b35db70204ef4b7d">os</h1>
+
+<p>所以下面的os, 从一个整体的角度去看待computer, 实质善顺道把os相关, 有助于os理解的hardware的知识<br />
+也包含进来.<br />
+下面的思考包含常见的GNU Linux/Unix/Windows这些系统, 和distribute system.<br />
+在更general 的form下思考他们的form.</p>
+
+<h1 id="architecture-of-cs:067ec0f34de866d1b35db70204ef4b7d">architecture of cs</h1>
 
 <p>Algorithm, TOC, Design Pattern, SICP, Logic, Mathematics<br />
 Programming: language, coding style<br />
@@ -334,8 +505,7 @@ Abstruction<br />
 Combination<br />
 Virtualization<br />
 Exchange time and space<br />
-Isolation<br />
-Modular manner: D</p></li>
+Isolation/Modular</p></li>
 
 <li><p>Top goal<br />
 Easy to use<br />
@@ -346,7 +516,7 @@ Security<br />
 Energy-efficiency</p></li>
 </ul>
 
-<h1 id="programming:067ec0f34de866d1b35db70204ef4b7d">Programming</h1>
+<h1 id="programming-1:067ec0f34de866d1b35db70204ef4b7d">Programming</h1>
 
 <p>Programming langueage: c, python, shell<br />
 Programming tools: vim<br />
@@ -355,7 +525,7 @@ Testing<br />
 Debuging<br />
 Interface</p>
 
-<h1 id="os:067ec0f34de866d1b35db70204ef4b7d">OS</h1>
+<h1 id="os-1:067ec0f34de866d1b35db70204ef4b7d">OS</h1>
 
 <p>Batch processing -&gt; Time-sharing<br />
 Overlaying<br />
@@ -496,71 +666,7 @@ libevent and libev is a well-designed <em>event loop</em>.Check shadowsocks for 
 进程是始终存在的, 也就是说IO 和进程共享着相同的时间进度, 但是却不在一起.也就是说,<br />
 IO不是由我们的进程完成而是别的进程完成, 是谁呢,是内核线程.<br />
 那么我们就知道只有linux上的aio是符合异步IO的标准, 而多路复用, 如epoll返回是我们和IO是在<br />
-一起, 我们要调用read之类的完成他.<br />
-下面用一个生活化的例子, 说明下linux下的IO.<br />
-比如你要买&lt;百年孤独&gt; 还要买件衬衫, 你会怎么买<br />
-你要先去书店, 如果店家没有货, 如果一个小时后货补齐了你可以等,<br />
-长点你就不愿意等了. 也就是阻塞和不阻塞.之后你要去衣服点.也是同样.<br />
-假如都没货, 你有等不下去, 怎么办? 你又不能一会儿去这家问下书怎么样? 一会儿去衣服店询问.<br />
-这太累人了. 最好的方式, 你告诉店家我要什么, 到货了给我打个电话, 我在过来.<br />
-这就是io多路复用. 可是还有更高明的方法, 没错就是京东了, 我网上下订单, 第二天直接送到家了.<br />
-京东, 为什么成功? 你知道了吧.用户省心啊.对应异步io</p></li>
-</ul>
-
-<h1 id="computer-architecutre:067ec0f34de866d1b35db70204ef4b7d">Computer Architecutre</h1>
-
-<p>∅ ⊢ Computer<br />
-Computer ⊃ CPU ∪ Memory ∪ Bus ∪ Peripheral<br />
-Computer → I/O</p>
-
-<p>∅ ⊢ CPU<br />
-CPU ⊃ Instruction set architecture ∪ Microarchitecture ∪ ?<br />
-Instruction set architecture ⊃ Memory model ∪ ISA Registers ∪ Data types ∪ Instructions<br />
-Instruction set architecture(extension)  ⊃ RISC ∪ CISC<br />
-Memory model ⊃ Byte ∪ Words ∪ Address space ∪ Memory semantics<br />
-ISA Registers ⊃ Special-purpose registers ∪ General-purpose registers ∪ Control registers<br />
-Data types ⊃ Numeric ∪ Nonnumeric<br />
-Numeric data types ⊃ Integer<br />
-Instructions ⊃ Instruction formats ∪ Instruction length ∪ Addressing mode ∪ Comparisons ∪ Branches ∪ Procedure Call<br />
-Instruction formats ⊃ opcode<br />
-Instructions(extension) ⊃ Data transfer ∪ Arithmetic ∪ Logic ∪ Control flow</p>
-
-<p>RISC ⊃ Fixed instruct length ∪ Few instruction formats ∪ Load/Store architecture</p>
-
-<p>Microarchitecture ⊃ Data path ∪ Control path ∪ MMU ∪ CPU cache ∪ Oscillator crystal ∪ Clock generator<br />
-Microarchitecture → Instruction cycle ∪ Instruction pipeline ∪ Out-of-order<br />
-Instruction pipeline ⊃ Branch prediction ∪ Hazard ∪ Parallel<br />
-Data path ⊃ ALU ∪ FPU ∪ Registers ∪ Bus<br />
-ALU ⊃ Adder ∪ Multiplexor<br />
-Adder ⊃ Logic gate<br />
-Logic gate ⊃ diodes or transistors<br />
-Transistor ⊃</p>
-
-<p>MMU ⊃ TLB</p>
-
-<p>CPU register ⊃ not same with SRAM ∪ Synchronous circuit</p>
-
-<p>CPU cache ⊃ SRAM ∪ Synchronous circuit<br />
-SRAM ⊃ MOSFET ∪ Computer organization and design page B-59<br />
-CPU cache → Cache coherence ∪ Associativity ∪ Cache miss<br />
-Cache coherence ⊃ MSI</p>
-
-<p>Oscillator crystal</p>
-
-<p>Clock generator ⊃ frequency divider ∪ clock multiplier<br />
-Clock generator → Clock rate</p>
-
-<p>∅ ⊢ Memory<br />
-// No matter physical or virtual address both are relative continuity.<br />
-// What is memory? Simplely, a large number of identifier and 1 byte infomation.<br />
-// What is address space is the methmatical set of identifiers of memory.<br />
-Memory ⊃ Sequencial logic circuit ∪ Memory controller ∪ Bank<br />
-Memory controller ⊃<br />
-∅ ⊢ Bus<br />
-∅ ⊢ Peripheral</p>
-
-<p>Digital circuits<br />
-Analog circuits</p>
+一起, 我们要调用read之类的完成他.</p>
 
 <h1 id="physical-computation-phenomenon:067ec0f34de866d1b35db70204ef4b7d">Physical computation phenomenon</h1>
 
@@ -568,11 +674,13 @@ Analog circuits</p>
 The Mathematical Theory of Communication<br />
 Given a symbol level, the architecture is the description of the system in<br />
 whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81<br />
-<a href="https://news.ycombinator.com/item?id=9844090">Ask HN: How to learn about the history of computing?</a><br />
-* Control<br />
+<a href="https://news.ycombinator.com/item?id=9844090">Ask HN: How to learn about the history of computing?</a></p></li>
+
+<li><p>Control<br />
 Cogwheel control<br />
 electromechanical magnet plugging control<br />
-control sequence points</p>
+control sequence points</p></li>
+</ul>
 
 <h1 id="faq:067ec0f34de866d1b35db70204ef4b7d">Faq</h1>
 
@@ -582,10 +690,9 @@ struct S1 { short f; short f1; short f2;char a; char c;} <strong>attribute</stro
 sizeof S1 = 16 in 64-bit<br /></li>
 <li>In what situation can unaligned accesss make a kernel panic?<br />
 may be arch/mips/kernel/unaligned.c<br /></li>
-<li>Is the address generated by compiler physical or virtual?<br /></li>
+<li>Is the address generated by compiler physical or virtual?<br />
+Graphviz + CodeViz<br /></li>
 </ul>
-
-<p>Graphviz + CodeViz</p>
 
 		</article>
 	  </div>
