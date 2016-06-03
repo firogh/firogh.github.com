@@ -1000,12 +1000,56 @@ interrupt对应的是什么?是relation, 准确说是建立order.&lt;br /&gt;
 interrupt为什么不能运行长时间, 当然可以运行长时间.&lt;br /&gt;
 我们把interrupt, 看成和Process是一类东西, 都是process, change的实例.&lt;br /&gt;
 memory和fs对state set的管理.所以至少process要和memory 和fs关联&lt;br /&gt;
-貌似就没了?这只是框架.&lt;br /&gt;
-form | os&lt;br /&gt;
-&amp;mdash;&amp;ndash;|&amp;mdash;-&lt;br /&gt;
-change, process | Process, interrupt, IO&lt;br /&gt;
-relation, order | synchronization, scheduling, interrupt&lt;br /&gt;
-quantaties, state | fs, memory&lt;/p&gt;
+貌似就没了?这只是框架.&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;form&lt;/th&gt;
+&lt;th&gt;os&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;change, computation, transfer&lt;/td&gt;
+&lt;td&gt;instructions(memory,IO), Process, interrupt&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;relation, order&lt;/td&gt;
+&lt;td&gt;synchronization/atomic, scheduling, interrupt&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;quantaties, state&lt;/td&gt;
+&lt;td&gt;fs, memory, device, driver&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf&#34;&gt;test-and-set&lt;/a&gt;&lt;br /&gt;
+test the lock, if false(nobody take it), then set the lock.&lt;br /&gt;
+Test and test-and-set对TAS优化.&lt;br /&gt;
+TAS bus lock, cache invalidation&lt;br /&gt;
+TAS and TTAS is two different algorithms .&lt;br /&gt;
+还需要面对contention, backoff and queue lock.&lt;br /&gt;
+造成contention原因是什么, 就是cache.&lt;br /&gt;
+因为lokc prefix的总线仲裁, 可以简单的按顺序来.&lt;br /&gt;
+这样的话, concurrent, parallel涉及到的order就算是大概过了.&lt;br /&gt;
+下面我们还是回到relation/order, change, quantaties上来.&lt;br /&gt;
+这样我们用locality of reference and transfer/channel special/temporal.来解读了cache.&lt;br /&gt;
+另外还有cache coherence.&lt;br /&gt;
+我们把process, interrupt都看成computation.&lt;br /&gt;
+而timeshareing 世界之源是作为process的基本属性, 解读了调度&lt;br /&gt;
+memory subsystem 作为quantaties和state的管理比较直观.&lt;br /&gt;
+fs和mm本质是一回事.&lt;br /&gt;
+剩下一个IO, 就是transfer的实例化, 包括char, block, network device的驱动.&lt;br /&gt;
+我们把peripheral device看成跟memory一样的东西也就是quantaties同时也涉及到了transfer&lt;br /&gt;
+我们基本上把 整个os computer都包含进来了.&lt;br /&gt;
+但还需要细节推理.&lt;br /&gt;
+比如, fs:&lt;br /&gt;
+我们要先有个文件file, 各种类型&lt;/p&gt;
 
 &lt;h1 id=&#34;architecture-of-cs:067ec0f34de866d1b35db70204ef4b7d&#34;&gt;architecture of cs&lt;/h1&gt;
 

@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="2317">
+<meta itemprop="wordCount" content="2392">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/cs/">
 
@@ -564,12 +564,56 @@ interrupt对应的是什么?是relation, 准确说是建立order.<br />
 interrupt为什么不能运行长时间, 当然可以运行长时间.<br />
 我们把interrupt, 看成和Process是一类东西, 都是process, change的实例.<br />
 memory和fs对state set的管理.所以至少process要和memory 和fs关联<br />
-貌似就没了?这只是框架.<br />
-form | os<br />
-&mdash;&ndash;|&mdash;-<br />
-change, process | Process, interrupt, IO<br />
-relation, order | synchronization, scheduling, interrupt<br />
-quantaties, state | fs, memory</p>
+貌似就没了?这只是框架.</p>
+
+<table>
+<thead>
+<tr>
+<th>form</th>
+<th>os</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>change, computation, transfer</td>
+<td>instructions(memory,IO), Process, interrupt</td>
+</tr>
+
+<tr>
+<td>relation, order</td>
+<td>synchronization/atomic, scheduling, interrupt</td>
+</tr>
+
+<tr>
+<td>quantaties, state</td>
+<td>fs, memory, device, driver</td>
+</tr>
+</tbody>
+</table>
+
+<p><a href="http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf">test-and-set</a><br />
+test the lock, if false(nobody take it), then set the lock.<br />
+Test and test-and-set对TAS优化.<br />
+TAS bus lock, cache invalidation<br />
+TAS and TTAS is two different algorithms .<br />
+还需要面对contention, backoff and queue lock.<br />
+造成contention原因是什么, 就是cache.<br />
+因为lokc prefix的总线仲裁, 可以简单的按顺序来.<br />
+这样的话, concurrent, parallel涉及到的order就算是大概过了.<br />
+下面我们还是回到relation/order, change, quantaties上来.<br />
+这样我们用locality of reference and transfer/channel special/temporal.来解读了cache.<br />
+另外还有cache coherence.<br />
+我们把process, interrupt都看成computation.<br />
+而timeshareing 世界之源是作为process的基本属性, 解读了调度<br />
+memory subsystem 作为quantaties和state的管理比较直观.<br />
+fs和mm本质是一回事.<br />
+剩下一个IO, 就是transfer的实例化, 包括char, block, network device的驱动.<br />
+我们把peripheral device看成跟memory一样的东西也就是quantaties同时也涉及到了transfer<br />
+我们基本上把 整个os computer都包含进来了.<br />
+但还需要细节推理.<br />
+比如, fs:<br />
+我们要先有个文件file, 各种类型</p>
 
 <h1 id="architecture-of-cs:067ec0f34de866d1b35db70204ef4b7d">architecture of cs</h1>
 
