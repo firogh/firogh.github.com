@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="2610">
+<meta itemprop="wordCount" content="2715">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/cs/">
 
@@ -656,12 +656,40 @@ in fs, namei stands for name interpreting,  the pathname lookup mechanisms (name
 3. file -&gt; dentry -&gt; inode 这个顺序<br />
 4. inode决定了你的 fs之内的最高级别operations(如char ops). 进一步的(如tty 靠major minor)<br />
 5. special的inode不同于disk reglar 这种. 他们事先就created and pin dentry in core.<br />
+6. namei<br />
+7. lru<br />
 反观fs, sb和dentry是做骨架同inode是骨架的支撑, 不可缺少.<br />
 file是花拳绣腿. 有什么深刻的? 用户态松散的order和 transfer, quantaties 关系. dentry就是这种反应.<br />
 深刻1, 就是order 包含!<br />
 深刻2, 是什么, abstraction and function of everything(data, process)不同事物的抽象关系, 映射关系.<br />
 明天就是mm, 想对比fs关注与不同事物的组合, mm更纯粹, 也会涉及大quantaties的管理, 和disk之类应该有较大的相似性.<br />
-更能体现出quantaties.</p>
+更能体现出quantaties.<br />
+cs 的fs的inode见 iput_final iput inode_add_lru list_lru_add(&amp;inode-&gt;i_sb-&gt;s_inode_lru, &amp;inode-&gt;i<em>lru) .</em>.<br />
+现在来看最后的mm.</p>
+
+<h1 id="底层的transer:067ec0f34de866d1b35db70204ef4b7d">底层的transer</h1>
+
+<p>io, polling, interrupting, network device的multi queue, 的性能提升.</p>
+
+<h1 id="mm:067ec0f34de866d1b35db70204ef4b7d">mm</h1>
+
+<p>首先, physical  memory 就是quantaties/states的集合, 没有什么好说的, DRAM的实现需要看下.<br />
+process要用到这些quantaties 如何分给他们, 分多少?<br />
+首先, 我们要统计下, 我们有多少内存, mem map, 内存 看page分块. 分配物理地址signifier. buddy system.<br />
+我们不知道process, 要多少, 不可能给他很多, 所以就是 Demand paging是被动的, 再有就是主动分配alloc的.<br />
+首先process是不应该关心物理的signifier, 他肯定是在写程序的时候有自己的一套, 标记quantaties的signifiers.<br />
+我们不关心, process自己如何组织他自己内部的signifiers, 但是我们知道他当然可能自己全权掌控, physicl signifiers,<br />
+所谓的real system.一单, 我们为了简单, 使用了internal的signifiers, 那么internal 到physical的转换必不可缺.<br />
+这里就要设计到relation的维护. 同时memory是作为disk的cache, 那么不可避免.<br />
+已知关于cache的问题:<br />
+1. 组织 如page cache radix tree.<br />
+2. cache coherence. 如page 和disk. pdflush<br />
+3. 还是lru<br />
+关于mm<br />
+1. relation, page table.<br />
+2. physical signifiers的管理, mem map buddy system.<br />
+3. 关于internal signifiers的管理, mem layout, vma之类的.<br />
+基本上os就差不多了. 另外, 还有碎角料, kernel mode切换, interface abi,api.</p>
 
 <p>can we open a file in interrupt?</p>
 
