@@ -174,13 +174,13 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="reference:e2689587120d0b6ef78b8a3e3eecfbca">Reference</h1>
+<h1 id="reference">Reference</h1>
 
 <p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html">Linux netfilter Hacking HOWTO</a><br />
 <a href="http://www.karlrupp.net/en/computer/nat_tutorial">NAT - Network Address Translation</a><br />
 man iptables and man iptables-extension</p>
 
-<h1 id="introduction-to-netfilter:e2689587120d0b6ef78b8a3e3eecfbca">Introduction to netfilter</h1>
+<h1 id="introduction-to-netfilter">Introduction to netfilter</h1>
 
 <p>Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.<br />
 Netfilter的本质就是内核协议栈上的Hook的集合.<br />
@@ -200,30 +200,30 @@ ct| |iptables<br />
 nat,filter,mangle,kproxy,smartqos<br />
 当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.</p>
 
-<h1 id="netfilter:e2689587120d0b6ef78b8a3e3eecfbca">netfilter</h1>
+<h1 id="netfilter">netfilter</h1>
 
-<h2 id="source:e2689587120d0b6ef78b8a3e3eecfbca">source</h2>
+<h2 id="source">source</h2>
 
 <p>netfilter 公共: net/netfilter<br />
 ipv4协议的netfilter细节在: net/ipv4/netfilter/</p>
 
-<h2 id="init:e2689587120d0b6ef78b8a3e3eecfbca">Init</h2>
+<h2 id="init">Init</h2>
 
 <p>~/linux/net/netfilter/core.c<br />
 netfilter_init()</p>
 
-<h2 id="hook-point:e2689587120d0b6ef78b8a3e3eecfbca">Hook point</h2>
+<h2 id="hook-point">Hook point</h2>
 
 <p>local_in local_out forward pre_routing post_routing</p>
 
-<h1 id="iptables:e2689587120d0b6ef78b8a3e3eecfbca">Iptables</h1>
+<h1 id="iptables">Iptables</h1>
 
 <p>Iptables is a packet selecttion system (包括内核和用户态两部分).<br />
 iptables 的ip是IP(Internet Protocol).<br />
 xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.<br />
 <a href="http://en.wikipedia.org/wiki/Iptables#Overview">Overview of xtables in wikipedia</a></p>
 
-<h2 id="details-of-iptables:e2689587120d0b6ef78b8a3e3eecfbca">Details of iptables</h2>
+<h2 id="details-of-iptables">Details of iptables</h2>
 
 <ul>
 <li><p>iptables command<br />
@@ -237,9 +237,9 @@ xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部
 ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.</p></li>
 </ul>
 
-<h2 id="step-of-exution:e2689587120d0b6ef78b8a3e3eecfbca">Step of exution</h2>
+<h2 id="step-of-exution">Step of exution</h2>
 
-<h3 id="init-1:e2689587120d0b6ef78b8a3e3eecfbca">Init</h3>
+<h3 id="init-1">Init</h3>
 
 <ul>
 <li>如mangle表的初始化见iptable_mangle_init<br />
@@ -258,39 +258,39 @@ xt_match: xt_register_match</p></li>
 xt_target: xt_register_target</p></li>
 </ul>
 
-<h3 id="the-mangle-journal:e2689587120d0b6ef78b8a3e3eecfbca">The mangle journal</h3>
+<h3 id="the-mangle-journal">The mangle journal</h3>
 
 <p>netfilter hook -&gt;  iptable_mangle_hook -&gt; ipt_do_table -&gt;&hellip;</p>
 
-<h1 id="connection-tracking:e2689587120d0b6ef78b8a3e3eecfbca">Connection tracking</h1>
+<h1 id="connection-tracking">Connection tracking</h1>
 
 <p>Conntrack 的实现不依赖iptables, 很独立.</p>
 
-<h2 id="init-2:e2689587120d0b6ef78b8a3e3eecfbca">init</h2>
+<h2 id="init-2">init</h2>
 
 <p>nf_conntrack_standalone_init()<br />
 nf_conntrack_l3proto_ipv4_init()</p>
 
-<h2 id="conntrack-user-land-tools:e2689587120d0b6ef78b8a3e3eecfbca">conntrack &ndash; user-land tools</h2>
+<h2 id="conntrack-user-land-tools">conntrack &ndash; user-land tools</h2>
 
 <p>obsolete /proc/net/nf_conntrack</p>
 
-<h2 id="tuple-link-a-socket-5-arry-tuple:e2689587120d0b6ef78b8a3e3eecfbca">tuple &ndash; link a socket 5-arry tuple</h2>
+<h2 id="tuple-link-a-socket-5-arry-tuple">tuple &ndash; link a socket 5-arry tuple</h2>
 
 <p>Each Netfilter connection is uniquely identified by a<br />
 (layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple<br />
 nf_conntrack_tuple nf_conn</p>
 
-<h2 id="connection-tracking-helper:e2689587120d0b6ef78b8a3e3eecfbca">Connection tracking helper</h2>
+<h2 id="connection-tracking-helper">Connection tracking helper</h2>
 
 <p>connection tracking can be given knowledge of application-layer protocols<br />
 ALG</p>
 
-<h2 id="template:e2689587120d0b6ef78b8a3e3eecfbca">template</h2>
+<h2 id="template">template</h2>
 
 <p>netfilter: nf_conntrack: support conntrack templates</p>
 
-<h2 id="details:e2689587120d0b6ef78b8a3e3eecfbca">Details</h2>
+<h2 id="details">Details</h2>
 
 <p>以上的工作事实上都很简单，基本思路是：<br />
 一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。<br />
@@ -305,16 +305,16 @@ linux 内核的NAT是基于iptables 和 conntrack实现的.</p>
 <p>##init<br />
 iptable_nat_init</p>
 
-<h2 id="nat-helper:e2689587120d0b6ef78b8a3e3eecfbca">NAT helper</h2>
+<h2 id="nat-helper">NAT helper</h2>
 
 <p>Similar to connection tracking helpers, NAT helpers will do a packet inspection<br />
 and substitute original addresses by reply addresses in the payload.</p>
 
-<h2 id="drop-icmp-redict-in-nat:e2689587120d0b6ef78b8a3e3eecfbca">Drop ICMP redict in NAT</h2>
+<h2 id="drop-icmp-redict-in-nat">Drop ICMP redict in NAT</h2>
 
 <p><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></p>
 
-<h2 id="snat:e2689587120d0b6ef78b8a3e3eecfbca">SNAT</h2>
+<h2 id="snat">SNAT</h2>
 
 <p>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;<br />
 {<br />

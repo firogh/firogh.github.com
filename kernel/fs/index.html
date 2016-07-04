@@ -174,7 +174,7 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="open:e7b362f58fb1c46aad455e64848bbc3b">open()</h1>
+<h1 id="open">open()</h1>
 
 <p>最烦, 看什么系统调用参数了.<br />
 那一大堆很少用到的组合还有undefined, 太扯淡了.<br />
@@ -192,7 +192,7 @@ I suddenly find that a good way to understand fs in kernel is to manupulate a sm
 ##Common concepts<br />
 * VFS:Common fs interface plus fs anstraction layer!</p>
 
-<h2 id="unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points:e7b362f58fb1c46aad455e64848bbc3b">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</h2>
+<h2 id="unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</h2>
 
 <ul>
 <li>Filesytem: a hierarchial storage of data adhering to a specific structure.<br />
@@ -201,10 +201,11 @@ In unix, fs are mounted at a specific mount point in global hierarchy known as a
 <li>directory: analogous to a folder and usally contains related files.<br /></li>
 <li>dentry: Each component of a path is called a directory entry.<br /></li>
 <li>inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!<br /></li>
-<li>supreblock: a data structure containing information about the filesystem as a whole.<br /></li>
+<li>supreblock: a data structure containing information about the filesystem as a whole.<br />
+<br /></li>
 </ul>
 
-<h2 id="vfs-primary-objects-superblock-inode-dentry-file:e7b362f58fb1c46aad455e64848bbc3b">VFS primary objects: superblock, inode, dentry, file.</h2>
+<h2 id="vfs-primary-objects-superblock-inode-dentry-file">VFS primary objects: superblock, inode, dentry, file.</h2>
 
 <ul>
 <li>supreblock: a specific mounted filesystem.<br /></li>
@@ -212,7 +213,8 @@ In unix, fs are mounted at a specific mount point in global hierarchy known as a
 <li>dentry: accelerate access fs, dcache! a single component of a path, certainly include <em>regular</em> file.<br />
 VFS treats directory as non-exist <em>normal</em> file. directory and dentry is not the same at all, different congitive level!<br />
 In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!<br /></li>
-<li>file: an open normal file as associated with a process.<br /></li>
+<li>file: an open normal file as associated with a process.<br />
+<br /></li>
 </ul>
 
 <p>##Step of how to use ext2 fs<br />
@@ -233,7 +235,8 @@ do_last()<br /></li>
 <li>file, if not open, file-&gt;f_op = inode-&gt;i_fop<br /></li>
 </ol></li>
 <li>sys_write -&gt;<br />
-file-&gt;f_op-&gt;write()&hellip;<br /></li>
+file-&gt;f_op-&gt;write()&hellip;<br />
+<br /></li>
 </ul>
 
 <p>##How make dentry<br />
@@ -250,11 +253,11 @@ set inode to dentry</p>
 ##I think, important directory need to know.<br />
 /proc/sys/kernel</p>
 
-<h1 id="sysfs:e7b362f58fb1c46aad455e64848bbc3b">Sysfs</h1>
+<h1 id="sysfs">Sysfs</h1>
 
 <p>sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!</p>
 
-<h1 id="ramfs:e7b362f58fb1c46aad455e64848bbc3b">Ramfs</h1>
+<h1 id="ramfs">Ramfs</h1>
 
 <p>fs/ramfs</p>
 
@@ -298,35 +301,35 @@ module_initinit_sd;6-&gt;scsi_register_driver -&gt;driver_register-&gt;bus_add_d
 kernel_init_freeable-&gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd<br />
 如果/init不可以访问 prepare_namespace{挂在真正的文件系统}</p>
 
-<h1 id="faq:e7b362f58fb1c46aad455e64848bbc3b">FAQ</h1>
+<h1 id="faq">FAQ</h1>
 
-<h2 id="forbid-ln:e7b362f58fb1c46aad455e64848bbc3b">forbid ln</h2>
+<h2 id="forbid-ln">forbid ln</h2>
 
 <p>hard link to directory, recursive<br />
 hard link to file accross partitions, may led confilict with inode number.</p>
 
-<h2 id="stick-bit:e7b362f58fb1c46aad455e64848bbc3b">stick bit</h2>
+<h2 id="stick-bit">stick bit</h2>
 
 <p>chmod +t<br />
 1777<br />
 只有owner 和root才能删除这个文件, 用于/tmp</p>
 
-<h2 id="time-of-file:e7b362f58fb1c46aad455e64848bbc3b">time of file</h2>
+<h2 id="time-of-file">time of file</h2>
 
-<h3 id="atime:e7b362f58fb1c46aad455e64848bbc3b">atime</h3>
+<h3 id="atime">atime</h3>
 
 <p>perhaps the most stupid Unix design idea of all times,&rdquo; adding: &ldquo;[T]hink about this a bit: &lsquo;For every file that is read from the disk, lets do a &hellip; write to the disk! And, for every file that is already cached and which we read from the cache &hellip; do a write to the disk!&rsquo;&rdquo; He further emphasized the performance impact thus:</p>
 
-<h4 id="find-relatime-options:e7b362f58fb1c46aad455e64848bbc3b">find relatime options</h4>
+<h4 id="find-relatime-options">find relatime options</h4>
 
 <p>cat /proc/mounts<br />
 man mount</p>
 
-<h3 id="chang-time:e7b362f58fb1c46aad455e64848bbc3b">chang time</h3>
+<h3 id="chang-time">chang time</h3>
 
 <p>meta data</p>
 
-<h3 id="modification-time:e7b362f58fb1c46aad455e64848bbc3b">modification time</h3>
+<h3 id="modification-time">modification time</h3>
 
 <p>content of file</p>
 

@@ -173,7 +173,7 @@
 1. /dev/console 指向正在运行的tty 和tty0 一样ttyN not pts, console 佬变.<br />
 2. /dev/tty 一直指向所在的那个不变.</p>
 
-<h1 id="about-the-design:49ed33abd1f8adafccaa91748bb495b5">About the design</h1>
+<h1 id="about-the-design">About the design</h1>
 
 <p>Why dose we use /dev/xxx to represent the &ldquo;tty&rdquo; device?</p>
 
@@ -206,7 +206,7 @@ Abstruction -&gt; Control abstruction and data abstruction -&gt; Abstruction lay
 1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.<br />
 2. Separation of concerns, modular(abstruciton in layer), 笛卡尔划分的思想</p>
 
-<h1 id="tty-struct-disc-data:49ed33abd1f8adafccaa91748bb495b5">tty_struct-&gt;disc_data</h1>
+<h1 id="tty-struct-disc-data">tty_struct-&gt;disc_data</h1>
 
 <p>tty_init_dev-&gt;<br />
 {<br />
@@ -216,7 +216,7 @@ Abstruction -&gt; Control abstruction and data abstruction -&gt; Abstruction lay
 sys_vhangup-&gt;tty_vhangup_self-&gt;__tty_hangup-&gt;tty_ldisc_hangup-&gt;tty_ldisc_reinit<br />
 vfs_write-&gt;redirected_tty_write-&gt;tty_write-&gt;n_tty_write-&gt;process_output</p>
 
-<h1 id="early-con:49ed33abd1f8adafccaa91748bb495b5">early_con</h1>
+<h1 id="early-con">early_con</h1>
 
 <p>EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);<br />
 setup_earlycon-&gt;<br />
@@ -230,7 +230,7 @@ setup_earlycon-&gt;<br />
     register_console(early_console_dev.con)<br />
 }</p>
 
-<h1 id="earlyprintk:49ed33abd1f8adafccaa91748bb495b5">earlyprintk</h1>
+<h1 id="earlyprintk">earlyprintk</h1>
 
 <p>early_param(&ldquo;earlyprintk&rdquo;, setup_early_printk)-&gt;<br />
 {<br />
@@ -243,7 +243,7 @@ early_console_register(&amp;early_serial_console, keep);
 
 <p>}</p>
 
-<h1 id="cpu-hotplug:49ed33abd1f8adafccaa91748bb495b5">cpu hotplug</h1>
+<h1 id="cpu-hotplug">cpu hotplug</h1>
 
 <ul>
 <li>onset<br />
@@ -254,14 +254,15 @@ early_initcall(spawn_ksoftirqd)-&gt;mpboot_register_percpu_thread(&amp;softirq_t
 <li>nucles onset<br />
 suspend_enter-&gt;enable_nonboot_cpus-&gt;_cpu_up-&gt;smpboot_create_threads-&gt;<strong>smpboot_create_thread(&amp;hotplug_threads)-&gt;<br />
 kthread_create_on_cpu(smpboot_thread_fn-&gt; ht-&gt;thread_fn(td-&gt;cpu)= run_ksoftirqd-&gt;</strong>do_softirq-&gt;h-&gt;action(h) = run_timer_softirq-&gt;<br />
-__run_timers-&gt;call_timer_fn)<br /></li>
+__run_timers-&gt;call_timer_fn)<br />
+<br /></li>
 </ul>
 
 <p>vt 就是个tty也有tty_driver 叫console_driver.</p>
 
-<h1 id="reference:49ed33abd1f8adafccaa91748bb495b5">Reference</h1>
+<h1 id="reference">Reference</h1>
 
-<h1 id="contents:49ed33abd1f8adafccaa91748bb495b5">Contents</h1>
+<h1 id="contents">Contents</h1>
 
 <p><a href="http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal">What is the difference between shell, console, and terminal?</a><br />
 What does console do in kernel or u-boot?<br />
@@ -269,7 +270,7 @@ Linux console?<br />
 Computer terminal: keyboard + dispaly<br />
 Terminal emulator:</p>
 
-<h1 id="get-a-glance-on-u-boot:49ed33abd1f8adafccaa91748bb495b5">get a glance on u-boot</h1>
+<h1 id="get-a-glance-on-u-boot">get a glance on u-boot</h1>
 
 <p>start.S:board_init_r<br />
 init_sequence_f: -&gt;init_baud_rate; serial_init; console_init_f<br />
@@ -286,9 +287,9 @@ console_init_r: console_doenv -&gt;console_setfile:stdio_devices[file(0/1/2)] = 
 看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?<br />
 main_loop:cli_loop: getc!</p>
 
-<h1 id="what-is-platform-device-or-driver:49ed33abd1f8adafccaa91748bb495b5">what is platform device or driver?</h1>
+<h1 id="what-is-platform-device-or-driver">what is platform device or driver?</h1>
 
-<h1 id="a-reallife-serial8250:49ed33abd1f8adafccaa91748bb495b5">A reallife serial8250</h1>
+<h1 id="a-reallife-serial8250">A reallife serial8250</h1>
 
 <p>drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port<br />
 module_init-&gt;<br />
@@ -322,7 +323,7 @@ tty_port_register_device_attr-&gt;
 
 <p>}</p>
 
-<h1 id="simple-conceptions:49ed33abd1f8adafccaa91748bb495b5">Simple conceptions</h1>
+<h1 id="simple-conceptions">Simple conceptions</h1>
 
 <p><a href="http://www.linusakesson.net/programming/tty/">You must read this -&gt; The TTY demystified</a><br />
 System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.<br />
@@ -434,7 +435,7 @@ tty-&gt;ops-&gt;open(tty, filp)-&gt;//ops = &amp;uart_ops
 <p>}<br />
 // At present, we understand the flow of open /dev/console to serial console</p>
 
-<h1 id="what-about-opening-dev-console-to-vt-console:49ed33abd1f8adafccaa91748bb495b5">What about opening /dev/console to vt console</h1>
+<h1 id="what-about-opening-dev-console-to-vt-console">What about opening /dev/console to vt console</h1>
 
 <p>sys_open(/dev/console)-&gt; &hellip; tty_open -&gt;<br />
 {<br />
@@ -448,16 +449,16 @@ tty-&gt;ops-&gt;open(tty, filp)-&gt;//ops = &amp;uart_ops
 
 <p>}</p>
 
-<h1 id="总结下-打开-dev-console-会从console-drivers-最终到达tty-driver:49ed33abd1f8adafccaa91748bb495b5">总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.</h1>
+<h1 id="总结下-打开-dev-console-会从console-drivers-最终到达tty-driver">总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.</h1>
 
-<h1 id="这和-dev-tty-dev-ttys-从tty-drivers-差不多:49ed33abd1f8adafccaa91748bb495b5">这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.</h1>
+<h1 id="这和-dev-tty-dev-ttys-从tty-drivers-差不多">这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.</h1>
 
 <p>// 这么输出为什么不会打窜了?<br />
 // How ctrl alt Fn work?<br />
 // echo xxx /dev/tty in serial tty_lookup_driver<br />
 // 另一个问题, serial 的terminal?</p>
 
-<h1 id="the-perspective:49ed33abd1f8adafccaa91748bb495b5">The perspective</h1>
+<h1 id="the-perspective">The perspective</h1>
 
 <p>/dev/*<br />
 vfs<br />
@@ -475,7 +476,7 @@ UART console<br />
         Terminal&ndash;|<br />
               |&mdash;-</p>
 
-<h1 id="what-about-console:49ed33abd1f8adafccaa91748bb495b5">What about console?</h1>
+<h1 id="what-about-console">What about console?</h1>
 
 <ul>
 <li><p>early_con<br />
@@ -534,7 +535,7 @@ do_bind_con_driver -&gt;<br />
 }<br />
 }</p>
 
-<h2 id="vga-text-console-printk-write:49ed33abd1f8adafccaa91748bb495b5">VGA text console printk &amp; write</h2></li>
+<h2 id="vga-text-console-printk-write">VGA text console printk &amp; write</h2></li>
 
 <li><p>kernel space<br />
 printk-&gt; &hellip;-&gt;log_buf</p></li>
@@ -552,7 +553,7 @@ scr_writew((vc-&gt;vc_attr &lt;&lt; 8) + c, (unsigned short *)vc-&gt;vc_pos);</p
 
 <p>}</p>
 
-<h1 id="what-about-tty:49ed33abd1f8adafccaa91748bb495b5">What about tty</h1>
+<h1 id="what-about-tty">What about tty</h1>
 
 <ul>
 <li>onset<br />
@@ -561,7 +562,8 @@ console_init-&gt;<br />
 tty_ldisc_begin-&gt;tty_register_ldisc(N_TTY, &amp;tty_ldisc_N_TTY);<br />
 console_initcall(con_init);<br />
 console_initcall(serial8250_console_init)<br />
-}<br /></li>
+}<br />
+<br /></li>
 </ul>
 
 <p>N_TTY:<a href="http://www.linux.it/~rubini/docs/serial/serial.html">Serial Drivers by Alessandro Rubini</a><br />
@@ -644,7 +646,7 @@ tty_write-&gt;ld-&gt;ops-&gt;write=n_tty_write-&gt;(tty_struct tty-&gt;ops-&gt;w
     uart_start-&gt;__uart_start-&gt;(uart_port-&gt;ops-&gt;start_tx(port)); //&amp;uart_port_ops ?? uart_ops??<br />
 }</p>
 
-<h1 id="what-about-pseudoterminal:49ed33abd1f8adafccaa91748bb495b5">What about Pseudoterminal</h1>
+<h1 id="what-about-pseudoterminal">What about Pseudoterminal</h1>
 
 <p>/dev/ptmx is the &ldquo;pseudo-terminal master multiplexer&rdquo;. from wikipedia<br />
 static struct tty_driver *ptm_driver;<br />
@@ -661,10 +663,11 @@ module_init(pty_init)-&gt;unix98_pty_init-&gt;<br />
 }</p>
 
 <ul>
-<li>How to use ptmx?<br /></li>
+<li>How to use ptmx?<br />
+<br /></li>
 </ul>
 
-<h1 id="tty-drivers:49ed33abd1f8adafccaa91748bb495b5">tty drivers</h1>
+<h1 id="tty-drivers">tty drivers</h1>
 
 <ul>
 <li>cat /proc/tty/drivers<br />
@@ -676,14 +679,15 @@ usbserial            /dev/ttyUSB   188 0-511 serial<br />
 serial               /dev/ttyS       4 64-95 serial<br />
 pty_slave            /dev/pts      136 0-1048575 pty:slave<br />
 pty_master           /dev/ptm      128 0-1048575 pty:master<br />
-unknown              /dev/tty        4 1-63 console<br /></li>
+unknown              /dev/tty        4 1-63 console<br />
+<br /></li>
 </ul>
 
-<h1 id="question:49ed33abd1f8adafccaa91748bb495b5">Question?</h1>
+<h1 id="question">Question?</h1>
 
 <p>what is /dev/vcs?</p>
 
-<h1 id="backup:49ed33abd1f8adafccaa91748bb495b5">Backup</h1>
+<h1 id="backup">Backup</h1>
 
 <p>./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &ldquo;/dev/vc/0&rdquo;) &lt; 0)<br />
 ./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &ldquo;vcs&rdquo;, &amp;vcs_fops))<br />

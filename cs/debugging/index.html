@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="540">
+<meta itemprop="wordCount" content="539">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -174,11 +174,11 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="reference:9df68a0e9ceffd0ef168c5e5e50c9f94">Reference</h1>
+<h1 id="reference">Reference</h1>
 
 <p>Reverse engineering</p>
 
-<h1 id="debugging-and-bug-types:9df68a0e9ceffd0ef168c5e5e50c9f94">Debugging and Bug types</h1>
+<h1 id="debugging-and-bug-types">Debugging and Bug types</h1>
 
 <p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
 The explaination type of a Bug is named Bug type, generally.<br />
@@ -192,14 +192,14 @@ NVD的Bug分类也采用类似的构建方式.<a href="https://nvd.nist.gov/cwe.
 
 <p>use after free</p>
 
-<h1 id="bugs-in-linux-kernel:9df68a0e9ceffd0ef168c5e5e50c9f94">Bugs in Linux kernel</h1>
+<h1 id="bugs-in-linux-kernel">Bugs in Linux kernel</h1>
 
 <p>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br />
 <a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a><br />
 <a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a><br />
 <a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic</p>
 
-<h1 id="general-debugging-steps:9df68a0e9ceffd0ef168c5e5e50c9f94">General debugging steps</h1>
+<h1 id="general-debugging-steps">General debugging steps</h1>
 
 <p>Debugging的逻辑过程是<a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>. 我们以此进行推导.<br />
 T: Theory 也就是我们的background, cs的知识技术, 出问题的程序与代码.<br />
@@ -219,7 +219,7 @@ E: ∅ -&gt; Bug type(可能经过是多种Bug types的过渡状态) -&gt; Expla
 observations -&gt; source code -&gt; mind logic<br />
 基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.</p>
 
-<h3 id="get-observations:9df68a0e9ceffd0ef168c5e5e50c9f94">Get observations</h3>
+<h3 id="get-observations">Get observations</h3>
 
 <p>首先我们要理清中间的各个流程, 以及相关的observations:</p>
 
@@ -238,7 +238,7 @@ LD_TRACE_LOADED_OBJECTS=1 git<br />
 ldd /usr/bin/git</p></li>
 
 <li><p>software running<br />
-&gt; #define debugme(fmt, args&hellip;) do{FILE *fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); \<br />
+&gt; #define debugme(fmt, args&hellip;) do{FILE *fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); <br />
 &gt; fprintf(fdebug,&ldquo;%s,%s,%d:&ldquo;fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)<br />
 lsof, ltrace, strace, bash -x, coredump</p>
 
@@ -259,14 +259,15 @@ print_tlb<br /></li>
 $(warning &hellip;)<br /></li>
 <li>有的类型的Bug会阻止我们收集observations<br />
 这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.<br />
-这时要扩大目标struct的大小, 把observations加进去.<br /></li>
+这时要扩大目标struct的大小, 把observations加进去.<br />
+<br /></li>
 </ul></li>
 
 <li><p>software imediately stop<br />
 Use atexit() register a stackdump or a wrapped print</p></li>
 </ul>
 
-<h1 id="inference:9df68a0e9ceffd0ef168c5e5e50c9f94">Inference</h1>
+<h1 id="inference">Inference</h1>
 
 <p>From observatons to source code/mind<br />
 追BUG实际上就是, 找关联度最高的.</p>
@@ -280,10 +281,17 @@ code reordering inlining Optimized-away variables Tailcall optimization<br /></l
 <li>oops<br />
 From ASM to c language<br />
 <a href="http://yarchive.net/comp/linux/oops_decoding.html">lkml-Linus-Al-Viro-oops-debug</a><br />
-<strong>asm</strong>(), 常量, loop codes format, char *, ip<br /></li>
+<strong>asm</strong>(), 常量, loop codes format, char *, ip<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br /></li>
 </ul>
 
-<h1 id="一些比较通用的调试工具:9df68a0e9ceffd0ef168c5e5e50c9f94">一些比较通用的调试工具</h1>
+<h1 id="一些比较通用的调试工具">一些比较通用的调试工具</h1>
 
 <ul>
 <li>gdb<br />
@@ -291,20 +299,22 @@ gdb vmlinux /proc/kcore<br />
 p jiffies_64<br />
 text_addr=/sys/module/char-read-write/sections/.text<br />
 add-symbol-file /home/nkhare/char-read-write.ko $text_addr<br />
-print &amp;((struct kmem_cache *)0)-&gt;offset<br /></li>
+print &amp;((struct kmem_cache *)0)-&gt;offset<br />
+<br /></li>
 </ul>
 
-<h1 id="anti-debugging:9df68a0e9ceffd0ef168c5e5e50c9f94">Anti-debugging</h1>
+<h1 id="anti-debugging">Anti-debugging</h1>
 
 <ul>
 <li>Syntax checking<br />
 gcc -Wall<br />
 bash -n<br /></li>
 <li>static code analysis<br />
-smatch<br /></li>
+smatch<br />
+<br /></li>
 </ul>
 
-<h1 id="bug-made-by-me:9df68a0e9ceffd0ef168c5e5e50c9f94">BUG made by me</h1>
+<h1 id="bug-made-by-me">BUG made by me</h1>
 
 <ul>
 <li>print_signal_info wrong pritk parameters position<br />
@@ -315,7 +325,7 @@ Watch compile warning info can be avoid of this bug.<br /></li>
 <li><p>spin_lock(sighand) invoke down_sem and cond_resched&hellip;<br />
 __send_signal()</p>
 
-<h1 id="examples:9df68a0e9ceffd0ef168c5e5e50c9f94">Examples</h1></li>
+<h1 id="examples">Examples</h1></li>
 
 <li><p>timer_list-&gt;function = NULL<br />
 我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.<br />

@@ -174,7 +174,7 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="rfc:90dde891494f7c922f22925d795590fb">RFC</h1>
+<h1 id="rfc">RFC</h1>
 
 <p><a href="http://tools.ietf.org/html/rfc7414">A Roadmap for Transmission Control Protocol (TCP) Specification Documents</a><br />
 <a href="https://tools.ietf.org/html/rfc1122">Requirements for Internet Hosts &ndash; Communication Layers</a><br />
@@ -182,7 +182,7 @@
 <a href="http://www.rfc-editor.org/errata_search.php?rfc=1122&amp;rec_status=15&amp;presentation=records">RFC Errata 一切都有改口的余地</a><br />
 793的errata建议阅读1122.</p>
 
-<h1 id="introduction:90dde891494f7c922f22925d795590fb">Introduction</h1>
+<h1 id="introduction">Introduction</h1>
 
 <p>本文主要关注tcp这一类的可靠的传输层协议.<br />
 在之前的推理过程中, 我们已经能够明白, tcp的核心性质, 远没有想象<br />
@@ -202,7 +202,7 @@ flow control, 流控, 保证对端可以良好稳定接收到报文.免得想双
 1. 很容易让人掉进去代码里面, 而忘了初衷.<br />
 2. 内核的实现有很多工程性的问题, 这和tcp本身是无关的.比如tcp seq回绕的问题.</p>
 
-<h1 id="大话tcp-头部:90dde891494f7c922f22925d795590fb">大话TCP 头部</h1>
+<h1 id="大话tcp-头部">大话TCP 头部</h1>
 
 <p>从上往下, 这也标志了重要性.<br />
 先是, 源目的端口, 属于multiplex.<br />
@@ -215,18 +215,18 @@ tcp flags涉及到了多个性质,主要是握手和拥塞<br />
 你看tcp真的不复杂, 我们只是没有遇到一个好的解读角度, tcp是有鼻子有眼<br />
 很生动的.</p>
 
-<h1 id="multiplexing:90dde891494f7c922f22925d795590fb">Multiplexing</h1>
+<h1 id="multiplexing">Multiplexing</h1>
 
 <p>Ports can provide multiple endpoints on a single node.<br />
 inet_hash_connect()</p>
 
-<h1 id="flow-control:90dde891494f7c922f22925d795590fb">Flow control</h1>
+<h1 id="flow-control">Flow control</h1>
 
-<h2 id="receive-windowsize:90dde891494f7c922f22925d795590fb">receive windowsize</h2>
+<h2 id="receive-windowsize">receive windowsize</h2>
 
 <p>暗含tcp的最大64KB.</p>
 
-<h2 id="sliding-window-protocol-滑动窗口协议:90dde891494f7c922f22925d795590fb">Sliding window protocol 滑动窗口协议</h2>
+<h2 id="sliding-window-protocol-滑动窗口协议">Sliding window protocol 滑动窗口协议</h2>
 
 <p>首先滑动窗口本身就是一个协议</p>
 
@@ -236,13 +236,13 @@ For every ack packet received, the window slides by one packet (logically) to tr
 如果发送了一个可用的发送空间 = receive windowsize - 那个报文大小, 新来报文更新串口.<br />
 接收端的窗口就是最后收到连续到不连续的位置.</p>
 
-<h1 id="detection-of-transmission-errors:90dde891494f7c922f22925d795590fb">Detection of transmission errors</h1>
+<h1 id="detection-of-transmission-errors">Detection of transmission errors</h1>
 
 <p>Error &ndash;  checksum, the transport protocol may check that the data is not corrupted</p>
 
-<h1 id="connection-oriented-communications:90dde891494f7c922f22925d795590fb">Connection-oriented communications</h1>
+<h1 id="connection-oriented-communications">Connection-oriented communications</h1>
 
-<h2 id="handshak:90dde891494f7c922f22925d795590fb">Handshak</h2>
+<h2 id="handshak">Handshak</h2>
 
 <ul>
 <li><p>kproxy reorder<br />
@@ -262,14 +262,14 @@ tcp_ack -&gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&gt; nginx<br
 nginx-&gt;GET -&gt;firoyang.org<br />
 firoyang.org-&gt;nginx-&gt;chrome</p>
 
-<h2 id="syn-flood:90dde891494f7c922f22925d795590fb">syn flood</h2>
+<h2 id="syn-flood">syn flood</h2>
 
 <p>首先syn 也有超时5次指数1 2 4 8 16 32(第五次超时), 如果client发了一个syn就没了,<br />
 会被黑客利用. 解决办法是tcp_syncookies, 在syn队列满了的时候, 构造一个特别isn,<br />
 丢掉syn entry, 等待ack,校验合法直接accpet.好像incomplete队列无限大一般.</p></li>
 </ul>
 
-<h2 id="深入理解seq-和ack:90dde891494f7c922f22925d795590fb">深入理解seq 和ack</h2>
+<h2 id="深入理解seq-和ack">深入理解seq 和ack</h2>
 
 <p><a href="http://serverfault.com/questions/593037/tcp-sequence-acknowledgment-numbers">TCP Sequence &amp; Acknowledgment numbers</a><br />
 这种问题就是咬住定义就完了.<br />
@@ -294,7 +294,7 @@ ACK最简单了, 整个tcp session只有一个segement没有ack number就是第�
     seq的计算只和实际的数据有关.<br />
     小心处理no data这种情况, 就OK了.</p>
 
-<h2 id="time-wait:90dde891494f7c922f22925d795590fb">Time wait</h2>
+<h2 id="time-wait">Time wait</h2>
 
 <p><a href="http://blog.csdn.net/dog250/article/details/13760985">TCP的TIME_WAIT快速回收与重用</a><br />
 双工, 被动关闭收到ack就%100圆满了.而clinet就不能确认被动关闭是否收到ack,<br />
@@ -351,14 +351,14 @@ tcp_time_wait<br />
 3.5倍的icsk_rto<br />
 在FIN_WAIT_2状态下没有接收到FIN包就进入TIME_WAIT的情况下，如果tcp_fin_timeout的值设置的太小，可能会导致TIME_WAIT套接字（子状态为FIN_WAIT_2）过早地被释放，这样对端发送的FIN（短暂地延迟或者本来就是正常的时间到达）到达时就没有办法处理，导致连接不正常关闭，所以tcp_fin_timeout参数的值并不是越小越好，通常设置为30S比较合适。</p>
 
-<h1 id="reliability:90dde891494f7c922f22925d795590fb">Reliability</h1>
+<h1 id="reliability">Reliability</h1>
 
-<h2 id="rtt:90dde891494f7c922f22925d795590fb">RTT</h2>
+<h2 id="rtt">RTT</h2>
 
 <p>计算发送和返回ack的时间差.<br />
 tcp_rtt_estimator()</p>
 
-<h2 id="arq:90dde891494f7c922f22925d795590fb">ARQ</h2>
+<h2 id="arq">ARQ</h2>
 
 <p>ack and timeout<br />
 Sliding window protocol is based on automatic repeat request/ARQ<br />
@@ -369,7 +369,7 @@ My conclusion: in practice TCP is a mixture between both GBN and SR.</p></li>
 <li><p>Selective repeat</p></li>
 </ul>
 
-<h1 id="congestion-control:90dde891494f7c922f22925d795590fb">Congestion control</h1>
+<h1 id="congestion-control">Congestion control</h1>
 
 <p>icsk_ca_ops;<br />
 tcp_ack {<br />
@@ -416,7 +416,7 @@ ss就是slow start的缩写, 我没有验证过这个值.<br />
 这个paper将的比较好.<br />
 下面说tcp的优化.</p>
 
-<h2 id="fast-retrans:90dde891494f7c922f22925d795590fb">Fast retrans</h2>
+<h2 id="fast-retrans">Fast retrans</h2>
 
 <p>这个解决丢包timeout太慢的问题.<br />
 tcp认为收到3个重复确认相同ack序号的报文, 就认为有报文丢了, 我要重传了.<br />
@@ -429,7 +429,7 @@ tcp认为收到3个重复确认相同ack序号的报文, 就认为有报文丢�
 而且目标是让状态机维持在拥塞避免这个状态附近.<br />
 就到这里了.</p>
 
-<h2 id="sack-and-dsack:90dde891494f7c922f22925d795590fb">SACK and DSACK</h2>
+<h2 id="sack-and-dsack">SACK and DSACK</h2>
 
 <p>看cool shell就够了, 其实很好理解.</p>
 
@@ -442,27 +442,27 @@ listen: synack<br />
 estblished: keepalive<br />
 timewait:</p>
 
-<h1 id="optimization:90dde891494f7c922f22925d795590fb">optimization</h1>
+<h1 id="optimization">optimization</h1>
 
-<h2 id="nagle:90dde891494f7c922f22925d795590fb">Nagle</h2>
+<h2 id="nagle">Nagle</h2>
 
 <p>Nagle算法并没有阻止发送小包，它只是阻止了发送大量的小包！<br />
 Nagle算法的初衷：避免发送大量的小包，防止小包泛滥于网络，理想情况下，<br />
 对于一个TCP连接而言，网络上每次只能一个小包存在。它更多的是端到端意义上的优化。<br />
 正是交互式应用引入了大量的小包，Nagle算法所作用的正是交互式应用！</p>
 
-<h2 id="cork:90dde891494f7c922f22925d795590fb">Cork</h2>
+<h2 id="cork">Cork</h2>
 
 <p>CORK算法的初衷：提高网络利用率，理想情况下，完全避免发送小包，仅仅发送满包以及不得不发的小包。<br />
 CORK的真正初衷是提高载荷率，提高网络利用率</p>
 
-<h2 id="tso:90dde891494f7c922f22925d795590fb">TSO</h2>
+<h2 id="tso">TSO</h2>
 
 <p>搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文,<br />
 当然skb-&gt;len得大于mss_now才有意义.<br />
 tcp_set_skb_tso_segs</p>
 
-<h2 id="fixme:90dde891494f7c922f22925d795590fb">FIXME</h2>
+<h2 id="fixme">FIXME</h2>
 
 <ul>
 <li>Create TCP options<br />
