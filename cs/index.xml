@@ -1136,51 +1136,89 @@ process要用到这些quantaties 如何分给他们, 分多少?&lt;br /&gt;
 
 &lt;p&gt;cache: in order to improve performace, cache tries to reduce the access time of transfer of future.&lt;br /&gt;
 buffer: What does buffer do? temporary(Not future) place for data,reducing access time of transfer and&lt;br /&gt;
-maybe effiency of quantaties/times of transfer. 是确定的行为, 不同与cache的统计学原理.&lt;/p&gt;
+maybe effiency of quantaties/times of transfer. 是确定的行为, 不同与cache的统计学原理.&lt;br /&gt;
+time-sharing: multi-task from batch processing&lt;br /&gt;
+prallel process: increas quantanties of process.&lt;/p&gt;
 
-&lt;h1 id=&#34;architecture-of-cs&#34;&gt;architecture of cs&lt;/h1&gt;
-
-&lt;p&gt;Algorithm, TOC, Design Pattern, SICP, Logic, Mathematics&lt;br /&gt;
-Programming: language, coding style&lt;br /&gt;
-Compile, link, and load or interpret:&lt;br /&gt;
-OS&lt;br /&gt;
-Arch&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Top method&lt;br /&gt;
-Abstruction&lt;br /&gt;
-Combination&lt;br /&gt;
-Virtualization&lt;br /&gt;
-Exchange time and space&lt;br /&gt;
-Isolation/Modular&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Top goal&lt;br /&gt;
+&lt;p&gt;现在我们以新的视角看待os演化过程， 即以process/change， quantaties/state， relation/order这些natural origin为wilds，&lt;br /&gt;
+辅以will意志的origin:&lt;br /&gt;
+performance/efficiency&lt;br /&gt;
 Easy to use&lt;br /&gt;
-Efficiency&lt;br /&gt;
-Protection&lt;br /&gt;
+Security/Protection/isolation&lt;br /&gt;
 Reliability&lt;br /&gt;
-Security&lt;br /&gt;
-Energy-efficiency&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+Energy-efficiency&lt;/p&gt;
 
-&lt;h1 id=&#34;programming-1&#34;&gt;Programming&lt;/h1&gt;
-
-&lt;p&gt;Programming langueage: c, python, shell&lt;br /&gt;
-Programming tools: vim&lt;br /&gt;
-Compile Link: ELF&lt;br /&gt;
-Testing&lt;br /&gt;
-Debuging&lt;br /&gt;
-Interface&lt;/p&gt;
-
-&lt;h1 id=&#34;os-1&#34;&gt;OS&lt;/h1&gt;
-
-&lt;p&gt;Batch processing -&amp;gt; Time-sharing&lt;br /&gt;
-Overlaying&lt;br /&gt;
-* vm&lt;br /&gt;
-There are some great historical papers and books we should read before fully understanding virtual memory.&lt;br /&gt;
+&lt;p&gt;我们回头再看mm， vm的提出是为了解决。easy to use。&lt;br /&gt;
+1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。&lt;br /&gt;
+2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。&lt;br /&gt;
+Not useful links, you may not read them:&lt;br /&gt;
+&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://research.microsoft.com/en-us/um/people/gbell/CGB%20Files/Computer%20Structures%20Readings%20and%20Examples%201971.pdf&#34;&gt;Computer Structures: Readings and Examples &lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://research.microsoft.com/en-us/um/people/gbell/Computer_Structures_Principles_and_Examples/contents.html&#34;&gt;Computer Structures: Readings and Examples html version&lt;/a&gt;&lt;br /&gt;
-Chapter 10 One-level storage system is the first implemention of virtual memory mind.&lt;/p&gt;
+Chapter 10 One-level storage system is the first implemention of virtual memory mind.&lt;br /&gt;
+VM address space 和physical memory address space， 本质上都是符号集合。 形象点说， 就是数字的集合。&lt;br /&gt;
+32bit系统为例， 现在书上都是长条矩形标上0， 4GB， 容易让人产生狭隘的理解。 实际上， 所谓的0~4GB，只要你有这么多个标示，他们能被&lt;br /&gt;
+computation这个符号系统理解。就可以， 比如0用香蕉图片， 1用汽车图片， 等等。显然数字最简洁了。&lt;br /&gt;
+现在我们有了4GB的空间怎么用， 作为处理公共事务的kernel要占quantative states集合的一部分， ok。另外一部分给process。&lt;br /&gt;
+1. kernel 和 user之间分。Linux TASK_SIZE. VM split, 同时copy between kernel and userspace.&lt;br /&gt;
+2. 有了user VM space，开始布局memory layout。在load application时候。load_elf_binary&lt;br /&gt;
+layout内每块区域都是个VMA。VMA a memory region如何组织&lt;br /&gt;
+rb寻找可用的未分配的userspace VM地址空间.&lt;br /&gt;
+list, for what? proc/self/maps show_tid_map-&amp;gt;show_map_vma  and core dump fill_files_note.&lt;br /&gt;
+vm_pgoff, 文件内偏移不是VMA/Page内偏移, 0代表从文件开始处开始映射.&lt;br /&gt;
+VMA in PAGE_SIZE unit&lt;br /&gt;
+3. 现在vm space 已经划分出去了. 还没有和physical memory 还有disk 关联上。Demand paging,见page fault, filemap_fault.&lt;br /&gt;
+4. 通过Demand paging 和page建立联系了. VM spaces/VMA, page, disk的关系, 何去何从?&lt;br /&gt;
+我们得沿着自己的思路去思考. physial-pages-of-file/page-cache-entity/address_space.&lt;br /&gt;
+首先一个file的pages的集合.address_space.page_tree + pagevec_lru 也就是 Page cache add_to_page_cache_lru.&lt;br /&gt;
+page cache这个结构非常有意思. 众多的address_spaces 构成了分布式page_tree, 同时zone lruvec控制这个分布式page_trees里&lt;br /&gt;
+那些page该evict.&lt;br /&gt;
+我们先在总结下, load application到kernel, 建立各种VMA. access VMA出发demand paging.加入page cache可以正常用了.&lt;br /&gt;
+根本不需要reverse mapping.&lt;br /&gt;
+5. 如果page得到更新, pte也需要更新.比如page被evicted. pte必须invalid.&lt;br /&gt;
+rerverse mapping建立都在__do_fault&lt;br /&gt;
+For anon, check do_anonymous_page&lt;/p&gt;
+
+&lt;p&gt;现在放眼在Physical memory.&lt;br /&gt;
+performance: &lt;a href=&#34;https://lwn.net/Articles/254445/&#34;&gt;NUMA&lt;/a&gt;&lt;br /&gt;
+PM自身符号集合管理.&lt;/p&gt;
+
+&lt;p&gt;pg_data_t zone page&lt;br /&gt;
+关于pte.pte尾端bit被复用, phys_pud_init prot.&lt;/p&gt;
+
+&lt;h1 id=&#34;onset&#34;&gt;onset:&lt;/h1&gt;
+
+&lt;p&gt;先从bios 拿信息 main -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
+之后real -&amp;gt; protected -&amp;gt; long mode&lt;br /&gt;
+启动 protected? mode. &lt;a href=&#34;http://www.delorie.com/djgpp/doc/ug/basics/protected.html&#34;&gt;What does protected mode mean&lt;/a&gt;&lt;br /&gt;
+setup_arch&lt;br /&gt;
+setup_memory_map -&amp;gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&amp;rsquo;s all.&lt;br /&gt;
+max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: [mem 0x0000000100000000-0x00000003227fffff] usable and   last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
+mtrr update max_pfn, see &lt;a href=&#34;https://en.wikipedia.org/wiki/Processor_supplementary_capability&#34;&gt;Processor supplementary capability&lt;/a&gt;&lt;br /&gt;
+trim_low_memory_range // reserve 64k&lt;br /&gt;
+max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block&lt;br /&gt;
+memblock_x86_fill// e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
+early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&gt;
+init_mem_mapping //set page table and cr3.&lt;br /&gt;
+initmem_init ; NUMA init&lt;br /&gt;
+x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
+mm_init&lt;br /&gt;
+memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
+bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;br /&gt;
+a little history e820_register_active_region replaced by lmb &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by&lt;/a&gt; memblock&lt;br /&gt;
+reserve_initrd ; // RAMDISK&lt;br /&gt;
+为VM提供memory.&lt;br /&gt;
+1. Zone watermarks core_initcall(init_per_zone_wmark_min)&lt;/p&gt;
+
+&lt;p&gt;PM和VM的联系&lt;br /&gt;
+1. Page table&lt;/p&gt;
+
+&lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
+
+&lt;p&gt;Power button -&amp;gt; cpu reset -&amp;gt; BIOS -&amp;gt; hard drive -&amp;gt; Grub boot.S/MBR aa5a -&amp;gt; Grub diskboot.S -&amp;gt; &amp;hellip; -&amp;gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S&lt;br /&gt;
+Aligh register, Stack and BSS for C function to run. -&amp;gt; main-&amp;gt;startup_32-&amp;gt;startup_64-&amp;gt; __START_KERNEL_map-&amp;gt;&amp;hellip; start_kernel&lt;br /&gt;
+&lt;a href=&#34;https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130&#34;&gt;Kernel legacy boot sector&lt;/a&gt; start form 4d5a of arch/x86/boot/header.S&lt;br /&gt;
+is only used by something link &amp;lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&amp;rsquo;. It&amp;rsquo;s obsoleted that is what legacy means.&lt;/p&gt;
 
 &lt;h2 id=&#34;process-management&#34;&gt;Process management&lt;/h2&gt;
 
@@ -1332,13 +1370,24 @@ control sequence points&lt;/p&gt;&lt;/li&gt;
 &lt;h1 id=&#34;faq&#34;&gt;Faq&lt;/h1&gt;
 
 &lt;ul&gt;
+&lt;li&gt;early_reserve_initrd&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;How does gcc attribute((aligned)) work?&lt;br /&gt;
 struct S1 { short f; short f1; short f2;char a; char c;} &lt;strong&gt;attribute&lt;/strong&gt; ((aligned ));&lt;br /&gt;
 sizeof S1 = 16 in 64-bit&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;In what situation can unaligned accesss make a kernel panic?&lt;br /&gt;
 may be arch/mips/kernel/unaligned.c&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Is the address generated by compiler physical or virtual?&lt;br /&gt;
-Graphviz + CodeViz&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Is the address generated by compiler physical or virtual?&lt;br /&gt;
+Graphviz + CodeViz&lt;/p&gt;
+
+&lt;h1 id=&#34;architecture-of-cs&#34;&gt;architecture of cs&lt;/h1&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Top method&lt;br /&gt;
+Abstruction&lt;br /&gt;
+Combination&lt;br /&gt;
+Virtualization&lt;br /&gt;
+Exchange time and space&lt;br /&gt;
+Isolation/Modular&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -1350,6 +1399,89 @@ Graphviz + CodeViz&lt;br /&gt;&lt;/li&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/os/</guid>
       <description>
+
+&lt;h1 id=&#34;signal&#34;&gt;Signal&lt;/h1&gt;
+
+&lt;h1 id=&#34;fault-handler&#34;&gt;fault handler&lt;/h1&gt;
+
+&lt;p&gt;arch/powerpc/mm/fault.c&lt;br /&gt;
+deatils of trap is in bad_page_fault&lt;/p&gt;
+
+&lt;p&gt;sigbus&lt;br /&gt;
+__handle_mm_fault&lt;br /&gt;
+{&lt;br /&gt;
+    hugetlb_fault CONFIG_HUGETLB_PAGE&lt;br /&gt;
+    handle_pte_fault-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        do_linear_fault -&amp;gt; __do_fault&lt;br /&gt;
+        {&lt;br /&gt;
+            vma-&amp;gt;vm_ops-&amp;gt;fault(vma, &amp;amp;vmf);&lt;br /&gt;
+        }&lt;br /&gt;
+        do_anonymous_page&lt;br /&gt;
+        {&lt;br /&gt;
+            check_stack_guard_page&lt;br /&gt;
+        }&lt;br /&gt;
+        do_nonlinear_fault&lt;br /&gt;
+        do_swap_page&lt;br /&gt;
+        do_wp_page&lt;br /&gt;
+        {&lt;br /&gt;
+            vma-&amp;gt;vm_ops-&amp;gt;page_mkwrite(vma, &amp;amp;vmf); //??&lt;br /&gt;
+        }&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;process-and-thread&#34;&gt;Process and thread&lt;/h1&gt;
+
+&lt;h1 id=&#34;kernel-mapping&#34;&gt;Kernel mapping&lt;/h1&gt;
+
+&lt;p&gt;tgid_base_stuff show_map_vma&lt;/p&gt;
+
+&lt;h1 id=&#34;gdb-mapping&#34;&gt;GDB mapping&lt;/h1&gt;
+
+&lt;p&gt;t-&amp;gt;to_info_proc=procfs_info_proc&lt;br /&gt;
+linux_info_proc not used in core dump&lt;br /&gt;
+linux_core_info_proc_mappings this is correct&lt;/p&gt;
+
+&lt;p&gt;in kernel&lt;br /&gt;
+fill_files_note&lt;/p&gt;
+
+&lt;p&gt;_IO_new_fopen&lt;br /&gt;
+_IO_new_file_init&lt;br /&gt;
+libio/fileops.c _IO_file_open&lt;br /&gt;
+&amp;amp; _IO_file_jumps_maybe_mmap -&amp;gt; _IO_default_uflow -&amp;gt; _IO_file_underflow_maybe_mmap&lt;/p&gt;
+
+&lt;p&gt;libio/fileops.c: decide_maybe_mmap&lt;br /&gt;
+We use the file in read-only mode.  This could mean we can&lt;br /&gt;
+     mmap the file and use it without any copying.  But not all&lt;br /&gt;
+     file descriptors are for mmap-able objects and on 32-bit&lt;br /&gt;
+     machines we don&amp;rsquo;t want to map files which are too large since&lt;br /&gt;
+     this would require too much virtual memory.  */&lt;br /&gt;
+ __mmap64 (NULL, st.st_size, PROT_READ, MAP_SHARED, fp-&amp;gt;_fileno, 0);&lt;/p&gt;
+
+&lt;p&gt;_IO_file_jumps_maybe_mmap&lt;br /&gt;
+  JUMP_INIT_DUMMY,&lt;br /&gt;
+  JUMP_INIT(finish, _IO_file_finish),&lt;br /&gt;
+  JUMP_INIT(overflow, _IO_file_overflow),&lt;br /&gt;
+  JUMP_INIT(underflow, _IO_file_underflow_maybe_mmap),&lt;br /&gt;
+  JUMP_INIT(uflow, _IO_default_uflow),&lt;br /&gt;
+  JUMP_INIT(pbackfail, _IO_default_pbackfail),&lt;br /&gt;
+  JUMP_INIT(xsputn, _IO_new_file_xsputn),&lt;br /&gt;
+  JUMP_INIT(xsgetn, _IO_file_xsgetn_maybe_mmap),&lt;br /&gt;
+  JUMP_INIT(seekoff, _IO_file_seekoff_maybe_mmap),&lt;br /&gt;
+  JUMP_INIT(seekpos, _IO_default_seekpos),&lt;br /&gt;
+  JUMP_INIT(setbuf, (_IO_setbuf_t) _IO_file_setbuf_mmap),&lt;br /&gt;
+  JUMP_INIT(sync, _IO_new_file_sync),&lt;br /&gt;
+  JUMP_INIT(doallocate, _IO_file_doallocate),&lt;br /&gt;
+  JUMP_INIT(read, _IO_file_read),&lt;br /&gt;
+  JUMP_INIT(write, _IO_new_file_write),&lt;br /&gt;
+  JUMP_INIT(seek, _IO_file_seek),&lt;br /&gt;
+  JUMP_INIT(close, _IO_file_close),&lt;br /&gt;
+  JUMP_INIT(stat, _IO_file_stat),&lt;br /&gt;
+  JUMP_INIT(showmanyc, _IO_default_showmanyc),&lt;br /&gt;
+  JUMP_INIT(imbue, _IO_default_imbue)&lt;/p&gt;
+
+&lt;p&gt;_IO_file_jumps_mmap&lt;/p&gt;
+
+&lt;p&gt;_IO_file_jumps&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.yinwang.org/blog-cn/2016/03/31/no-longer-pl&#34;&gt;我为什么不再做PL人&lt;/a&gt;&lt;/p&gt;
 

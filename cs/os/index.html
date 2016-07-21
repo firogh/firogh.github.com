@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="219">
+<meta itemprop="wordCount" content="394">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/os/">
 
@@ -173,6 +173,89 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="signal">Signal</h1>
+
+<h1 id="fault-handler">fault handler</h1>
+
+<p>arch/powerpc/mm/fault.c<br />
+deatils of trap is in bad_page_fault</p>
+
+<p>sigbus<br />
+__handle_mm_fault<br />
+{<br />
+    hugetlb_fault CONFIG_HUGETLB_PAGE<br />
+    handle_pte_fault-&gt;<br />
+    {<br />
+        do_linear_fault -&gt; __do_fault<br />
+        {<br />
+            vma-&gt;vm_ops-&gt;fault(vma, &amp;vmf);<br />
+        }<br />
+        do_anonymous_page<br />
+        {<br />
+            check_stack_guard_page<br />
+        }<br />
+        do_nonlinear_fault<br />
+        do_swap_page<br />
+        do_wp_page<br />
+        {<br />
+            vma-&gt;vm_ops-&gt;page_mkwrite(vma, &amp;vmf); //??<br />
+        }<br />
+}</p>
+
+<h1 id="process-and-thread">Process and thread</h1>
+
+<h1 id="kernel-mapping">Kernel mapping</h1>
+
+<p>tgid_base_stuff show_map_vma</p>
+
+<h1 id="gdb-mapping">GDB mapping</h1>
+
+<p>t-&gt;to_info_proc=procfs_info_proc<br />
+linux_info_proc not used in core dump<br />
+linux_core_info_proc_mappings this is correct</p>
+
+<p>in kernel<br />
+fill_files_note</p>
+
+<p>_IO_new_fopen<br />
+_IO_new_file_init<br />
+libio/fileops.c _IO_file_open<br />
+&amp; _IO_file_jumps_maybe_mmap -&gt; _IO_default_uflow -&gt; _IO_file_underflow_maybe_mmap</p>
+
+<p>libio/fileops.c: decide_maybe_mmap<br />
+We use the file in read-only mode.  This could mean we can<br />
+     mmap the file and use it without any copying.  But not all<br />
+     file descriptors are for mmap-able objects and on 32-bit<br />
+     machines we don&rsquo;t want to map files which are too large since<br />
+     this would require too much virtual memory.  */<br />
+ __mmap64 (NULL, st.st_size, PROT_READ, MAP_SHARED, fp-&gt;_fileno, 0);</p>
+
+<p>_IO_file_jumps_maybe_mmap<br />
+  JUMP_INIT_DUMMY,<br />
+  JUMP_INIT(finish, _IO_file_finish),<br />
+  JUMP_INIT(overflow, _IO_file_overflow),<br />
+  JUMP_INIT(underflow, _IO_file_underflow_maybe_mmap),<br />
+  JUMP_INIT(uflow, _IO_default_uflow),<br />
+  JUMP_INIT(pbackfail, _IO_default_pbackfail),<br />
+  JUMP_INIT(xsputn, _IO_new_file_xsputn),<br />
+  JUMP_INIT(xsgetn, _IO_file_xsgetn_maybe_mmap),<br />
+  JUMP_INIT(seekoff, _IO_file_seekoff_maybe_mmap),<br />
+  JUMP_INIT(seekpos, _IO_default_seekpos),<br />
+  JUMP_INIT(setbuf, (_IO_setbuf_t) _IO_file_setbuf_mmap),<br />
+  JUMP_INIT(sync, _IO_new_file_sync),<br />
+  JUMP_INIT(doallocate, _IO_file_doallocate),<br />
+  JUMP_INIT(read, _IO_file_read),<br />
+  JUMP_INIT(write, _IO_new_file_write),<br />
+  JUMP_INIT(seek, _IO_file_seek),<br />
+  JUMP_INIT(close, _IO_file_close),<br />
+  JUMP_INIT(stat, _IO_file_stat),<br />
+  JUMP_INIT(showmanyc, _IO_default_showmanyc),<br />
+  JUMP_INIT(imbue, _IO_default_imbue)</p>
+
+<p>_IO_file_jumps_mmap</p>
+
+<p>_IO_file_jumps</p>
 
 <p><a href="http://www.yinwang.org/blog-cn/2016/03/31/no-longer-pl">我为什么不再做PL人</a></p>
 

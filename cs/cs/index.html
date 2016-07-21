@@ -165,7 +165,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="2772">
+<meta itemprop="wordCount" content="3116">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/cs/">
 
@@ -699,51 +699,89 @@ process要用到这些quantaties 如何分给他们, 分多少?<br />
 
 <p>cache: in order to improve performace, cache tries to reduce the access time of transfer of future.<br />
 buffer: What does buffer do? temporary(Not future) place for data,reducing access time of transfer and<br />
-maybe effiency of quantaties/times of transfer. 是确定的行为, 不同与cache的统计学原理.</p>
+maybe effiency of quantaties/times of transfer. 是确定的行为, 不同与cache的统计学原理.<br />
+time-sharing: multi-task from batch processing<br />
+prallel process: increas quantanties of process.</p>
 
-<h1 id="architecture-of-cs">architecture of cs</h1>
-
-<p>Algorithm, TOC, Design Pattern, SICP, Logic, Mathematics<br />
-Programming: language, coding style<br />
-Compile, link, and load or interpret:<br />
-OS<br />
-Arch</p>
-
-<ul>
-<li><p>Top method<br />
-Abstruction<br />
-Combination<br />
-Virtualization<br />
-Exchange time and space<br />
-Isolation/Modular</p></li>
-
-<li><p>Top goal<br />
+<p>现在我们以新的视角看待os演化过程， 即以process/change， quantaties/state， relation/order这些natural origin为wilds，<br />
+辅以will意志的origin:<br />
+performance/efficiency<br />
 Easy to use<br />
-Efficiency<br />
-Protection<br />
+Security/Protection/isolation<br />
 Reliability<br />
-Security<br />
-Energy-efficiency</p></li>
-</ul>
+Energy-efficiency</p>
 
-<h1 id="programming-1">Programming</h1>
-
-<p>Programming langueage: c, python, shell<br />
-Programming tools: vim<br />
-Compile Link: ELF<br />
-Testing<br />
-Debuging<br />
-Interface</p>
-
-<h1 id="os-1">OS</h1>
-
-<p>Batch processing -&gt; Time-sharing<br />
-Overlaying<br />
-* vm<br />
-There are some great historical papers and books we should read before fully understanding virtual memory.<br />
+<p>我们回头再看mm， vm的提出是为了解决。easy to use。<br />
+1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。<br />
+2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。<br />
+Not useful links, you may not read them:<br />
+<a href="http://denninginstitute.com/pjd/PUBS/bvm.pdf">BEFORE MEMORY WAS VIRTUAL</a><br />
 <a href="http://research.microsoft.com/en-us/um/people/gbell/CGB%20Files/Computer%20Structures%20Readings%20and%20Examples%201971.pdf">Computer Structures: Readings and Examples </a><br />
 <a href="http://research.microsoft.com/en-us/um/people/gbell/Computer_Structures_Principles_and_Examples/contents.html">Computer Structures: Readings and Examples html version</a><br />
-Chapter 10 One-level storage system is the first implemention of virtual memory mind.</p>
+Chapter 10 One-level storage system is the first implemention of virtual memory mind.<br />
+VM address space 和physical memory address space， 本质上都是符号集合。 形象点说， 就是数字的集合。<br />
+32bit系统为例， 现在书上都是长条矩形标上0， 4GB， 容易让人产生狭隘的理解。 实际上， 所谓的0~4GB，只要你有这么多个标示，他们能被<br />
+computation这个符号系统理解。就可以， 比如0用香蕉图片， 1用汽车图片， 等等。显然数字最简洁了。<br />
+现在我们有了4GB的空间怎么用， 作为处理公共事务的kernel要占quantative states集合的一部分， ok。另外一部分给process。<br />
+1. kernel 和 user之间分。Linux TASK_SIZE. VM split, 同时copy between kernel and userspace.<br />
+2. 有了user VM space，开始布局memory layout。在load application时候。load_elf_binary<br />
+layout内每块区域都是个VMA。VMA a memory region如何组织<br />
+rb寻找可用的未分配的userspace VM地址空间.<br />
+list, for what? proc/self/maps show_tid_map-&gt;show_map_vma  and core dump fill_files_note.<br />
+vm_pgoff, 文件内偏移不是VMA/Page内偏移, 0代表从文件开始处开始映射.<br />
+VMA in PAGE_SIZE unit<br />
+3. 现在vm space 已经划分出去了. 还没有和physical memory 还有disk 关联上。Demand paging,见page fault, filemap_fault.<br />
+4. 通过Demand paging 和page建立联系了. VM spaces/VMA, page, disk的关系, 何去何从?<br />
+我们得沿着自己的思路去思考. physial-pages-of-file/page-cache-entity/address_space.<br />
+首先一个file的pages的集合.address_space.page_tree + pagevec_lru 也就是 Page cache add_to_page_cache_lru.<br />
+page cache这个结构非常有意思. 众多的address_spaces 构成了分布式page_tree, 同时zone lruvec控制这个分布式page_trees里<br />
+那些page该evict.<br />
+我们先在总结下, load application到kernel, 建立各种VMA. access VMA出发demand paging.加入page cache可以正常用了.<br />
+根本不需要reverse mapping.<br />
+5. 如果page得到更新, pte也需要更新.比如page被evicted. pte必须invalid.<br />
+rerverse mapping建立都在__do_fault<br />
+For anon, check do_anonymous_page</p>
+
+<p>现在放眼在Physical memory.<br />
+performance: <a href="https://lwn.net/Articles/254445/">NUMA</a><br />
+PM自身符号集合管理.</p>
+
+<p>pg_data_t zone page<br />
+关于pte.pte尾端bit被复用, phys_pud_init prot.</p>
+
+<h1 id="onset">onset:</h1>
+
+<p>先从bios 拿信息 main -&gt; detect_memory save in boot_params.e820_map<br />
+之后real -&gt; protected -&gt; long mode<br />
+启动 protected? mode. <a href="http://www.delorie.com/djgpp/doc/ug/basics/protected.html">What does protected mode mean</a><br />
+setup_arch<br />
+setup_memory_map -&gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&rsquo;s all.<br />
+max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: [mem 0x0000000100000000-0x00000003227fffff] usable and   last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &lt;.<br />
+mtrr update max_pfn, see <a href="https://en.wikipedia.org/wiki/Processor_supplementary_capability">Processor supplementary capability</a><br />
+trim_low_memory_range // reserve 64k<br />
+max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block<br />
+memblock_x86_fill// e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET<br />
+early_trap_pf_init //  X86_TRAP_PF, page_fault) =&gt; do_page_fault<br />
+init_mem_mapping //set page table and cr3.<br />
+initmem_init ; NUMA init<br />
+x86_init.paging.pagetable_init();= paging_init //x86_64 -&gt;zone_sizes_init-&gt;&hellip;free_area_init_core<br />
+mm_init<br />
+memblock the <a href="https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html">implementations</a> of memblock is quite simple. static initialization with variable memblock.<br />
+bootmem is discarded by <a href="https://lkml.org/lkml/2015/12/21/333">ARM</a> and x86<br />
+a little history e820_register_active_region replaced by lmb <a href="https://lkml.org/lkml/2010/7/13/68">replaced by</a> memblock<br />
+reserve_initrd ; // RAMDISK<br />
+为VM提供memory.<br />
+1. Zone watermarks core_initcall(init_per_zone_wmark_min)</p>
+
+<p>PM和VM的联系<br />
+1. Page table</p>
+
+<h1 id="boot-and-init">Boot and init</h1>
+
+<p>Power button -&gt; cpu reset -&gt; BIOS -&gt; hard drive -&gt; Grub boot.S/MBR aa5a -&gt; Grub diskboot.S -&gt; &hellip; -&gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S<br />
+Aligh register, Stack and BSS for C function to run. -&gt; main-&gt;startup_32-&gt;startup_64-&gt; __START_KERNEL_map-&gt;&hellip; start_kernel<br />
+<a href="https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130">Kernel legacy boot sector</a> start form 4d5a of arch/x86/boot/header.S<br />
+is only used by something link &lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&rsquo;. It&rsquo;s obsoleted that is what legacy means.</p>
 
 <h2 id="process-management">Process management</h2>
 
@@ -895,13 +933,24 @@ control sequence points</p></li>
 <h1 id="faq">Faq</h1>
 
 <ul>
+<li>early_reserve_initrd<br /></li>
 <li>How does gcc attribute((aligned)) work?<br />
 struct S1 { short f; short f1; short f2;char a; char c;} <strong>attribute</strong> ((aligned ));<br />
 sizeof S1 = 16 in 64-bit<br /></li>
 <li>In what situation can unaligned accesss make a kernel panic?<br />
 may be arch/mips/kernel/unaligned.c<br /></li>
-<li>Is the address generated by compiler physical or virtual?<br />
-Graphviz + CodeViz<br /></li>
+
+<li><p>Is the address generated by compiler physical or virtual?<br />
+Graphviz + CodeViz</p>
+
+<h1 id="architecture-of-cs">architecture of cs</h1></li>
+
+<li><p>Top method<br />
+Abstruction<br />
+Combination<br />
+Virtualization<br />
+Exchange time and space<br />
+Isolation/Modular</p></li>
 </ul>
 
 		</article>
