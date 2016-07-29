@@ -1148,6 +1148,8 @@ Security/Protection/isolation&lt;br /&gt;
 Reliability&lt;br /&gt;
 Energy-efficiency&lt;/p&gt;
 
+&lt;h1 id=&#34;memory-vm&#34;&gt;Memory VM&lt;/h1&gt;
+
 &lt;p&gt;我们回头再看mm， vm的提出是为了解决。easy to use。&lt;br /&gt;
 1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。&lt;br /&gt;
 2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。&lt;br /&gt;
@@ -1186,18 +1188,18 @@ PM自身符号集合管理.&lt;/p&gt;
 &lt;p&gt;pg_data_t zone page&lt;br /&gt;
 关于pte.pte尾端bit被复用, phys_pud_init prot.&lt;/p&gt;
 
-&lt;h1 id=&#34;onset&#34;&gt;onset:&lt;/h1&gt;
+&lt;h1 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h1&gt;
 
 &lt;p&gt;先从bios 拿信息 main -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
 之后real -&amp;gt; protected -&amp;gt; long mode&lt;br /&gt;
 启动 protected? mode. &lt;a href=&#34;http://www.delorie.com/djgpp/doc/ug/basics/protected.html&#34;&gt;What does protected mode mean&lt;/a&gt;&lt;br /&gt;
 setup_arch&lt;br /&gt;
 setup_memory_map -&amp;gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&amp;rsquo;s all.&lt;br /&gt;
-max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: [mem 0x0000000100000000-0x00000003227fffff] usable and   last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
+max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
 mtrr update max_pfn, see &lt;a href=&#34;https://en.wikipedia.org/wiki/Processor_supplementary_capability&#34;&gt;Processor supplementary capability&lt;/a&gt;&lt;br /&gt;
 trim_low_memory_range // reserve 64k&lt;br /&gt;
 max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block&lt;br /&gt;
-memblock_x86_fill// e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
+memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
 early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&gt;
 init_mem_mapping //set page table and cr3.&lt;br /&gt;
 initmem_init ; NUMA init&lt;br /&gt;
@@ -1207,11 +1209,98 @@ memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/l
 bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;br /&gt;
 a little history e820_register_active_region replaced by lmb &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by&lt;/a&gt; memblock&lt;br /&gt;
 reserve_initrd ; // RAMDISK&lt;br /&gt;
-为VM提供memory.&lt;br /&gt;
-1. Zone watermarks core_initcall(init_per_zone_wmark_min)&lt;/p&gt;
+总结下, 内存初始化需要的基础.&lt;br /&gt;
+1. e820 get memory region.&lt;br /&gt;
+2. set PF trap do_page_fault.&lt;br /&gt;
+3. set page table and cr3.&lt;br /&gt;
+这就完了. 之后开始开始加工.&lt;br /&gt;
+arch 相关的x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
+sparse_init&lt;br /&gt;
+{&lt;br /&gt;
+    memblock_virt_alloc // sizeof(struct page *) * NR_MEM_SECTIONS;NR_MEM_SECTIONS = 1 &amp;lt;&amp;lt; 19, Is it big?&lt;br /&gt;
+    // alloc memory region will be marked in memory_reserved.&lt;br /&gt;
+}&lt;br /&gt;
+zone_sizes_init.&lt;br /&gt;
+{&lt;br /&gt;
+    calculate_node_totalpages // 每个zone的page数.&lt;br /&gt;
+    free_area_init_node-&amp;gt; alloc_node_mem_map // alloc mem_map for FLAT&lt;br /&gt;
+    free_area_init_core&lt;br /&gt;
+    {&lt;br /&gt;
+        calc_memmap_size // 1/4k of spanned or present used for memmap. heuristic?&lt;br /&gt;
+        zone_pcp_init // init percpu pageset with boot_pageset&lt;br /&gt;
+        set_pageblock_migratetype(page, MIGRATE_MOVABLE);// 512 per zone&lt;br /&gt;
+        memmap_init_zone-&amp;gt; __init_single_page // init every page in a zone.&lt;br /&gt;
+    }&lt;br /&gt;
+}&lt;br /&gt;
+arch independent,&lt;br /&gt;
+build_all_zonelists&lt;br /&gt;
+page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug&lt;br /&gt;
+mm_init&lt;br /&gt;
+Zone watermarks core_initcall(init_per_zone_wmark_min)&lt;br /&gt;
+基本上内存初始化,就到这里了.&lt;/p&gt;
 
-&lt;p&gt;PM和VM的联系&lt;br /&gt;
-1. Page table&lt;/p&gt;
+&lt;h1 id=&#34;memory-pagge-cache-and-buffer-cache&#34;&gt;Memory pagge cache and buffer cache.&lt;/h1&gt;
+
+&lt;p&gt;page cache for memory, buffer cache for fs(block size is dependent on filesystem).&lt;br /&gt;
+address_pace-&amp;gt;page_tree: why radix tree, read ahead,&lt;br /&gt;
+do_page_fault-&amp;gt;read_page&lt;/p&gt;
+
+&lt;p&gt;For buffer cache: buffer cache is only a wrapper of page for fs operations.&lt;br /&gt;
+buffer_head is temporary data released in a deeper function than the function allocing the buffer_head.&lt;br /&gt;
+__block_write_full_page&lt;br /&gt;
+block_read_full_page&lt;/p&gt;
+
+&lt;p&gt;I can not cover every corner of kernel, so If need, I will learn it.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Writeback&#34;&gt;The coherency problem, fs-writeback&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/326552/&#34;&gt;Flushing out pdflush&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Swapping&#34;&gt;Swapping&lt;/a&gt;&lt;br /&gt;
+User space process: anonymous mapping(stack,heap,mmap), IPC-share memory(anonymous?), private mapping&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Shrinkers&#34;&gt;Shrink cache&lt;/a&gt;&lt;br /&gt;
+LRU cache&lt;/p&gt;
+
+&lt;h1 id=&#34;processes-of-os&#34;&gt;processes of os&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
+But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
+Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;
+.data&lt;br /&gt;
+    .quad msg&lt;/p&gt;
+
+&lt;p&gt;msg:&lt;br /&gt;
+    .ascii &amp;ldquo;Hello, world!\n&amp;rdquo;&lt;br /&gt;
+    len = . - msg&lt;br /&gt;
+saved_idt:&lt;br /&gt;
+        .long 0,0&lt;/p&gt;
+
+&lt;p&gt;.text&lt;br /&gt;
+    .global _start&lt;/p&gt;
+
+&lt;p&gt;_start:&lt;br /&gt;
+    movl  $4, %eax&lt;br /&gt;
+    movl  $1, %ebx&lt;br /&gt;
+    movl  $msg, %ecx&lt;br /&gt;
+    sidt  saved_idt&lt;br /&gt;
+    lidt  saved_idt  ;===============&amp;gt; crashed at here&lt;br /&gt;
+    movl  $len, %edx&lt;br /&gt;
+    int   $0x80&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;movl  $1, %eax
+xorl  %ebx, %ebx 
+int   $0x80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, we need to know the basic elements of process.&lt;br /&gt;
+Privilege level. ring 0 ~ 3.&lt;br /&gt;
+v1 6.4 and v3a 6 for interrupt and exceptions.&lt;br /&gt;
+priority&lt;br /&gt;
+status&lt;br /&gt;
+PCB&lt;br /&gt;
+Process create.&lt;br /&gt;
+schedule&lt;/p&gt;
 
 &lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
 
@@ -2234,6 +2323,296 @@ find . -name ‘your_pattern*’ -delete&lt;/p&gt;
 find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo &amp;ldquo;$cnt $d&amp;rdquo;; done | sort -n &amp;gt;stat&lt;br /&gt;
 #AWK&lt;br /&gt;
 netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The computational process</title>
+      <link>http://firoyang.org/cs/process/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/process/</guid>
+      <description>
+
+&lt;h1 id=&#34;the-computational-process&#34;&gt;The computational process&lt;/h1&gt;
+
+&lt;p&gt;order -&amp;gt; synchronization: order temporal spatial&lt;br /&gt;
+security -&amp;gt; privilege level: spatial, user space process and kernel process, trap, interrupt.&lt;br /&gt;
+real time -&amp;gt; execution time:long-live&lt;br /&gt;
+performance(real time) -&amp;gt; priority: order time, interrupt, trap, high priority process&lt;br /&gt;
+efficiency -&amp;gt; schedule out io-waiting&lt;br /&gt;
+fairness&lt;/p&gt;
+
+&lt;p&gt;schedule and interrupt is the same thing.&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-preempt&#34;&gt;kernel preempt&lt;/h1&gt;
+
+&lt;p&gt;arch/x86/kernel/entry_64.S&lt;br /&gt;
+preempt_schedule_irq&lt;br /&gt;
+retint_kernel&lt;/p&gt;
+
+&lt;p&gt;entity_key&lt;/p&gt;
+
+&lt;h1 id=&#34;priority-and-nice&#34;&gt;priority and nice&lt;/h1&gt;
+
+&lt;p&gt;In according to  do_task_stat, we know priority = task_prio(task); nice = task_nice(task);&lt;br /&gt;
+p-&amp;gt;prio - MAX_RT_PRIO; = -2,  MAX_RT_PRIO = 100;so p-&amp;gt;prio = 98;&lt;br /&gt;
+PRIO_TO_NICE(prio)&lt;br /&gt;
+(p)-&amp;gt;static_prio - MAX_RT_PRIO - 20 = 0; So p-&amp;gt;static_prio = 120;&lt;br /&gt;
+NICE_TO_PRIO(nice)      (MAX_RT_PRIO + (nice) + 20)&lt;br /&gt;
+Convert user-nice values [ -20 &amp;hellip; 0 &amp;hellip; 19 ] to static priority [ MAX_RT_PRIO..MAX_PRIO-1 ] 100..139, and back.&lt;br /&gt;
+MAX_PRIO                (MAX_RT_PRIO + 40) // 140&lt;br /&gt;
+DEFAULT_PRIO            (MAX_RT_PRIO + 20) // 120&lt;/p&gt;
+
+&lt;p&gt;#define LOCAL_TIMER_VECTOR      0xef&lt;br /&gt;
+/arch/x86/kernel/irqinit_64.c:215:  alloc_intr_gate(LOCAL_TIMER_VECTOR, apic_timer_interrupt);&lt;br /&gt;
+apic_timer_interrupt&lt;br /&gt;
+smp_apic_timer_interrupt&lt;br /&gt;
+local_apic_timer_interrupt&lt;br /&gt;
+tick_handle_periodic&lt;br /&gt;
+tick_periodic-&amp;gt;&lt;br /&gt;
+scheduler_tick -&amp;gt;&lt;br /&gt;
+.task_tick              = task_tick_fair,&lt;br /&gt;
+tick_periodic -&amp;gt;.task_tick              = task_tick_fair,&lt;/p&gt;
+
+&lt;h1 id=&#34;protection-ring&#34;&gt;Protection ring&lt;/h1&gt;
+
+&lt;h2 id=&#34;kernel-mode&#34;&gt;Kernel mode:&lt;/h2&gt;
+
+&lt;h2 id=&#34;user-mode&#34;&gt;User mode&lt;/h2&gt;
+
+&lt;p&gt;限制访问地址空间, 内核数据结构, I/O 指令, 中断代码等.&lt;/p&gt;
+
+&lt;h2 id=&#34;mode-switch&#34;&gt;Mode switch&lt;/h2&gt;
+
+&lt;p&gt;esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。&lt;br /&gt;
+读TSS段中进程的内核态指针付给ss和esp。&lt;br /&gt;
+把用户态SS和esp指针保存在进程的内核栈上，&lt;br /&gt;
+从内核态返回时，弹出进程内核栈上用户态ss和esp值。&lt;br /&gt;
+那么TSS段中进程的内核态指针是从哪里来的呢？&lt;/p&gt;
+
+&lt;p&gt;cpu -&amp;gt; tr -&amp;gt; tss -&amp;gt; esp0 =&amp;gt; 内核栈-&amp;gt;保存用户态cs eip esp等.&lt;br /&gt;
+Hardware context switch.&lt;br /&gt;
+pt_regs&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-stack&#34;&gt;kernel stack&lt;/h2&gt;
+
+&lt;p&gt;从system_call中, 我们可以发现:&lt;br /&gt;
+GET_THREAD_INFO(%ebp)&lt;/p&gt;
+
+&lt;p&gt;master idle进程的kernel stack在init/init_task.c:init_thread_union&lt;br /&gt;
+其他进程的kernel stack是fork产生.&lt;br /&gt;
+this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;br /&gt;
+this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;/p&gt;
+
+&lt;h1 id=&#34;schedule-cfs&#34;&gt;Schedule cfs&lt;/h1&gt;
+
+&lt;p&gt;sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &amp;gt; 5）&lt;br /&gt;
+sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &amp;lt;= 5）&lt;br /&gt;
+sysctl_sched_min_granularity = 4ms&lt;br /&gt;
+ideal_time = sum_runtime * se.weight/cfs_rq.weight&lt;br /&gt;
+vruntime +=  delta * NICE_0_LOAD/ se.weight;(if curr.nice!=NICE_0_LOAD)&lt;/p&gt;
+
+&lt;h1 id=&#34;idle&#34;&gt;Idle&lt;/h1&gt;
+
+&lt;p&gt;主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0&lt;br /&gt;
+init_idle.&lt;/p&gt;
+
+&lt;h1 id=&#34;porcess-context&#34;&gt;Porcess context&lt;/h1&gt;
+
+&lt;h2 id=&#34;userspace-context&#34;&gt;Userspace context&lt;/h2&gt;
+
+&lt;p&gt;.txt, .data, .bss, userspace stack, heap, library.&lt;/p&gt;
+
+&lt;h2 id=&#34;kernespace-context&#34;&gt;Kernespace context&lt;/h2&gt;
+
+&lt;p&gt;task_struct, mm_struct, pgd, kernelspace stack.&lt;/p&gt;
+
+&lt;h2 id=&#34;hardware-context&#34;&gt;Hardware context&lt;/h2&gt;
+
+&lt;p&gt;Registers&lt;/p&gt;
+
+&lt;h2 id=&#34;context-switch&#34;&gt;Context switch&lt;/h2&gt;
+
+&lt;p&gt;A context switch (also sometimes referred to as a process switch or a task switch)&lt;br /&gt;
+is the switching of the CPU (central processing unit) from one process or thread to another.&lt;/p&gt;
+
+&lt;h2 id=&#34;进程切换process-switch&#34;&gt;进程切换process switch&lt;/h2&gt;
+
+&lt;p&gt;也叫上下文切换context switch只发生在内核态，必须理解而不是记住。&lt;br /&gt;
+一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，&lt;br /&gt;
+如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，&lt;br /&gt;
+新的培养液进来，旧的培养液也需要保存，以备稍后使用。&lt;br /&gt;
+当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。&lt;br /&gt;
+应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？&lt;br /&gt;
+在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。&lt;br /&gt;
+我们所关心的换出的进程的esp指针也保存在thread_struct当中了。&lt;br /&gt;
+当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，&lt;br /&gt;
+也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。&lt;/p&gt;
+
+&lt;h2 id=&#34;switch-to&#34;&gt;switch_to&lt;/h2&gt;
+
+&lt;p&gt;__schedule()-&amp;gt;swtich_to&lt;/p&gt;
+
+&lt;h3 id=&#34;load-tss&#34;&gt;load TSS&lt;/h3&gt;
+
+&lt;p&gt;进程切换只发生在内核态&lt;br /&gt;
+/&lt;em&gt;将next进程的内核栈指针(next-&amp;gt;thread-&amp;gt;sp0)值更新到当前CPU的TSS中&lt;/em&gt;/&lt;br /&gt;
+load_sp0(tss, next);&lt;br /&gt;
+task_struct.thread.sp0&lt;br /&gt;
+thread_struct&lt;/p&gt;
+
+&lt;h2 id=&#34;type-of-context-switch&#34;&gt;type of Context switch&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;context switch by hardware&lt;br /&gt;
+Old linux kernel&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;context switch by software&lt;br /&gt;
+kernel 2.6&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;common-concepts&#34;&gt;Common concepts&lt;/h1&gt;
+
+&lt;p&gt;Multiprocessing for SMP&lt;/p&gt;
+
+&lt;h1 id=&#34;process-flag&#34;&gt;Process flag&lt;/h1&gt;
+
+&lt;p&gt;PF_MEMALLOC &lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/914878&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;process-user-id&#34;&gt;Process user ID&lt;/h1&gt;
+
+&lt;h2 id=&#34;effective-user-group-id&#34;&gt;Effective user/group ID&lt;/h2&gt;
+
+&lt;p&gt;euid:4777&lt;br /&gt;
+egid:2777&lt;br /&gt;
+chmod u+s cynthia&lt;br /&gt;
+root进程执行cynthia后euid变为firo, saved user id变为root&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;p&gt;u+s 就可以&lt;br /&gt;
+firo@firo tmp$ iptables -L&lt;br /&gt;
+iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
+Perhaps iptables or your kernel needs to be upgraded.&lt;/p&gt;
+
+&lt;p&gt;chmod +s /usr/sbin/iptables&lt;/p&gt;
+
+&lt;p&gt;firo@firo tmp$ iptables -L&lt;br /&gt;
+Chain INPUT (policy ACCEPT)&lt;br /&gt;
+target     prot opt source               destination&lt;/p&gt;
+
+&lt;p&gt;Chain FORWARD (policy ACCEPT)&lt;br /&gt;
+target     prot opt source               destination&lt;/p&gt;
+
+&lt;p&gt;Chain OUTPUT (policy ACCEPT)&lt;br /&gt;
+target     prot opt source               destination&lt;/p&gt;
+
+&lt;p&gt;chmod -s /usr/sbin/iptables&lt;/p&gt;
+
+&lt;p&gt;iptables -L&lt;br /&gt;
+iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
+Perhaps iptables or your kernel needs to be upgraded.&lt;/p&gt;
+
+&lt;h1 id=&#34;scheduling-strategies&#34;&gt;Scheduling strategies&lt;/h1&gt;
+
+&lt;p&gt;multiprogramming&lt;br /&gt;
+time-sharing(multi tasking)&lt;br /&gt;
+real-time&lt;/p&gt;
+
+&lt;h1 id=&#34;multitasking&#34;&gt;Multitasking&lt;/h1&gt;
+
+&lt;h2 id=&#34;reference&#34;&gt;Reference&lt;/h2&gt;
+
+&lt;p&gt;codes: comments of __schedule()&lt;br /&gt;
+Book: Linux kernel development&lt;/p&gt;
+
+&lt;p&gt;##Common concepts&lt;br /&gt;
+* The process scheduler decides which process runs, when, and for how long.&lt;br /&gt;
+* Multitasking: cooperative and preemptive.&lt;br /&gt;
+* Preemption:Involuntarily suspending a running process.&lt;br /&gt;
+* Timeslice: a slice of cpu&amp;rsquo;s time.&lt;br /&gt;
+* Yielding: The act of a process voluntarily suspending itself.&lt;br /&gt;
+* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.&lt;br /&gt;
+* Time sharing: is cooperative mutitasking,&lt;br /&gt;
+* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!&lt;br /&gt;
+so if !CONFIG_PREEMPT* is cooperative!&lt;br /&gt;
+* CFS: Pick the task with the smallest vruntime. That&amp;rsquo;s it!&lt;/p&gt;
+
+&lt;p&gt;##TIF_NEED_RESCHED&lt;br /&gt;
+* The situation of set task need resched&lt;br /&gt;
+scheduler_tick()&lt;br /&gt;
+try_to_wake_up() when a process that has a higher priority than &lt;em&gt;current&lt;/em&gt; is awakened.&lt;br /&gt;
+Other?&lt;/p&gt;
+
+&lt;h2 id=&#34;save-all&#34;&gt;SAVE_ALL&lt;/h2&gt;
+
+&lt;p&gt;no include cs ss ip sp eflag why?&lt;/p&gt;
+
+&lt;p&gt;#Deamonize&lt;/p&gt;
+
+&lt;h2 id=&#34;fork-oraphan&#34;&gt;fork, oraphan&lt;/h2&gt;
+
+&lt;p&gt;similar &amp;amp;&lt;br /&gt;
+not a goup leader inherit with parent pgid for setsid&lt;/p&gt;
+
+&lt;h2 id=&#34;setsid&#34;&gt;setsid&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;session leader&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;process group leader&lt;br /&gt;
+A signal directed to a process group is delivered individually to&lt;br /&gt;
+all of the processes that are members of the group.&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;deatch controlling terminals(confusing)&lt;/p&gt;
+
+&lt;h2 id=&#34;chdir&#34;&gt;chdir&lt;/h2&gt;
+
+&lt;h2 id=&#34;umask&#34;&gt;umask&lt;/h2&gt;
+
+&lt;h2 id=&#34;deal-with-fd&#34;&gt;deal with fd&lt;/h2&gt;
+
+&lt;p&gt;below both output&lt;br /&gt;
+守护进程继承了shell的屏幕和键盘输入.&lt;br /&gt;
+pid_t pid= fork();&lt;br /&gt;
+if (pid != 0) {&lt;br /&gt;
+system(&amp;ldquo;sleep 3&amp;rdquo;);&lt;br /&gt;
+printf(&amp;ldquo;parent exit\n&amp;rdquo;);&lt;br /&gt;
+} else {&lt;br /&gt;
+printf(&amp;ldquo;child start\n&amp;rdquo;);&lt;br /&gt;
+setsid();&lt;br /&gt;
+fprintf(stdout, &amp;ldquo;out child\n&amp;rdquo;);&lt;br /&gt;
+fprintf(stderr, &amp;ldquo;err child\n&amp;rdquo;);&lt;/p&gt;
+
+&lt;p&gt;system(&amp;ldquo;sleep 7&amp;rdquo;);&lt;/p&gt;
+
+&lt;p&gt;fprintf(stdout, &amp;ldquo;after out child\n&amp;rdquo;);&lt;br /&gt;
+fprintf(stderr, &amp;ldquo;after err child\n&amp;rdquo;);&lt;br /&gt;
+printf(&amp;ldquo;child exit\n&amp;rdquo;);&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;zombie-process&#34;&gt;Zombie process&lt;/h1&gt;
+
+&lt;h2 id=&#34;defunct&#34;&gt;&lt;defunct&gt;&lt;/h2&gt;
+
+&lt;p&gt;forked child not reaped by parent will hooked in process list.&lt;br /&gt;
+if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
+&lt;defunct&gt;表明父活着, 但不收尸.&lt;/p&gt;
+
+&lt;h2 id=&#34;double-fork-for-parent-long-live&#34;&gt;Double fork for parent long live&lt;/h2&gt;
+
+&lt;p&gt;mirgate subchild to init, parent just reap child.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;thread_info&lt;br /&gt;
+可以快速访问task_struct.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;swtch_stack&lt;br /&gt;
+线程切换&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
