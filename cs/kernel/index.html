@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="557">
+<meta itemprop="wordCount" content="287">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/kernel/">
 
@@ -179,8 +179,7 @@
 <a href="http://elinux.org/Kernel_Debugging_Tips">http://elinux.org/Kernel_Debugging_Tips</a><br />
 <a href="https://www.kernel.org/doc/">https://www.kernel.org/doc/</a><br />
 <a href="http://kernelnewbies.org/KernelJanitors/Todo">http://kernelnewbies.org/KernelJanitors/Todo</a><br />
-<a href="http://eudyptula-challenge.org/">http://eudyptula-challenge.org/</a><br />
-<a href="http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/">走近Linux内核&ndash; 王聪</a></p>
+<a href="http://eudyptula-challenge.org/">http://eudyptula-challenge.org/</a></p>
 
 <h1 id="cpu-freq">CPU freq</h1>
 
@@ -239,85 +238,9 @@ no_context-&gt;<br />
 <p><a href="http://lwn.net/Articles/336224/">Linux kernel design patterns</a><br />
 <a href="http://www.cs.fsu.edu/~baker/devices/notes/patterns.html#">Linux Kernel Programming Patterns</a></p>
 
-<h1 id="find-bug">Find bug</h1>
+<h1 id="module">Module</h1>
 
-<ul>
-<li>Considered fault types<br />
-Block “To avoid deadlock, do not call blocking functions with interrupts disabled or a spinlock held.”<br />
-Null “Check potentially NULL pointers returned from routines”<br />
-Var “Do not allocate large stack variables (&gt;1K) on the fixed-size kernel stack.”<br />
-INull “Do not make inconsistent assumptions about whether a pointer is NULL.”<br />
-Range “Always check bounds of array indices and loop bounds derived from user data.”<br />
-Lock “Release acquired locks; do not double-acquire locks.”<br />
-Intr “Restore disabled interrupts.”<br />
-Free “Do not use freed memory.”<br />
-Float “Do not use floating point in the kernel.”<br />
-Size “Allocate enough memory to hold the type for which you are allocating.”<br />
-<br /></li>
-</ul>
-
-<p>##KSM</p>
-
-<p>#Signal<br />
-* struct signal_sturct:<br />
-The &ldquo;struct signal_struct&rdquo; is the random <em>leftovers</em> from all the other stuff.<br />
-<a href="http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990">http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990</a><br />
-* sigpending<br />
-Store blocked signal info<br />
-* Non-mask signal<br />
-SIGKILL, SIGSTOP<br />
-##Generate signal<br />
-<strong>send_signal();<br />
-##Process siganl<br />
-* SIGKILL (may be some other)<br />
-process in _send_signal()-&gt; complete_signal() tsk-&gt;state |= TASK_WAKEKILL<br />
-<a href="http://lwn.net/Articles/288056/">http://lwn.net/Articles/288056/</a><br />
-<a href="http://www.ibm.com/developerworks/library/l-task-killable/">http://www.ibm.com/developerworks/library/l-task-killable/</a><br />
-* others<br />
-each time a switch is made from kernel mode to user mode,<br />
-arch-specific: entry.S -&gt; do_siganl()<br />
-{<br />
-    get_signal_deliver()<br />
-    {<br />
-        if fatal -&gt; do_greoup_exit()-&gt;&hellip;</strong>cleanup_sighand()<br />
-    }</p>
-
-<pre><code>handle_signal() -&gt; k-&gt;u(hanle)-sigreturn-&gt;k
-</code></pre>
-
-<p>}</p>
-
-<p>#Netlink<br />
-* Group<br />
-enum rtnetlink_groups<br />
-##What is netlink<br />
-Networking related kernel configuration and monitoring interfaces.<br />
-* IPC between kernel and user spacess process.<br />
-ioctl<br />
-* prarts<br />
-    libnl<br />
-    libnl-route<br />
-    libnl-genl<br />
-    libnl-nf</p>
-
-<ul>
-<li>How many parts does libnl-route has?<br />
-Address,  links, neighboring, routing, TC<br />
-<br /></li>
-</ul>
-
-<h2 id="need-patch">Need patch</h2>
-
-<p>skbedit action<br />
-cgroup classifier<br />
-tun/tap dev<br />
-gre tunnel dev<br />
-tc classifier/action</p>
-
-<p>#Namespace</p>
-
-<p>#Module<br />
-##pre-require<br />
+<p>##pre-require<br />
 modules.alias<br />
 <a href="http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html">http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html</a></p>
 
@@ -332,17 +255,23 @@ modules.alias<br />
 
 <p>3 rc 里面smartqos之类的.</p>
 
-<p>##Load module into kernel<br />
-vmlinux.lds.h linker scipts include helper macros.</p>
+<h2 id="load-module-into-kernel">Load module into kernel</h2>
 
-<p>#Data structures<br />
-* u32 __u32<br />
+<p>vmlinux.lds.h linker scipts include helper macros.</p>
+
+<h1 id="data-structures">Data structures</h1>
+
+<ul>
+<li>u32 __u32<br />
 __u32 is used for user-space. declare a variabe used by icotl. qosmark.<br />
 u32 is used for kernel.<br />
-deatils in ldd3e chapter 10</p>
+deatils in ldd3e chapter 10<br />
+<br /></li>
+</ul>
 
-<p>#Panic<br />
-kernel/kernel/panic.c</p>
+<h1 id="panic">Panic</h1>
+
+<p>kernel/kernel/panic.c</p>
 
 <p>##disk<br />
 subsys_initcall 4 genhd_device_init with base_probe{ request_module()}<br />
@@ -372,26 +301,6 @@ MACHINE_START(_type,_name)<br />
 <strong>section</strong>(&ldquo;.arch.info.init&rdquo;)<br />
 arch/arm/tools/mach-types<br />
 armada_xp_db            MACH_ARMADA_XP_DB       ARMADA_XP_DB            3036</p>
-
-<h2 id="smp">smp</h2>
-
-<p>An Implementation Of Multiprocessor Linux Alan Cox</p>
-
-<h3 id="cpumask">cpumask</h3>
-
-<h2 id="interrupt">Interrupt</h2>
-
-<p>SPI and PPI or IPI, difference?</p>
-
-<h1 id="faq">Faq</h1>
-
-<p>MACHINE_START</p>
-
-<h2 id="kernel-system-boot-hang-freeze">Kernel/system boot hang/freeze</h2>
-
-<h3 id="sysrq">Sysrq</h3>
-
-<p>Whe sysrq work?</p>
 
 <h3 id="bootargs">bootargs</h3>
 

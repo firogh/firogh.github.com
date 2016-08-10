@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="394">
+<meta itemprop="wordCount" content="466">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/os/">
 
@@ -171,6 +171,35 @@
 		   
 
 <h1 id="signal">Signal</h1>
+
+<ul>
+<li>struct signal_sturct:<br />
+The &ldquo;struct signal_struct&rdquo; is the random <em>leftovers</em> from all the other stuff.<br />
+<a href="http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990">http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990</a><br /></li>
+<li>sigpending<br />
+Store blocked signal info<br /></li>
+<li>Non-mask signal<br />
+SIGKILL, SIGSTOP<br />
+##Generate signal<br />
+__send_signal();<br />
+##Process siganl<br /></li>
+<li>SIGKILL (may be some other)<br />
+process in _send_signal()-&gt; complete_signal() tsk-&gt;state |= TASK_WAKEKILL<br />
+<a href="http://lwn.net/Articles/288056/">http://lwn.net/Articles/288056/</a><br />
+<a href="http://www.ibm.com/developerworks/library/l-task-killable/">http://www.ibm.com/developerworks/library/l-task-killable/</a><br /></li>
+
+<li><p>others<br />
+each time a switch is made from kernel mode to user mode,<br />
+arch-specific: entry.S -&gt; do_siganl()<br />
+{<br />
+get_signal_deliver()<br />
+{<br />
+    if fatal -&gt; do_greoup_exit()-&gt;&hellip;__cleanup_sighand()<br />
+}</p>
+
+<p>handle_signal() -&gt; k-&gt;u(hanle)-sigreturn-&gt;k<br />
+}</p></li>
+</ul>
 
 <h1 id="fault-handler">fault handler</h1>
 
