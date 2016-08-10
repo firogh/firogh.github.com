@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="">
+
+ 
+<meta property="og:type" content="article"/>
+<meta property="og:description" content=""/>
+<meta property="og:title" content="Linux virtualization : firoyang.org"/>
+<meta property="og:site_name" content="Firo Website"/>
+<meta property="og:image" content="" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="" />
+<meta property="og:image:height" content="" />
+<meta property="og:url" content="http://firoyang.org/cs/virt/">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2015-06-17"/>
+<meta property="article:modified_time" content="2015-06-17"/>
+
+
+
+
+
+    <base href="http://firoyang.org/">
+    <title> Linux virtualization</title>
+    <link rel="canonical" href="http://firoyang.org/cs/virt/">
+    
+
+    
+<link rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+     
+</head>
+
+<body style="background-color:#FFFFF0;" lang="en" itemscope itemtype="http://schema.org/Article">
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<link rel="stylesheet" href="static/css/font-awesome.min.css">
+	<nav id="nav">
+	<div id="title"><a href="/" style="color:#B22222;">ƒ(x)</a></div>
+
+
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+            <a href="/review/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-thumbs-o-up"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-institution"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about" style="color:#B22222" >
+                <span class="icon" > <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-rocket"></i></span>
+                <span> Firo </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-gamepad"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/cs/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-linux"></i></span>
+                <span> computer science </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-globe"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="icon-leaf"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+
+            <li>
+                <a href="/lyubishchev/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-hourglass-half"></i></span>
+                <span> lyubishchev </span>
+            </a>
+            </li>
+            
+	    <li>
+                <a href="/linguistics/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-language"></i></span>
+                <span> linguistics </span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+ <link rel="stylesheet" href="highlight.js/styles/monokai-sublime.css">
+    <script src="highlight.js/highlight.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	<section id="main">
+
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >Linux virtualization</h1>
+	  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Wed Jun 17, 2015 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+        </ul>
+
+    </div>
+
+
+</aside>
+
+<meta itemprop="wordCount" content="388">
+<meta itemprop="datePublished" content="2015-06-17">
+<meta itemprop="url" content="http://firoyang.org/cs/virt/">
+
+
+	  <div>
+		<article itemprop="articleBody" id="content">
+		   
+
+<p>本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.<br />
+已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!<br />
+现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.<br />
+看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和<br />
+他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与<br />
+空间去体验到不同生命历程.<br />
+今天, 我们来探索一下<a href="https://en.wikipedia.org/wiki/Virtualization">虚拟化</a><br />
+如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.<br />
+显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.<br />
+法国哲学家福柯一生都在从事&rdquo;知识考古学&rdquo;, 而我也喜欢在研究问题时, 从语言学特别是<br />
+词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是<br />
+influencing by physical virtues or capabilities,<br />
+effective with respect to inherent natural qualities<br />
+受某种实在的长处能力影响, 源自本质的效用.<br />
+这里从两种角度理解virtual, 受影响者, 影响者本身.<br />
+所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.<br />
+这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:</p>
+
+<pre><code>virtual 音节划分：vir▪tual
+英 [ˈvɜ:tʃuəl] 美 [ˈvɜ:rtʃuəl]
+adj.实质上的，事实上的；（计算机）虚拟的；&lt;物&gt;有效的，虚像的；（粒子）实际存在的
+虚；虚拟艺术；虚拟的；模拟帐户
+</code></pre>
+
+<p>这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!<br />
+话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.<br />
+很多事情, 在我们出生前就决定了, 我是89年9月出生的.<br />
+我们搞懂了所谓&rdquo;虚拟化&rdquo;的实质, 之后就可以继续探索了.<br />
+如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.<br />
+没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.<br />
+好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?<br />
+没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?<br />
+所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.<br />
+那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!<br />
+我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.<br />
+终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora<br />
+之上.</p>
+
+<h2 id="fkvm">FKVM</h2>
+
+<p>没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&rsquo;s KVM!<br />
+首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel<br />
+运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!<br />
+因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!<br />
+你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.<br />
+怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行<br />
+start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的<br />
+cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.<br />
+也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.<br />
+在内核初始化的时候, 会用调用bios的中断来获取内存信息.<br />
+也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.<br />
+开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.<br />
+现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是<br />
+高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.<br />
+只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?<br />
+我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.<br />
+就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.<br />
+也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.<br />
+如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.<br />
+这里需要很多底层的知识. 先看点资料再回来.<br />
+看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.<br />
+访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.<br />
+探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.<br />
+无论别人说的多么好, 我们必须要有自己的思路.<br />
+总结下所得:<br />
+控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.<br />
+虚拟化一块内存.<br />
+我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.<br />
+由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.<br />
+同时乐趣也会减少.</p>
+
+<h1 id="kvm-qemu">KVM QEMU</h1>
+
+<p>现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&hellip;<br />
+探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.<br />
+千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然<br />
+是我们自己, 别人的知识只是辅助. 那好我们开始.<br />
+首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.<br />
+往往初学者, 很容易被绕进去.<br />
+从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.<br />
+为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.<br />
+Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供<br />
+全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的<br />
+洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.<br />
+Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.<br />
+至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.<br />
+从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.<br />
+这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.<br />
+Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.<br />
+类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.<br />
+Operating-system-level virtualization<br />
+这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.<br />
+但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.<br />
+比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.<br />
+这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.<br />
+比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,<br />
+他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.<br />
+这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.<br />
+在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,<br />
+网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.<br />
+我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.<br />
+首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?<br />
+官网的解释:</p>
+
+<pre><code>QEMU is a generic and open source machine emulator and virtualizer.
+</code></pre>
+
+<p>qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.<br />
+qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.<br />
+我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.<br />
+那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.<br />
+毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的<br />
+虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.<br />
+据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情<br />
+补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.<br />
+不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂<br />
+肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.<br />
+内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.<br />
+下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.<br />
+我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.</p>
+
+<p>下面是设备的虚拟化, 这个还是看书去吧.</p>
+
+<h1 id="代码实现">代码实现</h1>
+
+<ul>
+<li>KVM architecture<br /></li>
+<li>Kernel running flow<br />
+svm.ko -&gt; svm_init(svm.c) -&gt; kvm_init(kvm_main.c) -&gt;<br /></li>
+<li>File<br />
+svm.c vmx.c kvm_main.c kvm_svm.h<br /></li>
+<li>Function<br /></li>
+<li>Struct<br />
+kvm_x86_ops x86.h<br />
+vcpu_svm    kvm_svm.h<br />
+<br />
+<br /></li>
+</ul>
+
+<h1 id="qemu-system-ppc">qemu-system-ppc</h1>
+
+<p>-mem-path:</p>
+
+		</article>
+	  </div>
+	</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/virt\/';
+    var disqus_title = 'Linux virtualization';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/virt\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2014 ~ 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang </span></span><a href="http://creativecommons.org/licenses/by/4.0/">Some rights reserved</a>. 
+	Powered by <a href="http://gohugo.io">Hugo</a> and <a href="https://fortawesome.github.io/Font-Awesome/">Font Awesome</a>.
+        Theme by <a href="http://spf13.com">Steve Francia <a href="http://firoyang.org">Firo Yang</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+
+
+
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

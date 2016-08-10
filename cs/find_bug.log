@@ -1,0 +1,69 @@
+
+
+#Static analysis
+* Spar
+
+# misuse unsigned
+acpi_gpiochip_pin_to_gpio_offset in acpi_gpio_adr_space_handler
+change gpio pin from unsigned to signed in acpi callback
+    The signed error will be wrongly used as valid gpio offset
+
+# memory leak
+request_firmware_nowait
+fw_work = kzalloc(sizeof(struct firmware_work), gfp);
+
+fib_trie: coding style: Use pointer after check    
+
+As Alexander Duyck pointed out that:
+struct tnode {
+	...
+	struct key_vector kv[1];
+}
+The kv[1] member of struct tnode is an arry that refernced by
+a null pointer will not crash the system, like this:
+struct tnode *p = NULL;
+struct key_vector *kv = p->kv;
+As such p->kv doesn't actually dereference anything, it is simply a
+means for getting the offset to the array from the pointer p.
+
+This patch make the code more regular to avoid making people feel
+odd when they look at the code.
+
+txx9_sramc_init
+arch/arm/plat-pxa/ssp.c
+
+    ARM: pxa: ssp: remove unnessary free for devm_xxx
+    
+    A Coccinelle warning.
+    It's not necessary to free memory allocated with devm_xxx
+    and using these free functions maybe lead to a double free that
+    will corrupt the resource subsys. So, I just remove them.
+    
+    By the way, I replace devm_request_mem_region and devm_ioremap with
+    devm_ioremap_resource as Julia's suggestion.
+
+
+drivers/md/md.c: In function ‘update_array_info’:
+drivers/md/md.c:6394:26: warning: logical not is only applied to the left hand side of comparison [-Wlogical-not-parentheses]
+      !mddev->persistent  != info->not_persistent||
+                          ^
+    md: fix a build warning
+    
+    Warning like this:
+    
+    drivers/md/md.c: In function ‘update_array_info’:
+    drivers/md/md.c:6394:26: warning: logical not is only applied
+    to the left hand side of comparison [-Wlogical-not-parentheses]
+          !mddev->persistent  != info->not_persistent||
+    
+    I fix it by enclosing !mddev->persistent with parentheses
+    
+    By the way, I also fixed a line over 80 charaters warning outputed
+    by ./scripts/checkpatch.pl
+
+
+# inline
+size net/ipv6/ip6_output.o
+   text	   data	    bss	    dec	    hex	filename
+  17340	     96	      0	  17436	   441c	net/ipv6/ip6_output.o
+17340	     96	      0	  17436	   441c	net/ipv6/ip6_output.o
