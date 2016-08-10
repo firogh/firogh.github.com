@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="466">
+<meta itemprop="wordCount" content="530">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/os/">
 
@@ -201,7 +201,7 @@ get_signal_deliver()<br />
 }</p></li>
 </ul>
 
-<h1 id="fault-handler">fault handler</h1>
+<h1 id="mm-fault-handler">mm fault handler</h1>
 
 <p>arch/powerpc/mm/fault.c<br />
 deatils of trap is in bad_page_fault</p>
@@ -226,6 +226,40 @@ __handle_mm_fault<br />
         {<br />
             vma-&gt;vm_ops-&gt;page_mkwrite(vma, &amp;vmf); //??<br />
         }<br />
+}</p>
+
+<h1 id="kernel-panic-3-10-62">kernel panic 3.10.62</h1>
+
+<p>kernel/panic.c<br />
+general protection fault and page fault<br />
+1498 errorentry general_protection do_general_protection<br />
+1499 errorentry page_fault do_page_fault<br />
+static const struct stacktrace_ops print_trace_ops = {<br />
+        .stack                  = print_trace_stack,<br />
+        .address                = print_trace_address,<br />
+        .walk_stack             = print_context_stack,<br />
+};<br />
+no_context-&gt;<br />
+{<br />
+    show_fault_oops-&gt;<br />
+    __die-&gt;<br />
+    {<br />
+        print_modules<br />
+        show_regs<br />
+        {<br />
+            printk(KERN_DEFAULT &ldquo;Stack:\n&rdquo;);<br />
+            show_stack_log_lvl-&gt;<br />
+            {<br />
+                show_trace_log_lvl-&gt;<br />
+                {<br />
+                    printk(&ldquo;%sCall Trace:\n&rdquo;, log_lvl);<br />
+                    // arch/x86/kernel/dumpstack_64.c<br />
+                    dump_trace-&gt;&amp;print_trace_ops<br />
+                }<br />
+            }<br />
+            printk(KERN_DEFAULT &ldquo;Code: &ldquo;);<br />
+        }<br />
+    }<br />
 }</p>
 
 <h1 id="process-and-thread">Process and thread</h1>

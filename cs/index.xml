@@ -649,43 +649,6 @@ devtmpfs: initialized^M^M&lt;/p&gt;
 
 &lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check&lt;br /&gt;
 if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
-
-&lt;p&gt;Here are the logs..&lt;/p&gt;
-
-&lt;p&gt;I printed pa in %lx since the outout of &lt;strong&gt;pa(&lt;/strong&gt;early_start) is in long unsigned int.&lt;/p&gt;
-
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0&lt;br /&gt;
-Firo: kernel origin spin tbale addr_l a63b2000, pir 57cc802, resv 480000, r3 3ae000, pa 50&lt;br /&gt;
-Firo: kernel update spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000&lt;br /&gt;
-Firo: kernel timeout spin tbale addr_l 50, pir 1, resv 480000, r3 3ae000&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)&lt;br /&gt;
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0&lt;br /&gt;
-Firo: kernel origin spin tbale addr_l a654e7af, pir a654e780, resv 387cf99a, r3 3408200, pa 50&lt;br /&gt;
-Firo: kernel update spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200&lt;br /&gt;
-Firo: kernel timeout spin tbale addr_l 50, pir 2, resv 387cf99a, r3 3408200&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)&lt;br /&gt;
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0&lt;br /&gt;
-Firo: kernel origin spin tbale addr_l 247cf09a, pir 7cf19b, resv a664e740, r3 3e7cf19a, pa 50&lt;br /&gt;
-Firo: kernel update spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a&lt;br /&gt;
-Firo: kernel timeout spin tbale addr_l 50, pir 3, resv a664e740, r3 3e7cf19a&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack&lt;br /&gt;
-smp: failed starting cpu 3 (rc -2)&lt;br /&gt;
-I don’t see the following print in u-boot..&lt;br /&gt;
- 69                                 fdt_setprop(blob, off, &amp;ldquo;cpu-release-addr&amp;rdquo;,&lt;br /&gt;
- 70                                                 &amp;amp;val, sizeof(val));&lt;br /&gt;
-+ printf(&amp;ldquo;Firo u-boot:cpu release addr %p, value %x\n&amp;rdquo;, &amp;amp;val, val);&lt;/p&gt;
-
-&lt;p&gt;Firo:cpu nr1 release addr c3fe352c, spin_table c000003f, ioremmappable 0&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)&lt;br /&gt;
-Firo:cpu nr2 release addr c3fe3740, spin_table c000007f, ioremmappable 0&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)&lt;br /&gt;
-Firo:cpu nr3 release addr c3fe3954, spin_table c00000bf, ioremmappable 0&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack&lt;br /&gt;
-smp: failed starting cpu 3 (rc -2)&lt;/p&gt;
 </description>
     </item>
     
@@ -1500,6 +1463,36 @@ Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq
       <guid>http://firoyang.org/cs/hacking/</guid>
       <description>
 
+&lt;h1 id=&#34;kernel-hacking&#34;&gt;kernel hacking&lt;/h1&gt;
+
+&lt;p&gt;The cxgb3_*_send() functions return NET&lt;em&gt;XMIT&lt;/em&gt; values, which are&lt;br /&gt;
+positive integers values. So don&amp;rsquo;t treat positive return values&lt;br /&gt;
+as an error.&lt;br /&gt;
+67f1aee6f45059fd6b0f5b0ecb2c97ad0451f6b3&lt;/p&gt;
+
+&lt;h1 id=&#34;old-questions&#34;&gt;old questions&lt;/h1&gt;
+
+&lt;p&gt;What is platform driver?&lt;br /&gt;
+find source code of config&lt;br /&gt;
+How to print backtrace by kernel oops, and why it&amp;rsquo;s not exact?&lt;br /&gt;
+What is abi&lt;br /&gt;
+why get_unaligned_be16?&lt;br /&gt;
+ _THIS&lt;em&gt;IP&lt;/em&gt; vs &lt;strong&gt;FUNCTIONS&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-data-type&#34;&gt;kernel data type&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://yarchive.net/comp/linux/kernel_headers.html&#34;&gt;__u32&lt;/a&gt; and &lt;a href=&#34;http://www.linuxjournal.com/article/5783&#34;&gt;this&lt;/a&gt; and dd3e chapter 10.&lt;/p&gt;
+
+&lt;h1 id=&#34;the-principle-of-kernel-driver-backport&#34;&gt;The principle of kernel &amp;amp; driver backport&lt;/h1&gt;
+
+&lt;p&gt;将高本版kernel的feature移植到低版本的kernel的过程就是backport.&lt;br /&gt;
+1. 尽量保持与mainline的代码一致&lt;br /&gt;
+2. 做好取舍不要引入太多patch.&lt;/p&gt;
+
+&lt;h2 id=&#34;开发流程&#34;&gt;开发流程&lt;/h2&gt;
+
+&lt;p&gt;理清所引入feature的代码. 主要数据结构以及功能流程.&lt;/p&gt;
+
 &lt;p&gt;&lt;a href=&#34;http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/&#34;&gt;走近Linux内核&amp;ndash; 王聪&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;kernel-hacker之路&#34;&gt;kernel hacker之路&lt;/h1&gt;
@@ -1747,8 +1740,8 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 
 &lt;p&gt;design(pattern) and algorithm, programming(debugging, hacking)&lt;br /&gt;
 pl, compile(gcc), link, load(cll)&lt;br /&gt;
-process, quantaties, order&lt;br /&gt;
-turing, arch, os(boot, console, fedora, fs, process, mm, pm)&lt;br /&gt;
+process, quantaties, order(synchronization)&lt;br /&gt;
+turing, arch, os(boot, console, fedora, fs, process, mm, pm, time, virt, synchronization)&lt;br /&gt;
 math, logic, electronics&lt;/p&gt;
 
 &lt;h1 id=&#34;the-architecture-of-computer-science&#34;&gt;The Architecture of Computer science&lt;/h1&gt;
@@ -2647,7 +2640,7 @@ get_signal_deliver()&lt;br /&gt;
 }&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;fault-handler&#34;&gt;fault handler&lt;/h1&gt;
+&lt;h1 id=&#34;mm-fault-handler&#34;&gt;mm fault handler&lt;/h1&gt;
 
 &lt;p&gt;arch/powerpc/mm/fault.c&lt;br /&gt;
 deatils of trap is in bad_page_fault&lt;/p&gt;
@@ -2672,6 +2665,40 @@ __handle_mm_fault&lt;br /&gt;
         {&lt;br /&gt;
             vma-&amp;gt;vm_ops-&amp;gt;page_mkwrite(vma, &amp;amp;vmf); //??&lt;br /&gt;
         }&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-panic-3-10-62&#34;&gt;kernel panic 3.10.62&lt;/h1&gt;
+
+&lt;p&gt;kernel/panic.c&lt;br /&gt;
+general protection fault and page fault&lt;br /&gt;
+1498 errorentry general_protection do_general_protection&lt;br /&gt;
+1499 errorentry page_fault do_page_fault&lt;br /&gt;
+static const struct stacktrace_ops print_trace_ops = {&lt;br /&gt;
+        .stack                  = print_trace_stack,&lt;br /&gt;
+        .address                = print_trace_address,&lt;br /&gt;
+        .walk_stack             = print_context_stack,&lt;br /&gt;
+};&lt;br /&gt;
+no_context-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    show_fault_oops-&amp;gt;&lt;br /&gt;
+    __die-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        print_modules&lt;br /&gt;
+        show_regs&lt;br /&gt;
+        {&lt;br /&gt;
+            printk(KERN_DEFAULT &amp;ldquo;Stack:\n&amp;rdquo;);&lt;br /&gt;
+            show_stack_log_lvl-&amp;gt;&lt;br /&gt;
+            {&lt;br /&gt;
+                show_trace_log_lvl-&amp;gt;&lt;br /&gt;
+                {&lt;br /&gt;
+                    printk(&amp;ldquo;%sCall Trace:\n&amp;rdquo;, log_lvl);&lt;br /&gt;
+                    // arch/x86/kernel/dumpstack_64.c&lt;br /&gt;
+                    dump_trace-&amp;gt;&amp;amp;print_trace_ops&lt;br /&gt;
+                }&lt;br /&gt;
+            }&lt;br /&gt;
+            printk(KERN_DEFAULT &amp;ldquo;Code: &amp;ldquo;);&lt;br /&gt;
+        }&lt;br /&gt;
+    }&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;h1 id=&#34;process-and-thread&#34;&gt;Process and thread&lt;/h1&gt;
@@ -3642,13 +3669,13 @@ hard link to file accross partitions, may led confilict with inode number.&lt;/p
 &lt;p&gt;cat /proc/mounts&lt;br /&gt;
 man mount&lt;/p&gt;
 
-&lt;h3 id=&#34;chang-time&#34;&gt;chang time&lt;/h3&gt;
+&lt;p&gt;##mount root device&lt;br /&gt;
+root= name_to_dev_t, mount_root in prepare_namespace&lt;br /&gt;
+如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.&lt;br /&gt;
+systemd负责挂在文件系统, 切换.&lt;/p&gt;
 
-&lt;p&gt;meta data&lt;/p&gt;
-
-&lt;h3 id=&#34;modification-time&#34;&gt;modification time&lt;/h3&gt;
-
-&lt;p&gt;content of file&lt;/p&gt;
+&lt;p&gt;subsys_initcall 4 genhd_device_init with base_probe{ request_module()}&lt;br /&gt;
+module_init 6 -&amp;gt;init_sd-&amp;gt;sync_schedule_domain(sd_probe_async&lt;/p&gt;
 </description>
     </item>
     
