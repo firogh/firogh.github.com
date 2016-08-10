@@ -611,10 +611,10 @@ insert 7:&lt;/p&gt;
 
 &lt;h1 id=&#34;arch-of-cs&#34;&gt;arch of cs&lt;/h1&gt;
 
-&lt;p&gt;design and algorithm, programming&lt;br /&gt;
-pl, compile, link, load&lt;br /&gt;
+&lt;p&gt;design and algorithm, programming(debugging,&lt;br /&gt;
+pl, compile(gcc), link, load&lt;br /&gt;
 process, quantaties, order&lt;br /&gt;
-turing, arch, os&lt;br /&gt;
+turing, arch, os(boot, console, fedora, fs, process)&lt;br /&gt;
 math, logic, electric&lt;/p&gt;
 
 &lt;h1 id=&#34;the-architecture-of-computer-science&#34;&gt;The Architecture of Computer science&lt;/h1&gt;
@@ -2494,25 +2494,9 @@ root进程执行cynthia后euid变为firo, saved user id变为root&lt;/p&gt;
 &lt;p&gt;u+s 就可以&lt;br /&gt;
 firo@firo tmp$ iptables -L&lt;br /&gt;
 iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
-Perhaps iptables or your kernel needs to be upgraded.&lt;/p&gt;
-
-&lt;p&gt;chmod +s /usr/sbin/iptables&lt;/p&gt;
-
-&lt;p&gt;firo@firo tmp$ iptables -L&lt;br /&gt;
-Chain INPUT (policy ACCEPT)&lt;br /&gt;
-target     prot opt source               destination&lt;/p&gt;
-
-&lt;p&gt;Chain FORWARD (policy ACCEPT)&lt;br /&gt;
-target     prot opt source               destination&lt;/p&gt;
-
-&lt;p&gt;Chain OUTPUT (policy ACCEPT)&lt;br /&gt;
-target     prot opt source               destination&lt;/p&gt;
-
-&lt;p&gt;chmod -s /usr/sbin/iptables&lt;/p&gt;
-
-&lt;p&gt;iptables -L&lt;br /&gt;
-iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
-Perhaps iptables or your kernel needs to be upgraded.&lt;/p&gt;
+Perhaps iptables or your kernel needs to be upgraded.&lt;br /&gt;
+chmod +s /usr/sbin/iptables&lt;br /&gt;
+chmod -s /usr/sbin/iptables&lt;/p&gt;
 
 &lt;h1 id=&#34;scheduling-strategies&#34;&gt;Scheduling strategies&lt;/h1&gt;
 
@@ -2613,6 +2597,171 @@ if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
 &lt;li&gt;&lt;p&gt;swtch_stack&lt;br /&gt;
 线程切换&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
+
+&lt;h1 id=&#34;the-player&#34;&gt;The player&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Interrupt &amp;ndash; irq,softirq&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Process &amp;ndash; user process, kernel thread(workqueue)&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;common-concpets&#34;&gt;Common concpets&lt;/h1&gt;
+
+&lt;p&gt;userspace: A process executing its own code outside the kernel.&lt;/p&gt;
+
+&lt;p&gt;##What is context?&lt;br /&gt;
+###process context/user context:&lt;br /&gt;
+The kernel executing on behalf of a particular process&lt;br /&gt;
+(ie. a system call or trap) or kernel thread.&lt;br /&gt;
+You can tell which process with the current macro.)&lt;br /&gt;
+Not to be confused with userspace.&lt;br /&gt;
+Can be interrupted by software or hardware interrupts.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;register, kernel task_struct, stack. user text stack heap&lt;br /&gt;
+###interrupt context:&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Firo thinks the key point is interrupt context is irrelevant to process context!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Can not schedule!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;register, maybe interrupt/process stack.&lt;br /&gt;
+###softirq context&lt;br /&gt;
+in the context of whichever process happens to be running at the wrong time;&lt;br /&gt;
+that is the &amp;ldquo;randomly chosen victim&amp;rdquo; aspect that Thomas was talking about.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##Preemption&lt;br /&gt;
+* Linux kernel user mode is always User preemption.&lt;br /&gt;
+When returning to user-space from a system call.&lt;br /&gt;
+When returning to user-space from an interrupt hander.&lt;br /&gt;
+* Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;br /&gt;
+If a task in the kernel explicitly calls schedule()&lt;br /&gt;
+If a task in the kernel blocked (which results in a all to schedule())&lt;br /&gt;
+* Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;br /&gt;
+schedule + blcoked&lt;br /&gt;
+When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+When kernel code becomes preemptible again.&lt;/p&gt;
+
+&lt;p&gt;###Entries of preempt schdule, FIXME&lt;br /&gt;
+1 After Interrupt return,preempt_count_irq.&lt;br /&gt;
+2 cond_resched&lt;br /&gt;
+3 preempt_count&lt;/p&gt;
+
+&lt;p&gt;###What is the PREEMPT_ACTIVE&lt;br /&gt;
+* This sets a flag bit in the preemption counter that has such a large value&lt;br /&gt;
+    that it is never affected by the regular preemption counter increments&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;It indicates to the schedule function that scheduling was not&lt;br /&gt;
+invoked in the normal way but as a result of a kernel preemption.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;This ensures that the next task is selected as quickly as possible without&lt;br /&gt;
+the hassle of deactivating the current one. If a high-priority task is waiting&lt;br /&gt;
+to be scheduled, it will be picked by the scheduler class and will be allowed to run.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;###preempt_count&lt;br /&gt;
+* preempt 8&lt;br /&gt;
+* softirq 8&lt;br /&gt;
+* irq   4&lt;br /&gt;
+* preempt active 1&lt;br /&gt;
+* nmi 1&lt;/p&gt;
+
+&lt;p&gt;#Interrupt&lt;/p&gt;
+
+&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
+
+&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
+irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
+
+&lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
+* in_irq&lt;br /&gt;
+in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!&lt;br /&gt;
++irq disable 部设计preempt_cout&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;in_softirq&lt;br /&gt;
+should rename to in_softirq_or_bh_disable()&lt;br /&gt;
+local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)&lt;br /&gt;
+__do_softirq use __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET), damn it!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;in_interrupt&lt;br /&gt;
+一种是irq路径上的do_softirq, 即in_serving_softirq&lt;br /&gt;
++local_bh_disbale()&lt;br /&gt;
+//not in softirq context!!!&lt;br /&gt;
++local_bh_enable()&lt;br /&gt;
+硬中断呢?&lt;br /&gt;
+do_IRQ,肯定是.&lt;br /&gt;
+local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check&lt;br /&gt;
+[Question about in_interrupt() semantics with regard to softirqs]()&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;##softirq&lt;br /&gt;
+同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。&lt;br /&gt;
+* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
+current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
+* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
+* not percpu&lt;/p&gt;
+
+&lt;h2 id=&#34;tasklet-and-kernel-timer-is-based-on-softirq&#34;&gt;tasklet and kernel timer is based on softirq&lt;/h2&gt;
+
+&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.&lt;br /&gt;
+.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上&lt;br /&gt;
+* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,&lt;br /&gt;
+ which run in the context of a randomly chosen victim&lt;br /&gt;
+ w/o the ability to put any control on them. &amp;ndash;Thomas Gleixner&lt;/p&gt;
+
+&lt;p&gt;tasklet different with other softirq is run  signal cpu core&lt;br /&gt;
+spinlock_bh wider then spinlock&lt;/p&gt;
+
+&lt;p&gt;###time of softirq&lt;br /&gt;
+* follow hardirq, irq_exit()&lt;br /&gt;
+* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
+* ksoftirqd&lt;/p&gt;
+
+&lt;p&gt;###tasklet&lt;br /&gt;
+tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?&lt;br /&gt;
+tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了&lt;br /&gt;
+只有一个cpu执行同一时刻.&lt;/p&gt;
+
+&lt;p&gt;#Process&lt;br /&gt;
+##kthread and workqueue&lt;br /&gt;
+kthread do specific func onshot&lt;br /&gt;
+workqueue can dynamic set different specific work&lt;br /&gt;
+workqueue is just a coat of kthread&lt;/p&gt;
+
+&lt;h2 id=&#34;differences-between-softirq-and-workqueue&#34;&gt;Differences between softirq and workqueue&lt;/h2&gt;
+
+&lt;p&gt;Softirq(tasklet)&lt;br /&gt;
+init static:    DECLARE_TASKLET(), DECLARE_TASKLET_DISABLED()&lt;br /&gt;
+init dynamic:   tasklet_init()&lt;br /&gt;
+schedule:   tasklet_schedule()&lt;br /&gt;
+exit:       tasklet_kill()&lt;br /&gt;
+pros and cons:  execute in interrupt context, serialization, tasklet blonged to the cpu which tasklet_schedule() it, oneshot&lt;/p&gt;
+
+&lt;p&gt;Workqueue&lt;br /&gt;
+init static:    DECLARE_WORK()&lt;br /&gt;
+init dynamic:   kzalloc() INIT_WORK(), kzalloc() PREPARE_WORK()&lt;br /&gt;
+schedule1:  create_singlethread_workqueue(), create_workqueue()&lt;br /&gt;
+        queue_work()&lt;br /&gt;
+exit1:      flush_workqueue(), destroy_workqueue()&lt;br /&gt;
+schedule2:  schedule_work()&lt;br /&gt;
+exit2:      (none)&lt;br /&gt;
+pros and cons:  execute in process context, workqueue has two type, driver can create workqueue or use system workqueue, oneshot&lt;/p&gt;
+
+&lt;p&gt;#FAQ&lt;br /&gt;
+##When to save irq rather than just disable irq&lt;br /&gt;
+local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
+&lt;p&gt;##what about irq nested?&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;##irq and lock&lt;br /&gt;
+irq and lock are complete different things!&lt;br /&gt;
+when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
 </description>
     </item>
     
