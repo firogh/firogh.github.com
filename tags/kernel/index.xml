@@ -484,6 +484,175 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
     </item>
     
     <item>
+      <title>Filesystem</title>
+      <link>http://firoyang.org/cs/fs/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/fs/</guid>
+      <description>
+
+&lt;h1 id=&#34;open&#34;&gt;open()&lt;/h1&gt;
+
+&lt;p&gt;最烦, 看什么系统调用参数了.&lt;br /&gt;
+那一大堆很少用到的组合还有undefined, 太扯淡了.&lt;br /&gt;
+也说不上碎碎的问题, 要理解着来, 看man 手册, 贴子显然不是&lt;br /&gt;
+最后的注意还是看实现吧.&lt;br /&gt;
+build_open_flags()还是看不出&lt;br /&gt;
+man里面有一句&lt;br /&gt;
+ The (undefined) effect of O_RDONLY | O_TRUNC varies among implementations.&lt;br /&gt;
+On many systems the file is actually truncated.&lt;/p&gt;
+
+&lt;p&gt;#Hacks&lt;br /&gt;
+I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.&lt;/p&gt;
+
+&lt;p&gt;#VFS&lt;br /&gt;
+##Common concepts&lt;br /&gt;
+* VFS:Common fs interface plus fs anstraction layer!&lt;/p&gt;
+
+&lt;h2 id=&#34;unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points&#34;&gt;Unix fs-related abstractions: file, directory entries, inodes, and mount points.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Filesytem: a hierarchial storage of data adhering to a specific structure.&lt;br /&gt;
+In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;file: and ordered string of bytes.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;directory: analogous to a folder and usally contains related files.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;dentry: Each component of a path is called a directory entry.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;supreblock: a data structure containing information about the filesystem as a whole.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;vfs-primary-objects-superblock-inode-dentry-file&#34;&gt;VFS primary objects: superblock, inode, dentry, file.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;supreblock: a specific mounted filesystem.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;inode: unit for fs. all the information needed by the kernel to manipulate a file or directory.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;dentry: accelerate access fs, dcache! a single component of a path, certainly include &lt;em&gt;regular&lt;/em&gt; file.&lt;br /&gt;
+VFS treats directory as non-exist &lt;em&gt;normal&lt;/em&gt; file. directory and dentry is not the same at all, different congitive level!&lt;br /&gt;
+In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;file: an open normal file as associated with a process.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##Step of how to use ext2 fs&lt;br /&gt;
+* Register a fs type in kernel.&lt;br /&gt;
+struct file_system_type: basic fs driver codes!&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;mkfs.ext2&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;shell mount -&amp;gt; sys_mount -&amp;gt; file_system_type-&amp;gt;mount =&amp;gt; root dentry and dentry-&amp;gt;d_sb!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;sys_open -&amp;gt;&lt;br /&gt;
+path_init()&lt;br /&gt;
+
+&lt;ol&gt;
+&lt;li&gt;get start point current-&amp;gt;fs{root, pwd}&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)&lt;br /&gt;
+do_last()&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;/li&gt;
+&lt;li&gt;sys_write -&amp;gt;&lt;br /&gt;
+file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##How make dentry&lt;br /&gt;
+d_alloc() alloc new dentry&lt;br /&gt;
+parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;&lt;br /&gt;
+set inode to dentry&lt;/p&gt;
+
+&lt;p&gt;#Procfs&lt;br /&gt;
+##How many parts does procfs has?&lt;br /&gt;
+* process-specific read only /proc/&lt;pid&gt;/&lt;br /&gt;
+* process tuneable interface. /proc/&lt;pid&gt;/&lt;br /&gt;
+* kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs&amp;hellip;&lt;br /&gt;
+* Read only kernel infomation. /proc&lt;br /&gt;
+##I think, important directory need to know.&lt;br /&gt;
+/proc/sys/kernel&lt;/p&gt;
+
+&lt;h1 id=&#34;sysfs&#34;&gt;Sysfs&lt;/h1&gt;
+
+&lt;p&gt;sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!&lt;/p&gt;
+
+&lt;h1 id=&#34;ramfs&#34;&gt;Ramfs&lt;/h1&gt;
+
+&lt;p&gt;fs/ramfs&lt;/p&gt;
+
+&lt;p&gt;##reference&lt;br /&gt;
+&lt;a href=&#34;http://www.thegeekstuff.com/2008/11/overview-of-ramfs-and-tmpfs-on-linux/&#34;&gt;Overview of RAMFS and TMPFS on Linux&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;#tmpfs&lt;br /&gt;
+mm/shmem.c&lt;br /&gt;
+&lt;a href=&#34;http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/&#34;&gt;关于 tmpfs&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;#rootfs&lt;br /&gt;
+init/do_mounts.c&lt;br /&gt;
+init_rootfs()&lt;br /&gt;
+init_mount_tree&lt;br /&gt;
+rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs&lt;br /&gt;
+但是在do_basic_setup才初始化.&lt;br /&gt;
+rootfs_initcall(populate_rootfs);&lt;/p&gt;
+
+&lt;p&gt;#initramfs&lt;br /&gt;
+init/initramfs.c&lt;/p&gt;
+
+&lt;p&gt;initrd-&amp;gt;initramfs&lt;br /&gt;
+{&lt;br /&gt;
+    linus&amp;rsquo; ramfs -&amp;gt; /tmpfs&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;p&gt;##Difference with initrd&lt;br /&gt;
+initrd is image with specific fs type, like ext2, need driver built-in kernel.&lt;br /&gt;
+initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs&lt;/p&gt;
+
+&lt;p&gt;##request hard drive driver maybe fs driver&lt;br /&gt;
+ata_host_register-&amp;gt;ata_scsi_scan_host-&amp;gt;__scsi_add_device-&amp;gt;scsi_probe_and_add_lun -&amp;gt;scsi_add_lun&lt;/p&gt;
+
+&lt;p&gt;subsys_initcall(genhd_device_init);-&amp;gt;kobj_map_init{bdev_map.probe.get = base_probe}&lt;/p&gt;
+
+&lt;p&gt;subsys_initcall(init_scsi);4-&amp;gt;scsi_sysfs_register{autoprobe = 1;}&lt;br /&gt;
+rootfs_initcall(populate_rootfs);-&amp;gt;{unpack_to_rootfs; 解压initramfs到rootfs}&lt;br /&gt;
+module_initinit_sd;6-&amp;gt;scsi_register_driver -&amp;gt;driver_register-&amp;gt;bus_add_driver -&amp;gt;driver_attach -&amp;gt;driver_probe_device-&amp;gt; drv-&amp;gt;probe(dev)=sd_probe_async-&amp;gt;add_disk -&amp;gt; register_disk -&amp;gt; get_gendisk -&amp;gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}&lt;/p&gt;
+
+&lt;p&gt;##mount fs&lt;br /&gt;
+kernel_init_freeable-&amp;gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd&lt;br /&gt;
+如果/init不可以访问 prepare_namespace{挂在真正的文件系统}&lt;/p&gt;
+
+&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
+
+&lt;h2 id=&#34;forbid-ln&#34;&gt;forbid ln&lt;/h2&gt;
+
+&lt;p&gt;hard link to directory, recursive&lt;br /&gt;
+hard link to file accross partitions, may led confilict with inode number.&lt;/p&gt;
+
+&lt;h2 id=&#34;stick-bit&#34;&gt;stick bit&lt;/h2&gt;
+
+&lt;p&gt;chmod +t&lt;br /&gt;
+1777&lt;br /&gt;
+只有owner 和root才能删除这个文件, 用于/tmp&lt;/p&gt;
+
+&lt;h2 id=&#34;time-of-file&#34;&gt;time of file&lt;/h2&gt;
+
+&lt;h3 id=&#34;atime&#34;&gt;atime&lt;/h3&gt;
+
+&lt;p&gt;perhaps the most stupid Unix design idea of all times,&amp;rdquo; adding: &amp;ldquo;[T]hink about this a bit: &amp;lsquo;For every file that is read from the disk, lets do a &amp;hellip; write to the disk! And, for every file that is already cached and which we read from the cache &amp;hellip; do a write to the disk!&amp;rsquo;&amp;rdquo; He further emphasized the performance impact thus:&lt;/p&gt;
+
+&lt;h4 id=&#34;find-relatime-options&#34;&gt;find relatime options&lt;/h4&gt;
+
+&lt;p&gt;cat /proc/mounts&lt;br /&gt;
+man mount&lt;/p&gt;
+
+&lt;h3 id=&#34;chang-time&#34;&gt;chang time&lt;/h3&gt;
+
+&lt;p&gt;meta data&lt;/p&gt;
+
+&lt;h3 id=&#34;modification-time&#34;&gt;modification time&lt;/h3&gt;
+
+&lt;p&gt;content of file&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Interrupt</title>
       <link>http://firoyang.org/cs/interrupt/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
@@ -1059,175 +1228,6 @@ Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C
 
 &lt;p&gt;&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>filesystem</title>
-      <link>http://firoyang.org/cs/fs/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/fs/</guid>
-      <description>
-
-&lt;h1 id=&#34;open&#34;&gt;open()&lt;/h1&gt;
-
-&lt;p&gt;最烦, 看什么系统调用参数了.&lt;br /&gt;
-那一大堆很少用到的组合还有undefined, 太扯淡了.&lt;br /&gt;
-也说不上碎碎的问题, 要理解着来, 看man 手册, 贴子显然不是&lt;br /&gt;
-最后的注意还是看实现吧.&lt;br /&gt;
-build_open_flags()还是看不出&lt;br /&gt;
-man里面有一句&lt;br /&gt;
- The (undefined) effect of O_RDONLY | O_TRUNC varies among implementations.&lt;br /&gt;
-On many systems the file is actually truncated.&lt;/p&gt;
-
-&lt;p&gt;#Hacks&lt;br /&gt;
-I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.&lt;/p&gt;
-
-&lt;p&gt;#VFS&lt;br /&gt;
-##Common concepts&lt;br /&gt;
-* VFS:Common fs interface plus fs anstraction layer!&lt;/p&gt;
-
-&lt;h2 id=&#34;unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points&#34;&gt;Unix fs-related abstractions: file, directory entries, inodes, and mount points.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Filesytem: a hierarchial storage of data adhering to a specific structure.&lt;br /&gt;
-In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file: and ordered string of bytes.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;directory: analogous to a folder and usally contains related files.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry: Each component of a path is called a directory entry.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;supreblock: a data structure containing information about the filesystem as a whole.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;vfs-primary-objects-superblock-inode-dentry-file&#34;&gt;VFS primary objects: superblock, inode, dentry, file.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;supreblock: a specific mounted filesystem.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inode: unit for fs. all the information needed by the kernel to manipulate a file or directory.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry: accelerate access fs, dcache! a single component of a path, certainly include &lt;em&gt;regular&lt;/em&gt; file.&lt;br /&gt;
-VFS treats directory as non-exist &lt;em&gt;normal&lt;/em&gt; file. directory and dentry is not the same at all, different congitive level!&lt;br /&gt;
-In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file: an open normal file as associated with a process.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;##Step of how to use ext2 fs&lt;br /&gt;
-* Register a fs type in kernel.&lt;br /&gt;
-struct file_system_type: basic fs driver codes!&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;mkfs.ext2&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;shell mount -&amp;gt; sys_mount -&amp;gt; file_system_type-&amp;gt;mount =&amp;gt; root dentry and dentry-&amp;gt;d_sb!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;sys_open -&amp;gt;&lt;br /&gt;
-path_init()&lt;br /&gt;
-
-&lt;ol&gt;
-&lt;li&gt;get start point current-&amp;gt;fs{root, pwd}&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)&lt;br /&gt;
-do_last()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;br /&gt;&lt;/li&gt;
-&lt;/ol&gt;&lt;/li&gt;
-&lt;li&gt;sys_write -&amp;gt;&lt;br /&gt;
-file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;##How make dentry&lt;br /&gt;
-d_alloc() alloc new dentry&lt;br /&gt;
-parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;&lt;br /&gt;
-set inode to dentry&lt;/p&gt;
-
-&lt;p&gt;#Procfs&lt;br /&gt;
-##How many parts does procfs has?&lt;br /&gt;
-* process-specific read only /proc/&lt;pid&gt;/&lt;br /&gt;
-* process tuneable interface. /proc/&lt;pid&gt;/&lt;br /&gt;
-* kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs&amp;hellip;&lt;br /&gt;
-* Read only kernel infomation. /proc&lt;br /&gt;
-##I think, important directory need to know.&lt;br /&gt;
-/proc/sys/kernel&lt;/p&gt;
-
-&lt;h1 id=&#34;sysfs&#34;&gt;Sysfs&lt;/h1&gt;
-
-&lt;p&gt;sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!&lt;/p&gt;
-
-&lt;h1 id=&#34;ramfs&#34;&gt;Ramfs&lt;/h1&gt;
-
-&lt;p&gt;fs/ramfs&lt;/p&gt;
-
-&lt;p&gt;##reference&lt;br /&gt;
-&lt;a href=&#34;http://www.thegeekstuff.com/2008/11/overview-of-ramfs-and-tmpfs-on-linux/&#34;&gt;Overview of RAMFS and TMPFS on Linux&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#tmpfs&lt;br /&gt;
-mm/shmem.c&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/&#34;&gt;关于 tmpfs&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#rootfs&lt;br /&gt;
-init/do_mounts.c&lt;br /&gt;
-init_rootfs()&lt;br /&gt;
-init_mount_tree&lt;br /&gt;
-rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs&lt;br /&gt;
-但是在do_basic_setup才初始化.&lt;br /&gt;
-rootfs_initcall(populate_rootfs);&lt;/p&gt;
-
-&lt;p&gt;#initramfs&lt;br /&gt;
-init/initramfs.c&lt;/p&gt;
-
-&lt;p&gt;initrd-&amp;gt;initramfs&lt;br /&gt;
-{&lt;br /&gt;
-    linus&amp;rsquo; ramfs -&amp;gt; /tmpfs&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;p&gt;##Difference with initrd&lt;br /&gt;
-initrd is image with specific fs type, like ext2, need driver built-in kernel.&lt;br /&gt;
-initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs&lt;/p&gt;
-
-&lt;p&gt;##request hard drive driver maybe fs driver&lt;br /&gt;
-ata_host_register-&amp;gt;ata_scsi_scan_host-&amp;gt;__scsi_add_device-&amp;gt;scsi_probe_and_add_lun -&amp;gt;scsi_add_lun&lt;/p&gt;
-
-&lt;p&gt;subsys_initcall(genhd_device_init);-&amp;gt;kobj_map_init{bdev_map.probe.get = base_probe}&lt;/p&gt;
-
-&lt;p&gt;subsys_initcall(init_scsi);4-&amp;gt;scsi_sysfs_register{autoprobe = 1;}&lt;br /&gt;
-rootfs_initcall(populate_rootfs);-&amp;gt;{unpack_to_rootfs; 解压initramfs到rootfs}&lt;br /&gt;
-module_initinit_sd;6-&amp;gt;scsi_register_driver -&amp;gt;driver_register-&amp;gt;bus_add_driver -&amp;gt;driver_attach -&amp;gt;driver_probe_device-&amp;gt; drv-&amp;gt;probe(dev)=sd_probe_async-&amp;gt;add_disk -&amp;gt; register_disk -&amp;gt; get_gendisk -&amp;gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}&lt;/p&gt;
-
-&lt;p&gt;##mount fs&lt;br /&gt;
-kernel_init_freeable-&amp;gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd&lt;br /&gt;
-如果/init不可以访问 prepare_namespace{挂在真正的文件系统}&lt;/p&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;h2 id=&#34;forbid-ln&#34;&gt;forbid ln&lt;/h2&gt;
-
-&lt;p&gt;hard link to directory, recursive&lt;br /&gt;
-hard link to file accross partitions, may led confilict with inode number.&lt;/p&gt;
-
-&lt;h2 id=&#34;stick-bit&#34;&gt;stick bit&lt;/h2&gt;
-
-&lt;p&gt;chmod +t&lt;br /&gt;
-1777&lt;br /&gt;
-只有owner 和root才能删除这个文件, 用于/tmp&lt;/p&gt;
-
-&lt;h2 id=&#34;time-of-file&#34;&gt;time of file&lt;/h2&gt;
-
-&lt;h3 id=&#34;atime&#34;&gt;atime&lt;/h3&gt;
-
-&lt;p&gt;perhaps the most stupid Unix design idea of all times,&amp;rdquo; adding: &amp;ldquo;[T]hink about this a bit: &amp;lsquo;For every file that is read from the disk, lets do a &amp;hellip; write to the disk! And, for every file that is already cached and which we read from the cache &amp;hellip; do a write to the disk!&amp;rsquo;&amp;rdquo; He further emphasized the performance impact thus:&lt;/p&gt;
-
-&lt;h4 id=&#34;find-relatime-options&#34;&gt;find relatime options&lt;/h4&gt;
-
-&lt;p&gt;cat /proc/mounts&lt;br /&gt;
-man mount&lt;/p&gt;
-
-&lt;h3 id=&#34;chang-time&#34;&gt;chang time&lt;/h3&gt;
-
-&lt;p&gt;meta data&lt;/p&gt;
-
-&lt;h3 id=&#34;modification-time&#34;&gt;modification time&lt;/h3&gt;
-
-&lt;p&gt;content of file&lt;/p&gt;
 </description>
     </item>
     
