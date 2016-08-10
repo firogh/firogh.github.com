@@ -828,6 +828,265 @@ when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
     </item>
     
     <item>
+      <title>Kernel</title>
+      <link>http://firoyang.org/cs/kernel/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/kernel/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;[Kernel in Wikipedia](&lt;a href=&#34;https://en.wikipedia.org/wiki/Kernel_(operating_system&#34;&gt;https://en.wikipedia.org/wiki/Kernel_(operating_system&lt;/a&gt;)&lt;br /&gt;
+* Book&lt;br /&gt;
+* Website&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/&#34;&gt;http://lwn.net/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://elinux.org/Kernel_Debugging_Tips&#34;&gt;http://elinux.org/Kernel_Debugging_Tips&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/&#34;&gt;https://www.kernel.org/doc/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;http://kernelnewbies.org/KernelJanitors/Todo&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://eudyptula-challenge.org/&#34;&gt;http://eudyptula-challenge.org/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/&#34;&gt;走近Linux内核&amp;ndash; 王聪&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;cpu-freq&#34;&gt;CPU freq&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;onset&lt;br /&gt;
+device_initcall: intel_pstate_init-&amp;gt;cpufreq_register_driver&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;nuclus&lt;br /&gt;
+** onset&lt;br /&gt;
+__cpufreq_add_dev -&amp;gt; cpufreq init= intel_pstate_cpu_init-&amp;gt;intel_pstate_init_cpu&lt;br /&gt;
+** coda&lt;br /&gt;
+_cpu_down-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+cpu_notify_nofail(CPU_DEAD | mod, hcpu)-&amp;gt;timer_cpu_notify&lt;br /&gt;
+cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu)-&amp;gt;cpufreq_cpu_callback-&amp;gt;cpufreq exit = intel_pstate_cpu_exit,&lt;br /&gt;
+}&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;coda&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;kernel-panic-3-10-62&#34;&gt;kernel panic 3.10.62&lt;/h1&gt;
+
+&lt;p&gt;general protection fault and page fault&lt;br /&gt;
+1498 errorentry general_protection do_general_protection&lt;br /&gt;
+1499 errorentry page_fault do_page_fault&lt;br /&gt;
+static const struct stacktrace_ops print_trace_ops = {&lt;br /&gt;
+        .stack                  = print_trace_stack,&lt;br /&gt;
+        .address                = print_trace_address,&lt;br /&gt;
+        .walk_stack             = print_context_stack,&lt;br /&gt;
+};&lt;br /&gt;
+no_context-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    show_fault_oops-&amp;gt;&lt;br /&gt;
+    __die-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        print_modules&lt;br /&gt;
+        show_regs&lt;br /&gt;
+        {&lt;br /&gt;
+            printk(KERN_DEFAULT &amp;ldquo;Stack:\n&amp;rdquo;);&lt;br /&gt;
+            show_stack_log_lvl-&amp;gt;&lt;br /&gt;
+            {&lt;br /&gt;
+                show_trace_log_lvl-&amp;gt;&lt;br /&gt;
+                {&lt;br /&gt;
+                    printk(&amp;ldquo;%sCall Trace:\n&amp;rdquo;, log_lvl);&lt;br /&gt;
+                    // arch/x86/kernel/dumpstack_64.c&lt;br /&gt;
+                    dump_trace-&amp;gt;&amp;amp;print_trace_ops&lt;br /&gt;
+                }&lt;br /&gt;
+            }&lt;br /&gt;
+            printk(KERN_DEFAULT &amp;ldquo;Code: &amp;ldquo;);&lt;br /&gt;
+        }&lt;br /&gt;
+    }&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/336224/&#34;&gt;Linux kernel design patterns&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.cs.fsu.edu/~baker/devices/notes/patterns.html#&#34;&gt;Linux Kernel Programming Patterns&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;find-bug&#34;&gt;Find bug&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Considered fault types&lt;br /&gt;
+Block “To avoid deadlock, do not call blocking functions with interrupts disabled or a spinlock held.”&lt;br /&gt;
+Null “Check potentially NULL pointers returned from routines”&lt;br /&gt;
+Var “Do not allocate large stack variables (&amp;gt;1K) on the fixed-size kernel stack.”&lt;br /&gt;
+INull “Do not make inconsistent assumptions about whether a pointer is NULL.”&lt;br /&gt;
+Range “Always check bounds of array indices and loop bounds derived from user data.”&lt;br /&gt;
+Lock “Release acquired locks; do not double-acquire locks.”&lt;br /&gt;
+Intr “Restore disabled interrupts.”&lt;br /&gt;
+Free “Do not use freed memory.”&lt;br /&gt;
+Float “Do not use floating point in the kernel.”&lt;br /&gt;
+Size “Allocate enough memory to hold the type for which you are allocating.”&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##KSM&lt;/p&gt;
+
+&lt;p&gt;#Signal&lt;br /&gt;
+* struct signal_sturct:&lt;br /&gt;
+The &amp;ldquo;struct signal_struct&amp;rdquo; is the random &lt;em&gt;leftovers&lt;/em&gt; from all the other stuff.&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&lt;/a&gt;&lt;br /&gt;
+* sigpending&lt;br /&gt;
+Store blocked signal info&lt;br /&gt;
+* Non-mask signal&lt;br /&gt;
+SIGKILL, SIGSTOP&lt;br /&gt;
+##Generate signal&lt;br /&gt;
+&lt;strong&gt;send_signal();&lt;br /&gt;
+##Process siganl&lt;br /&gt;
+* SIGKILL (may be some other)&lt;br /&gt;
+process in _send_signal()-&amp;gt; complete_signal() tsk-&amp;gt;state |= TASK_WAKEKILL&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/288056/&#34;&gt;http://lwn.net/Articles/288056/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.ibm.com/developerworks/library/l-task-killable/&#34;&gt;http://www.ibm.com/developerworks/library/l-task-killable/&lt;/a&gt;&lt;br /&gt;
+* others&lt;br /&gt;
+each time a switch is made from kernel mode to user mode,&lt;br /&gt;
+arch-specific: entry.S -&amp;gt; do_siganl()&lt;br /&gt;
+{&lt;br /&gt;
+    get_signal_deliver()&lt;br /&gt;
+    {&lt;br /&gt;
+        if fatal -&amp;gt; do_greoup_exit()-&amp;gt;&amp;hellip;&lt;/strong&gt;cleanup_sighand()&lt;br /&gt;
+    }&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;handle_signal() -&amp;gt; k-&amp;gt;u(hanle)-sigreturn-&amp;gt;k
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;p&gt;#Netlink&lt;br /&gt;
+* Group&lt;br /&gt;
+enum rtnetlink_groups&lt;br /&gt;
+##What is netlink&lt;br /&gt;
+Networking related kernel configuration and monitoring interfaces.&lt;br /&gt;
+* IPC between kernel and user spacess process.&lt;br /&gt;
+ioctl&lt;br /&gt;
+* prarts&lt;br /&gt;
+    libnl&lt;br /&gt;
+    libnl-route&lt;br /&gt;
+    libnl-genl&lt;br /&gt;
+    libnl-nf&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How many parts does libnl-route has?&lt;br /&gt;
+Address,  links, neighboring, routing, TC&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;need-patch&#34;&gt;Need patch&lt;/h2&gt;
+
+&lt;p&gt;skbedit action&lt;br /&gt;
+cgroup classifier&lt;br /&gt;
+tun/tap dev&lt;br /&gt;
+gre tunnel dev&lt;br /&gt;
+tc classifier/action&lt;/p&gt;
+
+&lt;p&gt;#Namespace&lt;/p&gt;
+
+&lt;p&gt;#Module&lt;br /&gt;
+##pre-require&lt;br /&gt;
+modules.alias&lt;br /&gt;
+&lt;a href=&#34;http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html&#34;&gt;http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-22954220-id-4380202.html&#34;&gt;http://blog.chinaunix.net/uid-22954220-id-4380202.html&lt;/a&gt;&lt;br /&gt;
+运行时, 插入u盘也是这样.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;内核自己加载比如缺少模块的时候 网络协议, fs&lt;br /&gt;
+&lt;a href=&#34;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&#34;&gt;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;3 rc 里面smartqos之类的.&lt;/p&gt;
+
+&lt;p&gt;##Load module into kernel&lt;br /&gt;
+vmlinux.lds.h linker scipts include helper macros.&lt;/p&gt;
+
+&lt;p&gt;#Data structures&lt;br /&gt;
+* u32 __u32&lt;br /&gt;
+__u32 is used for user-space. declare a variabe used by icotl. qosmark.&lt;br /&gt;
+u32 is used for kernel.&lt;br /&gt;
+deatils in ldd3e chapter 10&lt;/p&gt;
+
+&lt;p&gt;#Panic&lt;br /&gt;
+kernel/kernel/panic.c&lt;/p&gt;
+
+&lt;p&gt;##disk&lt;br /&gt;
+subsys_initcall 4 genhd_device_init with base_probe{ request_module()}&lt;br /&gt;
+module_init 6 -&amp;gt;init_sd-&amp;gt;sync_schedule_domain(sd_probe_async&lt;/p&gt;
+
+&lt;p&gt;##cmdline&lt;br /&gt;
+root= name_to_dev_t, mount_root in prepare_namespace&lt;br /&gt;
+如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.&lt;br /&gt;
+systemd负责挂在文件系统, 切换.&lt;/p&gt;
+
+&lt;h1 id=&#34;the-principle-of-kernel-driver-backport&#34;&gt;The principle of kernel &amp;amp; driver backport&lt;/h1&gt;
+
+&lt;p&gt;将高本版kernel的feature移植到低版本的kernel的过程就是backport.&lt;br /&gt;
+1. 尽量保持与mainline的代码一致&lt;br /&gt;
+2. 做好取舍不要引入太多patch.&lt;/p&gt;
+
+&lt;h2 id=&#34;开发流程&#34;&gt;开发流程&lt;/h2&gt;
+
+&lt;p&gt;理清所引入feature的代码. 主要数据结构以及功能流程.&lt;/p&gt;
+
+&lt;h1 id=&#34;arm&#34;&gt;ARM&lt;/h1&gt;
+
+&lt;h2 id=&#34;smp-ops&#34;&gt;smp_ops&lt;/h2&gt;
+
+&lt;p&gt;Machine: Marvell Armada XP Development Board&lt;br /&gt;
+MACHINE_START(_type,_name)&lt;br /&gt;
+&lt;strong&gt;section&lt;/strong&gt;(&amp;ldquo;.arch.info.init&amp;rdquo;)&lt;br /&gt;
+arch/arm/tools/mach-types&lt;br /&gt;
+armada_xp_db            MACH_ARMADA_XP_DB       ARMADA_XP_DB            3036&lt;/p&gt;
+
+&lt;h2 id=&#34;smp&#34;&gt;smp&lt;/h2&gt;
+
+&lt;p&gt;An Implementation Of Multiprocessor Linux Alan Cox&lt;/p&gt;
+
+&lt;h3 id=&#34;cpumask&#34;&gt;cpumask&lt;/h3&gt;
+
+&lt;h2 id=&#34;interrupt&#34;&gt;Interrupt&lt;/h2&gt;
+
+&lt;p&gt;SPI and PPI or IPI, difference?&lt;/p&gt;
+
+&lt;h1 id=&#34;faq&#34;&gt;Faq&lt;/h1&gt;
+
+&lt;p&gt;MACHINE_START&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-system-boot-hang-freeze&#34;&gt;Kernel/system boot hang/freeze&lt;/h2&gt;
+
+&lt;h3 id=&#34;sysrq&#34;&gt;Sysrq&lt;/h3&gt;
+
+&lt;p&gt;Whe sysrq work?&lt;/p&gt;
+
+&lt;h3 id=&#34;bootargs&#34;&gt;bootargs&lt;/h3&gt;
+
+&lt;p&gt;debug initcall_debug&lt;/p&gt;
+
+&lt;h3 id=&#34;printk&#34;&gt;printk&lt;/h3&gt;
+
+&lt;h1 id=&#34;old-questions&#34;&gt;old questions&lt;/h1&gt;
+
+&lt;p&gt;What is platform driver?&lt;br /&gt;
+find source code of config&lt;br /&gt;
+How to print backtrace by kernel oops, and why it&amp;rsquo;s not exact?&lt;br /&gt;
+What is abi&lt;br /&gt;
+why get_unaligned_be16?&lt;br /&gt;
+ _THIS&lt;em&gt;IP&lt;/em&gt; vs &lt;strong&gt;FUNCTIONS&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-modules&#34;&gt;kernel modules&lt;/h1&gt;
+
+&lt;p&gt;sudo depmod -n -a -F /boot/System.map-4.3.5-300.fc23.x86_64  4.3.5-300.fc23.x86_64 &amp;gt; /tmp/m.log&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-patches&#34;&gt;kernel patches&lt;/h1&gt;
+
+&lt;p&gt;The cxgb3_*_send() functions return NET&lt;em&gt;XMIT&lt;/em&gt; values, which are&lt;br /&gt;
+positive integers values. So don&amp;rsquo;t treat positive return values&lt;br /&gt;
+as an error.&lt;br /&gt;
+67f1aee6f45059fd6b0f5b0ecb2c97ad0451f6b3&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Linux device driver</title>
       <link>http://firoyang.org/cs/dd/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
@@ -1228,265 +1487,6 @@ Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C
 
 &lt;p&gt;&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>kernel</title>
-      <link>http://firoyang.org/cs/kernel/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/kernel/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;[Kernel in Wikipedia](&lt;a href=&#34;https://en.wikipedia.org/wiki/Kernel_(operating_system&#34;&gt;https://en.wikipedia.org/wiki/Kernel_(operating_system&lt;/a&gt;)&lt;br /&gt;
-* Book&lt;br /&gt;
-* Website&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/&#34;&gt;http://lwn.net/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://elinux.org/Kernel_Debugging_Tips&#34;&gt;http://elinux.org/Kernel_Debugging_Tips&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/&#34;&gt;https://www.kernel.org/doc/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;http://kernelnewbies.org/KernelJanitors/Todo&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://eudyptula-challenge.org/&#34;&gt;http://eudyptula-challenge.org/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/&#34;&gt;走近Linux内核&amp;ndash; 王聪&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;cpu-freq&#34;&gt;CPU freq&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;onset&lt;br /&gt;
-device_initcall: intel_pstate_init-&amp;gt;cpufreq_register_driver&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;nuclus&lt;br /&gt;
-** onset&lt;br /&gt;
-__cpufreq_add_dev -&amp;gt; cpufreq init= intel_pstate_cpu_init-&amp;gt;intel_pstate_init_cpu&lt;br /&gt;
-** coda&lt;br /&gt;
-_cpu_down-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-cpu_notify_nofail(CPU_DEAD | mod, hcpu)-&amp;gt;timer_cpu_notify&lt;br /&gt;
-cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu)-&amp;gt;cpufreq_cpu_callback-&amp;gt;cpufreq exit = intel_pstate_cpu_exit,&lt;br /&gt;
-}&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;coda&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;kernel-panic-3-10-62&#34;&gt;kernel panic 3.10.62&lt;/h1&gt;
-
-&lt;p&gt;general protection fault and page fault&lt;br /&gt;
-1498 errorentry general_protection do_general_protection&lt;br /&gt;
-1499 errorentry page_fault do_page_fault&lt;br /&gt;
-static const struct stacktrace_ops print_trace_ops = {&lt;br /&gt;
-        .stack                  = print_trace_stack,&lt;br /&gt;
-        .address                = print_trace_address,&lt;br /&gt;
-        .walk_stack             = print_context_stack,&lt;br /&gt;
-};&lt;br /&gt;
-no_context-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    show_fault_oops-&amp;gt;&lt;br /&gt;
-    __die-&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        print_modules&lt;br /&gt;
-        show_regs&lt;br /&gt;
-        {&lt;br /&gt;
-            printk(KERN_DEFAULT &amp;ldquo;Stack:\n&amp;rdquo;);&lt;br /&gt;
-            show_stack_log_lvl-&amp;gt;&lt;br /&gt;
-            {&lt;br /&gt;
-                show_trace_log_lvl-&amp;gt;&lt;br /&gt;
-                {&lt;br /&gt;
-                    printk(&amp;ldquo;%sCall Trace:\n&amp;rdquo;, log_lvl);&lt;br /&gt;
-                    // arch/x86/kernel/dumpstack_64.c&lt;br /&gt;
-                    dump_trace-&amp;gt;&amp;amp;print_trace_ops&lt;br /&gt;
-                }&lt;br /&gt;
-            }&lt;br /&gt;
-            printk(KERN_DEFAULT &amp;ldquo;Code: &amp;ldquo;);&lt;br /&gt;
-        }&lt;br /&gt;
-    }&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/336224/&#34;&gt;Linux kernel design patterns&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.cs.fsu.edu/~baker/devices/notes/patterns.html#&#34;&gt;Linux Kernel Programming Patterns&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;find-bug&#34;&gt;Find bug&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Considered fault types&lt;br /&gt;
-Block “To avoid deadlock, do not call blocking functions with interrupts disabled or a spinlock held.”&lt;br /&gt;
-Null “Check potentially NULL pointers returned from routines”&lt;br /&gt;
-Var “Do not allocate large stack variables (&amp;gt;1K) on the fixed-size kernel stack.”&lt;br /&gt;
-INull “Do not make inconsistent assumptions about whether a pointer is NULL.”&lt;br /&gt;
-Range “Always check bounds of array indices and loop bounds derived from user data.”&lt;br /&gt;
-Lock “Release acquired locks; do not double-acquire locks.”&lt;br /&gt;
-Intr “Restore disabled interrupts.”&lt;br /&gt;
-Free “Do not use freed memory.”&lt;br /&gt;
-Float “Do not use floating point in the kernel.”&lt;br /&gt;
-Size “Allocate enough memory to hold the type for which you are allocating.”&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;##KSM&lt;/p&gt;
-
-&lt;p&gt;#Signal&lt;br /&gt;
-* struct signal_sturct:&lt;br /&gt;
-The &amp;ldquo;struct signal_struct&amp;rdquo; is the random &lt;em&gt;leftovers&lt;/em&gt; from all the other stuff.&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/512831/focus=513990&lt;/a&gt;&lt;br /&gt;
-* sigpending&lt;br /&gt;
-Store blocked signal info&lt;br /&gt;
-* Non-mask signal&lt;br /&gt;
-SIGKILL, SIGSTOP&lt;br /&gt;
-##Generate signal&lt;br /&gt;
-&lt;strong&gt;send_signal();&lt;br /&gt;
-##Process siganl&lt;br /&gt;
-* SIGKILL (may be some other)&lt;br /&gt;
-process in _send_signal()-&amp;gt; complete_signal() tsk-&amp;gt;state |= TASK_WAKEKILL&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/288056/&#34;&gt;http://lwn.net/Articles/288056/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.ibm.com/developerworks/library/l-task-killable/&#34;&gt;http://www.ibm.com/developerworks/library/l-task-killable/&lt;/a&gt;&lt;br /&gt;
-* others&lt;br /&gt;
-each time a switch is made from kernel mode to user mode,&lt;br /&gt;
-arch-specific: entry.S -&amp;gt; do_siganl()&lt;br /&gt;
-{&lt;br /&gt;
-    get_signal_deliver()&lt;br /&gt;
-    {&lt;br /&gt;
-        if fatal -&amp;gt; do_greoup_exit()-&amp;gt;&amp;hellip;&lt;/strong&gt;cleanup_sighand()&lt;br /&gt;
-    }&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;handle_signal() -&amp;gt; k-&amp;gt;u(hanle)-sigreturn-&amp;gt;k
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;p&gt;#Netlink&lt;br /&gt;
-* Group&lt;br /&gt;
-enum rtnetlink_groups&lt;br /&gt;
-##What is netlink&lt;br /&gt;
-Networking related kernel configuration and monitoring interfaces.&lt;br /&gt;
-* IPC between kernel and user spacess process.&lt;br /&gt;
-ioctl&lt;br /&gt;
-* prarts&lt;br /&gt;
-    libnl&lt;br /&gt;
-    libnl-route&lt;br /&gt;
-    libnl-genl&lt;br /&gt;
-    libnl-nf&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;How many parts does libnl-route has?&lt;br /&gt;
-Address,  links, neighboring, routing, TC&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;need-patch&#34;&gt;Need patch&lt;/h2&gt;
-
-&lt;p&gt;skbedit action&lt;br /&gt;
-cgroup classifier&lt;br /&gt;
-tun/tap dev&lt;br /&gt;
-gre tunnel dev&lt;br /&gt;
-tc classifier/action&lt;/p&gt;
-
-&lt;p&gt;#Namespace&lt;/p&gt;
-
-&lt;p&gt;#Module&lt;br /&gt;
-##pre-require&lt;br /&gt;
-modules.alias&lt;br /&gt;
-&lt;a href=&#34;http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html&#34;&gt;http://doc.opensuse.org/documentation/html/openSUSE_113/opensuse-reference/cha.udev.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-22954220-id-4380202.html&#34;&gt;http://blog.chinaunix.net/uid-22954220-id-4380202.html&lt;/a&gt;&lt;br /&gt;
-运行时, 插入u盘也是这样.&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;内核自己加载比如缺少模块的时候 网络协议, fs&lt;br /&gt;
-&lt;a href=&#34;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&#34;&gt;https://unix.stackexchange.com/questions/90027/what-is-the-sequence-loading-linux-kernel-module-on-startup-how-priority-is-set/90037#90037&lt;/a&gt;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;3 rc 里面smartqos之类的.&lt;/p&gt;
-
-&lt;p&gt;##Load module into kernel&lt;br /&gt;
-vmlinux.lds.h linker scipts include helper macros.&lt;/p&gt;
-
-&lt;p&gt;#Data structures&lt;br /&gt;
-* u32 __u32&lt;br /&gt;
-__u32 is used for user-space. declare a variabe used by icotl. qosmark.&lt;br /&gt;
-u32 is used for kernel.&lt;br /&gt;
-deatils in ldd3e chapter 10&lt;/p&gt;
-
-&lt;p&gt;#Panic&lt;br /&gt;
-kernel/kernel/panic.c&lt;/p&gt;
-
-&lt;p&gt;##disk&lt;br /&gt;
-subsys_initcall 4 genhd_device_init with base_probe{ request_module()}&lt;br /&gt;
-module_init 6 -&amp;gt;init_sd-&amp;gt;sync_schedule_domain(sd_probe_async&lt;/p&gt;
-
-&lt;p&gt;##cmdline&lt;br /&gt;
-root= name_to_dev_t, mount_root in prepare_namespace&lt;br /&gt;
-如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.&lt;br /&gt;
-systemd负责挂在文件系统, 切换.&lt;/p&gt;
-
-&lt;h1 id=&#34;the-principle-of-kernel-driver-backport&#34;&gt;The principle of kernel &amp;amp; driver backport&lt;/h1&gt;
-
-&lt;p&gt;将高本版kernel的feature移植到低版本的kernel的过程就是backport.&lt;br /&gt;
-1. 尽量保持与mainline的代码一致&lt;br /&gt;
-2. 做好取舍不要引入太多patch.&lt;/p&gt;
-
-&lt;h2 id=&#34;开发流程&#34;&gt;开发流程&lt;/h2&gt;
-
-&lt;p&gt;理清所引入feature的代码. 主要数据结构以及功能流程.&lt;/p&gt;
-
-&lt;h1 id=&#34;arm&#34;&gt;ARM&lt;/h1&gt;
-
-&lt;h2 id=&#34;smp-ops&#34;&gt;smp_ops&lt;/h2&gt;
-
-&lt;p&gt;Machine: Marvell Armada XP Development Board&lt;br /&gt;
-MACHINE_START(_type,_name)&lt;br /&gt;
-&lt;strong&gt;section&lt;/strong&gt;(&amp;ldquo;.arch.info.init&amp;rdquo;)&lt;br /&gt;
-arch/arm/tools/mach-types&lt;br /&gt;
-armada_xp_db            MACH_ARMADA_XP_DB       ARMADA_XP_DB            3036&lt;/p&gt;
-
-&lt;h2 id=&#34;smp&#34;&gt;smp&lt;/h2&gt;
-
-&lt;p&gt;An Implementation Of Multiprocessor Linux Alan Cox&lt;/p&gt;
-
-&lt;h3 id=&#34;cpumask&#34;&gt;cpumask&lt;/h3&gt;
-
-&lt;h2 id=&#34;interrupt&#34;&gt;Interrupt&lt;/h2&gt;
-
-&lt;p&gt;SPI and PPI or IPI, difference?&lt;/p&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;Faq&lt;/h1&gt;
-
-&lt;p&gt;MACHINE_START&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel-system-boot-hang-freeze&#34;&gt;Kernel/system boot hang/freeze&lt;/h2&gt;
-
-&lt;h3 id=&#34;sysrq&#34;&gt;Sysrq&lt;/h3&gt;
-
-&lt;p&gt;Whe sysrq work?&lt;/p&gt;
-
-&lt;h3 id=&#34;bootargs&#34;&gt;bootargs&lt;/h3&gt;
-
-&lt;p&gt;debug initcall_debug&lt;/p&gt;
-
-&lt;h3 id=&#34;printk&#34;&gt;printk&lt;/h3&gt;
-
-&lt;h1 id=&#34;old-questions&#34;&gt;old questions&lt;/h1&gt;
-
-&lt;p&gt;What is platform driver?&lt;br /&gt;
-find source code of config&lt;br /&gt;
-How to print backtrace by kernel oops, and why it&amp;rsquo;s not exact?&lt;br /&gt;
-What is abi&lt;br /&gt;
-why get_unaligned_be16?&lt;br /&gt;
- _THIS&lt;em&gt;IP&lt;/em&gt; vs &lt;strong&gt;FUNCTIONS&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-modules&#34;&gt;kernel modules&lt;/h1&gt;
-
-&lt;p&gt;sudo depmod -n -a -F /boot/System.map-4.3.5-300.fc23.x86_64  4.3.5-300.fc23.x86_64 &amp;gt; /tmp/m.log&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-patches&#34;&gt;kernel patches&lt;/h1&gt;
-
-&lt;p&gt;The cxgb3_*_send() functions return NET&lt;em&gt;XMIT&lt;/em&gt; values, which are&lt;br /&gt;
-positive integers values. So don&amp;rsquo;t treat positive return values&lt;br /&gt;
-as an error.&lt;br /&gt;
-67f1aee6f45059fd6b0f5b0ecb2c97ad0451f6b3&lt;/p&gt;
 </description>
     </item>
     
