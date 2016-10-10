@@ -156,7 +156,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1948">
+<meta itemprop="wordCount" content="1992">
 <meta itemprop="datePublished" content="2015-12-05">
 <meta itemprop="url" content="http://firoyang.org/cs/console/">
 
@@ -693,6 +693,37 @@ unknown              /dev/tty        4 1-63 console<br />
 ./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &ldquo;/dev/tty&rdquo;) &lt; 0)<br />
 ./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &ldquo;/dev/console&rdquo;) &lt; 0)<br />
 ./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &ldquo;/dev/ptmx&rdquo;) &lt; 0)</p>
+
+<h1 id="hugh-in-n-tty-write">hugh in n_tty_write</h1>
+
+<p>uart_flush_buffer-&gt; tty_wakeup<br />
+serial8250_handle_port-&gt; transmit_chars<br />
+n_tty_read/poll-&gt;input_available_p-&gt;flush_to_ldisc-&gt;n_tty_receive_buf-&gt;uart_flush_chars<br />
+n_tty_write-&gt;uart_flush_chars-&gt;uart_start<br />
+n_tty_write-&gt;uart_write-&gt; uart_start-&gt;start_tx -&gt; serial8250_start_tx -&gt; transmit_chars-&gt;uart_write_wakeup -&gt;uart_tasklet_action-&gt;tty_wakeup</p>
+
+<h1 id="echo-char">Echo char</h1>
+
+<p>===serial chipset<br />
+serial8250_interrupt<br />
+seirial8250_handle_port<br />
+receive_chars</p>
+
+<p>===serial abstruction<br />
+uart_insert_char</p>
+
+<p>===terminal device<br />
+tty_insert_flip_char</p>
+
+<p>receive_chars-&gt;tty_flip_buffer_push -&gt;flush_to_ldisc-&gt;<br />
+=== Line discipline<br />
+disc-&gt;receive_buf=n_tty_receive_buf-&gt;n_tty_receive_char-&gt;echo_char</p>
+
+<h1 id="uart-port">uart_port</h1>
+
+<p>serial8250_register_ports<br />
+struct uart_8250_port *up = &amp;serial8250_ports[i];<br />
+uart_add_one_port(drv, &amp;up-&gt;port);</p>
 
 		</article>
 	  </div>

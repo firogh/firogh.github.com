@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="539">
+<meta itemprop="wordCount" content="590">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -177,23 +177,59 @@
 <h1 id="debugging-and-bug-types">Debugging and Bug types</h1>
 
 <p>Does anyone can tell me what is debugging? Debugging is <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>.<br />
-The explaination type of a Bug is named Bug type, generally.<br />
-坊间流传这样一句话:&ldquo;能复现的Bug, 都不算Bug.&rdquo;, 言外之意就是能复现就能解.<br />
-可见Bug复现,对解Bug的重要性. <a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">BUG type of Jim Gray</a>,除了Bohrbug,其他都不太好解.<br />
+Theory + Observations =&gt; Explanation</p>
+
+<h1 id="bug-classifications">Bug classifications</h1>
+
+<p><a href="http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs">BUG type of Jim Gray</a>,除了Bohrbug,其他都不太好解.<br />
 The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,<br />
 他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.<br />
 NVD的Bug分类也采用类似的构建方式.<a href="https://nvd.nist.gov/cwe.cfm">CWE Cross Section Mapped into by NVD</a><br />
 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了<br />
 <a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
 
-<p>use after free</p>
+<h1 id="use-after-free">use after free</h1>
 
-<h1 id="bugs-in-linux-kernel">Bugs in Linux kernel</h1>
+<p>record the owner, who free.</p>
 
-<p>Kernel oops,<a href="http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf">When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.</a><br />
-<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">kenrel lockup</a><br />
-<a href="http://fedoraproject.org/wiki/KernelBugClassification">oops, WARN_ON, or kernel panic</a><br />
-<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops</a>/warn/panic</p>
+<h1 id="oops">oops</h1>
+
+<p>Kernel oops relates to invalid memory access, including sigev and sigbus.<br />
+<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops tracing</a></p>
+
+<h1 id="lockup">lockup</h1>
+
+<p>phenomenon: LOCKUP_DETECTOR<br />
+<a href="https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt">kernle doc - Softlockup detector and hardlockup detector</a><br />
+<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">Debugging Linux Kernel Lockup / Panic / Oops</a><br />
+Causes: deadlock, hardware, irqoff and loop</p>
+
+<h1 id="hung-task">hung task</h1>
+
+<p>phenomenon: DETECT_HUNG_TASK<br />
+Includes the interruptable task.<br />
+Causes: deadlock, race condition</p>
+
+<h1 id="deadlock">deadlock</h1>
+
+<p>Lockdep<br />
+<a href="https://lwn.net/Articles/185666/">The kernel lock validator</a><br />
+<a href="https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt">Runtime locking correctness validator</a><br />
+<a href="https://lkml.org/lkml/2013/2/4/4">https://lkml.org/lkml/2013/2/4/4</a><br />
+<a href="http://bbs.chinaunix.net/thread-4183696-1-1.html">http://bbs.chinaunix.net/thread-4183696-1-1.html</a></p>
+
+<h1 id="kasan">kasan</h1>
+
+<p>setup_arch-&gt;kasan_init<br />
+<a href="http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf">KernelAddressSanitizer a fast memory error detector for the Linux kernel</a><br />
+<a href="https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506">kasan found stack out of bounds</a><br />
+<a href="https://lwn.net/Articles/612153/">lwn The kernel address sanitizer</a><br />
+<a href="https://lkml.org/lkml/2014/12/3/128">out of bounds</a></p>
+
+<h1 id="config-debug-pagealloc">CONFIG_DEBUG_PAGEALLOC</h1>
+
+<p>check_poison_mem in alloc_pages<br />
+free_pages_prepare posion</p>
 
 <h1 id="general-debugging-steps">General debugging steps</h1>
 
@@ -211,9 +247,7 @@ E: ∅ -&gt; Bug type(可能经过是多种Bug types的过渡状态) -&gt; Expla
 &gt; the process of debugging is use O to minimize T to E instance.<br />
 &gt; T is solutions space, E <a href="https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1">locates</a> in T. O is the address to find E.</p>
 
-<p>对于Software Bug而言, Debugging可以认为是从observations到source code再到人的逻辑的过程.<br />
-observations -&gt; source code -&gt; mind logic<br />
-基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.</p>
+<p>基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.</p>
 
 <h3 id="get-observations">Get observations</h3>
 

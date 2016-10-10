@@ -735,6 +735,37 @@ unknown              /dev/tty        4 1-63 console&lt;br /&gt;
 ./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
 ./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
 ./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
+
+&lt;h1 id=&#34;hugh-in-n-tty-write&#34;&gt;hugh in n_tty_write&lt;/h1&gt;
+
+&lt;p&gt;uart_flush_buffer-&amp;gt; tty_wakeup&lt;br /&gt;
+serial8250_handle_port-&amp;gt; transmit_chars&lt;br /&gt;
+n_tty_read/poll-&amp;gt;input_available_p-&amp;gt;flush_to_ldisc-&amp;gt;n_tty_receive_buf-&amp;gt;uart_flush_chars&lt;br /&gt;
+n_tty_write-&amp;gt;uart_flush_chars-&amp;gt;uart_start&lt;br /&gt;
+n_tty_write-&amp;gt;uart_write-&amp;gt; uart_start-&amp;gt;start_tx -&amp;gt; serial8250_start_tx -&amp;gt; transmit_chars-&amp;gt;uart_write_wakeup -&amp;gt;uart_tasklet_action-&amp;gt;tty_wakeup&lt;/p&gt;
+
+&lt;h1 id=&#34;echo-char&#34;&gt;Echo char&lt;/h1&gt;
+
+&lt;p&gt;===serial chipset&lt;br /&gt;
+serial8250_interrupt&lt;br /&gt;
+seirial8250_handle_port&lt;br /&gt;
+receive_chars&lt;/p&gt;
+
+&lt;p&gt;===serial abstruction&lt;br /&gt;
+uart_insert_char&lt;/p&gt;
+
+&lt;p&gt;===terminal device&lt;br /&gt;
+tty_insert_flip_char&lt;/p&gt;
+
+&lt;p&gt;receive_chars-&amp;gt;tty_flip_buffer_push -&amp;gt;flush_to_ldisc-&amp;gt;&lt;br /&gt;
+=== Line discipline&lt;br /&gt;
+disc-&amp;gt;receive_buf=n_tty_receive_buf-&amp;gt;n_tty_receive_char-&amp;gt;echo_char&lt;/p&gt;
+
+&lt;h1 id=&#34;uart-port&#34;&gt;uart_port&lt;/h1&gt;
+
+&lt;p&gt;serial8250_register_ports&lt;br /&gt;
+struct uart_8250_port *up = &amp;amp;serial8250_ports[i];&lt;br /&gt;
+uart_add_one_port(drv, &amp;amp;up-&amp;gt;port);&lt;/p&gt;
 </description>
     </item>
     
@@ -1104,6 +1135,12 @@ Leap second&lt;/p&gt;
 
 &lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
 
+&lt;h2 id=&#34;unites&#34;&gt;unites&lt;/h2&gt;
+
+&lt;p&gt;cputime = jiffies under HZ (FIXME)&lt;br /&gt;
+sum_exec_runtime nanoseconds&lt;br /&gt;
+clockt = jiffies but under USER_HZ&lt;/p&gt;
+
 &lt;h2 id=&#34;功用定义&#34;&gt;功用定义&lt;/h2&gt;
 
 &lt;p&gt;获取时间&lt;br /&gt;
@@ -1187,123 +1224,51 @@ Epistemology专门研究这个问题. 而我继续前人的工作.&lt;br /&gt;
 在过往的不断尝试中, 我体验与感悟到了, 这个世界很复杂, 不能有一些简单的规则来理解透.&lt;br /&gt;
 多种不同的角度, 往往是理解事物最合宜的方法.&lt;/p&gt;
 
-&lt;h1 id=&#34;framework-architecture-oracle-machine-万物皆备于我&#34;&gt;Framework architecture: oracle-machine, 万物皆备于我&lt;/h1&gt;
+&lt;h1 id=&#34;oracle-machine&#34;&gt;Oracle-machine&lt;/h1&gt;
 
-&lt;p&gt;Sentific method&lt;br /&gt;
-oracle: book, website, papper.&lt;br /&gt;
-学习知识的重点, 不是知识现在是什么样, 也不是知识为什么这么样, 而是要是, 如果是你的话会是什么样的!&lt;br /&gt;
-如果是我, 去创造回事什么样? 推倒现有的存在, 自己去创造.并且所有知识体系都建立在这个根基之上.&lt;br /&gt;
-比如说计算机的知识,语法的知识,如果我造一个语法会是什么样呢?很自然就会理出为什么要这么干了.&lt;br /&gt;
-房子的架构是靠重力,钢筋,水泥,联系到一起的.而为的architecture是靠logic联系到一起的。&lt;br /&gt;
-小河之光.&lt;br /&gt;
-奥卡姆的剃刀.&lt;br /&gt;
-知识进来时是肤浅的,暂时的理解, 能否出去, 只有能出去的知识,才算吸收, 否则通常都是肤浅的记忆, 你以为你懂了, 但没懂.&lt;br /&gt;
-阶段性啊, 骨肉框架内容.&lt;br /&gt;
-根据不同的状态, 框架内容啊, 定义问题(往往多个问题)&lt;br /&gt;
-选取总结找到解决问题的模式过程(往往多种方法)&lt;br /&gt;
-建立一个真实的实践环境, 在其中不断实践,体验.成长的主要步骤.&lt;br /&gt;
-认识缺陷, 发现反馈不足, 尝试收集资料, 分析, 找寻方法, 实践,修正缺陷, 解决问题.成长.&lt;/p&gt;
+&lt;p&gt;Things themselves: Husserl, Wittgenstein&lt;/p&gt;
 
-&lt;h1 id=&#34;原则&#34;&gt;原则&lt;/h1&gt;
+&lt;p&gt;Weakness, fixup, growing up &amp;ndash; Firo 人在缺点被弥补之后获得成长.&lt;br /&gt;
+Zeroness &amp;ndash; 学习知识的重点, 不是知识现在是什么样, 也不是知识为什么这么样, 而是要是, 如果是你的话会是什么样的! &amp;ndash; Firo&lt;br /&gt;
+The origin of the world &amp;ndash; Firo&lt;br /&gt;
+Multitask: 不能等一件事完了, 才去干另一件事, 很多事都是在摸索中进行的,很多事之间是相互联系的. 更多的时候,&lt;br /&gt;
+因为没有办法确定事情之间的顺序是合理的.导致浪费了很多时间, 走了很多弯路. 幸亏没有等着背完GRE高频词,再练听力.&lt;br /&gt;
+Reflexivity &amp;ndash; Soros  很多事情是混沌的, 不能一开始就全部计划好, 而是在不断探索中完成的.&lt;br /&gt;
+Transformation cognition &amp;ndash; Firo&lt;br /&gt;
+The Feynman Technique&lt;br /&gt;
+奥卡姆的剃刀. 简单有效可持续.&lt;br /&gt;
+它山之石可以攻玉&lt;br /&gt;
+Descartes&amp;rsquo;s methods&lt;/p&gt;
 
-&lt;p&gt;世界之源, 费曼技巧, semantic tree hung point &amp;ndash;Firo, 费曼, Musk&lt;br /&gt;
-注意到quantaties很重要, 一个复杂的东西. 要看出来他是有简单的form通过量化后形成的.&lt;br /&gt;
-form transformation cognition form analysis algorithm by change process to quantity(有些时候1个量不能描述清楚). &amp;ndash; Firo&lt;br /&gt;
-我们只能包相似一类的过程量化, 不相似的过程量化需要更高阶, 更抽象的思维,起始没意义. 比如基数排序和霍夫曼编码. &amp;ndash;Firo&lt;br /&gt;
-即便是结构本身一样不可以描述一定要找到某个点, 之后分析相似衍生才有意义, 如树结构,试问霍夫曼和searching的关联+ linked list. &amp;ndash;Firo&lt;br /&gt;
-量要和过程匹配, 同步动态变化. 如二叉树的height就不是一个process 量.quantities有很多 &amp;ndash;Firo&lt;br /&gt;
-Reflexivity &amp;ndash; Soros&lt;br /&gt;
-直达最可能的地方, 答案, 要事第一.&lt;br /&gt;
-一切的发源的动机.知识是有生命力的, 一点点生长的.&lt;br /&gt;
-从实际问题触发, 实际的topic, 实际的问题应该是完整的, 不要孤立化, 也就是具体到具体行为, 业务场景, 不要把说和听分开.&lt;br /&gt;
-实际的东西也能抽象化而且保留实际的内容要点, 语言可以抽象成理解和表述两方面, 都是抽象的但同时保留具体的含义.&lt;br /&gt;
-学习的原则, 广(框架建立, 涉及的方面多), 效果好又快(学最重要的,排除无用的知识), 时间短(短时间内完成一两个周)&lt;br /&gt;
-Top down: architecture, bottom up: feedback. 算是一种横向上的成果.&lt;br /&gt;
-框架通过具体肉, 受肉, 联系(统治, 延伸)到现实,实际, 框架本来就来自实际.整体不等于部分之和.&lt;br /&gt;
-为什么框架能够指导, 统治现实呢? 因为框架就是实际, 同时超越实际.&lt;br /&gt;
-搞清楚architecture的一种可能的方法是, 指出ostensive涉及到的内容, 并从时间, 因果角度加以分析.&lt;br /&gt;
-被列出来的事物, 因为不同, 显得独立模块化. 比如UTM和architecture. 正因为替换成DNA之类才显示出UTM的独立.&lt;br /&gt;
-From architecture to another architecture&lt;br /&gt;
-有机的知识.  算是一种横向上的成果.&lt;br /&gt;
-不要把目标看成一个孤立的节点, 它和现在千丝万缕的联系.&lt;br /&gt;
-有的问题, 虽然看上去无法理解清楚也不知道怎么解决.只要去做就行了doing.&lt;br /&gt;
-将语言还原为日常生活及其形式.&amp;ndash; 维特根斯坦&lt;br /&gt;
-Zeroness, 自己思考. 不要上来就读or做, 你要思考这个过程.&amp;ndash; Firo&lt;br /&gt;
-方法简单容易, 方便证明是否有效&lt;br /&gt;
-世界总是转换,不稳定,不确定.&lt;br /&gt;
+&lt;p&gt;The background, architecture, tide of times. &amp;ndash; Firo topdown?&lt;br /&gt;
+The hot and important, else later. &amp;ndash; Firo 如直达最可能的地方, 答案, 要事第一. bottom up&lt;/p&gt;
+
+&lt;p&gt;Feedback 认识缺陷, 发现不足,&lt;br /&gt;
 Completeness, consistency, validity, soundness. &amp;ndash; Logic&lt;br /&gt;
 Falsifiability可证伪性 &amp;ndash; Popper&lt;br /&gt;
 批判性, 你所学的一切都是暂时性的,任何所学都有改口 驳斥 质疑的余地 &amp;ndash;Aaron Swartz,25:20&lt;br /&gt;
-对于学习的知识上, 方法要做到知识之间的联系, 转换关系.&lt;br /&gt;
-认知的缺陷, imperfect-understand, 彻底可错性. &amp;ndash;Firo Soros Popper&lt;br /&gt;
-When you can not think any further of somthing, you must be awarenees of lack of causilities.&lt;/p&gt;
+认知的缺陷, imperfect-understand, 彻底可错性. &amp;ndash;Firo Soros Popper&lt;/p&gt;
 
-&lt;h1 id=&#34;收集&#34;&gt;收集&lt;/h1&gt;
+&lt;h1 id=&#34;the-origin-of-the-world&#34;&gt;The origin of the world&lt;/h1&gt;
 
-&lt;h1 id=&#34;分析&#34;&gt;分析&lt;/h1&gt;
-
-&lt;p&gt;Autonomous Change-of-state calculus &amp;ndash;Firo-Von Wright’s approach&lt;/p&gt;
-
-&lt;p&gt;骨架和肉分析法 &amp;ndash; Firo&lt;/p&gt;
-
-&lt;p&gt;祖孙的方法”   the genetic method &amp;ndash; 胡适,杜威&lt;br /&gt;
-Why? How? What? Good and bad?&lt;/p&gt;
-
-&lt;p&gt;从结构角度, 往往并不是所有简单元素都可以组合成复杂元素. 这也整个结构的缩影.&lt;br /&gt;
-特别是简单元素和由简单元素合成的复杂元素却是平级的, 复合元素也成为了&amp;rdquo;简单元素&amp;rdquo;, 独立, 完整, 不可或缺的元素.&lt;br /&gt;
-对于但从简单元素角度看, 有点哥德尔不完备定理的感觉.&lt;br /&gt;
-比如英语的Collocation, 并不是掌握了基础就掌握了一切.&lt;/p&gt;
-
-&lt;p&gt;从时间角度&lt;/p&gt;
-
-&lt;p&gt;最重要的是什么呢?&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;analysis computer program&lt;br /&gt;
+&lt;p&gt;世界总是转换,不稳定,不确定.&lt;br /&gt;
+When you can not think any further of somthing, you must be awarenees of lack of causilities.&lt;br /&gt;
 init onset, running nuclus, exit coda&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+问题总是复杂的, 解决方法总是简单的.  &amp;ndash;xiaolai.li&lt;/p&gt;
 
-&lt;h1 id=&#34;阶段目标与问题定义&#34;&gt;阶段目标与问题定义&lt;/h1&gt;
-
-&lt;p&gt;The phrased objectives&lt;br /&gt;
-What is the important, foundation, most useful, minimal cached? &amp;ndash; Firo&lt;/p&gt;
+&lt;h1 id=&#34;问题定义&#34;&gt;问题定义&lt;/h1&gt;
 
 &lt;p&gt;内涵定义: Genus-differentia definition 属加种差定义: 发生定义(设计), 关系定义, 功用定义, 摹状定义&lt;br /&gt;
 充要定义, Real and nominal definitions&lt;br /&gt;
 Classes of extensional definitions: enumerative definition&lt;br /&gt;
 &lt;a href=&#34;http://plato.stanford.edu/entries/definitions/&#34;&gt;Definitions Stanford Encyclopedia of Philosophy&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;模式过程&#34;&gt;模式过程&lt;/h1&gt;
-
-&lt;p&gt;反射理论作为开始, 有机知识作为结果, feedback update 作为机制.&lt;br /&gt;
-工作生活中的决断都现实的真实反馈而做出的.&lt;br /&gt;
-费曼技巧可以部分地用来生成有机知识.&lt;br /&gt;
-缺陷反馈更新, 可以以假设-验证的方式进行.假设自己全会了, 去想象那种感觉, 之后去实践验证.从而得出缺陷. 修补缺陷.&lt;br /&gt;
-Experiential Learning, 两个难点, 实践的范围强度和谕示机.&lt;/p&gt;
-
-&lt;p&gt;去看看别人怎么做的, 什么应该做, 什么不应该做.&lt;/p&gt;
+&lt;h1 id=&#34;descartes-s-methods&#34;&gt;Descartes&amp;rsquo;s methods&lt;/h1&gt;
 
 &lt;p&gt;Divide every question into manageable parts. &amp;ndash; Descartes&lt;br /&gt;
 Begin with the simplest issues and ascend to the more complex. &amp;ndash; Descartes&lt;br /&gt;
 Review frequently enough to retain the whole argument at once &amp;ndash; Descartes&lt;br /&gt;
 Accept as true only what is indubitable. &amp;ndash; Descartes&lt;/p&gt;
-
-&lt;h1 id=&#34;实践&#34;&gt;实践&lt;/h1&gt;
-
-&lt;p&gt;建立一个全面的wilds环境, 在这个环境下生存!&lt;br /&gt;
-活下去!&lt;/p&gt;
-
-&lt;h1 id=&#34;反馈缺陷&#34;&gt;反馈缺陷&lt;/h1&gt;
-
-&lt;h1 id=&#34;本体系自身的反馈&#34;&gt;本体系自身的反馈&lt;/h1&gt;
-
-&lt;p&gt;成长来自实践, 以及认识缺陷并加以改正.&lt;br /&gt;
-不断的实践和改正缺陷才是提高能力的核心!&lt;br /&gt;
-很多时候, 依靠现在的经验学识不能找到完整的方法, 需要不断的调整.&lt;br /&gt;
-学会认识自己的无力.&lt;br /&gt;
-问题总是复杂的, 解决方法总是简单的.  &amp;ndash;xiaolai.li&lt;br /&gt;
-反射理论, 反射的对象不是其他, 正是现实!&lt;/p&gt;
 </description>
     </item>
     
@@ -1323,7 +1288,10 @@ Accept as true only what is indubitable. &amp;ndash; Descartes&lt;/p&gt;
       <pubDate>Tue, 25 Aug 2015 15:46:11 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/firo/firo/</guid>
-      <description>&lt;p&gt;一个人应该与外界的应该保持什么样的关系? 每个人都应该有自己的回答, 而且答案不一而终.&lt;br /&gt;
+      <description>&lt;p&gt;世界被他人的谎言所掩盖, 丧失了原始的存在欲望.`&lt;br /&gt;
+一点点小的改变, 事情就会朝着好的方向发展.&lt;/p&gt;
+
+&lt;p&gt;一个人应该与外界的应该保持什么样的关系? 每个人都应该有自己的回答, 而且答案不一而终.&lt;br /&gt;
 正是这种关系成就了我们的一生.个体如何确定这种关系,或者说如何确定一种合理的生存状态?&lt;br /&gt;
 对于人类丰富, 无止尽的欲望而言, 很难给出统一的答案.然而这并不妨碍我们找到理想的状态.&lt;br /&gt;
 简单说来, 两点; 那些来自内心的, 原始的, 本能的愿望正是我们生活的方向, 不应被忽视, 反而&lt;br /&gt;

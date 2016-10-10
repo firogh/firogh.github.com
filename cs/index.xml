@@ -545,6 +545,37 @@ unknown              /dev/tty        4 1-63 console&lt;br /&gt;
 ./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
 ./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
 ./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
+
+&lt;h1 id=&#34;hugh-in-n-tty-write&#34;&gt;hugh in n_tty_write&lt;/h1&gt;
+
+&lt;p&gt;uart_flush_buffer-&amp;gt; tty_wakeup&lt;br /&gt;
+serial8250_handle_port-&amp;gt; transmit_chars&lt;br /&gt;
+n_tty_read/poll-&amp;gt;input_available_p-&amp;gt;flush_to_ldisc-&amp;gt;n_tty_receive_buf-&amp;gt;uart_flush_chars&lt;br /&gt;
+n_tty_write-&amp;gt;uart_flush_chars-&amp;gt;uart_start&lt;br /&gt;
+n_tty_write-&amp;gt;uart_write-&amp;gt; uart_start-&amp;gt;start_tx -&amp;gt; serial8250_start_tx -&amp;gt; transmit_chars-&amp;gt;uart_write_wakeup -&amp;gt;uart_tasklet_action-&amp;gt;tty_wakeup&lt;/p&gt;
+
+&lt;h1 id=&#34;echo-char&#34;&gt;Echo char&lt;/h1&gt;
+
+&lt;p&gt;===serial chipset&lt;br /&gt;
+serial8250_interrupt&lt;br /&gt;
+seirial8250_handle_port&lt;br /&gt;
+receive_chars&lt;/p&gt;
+
+&lt;p&gt;===serial abstruction&lt;br /&gt;
+uart_insert_char&lt;/p&gt;
+
+&lt;p&gt;===terminal device&lt;br /&gt;
+tty_insert_flip_char&lt;/p&gt;
+
+&lt;p&gt;receive_chars-&amp;gt;tty_flip_buffer_push -&amp;gt;flush_to_ldisc-&amp;gt;&lt;br /&gt;
+=== Line discipline&lt;br /&gt;
+disc-&amp;gt;receive_buf=n_tty_receive_buf-&amp;gt;n_tty_receive_char-&amp;gt;echo_char&lt;/p&gt;
+
+&lt;h1 id=&#34;uart-port&#34;&gt;uart_port&lt;/h1&gt;
+
+&lt;p&gt;serial8250_register_ports&lt;br /&gt;
+struct uart_8250_port *up = &amp;amp;serial8250_ports[i];&lt;br /&gt;
+uart_add_one_port(drv, &amp;amp;up-&amp;gt;port);&lt;/p&gt;
 </description>
     </item>
     
@@ -884,6 +915,12 @@ Leap second&lt;/p&gt;
 &lt;h2 id=&#34;genus-differentia-definition&#34;&gt;Genus-differentia definition&lt;/h2&gt;
 
 &lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
+
+&lt;h2 id=&#34;unites&#34;&gt;unites&lt;/h2&gt;
+
+&lt;p&gt;cputime = jiffies under HZ (FIXME)&lt;br /&gt;
+sum_exec_runtime nanoseconds&lt;br /&gt;
+clockt = jiffies but under USER_HZ&lt;/p&gt;
 
 &lt;h2 id=&#34;功用定义&#34;&gt;功用定义&lt;/h2&gt;
 
@@ -1739,7 +1776,7 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 &lt;h1 id=&#34;arch-of-cs&#34;&gt;arch of cs&lt;/h1&gt;
 
 &lt;p&gt;design(pattern) and algorithm, programming(debugging, hacking)&lt;br /&gt;
-pl, compile(gcc), link, load(cll)&lt;br /&gt;
+pl,assembly, compile(gcc), link, load(cll)&lt;br /&gt;
 process, quantaties, order(synchronization)&lt;br /&gt;
 turing, arch, os(boot, console, fedora, fs, process, mm, pm, time, virt, synchronization)&lt;br /&gt;
 math, logic, electronics&lt;/p&gt;
@@ -2889,6 +2926,11 @@ Valid and verification&lt;br /&gt;
 Testing&lt;br /&gt;
 Debuging&lt;/p&gt;
 
+&lt;h1 id=&#34;files-sytle&#34;&gt;Files sytle&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lists.kernelnewbies.org/pipermail/kernelnewbies/2012-March/004986.html&#34;&gt;kernel asm/asm-generic&lt;/a&gt;&lt;br /&gt;
+asm stands for arch specific macros(FIXME).&lt;/p&gt;
+
 &lt;h1 id=&#34;coding-style&#34;&gt;Coding style&lt;/h1&gt;
 
 &lt;p&gt;比如GNU coding standards, Linux kernel coding style, Shell coding standard&lt;br /&gt;
@@ -2942,23 +2984,59 @@ kvm &amp;amp; supermin&lt;/p&gt;
 &lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
 
 &lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
-The explaination type of a Bug is named Bug type, generally.&lt;br /&gt;
-坊间流传这样一句话:&amp;ldquo;能复现的Bug, 都不算Bug.&amp;rdquo;, 言外之意就是能复现就能解.&lt;br /&gt;
-可见Bug复现,对解Bug的重要性. &lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
+Theory + Observations =&amp;gt; Explanation&lt;/p&gt;
+
+&lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
 The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,&lt;br /&gt;
 他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.&lt;br /&gt;
 NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt;&lt;br /&gt;
 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
 
-&lt;p&gt;use after free&lt;/p&gt;
+&lt;h1 id=&#34;use-after-free&#34;&gt;use after free&lt;/h1&gt;
 
-&lt;h1 id=&#34;bugs-in-linux-kernel&#34;&gt;Bugs in Linux kernel&lt;/h1&gt;
+&lt;p&gt;record the owner, who free.&lt;/p&gt;
 
-&lt;p&gt;Kernel oops,&lt;a href=&#34;http://neependra.net/kernel/Debugging_Kernel_OOPs_FUDCon2011.pdf&#34;&gt;When the kernel de-references an invalid pointer, it’s not called a segfault – it’s called an ”oops”.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;kenrel lockup&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://fedoraproject.org/wiki/KernelBugClassification&#34;&gt;oops, WARN_ON, or kernel panic&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops&lt;/a&gt;/warn/panic&lt;/p&gt;
+&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
+
+&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
+Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
+
+&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
+Includes the interruptable task.&lt;br /&gt;
+Causes: deadlock, race condition&lt;/p&gt;
+
+&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
+
+&lt;p&gt;Lockdep&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
+
+&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
+free_pages_prepare posion&lt;/p&gt;
 
 &lt;h1 id=&#34;general-debugging-steps&#34;&gt;General debugging steps&lt;/h1&gt;
 
@@ -2976,9 +3054,7 @@ E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;g
 &amp;gt; the process of debugging is use O to minimize T to E instance.&lt;br /&gt;
 &amp;gt; T is solutions space, E &lt;a href=&#34;https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1&#34;&gt;locates&lt;/a&gt; in T. O is the address to find E.&lt;/p&gt;
 
-&lt;p&gt;对于Software Bug而言, Debugging可以认为是从observations到source code再到人的逻辑的过程.&lt;br /&gt;
-observations -&amp;gt; source code -&amp;gt; mind logic&lt;br /&gt;
-基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.&lt;/p&gt;
+&lt;p&gt;基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.&lt;/p&gt;
 
 &lt;h3 id=&#34;get-observations&#34;&gt;Get observations&lt;/h3&gt;
 
