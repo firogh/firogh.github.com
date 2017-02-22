@@ -1,3 +1,12 @@
+
+
+# Concepts
+[Fast forward merge](https://sandofsky.com/images/fast_forward.pdf)
+[git merge recursive strategy](https://www.youtube.com/watch?v=Lg1igaCtAck)
+git diff: working tree..index
+git diff --cached or --staged: index..HEAD
+git diff HEAD:working tree..HEAD
+
 # Config
 
 [apply]
@@ -5,3 +14,40 @@
 	ignorewhitespace = change
 [core]
 	whitespace = trailing-space,space-before-tab,indent-with-non-tab
+
+# Usage
+[git format-patch a merge commit](http://stackoverflow.com/questions/2285699/git-how-to-create-patches-for-a-merge)
+git log -p --pretty=email --stat -m --first-parent 1ca72c^..1ca72c
+git log -p --pretty=email --stat -m --first-parent origin/master..HEAD > feature.patch
+http://git.661346.n2.nabble.com/PATCH-Allow-format-patch-to-create-patches-for-merges-td2218034.html
+* [git](http://git-scm.com/docs)
+git ls-files -d |xargs -i git checkout {}
+git log -S "RTN_UNSPEC" --source --all
+* reverse find all the blame from start commit id to now
+git blame --reverse 9e734775f7c22d2f89943ad6c745571f1930105f..   include/linux/netlink.h
+* find kernel version of path
+git describe --contains
+git tag --contains <id>
+* find commit id of a tag
+git rev-parse v2.6.12-rc2
+*  blame before a commit
+git blame sha1^ -- path/to/file
+* find commit after specific commit
+git log  --oneline  --ancestry-path   c146066ab^^..HEAD  net/ipv4/ip_output.c
+* find when line was deleted
+git log -c -S'missingtext' /path/to/file
+## git pull
+git pull {repo} {remotebranchname}:{localbranchname}
+git pull origin xyz:xyz
+git pull next master:now
+## git sendmail
+shadowsocks
+/etc/proxychains.conf
+/home/firo/.gitconfig
+proxychains git send-email --to dbaryshkov@gmail.com --cc rmk+kernel@arm.linux.org.uk --cc linux-pcmcia@lists.infradead.org  0001-Drivers-pcmcia-Fix-memroy-leak-in-sa11xx_drv_pcmcia_.patch
+git send-email --smtp-encryption=tls --smtp-server=smtp.gmail.com --smtp-user=firogm@gmail.com --smtp-server-port=587 --to "kernel-janitors@vger.kernel.org" 0001-x86-Remove-unnecessary-void-pointer-casts.patch
+##git diff
+git -c core.whitespace=tab-in-indent diff --check
+
+## git patches form a list
+NUM=0;awk '{print $1}' g.log  | while read line; do f=$(git format-patch -n1 $line); f1=$f;f=${f#"0001"};NUM=$(( NUM + 1 )); N="$(printf "%04u" "$NUM")";mv -f $f1 $N$f;done
