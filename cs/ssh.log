@@ -1,0 +1,22 @@
+1.家庭电脑A,windows系统
+2.拥有公网IP的电脑O,IP:114.115.116.117,用户名:username
+3.工作电脑B,linux系统,无公网IP
+想要做到的是:在A上SSH到B
+2. 步骤
+
+1.在B上建立远程转发,执行:ssh -fNR 2222:localhost:22 username@114.115.116.117
+2.在O上建立本地转发,执行:ssh -fN -g -L 2223:localhost:2222 username@localhost
+3.在A上使用putty,设置IP为114.115.116.117,端口为2223,建立连接,即可登录到B
+其中第1步中,如果连接不稳定,可以修改~/.ssh/config文件,增加心跳.若还是不稳定,可以安装antossh,执行:autossh -M 20000 -fNR 2222:localhost:22 username@114.115.116.117
+
+
+# windows: 
+ssh -vvv -fNR 2222:127.0.0.1:22 root@138.128.195.217 -p 29781
+autossh -M 20000 -fNR 2222:localhost:22 root@138.128.195.217 -p 29781
+# VPS
+ssh -fN -g -L 138.128.195.217:2223:localhost:2222 root@localhost -p 29781
+# Linux
+ssh  -v yongmiya@138.128.195.217 -p 2223
+
+
+autossh -M 20000 -fNR 2222:localhost:22 username@114.115.116.117
