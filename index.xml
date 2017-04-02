@@ -7,7 +7,576 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Sat, 26 Nov 2016 20:54:11 CST</updated>
+    <updated>Wed, 29 Mar 2017 10:49:04 CST</updated>
+    
+    <item>
+      <title>Scheduling in operating system</title>
+      <link>http://firoyang.org/cs/scheduling/</link>
+      <pubDate>Wed, 29 Mar 2017 10:49:04 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/scheduling/</guid>
+      <description>
+
+&lt;p&gt;Customer demand -&amp;gt; multitasking/concurrent&lt;br /&gt;
+Some other issues arise from multitasking/concurrent.&lt;br /&gt;
+Scheduling is used to implement the multitasking/concurrent and solve the arose issues.&lt;br /&gt;
+Questions we need to solve:&lt;br /&gt;
+1. how to switch to the context of the next process?&lt;br /&gt;
+    context_switch&lt;br /&gt;
+2. how to determine the next process? Fairness?&lt;br /&gt;
+2.1 There should be many shcheduling algorithms; how to manage them?&lt;br /&gt;
+    sched_class&lt;br /&gt;
+2.2 where to keep/find the processes?&lt;br /&gt;
+    All the ruunale process are put in cpu_rq, but they are in different places rt_rq, dl_rq, cfs_rq, stop, idle.&lt;br /&gt;
+    Why different palces? Simple.&lt;br /&gt;
+2.3 If we use CFS algoritm, how does it work?&lt;br /&gt;
+    The core source code of CFS is the members of fair_sched_class&lt;br /&gt;
+    The main idea of CFS is compensating the process which is deficient of running CPU time.&lt;br /&gt;
+    CFS use vruntime to reflect the CPU time a process used.&lt;br /&gt;
+    But what makes CFS complex? Two points:&lt;br /&gt;
+    a. CFS is compatiable with the traditional priority(the nice value).&lt;br /&gt;
+    b. make the vruntime suitable. For example, what&amp;rsquo;s the vrumtime of a new process?&lt;br /&gt;
+3. when to perform shcheduling?&lt;br /&gt;
+    new task, task dies&lt;br /&gt;
+    exception, interrupt&lt;br /&gt;
+    preempt_schedule_irq&lt;br /&gt;
+    retint_kernel&lt;br /&gt;
+4. States and actions&lt;br /&gt;
+4.1 wake up a sleep task&lt;br /&gt;
+    not runnable -&amp;gt; activate_task -&amp;gt; runnable -&amp;gt;deactivate_task-&amp;gt; not runnable&lt;br /&gt;
+    se-&amp;gt;on_rq &amp;amp; TASK_ON_RQ_QUEUED; deactivate_task set on_rq to 0;&lt;br /&gt;
+    enqueue_task_fair handles group stuff&lt;br /&gt;
+    enqueue_entity deals with sched_entity - uptodate the vruntime, load average, account load numa perfering,&lt;br /&gt;
+    sysctl_sched_latency: the cfs pledge to the pre-existing tasks that they have 6ms to run before new task to run.&lt;br /&gt;
+    try_to_wake_up_local for local task&lt;br /&gt;
+    try_to_wake_up for any task&lt;br /&gt;
+4.2 Choses a entity&lt;br /&gt;
+    set_next_entity is, actually, setup the next entity being running. remove entity from rb-tree.&lt;br /&gt;
+4.3 What about a new task&lt;br /&gt;
+4.4 process migration&lt;br /&gt;
+e761b7725234276a802322549cee5255305a0930&lt;br /&gt;
+Introduce cpu_active_map and redo sched domain managment&lt;br /&gt;
+    When to migration&lt;br /&gt;
+        sched_setaffinity __set_cpus_allowed_ptr manuly&lt;br /&gt;
+        Selecting a new CPU during wak up a sleeper&lt;br /&gt;
+        For balancing, selecting CPU during  wake up new process in _do_fork&lt;br /&gt;
+        execve&amp;rsquo;s sched_exec&lt;/p&gt;
+
+&lt;p&gt;4.x worker&lt;br /&gt;
+    sleep -&amp;gt; waking -&amp;gt; woken&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;how to deal with load balancing of multiple CPU?&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;how to control the cost of scheduling.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;etc&#34;&gt;ETC&lt;/h1&gt;
+
+&lt;p&gt;worker&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-preempt&#34;&gt;kernel preempt&lt;/h1&gt;
+
+&lt;p&gt;arch/x86/kernel/entry_64.S&lt;/p&gt;
+
+&lt;p&gt;entity_key&lt;/p&gt;
+
+&lt;h1 id=&#34;git-log&#34;&gt;Git log&lt;/h1&gt;
+
+&lt;p&gt;e9c8431185d6c406887190519f6dbdd112641686&lt;br /&gt;
+TASK_WAKING; see migrate_task_rq_fair and try_to_wake_up&lt;br /&gt;
+88ec22d3edb72b261f8628226cd543589a6d5e1b&lt;br /&gt;
+In order to remove the cfs_rq dependency from set_task_cpu() we&lt;br /&gt;
+    need to ensure the task is cfs_rq invariant for all callsites.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;The simple approach is to substract cfs_rq-&amp;gt;min_vruntime from
+se-&amp;gt;vruntime on dequeue, and add cfs_rq-&amp;gt;min_vruntime on
+enqueue.
+
+However, this has the downside of breaking FAIR_SLEEPERS since
+we loose the old vruntime as we only maintain the relative
+position.
+
+To solve this, we observe that we only migrate runnable tasks,
+we do this using deactivate_task(.sleep=0) and
+activate_task(.wakeup=0), therefore we can restrain the
+min_vruntime invariance to that state.
+
+The only other case is wakeup balancing, since we want to
+maintain the old vruntime we cannot make it relative on dequeue,
+but since we don&#39;t migrate inactive tasks, we can do so right
+before we activate it again.
+
+This is where we need the new pre-wakeup hook, we need to call
+this while still holding the old rq-&amp;gt;lock. We could fold it into
+-&amp;gt;select_task_rq(), but since that has multiple callsites and
+would obfuscate the locking requirements, that seems like a
+fudge.
+
+This leaves the fork() case, simply make sure that -&amp;gt;task_fork()
+leaves the -&amp;gt;vruntime in a relative state.
+
+This covers all cases where set_task_cpu() gets called, and
+ensures it sees a relative vruntime.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;2f950354e6d535b892f133d20bd6a8b09430424c&lt;br /&gt;
+ sched/fair: Fix fairness issue on migration&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Pavan reported that in the presence of very light tasks (or cgroups)
+the placement of migrated tasks can cause severe fairness issues.
+
+The problem is that enqueue_entity() places the task before it updates
+time, thereby it can place the task far in the past (remember that
+light tasks will shoot virtual time forward at a high speed, so in
+relation to the pre-existing light task, we can land far in the past).
+
+This is done because update_curr() needs the current task, and we
+might be placing the current task.
+
+The obvious solution is to differentiate between the current and any
+other task; placing the current before we update time, and placing any
+other task after, such that !curr tasks end up at the current moment
+in time, and not in the past.
+
+This commit re-introduces the previously reverted commit:
+
+  3a47d5124a95 (&amp;quot;sched/fair: Fix fairness issue on migration&amp;quot;)
+
+... which is now safe to do, after we&#39;ve also fixed another
+underlying bug first, in:
+
+  sched/fair: Prepare to fix fairness problems on migration
+
+and cleaned up other details in the migration code:
+
+  sched/core: Kill sched_class::task_wakin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://linux.kernel.narkive.com/p15Wmn0i/migrated-cfs-task-getting-an-unfair-advantage&#34;&gt;Migrated CFS task getting an unfair advantage&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;curr-was-not-kept-in-rb-tree&#34;&gt;curr was not kept in rb-tree&lt;/h1&gt;
+
+&lt;p&gt;30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;/p&gt;
+
+&lt;h1 id=&#34;group&#34;&gt;Group&lt;/h1&gt;
+
+&lt;p&gt;set_task_rq&lt;/p&gt;
+
+&lt;h1 id=&#34;priority-and-nice&#34;&gt;priority and nice&lt;/h1&gt;
+
+&lt;p&gt;In according to  do_task_stat, we know priority = task_prio(task); nice = task_nice(task);&lt;br /&gt;
+p-&amp;gt;prio - MAX_RT_PRIO; = -2,  MAX_RT_PRIO = 100;so p-&amp;gt;prio = 98;&lt;br /&gt;
+PRIO_TO_NICE(prio)&lt;br /&gt;
+(p)-&amp;gt;static_prio - MAX_RT_PRIO - 20 = 0; So p-&amp;gt;static_prio = 120;&lt;br /&gt;
+NICE_TO_PRIO(nice)      (MAX_RT_PRIO + (nice) + 20)&lt;br /&gt;
+Convert user-nice values [ -20 &amp;hellip; 0 &amp;hellip; 19 ] to static priority [ MAX_RT_PRIO..MAX_PRIO-1 ] 100..139, and back.&lt;br /&gt;
+MAX_PRIO                (MAX_RT_PRIO + 40) // 140&lt;br /&gt;
+DEFAULT_PRIO            (MAX_RT_PRIO + 20) // 120&lt;br /&gt;
+if (task_has_rt_policy(p)) {&lt;br /&gt;
+ p-&amp;gt;se.load.weight = prio_to_weight[0] * 2;  /*   0 &lt;em&gt;/      1024,&lt;br /&gt;
+p-&amp;gt;se.load.inv_weight = prio_to_wmult[0] &amp;gt;&amp;gt; 1; /&lt;/em&gt;   0 */   4194304,&lt;/p&gt;
+
+&lt;p&gt;#define LOCAL_TIMER_VECTOR      0xef&lt;br /&gt;
+/arch/x86/kernel/irqinit_64.c:215:  alloc_intr_gate(LOCAL_TIMER_VECTOR, apic_timer_interrupt);&lt;br /&gt;
+apic_timer_interrupt&lt;br /&gt;
+smp_apic_timer_interrupt&lt;br /&gt;
+local_apic_timer_interrupt&lt;br /&gt;
+tick_handle_periodic&lt;br /&gt;
+tick_periodic-&amp;gt;&lt;br /&gt;
+scheduler_tick -&amp;gt;&lt;br /&gt;
+.task_tick              = task_tick_fair,&lt;br /&gt;
+tick_periodic -&amp;gt;.task_tick              = task_tick_fair,&lt;/p&gt;
+
+&lt;h1 id=&#34;protection-ring&#34;&gt;Protection ring&lt;/h1&gt;
+
+&lt;h2 id=&#34;kernel-mode&#34;&gt;Kernel mode:&lt;/h2&gt;
+
+&lt;h2 id=&#34;user-mode&#34;&gt;User mode&lt;/h2&gt;
+
+&lt;p&gt;限制访问地址空间, 内核数据结构, I/O 指令, 中断代码等.&lt;/p&gt;
+
+&lt;h2 id=&#34;mode-switch&#34;&gt;Mode switch&lt;/h2&gt;
+
+&lt;p&gt;esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。&lt;br /&gt;
+读TSS段中进程的内核态指针付给ss和esp。&lt;br /&gt;
+把用户态SS和esp指针保存在进程的内核栈上，&lt;br /&gt;
+从内核态返回时，弹出进程内核栈上用户态ss和esp值。&lt;br /&gt;
+那么TSS段中进程的内核态指针是从哪里来的呢？&lt;/p&gt;
+
+&lt;p&gt;cpu -&amp;gt; tr -&amp;gt; tss -&amp;gt; esp0 =&amp;gt; 内核栈-&amp;gt;保存用户态cs eip esp等.&lt;br /&gt;
+Hardware context switch.&lt;br /&gt;
+pt_regs&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-stack&#34;&gt;kernel stack&lt;/h2&gt;
+
+&lt;p&gt;从system_call中, 我们可以发现:&lt;br /&gt;
+GET_THREAD_INFO(%ebp)&lt;/p&gt;
+
+&lt;p&gt;master idle进程的kernel stack在init/init_task.c:init_thread_union&lt;br /&gt;
+其他进程的kernel stack是fork产生.&lt;br /&gt;
+this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;br /&gt;
+this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;/p&gt;
+
+&lt;h1 id=&#34;schedule-cfs&#34;&gt;Schedule cfs&lt;/h1&gt;
+
+&lt;p&gt;sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &amp;gt; 5）&lt;br /&gt;
+sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &amp;lt;= 5）&lt;br /&gt;
+sysctl_sched_min_granularity = 4ms&lt;br /&gt;
+ideal_time = sum_runtime * se.weight/cfs_rq.weight&lt;br /&gt;
+vruntime +=  delta * NICE_0_LOAD/ se.weight;(if curr.nice!=NICE_0_LOAD)&lt;/p&gt;
+
+&lt;h1 id=&#34;idle&#34;&gt;Idle&lt;/h1&gt;
+
+&lt;p&gt;主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0&lt;br /&gt;
+init_idle.&lt;/p&gt;
+
+&lt;h1 id=&#34;porcess-context&#34;&gt;Porcess context&lt;/h1&gt;
+
+&lt;h2 id=&#34;userspace-context&#34;&gt;Userspace context&lt;/h2&gt;
+
+&lt;p&gt;.txt, .data, .bss, userspace stack, heap, library.&lt;/p&gt;
+
+&lt;h2 id=&#34;kernespace-context&#34;&gt;Kernespace context&lt;/h2&gt;
+
+&lt;p&gt;task_struct, mm_struct, pgd, kernelspace stack.&lt;/p&gt;
+
+&lt;h2 id=&#34;hardware-context&#34;&gt;Hardware context&lt;/h2&gt;
+
+&lt;p&gt;Registers&lt;/p&gt;
+
+&lt;h2 id=&#34;context-switch&#34;&gt;Context switch&lt;/h2&gt;
+
+&lt;p&gt;A context switch (also sometimes referred to as a process switch or a task switch)&lt;br /&gt;
+is the switching of the CPU (central processing unit) from one process or thread to another.&lt;/p&gt;
+
+&lt;h2 id=&#34;进程切换process-switch&#34;&gt;进程切换process switch&lt;/h2&gt;
+
+&lt;p&gt;也叫上下文切换context switch只发生在内核态，必须理解而不是记住。&lt;br /&gt;
+一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，&lt;br /&gt;
+如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，&lt;br /&gt;
+新的培养液进来，旧的培养液也需要保存，以备稍后使用。&lt;br /&gt;
+当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。&lt;br /&gt;
+应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？&lt;br /&gt;
+在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。&lt;br /&gt;
+我们所关心的换出的进程的esp指针也保存在thread_struct当中了。&lt;br /&gt;
+当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，&lt;br /&gt;
+也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。&lt;/p&gt;
+
+&lt;h2 id=&#34;switch-to&#34;&gt;switch_to&lt;/h2&gt;
+
+&lt;p&gt;__schedule()-&amp;gt;swtich_to&lt;/p&gt;
+
+&lt;h3 id=&#34;load-tss&#34;&gt;load TSS&lt;/h3&gt;
+
+&lt;p&gt;进程切换只发生在内核态&lt;br /&gt;
+/&lt;em&gt;将next进程的内核栈指针(next-&amp;gt;thread-&amp;gt;sp0)值更新到当前CPU的TSS中&lt;/em&gt;/&lt;br /&gt;
+load_sp0(tss, next);&lt;br /&gt;
+task_struct.thread.sp0&lt;br /&gt;
+thread_struct&lt;/p&gt;
+
+&lt;h2 id=&#34;type-of-context-switch&#34;&gt;type of Context switch&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;context switch by hardware&lt;br /&gt;
+Old linux kernel&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;context switch by software&lt;br /&gt;
+kernel 2.6&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;common-concepts&#34;&gt;Common concepts&lt;/h1&gt;
+
+&lt;p&gt;Multiprocessing for SMP&lt;/p&gt;
+
+&lt;h1 id=&#34;process-flag&#34;&gt;Process flag&lt;/h1&gt;
+
+&lt;p&gt;PF_MEMALLOC &lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/914878&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;process-user-id&#34;&gt;Process user ID&lt;/h1&gt;
+
+&lt;h2 id=&#34;effective-user-group-id&#34;&gt;Effective user/group ID&lt;/h2&gt;
+
+&lt;p&gt;euid:4777&lt;br /&gt;
+egid:2777&lt;br /&gt;
+chmod u+s cynthia&lt;br /&gt;
+root进程执行cynthia后euid变为firo, saved user id变为root&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;p&gt;u+s 就可以&lt;br /&gt;
+firo@firo tmp$ iptables -L&lt;br /&gt;
+iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
+Perhaps iptables or your kernel needs to be upgraded.&lt;br /&gt;
+chmod +s /usr/sbin/iptables&lt;br /&gt;
+chmod -s /usr/sbin/iptables&lt;/p&gt;
+
+&lt;h1 id=&#34;scheduling-strategies&#34;&gt;Scheduling strategies&lt;/h1&gt;
+
+&lt;p&gt;multiprogramming&lt;br /&gt;
+time-sharing(multi tasking)&lt;br /&gt;
+real-time&lt;/p&gt;
+
+&lt;h1 id=&#34;multitasking&#34;&gt;Multitasking&lt;/h1&gt;
+
+&lt;h2 id=&#34;reference&#34;&gt;Reference&lt;/h2&gt;
+
+&lt;p&gt;codes: comments of __schedule()&lt;br /&gt;
+Book: Linux kernel development&lt;/p&gt;
+
+&lt;p&gt;##Common concepts&lt;br /&gt;
+* The process scheduler decides which process runs, when, and for how long.&lt;br /&gt;
+* Multitasking: cooperative and preemptive.&lt;br /&gt;
+* Preemption:Involuntarily suspending a running process.&lt;br /&gt;
+* Timeslice: a slice of cpu&amp;rsquo;s time.&lt;br /&gt;
+* Yielding: The act of a process voluntarily suspending itself.&lt;br /&gt;
+* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.&lt;br /&gt;
+* Time sharing: is cooperative mutitasking,&lt;br /&gt;
+* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!&lt;br /&gt;
+so if !CONFIG_PREEMPT* is cooperative!&lt;br /&gt;
+* CFS: Pick the task with the smallest vruntime. That&amp;rsquo;s it!&lt;/p&gt;
+
+&lt;p&gt;##TIF_NEED_RESCHED&lt;br /&gt;
+* The situation of set task need resched&lt;br /&gt;
+scheduler_tick()&lt;br /&gt;
+try_to_wake_up() when a process that has a higher priority than &lt;em&gt;current&lt;/em&gt; is awakened.&lt;br /&gt;
+Other?&lt;/p&gt;
+
+&lt;h2 id=&#34;save-all&#34;&gt;SAVE_ALL&lt;/h2&gt;
+
+&lt;p&gt;no include cs ss ip sp eflag why?&lt;/p&gt;
+
+&lt;p&gt;#Deamonize&lt;/p&gt;
+
+&lt;h2 id=&#34;fork-oraphan&#34;&gt;fork, oraphan&lt;/h2&gt;
+
+&lt;p&gt;similar &amp;amp;&lt;br /&gt;
+not a goup leader inherit with parent pgid for setsid&lt;/p&gt;
+
+&lt;h2 id=&#34;setsid&#34;&gt;setsid&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;session leader&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;process group leader&lt;br /&gt;
+A signal directed to a process group is delivered individually to&lt;br /&gt;
+all of the processes that are members of the group.&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;deatch controlling terminals(confusing)&lt;/p&gt;
+
+&lt;h2 id=&#34;chdir&#34;&gt;chdir&lt;/h2&gt;
+
+&lt;h2 id=&#34;umask&#34;&gt;umask&lt;/h2&gt;
+
+&lt;h2 id=&#34;deal-with-fd&#34;&gt;deal with fd&lt;/h2&gt;
+
+&lt;p&gt;below both output&lt;br /&gt;
+守护进程继承了shell的屏幕和键盘输入.&lt;br /&gt;
+pid_t pid= fork();&lt;br /&gt;
+if (pid != 0) {&lt;br /&gt;
+system(&amp;ldquo;sleep 3&amp;rdquo;);&lt;br /&gt;
+printf(&amp;ldquo;parent exit\n&amp;rdquo;);&lt;br /&gt;
+} else {&lt;br /&gt;
+printf(&amp;ldquo;child start\n&amp;rdquo;);&lt;br /&gt;
+setsid();&lt;br /&gt;
+fprintf(stdout, &amp;ldquo;out child\n&amp;rdquo;);&lt;br /&gt;
+fprintf(stderr, &amp;ldquo;err child\n&amp;rdquo;);&lt;/p&gt;
+
+&lt;p&gt;system(&amp;ldquo;sleep 7&amp;rdquo;);&lt;/p&gt;
+
+&lt;p&gt;fprintf(stdout, &amp;ldquo;after out child\n&amp;rdquo;);&lt;br /&gt;
+fprintf(stderr, &amp;ldquo;after err child\n&amp;rdquo;);&lt;br /&gt;
+printf(&amp;ldquo;child exit\n&amp;rdquo;);&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;zombie-process&#34;&gt;Zombie process&lt;/h1&gt;
+
+&lt;h2 id=&#34;defunct&#34;&gt;&lt;defunct&gt;&lt;/h2&gt;
+
+&lt;p&gt;forked child not reaped by parent will hooked in process list.&lt;br /&gt;
+if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
+&lt;defunct&gt;表明父活着, 但不收尸.&lt;/p&gt;
+
+&lt;h2 id=&#34;double-fork-for-parent-long-live&#34;&gt;Double fork for parent long live&lt;/h2&gt;
+
+&lt;p&gt;mirgate subchild to init, parent just reap child.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;thread_info&lt;br /&gt;
+可以快速访问task_struct.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;swtch_stack&lt;br /&gt;
+线程切换&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;the-player&#34;&gt;The player&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Interrupt &amp;ndash; irq,softirq&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Process &amp;ndash; user process, kernel thread(workqueue)&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;common-concpets&#34;&gt;Common concpets&lt;/h1&gt;
+
+&lt;p&gt;userspace: A process executing its own code outside the kernel.&lt;/p&gt;
+
+&lt;p&gt;##What is context?&lt;br /&gt;
+###process context/user context:&lt;br /&gt;
+The kernel executing on behalf of a particular process&lt;br /&gt;
+(ie. a system call or trap) or kernel thread.&lt;br /&gt;
+You can tell which process with the current macro.)&lt;br /&gt;
+Not to be confused with userspace.&lt;br /&gt;
+Can be interrupted by software or hardware interrupts.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;register, kernel task_struct, stack. user text stack heap&lt;br /&gt;
+###interrupt context:&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Firo thinks the key point is interrupt context is irrelevant to process context!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Can not schedule!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;register, maybe interrupt/process stack.&lt;br /&gt;
+###softirq context&lt;br /&gt;
+in the context of whichever process happens to be running at the wrong time;&lt;br /&gt;
+that is the &amp;ldquo;randomly chosen victim&amp;rdquo; aspect that Thomas was talking about.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##Preemption&lt;br /&gt;
+* Linux kernel user mode is always User preemption.&lt;br /&gt;
+When returning to user-space from a system call.&lt;br /&gt;
+When returning to user-space from an interrupt hander.&lt;br /&gt;
+* Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;br /&gt;
+If a task in the kernel explicitly calls schedule()&lt;br /&gt;
+If a task in the kernel blocked (which results in a all to schedule())&lt;br /&gt;
+* Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;br /&gt;
+schedule + blcoked&lt;br /&gt;
+When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+When kernel code becomes preemptible again.&lt;/p&gt;
+
+&lt;p&gt;###Entries of preempt schdule, FIXME&lt;br /&gt;
+1 After Interrupt return,preempt_count_irq.&lt;br /&gt;
+2 cond_resched&lt;br /&gt;
+3 preempt_count&lt;/p&gt;
+
+&lt;p&gt;###What is the PREEMPT_ACTIVE&lt;br /&gt;
+* This sets a flag bit in the preemption counter that has such a large value&lt;br /&gt;
+    that it is never affected by the regular preemption counter increments&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;It indicates to the schedule function that scheduling was not&lt;br /&gt;
+invoked in the normal way but as a result of a kernel preemption.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;This ensures that the next task is selected as quickly as possible without&lt;br /&gt;
+the hassle of deactivating the current one. If a high-priority task is waiting&lt;br /&gt;
+to be scheduled, it will be picked by the scheduler class and will be allowed to run.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;###preempt_count&lt;br /&gt;
+* preempt 8&lt;br /&gt;
+* softirq 8&lt;br /&gt;
+* irq   4&lt;br /&gt;
+* preempt active 1&lt;br /&gt;
+* nmi 1&lt;/p&gt;
+
+&lt;p&gt;#Interrupt&lt;/p&gt;
+
+&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
+
+&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
+irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
+
+&lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
+* in_irq&lt;br /&gt;
+in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!&lt;br /&gt;
++irq disable 部设计preempt_cout&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;in_softirq&lt;br /&gt;
+should rename to in_softirq_or_bh_disable()&lt;br /&gt;
+local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)&lt;br /&gt;
+__do_softirq use __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET), damn it!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;in_interrupt&lt;br /&gt;
+一种是irq路径上的do_softirq, 即in_serving_softirq&lt;br /&gt;
++local_bh_disbale()&lt;br /&gt;
+//not in softirq context!!!&lt;br /&gt;
++local_bh_enable()&lt;br /&gt;
+硬中断呢?&lt;br /&gt;
+do_IRQ,肯定是.&lt;br /&gt;
+local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check&lt;br /&gt;
+[Question about in_interrupt() semantics with regard to softirqs]()&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;##softirq&lt;br /&gt;
+同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。&lt;br /&gt;
+* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
+current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
+* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
+* not percpu&lt;/p&gt;
+
+&lt;h2 id=&#34;tasklet-and-kernel-timer-is-based-on-softirq&#34;&gt;tasklet and kernel timer is based on softirq&lt;/h2&gt;
+
+&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.&lt;br /&gt;
+.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上&lt;br /&gt;
+* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,&lt;br /&gt;
+ which run in the context of a randomly chosen victim&lt;br /&gt;
+ w/o the ability to put any control on them. &amp;ndash;Thomas Gleixner&lt;/p&gt;
+
+&lt;p&gt;tasklet different with other softirq is run  signal cpu core&lt;br /&gt;
+spinlock_bh wider then spinlock&lt;/p&gt;
+
+&lt;p&gt;###time of softirq&lt;br /&gt;
+* follow hardirq, irq_exit()&lt;br /&gt;
+* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
+* ksoftirqd&lt;/p&gt;
+
+&lt;p&gt;###tasklet&lt;br /&gt;
+tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?&lt;br /&gt;
+tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了&lt;br /&gt;
+只有一个cpu执行同一时刻.&lt;/p&gt;
+
+&lt;p&gt;#Process&lt;br /&gt;
+##kthread and workqueue&lt;br /&gt;
+kthread do specific func onshot&lt;br /&gt;
+workqueue can dynamic set different specific work&lt;br /&gt;
+workqueue is just a coat of kthread&lt;/p&gt;
+
+&lt;h2 id=&#34;differences-between-softirq-and-workqueue&#34;&gt;Differences between softirq and workqueue&lt;/h2&gt;
+
+&lt;p&gt;Softirq(tasklet)&lt;br /&gt;
+init static:    DECLARE_TASKLET(), DECLARE_TASKLET_DISABLED()&lt;br /&gt;
+init dynamic:   tasklet_init()&lt;br /&gt;
+schedule:   tasklet_schedule()&lt;br /&gt;
+exit:       tasklet_kill()&lt;br /&gt;
+pros and cons:  execute in interrupt context, serialization, tasklet blonged to the cpu which tasklet_schedule() it, oneshot&lt;/p&gt;
+
+&lt;p&gt;Workqueue&lt;br /&gt;
+init static:    DECLARE_WORK()&lt;br /&gt;
+init dynamic:   kzalloc() INIT_WORK(), kzalloc() PREPARE_WORK()&lt;br /&gt;
+schedule1:  create_singlethread_workqueue(), create_workqueue()&lt;br /&gt;
+        queue_work()&lt;br /&gt;
+exit1:      flush_workqueue(), destroy_workqueue()&lt;br /&gt;
+schedule2:  schedule_work()&lt;br /&gt;
+exit2:      (none)&lt;br /&gt;
+pros and cons:  execute in process context, workqueue has two type, driver can create workqueue or use system workqueue, oneshot&lt;/p&gt;
+
+&lt;p&gt;#FAQ&lt;br /&gt;
+##When to save irq rather than just disable irq&lt;br /&gt;
+local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
+&lt;p&gt;##what about irq nested?&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;##irq and lock&lt;br /&gt;
+irq and lock are complete different things!&lt;br /&gt;
+when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>杂记于北苑5号院</title>
@@ -1408,6 +1977,20 @@ source code, 我不觉得能很好理解我所看过的这些内容.&lt;br /&gt;
 就好比, 要学英语, 如果用英语去学TTC的哲学课程, 和用英语与印度技术人员沟通.&lt;br /&gt;
 这样才是真正寻找到目标的真正意义, we are not lacking of causality.&lt;/p&gt;
 
+&lt;ol&gt;
+&lt;li&gt;Quantity&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Quality&lt;br /&gt;
+It&amp;rsquo;s like structuralism.&lt;br /&gt;
+Stratal transverse Slicing&lt;br /&gt;
+Origins of the world: teleological causality&lt;br /&gt;
+Concurrency/prallel&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Practial connection&lt;br /&gt;
+Make a new one from scratch.&lt;br /&gt;
+Impove the current one&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
 &lt;h1 id=&#34;world-object-the-origins-of-the-world&#34;&gt;World/object/The origins of the world&lt;/h1&gt;
 
 &lt;p&gt;simple&lt;br /&gt;
@@ -1430,7 +2013,7 @@ perception/feeling注重的是人和object对人所产生的感受的不同,导�
 Things themselves - Husserl, Wittgenstein&lt;br /&gt;
 Ideal goal directed thought. &amp;ndash; Firo&lt;br /&gt;
 Quantitative irregularity, Structural, and complexity analyzing. &amp;ndash; Firo&lt;br /&gt;
-The Feynman Technique&lt;/p&gt;&lt;/li&gt;
+The question-based Feynman Technique&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Use the following method to select the appropriate methods&lt;br /&gt;
 Reflexivity &amp;ndash; Soros&lt;br /&gt;
@@ -1504,69 +2087,6 @@ Attention slavery.&lt;/p&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/lyubishchev/day-2016-04-07/</guid>
       <description>&lt;p&gt;The man who staring at the abyss.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Firo</title>
-      <link>http://firoyang.org/firo/firo/</link>
-      <pubDate>Tue, 25 Aug 2015 15:46:11 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/firo/firo/</guid>
-      <description>&lt;p&gt;世界被他人的谎言所掩盖, 丧失了原始的存在欲望.`&lt;br /&gt;
-一点点小的改变, 事情就会朝着好的方向发展.&lt;/p&gt;
-
-&lt;p&gt;一个人应该与外界的应该保持什么样的关系? 每个人都应该有自己的回答, 而且答案不一而终.&lt;br /&gt;
-正是这种关系成就了我们的一生.个体如何确定这种关系,或者说如何确定一种合理的生存状态?&lt;br /&gt;
-对于人类丰富, 无止尽的欲望而言, 很难给出统一的答案.然而这并不妨碍我们找到理想的状态.&lt;br /&gt;
-简单说来, 两点; 那些来自内心的, 原始的, 本能的愿望正是我们生活的方向, 不应被忽视, 反而&lt;br /&gt;
-要经常回忆起来, 并视若内心的珍宝一样对待; 另外, 我们应该做的是弥补生活中的不足, 以此来&lt;br /&gt;
-向理想中的生活不断的迈进, 而不是沉醉于对理想的执着与等待中. 从实实在在的生活不足开始,&lt;br /&gt;
-这才是真实的, 是你的生活.&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;生活不在别处, 正是当下此地.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;对于世界一部分的个体, 充分的认识世界的运作机制, 成为确定自己生活状态的前提. 对于普通人&lt;br /&gt;
-而言, 这似乎无从下手. 尤其是对于处在巨大生存压力下的人, 无暇顾及这般如同象牙塔式的问题?&lt;br /&gt;
-我想这正是他们生活悲剧的根源之一. 对于了解这个世界, 实际上要简单许多. 我想, 只要你有意识&lt;br /&gt;
-地在遇到困惑, 疑问, 艰难, 令人不适的生活的时候, 寻找这些问题背后的原因的时候, 答案便会出现.&lt;br /&gt;
-而答案就是一种关系, 因果律. 同时连带得出关系的主客体. 比如, 49年后, 中国人都有一个潜在&lt;br /&gt;
-的伟大的身份, 社会主义建造者.这是个体和国家之间的某种答案,在我出生之时, 变自动获得这种身份.&lt;br /&gt;
-直到我意识到这种身份的存在时, 我毫不犹豫的放弃了它.因为我并不是一个社会主义者,&lt;br /&gt;
-我打心眼里抵触社会主义, 我很难想象他的存在, 同时那样的社会对我来说是一种无声的恐惧,&lt;br /&gt;
-因为他偏离人性的核心, 那样的社会下的生活, 我一点也不期待, 我已体验过了.&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;显然, 在人与世界的诸多联系中, 有一些是被他人赋予, 而那些强制赋予的很多都成了枷锁.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;对于确定生命个体的合理生存状态, 可以看成找到你与世界现有的关系以及想要的某种关系.&lt;br /&gt;
-首先, 我们要理清那些重要的关系. 可以说我的哲学就是建立在关系之上, 也就是因果律.&lt;br /&gt;
-人总生活在关系中, 我认为下面的关系很重要.&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;从个人角度, 越靠近真实, 越靠近真实, 不靠近就会远离. 这也是因果律的体现.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;即便你找不到期待中的生活状态，你也活在关系中, 这也是最基本的．&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;人生没有目标, 也要好好活着!&lt;br /&gt;
-所有人都是某些东西的奴隶 &amp;ndash; 进击的巨人&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;其他的规律：&lt;/p&gt;
-
-&lt;p&gt;＞正反合&lt;br /&gt;
-&amp;gt; 完整的逻辑,包含不存在&lt;br /&gt;
-&amp;gt; 生活就是同傻逼的战争!&lt;br /&gt;
-&amp;gt; 每个人都有自己内心的弱点, 不必害怕他们.&lt;br /&gt;
-&amp;gt; 生长需要滋润.&lt;br /&gt;
-&amp;gt; 成长开始于注意到缺陷, 疑问&lt;br /&gt;
-&amp;gt; 很多时候其实我们的忙碌都是做着自己并不在乎的事情！&lt;br /&gt;
-&amp;gt; 生命所不能承受之轻!&lt;/p&gt;
 </description>
     </item>
     
