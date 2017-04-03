@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="604">
+<meta itemprop="wordCount" content="641">
 <meta itemprop="datePublished" content="2014-12-28">
 <meta itemprop="url" content="http://firoyang.org/cs/mm/">
 
@@ -286,6 +286,33 @@ expand_stack()/handle_mm_fault()</p></li>
 <li><p>vmalloc fault</p></li>
 </ul>
 
+<h2 id="mm-fault-handler">mm fault handler</h2>
+
+<p>arch/powerpc/mm/fault.c<br />
+deatils of trap is in bad_page_fault</p>
+
+<p>sigbus<br />
+__handle_mm_fault<br />
+{<br />
+        hugetlb_fault CONFIG_HUGETLB_PAGE<br />
+        handle_pte_fault-&gt;<br />
+        {<br />
+                do_linear_fault -&gt; __do_fault<br />
+                {<br />
+                        vma-&gt;vm_ops-&gt;fault(vma, &amp;vmf);<br />
+                }<br />
+                do_anonymous_page<br />
+                {<br />
+                        check_stack_guard_page<br />
+                }<br />
+                do_nonlinear_fault<br />
+                do_swap_page<br />
+                do_wp_page<br />
+                {<br />
+                        vma-&gt;vm_ops-&gt;page_mkwrite(vma, &amp;vmf); //??<br />
+                }<br />
+}</p>
+
 <p>#Physical memory<br />
 * NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl<br />
 * ZONE(DMA/NORMAL/HIGHMEM) struct zone:<br />
@@ -327,14 +354,12 @@ x86 used page table to all address!<br />
 Mips cpu can be aware of this address!</p></li>
 
 <li><p>How to deal with useless page? : &gt; /home/firo/bigdata</p></li>
-</ul>
 
-<p>*pfmemalloc &ndash; skb 表示申请了紧急内存!<br />
-page free</p>
+<li><p>pfmemalloc &ndash; skb 表示申请了紧急内存!<br />
+page free</p></li>
 
-<ul>
-<li>compound pages<br />
-18fa11efc279c20af5eefff2bbe814ca067<br /></li>
+<li><p>compound pages<br />
+18fa11efc279c20af5eefff2bbe814ca067</p></li>
 </ul>
 
 		</article>

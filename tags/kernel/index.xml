@@ -1218,6 +1218,33 @@ expand_stack()/handle_mm_fault()&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;vmalloc fault&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
+&lt;h2 id=&#34;mm-fault-handler&#34;&gt;mm fault handler&lt;/h2&gt;
+
+&lt;p&gt;arch/powerpc/mm/fault.c&lt;br /&gt;
+deatils of trap is in bad_page_fault&lt;/p&gt;
+
+&lt;p&gt;sigbus&lt;br /&gt;
+__handle_mm_fault&lt;br /&gt;
+{&lt;br /&gt;
+        hugetlb_fault CONFIG_HUGETLB_PAGE&lt;br /&gt;
+        handle_pte_fault-&amp;gt;&lt;br /&gt;
+        {&lt;br /&gt;
+                do_linear_fault -&amp;gt; __do_fault&lt;br /&gt;
+                {&lt;br /&gt;
+                        vma-&amp;gt;vm_ops-&amp;gt;fault(vma, &amp;amp;vmf);&lt;br /&gt;
+                }&lt;br /&gt;
+                do_anonymous_page&lt;br /&gt;
+                {&lt;br /&gt;
+                        check_stack_guard_page&lt;br /&gt;
+                }&lt;br /&gt;
+                do_nonlinear_fault&lt;br /&gt;
+                do_swap_page&lt;br /&gt;
+                do_wp_page&lt;br /&gt;
+                {&lt;br /&gt;
+                        vma-&amp;gt;vm_ops-&amp;gt;page_mkwrite(vma, &amp;amp;vmf); //??&lt;br /&gt;
+                }&lt;br /&gt;
+}&lt;/p&gt;
+
 &lt;p&gt;#Physical memory&lt;br /&gt;
 * NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl&lt;br /&gt;
 * ZONE(DMA/NORMAL/HIGHMEM) struct zone:&lt;br /&gt;
@@ -1259,14 +1286,12 @@ x86 used page table to all address!&lt;br /&gt;
 Mips cpu can be aware of this address!&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;How to deal with useless page? : &amp;gt; /home/firo/bigdata&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 
-&lt;p&gt;*pfmemalloc &amp;ndash; skb 表示申请了紧急内存!&lt;br /&gt;
-page free&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;pfmemalloc &amp;ndash; skb 表示申请了紧急内存!&lt;br /&gt;
+page free&lt;/p&gt;&lt;/li&gt;
 
-&lt;ul&gt;
-&lt;li&gt;compound pages&lt;br /&gt;
-18fa11efc279c20af5eefff2bbe814ca067&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;compound pages&lt;br /&gt;
+18fa11efc279c20af5eefff2bbe814ca067&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
