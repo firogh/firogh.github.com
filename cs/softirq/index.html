@@ -11,30 +11,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="keywords" content="">
+<meta name="keywords" content="cs, ">
 
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="404 Page not found : firoyang.org"/>
+<meta property="og:title" content="Softirq of Linux Kernel : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/404/">
+<meta property="og:url" content="http://firoyang.org/cs/softirq/">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2017-04-03"/>
 <meta property="article:modified_time" content="2017-04-03"/>
+
+
+<meta property="article:tag" content="cs">
 
 
 
 
 
     <base href="http://firoyang.org/">
-    <title> 404 Page not found</title>
-    <link rel="canonical" href="http://firoyang.org/404/">
-    <link href="http://firoyang.org/index.xml" rel="alternate" type="application/rss+xml" title="404 Page not found" />
+    <title> Softirq of Linux Kernel</title>
+    <link rel="canonical" href="http://firoyang.org/cs/softirq/">
+    
 
     
 <link rel='stylesheet' type='text/css'>
@@ -45,6 +48,8 @@
      
 </head>
 
+<body style="background-color:#FFFFF0;" lang="en" itemscope itemtype="http://schema.org/Article">
+<body lang="en" itemscope itemtype="http://schema.org/Article">
 <header id="header">
 	<link rel="stylesheet" href="static/css/font-awesome.min.css">
 	<nav id="nav">
@@ -128,11 +133,103 @@
 </header>
 
 
-<section id="main">
-  <div>
-   <h1 id="title">404 Page not found</h1>
-  </div>
-</section>
+
+ <link rel="stylesheet" href="highlight.js/styles/monokai-sublime.css">
+    <script src="highlight.js/highlight.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	<section id="main">
+
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >Softirq of Linux Kernel</h1>
+	  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Mon Apr 3, 2017 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+            <li> <a href="http://firoyang.org//tags/cs">cs</a> </li>
+          
+        </ul>
+
+    </div>
+
+
+</aside>
+
+<meta itemprop="wordCount" content="158">
+<meta itemprop="datePublished" content="2017-04-03">
+<meta itemprop="url" content="http://firoyang.org/cs/softirq/">
+
+
+	  <div>
+		<article itemprop="articleBody" id="content">
+		   
+
+<p>##softirq<br />
+同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。<br />
+* not allow execute nest but can recusive lock:local_bh_disable<br />
+current-&gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.<br />
+* hardirq on, can&rsquo;t sleep<br />
+* not percpu</p>
+
+<h2 id="tasklet-and-kernel-timer-is-based-on-softirq">tasklet and kernel timer is based on softirq</h2>
+
+<p>新增softirq, 是要重新编译内核的, 试试tasklet也不错.<br />
+.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上<br />
+* First of all, it&rsquo;s a conglomerate of mostly unrelated jobs,<br />
+ which run in the context of a randomly chosen victim<br />
+ w/o the ability to put any control on them. &ndash;Thomas Gleixner</p>
+
+<p>tasklet different with other softirq is run  signal cpu core<br />
+spinlock_bh wider then spinlock</p>
+
+<p>###time of softirq<br />
+* follow hardirq, irq_exit()<br />
+* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.<br />
+* ksoftirqd</p>
+
+<p>###tasklet<br />
+tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?<br />
+tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了<br />
+只有一个cpu执行同一时刻.</p>
+
+<p>#FAQ<br />
+##When to save irq rather than just disable irq<br />
+local_irq_disable() used in the code path that never disabled interrupts.<br />
+local_irq_save(flags) used in the code path that already disabled interrupts.</p>
+
+<p>##what about irq nested?<br />
+<a href="http://lwn.net/Articles/380937/">http://lwn.net/Articles/380937/</a></p>
+
+<p><a href="http://thread.gmane.org/gmane.linux.kernel/1152658">Deal PF_MEMALLOC in softirq</a></p>
+
+		</article>
+	  </div>
+	</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/softirq\/';
+    var disqus_title = 'Softirq of Linux Kernel';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/softirq\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
 
 <footer>
   <div>
@@ -155,3 +252,22 @@ fitText(document.getElementById('title'), 1)
 </body>
 </html>
 
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

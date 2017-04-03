@@ -7,7 +7,102 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Wed, 29 Mar 2017 10:49:04 CST</updated>
+    <updated>Mon, 03 Apr 2017 13:09:05 CST</updated>
+    
+    <item>
+      <title>Softirq of Linux Kernel</title>
+      <link>http://firoyang.org/cs/softirq/</link>
+      <pubDate>Mon, 03 Apr 2017 13:09:05 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/softirq/</guid>
+      <description>
+
+&lt;p&gt;##softirq&lt;br /&gt;
+同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。&lt;br /&gt;
+* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
+current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
+* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
+* not percpu&lt;/p&gt;
+
+&lt;h2 id=&#34;tasklet-and-kernel-timer-is-based-on-softirq&#34;&gt;tasklet and kernel timer is based on softirq&lt;/h2&gt;
+
+&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.&lt;br /&gt;
+.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上&lt;br /&gt;
+* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,&lt;br /&gt;
+ which run in the context of a randomly chosen victim&lt;br /&gt;
+ w/o the ability to put any control on them. &amp;ndash;Thomas Gleixner&lt;/p&gt;
+
+&lt;p&gt;tasklet different with other softirq is run  signal cpu core&lt;br /&gt;
+spinlock_bh wider then spinlock&lt;/p&gt;
+
+&lt;p&gt;###time of softirq&lt;br /&gt;
+* follow hardirq, irq_exit()&lt;br /&gt;
+* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
+* ksoftirqd&lt;/p&gt;
+
+&lt;p&gt;###tasklet&lt;br /&gt;
+tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?&lt;br /&gt;
+tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了&lt;br /&gt;
+只有一个cpu执行同一时刻.&lt;/p&gt;
+
+&lt;p&gt;#FAQ&lt;br /&gt;
+##When to save irq rather than just disable irq&lt;br /&gt;
+local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
+&lt;p&gt;##what about irq nested?&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Interrupt and exception</title>
+      <link>http://firoyang.org/cs/interrupt_and_exception/</link>
+      <pubDate>Mon, 03 Apr 2017 13:02:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/interrupt_and_exception/</guid>
+      <description>
+
+&lt;p&gt;#Interrupt&lt;/p&gt;
+
+&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
+
+&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
+irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
+
+&lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
+* in_irq&lt;br /&gt;
+in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!&lt;br /&gt;
++irq disable 部设计preempt_cout&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;in_softirq&lt;br /&gt;
+should rename to in_softirq_or_bh_disable()&lt;br /&gt;
+local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)&lt;br /&gt;
+__do_softirq use __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET), damn it!&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;in_interrupt&lt;br /&gt;
+一种是irq路径上的do_softirq, 即in_serving_softirq&lt;br /&gt;
++local_bh_disbale()&lt;br /&gt;
+//not in softirq context!!!&lt;br /&gt;
++local_bh_enable()&lt;br /&gt;
+硬中断呢?&lt;br /&gt;
+do_IRQ,肯定是.&lt;br /&gt;
+local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check&lt;br /&gt;
+[Question about in_interrupt() semantics with regard to softirqs]()&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;#FAQ&lt;br /&gt;
+##When to save irq rather than just disable irq&lt;br /&gt;
+local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
+&lt;p&gt;##what about irq nested?&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Scheduling in operating system</title>
@@ -40,7 +135,11 @@ Questions we need to solve:&lt;br /&gt;
     new task, task dies&lt;br /&gt;
     exception, interrupt&lt;br /&gt;
     preempt_schedule_irq&lt;br /&gt;
-    retint_kernel&lt;br /&gt;
+    retint_kernel; kernel preempt&lt;br /&gt;
+3.1 Scheduling timer&lt;br /&gt;
+alloc_intr_gate(LOCAL_TIMER_VECTOR, apic_timer_interrupt);&lt;br /&gt;
+apic_timer_interrupt smp_apic_timer_interrupt local_apic_timer_interrupt&lt;br /&gt;
+tick_handle_periodic -&amp;gt; tick_periodic-&amp;gt; scheduler_tick -&amp;gt; tick_periodic -&amp;gt;.task_tick= task_tick_fair,&lt;br /&gt;
 4. States and actions&lt;br /&gt;
 4.1 wake up a sleep task&lt;br /&gt;
     not runnable -&amp;gt; activate_task -&amp;gt; runnable -&amp;gt;deactivate_task-&amp;gt; not runnable&lt;br /&gt;
@@ -71,377 +170,17 @@ Introduce cpu_active_map and redo sched domain managment&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h1 id=&#34;etc&#34;&gt;ETC&lt;/h1&gt;
-
-&lt;p&gt;worker&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-preempt&#34;&gt;kernel preempt&lt;/h1&gt;
-
-&lt;p&gt;arch/x86/kernel/entry_64.S&lt;/p&gt;
-
-&lt;p&gt;entity_key&lt;/p&gt;
-
 &lt;h1 id=&#34;git-log&#34;&gt;Git log&lt;/h1&gt;
 
 &lt;p&gt;e9c8431185d6c406887190519f6dbdd112641686&lt;br /&gt;
 TASK_WAKING; see migrate_task_rq_fair and try_to_wake_up&lt;br /&gt;
 88ec22d3edb72b261f8628226cd543589a6d5e1b&lt;br /&gt;
-In order to remove the cfs_rq dependency from set_task_cpu() we&lt;br /&gt;
-    need to ensure the task is cfs_rq invariant for all callsites.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;The simple approach is to substract cfs_rq-&amp;gt;min_vruntime from
-se-&amp;gt;vruntime on dequeue, and add cfs_rq-&amp;gt;min_vruntime on
-enqueue.
-
-However, this has the downside of breaking FAIR_SLEEPERS since
-we loose the old vruntime as we only maintain the relative
-position.
-
-To solve this, we observe that we only migrate runnable tasks,
-we do this using deactivate_task(.sleep=0) and
-activate_task(.wakeup=0), therefore we can restrain the
-min_vruntime invariance to that state.
-
-The only other case is wakeup balancing, since we want to
-maintain the old vruntime we cannot make it relative on dequeue,
-but since we don&#39;t migrate inactive tasks, we can do so right
-before we activate it again.
-
-This is where we need the new pre-wakeup hook, we need to call
-this while still holding the old rq-&amp;gt;lock. We could fold it into
--&amp;gt;select_task_rq(), but since that has multiple callsites and
-would obfuscate the locking requirements, that seems like a
-fudge.
-
-This leaves the fork() case, simply make sure that -&amp;gt;task_fork()
-leaves the -&amp;gt;vruntime in a relative state.
-
-This covers all cases where set_task_cpu() gets called, and
-ensures it sees a relative vruntime.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;2f950354e6d535b892f133d20bd6a8b09430424c&lt;br /&gt;
- sched/fair: Fix fairness issue on migration&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;Pavan reported that in the presence of very light tasks (or cgroups)
-the placement of migrated tasks can cause severe fairness issues.
-
-The problem is that enqueue_entity() places the task before it updates
-time, thereby it can place the task far in the past (remember that
-light tasks will shoot virtual time forward at a high speed, so in
-relation to the pre-existing light task, we can land far in the past).
-
-This is done because update_curr() needs the current task, and we
-might be placing the current task.
-
-The obvious solution is to differentiate between the current and any
-other task; placing the current before we update time, and placing any
-other task after, such that !curr tasks end up at the current moment
-in time, and not in the past.
-
-This commit re-introduces the previously reverted commit:
-
-  3a47d5124a95 (&amp;quot;sched/fair: Fix fairness issue on migration&amp;quot;)
-
-... which is now safe to do, after we&#39;ve also fixed another
-underlying bug first, in:
-
-  sched/fair: Prepare to fix fairness problems on migration
-
-and cleaned up other details in the migration code:
-
-  sched/core: Kill sched_class::task_wakin
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://linux.kernel.narkive.com/p15Wmn0i/migrated-cfs-task-getting-an-unfair-advantage&#34;&gt;Migrated CFS task getting an unfair advantage&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;curr-was-not-kept-in-rb-tree&#34;&gt;curr was not kept in rb-tree&lt;/h1&gt;
-
-&lt;p&gt;30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;/p&gt;
-
-&lt;h1 id=&#34;group&#34;&gt;Group&lt;/h1&gt;
-
-&lt;p&gt;set_task_rq&lt;/p&gt;
-
-&lt;h1 id=&#34;priority-and-nice&#34;&gt;priority and nice&lt;/h1&gt;
-
-&lt;p&gt;In according to  do_task_stat, we know priority = task_prio(task); nice = task_nice(task);&lt;br /&gt;
-p-&amp;gt;prio - MAX_RT_PRIO; = -2,  MAX_RT_PRIO = 100;so p-&amp;gt;prio = 98;&lt;br /&gt;
-PRIO_TO_NICE(prio)&lt;br /&gt;
-(p)-&amp;gt;static_prio - MAX_RT_PRIO - 20 = 0; So p-&amp;gt;static_prio = 120;&lt;br /&gt;
-NICE_TO_PRIO(nice)      (MAX_RT_PRIO + (nice) + 20)&lt;br /&gt;
-Convert user-nice values [ -20 &amp;hellip; 0 &amp;hellip; 19 ] to static priority [ MAX_RT_PRIO..MAX_PRIO-1 ] 100..139, and back.&lt;br /&gt;
-MAX_PRIO                (MAX_RT_PRIO + 40) // 140&lt;br /&gt;
-DEFAULT_PRIO            (MAX_RT_PRIO + 20) // 120&lt;br /&gt;
-if (task_has_rt_policy(p)) {&lt;br /&gt;
- p-&amp;gt;se.load.weight = prio_to_weight[0] * 2;  /*   0 &lt;em&gt;/      1024,&lt;br /&gt;
-p-&amp;gt;se.load.inv_weight = prio_to_wmult[0] &amp;gt;&amp;gt; 1; /&lt;/em&gt;   0 */   4194304,&lt;/p&gt;
-
-&lt;p&gt;#define LOCAL_TIMER_VECTOR      0xef&lt;br /&gt;
-/arch/x86/kernel/irqinit_64.c:215:  alloc_intr_gate(LOCAL_TIMER_VECTOR, apic_timer_interrupt);&lt;br /&gt;
-apic_timer_interrupt&lt;br /&gt;
-smp_apic_timer_interrupt&lt;br /&gt;
-local_apic_timer_interrupt&lt;br /&gt;
-tick_handle_periodic&lt;br /&gt;
-tick_periodic-&amp;gt;&lt;br /&gt;
-scheduler_tick -&amp;gt;&lt;br /&gt;
-.task_tick              = task_tick_fair,&lt;br /&gt;
-tick_periodic -&amp;gt;.task_tick              = task_tick_fair,&lt;/p&gt;
-
-&lt;h1 id=&#34;protection-ring&#34;&gt;Protection ring&lt;/h1&gt;
-
-&lt;h2 id=&#34;kernel-mode&#34;&gt;Kernel mode:&lt;/h2&gt;
-
-&lt;h2 id=&#34;user-mode&#34;&gt;User mode&lt;/h2&gt;
-
-&lt;p&gt;限制访问地址空间, 内核数据结构, I/O 指令, 中断代码等.&lt;/p&gt;
-
-&lt;h2 id=&#34;mode-switch&#34;&gt;Mode switch&lt;/h2&gt;
-
-&lt;p&gt;esp既表示进程的用户栈，也表进程的内核栈，要看进程处于用户态还是内核态。&lt;br /&gt;
-读TSS段中进程的内核态指针付给ss和esp。&lt;br /&gt;
-把用户态SS和esp指针保存在进程的内核栈上，&lt;br /&gt;
-从内核态返回时，弹出进程内核栈上用户态ss和esp值。&lt;br /&gt;
-那么TSS段中进程的内核态指针是从哪里来的呢？&lt;/p&gt;
-
-&lt;p&gt;cpu -&amp;gt; tr -&amp;gt; tss -&amp;gt; esp0 =&amp;gt; 内核栈-&amp;gt;保存用户态cs eip esp等.&lt;br /&gt;
-Hardware context switch.&lt;br /&gt;
-pt_regs&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel-stack&#34;&gt;kernel stack&lt;/h2&gt;
-
-&lt;p&gt;从system_call中, 我们可以发现:&lt;br /&gt;
-GET_THREAD_INFO(%ebp)&lt;/p&gt;
-
-&lt;p&gt;master idle进程的kernel stack在init/init_task.c:init_thread_union&lt;br /&gt;
-其他进程的kernel stack是fork产生.&lt;br /&gt;
-this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;br /&gt;
-this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;/p&gt;
-
-&lt;h1 id=&#34;schedule-cfs&#34;&gt;Schedule cfs&lt;/h1&gt;
-
-&lt;p&gt;sum_runtime = sysctl_sched_min_granularity * nr_running（if 进程数 &amp;gt; 5）&lt;br /&gt;
-sum_runtime = sysctl_sched_latency = 20 ms （if 进程数 &amp;lt;= 5）&lt;br /&gt;
-sysctl_sched_min_granularity = 4ms&lt;br /&gt;
-ideal_time = sum_runtime * se.weight/cfs_rq.weight&lt;br /&gt;
-vruntime +=  delta * NICE_0_LOAD/ se.weight;(if curr.nice!=NICE_0_LOAD)&lt;/p&gt;
-
-&lt;h1 id=&#34;idle&#34;&gt;Idle&lt;/h1&gt;
-
-&lt;p&gt;主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0&lt;br /&gt;
-init_idle.&lt;/p&gt;
-
-&lt;h1 id=&#34;porcess-context&#34;&gt;Porcess context&lt;/h1&gt;
-
-&lt;h2 id=&#34;userspace-context&#34;&gt;Userspace context&lt;/h2&gt;
-
-&lt;p&gt;.txt, .data, .bss, userspace stack, heap, library.&lt;/p&gt;
-
-&lt;h2 id=&#34;kernespace-context&#34;&gt;Kernespace context&lt;/h2&gt;
-
-&lt;p&gt;task_struct, mm_struct, pgd, kernelspace stack.&lt;/p&gt;
-
-&lt;h2 id=&#34;hardware-context&#34;&gt;Hardware context&lt;/h2&gt;
-
-&lt;p&gt;Registers&lt;/p&gt;
-
-&lt;h2 id=&#34;context-switch&#34;&gt;Context switch&lt;/h2&gt;
-
-&lt;p&gt;A context switch (also sometimes referred to as a process switch or a task switch)&lt;br /&gt;
-is the switching of the CPU (central processing unit) from one process or thread to another.&lt;/p&gt;
-
-&lt;h2 id=&#34;进程切换process-switch&#34;&gt;进程切换process switch&lt;/h2&gt;
-
-&lt;p&gt;也叫上下文切换context switch只发生在内核态，必须理解而不是记住。&lt;br /&gt;
-一个进程会用到许多cpu的寄存器比如esp，eip等等，他们被称作Hardware context硬件上下文，&lt;br /&gt;
-如果进程是培养皿中的一条幼虫，那么硬件上下问就是培养液了。不同的虫子需要不同的培养液，&lt;br /&gt;
-新的培养液进来，旧的培养液也需要保存，以备稍后使用。&lt;br /&gt;
-当进程切换时，我们要保存当前被切换出去进程的硬件上下文，以备将来切换回来使用。&lt;br /&gt;
-应该明白为什么进程切换也叫上下文切换了。怎么保存上下文呢？&lt;br /&gt;
-在进程的task_struct结构的成员变量thread_struct结构保存被切换出去进程的硬件上下文。&lt;br /&gt;
-我们所关心的换出的进程的esp指针也保存在thread_struct当中了。&lt;br /&gt;
-当然，对于被切换进来的进程我们用这个进程的thread_struct成员中的esp 值更新硬件的esp寄存器，&lt;br /&gt;
-也需要更新GDT中的TSS里的esp0,以备将来用来从用户态切换到内核态时，找到进程内核栈的栈顶指针。&lt;/p&gt;
-
-&lt;h2 id=&#34;switch-to&#34;&gt;switch_to&lt;/h2&gt;
-
-&lt;p&gt;__schedule()-&amp;gt;swtich_to&lt;/p&gt;
-
-&lt;h3 id=&#34;load-tss&#34;&gt;load TSS&lt;/h3&gt;
-
-&lt;p&gt;进程切换只发生在内核态&lt;br /&gt;
-/&lt;em&gt;将next进程的内核栈指针(next-&amp;gt;thread-&amp;gt;sp0)值更新到当前CPU的TSS中&lt;/em&gt;/&lt;br /&gt;
-load_sp0(tss, next);&lt;br /&gt;
-task_struct.thread.sp0&lt;br /&gt;
-thread_struct&lt;/p&gt;
-
-&lt;h2 id=&#34;type-of-context-switch&#34;&gt;type of Context switch&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;context switch by hardware&lt;br /&gt;
-Old linux kernel&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;context switch by software&lt;br /&gt;
-kernel 2.6&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;common-concepts&#34;&gt;Common concepts&lt;/h1&gt;
-
-&lt;p&gt;Multiprocessing for SMP&lt;/p&gt;
-
-&lt;h1 id=&#34;process-flag&#34;&gt;Process flag&lt;/h1&gt;
-
-&lt;p&gt;PF_MEMALLOC &lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/914878&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;process-user-id&#34;&gt;Process user ID&lt;/h1&gt;
-
-&lt;h2 id=&#34;effective-user-group-id&#34;&gt;Effective user/group ID&lt;/h2&gt;
-
-&lt;p&gt;euid:4777&lt;br /&gt;
-egid:2777&lt;br /&gt;
-chmod u+s cynthia&lt;br /&gt;
-root进程执行cynthia后euid变为firo, saved user id变为root&lt;/p&gt;
-
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-
-&lt;p&gt;u+s 就可以&lt;br /&gt;
-firo@firo tmp$ iptables -L&lt;br /&gt;
-iptables v1.4.21: can&amp;rsquo;t initialize iptables table `filter&amp;rsquo;: Permission denied (you must be root)&lt;br /&gt;
-Perhaps iptables or your kernel needs to be upgraded.&lt;br /&gt;
-chmod +s /usr/sbin/iptables&lt;br /&gt;
-chmod -s /usr/sbin/iptables&lt;/p&gt;
-
-&lt;h1 id=&#34;scheduling-strategies&#34;&gt;Scheduling strategies&lt;/h1&gt;
-
-&lt;p&gt;multiprogramming&lt;br /&gt;
-time-sharing(multi tasking)&lt;br /&gt;
-real-time&lt;/p&gt;
-
-&lt;h1 id=&#34;multitasking&#34;&gt;Multitasking&lt;/h1&gt;
-
-&lt;h2 id=&#34;reference&#34;&gt;Reference&lt;/h2&gt;
-
-&lt;p&gt;codes: comments of __schedule()&lt;br /&gt;
-Book: Linux kernel development&lt;/p&gt;
-
-&lt;p&gt;##Common concepts&lt;br /&gt;
-* The process scheduler decides which process runs, when, and for how long.&lt;br /&gt;
-* Multitasking: cooperative and preemptive.&lt;br /&gt;
-* Preemption:Involuntarily suspending a running process.&lt;br /&gt;
-* Timeslice: a slice of cpu&amp;rsquo;s time.&lt;br /&gt;
-* Yielding: The act of a process voluntarily suspending itself.&lt;br /&gt;
-* Cooperative multitasking: a process does not stop running until it voluntary decides to do so.&lt;br /&gt;
-* Time sharing: is cooperative mutitasking,&lt;br /&gt;
-* the codes that yeild the cpu when timeslice is zero while ret from syscall is also belong to user process!&lt;br /&gt;
-so if !CONFIG_PREEMPT* is cooperative!&lt;br /&gt;
-* CFS: Pick the task with the smallest vruntime. That&amp;rsquo;s it!&lt;/p&gt;
-
-&lt;p&gt;##TIF_NEED_RESCHED&lt;br /&gt;
-* The situation of set task need resched&lt;br /&gt;
-scheduler_tick()&lt;br /&gt;
-try_to_wake_up() when a process that has a higher priority than &lt;em&gt;current&lt;/em&gt; is awakened.&lt;br /&gt;
-Other?&lt;/p&gt;
-
-&lt;h2 id=&#34;save-all&#34;&gt;SAVE_ALL&lt;/h2&gt;
-
-&lt;p&gt;no include cs ss ip sp eflag why?&lt;/p&gt;
-
-&lt;p&gt;#Deamonize&lt;/p&gt;
-
-&lt;h2 id=&#34;fork-oraphan&#34;&gt;fork, oraphan&lt;/h2&gt;
-
-&lt;p&gt;similar &amp;amp;&lt;br /&gt;
-not a goup leader inherit with parent pgid for setsid&lt;/p&gt;
-
-&lt;h2 id=&#34;setsid&#34;&gt;setsid&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;session leader&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;process group leader&lt;br /&gt;
-A signal directed to a process group is delivered individually to&lt;br /&gt;
-all of the processes that are members of the group.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;deatch controlling terminals(confusing)&lt;/p&gt;
-
-&lt;h2 id=&#34;chdir&#34;&gt;chdir&lt;/h2&gt;
-
-&lt;h2 id=&#34;umask&#34;&gt;umask&lt;/h2&gt;
-
-&lt;h2 id=&#34;deal-with-fd&#34;&gt;deal with fd&lt;/h2&gt;
-
-&lt;p&gt;below both output&lt;br /&gt;
-守护进程继承了shell的屏幕和键盘输入.&lt;br /&gt;
-pid_t pid= fork();&lt;br /&gt;
-if (pid != 0) {&lt;br /&gt;
-system(&amp;ldquo;sleep 3&amp;rdquo;);&lt;br /&gt;
-printf(&amp;ldquo;parent exit\n&amp;rdquo;);&lt;br /&gt;
-} else {&lt;br /&gt;
-printf(&amp;ldquo;child start\n&amp;rdquo;);&lt;br /&gt;
-setsid();&lt;br /&gt;
-fprintf(stdout, &amp;ldquo;out child\n&amp;rdquo;);&lt;br /&gt;
-fprintf(stderr, &amp;ldquo;err child\n&amp;rdquo;);&lt;/p&gt;
-
-&lt;p&gt;system(&amp;ldquo;sleep 7&amp;rdquo;);&lt;/p&gt;
-
-&lt;p&gt;fprintf(stdout, &amp;ldquo;after out child\n&amp;rdquo;);&lt;br /&gt;
-fprintf(stderr, &amp;ldquo;after err child\n&amp;rdquo;);&lt;br /&gt;
-printf(&amp;ldquo;child exit\n&amp;rdquo;);&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;zombie-process&#34;&gt;Zombie process&lt;/h1&gt;
-
-&lt;h2 id=&#34;defunct&#34;&gt;&lt;defunct&gt;&lt;/h2&gt;
-
-&lt;p&gt;forked child not reaped by parent will hooked in process list.&lt;br /&gt;
-if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
-&lt;defunct&gt;表明父活着, 但不收尸.&lt;/p&gt;
-
-&lt;h2 id=&#34;double-fork-for-parent-long-live&#34;&gt;Double fork for parent long live&lt;/h2&gt;
-
-&lt;p&gt;mirgate subchild to init, parent just reap child.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;thread_info&lt;br /&gt;
-可以快速访问task_struct.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;swtch_stack&lt;br /&gt;
-线程切换&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;the-player&#34;&gt;The player&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Interrupt &amp;ndash; irq,softirq&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Process &amp;ndash; user process, kernel thread(workqueue)&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;common-concpets&#34;&gt;Common concpets&lt;/h1&gt;
-
-&lt;p&gt;userspace: A process executing its own code outside the kernel.&lt;/p&gt;
-
-&lt;p&gt;##What is context?&lt;br /&gt;
-###process context/user context:&lt;br /&gt;
-The kernel executing on behalf of a particular process&lt;br /&gt;
-(ie. a system call or trap) or kernel thread.&lt;br /&gt;
-You can tell which process with the current macro.)&lt;br /&gt;
-Not to be confused with userspace.&lt;br /&gt;
-Can be interrupted by software or hardware interrupts.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;register, kernel task_struct, stack. user text stack heap&lt;br /&gt;
-###interrupt context:&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Firo thinks the key point is interrupt context is irrelevant to process context!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Can not schedule!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;register, maybe interrupt/process stack.&lt;br /&gt;
-###softirq context&lt;br /&gt;
-in the context of whichever process happens to be running at the wrong time;&lt;br /&gt;
-that is the &amp;ldquo;randomly chosen victim&amp;rdquo; aspect that Thomas was talking about.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+In order to remove the cfs_rq dependency from set_task_cpu() we need to ensure the task is cfs_rq invariant for all callsites.&lt;br /&gt;
+2f950354e6d535b892f133d20bd6a8b09430424c&lt;br /&gt;
+sched/fair: Fix fairness issue on migration&lt;br /&gt;
+&lt;a href=&#34;http://linux.kernel.narkive.com/p15Wmn0i/migrated-cfs-task-getting-an-unfair-advantage&#34;&gt;Migrated CFS task getting an unfair advantage&lt;/a&gt;&lt;br /&gt;
+30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;br /&gt;
+curr was not kept in rb-tree&lt;/p&gt;
 
 &lt;p&gt;##Preemption&lt;br /&gt;
 * Linux kernel user mode is always User preemption.&lt;br /&gt;
@@ -454,127 +193,6 @@ If a task in the kernel blocked (which results in a all to schedule())&lt;br /&g
 schedule + blcoked&lt;br /&gt;
 When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
 When kernel code becomes preemptible again.&lt;/p&gt;
-
-&lt;p&gt;###Entries of preempt schdule, FIXME&lt;br /&gt;
-1 After Interrupt return,preempt_count_irq.&lt;br /&gt;
-2 cond_resched&lt;br /&gt;
-3 preempt_count&lt;/p&gt;
-
-&lt;p&gt;###What is the PREEMPT_ACTIVE&lt;br /&gt;
-* This sets a flag bit in the preemption counter that has such a large value&lt;br /&gt;
-    that it is never affected by the regular preemption counter increments&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;It indicates to the schedule function that scheduling was not&lt;br /&gt;
-invoked in the normal way but as a result of a kernel preemption.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;This ensures that the next task is selected as quickly as possible without&lt;br /&gt;
-the hassle of deactivating the current one. If a high-priority task is waiting&lt;br /&gt;
-to be scheduled, it will be picked by the scheduler class and will be allowed to run.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;###preempt_count&lt;br /&gt;
-* preempt 8&lt;br /&gt;
-* softirq 8&lt;br /&gt;
-* irq   4&lt;br /&gt;
-* preempt active 1&lt;br /&gt;
-* nmi 1&lt;/p&gt;
-
-&lt;p&gt;#Interrupt&lt;/p&gt;
-
-&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
-
-&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
-irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
-
-&lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
-* in_irq&lt;br /&gt;
-in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!&lt;br /&gt;
-+irq disable 部设计preempt_cout&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;in_softirq&lt;br /&gt;
-should rename to in_softirq_or_bh_disable()&lt;br /&gt;
-local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)&lt;br /&gt;
-__do_softirq use __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET), damn it!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;in_interrupt&lt;br /&gt;
-一种是irq路径上的do_softirq, 即in_serving_softirq&lt;br /&gt;
-+local_bh_disbale()&lt;br /&gt;
-//not in softirq context!!!&lt;br /&gt;
-+local_bh_enable()&lt;br /&gt;
-硬中断呢?&lt;br /&gt;
-do_IRQ,肯定是.&lt;br /&gt;
-local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check&lt;br /&gt;
-[Question about in_interrupt() semantics with regard to softirqs]()&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;##softirq&lt;br /&gt;
-同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。&lt;br /&gt;
-* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
-current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
-* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
-* not percpu&lt;/p&gt;
-
-&lt;h2 id=&#34;tasklet-and-kernel-timer-is-based-on-softirq&#34;&gt;tasklet and kernel timer is based on softirq&lt;/h2&gt;
-
-&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.&lt;br /&gt;
-.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上&lt;br /&gt;
-* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,&lt;br /&gt;
- which run in the context of a randomly chosen victim&lt;br /&gt;
- w/o the ability to put any control on them. &amp;ndash;Thomas Gleixner&lt;/p&gt;
-
-&lt;p&gt;tasklet different with other softirq is run  signal cpu core&lt;br /&gt;
-spinlock_bh wider then spinlock&lt;/p&gt;
-
-&lt;p&gt;###time of softirq&lt;br /&gt;
-* follow hardirq, irq_exit()&lt;br /&gt;
-* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
-* ksoftirqd&lt;/p&gt;
-
-&lt;p&gt;###tasklet&lt;br /&gt;
-tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?&lt;br /&gt;
-tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了&lt;br /&gt;
-只有一个cpu执行同一时刻.&lt;/p&gt;
-
-&lt;p&gt;#Process&lt;br /&gt;
-##kthread and workqueue&lt;br /&gt;
-kthread do specific func onshot&lt;br /&gt;
-workqueue can dynamic set different specific work&lt;br /&gt;
-workqueue is just a coat of kthread&lt;/p&gt;
-
-&lt;h2 id=&#34;differences-between-softirq-and-workqueue&#34;&gt;Differences between softirq and workqueue&lt;/h2&gt;
-
-&lt;p&gt;Softirq(tasklet)&lt;br /&gt;
-init static:    DECLARE_TASKLET(), DECLARE_TASKLET_DISABLED()&lt;br /&gt;
-init dynamic:   tasklet_init()&lt;br /&gt;
-schedule:   tasklet_schedule()&lt;br /&gt;
-exit:       tasklet_kill()&lt;br /&gt;
-pros and cons:  execute in interrupt context, serialization, tasklet blonged to the cpu which tasklet_schedule() it, oneshot&lt;/p&gt;
-
-&lt;p&gt;Workqueue&lt;br /&gt;
-init static:    DECLARE_WORK()&lt;br /&gt;
-init dynamic:   kzalloc() INIT_WORK(), kzalloc() PREPARE_WORK()&lt;br /&gt;
-schedule1:  create_singlethread_workqueue(), create_workqueue()&lt;br /&gt;
-        queue_work()&lt;br /&gt;
-exit1:      flush_workqueue(), destroy_workqueue()&lt;br /&gt;
-schedule2:  schedule_work()&lt;br /&gt;
-exit2:      (none)&lt;br /&gt;
-pros and cons:  execute in process context, workqueue has two type, driver can create workqueue or use system workqueue, oneshot&lt;/p&gt;
-
-&lt;p&gt;#FAQ&lt;br /&gt;
-##When to save irq rather than just disable irq&lt;br /&gt;
-local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
-local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
-
-&lt;p&gt;##what about irq nested?&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;##irq and lock&lt;br /&gt;
-irq and lock are complete different things!&lt;br /&gt;
-when need to disable irq just get rid of mess of shared data.&lt;/p&gt;
 </description>
     </item>
     
@@ -3555,628 +3173,6 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
 &lt;p&gt;1.Black-box testing test software function.&lt;br /&gt;
 2.White-box testing test software internal logic.&lt;br /&gt;
 kvm &amp;amp; supermin&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>The philosophy of debugging</title>
-      <link>http://firoyang.org/cs/debugging/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/debugging/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;Reverse engineering&lt;/p&gt;
-
-&lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
-
-&lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
-Theory + Observations =&amp;gt; Explanation&lt;/p&gt;
-
-&lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
-The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,&lt;br /&gt;
-他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.&lt;br /&gt;
-NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt;&lt;br /&gt;
-涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h1 id=&#34;use-after-free&#34;&gt;use after free&lt;/h1&gt;
-
-&lt;p&gt;record the owner, who free.&lt;/p&gt;
-
-&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
-
-&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
-
-&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
-Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
-
-&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
-
-&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
-Includes the interruptable task.&lt;br /&gt;
-Causes: deadlock, race condition&lt;/p&gt;
-
-&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
-
-&lt;p&gt;Lockdep&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
-
-&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
-
-&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
-free_pages_prepare posion&lt;/p&gt;
-
-&lt;h1 id=&#34;general-debugging-steps&#34;&gt;General debugging steps&lt;/h1&gt;
-
-&lt;p&gt;Debugging的逻辑过程是&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;. 我们以此进行推导.&lt;br /&gt;
-T: Theory 也就是我们的background, cs的知识技术, 出问题的程序与代码.&lt;br /&gt;
-O: Observations 是Bug发生的现场以及相应的log, 现象.&lt;br /&gt;
-E: Explanation 是最终定位的结论.&lt;br /&gt;
-E ⊆ T; O ⊆ T; E ⊃ (E ∩ O);&lt;br /&gt;
-if E = (E ∩ O); then debugging is done.&lt;br /&gt;
-T, E 与 O理论上都是从∅开始,且O =&amp;gt; E;&lt;br /&gt;
-E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;gt; Explanation&lt;br /&gt;
-很多时候O也会使T扩大.所以O成为debugging的关键.&lt;br /&gt;
-下面严格区分T 和 O. 我们得到O就要不断地结合T进行理性分析.&lt;br /&gt;
-&amp;gt; Another perespective,&lt;br /&gt;
-&amp;gt; the process of debugging is use O to minimize T to E instance.&lt;br /&gt;
-&amp;gt; T is solutions space, E &lt;a href=&#34;https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1&#34;&gt;locates&lt;/a&gt; in T. O is the address to find E.&lt;/p&gt;
-
-&lt;p&gt;基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.&lt;/p&gt;
-
-&lt;h3 id=&#34;get-observations&#34;&gt;Get observations&lt;/h3&gt;
-
-&lt;p&gt;首先我们要理清中间的各个流程, 以及相关的observations:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;coding&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;compilation&lt;br /&gt;
-make kernel/sched.s V=1&lt;br /&gt;
-readelf, objdump&lt;br /&gt;
-c++filt&lt;br /&gt;
-addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
-./scripts/decodecode &amp;lt; Oops.txt&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;load software&lt;br /&gt;
-LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
-ldd /usr/bin/git&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;software running&lt;br /&gt;
-&amp;gt; #define debugme(fmt, args&amp;hellip;) do{FILE *fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); &lt;br /&gt;
-&amp;gt; fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
-lsof, ltrace, strace, bash -x, coredump&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;kernel specific&lt;br /&gt;
-putstr early_printk vs printk pr_debug vs dev_debug dump_stack&lt;br /&gt;
-Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;br /&gt;
-how to use serial-port addr&lt;br /&gt;
-ioctl/netlink, SysRq, ftrace expect,kgtp, lockdep, kdump, kgdboc&lt;br /&gt;
-CONFIG_DYNAMIC_DEBUG, &lt;debugfs&gt;/dynamic_debug/control&lt;br /&gt;
-print signal This is just a hiwifi wonderful kernel patch #931&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;network specific&lt;br /&gt;
-tcpdump netstat iptables wireshark&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;u-boot&lt;br /&gt;
-print_tlb&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make specific&lt;br /&gt;
--s, -n, -p, &amp;ndash;warn-undefined-variables&lt;br /&gt;
-$(warning &amp;hellip;)&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;有的类型的Bug会阻止我们收集observations&lt;br /&gt;
-这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.&lt;br /&gt;
-这时要扩大目标struct的大小, 把observations加进去.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;software imediately stop&lt;br /&gt;
-Use atexit() register a stackdump or a wrapped print&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;inference&#34;&gt;Inference&lt;/h1&gt;
-
-&lt;p&gt;From observatons to source code/mind&lt;br /&gt;
-追BUG实际上就是, 找关联度最高的.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;tips&lt;br /&gt;
-If an page oops close to zero, for example 0xfffffff4&lt;br /&gt;
-It maybe ERR_PTR(-12);&lt;br /&gt;
-&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;&lt;br /&gt;
-code reordering inlining Optimized-away variables Tailcall optimization&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;oops&lt;br /&gt;
-From ASM to c language&lt;br /&gt;
-&lt;a href=&#34;http://yarchive.net/comp/linux/oops_decoding.html&#34;&gt;lkml-Linus-Al-Viro-oops-debug&lt;/a&gt;&lt;br /&gt;
-&lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;一些比较通用的调试工具&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;gdb&lt;br /&gt;
-gdb vmlinux /proc/kcore&lt;br /&gt;
-p jiffies_64&lt;br /&gt;
-text_addr=/sys/module/char-read-write/sections/.text&lt;br /&gt;
-add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
-print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Syntax checking&lt;br /&gt;
-gcc -Wall&lt;br /&gt;
-bash -n&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;static code analysis&lt;br /&gt;
-smatch&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;bug-made-by-me&#34;&gt;BUG made by me&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
-    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
-Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
-__send_signal()&lt;/p&gt;
-
-&lt;h1 id=&#34;examples&#34;&gt;Examples&lt;/h1&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;timer_list-&amp;gt;function = NULL&lt;br /&gt;
-我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.&lt;br /&gt;
-首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations&lt;br /&gt;
-within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在&lt;br /&gt;
-就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.&lt;br /&gt;
-可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace&lt;br /&gt;
-log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.&lt;br /&gt;
-这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及&lt;br /&gt;
-记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来&lt;br /&gt;
-保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而&lt;br /&gt;
-确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use&lt;br /&gt;
-after free的问题是够了, 以后用到这类问题基本可以妙解了.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;module text address&lt;br /&gt;
-cat /sys/module/wmi/sections/.text&lt;br /&gt;
-cat /proc/modules | grep wmi&lt;br /&gt;
-int bss_var;&lt;br /&gt;
-static int hello_init(void)&lt;br /&gt;
-{printk(KERN_ALERT &amp;ldquo;Text location .text(Code Segment):%p\n&amp;rdquo;,hello_init);&lt;br /&gt;
-static int data_var=0;&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);}&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;debug-glibc&#34;&gt;Debug glibc&lt;/h1&gt;
-
-&lt;p&gt;directory ~/ws/glibc-2.23/libio&lt;br /&gt;
-set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>The programming language</title>
-      <link>http://firoyang.org/cs/pl/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/pl/</guid>
-      <description>
-
-&lt;p&gt;&lt;a href=&#34;http://www.yinwang.org/blog-cn/2016/03/31/no-longer-pl&#34;&gt;我为什么不再做PL人&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;∅ ⊢ pl&lt;br /&gt;
-scope: The set of expressions for which a binding defines a name is called the scope of that name.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;&lt;br /&gt;
-貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.&lt;br /&gt;
-Programming Language Pragmatics 3rd&lt;br /&gt;
-C11&lt;br /&gt;
-C Traps and Pitfalls&lt;br /&gt;
-Expert C Programming&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Programming language theory&lt;br /&gt;
-Programming language&lt;/p&gt;
-
-&lt;h1 id=&#34;programming-language-theory&#34;&gt;Programming language theory&lt;/h1&gt;
-
-&lt;p&gt;What is formal language and the relationg between fl and pl?&lt;br /&gt;
-Language primitive&lt;/p&gt;
-
-&lt;h2 id=&#34;semantics&#34;&gt;Semantics&lt;/h2&gt;
-
-&lt;h1 id=&#34;c&#34;&gt;C&lt;/h1&gt;
-
-&lt;p&gt;我们还是从使用的角度来看c 语言;&lt;br /&gt;
-c语言自身重要基础性质, 我们需要了解.&lt;br /&gt;
-除此之外, 我们还要了解一些重要的标准库函数.&lt;br /&gt;
-知道这些, 我们就能用c语言.&lt;/p&gt;
-
-&lt;h2 id=&#34;type&#34;&gt;Type&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Object type and function type&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Object &amp;ndash; void, scalar,aggregate types, composite&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Scalar type &amp;ndash; Arithmetic types and pointer types&lt;br /&gt;
-&lt;a href=&#34;http://www.techopedia.com/definition/16441/scalar&#34;&gt;What does Scalar mean?&lt;/a&gt;&lt;br /&gt;
-scalar 词源上由scale演化而来, scalar type来自scalar processor and vector processor.&lt;br /&gt;
-超标量也是来自这里concurrent SISD =&amp;gt;MIMD 所谓的流水线.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Arithmetic type &amp;ndash; Integer and floating types&lt;/p&gt;
-
-&lt;h2 id=&#34;incomplete-and-complete&#34;&gt;Incomplete and complete&lt;/h2&gt;
-
-&lt;p&gt;void; struct s; union u;&lt;/p&gt;
-
-&lt;h2 id=&#34;conversion&#34;&gt;Conversion&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;only effect to scalar type data&lt;br /&gt;
-error: conversion to non-scalar type requested&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;无符号数 转换成upper rank的有符号数, 还是无符号数, 不管最初是-1!&lt;br /&gt;
-unsigned int i = 1; long f = -10;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true 证明确实usigned 向long转换了.&lt;br /&gt;
-unsigned int i = -3; long f = -5u;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true&lt;br /&gt;
-c11上是ok的!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;做signed 和unsigned 貌似both convert to unsigned gcc才给警告, 否则不给即便是signed和unsigned比较.&lt;/p&gt;
-
-&lt;h2 id=&#34;lvalue-rvalue-modfiable-rvalue&#34;&gt;lvalue rvalue modfiable rvalue&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://eli.thegreenplace.net/2011/12/15/understanding-lvalues-and-rvalues-in-c-and-c&#34;&gt;Understanding lvalues and rvalues in C and C++&lt;/a&gt;&lt;br /&gt;
-If a variable/expression  has a address, it&amp;rsquo;s of lvalue.&lt;/p&gt;
-
-&lt;h2 id=&#34;array-decay&#34;&gt;Array decay&lt;/h2&gt;
-
-&lt;p&gt;数组退化的初衷, 可能是K&amp;amp;R当年计算资源紧缺, 导致不允许函数传值copy数组内容.&lt;br /&gt;
-总之标准委员会介入之前就决定.&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-1031622-1-1.html&#34;&gt;[C] [原创]数组与指针&amp;mdash;都是&amp;rdquo;退化&amp;rdquo;惹的祸&lt;/a&gt;&lt;br /&gt;
-关于char *s错误声明的讲解不错!&lt;br /&gt;
-&lt;a href=&#34;http://stackoverflow.com/questions/17752978/exception-to-array-not-decaying-into-a-pointer&#34;&gt;Exception to array not decaying into a pointer?&lt;/a&gt;&lt;br /&gt;
-在c11 6.3.2.1 Lvalues, arrays, and function designators第3点说明了&lt;br /&gt;
-array不会退化的4种场景. Except when it is&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;the operand of the sizeof operator,&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;the _Alignof operator, or the&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;unary &amp;amp; operator, or&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;is a string literal used to initialize an array, an expression that has type&lt;br /&gt;
-‘‘array of type’’ is converted to an expression with type ‘‘pointer to type’’&lt;br /&gt;
-that points to the initial element of the array object and is not an lvalue.&lt;br /&gt;
-If the array object has register storage class, the behavior is undefined.&lt;br /&gt;
-这4种场景之外, 那么array名退化的结果是pointer.&lt;br /&gt;
-这个pointer和我们最常用的pointer如int *p有什么区别呢?&lt;br /&gt;
-首先array decay是type上的转化array -&amp;gt; pointer.&lt;br /&gt;
-其次数组名原来是lvalue -&amp;gt; not an lvalue更谈不上modifiable.&lt;br /&gt;
-type: tyepof(array[0]) *&lt;br /&gt;
-value: &amp;amp;array[0] or array&lt;br /&gt;
-property: not lvalue&lt;br /&gt;
-当然这只是c11上的说明, 我们只要明白为什么不能修改一个decay数组名就行了.&lt;br /&gt;
-实现的个人猜测是: 根据lvalue的定义decay后数组名还是lvalue, 只不过一直都不是modifiable.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为什么作为函数形参的数组名可以++, 而作为变量的数组名就不可以.&lt;br /&gt;
-因为形参数组名被当初pointer处理modifiable lvalue, 而实参数组名只是传值而已.&lt;br /&gt;
-而普通数组名是一个lvalue,不能修改.&lt;/p&gt;
-
-&lt;h3 id=&#34;why-innermost-dimension-can-be-omit-in-array&#34;&gt;Why innermost dimension can be omit in array&lt;/h3&gt;
-
-&lt;p&gt;用不到.&lt;br /&gt;
-In essence, all arrays in C are one-dimensional.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Because the array will decay to pointer and to calculate offset to&lt;br /&gt;
-the elements of the array you do not need to know the innermost dimension.&lt;/p&gt;
-
-&lt;p&gt;Compiler has to know by how much to increment the pointer when&lt;br /&gt;
-indexing on the first dimension for example. So if an int array is named a,&lt;/p&gt;
-
-&lt;h2 id=&#34;integer-promotion&#34;&gt;Integer Promotion&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.idryman.org/blog/2012/11/21/integer-promotion/&#34;&gt;Deep C: Integer Promotion&lt;/a&gt;&lt;br /&gt;
-* &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/fc9te331.aspx&#34;&gt;Integral Promotions&lt;/a&gt;&lt;br /&gt;
-0xF int&lt;br /&gt;
-0xFFFFFFFF unsigned int&lt;/p&gt;
-
-&lt;h2 id=&#34;scopes-of-identifiers&#34;&gt;Scopes of identifiers&lt;/h2&gt;
-
-&lt;p&gt;For each different entity that an identifier designates, the identifier is visible (i.e., can be&lt;br /&gt;
-used) only within a region of program text called its scope.&lt;br /&gt;
-* four kinds of scopes: function, file, block, and function prototype&lt;br /&gt;
-If the declarator or type specifier that declares the identifier&lt;br /&gt;
-appears outside of any block or list of parameters, the identifier has file scope, which&lt;br /&gt;
-terminates at the end of the translation unit.&lt;/p&gt;
-
-&lt;p&gt;If the declarator or type specifier that&lt;br /&gt;
-declares the identifier appears inside a block or within the list of parameter declarations in&lt;br /&gt;
-a function definition, the identifier has block scope, which terminates at the end of the&lt;br /&gt;
-associated block.&lt;/p&gt;
-
-&lt;p&gt;If the declarator or type specifier that declares the identifier appears&lt;br /&gt;
-within the list of parameter declarations in a function prototype (not part of a function&lt;br /&gt;
-definition), the identifier has function prototype scope, which terminates at the end of the&lt;br /&gt;
-function declarator.&lt;/p&gt;
-
-&lt;p&gt;If an identifier designates two different entities in the same name&lt;br /&gt;
-space, the scopes might overlap.&lt;/p&gt;
-
-&lt;h2 id=&#34;linkages-of-identifiers&#34;&gt;linkages of identifiers&lt;/h2&gt;
-
-&lt;p&gt;An identifier declared in different scopes or in the same scope more than once can be&lt;br /&gt;
-made to refer to the same object or function by a process called linkage.&lt;br /&gt;
-* There are three kinds of linkage: external, internal, and none.&lt;br /&gt;
-* There is no linkage between different identifiers.&lt;br /&gt;
-* external linkage&lt;br /&gt;
-In the set of translation units and libraries that constitutes an entire program, each&lt;br /&gt;
-declaration of a particular identifier with external linkage denotes the same object or&lt;br /&gt;
-function. &amp;ndash;c11&lt;/p&gt;
-
-&lt;p&gt;If the name has external linkage,&lt;br /&gt;
-the entity that name denotes may be referred to from another translation unit&lt;br /&gt;
-using a distinct declaration for that same name,&lt;br /&gt;
-and from other scopes within the same translation unit using distinct declarations. &amp;ndash;wikipedia&lt;br /&gt;
-* Internal linkage&lt;br /&gt;
-Within one translation unit, each declaration of an identifier with internal&lt;br /&gt;
-linkage denotes the same object or function. &amp;ndash;c11&lt;/p&gt;
-
-&lt;p&gt;Were the name given internal linkage,&lt;br /&gt;
-such a declaration would denote a distinct entity, although using the same name,&lt;br /&gt;
-but its entity could be referred to by distinct declarations within the same translation unit.  &amp;ndash;wikipedia&lt;br /&gt;
-* No linkage&lt;br /&gt;
-Each declaration of an identifier with no linkage denotes a unique entity. &amp;ndash;c11&lt;br /&gt;
-A name that has no linkage at all cannot be referred to from declarations in different scopes,&lt;br /&gt;
-not even from within the same translation unit. &amp;ndash;wikipedia&lt;/p&gt;
-
-&lt;h2 id=&#34;name-spaces-of-identifiers&#34;&gt;Name spaces of identifiers&lt;/h2&gt;
-
-&lt;h2 id=&#34;storage-durations-of-objects&#34;&gt;Storage durations of objects&lt;/h2&gt;
-
-&lt;p&gt;An object has a storage duration that determines its lifetime.&lt;br /&gt;
-There are four storage durations: static, thread, automatic, and allocated.&lt;br /&gt;
-The lifetime of an object is the portion of program execution during which storage is&lt;br /&gt;
-guaranteed to be reserved for it.&lt;br /&gt;
-In book 21st Century C, it was named memory mode.&lt;br /&gt;
-* static storage duration&lt;br /&gt;
-An object whose identifier is declared without the storage-class specifier _Thread_local,&lt;br /&gt;
-and either with external or internal linkage or with the storage-class specifier static(for no linkage &amp;ndash;firo),&lt;br /&gt;
-has static storage duration.&lt;/p&gt;
-
-&lt;p&gt;Its lifetime is the entire execution of the program and its stored value is initialized only once,&lt;br /&gt;
-prior to program startup.&lt;br /&gt;
-* automatic storage duration&lt;br /&gt;
-An object whose identifier is declared with no linkage and without the storage-class&lt;br /&gt;
-specifier static has automatic storage duration, as do some compound literals.&lt;br /&gt;
-* alloced storage duration&lt;br /&gt;
-The lifetime of an allocated object extends from the allocation until the deallocation.&lt;br /&gt;
-* Thread storage duration&lt;br /&gt;
-details in c11&lt;/p&gt;
-
-&lt;h2 id=&#34;alignment-of-objects&#34;&gt;Alignment of objects&lt;/h2&gt;
-
-&lt;p&gt;An alignment is an implementation-defined integer value representing the number of bytes between&lt;br /&gt;
-successive addresses at which a given object can be allocated.&lt;br /&gt;
-More deatils in cs.md&lt;/p&gt;
-
-&lt;h2 id=&#34;declarations&#34;&gt;Declarations&lt;/h2&gt;
-
-&lt;p&gt;A declaration specifies the interpretation and attributes of a set of identifiers.&lt;br /&gt;
-A definition of an identifier is a declaration for that identifier that:&lt;br /&gt;
-for an object, causes storage to be reserved for that object;&lt;br /&gt;
-for a function, includes the function body;&lt;br /&gt;
-for an enumeration constant, is the (only) declaration of the identifier;&lt;br /&gt;
-for a typedef name, is the first (or only) declaration of the identifier.&lt;br /&gt;
-The declaration specifiers consist of a sequence of specifiers that indicate the linkage,&lt;br /&gt;
-storage duration, and part of the type of the entities that the declarators denote.&lt;/p&gt;
-
-&lt;h2 id=&#34;marco&#34;&gt;Marco&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://blog.csdn.net/huyansoft/article/details/2484297&#34;&gt;如果#操作符出现在对象宏的替换列表中,则仅作为一个普通字符,不具有下述含义&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;expressions&#34;&gt;Expressions&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;cast&lt;br /&gt;
-A cast does not yield an lvalue.&lt;/p&gt;
-
-&lt;h2 id=&#34;lexical-element&#34;&gt;Lexical element&lt;/h2&gt;
-
-&lt;h3 id=&#34;character-constants&#34;&gt;Character constants&lt;/h3&gt;
-
-&lt;p&gt;An integer character constant has type int.&lt;/p&gt;
-
-&lt;h2 id=&#34;lexical-pitfall&#34;&gt;lexical pitfall&lt;/h2&gt;
-
-&lt;h2 id=&#34;greedy-lexical-analysis&#34;&gt;Greedy lexical analysis&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Write tokens with blank!&lt;br /&gt;
-x = y/&lt;em&gt;p;  /&lt;/em&gt; oops, hidden error.*/&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Associative&lt;br /&gt;
-You donot need to remember it! Just use it!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Precedence&lt;br /&gt;
-Need to remember, but if you not sure, parenthess.&lt;/p&gt;
-
-&lt;h2 id=&#34;inline-和宏的区别&#34;&gt;inline 和宏的区别&lt;/h2&gt;
-
-&lt;p&gt;inline的好处与坏处&lt;br /&gt;
-没有调用的开销效率很高, 但是调试代码复杂了, 内链函数的实现是拷贝副本消耗内存.&lt;br /&gt;
-inline有类型检测, 宏没有.&lt;/p&gt;
-
-&lt;h2 id=&#34;c-standard-library&#34;&gt;C standard library&lt;/h2&gt;
-
-&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Logical operation with signed value? x86!&lt;br /&gt;
-int c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; =&amp;gt; d == f;&lt;br /&gt;
-unsigned c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; d!= f;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;shift beyond bits long?&lt;br /&gt;
-c &amp;gt;&amp;gt; 296 == c &amp;gt;&amp;gt; 8&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;变量同名不同类型不同文件, 通过extern, 否则就是multiple definition&lt;br /&gt;
-这是c语言最为迷糊的地方.简单说来类似union, 具体我也不清楚.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;所有名字引用同一个object&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;不同文件中不同类型的sizeof和当前文件类型一直.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;c-standard-library-1&#34;&gt;C standard library&lt;/h1&gt;
-
-&lt;p&gt;NULL?&lt;/p&gt;
-
-&lt;h2 id=&#34;string-handling&#34;&gt;String handling&lt;/h2&gt;
-
-&lt;p&gt;kernel/lib/string.c&lt;br /&gt;
-* Copying functions&lt;br /&gt;
-memcpy: dest&lt;br /&gt;
-memmove: dest&lt;br /&gt;
-strcpy: dest, 拷贝\0&lt;br /&gt;
-strncpy: dest, if src_len &amp;gt;= n; 0 NULL, if src _len &amp;lt; n; (n - len) NULL;&lt;br /&gt;
-strlcpy: src_len, mini(n -1, src_len -1) + \0, src_len 用你返回啊!&lt;br /&gt;
-* Concatenation functions&lt;br /&gt;
-strcat: dest, overwrite dest \0 with src util src \0&lt;br /&gt;
-strncat: dest, 末尾一定有\0&lt;br /&gt;
-* Comparison functions&lt;br /&gt;
-memcmp: 差值,&lt;br /&gt;
-strcmp: -1, 0, 1, 如果整个s1都比完了NULL or &amp;ndash;n ==0 for strncmp, return 0&lt;br /&gt;
-* Search functions&lt;br /&gt;
-memchr, NULL or p;&lt;br /&gt;
-strchr,ditto, 到\0返回NUll&lt;br /&gt;
-strrchr,ditto, last occurence.&lt;br /&gt;
-strspn: s1开始有多少在s2中.&lt;br /&gt;
-strcspn: s1开始有多少不在s2中.&lt;br /&gt;
-strpbrk: s2中第一次出现的位置&lt;br /&gt;
-strstr: 找子串, 用memcmp&lt;/p&gt;
-
-&lt;h1 id=&#34;asm-in-c-code&#34;&gt;ASM in c code&lt;/h1&gt;
-
-&lt;p&gt;c语言嵌入汇编这不是c语言的特性是编译器的feature.&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html#Using-Assembly-Language-with-C&#34;&gt;How to Use Inline Assembly Language in C Code&lt;/a&gt;&lt;br /&gt;
-#MIPS&lt;br /&gt;
-bdi 4, 8 delay solt&lt;br /&gt;
-mips instruction size is fixed, 32bit, 4byte.&lt;br /&gt;
-instruction address:  instrction in hex formate    instruction in string formate, 260&lt;br /&gt;
-8002c28c:   8c440104    lw  a0,260(v0)&lt;br /&gt;
-##ASM codes Fixme&lt;br /&gt;
-move &amp;lt;-&lt;br /&gt;
-j long jump&lt;br /&gt;
-b short jump&lt;br /&gt;
-a0, a1&amp;hellip;99% is parameters.&lt;br /&gt;
-##lwr &amp;amp; lwl&lt;br /&gt;
-load a word&lt;br /&gt;
-different with endianess&lt;br /&gt;
-register 63&amp;hellip;..32&amp;hellip;&amp;hellip;0&lt;br /&gt;
-big endian: lwl high bits in b + 0&lt;br /&gt;
-little endian: lwl high in b + off&lt;br /&gt;
-向中心&lt;/p&gt;
-
-&lt;h1 id=&#34;x86&#34;&gt;x86&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://heather.cs.ucdavis.edu/~matloff/50/PLN/lock.pdf&#34;&gt;Intel’s ‘cmpxchg’ instruction&lt;/a&gt;&lt;br /&gt;
-eax: e stand for 32&lt;br /&gt;
-rax: r stand for 64&lt;br /&gt;
-&lt;a href=&#34;http://x86.renejeschke.de/html/file_module_x86_id_159.html&#34;&gt;lock prefix in x86&lt;/a&gt;&lt;br /&gt;
-the lock prefix make instruction atomic!&lt;/p&gt;
-
-&lt;h2 id=&#34;registers-purpose&#34;&gt;registers&amp;rsquo; purpose&lt;/h2&gt;
-
-&lt;h2 id=&#34;register&#34;&gt;Register&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;gs&lt;br /&gt;
-The linux kernel uses GS to access cpu-specific memory.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;gdtr&lt;br /&gt;
-GDT&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tr&lt;br /&gt;
-TSS addressing&lt;br /&gt;
-#Wildcards&lt;br /&gt;
-&lt;a href=&#34;http://whatis.techtarget.com/definition/wildcard-character&#34;&gt;A wildcard character is a type of meta character&lt;/a&gt;&lt;br /&gt;
-##Type&lt;/p&gt;
-
-&lt;h3 id=&#34;standard-wildcards-globbing-patterns&#34;&gt;Standard Wildcards (globbing patterns)&lt;/h3&gt;
-
-&lt;p&gt;File and directory patterns&lt;br /&gt;
-?: must stand for a character&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Regular expression&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;SQL&lt;br /&gt;
-#Shell&lt;/p&gt;
-
-&lt;h2 id=&#34;test&#34;&gt;test&lt;/h2&gt;
-
-&lt;h3 id=&#34;n-is-not-equivalent-to-z&#34;&gt;-n is not equivalent to ! -z&lt;/h3&gt;
-
-&lt;p&gt;Be caution! just juse -z and !-z&lt;/p&gt;
-
-&lt;h2 id=&#34;ls&#34;&gt;ls&lt;/h2&gt;
-
-&lt;p&gt;-l: show hardlinks of file/dir in 2nd column&lt;br /&gt;
-drwsrwsr-T: T stand for sticky bit no other execution bit&lt;br /&gt;
-##eval&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;create variable name&lt;br /&gt;
-&lt;strong&gt;var=&amp;ldquo;name&amp;rdquo;&lt;br /&gt;
-eval &amp;ldquo;export &amp;ndash; \&amp;ldquo;$&lt;/strong&gt;var=firo\&amp;ldquo;&amp;rdquo;&lt;br /&gt;
-set | grep firo&lt;br /&gt;
-__var=&amp;lsquo;name&amp;rsquo;&lt;br /&gt;
-bbb=&amp;lsquo;firo&amp;rsquo;&lt;br /&gt;
-##expr&lt;br /&gt;
-expr &amp;ldquo;$name&amp;rdquo; : &amp;lsquo;(.*).conf&amp;rsquo;&lt;br /&gt;
-##find&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;find symbols in object&lt;br /&gt;
-find . -name &amp;lsquo;a.out&amp;rsquo; -exec nm -D {} \; -print&lt;br /&gt;
-find . -name &amp;lsquo;*.o&amp;rsquo; -print0 | xargs -0 nm -A | egrep &amp;lsquo; (i|y)$&amp;rsquo;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;rm&lt;br /&gt;
-find . -name ‘your_pattern*’ -exec rm -f {} \;&lt;br /&gt;
-find . -name ‘your_pattern*’ -delete&lt;/p&gt;
-
-&lt;h2 id=&#34;grep&#34;&gt;grep&lt;/h2&gt;
-
-&lt;p&gt;-c: count of match&lt;br /&gt;
-##pipe&lt;br /&gt;
-find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo &amp;ldquo;$cnt $d&amp;rdquo;; done | sort -n &amp;gt;stat&lt;br /&gt;
-#AWK&lt;br /&gt;
-netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
