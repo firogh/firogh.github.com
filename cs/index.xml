@@ -65,6 +65,10 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
       <guid>http://firoyang.org/cs/interrupt_and_exception/</guid>
       <description>
 
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.exploit-db.com/papers/13146/&#34;&gt;Obtain sys_call_table on amd64 &lt;/a&gt;&lt;/p&gt;
+
 &lt;p&gt;#Interrupt&lt;/p&gt;
 
 &lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
@@ -193,6 +197,10 @@ If a task in the kernel blocked (which results in a all to schedule())&lt;br /&g
 schedule + blcoked&lt;br /&gt;
 When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
 When kernel code becomes preemptible again.&lt;/p&gt;
+
+&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -885,7 +893,9 @@ if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://rickgray.me/2015/08/07/use-gdb-to-study-got-and-plt.html&#34;&gt;通过 GDB 调试理解 GOT/PLT&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html&#34;&gt;PLT and GOT - the key to code sharing and dynamic libraries&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html&#34;&gt;PLT and GOT - the key to code sharing and dynamic libraries&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://sourceware.org/binutils/docs/&#34;&gt;Gnu binutils docs&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://gcc.gnu.org/wiki/HomePage&#34;&gt;Welcome to GCC Wiki&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;elf&#34;&gt;ELF&lt;/h1&gt;
 
@@ -945,6 +955,7 @@ readelf -s&lt;/p&gt;&lt;/li&gt;
       <description>
 
 &lt;p&gt;##Reference&lt;br /&gt;
+&lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
 Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
 《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
@@ -1188,6 +1199,10 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
       <guid>http://firoyang.org/cs/virt/</guid>
       <description>
 
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.oenhan.com/kvm-src-3-cpu&#34;&gt;KVM源代码分析3:CPU虚拟化&lt;/a&gt;&lt;/p&gt;
+
 &lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.&lt;br /&gt;
 已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!&lt;br /&gt;
 现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.&lt;br /&gt;
@@ -1225,91 +1240,6 @@ adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;
 我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.&lt;br /&gt;
 终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora&lt;br /&gt;
 之上.&lt;/p&gt;
-
-&lt;h2 id=&#34;fkvm&#34;&gt;FKVM&lt;/h2&gt;
-
-&lt;p&gt;没错我的虚拟化技术就叫这个FucK VM, 好吧, 其实简写于Firo&amp;rsquo;s KVM!&lt;br /&gt;
-首先, 我们必须明确一点, 即便我 or 我们不能最终实现一个虚拟化架构让另一个kernel&lt;br /&gt;
-运行起来, 今天在这里做得事情的意义, 依然深远且几乎无可替代!&lt;br /&gt;
-因为, 至少你是在想象力,或者更为正式表述是在概念层次上让他运行起来了, 而且跑得飞快!&lt;br /&gt;
-你在虚拟化一个虚拟化, 这就是智力劳动的乐趣.&lt;br /&gt;
-怎么才能让一个kernel 运行起来呢? 能想到的就是从用户态起一个进程, 之后这个进程fork下去执行&lt;br /&gt;
-start_kernel的代码.有点眉目了. 问题也来了, 内核启动的时候会各种初始化, 这会扰乱了现在正在运行的&lt;br /&gt;
-cpu, 我能想到的这个新的内核的内存管理不能和之前运行的fedora的冲突, 两个都玩完, 首先要隔离内存.&lt;br /&gt;
-也就是要虚拟化一块内存. 怎么解决, 最简单的直接malloc一块空间给他吧. 怎么给? 为了简单.&lt;br /&gt;
-在内核初始化的时候, 会用调用bios的中断来获取内存信息.&lt;br /&gt;
-也就是说我们要先弄一个虚拟bios出来啊. 先假设bios, 我们弄出来了.&lt;br /&gt;
-开机先执行这段bios代码, 把之前申请的内存告诉bios, 之后我们在内核内核初始化的时候, 就用这块.&lt;br /&gt;
-现在问题用来了. 内核要访问这块内存就必须为他建页表, 申请的这块内存可能是不连续的而且还可能是&lt;br /&gt;
-高端内存, 内核初始化的代码可没考虑这么复杂. 要么该内核, 要么改FKVM, 显然不能改内核啊.&lt;br /&gt;
-只能去尝试, 虚拟一个CPU, cpu指令那么复杂, 怎么能搞定. 是否有必要, 搞那么复杂呢?&lt;br /&gt;
-我们的一个cpu就是一个进程.这个cpu执行内初始化的代码, 需要想办法, 让内核感知不到底层的变化.&lt;br /&gt;
-就好比, 他访问了一块高端内存, 但这个内核, 里面的页表却标明他是低端, 随意访问.&lt;br /&gt;
-也就是说, 我们要截获cpu访存的指令, 并且要把他再次重定向到真正的物理内存.&lt;br /&gt;
-如何截获?我们不能有太多假设.而且现在的工作, 实际已经被usermode linux 完成了.&lt;br /&gt;
-这里需要很多底层的知识. 先看点资料再回来.&lt;br /&gt;
-看了下基本实现, 这里我们的思路没有问题, 只不过指令和优先级的问题没有考虑.&lt;br /&gt;
-访问特权指令确实是被截获的. intel引入了vt-x来解决这个问题.&lt;br /&gt;
-探索这种复杂的系统, 就行探索一座深山一样, 如果不加思索就突入进去, 最终会迷路.&lt;br /&gt;
-无论别人说的多么好, 我们必须要有自己的思路.&lt;br /&gt;
-总结下所得:&lt;br /&gt;
-控制虚拟机对全局资源的访问, 通过截获虚拟的某些指令.&lt;br /&gt;
-虚拟化一块内存.&lt;br /&gt;
-我们知道想中断啊, IO这些都得良好的处理掉, 否这会影响到我们早已运行的fedora.&lt;br /&gt;
-由于缺少太多硬件知识, 在这样思考下去, 就会变成满篇假设了, 这和我们的目的背道而驰了.&lt;br /&gt;
-同时乐趣也会减少.&lt;/p&gt;
-
-&lt;h1 id=&#34;kvm-qemu&#34;&gt;KVM QEMU&lt;/h1&gt;
-
-&lt;p&gt;现在我们来了解KVM, 在经过前面不成熟的思考好, 结果有点令人沮丧. 似乎我们什么都没完成&amp;hellip;&lt;br /&gt;
-探索的方式, 依然是以自我思考为主, 通过提问的形式完成思考过程.&lt;br /&gt;
-千万不可成了, 靠一点一滴积累别人的思想感悟来成长. 万万不可.对于问题的洞见主力依然&lt;br /&gt;
-是我们自己, 别人的知识只是辅助. 那好我们开始.&lt;br /&gt;
-首先, 我们是为了了解KVM是如何运作的, 晚上的paper 帖子, 都说比较概括, 而分析的又不太通俗.&lt;br /&gt;
-往往初学者, 很容易被绕进去.&lt;br /&gt;
-从宏观上看KVM虚拟化, 由KVM和QEMU两个组件完成的, 一个内核模块, 一个用户态程序.&lt;br /&gt;
-为什么这么设计? 还有别的虚拟化架构吗? 维基给出了, 硬件虚拟化的几种实现策略.&lt;br /&gt;
-Full virtualization,  VMware Workstation 和 QEMU就是这种, 全虚拟化定义上是说, 为虚拟机提供&lt;br /&gt;
-全部的硬件特性的延伸支持. 这个技术上个世界70年代就由IBM推行. 在人们看来这门高深的学问在计算机的&lt;br /&gt;
-洪荒时代, 便已出现. 那个时代一切都是新的, 人们强烈的渴望伸展四肢, 天不怕地不怕的.&lt;br /&gt;
-Partial virtualization, 维基上给出半虚拟化的介绍, 他是全虚拟化的先驱, 现在很少本人提起.&lt;br /&gt;
-至少, 现在都是全虚拟化和类虚拟化的天下.文中提及, 虚拟地址空间便是半虚拟化.&lt;br /&gt;
-从虚拟化的定义角度来看, 操作系统本身, 便是一种原生且原始的虚拟化, 这无可否认.&lt;br /&gt;
-这是一种高度抽象的虚拟化, 就好比进程是cpu的虚拟化, 虚拟地址空间是对内存的一种虚拟化.&lt;br /&gt;
-Paravirtualization, para是在什么旁边的意思, 中文翻译成类虚拟化, 也算贴切.&lt;br /&gt;
-类虚拟化修改guest 系统, 而不是通过虚拟化硬件.Xen(也支持全虚拟化)和UML是这一类.&lt;br /&gt;
-Operating-system-level virtualization&lt;br /&gt;
-这种虚拟化,概念上不同于上面三种, 是对操作系统的虚拟化, 虽然追根到底, 还是对硬件的虚拟化.&lt;br /&gt;
-但是, 这里强调的是操作系统的资源的虚拟化. 属于操作系统的很多高级抽象, 底层硬件是不具备的.&lt;br /&gt;
-比如协议栈这个概念, 他本身是对信息传递的抽象而非硬件, 硬件只是其中一环而已.&lt;br /&gt;
-这里若是简单的翻译成系统级虚拟化, 就就比如LXC这个技术而言, 这里面我们并没有虚拟化任何东西.&lt;br /&gt;
-比如我们使用socket 发包, 还是这样; 使用malloc分配内存还是这样, 并没有也不需要所谓虚拟化,&lt;br /&gt;
-他们都是原生的original.  所以在这里我们就看到了, 不合适的翻译造成的理解差异.&lt;br /&gt;
-这里还是直接说容器技术,比较合适, 因为他本来就强调对资源的管理.&lt;br /&gt;
-在了解了虚拟化的概念后, 问题又回到了KVM QEMU本身, 此时, 我们依然对他们的实现没有头绪,&lt;br /&gt;
-网上也没有找到, 说理清晰的入门文档. 我们还是要搞懂 kvm和qemu的原理.&lt;br /&gt;
-我们从小的概念开始, 力求集合小的概念最终, 完成的对kvm 和 qemu的认知.&lt;br /&gt;
-首先是qemu是什么? 为什么要有他, 单独一个kvm不行吗?&lt;br /&gt;
-官网的解释:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;QEMU is a generic and open source machine emulator and virtualizer.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;qemu可以做emulator, 就像android的开发环境中的那个模拟器差不多.&lt;br /&gt;
-qemu可以作为虚拟化的工具和kvm,xen联动, 重点看这个.&lt;br /&gt;
-我们在FKVM中已经知道, cpu的虚拟化是同vtx, 截获特殊指令完成的.&lt;br /&gt;
-那么内存虚拟化呢, 显然不应是malloc一块空间能解决的.&lt;br /&gt;
-毫无疑问, 肯定要有一个机制把host的内存映射到一个guest的物理地址空间, 同时guest的&lt;br /&gt;
-虚拟地址解析出来的物理地址在转到宿主机的地址, 最后转成真正的物理地址. 有三次转换.&lt;br /&gt;
-据我所指, x86的页表转换是自动的.如何让他这么转来转去的.这个应该就是kvm orvtx干的事情&lt;br /&gt;
-补货到访存指令, 之后进行地址转换. 看了下真正的实现, 和我们思路差不多.&lt;br /&gt;
-不同点, guest的物理地址是用pfn加数量标志的. 不用想每次访存kvm都要参与, 而且地址转换确实复杂&lt;br /&gt;
-肯定有优化空间. 我现在想说, vtx这个截获访存指令确实是个BUG级的存在.&lt;br /&gt;
-内存虚拟化就到这里了, 优化去看IBM的讲解帖子吧.&lt;br /&gt;
-下面继续看cpu的虚拟化. 这个主要就是, 如何捕获, 那些vm运行比较敏感的指令.&lt;br /&gt;
-我们的FKVM支持一个进程跑, 能想到的就是建几个线程来模拟SMP.&lt;/p&gt;
-
-&lt;p&gt;下面是设备的虚拟化, 这个还是看书去吧.&lt;/p&gt;
 
 &lt;h1 id=&#34;代码实现&#34;&gt;代码实现&lt;/h1&gt;
 
@@ -1682,12 +1612,21 @@ Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq
     </item>
     
     <item>
-      <title>Kernel hacking</title>
+      <title>Yet another guide on the way to linux kernel hacking</title>
       <link>http://firoyang.org/cs/hacking/</link>
       <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/hacking/</guid>
       <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.brokenthorn.com/Resources/OSDevIndex.html&#34;&gt;BrokenThorn Entertainment Operating System Development Series&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.linux.org/threads/linux-kernel-reading-guide.5384/&#34;&gt;Linux Kernel Reading Guide&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://phrack.org/index.html&#34;&gt;Phrack&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://sourceforge.net/p/predef/wiki/Architectures/&#34;&gt;Pre-defined Compiler Macros&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;kernel-hacking&#34;&gt;kernel hacking&lt;/h1&gt;
 
@@ -1958,6 +1897,10 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
 
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;/p&gt;
+
 &lt;p&gt;OK, 突然发现之前写的文章不太友好, 到现在为止只有两个国外友人留言了.所以我决心,以绝大多数人习惯的方式,写新的内容or改写现有文章. 第一篇文章就是此文, 分享我个人对computer science的理解. 这会是一个系列的文章.&lt;/p&gt;
 
 &lt;p&gt;TL;DR&lt;br /&gt;
@@ -1972,7 +1915,7 @@ We use concurrent to measure the multitasking.&lt;br /&gt;
 We will inspect conccurency in multiple levels of computer science.&lt;br /&gt;
 The main force of concurrency in OS is process scheduling.&lt;/p&gt;
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;reference-1&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
 
@@ -2819,112 +2762,6 @@ control sequence points&lt;/p&gt;&lt;/li&gt;
     </item>
     
     <item>
-      <title>Operating system</title>
-      <link>http://firoyang.org/cs/os/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/os/</guid>
-      <description>
-
-&lt;h1 id=&#34;os-design&#34;&gt;OS design&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.brokenthorn.com/Resources/OSDevIndex.html&#34;&gt;BrokenThorn Entertainment Operating System Development Series&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;unix-linux-programming&#34;&gt;Unix/Linux programming&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/writings/taoup/html/&#34;&gt;The Art of Unix Programming&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;quantaties&#34;&gt;Quantaties&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;prof&#34;&gt;Prof&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;compile-and-link&#34;&gt;Compile and link&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://sourceforge.net/p/predef/wiki/Architectures/&#34;&gt;Pre-defined Compiler Macros&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://sourceware.org/binutils/docs/&#34;&gt;Gnu binutils docs&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/wiki/HomePage&#34;&gt;Welcome to GCC Wiki&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;distributed-system&#34;&gt;Distributed system&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.andrew.cmu.edu/course/15-440-s13/index/syllabus_index.html&#34;&gt;CMU 15-&lt;sup&gt;640&lt;/sup&gt;&amp;frasl;&lt;sub&gt;440&lt;/sub&gt;&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://dancres.github.io/Pages/&#34;&gt;A Distributed Systems Reading List&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.incubaid.com/2012/03/28/the-game-of-distributed-systems-programming-which-level-are-you/&#34;&gt;The Game of Distributed Systems Programming. Which Level Are You?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bravenewgeek.com/from-the-ground-up-reasoning-about-distributed-systems-in-the-real-world/&#34;&gt;From the Ground Up: Reasoning About Distributed Systems in the Real World&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://videlalvaro.github.io/2015/12/learning-about-distributed-systems.html&#34;&gt;WHAT WE TALK ABOUT WHEN WE TALK ABOUT DISTRIBUTED SYSTEMS&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;hack&#34;&gt;Hack&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://phrack.org/index.html&#34;&gt;Phrack&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.exploit-db.com/papers/13146/&#34;&gt;Obtain sys_call_table on amd64 &lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;cognition&#34;&gt;Cognition&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://jvns.ca/blog/2016/04/30/building-expertise-at-work/&#34;&gt;How does knowledge get locked up in people&amp;rsquo;s heads?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;process&#34;&gt;Process&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.ccs.neu.edu/home/matthias/HtDP2e/index.html&#34;&gt;How to Design Programs, Second Edition&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;programming-language&#34;&gt;Programming language&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://jozefg.bitbucket.org/posts/2015-08-14-learn-tt.html&#34;&gt;Learn Type Theory&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;functional-language&#34;&gt;Functional language&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html&#34;&gt;Functors, Applicatives, And Monads In Pictures&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;programming&#34;&gt;Programming&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://sijinjoseph.com/programmer-competency-matrix/&#34;&gt;Programmer Competency Matrix&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.freebsd.org/cgi/man.cgi?query=style&amp;amp;sektion=9&#34;&gt;FB coding style&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.gnu.org/prep/standards/standards.html&#34;&gt;GNU Coding Standards&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://googletesting.blogspot.com/&#34;&gt;Google testing blog&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;network&#34;&gt;Network&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.securitywizardry.com/index.php/tools/packet-headers.html&#34;&gt;RAW PACKET FORMATS&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/10/15/-e4-bb-8e-ipv4-e5-88-b0-ipv6/&#34;&gt;从 IPv4 到 IPv6&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.tecmint.com/ipv4-and-ipv6-comparison/&#34;&gt;What’s wrong with IPv4 and Why we are moving to IPv6&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/629155/&#34;&gt;Improving Linux networking performance&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;concurrency&#34;&gt;Concurrency&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://queue.acm.org/detail.cfm?id=2698990&#34;&gt;Scalability Techniques for Practical Synchronization Primitives&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;english&#34;&gt;English&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.tudou.com/programs/view/S9cfVXLvThM/?bid=03&amp;amp;pid=02&amp;amp;resourceId=100311153_03_05_02&#34;&gt;英语口音纠正课程&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.douban.com/note/144818819/#!/i!/ckDefault&#34;&gt;英语思维漫谈&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://v.youku.com/v_show/id_XNDYyMjcyNDI0.html?from=y1.2-1-87.3.3-2.1-1-1-2-0&#34;&gt;Pronunciation workshop&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.tu-chemnitz.de/phil/english/sections/ling/course/Conceptualising/Annabell/Question_tags.htm&#34;&gt;Conceptualizing English Language Systems&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;memory&#34;&gt;Memory&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.memorymanagement.org/mmref/recycle.html&#34;&gt;Recycling techniques&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel&#34;&gt;Kernel&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/&#34;&gt;走近Linux内核&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.linux.org/threads/linux-kernel-reading-guide.5384/&#34;&gt;Linux Kernel Reading Guide&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.usenix.org/legacy/event/usenix2000/freenix/full_papers/silvers/silvers_html/&#34;&gt;UBC: An Efficient Unified I/O and Memory Caching Subsystem for NetBSD&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.fieldses.org/~bfields/kernel/vfs.txt&#34;&gt;VFS notes&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kvm&#34;&gt;KVM&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.oenhan.com/kvm-src-3-cpu&#34;&gt;KVM源代码分析3:CPU虚拟化&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>The art of programming</title>
       <link>http://firoyang.org/cs/programming/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
@@ -2957,7 +2794,8 @@ asm stands for arch specific macros(FIXME).&lt;/p&gt;
 
 &lt;h1 id=&#34;coding-style&#34;&gt;Coding style&lt;/h1&gt;
 
-&lt;p&gt;比如GNU coding standards, Linux kernel coding style, Shell coding standard&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.gnu.org/prep/standards/standards.html&#34;&gt;GNU Coding Standards&lt;/a&gt;&lt;br /&gt;
+比如GNU coding standards, Linux kernel coding style, Shell coding standard&lt;br /&gt;
 * Label&lt;br /&gt;
 It is considered to be safer that the label reflect what happens at the&lt;br /&gt;
 destination, and not the reason for reaching the label. &amp;ndash;Julia&lt;/p&gt;
@@ -2987,9 +2825,236 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
 
 &lt;h1 id=&#34;testing&#34;&gt;Testing&lt;/h1&gt;
 
-&lt;p&gt;1.Black-box testing test software function.&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://googletesting.blogspot.com/&#34;&gt;Google testing blog&lt;/a&gt;&lt;br /&gt;
+1.Black-box testing test software function.&lt;br /&gt;
 2.White-box testing test software internal logic.&lt;br /&gt;
 kvm &amp;amp; supermin&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The philosophy of debugging</title>
+      <link>http://firoyang.org/cs/debugging/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/debugging/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;Reverse engineering&lt;/p&gt;
+
+&lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
+
+&lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
+Theory + Observations =&amp;gt; Explanation&lt;/p&gt;
+
+&lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
+The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,&lt;br /&gt;
+他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.&lt;br /&gt;
+NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt;&lt;br /&gt;
+涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&#34;use-after-free&#34;&gt;use after free&lt;/h1&gt;
+
+&lt;p&gt;record the owner, who free.&lt;/p&gt;
+
+&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
+
+&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
+Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
+
+&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
+Includes the interruptable task.&lt;br /&gt;
+Causes: deadlock, race condition&lt;/p&gt;
+
+&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
+
+&lt;p&gt;Lockdep&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
+
+&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
+free_pages_prepare posion&lt;/p&gt;
+
+&lt;h1 id=&#34;general-debugging-steps&#34;&gt;General debugging steps&lt;/h1&gt;
+
+&lt;p&gt;Debugging的逻辑过程是&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;. 我们以此进行推导.&lt;br /&gt;
+T: Theory 也就是我们的background, cs的知识技术, 出问题的程序与代码.&lt;br /&gt;
+O: Observations 是Bug发生的现场以及相应的log, 现象.&lt;br /&gt;
+E: Explanation 是最终定位的结论.&lt;br /&gt;
+E ⊆ T; O ⊆ T; E ⊃ (E ∩ O);&lt;br /&gt;
+if E = (E ∩ O); then debugging is done.&lt;br /&gt;
+T, E 与 O理论上都是从∅开始,且O =&amp;gt; E;&lt;br /&gt;
+E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;gt; Explanation&lt;br /&gt;
+很多时候O也会使T扩大.所以O成为debugging的关键.&lt;br /&gt;
+下面严格区分T 和 O. 我们得到O就要不断地结合T进行理性分析.&lt;br /&gt;
+&amp;gt; Another perespective,&lt;br /&gt;
+&amp;gt; the process of debugging is use O to minimize T to E instance.&lt;br /&gt;
+&amp;gt; T is solutions space, E &lt;a href=&#34;https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1&#34;&gt;locates&lt;/a&gt; in T. O is the address to find E.&lt;/p&gt;
+
+&lt;p&gt;基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.&lt;/p&gt;
+
+&lt;h3 id=&#34;get-observations&#34;&gt;Get observations&lt;/h3&gt;
+
+&lt;p&gt;首先我们要理清中间的各个流程, 以及相关的observations:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;coding&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;compilation&lt;br /&gt;
+make kernel/sched.s V=1&lt;br /&gt;
+readelf, objdump&lt;br /&gt;
+c++filt&lt;br /&gt;
+addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
+./scripts/decodecode &amp;lt; Oops.txt&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;load software&lt;br /&gt;
+LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
+ldd /usr/bin/git&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;software running&lt;br /&gt;
+&amp;gt; #define debugme(fmt, args&amp;hellip;) do{FILE *fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); &lt;br /&gt;
+&amp;gt; fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
+lsof, ltrace, strace, bash -x, coredump&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;kernel specific&lt;br /&gt;
+putstr early_printk vs printk pr_debug vs dev_debug dump_stack&lt;br /&gt;
+Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;br /&gt;
+how to use serial-port addr&lt;br /&gt;
+ioctl/netlink, SysRq, ftrace expect,kgtp, lockdep, kdump, kgdboc&lt;br /&gt;
+CONFIG_DYNAMIC_DEBUG, &lt;debugfs&gt;/dynamic_debug/control&lt;br /&gt;
+print signal This is just a hiwifi wonderful kernel patch #931&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;network specific&lt;br /&gt;
+tcpdump netstat iptables wireshark&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;u-boot&lt;br /&gt;
+print_tlb&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make specific&lt;br /&gt;
+-s, -n, -p, &amp;ndash;warn-undefined-variables&lt;br /&gt;
+$(warning &amp;hellip;)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;有的类型的Bug会阻止我们收集observations&lt;br /&gt;
+这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.&lt;br /&gt;
+这时要扩大目标struct的大小, 把observations加进去.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;software imediately stop&lt;br /&gt;
+Use atexit() register a stackdump or a wrapped print&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;inference&#34;&gt;Inference&lt;/h1&gt;
+
+&lt;p&gt;From observatons to source code/mind&lt;br /&gt;
+追BUG实际上就是, 找关联度最高的.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;tips&lt;br /&gt;
+If an page oops close to zero, for example 0xfffffff4&lt;br /&gt;
+It maybe ERR_PTR(-12);&lt;br /&gt;
+&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;&lt;br /&gt;
+code reordering inlining Optimized-away variables Tailcall optimization&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;oops&lt;br /&gt;
+From ASM to c language&lt;br /&gt;
+&lt;a href=&#34;http://yarchive.net/comp/linux/oops_decoding.html&#34;&gt;lkml-Linus-Al-Viro-oops-debug&lt;/a&gt;&lt;br /&gt;
+&lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;一些比较通用的调试工具&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;gdb&lt;br /&gt;
+gdb vmlinux /proc/kcore&lt;br /&gt;
+p jiffies_64&lt;br /&gt;
+text_addr=/sys/module/char-read-write/sections/.text&lt;br /&gt;
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
+print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Syntax checking&lt;br /&gt;
+gcc -Wall&lt;br /&gt;
+bash -n&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;static code analysis&lt;br /&gt;
+smatch&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;bug-made-by-me&#34;&gt;BUG made by me&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
+    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
+            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
+Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
+__send_signal()&lt;/p&gt;
+
+&lt;h1 id=&#34;examples&#34;&gt;Examples&lt;/h1&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;timer_list-&amp;gt;function = NULL&lt;br /&gt;
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.&lt;br /&gt;
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations&lt;br /&gt;
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在&lt;br /&gt;
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.&lt;br /&gt;
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace&lt;br /&gt;
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.&lt;br /&gt;
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及&lt;br /&gt;
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来&lt;br /&gt;
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而&lt;br /&gt;
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use&lt;br /&gt;
+after free的问题是够了, 以后用到这类问题基本可以妙解了.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;module text address&lt;br /&gt;
+cat /sys/module/wmi/sections/.text&lt;br /&gt;
+cat /proc/modules | grep wmi&lt;br /&gt;
+int bss_var;&lt;br /&gt;
+static int hello_init(void)&lt;br /&gt;
+{printk(KERN_ALERT &amp;ldquo;Text location .text(Code Segment):%p\n&amp;rdquo;,hello_init);&lt;br /&gt;
+static int data_var=0;&lt;br /&gt;
+printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);&lt;br /&gt;
+printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);}&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;debug-glibc&#34;&gt;Debug glibc&lt;/h1&gt;
+
+&lt;p&gt;directory ~/ws/glibc-2.23/libio&lt;br /&gt;
+set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
 </description>
     </item>
     
