@@ -16,16 +16,16 @@
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="Interrupt and exception : firoyang.org"/>
+<meta property="og:title" content="IO and events : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/cs/interrupt_and_exception/">
+<meta property="og:url" content="http://firoyang.org/cs/io/">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2017-04-03"/>
-<meta property="article:modified_time" content="2017-04-03"/>
+<meta property="article:published_time" content="2015-02-27"/>
+<meta property="article:modified_time" content="2015-02-27"/>
 
 
 <meta property="article:tag" content="cs">
@@ -35,8 +35,8 @@
 
 
     <base href="http://firoyang.org/">
-    <title> Interrupt and exception</title>
-    <link rel="canonical" href="http://firoyang.org/cs/interrupt_and_exception/">
+    <title> IO and events</title>
+    <link rel="canonical" href="http://firoyang.org/cs/io/">
     
 
     
@@ -139,14 +139,14 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >Interrupt and exception</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >IO and events</h1>
 	  
 
 <aside id="meta">
 
     <div>
         <section id="datecount">
-          <h4 id="date"> Mon Apr 3, 2017 </h4>
+          <h4 id="date"> Fri Feb 27, 2015 </h4>
           
         </section>
         
@@ -161,9 +161,9 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="203">
-<meta itemprop="datePublished" content="2017-04-03">
-<meta itemprop="url" content="http://firoyang.org/cs/interrupt_and_exception/">
+<meta itemprop="wordCount" content="110">
+<meta itemprop="datePublished" content="2015-02-27">
+<meta itemprop="url" content="http://firoyang.org/cs/io/">
 
 
 	  <div>
@@ -172,76 +172,24 @@
 
 <h1 id="reference">Reference</h1>
 
-<p><a href="https://www.exploit-db.com/papers/13146/">Obtain sys_call_table on amd64 </a></p>
+<p><a href="http://stackoverflow.com/questions/87892/what-is-the-status-of-posix-asynchronous-i-o-aio">What is the status of POSIX asynchronous I/O AIO</a><br />
+<a href="http://stackoverflow.com/questions/5844955/whats-the-difference-between-event-driven-and-asynchronous-between-epoll-and-a">hat&rsquo;s the difference between event-driven and asynchronous? Between epoll and AIO?</a><br />
+<a href="http://davmac.org/davpage/linux/async-io.html">Asynchronous I/O and event notification on linux</a><br />
+<a href="https://www.gnu.org/software/libc/manual/html_node/Asynchronous-I_002fO.html">Gnu Libc Perform I/O Operations in Parallel</a></p>
 
-<p>#Interrupt</p>
+<h1 id="really-confuing-conceptions">Really confuing conceptions</h1>
 
-<h2 id="init">init</h2>
+<p>What is Asynchronous I/O?<br />
+The onset of I/O is splitted from nuclus.<br />
+First, asynchronous I/O can be happned in UP machine.<br />
+AIO is based on Proactor, more portable.</p>
 
-<p>native_init_IRQ()-&gt;  set_intr_gate(i, irq_entries_start&hellip;<br />
-irq_entries_start define in arch/x86/kernel/entry_32.S</p>
+<h1 id="aynchoronous-event-notfication">Aynchoronous event notfication</h1>
 
-<p>##Interrupt Context terminology<br />
-* in_irq<br />
-in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!<br />
-+irq disable 部设计preempt_cout</p>
-
-<ul>
-<li><p>in_softirq<br />
-should rename to in_softirq_or_bh_disable()<br />
-local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)<br />
-__do_softirq use __local_bh_disable_ip(_RET<em>IP</em>, SOFTIRQ_OFFSET), damn it!</p></li>
-
-<li><p>in_interrupt<br />
-一种是irq路径上的do_softirq, 即in_serving_softirq<br />
-+local_bh_disbale()<br />
-//not in softirq context!!!<br />
-+local_bh_enable()<br />
-硬中断呢?<br />
-do_IRQ,肯定是.<br />
-local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check<br />
-[Question about in_interrupt() semantics with regard to softirqs]()</p></li>
-</ul>
-
-<p>#FAQ<br />
-##When to save irq rather than just disable irq<br />
-local_irq_disable() used in the code path that never disabled interrupts.<br />
-local_irq_save(flags) used in the code path that already disabled interrupts.</p>
-
-<p>##what about irq nested?<br />
-<a href="http://lwn.net/Articles/380937/">http://lwn.net/Articles/380937/</a></p>
-
-<h1 id="triggering-a-gp-exception">Triggering a #GP exception</h1>
-
-<p><a href="http://wiki.osdev.org/Exceptions">Exceptions</a><br />
-if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).<br />
-But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.<br />
-Privilege instructions in V3a chapter 5 Protection<br />
-.data<br />
-    .quad msg</p>
-
-<p>msg:<br />
-    .ascii &ldquo;Hello, world!\n&rdquo;<br />
-    len = . - msg<br />
-saved_idt:<br />
-        .long 0,0</p>
-
-<p>.text<br />
-    .global _start</p>
-
-<p>_start:<br />
-    movl  $4, %eax<br />
-    movl  $1, %ebx<br />
-    movl  $msg, %ecx<br />
-    sidt  saved_idt<br />
-    lidt  saved_idt  ;===============&gt; crashed at here<br />
-    movl  $len, %edx<br />
-    int   $0x80</p>
-
-<pre><code>movl  $1, %eax
-xorl  %ebx, %ebx 
-int   $0x80
-</code></pre>
+<p>epoll is based on Reactor pattern.<br />
+signal is based on Observer pattern.<br />
+For the ease of use, the select loop is implemented as an <em>event loop</em> with callbacks.<br />
+libevent and libev is a well-designed <em>event loop</em>.Check shadowsocks for using of libev.</p>
 
 		</article>
 	  </div>
@@ -252,9 +200,9 @@ int   $0x80
     <div id="disqus_thread"></div>
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/interrupt_and_exception\/';
-    var disqus_title = 'Interrupt and exception';
-    var disqus_url = 'http:\/\/firoyang.org\/cs\/interrupt_and_exception\/';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/io\/';
+    var disqus_title = 'IO and events';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/io\/';
 
     (function() {
         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

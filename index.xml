@@ -105,6 +105,38 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
 
 &lt;p&gt;##what about irq nested?&lt;br /&gt;
 &lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;triggering-a-gp-exception&#34;&gt;Triggering a #GP exception&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
+if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
+But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
+Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;
+.data&lt;br /&gt;
+    .quad msg&lt;/p&gt;
+
+&lt;p&gt;msg:&lt;br /&gt;
+    .ascii &amp;ldquo;Hello, world!\n&amp;rdquo;&lt;br /&gt;
+    len = . - msg&lt;br /&gt;
+saved_idt:&lt;br /&gt;
+        .long 0,0&lt;/p&gt;
+
+&lt;p&gt;.text&lt;br /&gt;
+    .global _start&lt;/p&gt;
+
+&lt;p&gt;_start:&lt;br /&gt;
+    movl  $4, %eax&lt;br /&gt;
+    movl  $1, %ebx&lt;br /&gt;
+    movl  $msg, %ecx&lt;br /&gt;
+    sidt  saved_idt&lt;br /&gt;
+    lidt  saved_idt  ;===============&amp;gt; crashed at here&lt;br /&gt;
+    movl  $len, %edx&lt;br /&gt;
+    int   $0x80&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;movl  $1, %eax
+xorl  %ebx, %ebx 
+int   $0x80
+&lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
     
@@ -999,6 +1031,13 @@ before start_kernel&lt;br /&gt;
 start_kernel&lt;br /&gt;
 reset_init &amp;amp; kernel_init&lt;/p&gt;
 
+&lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
+
+&lt;p&gt;Power button -&amp;gt; cpu reset -&amp;gt; BIOS -&amp;gt; hard drive -&amp;gt; Grub boot.S/MBR aa5a -&amp;gt; Grub diskboot.S -&amp;gt; &amp;hellip; -&amp;gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S&lt;br /&gt;
+Aligh register, Stack and BSS for C function to run. -&amp;gt; main-&amp;gt;startup_32-&amp;gt;startup_64-&amp;gt; __START_KERNEL_map-&amp;gt;&amp;hellip; start_kernel&lt;br /&gt;
+&lt;a href=&#34;https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130&#34;&gt;Kernel legacy boot sector&lt;/a&gt; start form 4d5a of arch/x86/boot/header.S&lt;br /&gt;
+is only used by something link &amp;lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&amp;rsquo;. It&amp;rsquo;s obsoleted that is what legacy means.&lt;/p&gt;
+
 &lt;h1 id=&#34;p4080-board&#34;&gt;p4080 Board&lt;/h1&gt;
 
 &lt;p&gt;PBL&lt;br /&gt;
@@ -1187,7 +1226,11 @@ ARM System-on-Chip Architecture (2nd Edition)&lt;/p&gt;
 &lt;p&gt;##Reference&lt;br /&gt;
 &lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
+A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
+The Mathematical Theory of Communication&lt;br /&gt;
+Given a symbol level, the architecture is the description of the system in&lt;br /&gt;
+whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81&lt;br /&gt;
+&lt;a href=&#34;https://news.ycombinator.com/item?id=9844090&#34;&gt;Ask HN: How to learn about the history of computing?&lt;/a&gt;&lt;br /&gt;
 《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
 Structured Computer Organization 6th Edition&lt;br /&gt;
 Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;

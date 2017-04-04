@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="643">
+<meta itemprop="wordCount" content="1030">
 <meta itemprop="datePublished" content="2014-12-28">
 <meta itemprop="url" content="http://firoyang.org/cs/mm/">
 
@@ -172,7 +172,8 @@
 
 <h1 id="reference">Reference</h1>
 
-<p><a href="http://www.memorymanagement.org/mmref/recycle.html">Recycling techniques</a><br />
+<p><a href="http://denninginstitute.com/pjd/PUBS/bvm.pdf">BEFORE MEMORY WAS VIRTUAL</a><br />
+<a href="http://www.memorymanagement.org/mmref/recycle.html">Recycling techniques</a><br />
 Computer memory#Management_of_memory<br />
 Memory management (operating systems)</p>
 
@@ -188,6 +189,77 @@ Exchange data between primary memory and second memory. Paging.</p>
 
 <p>What are the pitfall of manuplate directly physcial memory</p>
 
+<h1 id="memory-initialization-onset">Memory initialization onset:</h1>
+
+<p>先从bios 拿信息 main -&gt; detect_memory save in boot_params.e820_map<br />
+之后real -&gt; protected -&gt; long mode<br />
+启动 protected? mode. <a href="http://www.delorie.com/djgpp/doc/ug/basics/protected.html">What does protected mode mean</a><br />
+setup_arch<br />
+setup_memory_map -&gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&rsquo;s all.<br />
+max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &lt;.<br />
+mtrr update max_pfn, see <a href="https://en.wikipedia.org/wiki/Processor_supplementary_capability">Processor supplementary capability</a><br />
+trim_low_memory_range // reserve 64k<br />
+max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block<br />
+memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET<br />
+early_trap_pf_init //  X86_TRAP_PF, page_fault) =&gt; do_page_fault<br />
+init_mem_mapping //set page table and cr3.<br />
+initmem_init ; NUMA init<br />
+x86_init.paging.pagetable_init();= paging_init //x86_64 -&gt;zone_sizes_init-&gt;&hellip;free_area_init_core<br />
+mm_init<br />
+memblock the <a href="https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html">implementations</a> of memblock is quite simple. static initialization with variable memblock.<br />
+bootmem is discarded by <a href="https://lkml.org/lkml/2015/12/21/333">ARM</a> and x86<br />
+a little history e820_register_active_region replaced by lmb <a href="https://lkml.org/lkml/2010/7/13/68">replaced by</a> memblock<br />
+reserve_initrd ; // RAMDISK<br />
+总结下, 内存初始化需要的基础.<br />
+1. e820 get memory region.<br />
+2. set PF trap do_page_fault.<br />
+3. set page table and cr3.<br />
+这就完了. 之后开始开始加工.<br />
+arch 相关的x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&gt;<br />
+sparse_init<br />
+{<br />
+    memblock_virt_alloc // sizeof(struct page *) * NR_MEM_SECTIONS;NR_MEM_SECTIONS = 1 &lt;&lt; 19, Is it big?<br />
+    // alloc memory region will be marked in memory_reserved.<br />
+}<br />
+zone_sizes_init.<br />
+{<br />
+    calculate_node_totalpages // 每个zone的page数.<br />
+    free_area_init_node-&gt; alloc_node_mem_map // alloc mem_map for FLAT<br />
+    free_area_init_core<br />
+    {<br />
+        calc_memmap_size // 1/4k of spanned or present used for memmap. heuristic?<br />
+        zone_pcp_init // init percpu pageset with boot_pageset<br />
+        set_pageblock_migratetype(page, MIGRATE_MOVABLE);// 512 per zone<br />
+        memmap_init_zone-&gt; __init_single_page // init every page in a zone.<br />
+    }<br />
+}<br />
+arch independent,<br />
+build_all_zonelists<br />
+page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug<br />
+mm_init<br />
+Zone watermarks core_initcall(init_per_zone_wmark_min)</p>
+
+<h1 id="memory-pagge-cache-and-buffer-cache">Memory pagge cache and buffer cache.</h1>
+
+<p>page cache for memory, buffer cache for fs(block size is dependent on filesystem).<br />
+address_pace-&gt;page_tree: why radix tree, read ahead,<br />
+do_page_fault-&gt;read_page</p>
+
+<p>For buffer cache: buffer cache is only a wrapper of page for fs operations.<br />
+buffer_head is temporary data released in a deeper function than the function allocing the buffer_head.<br />
+__block_write_full_page<br />
+block_read_full_page</p>
+
+<p>I can not cover every corner of kernel, so If need, I will learn it.<br />
+<a href="https://lwn.net/Kernel/Index/#Memory_management-Writeback">The coherency problem, fs-writeback</a><br />
+<a href="https://lwn.net/Articles/326552/">Flushing out pdflush</a></p>
+
+<p><a href="https://lwn.net/Kernel/Index/#Memory_management-Swapping">Swapping</a><br />
+User space process: anonymous mapping(stack,heap,mmap), IPC-share memory(anonymous?), private mapping</p>
+
+<p><a href="https://lwn.net/Kernel/Index/#Memory_management-Shrinkers">Shrink cache</a><br />
+LRU cache</p>
+
 <h1 id="page">page</h1>
 
 <p><a href="https://lwn.net/Articles/619514/">An introduction to compound pages</a></p>
@@ -202,7 +274,10 @@ more details in lwn, lkd</p>
 
 <h1 id="virtual-memory">Virtual memory</h1>
 
-<p>##Page table<br />
+<p>vm的提出是为了解决。easy to use。<br />
+1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。<br />
+2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。<br />
+##Page table<br />
 mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))<br />
 原来低12位里面存了flag啊!<br />
 __pte(((phys_addr_t)page_nr &lt;&lt; PAGE_SHIFT) | massage_pgprot(pgprot));<br />

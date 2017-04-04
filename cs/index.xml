@@ -105,6 +105,38 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
 
 &lt;p&gt;##what about irq nested?&lt;br /&gt;
 &lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;triggering-a-gp-exception&#34;&gt;Triggering a #GP exception&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
+if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
+But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
+Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;
+.data&lt;br /&gt;
+    .quad msg&lt;/p&gt;
+
+&lt;p&gt;msg:&lt;br /&gt;
+    .ascii &amp;ldquo;Hello, world!\n&amp;rdquo;&lt;br /&gt;
+    len = . - msg&lt;br /&gt;
+saved_idt:&lt;br /&gt;
+        .long 0,0&lt;/p&gt;
+
+&lt;p&gt;.text&lt;br /&gt;
+    .global _start&lt;/p&gt;
+
+&lt;p&gt;_start:&lt;br /&gt;
+    movl  $4, %eax&lt;br /&gt;
+    movl  $1, %ebx&lt;br /&gt;
+    movl  $msg, %ecx&lt;br /&gt;
+    sidt  saved_idt&lt;br /&gt;
+    lidt  saved_idt  ;===============&amp;gt; crashed at here&lt;br /&gt;
+    movl  $len, %edx&lt;br /&gt;
+    int   $0x80&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;movl  $1, %eax
+xorl  %ebx, %ebx 
+int   $0x80
+&lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
     
@@ -798,6 +830,13 @@ before start_kernel&lt;br /&gt;
 start_kernel&lt;br /&gt;
 reset_init &amp;amp; kernel_init&lt;/p&gt;
 
+&lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
+
+&lt;p&gt;Power button -&amp;gt; cpu reset -&amp;gt; BIOS -&amp;gt; hard drive -&amp;gt; Grub boot.S/MBR aa5a -&amp;gt; Grub diskboot.S -&amp;gt; &amp;hellip; -&amp;gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S&lt;br /&gt;
+Aligh register, Stack and BSS for C function to run. -&amp;gt; main-&amp;gt;startup_32-&amp;gt;startup_64-&amp;gt; __START_KERNEL_map-&amp;gt;&amp;hellip; start_kernel&lt;br /&gt;
+&lt;a href=&#34;https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130&#34;&gt;Kernel legacy boot sector&lt;/a&gt; start form 4d5a of arch/x86/boot/header.S&lt;br /&gt;
+is only used by something link &amp;lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&amp;rsquo;. It&amp;rsquo;s obsoleted that is what legacy means.&lt;/p&gt;
+
 &lt;h1 id=&#34;p4080-board&#34;&gt;p4080 Board&lt;/h1&gt;
 
 &lt;p&gt;PBL&lt;br /&gt;
@@ -957,7 +996,11 @@ readelf -s&lt;/p&gt;&lt;/li&gt;
 &lt;p&gt;##Reference&lt;br /&gt;
 &lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
-Legacy 常用寄存器，常见指令 实模式和保护模式 分段和分页机制 TSS和任务管理 中断机制 时钟机制 高速缓存&lt;br /&gt;
+A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
+The Mathematical Theory of Communication&lt;br /&gt;
+Given a symbol level, the architecture is the description of the system in&lt;br /&gt;
+whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81&lt;br /&gt;
+&lt;a href=&#34;https://news.ycombinator.com/item?id=9844090&#34;&gt;Ask HN: How to learn about the history of computing?&lt;/a&gt;&lt;br /&gt;
 《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
 Structured Computer Organization 6th Edition&lt;br /&gt;
 Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;
@@ -1899,341 +1942,16 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;OK, 突然发现之前写的文章不太友好, 到现在为止只有两个国外友人留言了.所以我决心,以绝大多数人习惯的方式,写新的内容or改写现有文章. 第一篇文章就是此文, 分享我个人对computer science的理解. 这会是一个系列的文章.&lt;/p&gt;
-
-&lt;p&gt;TL;DR&lt;br /&gt;
-本文的目的, 不是主要目的帮助大家理解各种CS的知识, 而是揭示其中的联系.&lt;/p&gt;
-
-&lt;p&gt;如何刻画计算机? 我们使用Turing machine开始本文. 绝大多数人, 认为现代计算机已经不是一个简单Turing&lt;br /&gt;
-machine能描述清楚的, 所以很少有人去学习Automata theory. 相关定义参考Wikipedia.&lt;br /&gt;
-我们从图灵机开始往现代计算机推理.&lt;/p&gt;
-
-&lt;p&gt;Multitasking: we need computer to do multiple things at the same time.&lt;br /&gt;
-We use concurrent to measure the multitasking.&lt;br /&gt;
-We will inspect conccurency in multiple levels of computer science.&lt;br /&gt;
-The main force of concurrency in OS is process scheduling.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference-1&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;arch-of-cs&#34;&gt;arch of cs&lt;/h1&gt;
+&lt;h1 id=&#34;components-of-cs&#34;&gt;COmponents of cs&lt;/h1&gt;
 
 &lt;p&gt;design(pattern) and algorithm, programming(debugging, hacking)&lt;br /&gt;
 pl,assembly, compile(gcc), link, load(cll)&lt;br /&gt;
 process, quantaties, order(synchronization)&lt;br /&gt;
 turing, arch, os(boot, console, fedora, fs, process, mm, pm, time, virt, synchronization)&lt;br /&gt;
 math, logic, electronics&lt;/p&gt;
-
-&lt;h1 id=&#34;the-architecture-of-computer-science&#34;&gt;The Architecture of Computer science&lt;/h1&gt;
-
-&lt;p&gt;SICP states that cs focuses on process.&lt;br /&gt;
-What process is is the set of changes and quantaties.而这些changes 和 quantaties live in model of computation.&lt;br /&gt;
-我们可以说一个process就是一个从属于model of computation的changes和quantaties的一次排列和集合.&lt;br /&gt;
-所以model of computation至少是change的集合 和 quantaty的集合的集合.processess 本身就是暗含着data/quantaties的.&lt;br /&gt;
-Why can  processes being? It&amp;rsquo;s model of computation.&lt;br /&gt;
-这就是cs的form, process和model of computation. What is the material of cs?&lt;br /&gt;
-cs 的material 是symbolic.&lt;br /&gt;
-For now, we have noticed that the form of cs is changes and quantities.&lt;br /&gt;
-And the material of cs is symbolic(or, symbolic system).&lt;br /&gt;
-Both form and material are properties of being/abyss.&lt;br /&gt;
-人类的思维使用多种materials(vision, animation, graphics,or, feelings)去express a concept。&lt;br /&gt;
-可以说程序设计语言就是标准描述 process的Semiotic system。&lt;br /&gt;
-所以， pl对process的elements or origins做了合适的描述。&lt;br /&gt;
-sicp研究的符号规则层面的process 和 data。 design pattern研究的是语义层面的。&lt;br /&gt;
-PL 给了我们一种视角, 从process的元素的角度去描述process.&lt;br /&gt;
-form language(BNF-&amp;gt;syntax, regex-&amp;gt;lexical)藐视pl的语法.&lt;br /&gt;
-form language可以通过automata鉴别.automata等价于form system lambda calculus.&lt;br /&gt;
-自动机被相应的form grammar分类.&lt;br /&gt;
-我们的目的是规范化人类思维的表达形式.以此来达到交流, 具现化.&lt;br /&gt;
-我们要明白, pl的所有内容都是围绕the set of changes and quantaties建立的,&lt;br /&gt;
-也就是说pl是能指, 而所指便是the set of changes and quantaties.&lt;br /&gt;
-syntax句法不是我们关注的, 我们关注的是semantic.从semantic角度去尽可能的描述changes和quantaty.&lt;br /&gt;
-quantaties and changes: type system&lt;br /&gt;
-我们给quantaties附上特定的类型, 表达特定的含义,&lt;br /&gt;
-primitive expression: 数学量, 符号学字符, function&lt;br /&gt;
-combination: compound elements&lt;br /&gt;
-abstraction: name an elements&lt;br /&gt;
-relation: inference, relaton of changes, Flow Diagrams, Turing Machines And Languages With Only Two Formation Rules;&lt;br /&gt;
-也就是Jhone Locke的binary relation.&lt;br /&gt;
-process 可以看成人的意志力展示.origins加入interence不关注changes. logic就是研究过程/changes和过程/changes之间的关系.&lt;br /&gt;
-control flow描述设定的就是这种order/relation.核心不在于有没有if else, 而是是否有足够的表达能力.&lt;br /&gt;
-表达changes之间的relation/order.可能是一种图的感觉, 就比如if else引起了tree这种order的产生.&lt;br /&gt;
-也就是说语言的表达力. changes要类似automata的四通八达的感觉.&lt;br /&gt;
-process由 changes, inference/relation, quantaties组成.因为这是由人的意志will 参与的process.&lt;br /&gt;
-inference 强调的是order of changes/computation,也就是control flow.&lt;br /&gt;
-Why does the order of execution matter?&lt;br /&gt;
-Then we need programming:sicp c3(c2/c1)&lt;br /&gt;
-then interpreter: sicp c4&lt;br /&gt;
-compile link load&lt;br /&gt;
-computation model: sicp c5&lt;br /&gt;
-if else: 表示的是relation(changes之间的关系, order, causality, inference)&lt;br /&gt;
-也就是说pl包含:&lt;br /&gt;
-changes, quantaties, relation. 这几种表述.&lt;br /&gt;
-pl和machine/model of computation近乎等价, progrm是machin的超集. program 是process.而pl不是.&lt;br /&gt;
-所以pl和machine都对process有表达的能力.pl和machine的form一致, 但material不同. 他们都是process元素的集合.&lt;br /&gt;
-programming是排列组合这些process elements的craft.可以说这些元素是data, 可以转变为process.&lt;br /&gt;
-这里面我们就定义programmer的skills, crafts, 是一种排力组合的能力, 不严禁的通俗的理解.&lt;br /&gt;
-design pattern 更注重宏观process. 他们排布process. 单这些process是处理别的process.high-order process(procedure?)&lt;br /&gt;
-而algorithm, 可以认为是关注的是primitive/ process.&lt;br /&gt;
-图灵机加入的&amp;rdquo;感知&amp;rdquo;,正是laking of causal.&lt;br /&gt;
-之于表述computational process, 认为(hypothesis?)自然语言和pl是具有相同能力的.&lt;br /&gt;
-programming的目的之一是把思维结果转为pl形式表达出来.&lt;br /&gt;
-另外, 我们现在能总结出, cs的两大主题就是:the form of process and how to express more better.&lt;br /&gt;
-process的内在, 以及如何表达process.cs剩下的问题都是programmer 码农的问题.&lt;br /&gt;
-现在我们来研究纯粹的process.继承sicp的定义.&lt;br /&gt;
-procedure是process的体现. process &amp;gt;= procedure. 所谓的local evolution, 等价于c,lisp的function.&lt;br /&gt;
-procedure 是一changes(quantaties, relation)有限的集合.&lt;br /&gt;
-一个process可以包含多个procedure, 也可以只有一个procedure(如, 递归, 迭代).&lt;br /&gt;
-还有另外一个就是data.process和data唇亡齿寒.&lt;br /&gt;
-process: procedure, computation/changes.&lt;br /&gt;
-data-&amp;gt;: compound data, quantaty.&lt;br /&gt;
-我们研究的重点似乎时relation吧?&lt;br /&gt;
-process和data既像一物两面, 又像唇亡齿寒.&lt;br /&gt;
-下面开始,&lt;br /&gt;
-从combination, abstraction, relation这三个方面属性的process.&lt;br /&gt;
-从简单到复杂, 先关注process.&lt;br /&gt;
-如果process只有一个procedure.  elementary process.&lt;br /&gt;
-似乎我们可以得到一个关于process的坐标系: procedure 的种类和数量.&lt;br /&gt;
-这里, 我们不关注algorithm.&lt;br /&gt;
-这里, 关注design pattern, GoF, elemental design pattern, POSA.&lt;br /&gt;
-从坐标系角度只考虑process和process之间的关系:&lt;br /&gt;
-1 只有一种quality的procedure, 完成的process.&lt;br /&gt;
-那么数量上如果构成大于1, 也就是procedure call procedure.&lt;br /&gt;
-可以是iteration or recursion; 我门的坐标系反应不出来.&lt;br /&gt;
-需要另外一个属性, procedure 自身是否是运算的参数.&lt;br /&gt;
-坐标系改下, procedure的数量换成procedure是否参与运算. 如果参与computation就是递归.&lt;br /&gt;
-默认procedure 数量&amp;gt;=2.&lt;br /&gt;
-我们再一次发现, procedures之间可能并不是直接调用的.&lt;br /&gt;
-所以一个小坐标系, 能表达的太有限, 要废弃掉.从属性角度看.但可以明确procedures出现次数是2个以上.&lt;br /&gt;
-当然, 我们是从process角度分析问题的.&lt;br /&gt;
-只有一种procedure,&lt;br /&gt;
-* call/order relation&lt;br /&gt;
-参与 computaton 是 recursive, otherwise, iteration.&lt;br /&gt;
-iter(a,i, n)&lt;br /&gt;
-if (i&lt;n)
- a = a * (a +1)
- i++;
- return iter(a, i, n)//tail call&gt;&lt;br /&gt;
-看来这个问题的实质是process是否作为计算的对象.而recursive和iteration是某个general的特例.&lt;br /&gt;
-loose relation: sequence(特例iteration), 是computation之间的关系.&lt;br /&gt;
-strict relation: computation是内在的关系. computation被抽象data&lt;br /&gt;
-primitive computation可以调function, function可以调primitive computation.&lt;br /&gt;
-computation function 经过抽象变成data.data反过来又可构成computation.&lt;br /&gt;
-可以说没有data, 全是computation!?那这么说(所谓的&amp;rdquo;recursive&amp;rdquo;, 就司空见惯了.)&lt;br /&gt;
-function反应的是computation 序列集合.自身调用自身, 首先满足这种 order sequence的关系.&lt;br /&gt;
-似乎称之为recursive是没问题的. 但一个只能反应sequence, or和sequence等价的&amp;rdquo;recursive&amp;rdquo;.&lt;br /&gt;
-又有多大价值呢?recursive意义又有多大呢? 究竟, process的核心是什么呢? 是computation.&lt;br /&gt;
-回答显示世界的recursive, 一个画面不断重复自身的画面!&lt;br /&gt;
-&lt;img src=&#34;https://upload.wikimedia.org/wikipedia/commons/6/62/Droste.jpg&#34; alt=&#34;recursion&#34; /&gt;&lt;br /&gt;
-我们发现, 他们总是在表达一个完整的个体.&lt;br /&gt;
-画面的recursion, 依然在一个画面下.&lt;br /&gt;
-function的recursion, 确实表现在一个function内.&lt;br /&gt;
-但是从computation角度, recursive的function表述的是computation的连续sequence.&lt;br /&gt;
-也就是说recursion是有对象的,对于process是computation是对象.&lt;br /&gt;
-对于recursion process, 只有一个computation, 而iteration的process是多个computation的order/sequence集合.&lt;br /&gt;
-所以要区分computation和procedure/function. function是computation和sequence集合.他反应的是computation之间的关系.&lt;br /&gt;
-并不能反应computation自身内在关系.这也是我们混淆了recursion procedure的原因.&lt;br /&gt;
-想想, 集合的复合还是computation sequence. 而computation自身的复合却是一个computation,自身的演变.&lt;br /&gt;
-让我们体悟到了function和computation的区别.不同对象的交互operation差异.&lt;br /&gt;
-对函数的讨论研究等价与, 讨论computation之间的关系.也就是把function全部替换成了computation.&lt;br /&gt;
-所以recursive function就成了不断内嵌sequence computation了, 递归全无.&lt;br /&gt;
-computation 内在的组合, 我们讨论了, 相似对象/function的情况.&lt;br /&gt;
-如果一个computation内部,是由不同computation组成的.就是非递归的情况,edp叫Conglomeration.合理&lt;br /&gt;
-computation内在讨论先停下.&lt;br /&gt;
-我们关注computations之间的关系.&lt;br /&gt;
-无论是computation的内部还是,computation之间data都成了纽带.&lt;br /&gt;
-我们只讨论具有relation的process/computation.&lt;br /&gt;
-如果通过共同的操作的data,&lt;br /&gt;
-这就是并发的问题, 也就是changes.&lt;br /&gt;
-如果共同的data, 不是作为操作的对象知识表达一个relation.&lt;br /&gt;
-这是能想到的通过data的processes/computations之间的交互.&lt;br /&gt;
-似乎量changes/computation/process 之间的relation, 只能是&lt;br /&gt;
-causality and synchronization?(FIXME).&lt;br /&gt;
-Causality: Observer(发起者主动, 结果者被动), polling(结果者主动)&lt;br /&gt;
-state pattern(发起者的状态), Strategy Pattern(根据对象的选择行为)&lt;br /&gt;
-Command Pattern(?decoupling, 貌似就是个Observer不过把状态给了接收者处理),&lt;br /&gt;
-Mediator Pattern(decoupling),&lt;br /&gt;
-design pattern 关注的是form, syntax.&lt;br /&gt;
-研究process/procedure/function/computation 到 data&lt;br /&gt;
- Simple Factory Pattern类似strategy pattern, 根据(接收者类型产生对象)&lt;br /&gt;
-Factory Method Pattern类似(Mediator pattern, 将对象生成放给子类)&lt;br /&gt;
-没有relation(or relationless)的process联系到一起.&lt;br /&gt;
-adapter pattern&lt;br /&gt;
-还有一种两个procedure concurrent, 要分开 order sequence化.&lt;br /&gt;
-concurrent是design pattern等价的.&lt;br /&gt;
-这样design pattern也融合进来了.&lt;br /&gt;
-下面应该是SICP的chapter 3. chapter 3依然是对process的form的阐释和补全, 结合pl的语义进行挖掘.&lt;br /&gt;
-另一方面结合具体的实现开始kernel相关的(可能涉及到hard ware), 分布式系统理解.&lt;br /&gt;
-还有一个link load interpreter这方面的工作.&lt;/p&gt;
-
-&lt;h1 id=&#34;programming&#34;&gt;programming&lt;/h1&gt;
-
-&lt;p&gt;Abstraction is vital in helping us to cope with the complexity of&lt;br /&gt;
-large systems.&lt;br /&gt;
-Effective program synthesis also requires organizational principles that&lt;br /&gt;
-can guide us in formulating the overall design of a program.&lt;br /&gt;
-orgnizational principles应该是architecture pattern.&lt;br /&gt;
-我理解的programming的核心应该是modeling, modeling最直接的体现就是architecture pattern.&lt;br /&gt;
-相较于design pattern, ap更注重整体?&lt;br /&gt;
-不对, 这块不能把ap直接加进来, 逻辑不严密, 不完整.就先叫op吧.&lt;br /&gt;
-why modular,we are not creating something.&lt;br /&gt;
-It&amp;rsquo;s just about the being.&lt;br /&gt;
-abstraction is vital in helping us to cope with the complexity of&lt;br /&gt;
-large systems. 通过抽象构造的material层级, 逐级清晰.&lt;br /&gt;
-世界以我们所认为的那样方式运行着.&lt;br /&gt;
-modular , that is, so that they can be divided “naturally” into co-&lt;br /&gt;
-herent parts that can be separately developed and maintained.&lt;br /&gt;
-I think it&amp;rsquo;s because of the form.&lt;br /&gt;
-model as modeled, action in local.&lt;br /&gt;
-object-based approach and the stream-processing approach&lt;br /&gt;
-objec is the form of this world. what about stream?&lt;/p&gt;
-
-&lt;p&gt;The difficulties of dealing with objects, change, and identity are a fundamental&lt;br /&gt;
-consequence of the need to grapple with time in our computational models.&lt;br /&gt;
-Concurrent 增加了更多的难度, 但只是double的关系不是quality上的.&lt;/p&gt;
-
-&lt;p&gt;The stream approach can be most&lt;br /&gt;
-fully exploited when we decouple simulated time in our model from the&lt;br /&gt;
-order of the events that take place in the computer during evaluation.&lt;br /&gt;
-We will accomplish this using a technique known as delayed evaluation .&lt;br /&gt;
-stream 解耦了我模拟的时间和event的order.event有orderbut no time.&lt;br /&gt;
-We don&amp;rsquo;t care time. 隐约中我们引入了另一个origin of world, time.&lt;br /&gt;
-我想还是需要关心时间的只是在stream的form里面不存在时间了.&lt;br /&gt;
-leak of causal is abstraction.&lt;br /&gt;
-second origin, state, An object is said to “have&lt;br /&gt;
-state” if its behavior is influenced by its history.&lt;br /&gt;
-We can characterize an object’s state by one or more state vari-&lt;br /&gt;
-ables.&lt;br /&gt;
-有很多objects, 一些objects可能影响others&amp;rsquo;s state, couple the state variables.&lt;br /&gt;
-modular 需要decomposed into computational objects modeling actual objects.&lt;br /&gt;
-model指整体如substitution 和environment.&lt;br /&gt;
-Each computational object must have its own lo-&lt;br /&gt;
-cal state variables describing the actual object’s state.&lt;br /&gt;
-我们用computational object model actual, 每个 computational object must have its own local state variales.&lt;br /&gt;
-local state variables 描述actual object&amp;rsquo;s state. why local?&lt;/p&gt;
-
-&lt;p&gt;If we choose to model the flow of time in the system by the elapsed time&lt;br /&gt;
-in the computer, then we must have a way to construct computational&lt;br /&gt;
-objects whose behaviors change as our programs run. In particular, if&lt;br /&gt;
-we wish to model state variables by ordinary symbolic names in the&lt;br /&gt;
-programming language, then the language must provide an assignment&lt;br /&gt;
-operator to enable us to change the value associated with a name.&lt;br /&gt;
-从state variables 扯到 assignment operator.&lt;br /&gt;
-因为state variables是记录actual objects的state的, state可能随时间改变.&lt;br /&gt;
-我们必须改变state variables, 就需要assignment operator.表述一个关系, change.&lt;br /&gt;
-一个对象自己的state variables 被称为 local?&lt;br /&gt;
-形参?&lt;br /&gt;
-massage passing 类似strategy pattern&lt;/p&gt;
-
-&lt;p&gt;From the point of view of one part of a complex process, the other&lt;br /&gt;
-parts appear to change with time. They have hidden time-varying local&lt;br /&gt;
-state. If we wish to write computer programs whose structure reflects&lt;br /&gt;
-this decomposition, we make computational objects (such as bank ac-&lt;br /&gt;
-counts and random-number generators) whose behavior changes with&lt;br /&gt;
-time. We model state with local state variables, and we model the changes&lt;br /&gt;
-of state with assignments to those variables.&lt;br /&gt;
-整体上, a process, one part 看另外一面是&lt;br /&gt;
-A process hide time-varying local state in modular, but with a changes behavior. encapuslation.&lt;br /&gt;
-= changes, variable states&lt;/p&gt;
-
-&lt;p&gt;In general, programming with assignment forces us to carefully consider the relative orders&lt;br /&gt;
-of the assignments to make sure that each statement is using the correct&lt;br /&gt;
-version of the variables that have been changed. is issue simply does&lt;br /&gt;
-not arise in functional programs.&lt;/p&gt;
-
-&lt;p&gt;函数调用对应的是substitution model&lt;br /&gt;
-model of evaluation&lt;br /&gt;
-environments&lt;br /&gt;
-An environment is a sequence of frames . Each frame is a table (pos-&lt;br /&gt;
-sibly empty) of bindings , which associate variable names with their cor-&lt;br /&gt;
-responding values. (A single frame may contain at most one binding&lt;br /&gt;
-for any variable.) Each frame also has a pointer to its enclosing environ-&lt;br /&gt;
-ment , unless, for the purposes of discussion, the frame is considered to&lt;br /&gt;
-be global . e value of a variable with respect to an environment is the&lt;br /&gt;
-value given by the binding of the variable in the first frame in the en-&lt;br /&gt;
-vironment that contains a binding for that variable. If no frame in the&lt;br /&gt;
-sequence specifies a binding for the variable, then the variable is said to&lt;br /&gt;
-be unbound in the environment.&lt;br /&gt;
-所以programming实际讨论的是意义的问题.不是某种形式&lt;br /&gt;
-3.4&lt;br /&gt;
-e central issue lurking beneath the complexity of state, sameness,&lt;br /&gt;
-and change is that by introducing assignment we are forced to admit&lt;br /&gt;
-time into our computational models. Before we introduced assignment,&lt;br /&gt;
-all our programs were timeless, in the sense that any expression that&lt;br /&gt;
-has a value always has the same value.&lt;br /&gt;
-so time is changing.&lt;br /&gt;
-the execution of assignment&lt;br /&gt;
-statements delineates&lt;br /&gt;
-moments in time when values change. e result of evaluating an ex-&lt;br /&gt;
-pression depends not only on the expression itself, but also on whether&lt;br /&gt;
-the evaluation occurs before or aer these moments. Building models&lt;br /&gt;
-in terms of computational objects with local state forces us to confront&lt;br /&gt;
-time as an essential concept in programming.&lt;br /&gt;
-we use assignmnet to record state/history.&lt;br /&gt;
-We implemented the time variation of the states of the model objects in the computer&lt;br /&gt;
-with assignments to the local variables of the model objects.&lt;br /&gt;
-必须意识到change被modeled 到assignment.&lt;br /&gt;
-model change in terms of sequences&lt;br /&gt;
-list sequence is inefficient than the standard iterative style.&lt;br /&gt;
-Streams are a clever idea that allows one to use sequence manipu-&lt;br /&gt;
-lations without incurring the costs of manipulating sequences as lists.&lt;br /&gt;
-With streams we can achieve the best of both worlds: We can formu-&lt;br /&gt;
-late programs elegantly as sequence manipulations, while aaining the&lt;br /&gt;
-efficiency of incremental computation.&lt;br /&gt;
-stream 比list好,elegantly as sequence manipulation, efficiency as incremental computation.&lt;br /&gt;
-(delay ⟨ exp ⟩ ) delayed object很有趣, 类似Brandon的enhanced greensight.连接是空, 穿越时空.&lt;/p&gt;
-
-&lt;h1 id=&#34;chapter-4-metalinguistic-abstraction&#34;&gt;Chapter 4 Metalinguistic abstraction&lt;/h1&gt;
-
-&lt;p&gt;It is no exaggeration to regard this as the most fundamental idea in&lt;br /&gt;
-programming:&lt;br /&gt;
-evaluator, which determines the meaning of expres-&lt;br /&gt;
-sions in a programming language, is just another program.&lt;/p&gt;
-
-&lt;p&gt;SICP, 暂时看到这里.&lt;br /&gt;
-programming 是modeling. 看了sicp差不多了.&lt;br /&gt;
-interpreter:&lt;br /&gt;
-EOPL&lt;br /&gt;
-PLAI&lt;br /&gt;
-&lt;a href=&#34;http://papl.cs.brown.edu/2016/&#34;&gt;http://papl.cs.brown.edu/2016/&lt;/a&gt;&lt;br /&gt;
-另外PL也到这里吧.&lt;br /&gt;
-source code写出来如何让run?&lt;br /&gt;
-&lt;a href=&#34;https://www.zhihu.com/question/19918532&#34;&gt;弱类型、强类型、动态类型、静态类型语言的区别是什么？&lt;/a&gt;&lt;br /&gt;
-c语言是弱类型语言的意思是：它的类型是给编译器看的，让编译器在初次分配内存的时候好分配一个指定大小的空间。在实际操作中你可以随意更改变量的类型（强制或自动）。&lt;br /&gt;
-c语言实际是对内存直接操作的一门语言。也就是说如果给你四个字节的内存，你喜欢把它当成int来操作也行，当成四个char操作也行，随你喜欢。&lt;br /&gt;
-&lt;a href=&#34;http://stackoverflow.com/questions/430182/is-c-strongly-typed&#34;&gt;Is C strongly typed?&lt;/a&gt;&lt;br /&gt;
-I spent a few weeks, about a year ago, trying to sort out the terminology of &amp;ldquo;strongly typed,&amp;rdquo; &amp;ldquo;statically typed,&amp;rdquo; &amp;ldquo;safe,&amp;rdquo; etc., and found it amazingly difficult. As your message points out, the usage of these terms is so various as to render them almost useless. &amp;ndash;Benjamin C. Pierce&lt;/p&gt;
-
-&lt;h1 id=&#34;program-execution&#34;&gt;program execution&lt;/h1&gt;
-
-&lt;p&gt;run的目的是source code 对应到ISA.&lt;br /&gt;
-最容易想到的就是compilation.&lt;br /&gt;
-我们把compilation和interpreter当成从source code 到runnable program之间的某种form的变化.&lt;br /&gt;
-先略过compilation, 也就是我们现在编译出了最简单形式的一个程序foo 输出hello world用到了一个新lib.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/631631/&#34;&gt;How programs get run: ELF binaries&lt;/a&gt;&lt;br /&gt;
-我们知道了个大概, 那么我们最关心的事, 现在lib和foo都进入内存了, 那么foo是如何调用到lib的函数.&lt;br /&gt;
-原来是直接利用address_space 最memory map private就共享了.&lt;br /&gt;
-不需要显示维护library的list列表的.&lt;br /&gt;
-这样程序就运行起来了.&lt;br /&gt;
-硬件可以理解为programs的的interpreter. 理解为model of computations, 由set of changs and state/quantaties and relations 组成.&lt;br /&gt;
-所以硬件也可以看成是抽象的! 只不过不能自动.&lt;br /&gt;
-研究memory的是时候我们会区分到RAM和SRAM到电容和logic gates.也就是最终的实现.&lt;br /&gt;
-这个时候, 我们发现material成了我们理解问题的所必须考虑的方面了.&lt;br /&gt;
-也就是说理解到了电路这个层次, 我们就完成了standalone, Completeness的.&lt;br /&gt;
-也就是hardware的material完成了我们的认知, 就是认知闭环了.&lt;br /&gt;
-所以已经关注很多cpu的和process运行相关的指令, 对于理解lock锁(包括所谓的lockfree无锁)理解到硬件的material也是应该的.&lt;br /&gt;
-为什么这么说? 如果不用关心到logic完整的material, 实际上我们不需要理解什么语言啊, computation model. 设计模式啊, 操作系统啊.&lt;br /&gt;
-只要脑子想就够了.可是material也是being存在.也是有form的存在.&lt;br /&gt;
-所以另外的, 很重要的就是, 我们不是理解hardware本身, 我们理解的是hardware背后的form!&lt;br /&gt;
-form的内容就很少了.所以说学习要特别注意两点, form和completeness.&lt;br /&gt;
-记住我们关心的不是hardware的material而是hardware的form.&lt;br /&gt;
-所以说我们是为了完整complete form而不是material.&lt;br /&gt;
-而实际上, 当我意识到所谓的form的存在的时候, hardware本身就成一种自然的延伸了.自然的被包括进学习的范围目标里面了(FIXME).&lt;/p&gt;
-
-&lt;h1 id=&#34;os&#34;&gt;os&lt;/h1&gt;
 
 &lt;table&gt;
 &lt;thead&gt;
@@ -2278,42 +1996,17 @@ form的内容就很少了.所以说学习要特别注意两点, form和completen
 &lt;td&gt;Virtual memory&lt;/td&gt;
 &lt;td&gt;Translation look-aside buffers&lt;/td&gt;
 &lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
 
-&lt;p&gt;特别是synchronization和atomic instructions这条, 貌似冥冥中, 体现出了我们想要的感觉.&lt;br /&gt;
-就我所知道的&lt;a href=&#34;https://book.douban.com/people/firodb/all?sort=rating&amp;amp;start=0&amp;amp;tag=os&amp;amp;mode=grid&amp;amp;tags_sort=count&#34;&gt;几本OS的书&lt;/a&gt;, 基本都不符合我的思路. Operating Systems : Three Easy Pieces 这本还算可以吧.&lt;br /&gt;
-有点心意, 但是达不到sicp的高度.&lt;br /&gt;
-终于可以坐下来安心思考os了.上面的os书都是告诉你os有什么process, thread, memory management,&lt;br /&gt;
-interrupt, IO等等, 而且讲的非常详细, 就好像他们真的是主角似得.&lt;br /&gt;
-是的没错! os书里只关注这process, thread, scheduling, memory management, interrupt, IO之类的能干什么.&lt;br /&gt;
-对, 尽量讲得很详细, 以为这样就好了. 可实际上呢? 学习者的思维, 全被那些符号填满, 同时思考的机会也&lt;br /&gt;
-被剥夺了! 合理的os理解过程是什么样的呢? 我觉得还是从origins of world 往过来推导.&lt;br /&gt;
-我们上来根本就不关心process 啊scheduling, memory management.IO, interrupt等等&lt;br /&gt;
-我们最初有什么? 或者说, 我们正在做什么? 从origins 经过sicip.&lt;br /&gt;
-只考虑最原始的情况, 为了完成computational process, 我们需要一个真实的model of computation.&lt;br /&gt;
-我们有了他是relation(算术数学运算, order体现着结构上),  change(transfer, assignment), quantaties(state, memory)的集合.&lt;br /&gt;
-我们为了, 完成一件事情编写了program开始运行. 似乎不太好想遇上了什么问题.&lt;br /&gt;
-我们很容易想到让computer同时做量件事, 比如说两个人同时记日记.想当然, 我们也可以让一所学校的学生,&lt;br /&gt;
-同时记日记.此时我们就意识到了, 要抽象下Process出来了, scheduling也来了. 同时我们也要统一管理set of states, memory了.&lt;br /&gt;
-也有了IO, 我们要让内容输入进来, 显示出来.这都很好想.&lt;br /&gt;
-我们要保证系统有序的运行动起来.我设计了datapath和control unit.&lt;br /&gt;
-现在我们往回解释,也就是从interrupt之类到origins, 讨论the form.&lt;br /&gt;
-interrupt对应的是什么?是relation, 准确说是建立order.&lt;br /&gt;
-interrupt为什么不能运行长时间, 当然可以运行长时间.&lt;br /&gt;
-我们把interrupt, 看成和Process是一类东西, 都是process, change的实例.&lt;br /&gt;
-memory和fs对state set的管理.所以至少process要和memory 和fs关联&lt;br /&gt;
-貌似就没了?这只是框架.&lt;/p&gt;
-
-&lt;table&gt;
-&lt;thead&gt;
 &lt;tr&gt;
-&lt;th&gt;form&lt;/th&gt;
-&lt;th&gt;os&lt;/th&gt;
+&lt;td&gt;form&lt;/td&gt;
+&lt;td&gt;os&lt;/td&gt;
 &lt;/tr&gt;
-&lt;/thead&gt;
 
-&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&amp;mdash;&amp;ndash;&lt;/td&gt;
+&lt;td&gt;&amp;mdash;-&lt;/td&gt;
+&lt;/tr&gt;
+
 &lt;tr&gt;
 &lt;td&gt;change, computation, transfer .&lt;/td&gt;
 &lt;td&gt;instructions(memory,IO), Process, interrupt&lt;/td&gt;
@@ -2331,109 +2024,6 @@ memory和fs对state set的管理.所以至少process要和memory 和fs关联&lt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf&#34;&gt;test-and-set&lt;/a&gt;&lt;br /&gt;
-test the lock, if false(nobody take it), then set the lock.&lt;br /&gt;
-Test and test-and-set对TAS优化.&lt;br /&gt;
-TAS bus lock, cache invalidation&lt;br /&gt;
-TAS and TTAS is two different algorithms .&lt;br /&gt;
-还需要面对contention, backoff and queue lock.&lt;br /&gt;
-造成contention原因是什么, 就是cache.&lt;br /&gt;
-因为lokc prefix的总线仲裁, 可以简单的按顺序来.&lt;br /&gt;
-这样的话, concurrent, parallel涉及到的order就算是大概过了.&lt;br /&gt;
-下面我们还是回到relation/order, change, quantaties上来.&lt;br /&gt;
-这样我们用locality of reference and transfer/channel special/temporal.来解读了cache.&lt;br /&gt;
-另外还有cache coherence.&lt;br /&gt;
-我们把process, interrupt都看成computation.&lt;br /&gt;
-而timeshareing 世界之源是作为process的基本属性, 解读了调度&lt;br /&gt;
-memory subsystem 作为quantaties和state的管理比较直观.&lt;br /&gt;
-fs和mm本质是一回事.&lt;br /&gt;
-剩下一个IO, 就是transfer的实例化, 包括char, block, network device的驱动.&lt;br /&gt;
-我们把peripheral device看成跟memory一样的东西也就是quantaties同时也涉及到了transfer&lt;br /&gt;
-我们基本上把 整个os computer都包含进来了.&lt;br /&gt;
-但还需要细节推理.&lt;br /&gt;
-比如, fs:&lt;br /&gt;
-我们要先有个文件file, 各种类型&lt;br /&gt;
-mm 和fs都是quantaties的描述, 但根本却别在于fs是有人的参与的, 也就是说操作是要满足人的需求的.&lt;br /&gt;
-这里fs包含了各种设备.mm是process和quantaties的关系. 而fs是人与quantaties的关系.&lt;br /&gt;
-我们不考虑各种图形界面GUI, 只考虑最基础的linux console那种情况. 当然shell和linux console也要忽略掉.&lt;br /&gt;
-从纯粹的使用场景出发, 我们是不关心什么具体的fs实现, 我们只关心具体的用户user如何操作几个or很多的文件.&lt;br /&gt;
-最为真实的,实惠的, 基本的用户场景. 同样作为quantaties的mm是用数字标示quantaties的. 而且signifier根植&lt;br /&gt;
-于电路版.而fs面对的对象是人, 而有自己的语言符号系统, 而且不能通过全部number记忆东西.&lt;br /&gt;
-所以file要有个name, 文件多了, folder就有了, folder和folder之间就类似function之间调用.&lt;br /&gt;
-也是体现的order.&lt;br /&gt;
-我们发现folder和file这两个就能很好的描述用户使用了. 另外还有一个就是order, 不太被在意的.&lt;br /&gt;
-现在fs就成了name的集合了并且那么之间都是线性的关系, 我们不考虑soft link.&lt;br /&gt;
-我们来考虑下ln: a: hard link not allowed for directory. Why?&lt;br /&gt;
-反证法如果我们允许hard link dir, 在不recursive情况下hard link ok. But 如果recursive怎么办?&lt;br /&gt;
-soft link 也可能递归!所以recursive不是问题. 那么什么是&lt;br /&gt;
-mkdir -p /tmp/a /tmp/a/b&lt;br /&gt;
-如果&lt;br /&gt;
-ln /tmp/a /tmp/la&lt;br /&gt;
-怎么办, 就是递归.&lt;br /&gt;
-ln /tmp/a/ /tmp/a/b/la1&lt;br /&gt;
-toch /tmp/a/b/la1&lt;br /&gt;
-貌似没理解到点子上.&lt;br /&gt;
-现在用户哪里看到的就是多树.&lt;br /&gt;
-开始fs.&lt;br /&gt;
-有理由把dir和file看成一个东西.&lt;br /&gt;
-下面file代表抽象了. file代表open, 就是用户面对的那个. 指向inode对应一个文件 inode连接address space backend.&lt;br /&gt;
-那么问题来了, 就上面这个搓比的设计我们如何管理这些inode, file可以process弄个链表(大误, 数组)什么的好办.&lt;br /&gt;
-如, struct file __rcu * fd-array[NR_OPEN_DEFAULT]; 这个可以理解. struct fdtable fdtab; 这个就不理解了.&lt;br /&gt;
-不去管他. 我们如何组织inode, 比如我们打开是5本电子书, 7个文件, chrome, vim, 总之很多个文件, 那么这些inode怎么办?&lt;br /&gt;
-最简单, 列个linked list就行.&lt;br /&gt;
-in fs, namei stands for name interpreting,  the pathname lookup mechanisms (namei) by Feb-1997 T. Schoebel-Theuer&lt;br /&gt;
-现在关于fs就make sense了.&lt;br /&gt;
-关于open /dev, 参考dev&lt;em&gt;mount().&lt;/em&gt;. ramfs_mknod vfs_mknode&lt;br /&gt;
- drivers/base/devtmpfs.c &amp;lt;&lt;handle_create&gt;&amp;gt;&lt;br /&gt;
-1. 从用户这个层面我们提供了dir 和 file, dir可以包含dir这三个concept涵盖住用户需求.&lt;/p&gt;
-
-&lt;p&gt;内核一个file 对应一次open, 先walk link path 之后do_last(walk和last交互着来 in wile()) 先去dcache 找dentry,&lt;br /&gt;
-(/dev 的dentry被pin住了, inode也建好了), 其他不在dcache找个empty dentry, 用父inode的iget之类操作&lt;br /&gt;
-建个inode同时根据硬盘数据确定operation 类型.&lt;br /&gt;
-我们发现:&lt;br /&gt;
-2. file/ inode/ dentry是严格从属于fs的.&lt;br /&gt;
-3. file -&amp;gt; dentry -&amp;gt; inode 这个顺序&lt;br /&gt;
-4. inode决定了你的 fs之内的最高级别operations(如char ops). 进一步的(如tty 靠major minor)&lt;br /&gt;
-5. special的inode不同于disk reglar 这种. 他们事先就created and pin dentry in core.&lt;br /&gt;
-6. namei&lt;br /&gt;
-7. lru&lt;br /&gt;
-反观fs, sb和dentry是做骨架同inode是骨架的支撑, 不可缺少.&lt;br /&gt;
-file是花拳绣腿. 有什么深刻的? 用户态松散的order和 transfer, quantaties 关系. dentry就是这种反应.&lt;br /&gt;
-深刻1, 就是order 包含!&lt;br /&gt;
-深刻2, 是什么, abstraction and function of everything(data, process)不同事物的抽象关系, 映射关系.&lt;br /&gt;
-明天就是mm, 想对比fs关注与不同事物的组合, mm更纯粹, 也会涉及大quantaties的管理, 和disk之类应该有较大的相似性.&lt;br /&gt;
-更能体现出quantaties.&lt;br /&gt;
-cs 的fs的inode见 iput_final iput inode_add_lru list_lru_add(&amp;amp;inode-&amp;gt;i_sb-&amp;gt;s_inode_lru, &amp;amp;inode-&amp;gt;i&lt;em&gt;lru) .&lt;/em&gt;.&lt;br /&gt;
-现在来看最后的mm.&lt;/p&gt;
-
-&lt;h1 id=&#34;底层的transer&#34;&gt;底层的transer&lt;/h1&gt;
-
-&lt;p&gt;io, polling, interrupting, network device的multi queue, 的性能提升.&lt;/p&gt;
-
-&lt;h1 id=&#34;mm&#34;&gt;mm&lt;/h1&gt;
-
-&lt;p&gt;首先, physical  memory 就是quantaties/states的集合, 没有什么好说的, DRAM的实现需要看下.&lt;br /&gt;
-process要用到这些quantaties 如何分给他们, 分多少?&lt;br /&gt;
-首先, 我们要统计下, 我们有多少内存, mem map, 内存 看page分块. 分配物理地址signifier. buddy system.&lt;br /&gt;
-我们不知道process, 要多少, 不可能给他很多, 所以就是 Demand paging是被动的, 再有就是主动分配alloc的.&lt;br /&gt;
-首先process是不应该关心物理的signifier, 他肯定是在写程序的时候有自己的一套, 标记quantaties的signifiers.&lt;br /&gt;
-我们不关心, process自己如何组织他自己内部的signifiers, 但是我们知道他当然可能自己全权掌控, physicl signifiers,&lt;br /&gt;
-所谓的real system.一单, 我们为了简单, 使用了internal的signifiers, 那么internal 到physical的转换必不可缺.&lt;br /&gt;
-这里就要设计到relation的维护. 同时memory是作为disk的cache, 那么不可避免.&lt;br /&gt;
-已知关于cache的问题:&lt;br /&gt;
-1. 组织 如page cache radix tree.&lt;br /&gt;
-2. cache coherence. 如page 和disk. pdflush&lt;br /&gt;
-3. 还是lru&lt;br /&gt;
-关于mm&lt;br /&gt;
-1. relation, page table.&lt;br /&gt;
-2. physical signifiers的管理, mem map buddy system.&lt;br /&gt;
-3. 关于internal signifiers的管理, mem layout, vma之类的.&lt;br /&gt;
-基本上os就差不多了. 另外, 还有碎角料, kernel mode切换, interface abi,api.&lt;br /&gt;
-所以我们能从os遇到个种种问题中, 归纳出共性, 集中精力研究这些共性的, 重要的(性能角度)的问题, 得到他们的&lt;br /&gt;
-本源origins of the world._.&lt;/p&gt;
-
-&lt;p&gt;can we open a file in interrupt?&lt;/p&gt;
-
 &lt;h1 id=&#34;the-advert-of-new-world-origin-performance&#34;&gt;the advert of new world origin - performance&lt;/h1&gt;
 
 &lt;p&gt;cache: in order to improve performace, cache tries to reduce the access time of transfer of future.&lt;br /&gt;
@@ -2449,315 +2039,37 @@ Easy to use&lt;br /&gt;
 Security/Protection/isolation&lt;br /&gt;
 Reliability&lt;br /&gt;
 Energy-efficiency&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>IO and events</title>
+      <link>http://firoyang.org/cs/io/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/io/</guid>
+      <description>
 
-&lt;h1 id=&#34;memory-vm&#34;&gt;Memory VM&lt;/h1&gt;
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;我们回头再看mm， vm的提出是为了解决。easy to use。&lt;br /&gt;
-1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。&lt;br /&gt;
-2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。&lt;br /&gt;
-Not useful links, you may not read them:&lt;br /&gt;
-&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://research.microsoft.com/en-us/um/people/gbell/CGB%20Files/Computer%20Structures%20Readings%20and%20Examples%201971.pdf&#34;&gt;Computer Structures: Readings and Examples &lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://research.microsoft.com/en-us/um/people/gbell/Computer_Structures_Principles_and_Examples/contents.html&#34;&gt;Computer Structures: Readings and Examples html version&lt;/a&gt;&lt;br /&gt;
-Chapter 10 One-level storage system is the first implemention of virtual memory mind.&lt;br /&gt;
-VM address space 和physical memory address space， 本质上都是符号集合。 形象点说， 就是数字的集合。&lt;br /&gt;
-32bit系统为例， 现在书上都是长条矩形标上0， 4GB， 容易让人产生狭隘的理解。 实际上， 所谓的0~4GB，只要你有这么多个标示，他们能被&lt;br /&gt;
-computation这个符号系统理解。就可以， 比如0用香蕉图片， 1用汽车图片， 等等。显然数字最简洁了。&lt;br /&gt;
-现在我们有了4GB的空间怎么用， 作为处理公共事务的kernel要占quantative states集合的一部分， ok。另外一部分给process。&lt;br /&gt;
-1. kernel 和 user之间分。Linux TASK_SIZE. VM split, 同时copy between kernel and userspace.&lt;br /&gt;
-2. 有了user VM space，开始布局memory layout。在load application时候。load_elf_binary&lt;br /&gt;
-layout内每块区域都是个VMA。VMA a memory region如何组织&lt;br /&gt;
-rb寻找可用的未分配的userspace VM地址空间.&lt;br /&gt;
-list, for what? proc/self/maps show_tid_map-&amp;gt;show_map_vma  and core dump fill_files_note.&lt;br /&gt;
-vm_pgoff, 文件内偏移不是VMA/Page内偏移, 0代表从文件开始处开始映射.&lt;br /&gt;
-VMA in PAGE_SIZE unit&lt;br /&gt;
-3. 现在vm space 已经划分出去了. 还没有和physical memory 还有disk 关联上。Demand paging,见page fault, filemap_fault.&lt;br /&gt;
-4. 通过Demand paging 和page建立联系了. VM spaces/VMA, page, disk的关系, 何去何从?&lt;br /&gt;
-我们得沿着自己的思路去思考. physial-pages-of-file/page-cache-entity/address_space.&lt;br /&gt;
-首先一个file的pages的集合.address_space.page_tree + pagevec_lru 也就是 Page cache add_to_page_cache_lru.&lt;br /&gt;
-page cache这个结构非常有意思. 众多的address_spaces 构成了分布式page_tree, 同时zone lruvec控制这个分布式page_trees里&lt;br /&gt;
-那些page该evict.&lt;br /&gt;
-我们先在总结下, load application到kernel, 建立各种VMA. access VMA出发demand paging.加入page cache可以正常用了.&lt;br /&gt;
-根本不需要reverse mapping.&lt;br /&gt;
-5. 如果page得到更新, pte也需要更新.比如page被evicted. pte必须invalid.&lt;br /&gt;
-rerverse mapping建立都在__do_fault&lt;br /&gt;
-For anon, check do_anonymous_page&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://stackoverflow.com/questions/87892/what-is-the-status-of-posix-asynchronous-i-o-aio&#34;&gt;What is the status of POSIX asynchronous I/O AIO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://stackoverflow.com/questions/5844955/whats-the-difference-between-event-driven-and-asynchronous-between-epoll-and-a&#34;&gt;hat&amp;rsquo;s the difference between event-driven and asynchronous? Between epoll and AIO?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://davmac.org/davpage/linux/async-io.html&#34;&gt;Asynchronous I/O and event notification on linux&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.gnu.org/software/libc/manual/html_node/Asynchronous-I_002fO.html&#34;&gt;Gnu Libc Perform I/O Operations in Parallel&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;现在放眼在Physical memory.&lt;br /&gt;
-performance: &lt;a href=&#34;https://lwn.net/Articles/254445/&#34;&gt;NUMA&lt;/a&gt;&lt;br /&gt;
-PM自身符号集合管理.&lt;/p&gt;
+&lt;h1 id=&#34;really-confuing-conceptions&#34;&gt;Really confuing conceptions&lt;/h1&gt;
 
-&lt;p&gt;pg_data_t zone page&lt;br /&gt;
-关于pte.pte尾端bit被复用, phys_pud_init prot.&lt;/p&gt;
+&lt;p&gt;What is Asynchronous I/O?&lt;br /&gt;
+The onset of I/O is splitted from nuclus.&lt;br /&gt;
+First, asynchronous I/O can be happned in UP machine.&lt;br /&gt;
+AIO is based on Proactor, more portable.&lt;/p&gt;
 
-&lt;h1 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h1&gt;
+&lt;h1 id=&#34;aynchoronous-event-notfication&#34;&gt;Aynchoronous event notfication&lt;/h1&gt;
 
-&lt;p&gt;先从bios 拿信息 main -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
-之后real -&amp;gt; protected -&amp;gt; long mode&lt;br /&gt;
-启动 protected? mode. &lt;a href=&#34;http://www.delorie.com/djgpp/doc/ug/basics/protected.html&#34;&gt;What does protected mode mean&lt;/a&gt;&lt;br /&gt;
-setup_arch&lt;br /&gt;
-setup_memory_map -&amp;gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&amp;rsquo;s all.&lt;br /&gt;
-max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
-mtrr update max_pfn, see &lt;a href=&#34;https://en.wikipedia.org/wiki/Processor_supplementary_capability&#34;&gt;Processor supplementary capability&lt;/a&gt;&lt;br /&gt;
-trim_low_memory_range // reserve 64k&lt;br /&gt;
-max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block&lt;br /&gt;
-memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
-early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&gt;
-init_mem_mapping //set page table and cr3.&lt;br /&gt;
-initmem_init ; NUMA init&lt;br /&gt;
-x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
-mm_init&lt;br /&gt;
-memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
-bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;br /&gt;
-a little history e820_register_active_region replaced by lmb &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by&lt;/a&gt; memblock&lt;br /&gt;
-reserve_initrd ; // RAMDISK&lt;br /&gt;
-总结下, 内存初始化需要的基础.&lt;br /&gt;
-1. e820 get memory region.&lt;br /&gt;
-2. set PF trap do_page_fault.&lt;br /&gt;
-3. set page table and cr3.&lt;br /&gt;
-这就完了. 之后开始开始加工.&lt;br /&gt;
-arch 相关的x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
-sparse_init&lt;br /&gt;
-{&lt;br /&gt;
-    memblock_virt_alloc // sizeof(struct page *) * NR_MEM_SECTIONS;NR_MEM_SECTIONS = 1 &amp;lt;&amp;lt; 19, Is it big?&lt;br /&gt;
-    // alloc memory region will be marked in memory_reserved.&lt;br /&gt;
-}&lt;br /&gt;
-zone_sizes_init.&lt;br /&gt;
-{&lt;br /&gt;
-    calculate_node_totalpages // 每个zone的page数.&lt;br /&gt;
-    free_area_init_node-&amp;gt; alloc_node_mem_map // alloc mem_map for FLAT&lt;br /&gt;
-    free_area_init_core&lt;br /&gt;
-    {&lt;br /&gt;
-        calc_memmap_size // 1/4k of spanned or present used for memmap. heuristic?&lt;br /&gt;
-        zone_pcp_init // init percpu pageset with boot_pageset&lt;br /&gt;
-        set_pageblock_migratetype(page, MIGRATE_MOVABLE);// 512 per zone&lt;br /&gt;
-        memmap_init_zone-&amp;gt; __init_single_page // init every page in a zone.&lt;br /&gt;
-    }&lt;br /&gt;
-}&lt;br /&gt;
-arch independent,&lt;br /&gt;
-build_all_zonelists&lt;br /&gt;
-page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug&lt;br /&gt;
-mm_init&lt;br /&gt;
-Zone watermarks core_initcall(init_per_zone_wmark_min)&lt;br /&gt;
-基本上内存初始化,就到这里了.&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-pagge-cache-and-buffer-cache&#34;&gt;Memory pagge cache and buffer cache.&lt;/h1&gt;
-
-&lt;p&gt;page cache for memory, buffer cache for fs(block size is dependent on filesystem).&lt;br /&gt;
-address_pace-&amp;gt;page_tree: why radix tree, read ahead,&lt;br /&gt;
-do_page_fault-&amp;gt;read_page&lt;/p&gt;
-
-&lt;p&gt;For buffer cache: buffer cache is only a wrapper of page for fs operations.&lt;br /&gt;
-buffer_head is temporary data released in a deeper function than the function allocing the buffer_head.&lt;br /&gt;
-__block_write_full_page&lt;br /&gt;
-block_read_full_page&lt;/p&gt;
-
-&lt;p&gt;I can not cover every corner of kernel, so If need, I will learn it.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Writeback&#34;&gt;The coherency problem, fs-writeback&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/326552/&#34;&gt;Flushing out pdflush&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Swapping&#34;&gt;Swapping&lt;/a&gt;&lt;br /&gt;
-User space process: anonymous mapping(stack,heap,mmap), IPC-share memory(anonymous?), private mapping&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Shrinkers&#34;&gt;Shrink cache&lt;/a&gt;&lt;br /&gt;
-LRU cache&lt;/p&gt;
-
-&lt;h1 id=&#34;processes-of-os&#34;&gt;processes of os&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
-But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
-Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;
-.data&lt;br /&gt;
-    .quad msg&lt;/p&gt;
-
-&lt;p&gt;msg:&lt;br /&gt;
-    .ascii &amp;ldquo;Hello, world!\n&amp;rdquo;&lt;br /&gt;
-    len = . - msg&lt;br /&gt;
-saved_idt:&lt;br /&gt;
-        .long 0,0&lt;/p&gt;
-
-&lt;p&gt;.text&lt;br /&gt;
-    .global _start&lt;/p&gt;
-
-&lt;p&gt;_start:&lt;br /&gt;
-    movl  $4, %eax&lt;br /&gt;
-    movl  $1, %ebx&lt;br /&gt;
-    movl  $msg, %ecx&lt;br /&gt;
-    sidt  saved_idt&lt;br /&gt;
-    lidt  saved_idt  ;===============&amp;gt; crashed at here&lt;br /&gt;
-    movl  $len, %edx&lt;br /&gt;
-    int   $0x80&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;movl  $1, %eax
-xorl  %ebx, %ebx 
-int   $0x80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;So, we need to know the basic elements of process.&lt;br /&gt;
-Privilege level. ring 0 ~ 3.&lt;br /&gt;
-v1 6.4 and v3a 6 for interrupt and exceptions.&lt;br /&gt;
-priority&lt;br /&gt;
-status&lt;br /&gt;
-PCB&lt;br /&gt;
-Process create.&lt;br /&gt;
-schedule&lt;/p&gt;
-
-&lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
-
-&lt;p&gt;Power button -&amp;gt; cpu reset -&amp;gt; BIOS -&amp;gt; hard drive -&amp;gt; Grub boot.S/MBR aa5a -&amp;gt; Grub diskboot.S -&amp;gt; &amp;hellip; -&amp;gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S&lt;br /&gt;
-Aligh register, Stack and BSS for C function to run. -&amp;gt; main-&amp;gt;startup_32-&amp;gt;startup_64-&amp;gt; __START_KERNEL_map-&amp;gt;&amp;hellip; start_kernel&lt;br /&gt;
-&lt;a href=&#34;https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130&#34;&gt;Kernel legacy boot sector&lt;/a&gt; start form 4d5a of arch/x86/boot/header.S&lt;br /&gt;
-is only used by something link &amp;lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&amp;rsquo;. It&amp;rsquo;s obsoleted that is what legacy means.&lt;/p&gt;
-
-&lt;h2 id=&#34;process-management&#34;&gt;Process management&lt;/h2&gt;
-
-&lt;p&gt;进程的定义和PCB，进程和线程的区别，进程的三个基本状态及它们之间的转换关系，进程的同步，竞争和死锁，进程间通信&lt;br /&gt;
-###Representation&lt;br /&gt;
-* Program memory&lt;br /&gt;
-Stack(User/Kernel)&lt;br /&gt;
-Heap&lt;br /&gt;
-Data segment(data/bss)&lt;br /&gt;
-Code segment&lt;br /&gt;
-* PCB&lt;br /&gt;
-Resource&lt;br /&gt;
-Processor Context&lt;br /&gt;
-Process state&lt;br /&gt;
-###daemonize&lt;br /&gt;
-&lt;a href=&#34;http://fixunix.com/unix/84640-daemon-controlling-terminal.html&#34;&gt;http://fixunix.com/unix/84640-daemon-controlling-terminal.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-managerment&#34;&gt;Memory managerment&lt;/h2&gt;
-
-&lt;p&gt;分页式管理，分段式管理，虚拟内存的概念，页面置换算法，内存分配算法&lt;/p&gt;
-
-&lt;h3 id=&#34;paging&#34;&gt;Paging&lt;/h3&gt;
-
-&lt;p&gt;paging is one of the memory management schemes by which&lt;br /&gt;
-a computer stores and retrieves data from the secondary storage for use in main memory.&lt;br /&gt;
-* Page fault&lt;br /&gt;
-###Page replacement algorithm&lt;br /&gt;
-OPT&lt;br /&gt;
-FIFO&lt;br /&gt;
-Second-chance&lt;br /&gt;
-LRU&lt;/p&gt;
-
-&lt;h3 id=&#34;x86-memory-segmentation&#34;&gt;x86 memory segmentation&lt;/h3&gt;
-
-&lt;p&gt;linux 基本不用&lt;br /&gt;
-&lt;a href=&#34;http://oss.org.cn/kernel-book/ch02/2.3.7.htm&#34;&gt;Linux中的段&lt;/a&gt;&lt;br /&gt;
-* GDT&lt;br /&gt;
-* TSS&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Task_state_segment#Use_of_TSS_in_Linux&#34;&gt;Use of TSS in Linux&lt;/a&gt;&lt;br /&gt;
-* Linear address&lt;/p&gt;
-
-&lt;h3 id=&#34;virtual-memory-https-en-wikipedia-org-wiki-virtual-memory-paged-virtual-memory&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtual_memory#Paged_virtual_memory&#34;&gt;Virtual memory&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;It maps memory addresses used by a program, called virtual addresses, into physical addresses in computer memory.&lt;br /&gt;
-* Logic/Virtual address&lt;br /&gt;
-* Page table&lt;/p&gt;
-
-&lt;h3 id=&#34;memory-allocation&#34;&gt;Memory allocation&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Buddy memory allocation.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Slab allocation/Memory Pool&lt;/p&gt;
-
-&lt;h2 id=&#34;device-management&#34;&gt;Device management&lt;/h2&gt;
-
-&lt;p&gt;中断的概念，中断处理，I/O控制方式，缓冲区管理，设备驱动，磁盘调度和高速缓存&lt;/p&gt;
-
-&lt;h2 id=&#34;network-stack&#34;&gt;Network stack&lt;/h2&gt;
-
-&lt;p&gt;Protocol&lt;/p&gt;
-
-&lt;h2 id=&#34;i-o&#34;&gt;I/O&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.cs.uwm.edu/classes/cs458/Lecture/HTML/ch11s02.html&#34;&gt;Methods for designing a CPU&amp;rsquo;s I/O interface generally fall into one of the following categories:&lt;/a&gt;&lt;br /&gt;
-Completely separate memory and I/O. buses DMA?&lt;br /&gt;
-Common buses, separate control lines. Port-I/O&lt;br /&gt;
-Common buses and control line. Memroy-maped I/O&lt;br /&gt;
-###Higher level implemention of I/O&lt;br /&gt;
-device or partion of device/memory -&amp;gt; file&lt;br /&gt;
-io -&amp;gt; stream&lt;br /&gt;
-####&lt;a href=&#34;https://en.wikipedia.org/wiki/Stream_(computing)&#34;&gt;stream&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Standard_streams&#34;&gt;Standard streams&lt;/a&gt;&lt;br /&gt;
-interface is stdio library or the kernel version.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;codata&lt;/p&gt;
-
-&lt;h3 id=&#34;low-i-o-type&#34;&gt;Low I/O type&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Programmed I/O/Polling&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;DMA&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Interrupt I/O&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Channel I/O&lt;/p&gt;
-
-&lt;h3 id=&#34;i-o-scheduling&#34;&gt;I/O scheduling&lt;/h3&gt;
-
-&lt;p&gt;Elevator algorithm&lt;br /&gt;
-###Asynchronous I/O NEED CLEAN&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;synchronous I/O multiplexing and I/O event notification facility&lt;br /&gt;
-select/poll/epoll&lt;br /&gt;
+&lt;p&gt;epoll is based on Reactor pattern.&lt;br /&gt;
+signal is based on Observer pattern.&lt;br /&gt;
 For the ease of use, the select loop is implemented as an &lt;em&gt;event loop&lt;/em&gt; with callbacks.&lt;br /&gt;
 libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.&lt;/p&gt;
-
-&lt;h2 id=&#34;file-system&#34;&gt;File system&lt;/h2&gt;
-
-&lt;p&gt;文件的概念，文件的管理，文件系统&lt;/p&gt;
-
-&lt;h2 id=&#34;system-calls&#34;&gt;System calls&lt;/h2&gt;
-
-&lt;p&gt;系统调用的概念，系统调用的处理，系统调用类型&lt;/p&gt;
-
-&lt;h2 id=&#34;cpu-device-i-o&#34;&gt;CPU-device I/O&lt;/h2&gt;
-
-&lt;h3 id=&#34;memory-mapped-i-o&#34;&gt;Memory-mapped I/O&lt;/h3&gt;
-
-&lt;p&gt;ioremap: physical address-&amp;gt;logical address, simlar to vmalloc except we need not page.&lt;/p&gt;
-
-&lt;h3 id=&#34;ported-mapped-i-o&#34;&gt;Ported-mapped I/O&lt;/h3&gt;
-
-&lt;p&gt;##Non CPU-device I/O&lt;/p&gt;
-
-&lt;h3 id=&#34;i-o-channels&#34;&gt;I/O channels&lt;/h3&gt;
-
-&lt;h2 id=&#34;同步与异步io&#34;&gt;同步与异步IO&lt;/h2&gt;
-
-&lt;p&gt;今天我们要辨析一下同步和异步IO. 我们先解释最基础的概念, 之后用生活化的例子&lt;br /&gt;
-完成认知.&lt;br /&gt;
-首先是blocking 和 non-blocking这两个概念. 这两个概念实质上是和IO没有关系.&lt;br /&gt;
-他们是在说, 比如读数据, 如果没有数据我该怎么办. 也就是说, 他是在IO不存的时候,&lt;br /&gt;
-在语义上才是有效, 如果你要读的数据始终存在, 那么你还会考虑阻塞与不阻塞的问题吗?&lt;br /&gt;
-那你应该考虑什么? 同步还是异步IO, 倒地什么是同步或者异步呢?&lt;br /&gt;
-英文synchronous, syn 和chronous构成, syn是在一起的意思而chronous是时间的意思.&lt;br /&gt;
-也就是说在一个时间点上在一起, 那么是谁和谁在意一起呢?其中一个是IO可以肯定, 另外一个&lt;br /&gt;
-就是执行IO的发起者, 通常也就是进程. 简单说来这个IO是由进程执行的.&lt;br /&gt;
-那么异步IO呢, asynchronous是a + synchronous. a表否定, 我们知道在IO进行的过程中我们的&lt;br /&gt;
-进程是始终存在的, 也就是说IO 和进程共享着相同的时间进度, 但是却不在一起.也就是说,&lt;br /&gt;
-IO不是由我们的进程完成而是别的进程完成, 是谁呢,是内核线程.&lt;br /&gt;
-那么我们就知道只有linux上的aio是符合异步IO的标准, 而多路复用, 如epoll返回是我们和IO是在&lt;br /&gt;
-一起, 我们要调用read之类的完成他.&lt;/p&gt;
-
-&lt;h1 id=&#34;physical-computation-phenomenon&#34;&gt;Physical computation phenomenon&lt;/h1&gt;
-
-&lt;p&gt;A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
-The Mathematical Theory of Communication&lt;br /&gt;
-Given a symbol level, the architecture is the description of the system in&lt;br /&gt;
-whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81&lt;br /&gt;
-&lt;a href=&#34;https://news.ycombinator.com/item?id=9844090&#34;&gt;Ask HN: How to learn about the history of computing?&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Control&lt;br /&gt;
-Cogwheel control&lt;br /&gt;
-electromechanical magnet plugging control&lt;br /&gt;
-control sequence points&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
@@ -2829,232 +2141,6 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
 1.Black-box testing test software function.&lt;br /&gt;
 2.White-box testing test software internal logic.&lt;br /&gt;
 kvm &amp;amp; supermin&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>The philosophy of debugging</title>
-      <link>http://firoyang.org/cs/debugging/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/debugging/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;Reverse engineering&lt;/p&gt;
-
-&lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
-
-&lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
-Theory + Observations =&amp;gt; Explanation&lt;/p&gt;
-
-&lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
-The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,&lt;br /&gt;
-他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.&lt;br /&gt;
-NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt;&lt;br /&gt;
-涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h1 id=&#34;use-after-free&#34;&gt;use after free&lt;/h1&gt;
-
-&lt;p&gt;record the owner, who free.&lt;/p&gt;
-
-&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
-
-&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
-
-&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
-Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
-
-&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
-
-&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
-Includes the interruptable task.&lt;br /&gt;
-Causes: deadlock, race condition&lt;/p&gt;
-
-&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
-
-&lt;p&gt;Lockdep&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
-
-&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
-
-&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
-free_pages_prepare posion&lt;/p&gt;
-
-&lt;h1 id=&#34;general-debugging-steps&#34;&gt;General debugging steps&lt;/h1&gt;
-
-&lt;p&gt;Debugging的逻辑过程是&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;. 我们以此进行推导.&lt;br /&gt;
-T: Theory 也就是我们的background, cs的知识技术, 出问题的程序与代码.&lt;br /&gt;
-O: Observations 是Bug发生的现场以及相应的log, 现象.&lt;br /&gt;
-E: Explanation 是最终定位的结论.&lt;br /&gt;
-E ⊆ T; O ⊆ T; E ⊃ (E ∩ O);&lt;br /&gt;
-if E = (E ∩ O); then debugging is done.&lt;br /&gt;
-T, E 与 O理论上都是从∅开始,且O =&amp;gt; E;&lt;br /&gt;
-E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;gt; Explanation&lt;br /&gt;
-很多时候O也会使T扩大.所以O成为debugging的关键.&lt;br /&gt;
-下面严格区分T 和 O. 我们得到O就要不断地结合T进行理性分析.&lt;br /&gt;
-&amp;gt; Another perespective,&lt;br /&gt;
-&amp;gt; the process of debugging is use O to minimize T to E instance.&lt;br /&gt;
-&amp;gt; T is solutions space, E &lt;a href=&#34;https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1&#34;&gt;locates&lt;/a&gt; in T. O is the address to find E.&lt;/p&gt;
-
-&lt;p&gt;基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.&lt;/p&gt;
-
-&lt;h3 id=&#34;get-observations&#34;&gt;Get observations&lt;/h3&gt;
-
-&lt;p&gt;首先我们要理清中间的各个流程, 以及相关的observations:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;coding&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;compilation&lt;br /&gt;
-make kernel/sched.s V=1&lt;br /&gt;
-readelf, objdump&lt;br /&gt;
-c++filt&lt;br /&gt;
-addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
-./scripts/decodecode &amp;lt; Oops.txt&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;load software&lt;br /&gt;
-LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
-ldd /usr/bin/git&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;software running&lt;br /&gt;
-&amp;gt; #define debugme(fmt, args&amp;hellip;) do{FILE *fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); &lt;br /&gt;
-&amp;gt; fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
-lsof, ltrace, strace, bash -x, coredump&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;kernel specific&lt;br /&gt;
-putstr early_printk vs printk pr_debug vs dev_debug dump_stack&lt;br /&gt;
-Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;br /&gt;
-how to use serial-port addr&lt;br /&gt;
-ioctl/netlink, SysRq, ftrace expect,kgtp, lockdep, kdump, kgdboc&lt;br /&gt;
-CONFIG_DYNAMIC_DEBUG, &lt;debugfs&gt;/dynamic_debug/control&lt;br /&gt;
-print signal This is just a hiwifi wonderful kernel patch #931&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;network specific&lt;br /&gt;
-tcpdump netstat iptables wireshark&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;u-boot&lt;br /&gt;
-print_tlb&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make specific&lt;br /&gt;
--s, -n, -p, &amp;ndash;warn-undefined-variables&lt;br /&gt;
-$(warning &amp;hellip;)&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;有的类型的Bug会阻止我们收集observations&lt;br /&gt;
-这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.&lt;br /&gt;
-这时要扩大目标struct的大小, 把observations加进去.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;software imediately stop&lt;br /&gt;
-Use atexit() register a stackdump or a wrapped print&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;inference&#34;&gt;Inference&lt;/h1&gt;
-
-&lt;p&gt;From observatons to source code/mind&lt;br /&gt;
-追BUG实际上就是, 找关联度最高的.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;tips&lt;br /&gt;
-If an page oops close to zero, for example 0xfffffff4&lt;br /&gt;
-It maybe ERR_PTR(-12);&lt;br /&gt;
-&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;&lt;br /&gt;
-code reordering inlining Optimized-away variables Tailcall optimization&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;oops&lt;br /&gt;
-From ASM to c language&lt;br /&gt;
-&lt;a href=&#34;http://yarchive.net/comp/linux/oops_decoding.html&#34;&gt;lkml-Linus-Al-Viro-oops-debug&lt;/a&gt;&lt;br /&gt;
-&lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;一些比较通用的调试工具&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;gdb&lt;br /&gt;
-gdb vmlinux /proc/kcore&lt;br /&gt;
-p jiffies_64&lt;br /&gt;
-text_addr=/sys/module/char-read-write/sections/.text&lt;br /&gt;
-add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
-print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Syntax checking&lt;br /&gt;
-gcc -Wall&lt;br /&gt;
-bash -n&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;static code analysis&lt;br /&gt;
-smatch&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;bug-made-by-me&#34;&gt;BUG made by me&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
-    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
-Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
-__send_signal()&lt;/p&gt;
-
-&lt;h1 id=&#34;examples&#34;&gt;Examples&lt;/h1&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;timer_list-&amp;gt;function = NULL&lt;br /&gt;
-我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.&lt;br /&gt;
-首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations&lt;br /&gt;
-within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在&lt;br /&gt;
-就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.&lt;br /&gt;
-可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace&lt;br /&gt;
-log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.&lt;br /&gt;
-这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及&lt;br /&gt;
-记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来&lt;br /&gt;
-保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而&lt;br /&gt;
-确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use&lt;br /&gt;
-after free的问题是够了, 以后用到这类问题基本可以妙解了.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;module text address&lt;br /&gt;
-cat /sys/module/wmi/sections/.text&lt;br /&gt;
-cat /proc/modules | grep wmi&lt;br /&gt;
-int bss_var;&lt;br /&gt;
-static int hello_init(void)&lt;br /&gt;
-{printk(KERN_ALERT &amp;ldquo;Text location .text(Code Segment):%p\n&amp;rdquo;,hello_init);&lt;br /&gt;
-static int data_var=0;&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);}&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;debug-glibc&#34;&gt;Debug glibc&lt;/h1&gt;
-
-&lt;p&gt;directory ~/ws/glibc-2.23/libio&lt;br /&gt;
-set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
 </description>
     </item>
     
