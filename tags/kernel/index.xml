@@ -7,7 +7,74 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Tue, 22 Sep 2015 00:00:00 UTC</updated>
+    <updated>Wed, 05 Apr 2017 14:45:21 CST</updated>
+    
+    <item>
+      <title>Kernel debugging primer</title>
+      <link>http://firoyang.org/cs/kernel_dbg/</link>
+      <pubDate>Wed, 05 Apr 2017 14:45:21 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/kernel_dbg/</guid>
+      <description>
+
+&lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
+
+&lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
+How to use it during kernel booting?&lt;br /&gt;
+Use boot option:&lt;br /&gt;
+dyndbg=&amp;ldquo;file drivers/usb/host/ehci-hcd.c +p; file&lt;br /&gt;
+drivers/usb/host/ehci-ppc-of.c +p&amp;rdquo; loglevel=8&lt;br /&gt;
+loglevel=8 dyndbg=&amp;ldquo;module ehci_pci +p;&lt;br /&gt;
+module ehci_hcd +p; module usbcore +p&amp;rdquo;&lt;br /&gt;
+After booting:&lt;br /&gt;
+/sys/kernel/debug/dynamic_debug/control&lt;/p&gt;
+
+&lt;h1 id=&#34;dev-print-functions&#34;&gt;Dev print functions&lt;/h1&gt;
+
+&lt;p&gt;drivers/base/core.c&lt;br /&gt;
+define_dev_printk_level&lt;br /&gt;
+THese functions are like pr_func&lt;/p&gt;
+
+&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
+
+&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
+Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
+
+&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
+Includes the interruptable task.&lt;br /&gt;
+Causes: deadlock, race condition&lt;/p&gt;
+
+&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
+
+&lt;p&gt;Lockdep&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
+
+&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
+free_pages_prepare posion&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Linux time subsystem</title>
@@ -532,6 +599,10 @@ static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)&lt;br /&gt;
 Dave Miller usually prefers it if variables are ordered from longest to shortest.&lt;br /&gt;
 So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
+
+&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
+
+&lt;p&gt;kernel module name: scripts/Makefile.lib $(subst -,_,$1)&lt;/p&gt;
 </description>
     </item>
     

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="cs, debug, kernel, ">
+
+ 
+<meta property="og:type" content="article"/>
+<meta property="og:description" content=""/>
+<meta property="og:title" content="Kernel debugging primer : firoyang.org"/>
+<meta property="og:site_name" content="Firo Website"/>
+<meta property="og:image" content="" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="" />
+<meta property="og:image:height" content="" />
+<meta property="og:url" content="http://firoyang.org/cs/kernel_dbg/">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2017-04-05"/>
+<meta property="article:modified_time" content="2017-04-05"/>
+
+
+<meta property="article:tag" content="cs">
+<meta property="article:tag" content="debug">
+<meta property="article:tag" content="kernel">
+
+
+
+
+
+    <base href="http://firoyang.org/">
+    <title> Kernel debugging primer</title>
+    <link rel="canonical" href="http://firoyang.org/cs/kernel_dbg/">
+    
+
+    
+<link rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+     
+</head>
+
+<body style="background-color:#FFFFF0;" lang="en" itemscope itemtype="http://schema.org/Article">
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<link rel="stylesheet" href="static/css/font-awesome.min.css">
+	<nav id="nav">
+	<div id="title"><a href="/" style="color:#B22222;">ƒ(x)</a></div>
+
+
+	<div>
+	
+	</div>
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+            <a href="/review/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-thumbs-o-up"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+            <li>
+            <a href="/firo/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
+                <span> firo </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-institution"></i></span>
+                <span> history </span>
+            </a>
+            </li>
+            <li>
+            <a href="/about" style="color:#B22222" >
+                <span class="icon" > <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-rocket"></i></span>
+                <span> Firo </span>
+            </a>
+            </li>
+            <li>
+                <a href="/howto/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-gamepad"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/cs/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-linux"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-globe"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="icon-leaf"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+
+            <li>
+                <a href="/lyubishchev/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-hourglass-half"></i></span>
+                <span> lyubishchev </span>
+            </a>
+            </li>
+            
+	    <li>
+                <a href="/linguistics/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-language"></i></span>
+                <span> linguistics </span>
+            </a>
+            </li>
+        </ul>
+
+	</nav>
+	<nav id="nav">
+       
+	</nav>
+</header>
+
+
+
+ <link rel="stylesheet" href="highlight.js/styles/monokai-sublime.css">
+    <script src="highlight.js/highlight.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	<section id="main">
+
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >Kernel debugging primer</h1>
+	  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Wed Apr 5, 2017 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+            <li> <a href="http://firoyang.org//tags/cs">cs</a> </li>
+          
+            <li> <a href="http://firoyang.org//tags/debug">debug</a> </li>
+          
+            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
+          
+        </ul>
+
+    </div>
+
+
+</aside>
+
+<meta itemprop="wordCount" content="140">
+<meta itemprop="datePublished" content="2017-04-05">
+<meta itemprop="url" content="http://firoyang.org/cs/kernel_dbg/">
+
+
+	  <div>
+		<article itemprop="articleBody" id="content">
+		   
+
+<h1 id="dynamic-debug">Dynamic debug</h1>
+
+<p>Precondition: CONFIG_DYNAMIC_DEBUG<br />
+How to use it during kernel booting?<br />
+Use boot option:<br />
+dyndbg=&ldquo;file drivers/usb/host/ehci-hcd.c +p; file<br />
+drivers/usb/host/ehci-ppc-of.c +p&rdquo; loglevel=8<br />
+loglevel=8 dyndbg=&ldquo;module ehci_pci +p;<br />
+module ehci_hcd +p; module usbcore +p&rdquo;<br />
+After booting:<br />
+/sys/kernel/debug/dynamic_debug/control</p>
+
+<h1 id="dev-print-functions">Dev print functions</h1>
+
+<p>drivers/base/core.c<br />
+define_dev_printk_level<br />
+THese functions are like pr_func</p>
+
+<h1 id="oops">oops</h1>
+
+<p>Kernel oops relates to invalid memory access, including sigev and sigbus.<br />
+<a href="https://www.kernel.org/doc/Documentation/oops-tracing.txt">kernel oops tracing</a></p>
+
+<h1 id="lockup">lockup</h1>
+
+<p>phenomenon: LOCKUP_DETECTOR<br />
+<a href="https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt">kernle doc - Softlockup detector and hardlockup detector</a><br />
+<a href="http://www.av8n.com/computer/htm/kernel-lockup.htm">Debugging Linux Kernel Lockup / Panic / Oops</a><br />
+Causes: deadlock, hardware, irqoff and loop</p>
+
+<h1 id="hung-task">hung task</h1>
+
+<p>phenomenon: DETECT_HUNG_TASK<br />
+Includes the interruptable task.<br />
+Causes: deadlock, race condition</p>
+
+<h1 id="deadlock">deadlock</h1>
+
+<p>Lockdep<br />
+<a href="https://lwn.net/Articles/185666/">The kernel lock validator</a><br />
+<a href="https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt">Runtime locking correctness validator</a><br />
+<a href="https://lkml.org/lkml/2013/2/4/4">https://lkml.org/lkml/2013/2/4/4</a><br />
+<a href="http://bbs.chinaunix.net/thread-4183696-1-1.html">http://bbs.chinaunix.net/thread-4183696-1-1.html</a></p>
+
+<h1 id="kasan">kasan</h1>
+
+<p>setup_arch-&gt;kasan_init<br />
+<a href="http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf">KernelAddressSanitizer a fast memory error detector for the Linux kernel</a><br />
+<a href="https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506">kasan found stack out of bounds</a><br />
+<a href="https://lwn.net/Articles/612153/">lwn The kernel address sanitizer</a><br />
+<a href="https://lkml.org/lkml/2014/12/3/128">out of bounds</a></p>
+
+<h1 id="config-debug-pagealloc">CONFIG_DEBUG_PAGEALLOC</h1>
+
+<p>check_poison_mem in alloc_pages<br />
+free_pages_prepare posion</p>
+
+		</article>
+	  </div>
+	</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/kernel_dbg\/';
+    var disqus_title = 'Kernel debugging primer';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/kernel_dbg\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2014 ~ 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang </span></span><a href="http://creativecommons.org/licenses/by/4.0/">Some rights reserved</a>. 
+	Powered by <a href="http://gohugo.io">Hugo</a> and <a href="https://fortawesome.github.io/Font-Awesome/">Font Awesome</a>.
+        Theme by <a href="http://spf13.com">Steve Francia <a href="http://firoyang.org">Firo Yang</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+
+
+
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

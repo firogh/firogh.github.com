@@ -7,7 +7,74 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Tue, 04 Apr 2017 20:08:35 CST</updated>
+    <updated>Wed, 05 Apr 2017 14:45:21 CST</updated>
+    
+    <item>
+      <title>Kernel debugging primer</title>
+      <link>http://firoyang.org/cs/kernel_dbg/</link>
+      <pubDate>Wed, 05 Apr 2017 14:45:21 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/kernel_dbg/</guid>
+      <description>
+
+&lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
+
+&lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
+How to use it during kernel booting?&lt;br /&gt;
+Use boot option:&lt;br /&gt;
+dyndbg=&amp;ldquo;file drivers/usb/host/ehci-hcd.c +p; file&lt;br /&gt;
+drivers/usb/host/ehci-ppc-of.c +p&amp;rdquo; loglevel=8&lt;br /&gt;
+loglevel=8 dyndbg=&amp;ldquo;module ehci_pci +p;&lt;br /&gt;
+module ehci_hcd +p; module usbcore +p&amp;rdquo;&lt;br /&gt;
+After booting:&lt;br /&gt;
+/sys/kernel/debug/dynamic_debug/control&lt;/p&gt;
+
+&lt;h1 id=&#34;dev-print-functions&#34;&gt;Dev print functions&lt;/h1&gt;
+
+&lt;p&gt;drivers/base/core.c&lt;br /&gt;
+define_dev_printk_level&lt;br /&gt;
+THese functions are like pr_func&lt;/p&gt;
+
+&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
+
+&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
+Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
+
+&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
+
+&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
+Includes the interruptable task.&lt;br /&gt;
+Causes: deadlock, race condition&lt;/p&gt;
+
+&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
+
+&lt;p&gt;Lockdep&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
+
+&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
+free_pages_prepare posion&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>IO and events</title>
@@ -1388,114 +1455,6 @@ version ihl&lt;br /&gt;
 (ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version&lt;br /&gt;
 ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
 是无关cpu读取顺序的.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Linux time subsystem</title>
-      <link>http://firoyang.org/cs/time/</link>
-      <pubDate>Tue, 22 Sep 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/time/</guid>
-      <description>
-
-&lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
-
-&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.&lt;br /&gt;
-一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,&lt;br /&gt;
-*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态&lt;br /&gt;
-那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全&lt;br /&gt;
-转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
-                        — William Gibson
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.&lt;br /&gt;
-想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在&lt;br /&gt;
-时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
-
-&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.&lt;br /&gt;
-UTC/GMT&lt;br /&gt;
-Based on caesium microwave atomic clock&lt;br /&gt;
-Leap second&lt;/p&gt;
-
-&lt;h2 id=&#34;genus-differentia-definition&#34;&gt;Genus-differentia definition&lt;/h2&gt;
-
-&lt;p&gt;interrupt, clock event,  clock source, tick, timer, timekeeping, gettimeofday.&lt;/p&gt;
-
-&lt;h2 id=&#34;unites&#34;&gt;unites&lt;/h2&gt;
-
-&lt;p&gt;cputime = jiffies under HZ (FIXME)&lt;br /&gt;
-sum_exec_runtime nanoseconds&lt;br /&gt;
-clockt = jiffies but under USER_HZ&lt;/p&gt;
-
-&lt;h2 id=&#34;功用定义&#34;&gt;功用定义&lt;/h2&gt;
-
-&lt;p&gt;获取时间&lt;br /&gt;
-timer&lt;br /&gt;
-sleep ?&lt;br /&gt;
-update sched info&lt;/p&gt;
-
-&lt;h2 id=&#34;发生定义-设计-etymology-history-operational-definition&#34;&gt;发生定义/设计   etymology, history Operational definition&lt;/h2&gt;
-
-&lt;p&gt;timekeeping/计时:时刻．&lt;br /&gt;
-clock source: 时间之源, 表针之力.&lt;br /&gt;
-clock event: 闹铃之力, 经过tick展现能力.&lt;br /&gt;
-tick: timer的中断事件叫tick, tick device产生tick, 可以说tick决定了clock_event event_handler进而决定了, clock_event行为.&lt;br /&gt;
-tickless:&lt;br /&gt;
-for timer: use HW timer one shot, set next.&lt;br /&gt;
-for update time: in above HW timer, not good&lt;br /&gt;
-for sched: for priority distributed in time slice, use timer.&lt;br /&gt;
-dynamic tick/no HZ:&lt;br /&gt;
-No HZ in idle&lt;br /&gt;
-No HZ while only 1 process running for HPC.&lt;br /&gt;
-tick devies 就是clock event包了层虎皮.&lt;br /&gt;
-tick broadcast framework:  based on tick device&lt;br /&gt;
-clock: 可记录时间, 表盘.利用timekeeping&lt;br /&gt;
-timer: use clock. what about timer_list?&lt;br /&gt;
-timer_list: do in softirq&lt;br /&gt;
-* timekeeping aspect&lt;br /&gt;
-onset: start_kernel -&amp;gt; timekeeping_init &amp;amp; time_init &amp;amp;(rest_init-&amp;gt; kernel_init-&amp;gt; &lt;br /&gt;
-kernel_init_freeable-&amp;gt;do_basic_setup-&amp;gt;do_initcalls&amp;ndash;device_initcall(init_clocksource_sysfs))&lt;br /&gt;
-nucleus:used by clock see init_posix_timers and update_wall_time and sys_time&lt;br /&gt;
-coda:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;clock source aspect&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tick device layer aspect&lt;br /&gt;
-per_cpu(tick_cpu_device, cpu)&lt;br /&gt;
-onset: time_init-&amp;gt;mach-&amp;gt;init_time-&amp;gt;&amp;hellip;clockevents_register_device-&amp;gt;tick_check_new_device&lt;br /&gt;
-nucleus: a38x_timer_interrupt-&amp;gt;a38x_clkevt.event_handler&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tick broadcast framework&lt;br /&gt;
-onset:&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;clock aspect&lt;br /&gt;
-k_clock&lt;br /&gt;
-onset:init_posix_timers &amp;amp; init_posix_cpu_timers&lt;br /&gt;
-nucleus: 用户-&amp;gt; posix_clock-&amp;gt;timepkeeping-&amp;gt;clock_socurce&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;timer aspect&lt;br /&gt;
-onset: open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);&lt;br /&gt;
-nucleus: common_timer_set&lt;br /&gt;
-hrtimer_interrupt | (tick_handle_periodic-&amp;gt; tick_periodic-&amp;gt; update_process_times-&amp;gt;run_local_timers-&amp;gt;hrtimer_run_queues)-&amp;gt;__run_hrtimer-&amp;gt;timer.function = posix_timer_fn;(set in common_timer_set)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;计算机概念&lt;br /&gt;
-system clock CLOCK_REALTIME CLOCK_MONOTONIC&lt;br /&gt;
-time.h time_t=tm=timeval=timespec calendar time  clock_t&lt;/p&gt;
-
-&lt;p&gt;clock event -&amp;gt; tick device-&amp;gt; handle function&lt;br /&gt;
-clock event 相较于timer更为抽象, timer 是一种用途,timer 通过clock event来实现功能,&lt;br /&gt;
-clock event 通过timer来体现自己, timer面向使用者的onset,&lt;br /&gt;
-而clock event 则是偏向于nucleus and coda.&lt;br /&gt;
-timer: 标记不能立即执行的变化.&lt;br /&gt;
-clock source: 用一些整型抽象一个过程, 对于时间来说, 简直是完美的抽象.&lt;br /&gt;
-* kernel requirement&lt;br /&gt;
-linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
-一是free running的counter，此外需要能够在指定的counter值上产生中断的能力。&lt;/p&gt;
 </description>
     </item>
     
