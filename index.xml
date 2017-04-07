@@ -7,7 +7,89 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Wed, 05 Apr 2017 14:45:21 CST</updated>
+    <updated>Thu, 06 Apr 2017 00:00:00 UTC</updated>
+    
+    <item>
+      <title>Linux page reclaim</title>
+      <link>http://firoyang.org/cs/page_reclaim/</link>
+      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/page_reclaim/</guid>
+      <description>&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
+    Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
+    No enough memory for a large memory alloc.&lt;br /&gt;
+    Manually initate&lt;br /&gt;
+What pages do we want to reclaim?&lt;br /&gt;
+    All user space pages, except some pages.&lt;br /&gt;
+    Do not reclaim kernel page in order to make things simple.&lt;br /&gt;
+Where to store the pages?&lt;br /&gt;
+    There may be many processes which use the same pages.&lt;br /&gt;
+    We put list of pages in a global site.&lt;br /&gt;
+How to organize the pages.&lt;br /&gt;
+    LRU&lt;br /&gt;
+    When to add the page to LRU&lt;br /&gt;
+How to reclaim in deatils.&lt;br /&gt;
+    For memory-mapped file page, write back.&lt;br /&gt;
+    For private and anonymous, swap.&lt;br /&gt;
+    For memroy-mapped file page without modification.&lt;br /&gt;
+    How to distinguish kernel page from user space page?&lt;br /&gt;
+How to modify the process&amp;rsquo;s pte to let it know the page has been reclaimed.&lt;br /&gt;
+    Reverse mapping.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Page fault</title>
+      <link>http://firoyang.org/cs/page_fault/</link>
+      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/page_fault/</guid>
+      <description>
+
+&lt;p&gt;#Page faults&lt;br /&gt;
+Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Segemnt fault&lt;br /&gt;
+Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&lt;/a&gt;&lt;br /&gt;
+Null pointer: probably, mostly catched in below 0x08048000.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Demanding page&lt;br /&gt;
+vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!&lt;br /&gt;
+expand_stack()/handle_mm_fault()&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;vmalloc fault&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;mm-fault-handler&#34;&gt;mm fault handler&lt;/h2&gt;
+
+&lt;p&gt;arch/powerpc/mm/fault.c&lt;br /&gt;
+deatils of trap is in bad_page_fault&lt;/p&gt;
+
+&lt;p&gt;sigbus&lt;br /&gt;
+__handle_mm_fault&lt;br /&gt;
+{&lt;br /&gt;
+        hugetlb_fault CONFIG_HUGETLB_PAGE&lt;br /&gt;
+        handle_pte_fault-&amp;gt;&lt;br /&gt;
+        {&lt;br /&gt;
+                do_linear_fault -&amp;gt; __do_fault&lt;br /&gt;
+                {&lt;br /&gt;
+                        vma-&amp;gt;vm_ops-&amp;gt;fault(vma, &amp;amp;vmf);&lt;br /&gt;
+                }&lt;br /&gt;
+                do_anonymous_page&lt;br /&gt;
+                {&lt;br /&gt;
+                        check_stack_guard_page&lt;br /&gt;
+                }&lt;br /&gt;
+                do_nonlinear_fault&lt;br /&gt;
+                do_swap_page&lt;br /&gt;
+                do_wp_page&lt;br /&gt;
+                {&lt;br /&gt;
+                        vma-&amp;gt;vm_ops-&amp;gt;page_mkwrite(vma, &amp;amp;vmf); //??&lt;br /&gt;
+                }&lt;br /&gt;
+}&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Kernel debugging primer</title>
@@ -1285,176 +1367,6 @@ readelf -s&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>My reading list of computer science</title>
-      <link>http://firoyang.org/review/reading_list/</link>
-      <pubDate>Wed, 14 Oct 2015 14:09:57 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/review/reading_list/</guid>
-      <description>
-
-&lt;p&gt;I think you should check my The Organization of Knowledgs&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Programming:&lt;/strong&gt;&lt;br /&gt;
-&lt;a href=&#34;http://sarabander.github.io/sicp/&#34;&gt;SICP&lt;/a&gt;&lt;br /&gt;
-The science of programming&lt;/p&gt;
-
-&lt;h1 id=&#34;computer-science&#34;&gt;Computer science&lt;/h1&gt;
-
-&lt;p&gt;Code: The hidden language of computer hardware and software&lt;br /&gt;
-Digital Design and Computer Architecture 2nd Edition&lt;/p&gt;
-
-&lt;p&gt;未看口碑好:&lt;br /&gt;
-Computer Organization and Design, Fifth Edition&lt;br /&gt;
-ARM System-on-Chip Architecture (2nd Edition)&lt;/p&gt;
-
-&lt;h1 id=&#34;philosophy&#34;&gt;Philosophy&lt;/h1&gt;
-
-&lt;p&gt;普通认识论 &amp;ndash; Moritz Schlick&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Computer architecture</title>
-      <link>http://firoyang.org/cs/arch/</link>
-      <pubDate>Tue, 13 Oct 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/arch/</guid>
-      <description>
-
-&lt;p&gt;##Reference&lt;br /&gt;
-&lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
-A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
-The Mathematical Theory of Communication&lt;br /&gt;
-Given a symbol level, the architecture is the description of the system in&lt;br /&gt;
-whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81&lt;br /&gt;
-&lt;a href=&#34;https://news.ycombinator.com/item?id=9844090&#34;&gt;Ask HN: How to learn about the history of computing?&lt;/a&gt;&lt;br /&gt;
-《模拟电子技术基础 童诗白 第四版》第一章前半部分&lt;br /&gt;
-Structured Computer Organization 6th Edition&lt;br /&gt;
-Digital Design and Computer Architecture 2nd Edition&lt;br /&gt;
-Computer Organization and Design 5th Edition&lt;br /&gt;
-Write Great Code: Volume 1: Understanding the Machine&lt;br /&gt;
-See MIPS run&lt;br /&gt;
-Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
-Microelectronics&lt;/p&gt;
-
-&lt;h2 id=&#34;isa&#34;&gt;ISA&lt;/h2&gt;
-
-&lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle&lt;br /&gt;
-Semantics in computer science: In programming language theory, semantics is the field concerned&lt;br /&gt;
-with the rigorous mathematical study of the meaning of programming languages.&lt;br /&gt;
-Language primitive&lt;br /&gt;
-ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;br /&gt;
-#x86 Interrupt&lt;br /&gt;
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
-##Hardware interrupts&lt;br /&gt;
-are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
-asynchronus&lt;br /&gt;
-more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
-##software interrupt&lt;br /&gt;
-synchronus&lt;br /&gt;
-more details in trap_init().&lt;br /&gt;
-* exception or trap&lt;br /&gt;
-is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
-divide zero painc?&lt;br /&gt;
-* special instruction, for example INT 0x80&lt;br /&gt;
-or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
-
-&lt;h1 id=&#34;i-o-ic&#34;&gt;I/O IC&lt;/h1&gt;
-
-&lt;p&gt;serial communication: UART(16550) + RS-232&lt;br /&gt;
-parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
-
-&lt;h1 id=&#34;data-struct-aligment&#34;&gt;Data struct aligment&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86&#34;&gt;Typical alignment of C structs on x86&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;为什么需要结构体对齐&#34;&gt;为什么需要结构体对齐?&lt;/h2&gt;
-
-&lt;p&gt;struct foo {&lt;br /&gt;
-char c;&lt;br /&gt;
-int i;};&lt;br /&gt;
-如果是32位, cpu 一次取4byte a word 数据.&lt;br /&gt;
-如果我们把i的前3byte和c存到一起, 剩下1byte of i自己单独存.&lt;br /&gt;
-那么我们访问i这个数据就要读两个4byte a word. 对cpu来说性能损耗.&lt;br /&gt;
-如果我们把i单独放到4byte 对齐的地址, 那么我们只需要一次cpu读取.fast!&lt;/p&gt;
-
-&lt;h2 id=&#34;产生非对齐访问的场景&#34;&gt;产生非对齐访问的场景&lt;/h2&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Casting variables to types of different lengths, 比如char * 到int *&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.&lt;/p&gt;
-
-&lt;h2 id=&#34;我们做什么&#34;&gt;我们做什么?&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;什么也不干, 按默认对齐来Natural alignment&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为了不影响性能, 同时减少内存使用, 编程时最好显示reorder.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;get/put_unaligned  to avoid analigned access.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;通过attribute aligned指定对齐要求.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;数据要在不同体系, 32/64之间使用, 比如网络,写到disk, 我们必须要attribute packed&lt;br /&gt;
-也就是说不对齐, 不同平台对齐可能不同, 我们不能让数据corruption.&lt;/p&gt;
-
-&lt;h2 id=&#34;如果数据不对齐有什么-cpu怎么办&#34;&gt;如果数据不对齐有什么, cpu怎么办?&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt&#34;&gt;必读UNALIGNED MEMORY ACCESSES&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如果用了packed, 编译器会生成extra代码阻止非对齐访问, performance loss.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;cpu呢? 可能正确处理raise a exception to fix it with performance loss.&lt;/p&gt;
-
-&lt;h2 id=&#34;calculate-the-sizeof-of-aligned-c-struct&#34;&gt;Calculate the sizeof of aligned c struct&lt;/h2&gt;
-
-&lt;p&gt;Data alignment means putting the data at a memory address equal to some multiple of the word size,&lt;br /&gt;
-which increases the system&amp;rsquo;s performance due to the way the CPU handles memory.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;find the widest scalar member and attribute( aligned(x)) to determin alignment.&lt;br /&gt;
-找到结构体内scalar和attribute最大的对齐要求.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fill the member to alignement without wrap&lt;br /&gt;
-把结构的成员一次填满对齐宽度, 不够的填到下个对齐宽度, 空出来留着padding&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Pading to alignment&lt;br /&gt;
-填上所有空.&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;endianess&#34;&gt;Endianess&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;&lt;br /&gt;
-应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.&lt;br /&gt;
-这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,&lt;br /&gt;
-之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;br /&gt;
-* &lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;br /&gt;
-这样就可以更好的理解iphdr:&lt;br /&gt;
-#if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
-    &lt;strong&gt;u8    ihl:4,&lt;br /&gt;
-        version:4;&lt;br /&gt;
-#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)&lt;br /&gt;
-    __u8    version:4,&lt;br /&gt;
-        ihl:4;&lt;br /&gt;
-#else&lt;br /&gt;
-#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;&lt;br /&gt;
-#endif&lt;br /&gt;
-ipv4 header的拓扑&lt;br /&gt;
-version ihl&lt;br /&gt;
-0100 0101&lt;br /&gt;
-因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl&lt;br /&gt;
-而be的cpu是 msb first, 从最右开始所以version开头.&lt;br /&gt;
-而使用unsigned char ver_ihl&lt;br /&gt;
-(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version&lt;br /&gt;
-ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
-是无关cpu读取顺序的.&lt;/p&gt;
 </description>
     </item>
     

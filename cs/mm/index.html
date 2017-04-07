@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1030">
+<meta itemprop="wordCount" content="928">
 <meta itemprop="datePublished" content="2014-12-28">
 <meta itemprop="url" content="http://firoyang.org/cs/mm/">
 
@@ -172,10 +172,7 @@
 
 <h1 id="reference">Reference</h1>
 
-<p><a href="http://denninginstitute.com/pjd/PUBS/bvm.pdf">BEFORE MEMORY WAS VIRTUAL</a><br />
-<a href="http://www.memorymanagement.org/mmref/recycle.html">Recycling techniques</a><br />
-Computer memory#Management_of_memory<br />
-Memory management (operating systems)</p>
+<p><a href="http://denninginstitute.com/pjd/PUBS/bvm.pdf">BEFORE MEMORY WAS VIRTUAL</a></p>
 
 <h1 id="contents">Contents</h1>
 
@@ -188,56 +185,6 @@ How to translate linear address to physical address? Page table.<br />
 Exchange data between primary memory and second memory. Paging.</p>
 
 <p>What are the pitfall of manuplate directly physcial memory</p>
-
-<h1 id="memory-initialization-onset">Memory initialization onset:</h1>
-
-<p>先从bios 拿信息 main -&gt; detect_memory save in boot_params.e820_map<br />
-之后real -&gt; protected -&gt; long mode<br />
-启动 protected? mode. <a href="http://www.delorie.com/djgpp/doc/ug/basics/protected.html">What does protected mode mean</a><br />
-setup_arch<br />
-setup_memory_map -&gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&rsquo;s all.<br />
-max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &lt;.<br />
-mtrr update max_pfn, see <a href="https://en.wikipedia.org/wiki/Processor_supplementary_capability">Processor supplementary capability</a><br />
-trim_low_memory_range // reserve 64k<br />
-max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block<br />
-memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET<br />
-early_trap_pf_init //  X86_TRAP_PF, page_fault) =&gt; do_page_fault<br />
-init_mem_mapping //set page table and cr3.<br />
-initmem_init ; NUMA init<br />
-x86_init.paging.pagetable_init();= paging_init //x86_64 -&gt;zone_sizes_init-&gt;&hellip;free_area_init_core<br />
-mm_init<br />
-memblock the <a href="https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html">implementations</a> of memblock is quite simple. static initialization with variable memblock.<br />
-bootmem is discarded by <a href="https://lkml.org/lkml/2015/12/21/333">ARM</a> and x86<br />
-a little history e820_register_active_region replaced by lmb <a href="https://lkml.org/lkml/2010/7/13/68">replaced by</a> memblock<br />
-reserve_initrd ; // RAMDISK<br />
-总结下, 内存初始化需要的基础.<br />
-1. e820 get memory region.<br />
-2. set PF trap do_page_fault.<br />
-3. set page table and cr3.<br />
-这就完了. 之后开始开始加工.<br />
-arch 相关的x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&gt;<br />
-sparse_init<br />
-{<br />
-    memblock_virt_alloc // sizeof(struct page *) * NR_MEM_SECTIONS;NR_MEM_SECTIONS = 1 &lt;&lt; 19, Is it big?<br />
-    // alloc memory region will be marked in memory_reserved.<br />
-}<br />
-zone_sizes_init.<br />
-{<br />
-    calculate_node_totalpages // 每个zone的page数.<br />
-    free_area_init_node-&gt; alloc_node_mem_map // alloc mem_map for FLAT<br />
-    free_area_init_core<br />
-    {<br />
-        calc_memmap_size // 1/4k of spanned or present used for memmap. heuristic?<br />
-        zone_pcp_init // init percpu pageset with boot_pageset<br />
-        set_pageblock_migratetype(page, MIGRATE_MOVABLE);// 512 per zone<br />
-        memmap_init_zone-&gt; __init_single_page // init every page in a zone.<br />
-    }<br />
-}<br />
-arch independent,<br />
-build_all_zonelists<br />
-page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug<br />
-mm_init<br />
-Zone watermarks core_initcall(init_per_zone_wmark_min)</p>
 
 <h1 id="memory-pagge-cache-and-buffer-cache">Memory pagge cache and buffer cache.</h1>
 
@@ -346,49 +293,6 @@ a region of file(one physical) and all virtual address spaces(many virtual) into
 a physical page and the processes that share the page(used in swap case)</p></li>
 </ul>
 
-<p>#Page faults<br />
-Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory</p>
-
-<ul>
-<li><p>Segemnt fault<br />
-Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.<br />
-<a href="https://www.kernel.org/doc/Documentation/x86/exception-tables.txt">https://www.kernel.org/doc/Documentation/x86/exception-tables.txt</a><br />
-Null pointer: probably, mostly catched in below 0x08048000.</p></li>
-
-<li><p>Demanding page<br />
-vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!<br />
-expand_stack()/handle_mm_fault()</p></li>
-
-<li><p>vmalloc fault</p></li>
-</ul>
-
-<h2 id="mm-fault-handler">mm fault handler</h2>
-
-<p>arch/powerpc/mm/fault.c<br />
-deatils of trap is in bad_page_fault</p>
-
-<p>sigbus<br />
-__handle_mm_fault<br />
-{<br />
-        hugetlb_fault CONFIG_HUGETLB_PAGE<br />
-        handle_pte_fault-&gt;<br />
-        {<br />
-                do_linear_fault -&gt; __do_fault<br />
-                {<br />
-                        vma-&gt;vm_ops-&gt;fault(vma, &amp;vmf);<br />
-                }<br />
-                do_anonymous_page<br />
-                {<br />
-                        check_stack_guard_page<br />
-                }<br />
-                do_nonlinear_fault<br />
-                do_swap_page<br />
-                do_wp_page<br />
-                {<br />
-                        vma-&gt;vm_ops-&gt;page_mkwrite(vma, &amp;vmf); //??<br />
-                }<br />
-}</p>
-
 <p>#Physical memory<br />
 * NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl<br />
 * ZONE(DMA/NORMAL/HIGHMEM) struct zone:<br />
@@ -435,7 +339,60 @@ Mips cpu can be aware of this address!</p></li>
 page free</p></li>
 
 <li><p>compound pages<br />
-18fa11efc279c20af5eefff2bbe814ca067</p></li>
+18fa11efc279c20af5eefff2bbe814ca067</p>
+
+<h1 id="memory-initialization-onset">Memory initialization onset:</h1>
+
+<p>先从bios 拿信息 main -&gt; detect_memory save in boot_params.e820_map<br />
+之后real -&gt; protected -&gt; long mode<br />
+启动 protected? mode. <a href="http://www.delorie.com/djgpp/doc/ug/basics/protected.html">What does protected mode mean</a><br />
+setup_arch<br />
+setup_memory_map -&gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&rsquo;s all.<br />
+max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &lt;.<br />
+mtrr update max_pfn, see <a href="https://en.wikipedia.org/wiki/Processor_supplementary_capability">Processor supplementary capability</a><br />
+trim_low_memory_range // reserve 64k<br />
+max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block<br />
+memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET<br />
+early_trap_pf_init //  X86_TRAP_PF, page_fault) =&gt; do_page_fault<br />
+init_mem_mapping //set page table and cr3.<br />
+initmem_init ; NUMA init<br />
+x86_init.paging.pagetable_init();= paging_init //x86_64 -&gt;zone_sizes_init-&gt;&hellip;free_area_init_core<br />
+mm_init<br />
+memblock the <a href="https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html">implementations</a> of memblock is quite simple. static initialization with variable memblock.<br />
+bootmem is discarded by <a href="https://lkml.org/lkml/2015/12/21/333">ARM</a> and x86<br />
+a little history e820_register_active_region replaced by lmb <a href="https://lkml.org/lkml/2010/7/13/68">replaced by</a> memblock<br />
+reserve_initrd ; // RAMDISK<br />
+总结下, 内存初始化需要的基础.</p></li>
+
+<li><p>e820 get memory region.</p></li>
+
+<li><p>set PF trap do_page_fault.</p></li>
+
+<li><p>set page table and cr3.<br />
+这就完了. 之后开始开始加工.<br />
+arch 相关的x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&gt;<br />
+sparse_init<br />
+{<br />
+memblock_virt_alloc // sizeof(struct page *) * NR_MEM_SECTIONS;NR_MEM_SECTIONS = 1 &lt;&lt; 19, Is it big?<br />
+// alloc memory region will be marked in memory_reserved.<br />
+}<br />
+zone_sizes_init.<br />
+{<br />
+calculate_node_totalpages // 每个zone的page数.<br />
+free_area_init_node-&gt; alloc_node_mem_map // alloc mem_map for FLAT<br />
+free_area_init_core<br />
+{<br />
+    calc_memmap_size // 1/4k of spanned or present used for memmap. heuristic?<br />
+    zone_pcp_init // init percpu pageset with boot_pageset<br />
+    set_pageblock_migratetype(page, MIGRATE_MOVABLE);// 512 per zone<br />
+    memmap_init_zone-&gt; __init_single_page // init every page in a zone.<br />
+}<br />
+}<br />
+arch independent,<br />
+build_all_zonelists<br />
+page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug<br />
+mm_init<br />
+Zone watermarks core_initcall(init_per_zone_wmark_min)</p></li>
 </ul>
 
 		</article>
