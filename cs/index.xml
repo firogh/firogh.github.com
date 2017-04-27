@@ -7,7 +7,58 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Thu, 06 Apr 2017 00:00:00 UTC</updated>
+    <updated>Wed, 26 Apr 2017 21:39:41 CST</updated>
+    
+    <item>
+      <title>The definitive guide to Linux x86 entry.S</title>
+      <link>http://firoyang.org/cs/entry/</link>
+      <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/entry/</guid>
+      <description>&lt;p&gt;Documentation/x86/entry_64.txt&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Hello world! a journey to computer science</title>
+      <link>http://firoyang.org/cs/hello/</link>
+      <pubDate>Thu, 13 Apr 2017 20:42:49 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/hello/</guid>
+      <description>
+
+&lt;p&gt;In this series, I will a simple hello world program to explain the every important concept in cmputer science.&lt;br /&gt;
+So let&amp;rsquo;s go.&lt;/p&gt;
+
+&lt;p&gt;Do you know vDSO?&lt;br /&gt;
+If a C program, gtod, calls the system call gettimeofday in vDSO, how does this program know the address of gettimeofday?&lt;/p&gt;
+
+&lt;p&gt;ldd gtod&lt;br /&gt;
+    linux-gate.so.1 (0xf7766000)&lt;br /&gt;
+    libdl.so.2 =&amp;gt; /lib/libdl.so.2 (0xf7743000)&lt;br /&gt;
+    libc.so.6 =&amp;gt; /lib/libc.so.6 (0xf7568000)&lt;br /&gt;
+    /lib/ld-linux.so.2 (0x56639000)&lt;br /&gt;
+Check this commit of glibc:&lt;br /&gt;
+30e32d23eb06cbeae02e51c7c4df150736dba795&lt;br /&gt;
+Set up GLRO(dl_sysinfo_dso) under [NEED_DL_SYSINFO_DSO] as well&lt;br /&gt;
+AT_SYSINFO_EHDR&lt;/p&gt;
+
+&lt;p&gt;Gcc 32bit support&lt;br /&gt;
+ca677d3c3cd0eba7d1f03092517aea553a0e8569&lt;br /&gt;
+Add x86 32 bit vDSO time function support&lt;br /&gt;
+kernel&lt;br /&gt;
+37c975545ec63320789962bf307f000f08fabd48&lt;/p&gt;
+
+&lt;h1 id=&#34;start-the-program&#34;&gt;start the program&lt;/h1&gt;
+
+&lt;p&gt;sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/#locating-the-vdso-in-memory&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Linux page reclaim</title>
@@ -15,7 +66,9 @@
       <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/page_reclaim/</guid>
-      <description>&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
+      <description>
+
+&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
     Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
     No enough memory for a large memory alloc.&lt;br /&gt;
     Manually initate&lt;br /&gt;
@@ -35,6 +88,15 @@ How to reclaim in deatils.&lt;br /&gt;
     How to distinguish kernel page from user space page?&lt;br /&gt;
 How to modify the process&amp;rsquo;s pte to let it know the page has been reclaimed.&lt;br /&gt;
     Reverse mapping.&lt;/p&gt;
+
+&lt;h1 id=&#34;anonymous-reverse-mappinng&#34;&gt;Anonymous reverse mappinng&lt;/h1&gt;
+
+&lt;p&gt;Where do reverse mappings come from?&lt;br /&gt;
+    syscall: mmap(ANONYMOUS | PRIVATE)&lt;br /&gt;
+    Proceass address space: Heap, stack.&lt;br /&gt;
+mm: change anon_vma linking to fix multi-process server scalability issue&lt;br /&gt;
+5beb49305251e5669852ed541e8e2f2f7696c53e&lt;br /&gt;
+When we fork a child process, it will associate multiple anon_vmas with a VMA.&lt;/p&gt;
 </description>
     </item>
     
@@ -1104,72 +1166,6 @@ if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
     </item>
     
     <item>
-      <title>Light camera action - compile link load</title>
-      <link>http://firoyang.org/cs/cll/</link>
-      <pubDate>Sun, 25 Oct 2015 01:46:28 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/cll/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://rickgray.me/2015/08/07/use-gdb-to-study-got-and-plt.html&#34;&gt;通过 GDB 调试理解 GOT/PLT&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html&#34;&gt;PLT and GOT - the key to code sharing and dynamic libraries&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://sourceware.org/binutils/docs/&#34;&gt;Gnu binutils docs&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/wiki/HomePage&#34;&gt;Welcome to GCC Wiki&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;elf&#34;&gt;ELF&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.sco.com/developers/gabi/latest/contents.html&#34;&gt;System V Application Binary Interface ELF&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.sco.com/developers/devspecs/&#34;&gt;SCO Developer Specifications&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;function-call&#34;&gt;Function call&lt;/h1&gt;
-
-&lt;p&gt;x86: stack and caller but kernel maybe regpara(3)&lt;/p&gt;
-
-&lt;p&gt;create_elf_tables&lt;br /&gt;
-sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;br /&gt;
-Relocation&lt;br /&gt;
-PIC&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Why complier can manipulate the address of vriables?&lt;br /&gt;
-What is the address in lds(??) file?&lt;/p&gt;
-
-&lt;h2 id=&#34;kbuild&#34;&gt;kbuild&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;if no .config, every config tools make a .config from scrach!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make localmodconfig will reduce many unused kernel config.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make bzImage  #kmods will not build that configured with M!&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;br /&gt;
-##build signle kernel module&lt;br /&gt;
-make menuconfig&lt;br /&gt;
-make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
-make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
-make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
-
-&lt;h1 id=&#34;compile-construction&#34;&gt;Compile construction&lt;/h1&gt;
-
-&lt;p&gt;##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;&lt;br /&gt;
-##Symbol table&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;System.map less&lt;br /&gt;
-When you compile the kernel&lt;br /&gt;
-nm vmlinux&lt;br /&gt;
-readelf -s&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Computer architecture</title>
       <link>http://firoyang.org/cs/arch/</link>
       <pubDate>Tue, 13 Oct 2015 00:00:00 UTC</pubDate>
@@ -1700,141 +1696,6 @@ insert 7:&lt;/p&gt;
 如果叔是黑, 父黑, 祖父r. 父变root.&lt;br /&gt;
 删除:&lt;br /&gt;
 要复杂很多.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>The Journey to RCU</title>
-      <link>http://firoyang.org/cs/rcu/</link>
-      <pubDate>Sun, 24 May 2015 09:52:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/rcu/</guid>
-      <description>
-
-&lt;h1 id=&#34;rcu-stalls&#34;&gt;RCU stalls&lt;/h1&gt;
-
-&lt;p&gt;update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;why-do-need-rcu&#34;&gt;Why do need RCU&lt;/h1&gt;
-
-&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.&lt;br /&gt;
-scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.&lt;br /&gt;
-scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.&lt;br /&gt;
-另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.&lt;br /&gt;
-From wikipedia,  A system whose performance improves after adding hardware,&lt;br /&gt;
-proportionally to the capacity added, is said to be a scalable system.&lt;br /&gt;
-&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;&lt;br /&gt;
-言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.&lt;br /&gt;
-Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;br /&gt;
-* Increase in cost of conventional locks&lt;br /&gt;
-第一个原因也是最重要的, 最根本原因.&lt;br /&gt;
-传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;&lt;br /&gt;
-一种新的锁机制减少访问内存,就成了强烈的需求.&lt;br /&gt;
-* Cache benefits of lock-free reads&lt;br /&gt;
-传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.&lt;br /&gt;
-3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的&lt;br /&gt;
-spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,&lt;br /&gt;
-之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.&lt;br /&gt;
-在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
-像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,&lt;br /&gt;
-其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.&lt;br /&gt;
-* Avoiding complicated races&lt;br /&gt;
-No deadlock, 减少了开发维护.&lt;/p&gt;
-
-&lt;h1 id=&#34;how-to-use-rcu&#34;&gt;How to use RCU&lt;/h1&gt;
-
-&lt;p&gt;list rcu&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;what-is-rcu&#34;&gt;What is RCU&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;&lt;br /&gt;
-RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
-
-&lt;h2 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Publish-Subscribe&lt;br /&gt;
-For updater before synchnization_rcu(); similar to softirq rcu&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Observer&lt;br /&gt;
-For updater to wait For Pre-Existing RCU Readers to Complete&lt;br /&gt;
-Maintain Multiple Versions of Recently Updated Objects&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;positivism-implementions&#34;&gt;Positivism Implementions&lt;/h1&gt;
-
-&lt;h2 id=&#34;classic-rcu&#34;&gt;Classic RCU&lt;/h2&gt;
-
-&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules&lt;br /&gt;
-obeyed by the critical sections of pure spinlocks:&lt;br /&gt;
-blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
-
-&lt;h2 id=&#34;preemtible-rcu&#34;&gt;Preemtible RCU&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
-stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
-
-&lt;h2 id=&#34;tree-rcu&#34;&gt;Tree RCU&lt;/h2&gt;
-
-&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
-
-&lt;p&gt;#FAQ&lt;br /&gt;
-* Difference with primitive and atomic&lt;br /&gt;
-* Grace period is synchroinze_rcu or a softirq justment&lt;br /&gt;
-* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
-
-&lt;h1 id=&#34;below-is-how-to-use-rcu&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
-
-&lt;h1 id=&#34;reference-1&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;
-
-&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.&lt;br /&gt;
-本文不关心RCU的实现.&lt;br /&gt;
-本文的核心目标就是了解如何使用RCU.&lt;br /&gt;
-所有使用RCU代码, 都可以分为4部分:&lt;br /&gt;
-RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.&lt;br /&gt;
-update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;&lt;br /&gt;
-synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.&lt;br /&gt;
-free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.&lt;br /&gt;
-Paul的paper总结了5种用法, 并且附上了代码, 便于理解.&lt;br /&gt;
-理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
-
-&lt;h1 id=&#34;wait-for-completion&#34;&gt;Wait for Completion&lt;/h1&gt;
-
-&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施&lt;br /&gt;
-上面的RCU read critical section和synchronize可以构成completion的语义.&lt;br /&gt;
-为什么要用RCU而不是内核自身提供的completion函数呢?&lt;br /&gt;
-Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.&lt;br /&gt;
-所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference-counting&#34;&gt;Reference Counting&lt;/h1&gt;
-
-&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.&lt;br /&gt;
-但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.&lt;br /&gt;
-Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多&lt;br /&gt;
-同样也会带来性能的损耗,而不是almost zero in his paper.&lt;br /&gt;
-引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
-
-&lt;h1 id=&#34;type-safe-memory&#34;&gt;Type Safe Memory&lt;/h1&gt;
-
-&lt;h1 id=&#34;publish-subscribe&#34;&gt;Publish-Subscribe&lt;/h1&gt;
-
-&lt;h1 id=&#34;read-write-lock-alternative&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
 </description>
     </item>
     

@@ -7,7 +7,48 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Wed, 05 Apr 2017 14:45:21 CST</updated>
+    <updated>Thu, 13 Apr 2017 20:42:49 CST</updated>
+    
+    <item>
+      <title>Hello world! a journey to computer science</title>
+      <link>http://firoyang.org/cs/hello/</link>
+      <pubDate>Thu, 13 Apr 2017 20:42:49 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/hello/</guid>
+      <description>
+
+&lt;p&gt;In this series, I will a simple hello world program to explain the every important concept in cmputer science.&lt;br /&gt;
+So let&amp;rsquo;s go.&lt;/p&gt;
+
+&lt;p&gt;Do you know vDSO?&lt;br /&gt;
+If a C program, gtod, calls the system call gettimeofday in vDSO, how does this program know the address of gettimeofday?&lt;/p&gt;
+
+&lt;p&gt;ldd gtod&lt;br /&gt;
+    linux-gate.so.1 (0xf7766000)&lt;br /&gt;
+    libdl.so.2 =&amp;gt; /lib/libdl.so.2 (0xf7743000)&lt;br /&gt;
+    libc.so.6 =&amp;gt; /lib/libc.so.6 (0xf7568000)&lt;br /&gt;
+    /lib/ld-linux.so.2 (0x56639000)&lt;br /&gt;
+Check this commit of glibc:&lt;br /&gt;
+30e32d23eb06cbeae02e51c7c4df150736dba795&lt;br /&gt;
+Set up GLRO(dl_sysinfo_dso) under [NEED_DL_SYSINFO_DSO] as well&lt;br /&gt;
+AT_SYSINFO_EHDR&lt;/p&gt;
+
+&lt;p&gt;Gcc 32bit support&lt;br /&gt;
+ca677d3c3cd0eba7d1f03092517aea553a0e8569&lt;br /&gt;
+Add x86 32 bit vDSO time function support&lt;br /&gt;
+kernel&lt;br /&gt;
+37c975545ec63320789962bf307f000f08fabd48&lt;/p&gt;
+
+&lt;h1 id=&#34;start-the-program&#34;&gt;start the program&lt;/h1&gt;
+
+&lt;p&gt;sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/#locating-the-vdso-in-memory&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Kernel debugging primer</title>
@@ -448,72 +489,6 @@ devtmpfs: initialized^M^M&lt;/p&gt;
 
 &lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check&lt;br /&gt;
 if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Light camera action - compile link load</title>
-      <link>http://firoyang.org/cs/cll/</link>
-      <pubDate>Sun, 25 Oct 2015 01:46:28 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/cll/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://rickgray.me/2015/08/07/use-gdb-to-study-got-and-plt.html&#34;&gt;通过 GDB 调试理解 GOT/PLT&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html&#34;&gt;PLT and GOT - the key to code sharing and dynamic libraries&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://sourceware.org/binutils/docs/&#34;&gt;Gnu binutils docs&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/wiki/HomePage&#34;&gt;Welcome to GCC Wiki&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;elf&#34;&gt;ELF&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.sco.com/developers/gabi/latest/contents.html&#34;&gt;System V Application Binary Interface ELF&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.sco.com/developers/devspecs/&#34;&gt;SCO Developer Specifications&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;function-call&#34;&gt;Function call&lt;/h1&gt;
-
-&lt;p&gt;x86: stack and caller but kernel maybe regpara(3)&lt;/p&gt;
-
-&lt;p&gt;create_elf_tables&lt;br /&gt;
-sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;br /&gt;
-Relocation&lt;br /&gt;
-PIC&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Why complier can manipulate the address of vriables?&lt;br /&gt;
-What is the address in lds(??) file?&lt;/p&gt;
-
-&lt;h2 id=&#34;kbuild&#34;&gt;kbuild&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;if no .config, every config tools make a .config from scrach!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make localmodconfig will reduce many unused kernel config.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make bzImage  #kmods will not build that configured with M!&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;br /&gt;
-##build signle kernel module&lt;br /&gt;
-make menuconfig&lt;br /&gt;
-make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
-make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
-make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
-
-&lt;h1 id=&#34;compile-construction&#34;&gt;Compile construction&lt;/h1&gt;
-
-&lt;p&gt;##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;&lt;br /&gt;
-##Symbol table&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;System.map less&lt;br /&gt;
-When you compile the kernel&lt;br /&gt;
-nm vmlinux&lt;br /&gt;
-readelf -s&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
@@ -1649,6 +1624,11 @@ netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&am
 
 &lt;p&gt;What does the child process need from parent?&lt;br /&gt;
     sched_fork: setup schduling stuff&lt;br /&gt;
+    memory: copy parent&amp;rsquo;s mm&lt;br /&gt;
+How to share memory stuff with parent process?&lt;br /&gt;
+    Linux use COW technique to do this.&lt;br /&gt;
+    How does COW work?&lt;br /&gt;
+    Why does Linux just share page?&lt;br /&gt;
 How to diverge the child execution flow from parent?&lt;br /&gt;
     what is the first instruction executed by the child process?&lt;/p&gt;
 

@@ -16,16 +16,16 @@
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="The computational process : firoyang.org"/>
+<meta property="og:title" content="Hello world! a journey to computer science : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/cs/process/">
+<meta property="og:url" content="http://firoyang.org/cs/hello/">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2015-02-27"/>
-<meta property="article:modified_time" content="2015-02-27"/>
+<meta property="article:published_time" content="2017-04-13"/>
+<meta property="article:modified_time" content="2017-04-13"/>
 
 
 <meta property="article:tag" content="cs">
@@ -35,8 +35,8 @@
 
 
     <base href="http://firoyang.org/">
-    <title> The computational process</title>
-    <link rel="canonical" href="http://firoyang.org/cs/process/">
+    <title> Hello world! a journey to computer science</title>
+    <link rel="canonical" href="http://firoyang.org/cs/hello/">
     
 
     
@@ -139,14 +139,14 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >The computational process</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >Hello world! a journey to computer science</h1>
 	  
 
 <aside id="meta">
 
     <div>
         <section id="datecount">
-          <h4 id="date"> Fri Feb 27, 2015 </h4>
+          <h4 id="date"> Thu Apr 13, 2017 </h4>
           
         </section>
         
@@ -161,56 +161,45 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="125">
-<meta itemprop="datePublished" content="2015-02-27">
-<meta itemprop="url" content="http://firoyang.org/cs/process/">
+<meta itemprop="wordCount" content="113">
+<meta itemprop="datePublished" content="2017-04-13">
+<meta itemprop="url" content="http://firoyang.org/cs/hello/">
 
 
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="fork-a-new-process">Fork a new process</h1>
+<p>In this series, I will a simple hello world program to explain the every important concept in cmputer science.<br />
+So let&rsquo;s go.</p>
 
-<p>What does the child process need from parent?<br />
-    sched_fork: setup schduling stuff<br />
-    memory: copy parent&rsquo;s mm<br />
-How to share memory stuff with parent process?<br />
-    Linux use COW technique to do this.<br />
-    How does COW work?<br />
-    Why does Linux just share page?<br />
-How to diverge the child execution flow from parent?<br />
-    what is the first instruction executed by the child process?</p>
+<p>Do you know vDSO?<br />
+If a C program, gtod, calls the system call gettimeofday in vDSO, how does this program know the address of gettimeofday?</p>
 
-<h1 id="insepct-process-status">Insepct process status</h1>
+<p>ldd gtod<br />
+    linux-gate.so.1 (0xf7766000)<br />
+    libdl.so.2 =&gt; /lib/libdl.so.2 (0xf7743000)<br />
+    libc.so.6 =&gt; /lib/libc.so.6 (0xf7568000)<br />
+    /lib/ld-linux.so.2 (0x56639000)<br />
+Check this commit of glibc:<br />
+30e32d23eb06cbeae02e51c7c4df150736dba795<br />
+Set up GLRO(dl_sysinfo_dso) under [NEED_DL_SYSINFO_DSO] as well<br />
+AT_SYSINFO_EHDR</p>
 
-<p>do_task_stat<br />
-Kernel mapping: tgid_base_stuff show_map_vma</p>
+<p>Gcc 32bit support<br />
+ca677d3c3cd0eba7d1f03092517aea553a0e8569<br />
+Add x86 32 bit vDSO time function support<br />
+kernel<br />
+37c975545ec63320789962bf307f000f08fabd48</p>
 
-<h1 id="protection">Protection</h1>
+<h1 id="start-the-program">start the program</h1>
 
-<p>3A: Chaper 5</p>
+<p>sysdeps/x86_64/dl-machine.h: -&gt; _start -&gt;_dl_start-&gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&gt;dl_main</p>
 
-<h1 id="faq">FAQ</h1>
+<h1 id="reference">Reference</h1>
 
-<p>Check glibc sysdeps/unix/sysv/linux/x86_64/clone.S for creating a new thread.</p>
-
-<h2 id="idle-kernel-stack">idle kernel stack</h2>
-
-<p>master idle进程的kernel stack在init/init_task.c:init_thread_union<br />
-其他进程的kernel stack是fork产生.<br />
-this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);<br />
-this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);<br />
-主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0 init_idle.<br />
-Deamonize</p>
-
-<h1 id="zombie-process">Zombie process</h1>
-
-<h2 id="defunct"><defunct></h2>
-
-<p>forked child not reaped by parent will hooked in process list.<br />
-if parent was killed and exit <defunct> will repaped.<br />
-<defunct>表明父活着, 但不收尸.</p>
+<p><a href="http://a3f.at/lists/linkers">Linkers 20 parts by Gold author Ian Lance Taylor</a><br />
+<a href="https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/#locating-the-vdso-in-memory">The Definitive Guide to Linux System Calls</a></p>
 
 		</article>
 	  </div>
@@ -221,9 +210,9 @@ if parent was killed and exit <defunct> will repaped.<br />
     <div id="disqus_thread"></div>
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/process\/';
-    var disqus_title = 'The computational process';
-    var disqus_url = 'http:\/\/firoyang.org\/cs\/process\/';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/hello\/';
+    var disqus_title = 'Hello world! a journey to computer science';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/hello\/';
 
     (function() {
         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

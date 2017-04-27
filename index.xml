@@ -7,7 +7,58 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Thu, 06 Apr 2017 00:00:00 UTC</updated>
+    <updated>Wed, 26 Apr 2017 21:39:41 CST</updated>
+    
+    <item>
+      <title>The definitive guide to Linux x86 entry.S</title>
+      <link>http://firoyang.org/cs/entry/</link>
+      <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/entry/</guid>
+      <description>&lt;p&gt;Documentation/x86/entry_64.txt&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Hello world! a journey to computer science</title>
+      <link>http://firoyang.org/cs/hello/</link>
+      <pubDate>Thu, 13 Apr 2017 20:42:49 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/hello/</guid>
+      <description>
+
+&lt;p&gt;In this series, I will a simple hello world program to explain the every important concept in cmputer science.&lt;br /&gt;
+So let&amp;rsquo;s go.&lt;/p&gt;
+
+&lt;p&gt;Do you know vDSO?&lt;br /&gt;
+If a C program, gtod, calls the system call gettimeofday in vDSO, how does this program know the address of gettimeofday?&lt;/p&gt;
+
+&lt;p&gt;ldd gtod&lt;br /&gt;
+    linux-gate.so.1 (0xf7766000)&lt;br /&gt;
+    libdl.so.2 =&amp;gt; /lib/libdl.so.2 (0xf7743000)&lt;br /&gt;
+    libc.so.6 =&amp;gt; /lib/libc.so.6 (0xf7568000)&lt;br /&gt;
+    /lib/ld-linux.so.2 (0x56639000)&lt;br /&gt;
+Check this commit of glibc:&lt;br /&gt;
+30e32d23eb06cbeae02e51c7c4df150736dba795&lt;br /&gt;
+Set up GLRO(dl_sysinfo_dso) under [NEED_DL_SYSINFO_DSO] as well&lt;br /&gt;
+AT_SYSINFO_EHDR&lt;/p&gt;
+
+&lt;p&gt;Gcc 32bit support&lt;br /&gt;
+ca677d3c3cd0eba7d1f03092517aea553a0e8569&lt;br /&gt;
+Add x86 32 bit vDSO time function support&lt;br /&gt;
+kernel&lt;br /&gt;
+37c975545ec63320789962bf307f000f08fabd48&lt;/p&gt;
+
+&lt;h1 id=&#34;start-the-program&#34;&gt;start the program&lt;/h1&gt;
+
+&lt;p&gt;sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/#locating-the-vdso-in-memory&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Linux page reclaim</title>
@@ -15,7 +66,9 @@
       <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/page_reclaim/</guid>
-      <description>&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
+      <description>
+
+&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
     Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
     No enough memory for a large memory alloc.&lt;br /&gt;
     Manually initate&lt;br /&gt;
@@ -35,6 +88,15 @@ How to reclaim in deatils.&lt;br /&gt;
     How to distinguish kernel page from user space page?&lt;br /&gt;
 How to modify the process&amp;rsquo;s pte to let it know the page has been reclaimed.&lt;br /&gt;
     Reverse mapping.&lt;/p&gt;
+
+&lt;h1 id=&#34;anonymous-reverse-mappinng&#34;&gt;Anonymous reverse mappinng&lt;/h1&gt;
+
+&lt;p&gt;Where do reverse mappings come from?&lt;br /&gt;
+    syscall: mmap(ANONYMOUS | PRIVATE)&lt;br /&gt;
+    Proceass address space: Heap, stack.&lt;br /&gt;
+mm: change anon_vma linking to fix multi-process server scalability issue&lt;br /&gt;
+5beb49305251e5669852ed541e8e2f2f7696c53e&lt;br /&gt;
+When we fork a child process, it will associate multiple anon_vmas with a VMA.&lt;/p&gt;
 </description>
     </item>
     
@@ -1188,185 +1250,6 @@ disc-&amp;gt;receive_buf=n_tty_receive_buf-&amp;gt;n_tty_receive_char-&amp;gt;ec
 &lt;p&gt;serial8250_register_ports&lt;br /&gt;
 struct uart_8250_port *up = &amp;amp;serial8250_ports[i];&lt;br /&gt;
 uart_add_one_port(drv, &amp;amp;up-&amp;gt;port);&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>System booting</title>
-      <link>http://firoyang.org/cs/boot/</link>
-      <pubDate>Thu, 12 Nov 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/boot/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/&#34;&gt;Article: Introducing initramfs, a new model for initial RAM disks&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;What basic initializations should be perfomed when power on?&lt;br /&gt;
-How do we load the kernel to memory?&lt;br /&gt;
-What does kernel do when kernel boot.&lt;br /&gt;
-MBR vs BIOS?&lt;br /&gt;
-PC vs embedded&lt;br /&gt;
-Kernel init&lt;br /&gt;
-before start_kernel&lt;br /&gt;
-start_kernel&lt;br /&gt;
-reset_init &amp;amp; kernel_init&lt;/p&gt;
-
-&lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
-
-&lt;p&gt;Power button -&amp;gt; cpu reset -&amp;gt; BIOS -&amp;gt; hard drive -&amp;gt; Grub boot.S/MBR aa5a -&amp;gt; Grub diskboot.S -&amp;gt; &amp;hellip; -&amp;gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S&lt;br /&gt;
-Aligh register, Stack and BSS for C function to run. -&amp;gt; main-&amp;gt;startup_32-&amp;gt;startup_64-&amp;gt; __START_KERNEL_map-&amp;gt;&amp;hellip; start_kernel&lt;br /&gt;
-&lt;a href=&#34;https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130&#34;&gt;Kernel legacy boot sector&lt;/a&gt; start form 4d5a of arch/x86/boot/header.S&lt;br /&gt;
-is only used by something link &amp;lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&amp;rsquo;. It&amp;rsquo;s obsoleted that is what legacy means.&lt;/p&gt;
-
-&lt;h1 id=&#34;p4080-board&#34;&gt;p4080 Board&lt;/h1&gt;
-
-&lt;p&gt;PBL&lt;br /&gt;
-1. initialize I2C, SPI, eLBC, eSDHC.&lt;br /&gt;
-2. Load RCW and boot init commands from above.&lt;br /&gt;
-3. write date to conf register and memory&lt;/p&gt;
-
-&lt;h1 id=&#34;config&#34;&gt;config&lt;/h1&gt;
-
-&lt;p&gt;CCSRBAR -&amp;gt; CCSR&lt;br /&gt;
-default is 0x0_FE00_0000&lt;br /&gt;
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).&lt;br /&gt;
-CCSRBAR always points to itself.&lt;br /&gt;
-holdoff&lt;/p&gt;
-
-&lt;h1 id=&#34;u-boot&#34;&gt;u-boot&lt;/h1&gt;
-
-&lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
-
-&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;&lt;br /&gt;
-&amp;amp;&lt;br /&gt;
-boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =&lt;br /&gt;
-&amp;amp;&lt;br /&gt;
-boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;&lt;br /&gt;
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;ppc-multicore-booting&#34;&gt;PPC multicore booting&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;CCSRBAR&lt;br /&gt;
-MPC86xx_MCM_OFFSET&lt;br /&gt;
-srio_boot_master_release_slave&lt;/p&gt;
-
-&lt;p&gt;uboot-&amp;gt;&lt;br /&gt;
-set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
-
-&lt;p&gt;core0 run, 2nd cores holdoff&lt;br /&gt;
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp&lt;br /&gt;
-core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500&lt;br /&gt;
-board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {&lt;br /&gt;
-&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page&lt;br /&gt;
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page&lt;br /&gt;
-bootpg = BPTR = __secondary_start_page&lt;br /&gt;
-plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation&lt;br /&gt;
-}&lt;br /&gt;
-2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page&lt;br /&gt;
-kernel-&amp;gt;&lt;br /&gt;
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address&lt;br /&gt;
-2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle&lt;br /&gt;
-arch/powerpc/kernel/head_fsl_booke.S&lt;br /&gt;
-U-boot logs:&lt;br /&gt;
-Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table&lt;br /&gt;
-address.&lt;br /&gt;
-SPAG : fdt_fixup_fman_firmware, 567^M^M&lt;br /&gt;
-^M^M&lt;br /&gt;
-..r.^M^M&lt;br /&gt;
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M&lt;br /&gt;
-VDBG: Secondary cores are not held in reset.^M^M&lt;br /&gt;
-Kernel Logs:&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)^M^M&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)^M^M&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 3 (rc -2)^M^M&lt;br /&gt;
-Brought up 1 CPUs^M^M&lt;br /&gt;
-devtmpfs: initialized^M^M&lt;/p&gt;
-
-&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check&lt;br /&gt;
-if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Light camera action - compile link load</title>
-      <link>http://firoyang.org/cs/cll/</link>
-      <pubDate>Sun, 25 Oct 2015 01:46:28 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/cll/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.tenouk.com/ModuleW.html&#34;&gt;compiler, assembler, linker and loader: a brief story&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://rickgray.me/2015/08/07/use-gdb-to-study-got-and-plt.html&#34;&gt;通过 GDB 调试理解 GOT/PLT&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html&#34;&gt;PLT and GOT - the key to code sharing and dynamic libraries&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://sourceware.org/binutils/docs/&#34;&gt;Gnu binutils docs&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/wiki/HomePage&#34;&gt;Welcome to GCC Wiki&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;elf&#34;&gt;ELF&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.sco.com/developers/gabi/latest/contents.html&#34;&gt;System V Application Binary Interface ELF&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.sco.com/developers/devspecs/&#34;&gt;SCO Developer Specifications&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;function-call&#34;&gt;Function call&lt;/h1&gt;
-
-&lt;p&gt;x86: stack and caller but kernel maybe regpara(3)&lt;/p&gt;
-
-&lt;p&gt;create_elf_tables&lt;br /&gt;
-sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;br /&gt;
-Relocation&lt;br /&gt;
-PIC&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Why complier can manipulate the address of vriables?&lt;br /&gt;
-What is the address in lds(??) file?&lt;/p&gt;
-
-&lt;h2 id=&#34;kbuild&#34;&gt;kbuild&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;if no .config, every config tools make a .config from scrach!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make localmodconfig will reduce many unused kernel config.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make bzImage  #kmods will not build that configured with M!&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;br /&gt;
-##build signle kernel module&lt;br /&gt;
-make menuconfig&lt;br /&gt;
-make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
-make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
-make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;/p&gt;
-
-&lt;h1 id=&#34;compile-construction&#34;&gt;Compile construction&lt;/h1&gt;
-
-&lt;p&gt;##&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Generating optimized code&lt;/a&gt;&lt;br /&gt;
-##Symbol table&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;System.map less&lt;br /&gt;
-When you compile the kernel&lt;br /&gt;
-nm vmlinux&lt;br /&gt;
-readelf -s&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;/proc/kallsyms&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
