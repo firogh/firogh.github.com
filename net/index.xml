@@ -254,10 +254,10 @@ with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
     
     <item>
       <title>Data link layer</title>
-      <link>http://firoyang.org/net/l2/</link>
+      <link>http://firoyang.org/net/link/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/l2/</guid>
+      <guid>http://firoyang.org/net/link/</guid>
       <description>
 
 &lt;p&gt;#data link layer&lt;br /&gt;
@@ -584,62 +584,10 @@ dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
 &lt;a href=&#34;http://www.tecmint.com/ipv4-and-ipv6-comparison/&#34;&gt;What’s wrong with IPv4 and Why we are moving to IPv6&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/629155/&#34;&gt;Improving Linux networking performance&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;network&#34;&gt;Network&lt;/h1&gt;
-
-&lt;p&gt;When we talk about network, what we talk about?&lt;br /&gt;
+&lt;p&gt;The Feynman map of network, check &lt;a href=&#34;https://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough&#34;&gt;Thomas Graf&amp;rsquo;s DevConf 2014 Kernel Networking Walkthrough&lt;/a&gt;&lt;br /&gt;
+When we talk about network, what we talk about?&lt;br /&gt;
 Transfer; Truely we are talking about transfer including three component:src, dst, channel.&lt;br /&gt;
 Address has two properties: relation and scope.&lt;/p&gt;
-
-&lt;h1 id=&#34;4-3-ip-address&#34;&gt;4.3 IP address&lt;/h1&gt;
-
-&lt;p&gt;IPv6 wrl6&lt;br /&gt;
-__ipv6_addr_type&lt;br /&gt;
-ip6addrlbl_init_table&lt;br /&gt;
-ip6_input or ip6_output&lt;br /&gt;
-ipv6_addr_v4mapped&lt;br /&gt;
-* 0:&lt;br /&gt;
-1 ok IPV6_ADDR_LOOPBACK ::&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;128&lt;/sub&gt;&lt;br /&gt;
-2 ok IPV6_ADDR_ANY ::/128&lt;br /&gt;
-3 ok IPV6_ADDR_MAPPED ::ffff:0:0/96&lt;br /&gt;
-4 ? IPV6_ADDR_COMPATv4  0000::/96 ipgre_tunnel_xmit ddr_type &amp;amp; IPV6_ADDR_COMPATv4) == 0 ; goto tx_error_icmp;&lt;br /&gt;
-5 G?&lt;br /&gt;
-* 0100::/64, NG, Used by CISCO&lt;br /&gt;
-A Discard Prefix for IPv6&lt;br /&gt;
-Discard-Only Address Block&lt;br /&gt;
-&lt;a href=&#34;https://tools.ietf.org/html/rfc6666&#34;&gt;https://tools.ietf.org/html/rfc6666&lt;/a&gt;&lt;br /&gt;
- Remote Triggered Black Hole (RTBH)&lt;br /&gt;
-&lt;a href=&#34;https://tools.ietf.org/html/rfc5635&#34;&gt;https://tools.ietf.org/html/rfc5635&lt;/a&gt;&lt;br /&gt;
-* 0200::/7,  NG, Deprecated&lt;br /&gt;
-OSI NSAPs and IPv6&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc1888&#34;&gt;http://tools.ietf.org/html/rfc1888&lt;/a&gt;&lt;br /&gt;
-Internet Code Point (ICP) Assignments for NSAP Addresses&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc4548&#34;&gt;http://tools.ietf.org/html/rfc4548&lt;/a&gt;&lt;br /&gt;
-Interfaces between protocol layers&lt;br /&gt;
-&lt;a href=&#34;http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html&#34;&gt;http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html&lt;/a&gt;&lt;br /&gt;
-Network Service Access Point (NSAP): v4,v6?&lt;br /&gt;
-&lt;a href=&#34;http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point&#34;&gt;http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point&lt;/a&gt;&lt;br /&gt;
-* 0400::/6, NG, No information, maybe used as Global address see __ipv6_addr_type&lt;br /&gt;
-* 0800::/5, NG, ditto&lt;br /&gt;
-* (000, 111)x::/3, OK, unicasts. For more details please reference __ipv6_addr_type&lt;br /&gt;
-1000::/4, OK, ditto&lt;br /&gt;
-2000::/3, OK, Global Unicast,&lt;br /&gt;
-2002::/16, OK, SIT, 6in4&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc3056&#34;&gt;http://tools.ietf.org/html/rfc3056&lt;/a&gt;&lt;br /&gt;
-2001::/32, OK, used in Default policy table for routing&lt;br /&gt;
-2001:10::/28, OK, Ditto&lt;br /&gt;
-* e000::/4, NG?, No information in google; but used as GU in and kernel by default.&lt;br /&gt;
-* fc00::/7, OK,&lt;br /&gt;
-IPV6_ADDR_UNICAST&lt;br /&gt;
-* fe80::/10, OK,&lt;br /&gt;
-IPV6_ADDR_LINKLOCAL&lt;br /&gt;
-* fec0::/10, OK, But deprecated by RFC3879, used in kernel?&lt;br /&gt;
-IPV6_ADDR_SITELOCAL&lt;br /&gt;
-Deprecating Site Local Addresses&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc3879&#34;&gt;http://tools.ietf.org/html/rfc3879&lt;/a&gt;&lt;br /&gt;
-* ff00::/8, OK&lt;br /&gt;
-IPV6_ADDR_MULTICAST&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc4291&#34;&gt;http://tools.ietf.org/html/rfc4291&lt;/a&gt;&lt;br /&gt;
-* addr not described in __ipv6_addr_type working as global unicast&lt;/p&gt;
 
 &lt;h2 id=&#34;什么是internet&#34;&gt;什么是Internet&lt;/h2&gt;
 
@@ -1143,22 +1091,6 @@ ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题l
 如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.&lt;br /&gt;
 compound page&lt;/p&gt;
 
-&lt;h2 id=&#34;offload&#34;&gt;offload&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;TSO in tcp_v4_connect&lt;br /&gt;
-&lt;a href=&#34;https://tejparkash.wordpress.com/2010/03/06/tso-explained/&#34;&gt;TSO Explained&lt;/a&gt;&lt;br /&gt;
-One Liner says: It is a method to reduce cpu workload of packet cutting in 1500byte and asking hardware to perform the same functionality.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;GSO&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/37287&#34;&gt;GSO: Generic Segmentation Offload&lt;/a&gt;&lt;br /&gt;
-TSO = GSO_TCPV4&lt;br /&gt;
-frags = sg I/O&lt;br /&gt;
-frag_list&lt;br /&gt;
-*GRO&lt;br /&gt;
-napi -&amp;gt; dev -&amp;gt;inet-&amp;gt;skb&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
 &lt;h1 id=&#34;inet&#34;&gt;INET&lt;/h1&gt;
 
 &lt;p&gt;现在我们来看具体的network stack的实现.&lt;br /&gt;
@@ -1210,8 +1142,6 @@ icsk-&amp;gt;icsk_af_ops&lt;br /&gt;&lt;/li&gt;
 是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;packet_type &amp;ndash; l3 rcv in ptype_all and ptype_base&lt;br /&gt;
 pt_prev-&amp;gt;func&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -1521,9 +1451,7 @@ sk_filter&lt;br /&gt;
 tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb&lt;br /&gt;
 上面主要是和cork和nagle有关&lt;br /&gt;
 完了&lt;br /&gt;
-在tcp协议的5点基础属性, 后世对tcp做了很多优化!&lt;/p&gt;
-
-&lt;p&gt;Details in l4.md&lt;br /&gt;
+在tcp协议的5点基础属性, 后世对tcp做了很多优化!&lt;br /&gt;
 #Network layer&lt;br /&gt;
 ip_append_data 和ip_push_pending_frames弄frag_list&lt;br /&gt;
 ip_push_pending_frames -&amp;gt; __ip_make_skb &amp;amp; ip_send_skb -&amp;gt;ip_local_out&lt;br /&gt;
@@ -1546,45 +1474,6 @@ Details in l3.md&lt;/p&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#Net initialization&lt;br /&gt;
-start_kernel-&amp;gt; parse_early_param irq timers softirq -&amp;gt; rest_init(): kthread&lt;br /&gt;
-{&lt;br /&gt;
-    do_basic_setup()&lt;br /&gt;
-    {&lt;br /&gt;
-        driver_init&lt;br /&gt;
-        sock_init&lt;br /&gt;
-        do_initcalls()&lt;br /&gt;
-        {&lt;br /&gt;
-            net_dev_init: Initializing the Device Handling Layer&lt;br /&gt;
-            {&lt;br /&gt;
-                per-CPU&lt;br /&gt;
-                proc&lt;br /&gt;
-                sysfs&lt;br /&gt;
-                ptype_base&lt;br /&gt;
-                dst_init&lt;br /&gt;
-                softirq: net_rx/tx_action&lt;br /&gt;
-                dev_cpu_callback: CPU hotplug.&lt;br /&gt;
-            }&lt;br /&gt;
-        }&lt;br /&gt;
-    }&lt;br /&gt;
-    free_init_mem()&lt;br /&gt;
-    run_init_process()&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h2 id=&#34;network-init&#34;&gt;network init&lt;/h2&gt;
-
-&lt;p&gt;inet_init()-&amp;gt;ip_init()-&amp;gt;ip_rt_init()-&amp;gt;ip_fib_init()-&amp;gt;fib_hash_init():create kmem_cache&lt;/p&gt;
-
-&lt;h2 id=&#34;net-device-init&#34;&gt;net device init&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;net_dev_init&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;nic init&lt;br /&gt;
-e100_init_module    pci_register_driver:构建结构    driver_regiser:注册到内核    really_probe()drv-&amp;gt;probe:初始化。&lt;br /&gt;
-vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册到内核    dev-&amp;gt;init():初始化&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
 &lt;h1 id=&#34;old-log&#34;&gt;OLD log&lt;/h1&gt;
 
 &lt;h2 id=&#34;net&#34;&gt;net&lt;/h2&gt;
@@ -1603,25 +1492,6 @@ switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以�
 net_poll&lt;br /&gt;
 napi&lt;br /&gt;
 * What is Head-of-line blocking&lt;/p&gt;
-
-&lt;p&gt;#Netlink&lt;br /&gt;
-* Group&lt;br /&gt;
-enum rtnetlink_groups&lt;br /&gt;
-##What is netlink&lt;br /&gt;
-Networking related kernel configuration and monitoring interfaces.&lt;br /&gt;
-* IPC between kernel and user spacess process.&lt;br /&gt;
-ioctl&lt;br /&gt;
-* prarts&lt;br /&gt;
-    libnl&lt;br /&gt;
-    libnl-route&lt;br /&gt;
-    libnl-genl&lt;br /&gt;
-    libnl-nf&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;How many parts does libnl-route has?&lt;br /&gt;
-Address,  links, neighboring, routing, TC&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
 
 &lt;h2 id=&#34;need-patch&#34;&gt;Need patch&lt;/h2&gt;
 
@@ -1798,10 +1668,10 @@ register_vlan_dev(）把这个设备注册到内核。&lt;/p&gt;
     
     <item>
       <title>Network layer</title>
-      <link>http://firoyang.org/net/l3/</link>
+      <link>http://firoyang.org/net/ip/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/l3/</guid>
+      <guid>http://firoyang.org/net/ip/</guid>
       <description>
 
 &lt;p&gt;#Network layer&lt;br /&gt;
@@ -1816,6 +1686,57 @@ throw away the datagram and try to send an ICMP message back to the source&lt;br
 ip6_input or ip6_output&lt;br /&gt;
 F1: OK&lt;br /&gt;
 F2: OK&lt;/p&gt;
+
+&lt;h1 id=&#34;4-3-ip-address&#34;&gt;4.3 IP address&lt;/h1&gt;
+
+&lt;p&gt;IPv6 wrl6&lt;br /&gt;
+__ipv6_addr_type&lt;br /&gt;
+ip6addrlbl_init_table&lt;br /&gt;
+ip6_input or ip6_output&lt;br /&gt;
+ipv6_addr_v4mapped&lt;br /&gt;
+* 0:&lt;br /&gt;
+1 ok IPV6_ADDR_LOOPBACK ::&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;128&lt;/sub&gt;&lt;br /&gt;
+2 ok IPV6_ADDR_ANY ::/128&lt;br /&gt;
+3 ok IPV6_ADDR_MAPPED ::ffff:0:0/96&lt;br /&gt;
+4 ? IPV6_ADDR_COMPATv4  0000::/96 ipgre_tunnel_xmit ddr_type &amp;amp; IPV6_ADDR_COMPATv4) == 0 ; goto tx_error_icmp;&lt;br /&gt;
+5 G?&lt;br /&gt;
+* 0100::/64, NG, Used by CISCO&lt;br /&gt;
+A Discard Prefix for IPv6&lt;br /&gt;
+Discard-Only Address Block&lt;br /&gt;
+&lt;a href=&#34;https://tools.ietf.org/html/rfc6666&#34;&gt;https://tools.ietf.org/html/rfc6666&lt;/a&gt;&lt;br /&gt;
+ Remote Triggered Black Hole (RTBH)&lt;br /&gt;
+&lt;a href=&#34;https://tools.ietf.org/html/rfc5635&#34;&gt;https://tools.ietf.org/html/rfc5635&lt;/a&gt;&lt;br /&gt;
+* 0200::/7,  NG, Deprecated&lt;br /&gt;
+OSI NSAPs and IPv6&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc1888&#34;&gt;http://tools.ietf.org/html/rfc1888&lt;/a&gt;&lt;br /&gt;
+Internet Code Point (ICP) Assignments for NSAP Addresses&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc4548&#34;&gt;http://tools.ietf.org/html/rfc4548&lt;/a&gt;&lt;br /&gt;
+Interfaces between protocol layers&lt;br /&gt;
+&lt;a href=&#34;http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html&#34;&gt;http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html&lt;/a&gt;&lt;br /&gt;
+Network Service Access Point (NSAP): v4,v6?&lt;br /&gt;
+&lt;a href=&#34;http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point&#34;&gt;http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point&lt;/a&gt;&lt;br /&gt;
+* 0400::/6, NG, No information, maybe used as Global address see __ipv6_addr_type&lt;br /&gt;
+* 0800::/5, NG, ditto&lt;br /&gt;
+* (000, 111)x::/3, OK, unicasts. For more details please reference __ipv6_addr_type&lt;br /&gt;
+1000::/4, OK, ditto&lt;br /&gt;
+2000::/3, OK, Global Unicast,&lt;br /&gt;
+2002::/16, OK, SIT, 6in4&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc3056&#34;&gt;http://tools.ietf.org/html/rfc3056&lt;/a&gt;&lt;br /&gt;
+2001::/32, OK, used in Default policy table for routing&lt;br /&gt;
+2001:10::/28, OK, Ditto&lt;br /&gt;
+* e000::/4, NG?, No information in google; but used as GU in and kernel by default.&lt;br /&gt;
+* fc00::/7, OK,&lt;br /&gt;
+IPV6_ADDR_UNICAST&lt;br /&gt;
+* fe80::/10, OK,&lt;br /&gt;
+IPV6_ADDR_LINKLOCAL&lt;br /&gt;
+* fec0::/10, OK, But deprecated by RFC3879, used in kernel?&lt;br /&gt;
+IPV6_ADDR_SITELOCAL&lt;br /&gt;
+Deprecating Site Local Addresses&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc3879&#34;&gt;http://tools.ietf.org/html/rfc3879&lt;/a&gt;&lt;br /&gt;
+* ff00::/8, OK&lt;br /&gt;
+IPV6_ADDR_MULTICAST&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc4291&#34;&gt;http://tools.ietf.org/html/rfc4291&lt;/a&gt;&lt;br /&gt;
+* addr not described in __ipv6_addr_type working as global unicast&lt;/p&gt;
 
 &lt;p&gt;#IP&lt;br /&gt;
 * IP Packet Fragmentation/Defragmentation&lt;br /&gt;
@@ -1868,10 +1789,10 @@ fib_create_info(): create a fib_info&lt;/p&gt;
     
     <item>
       <title>Transport layer</title>
-      <link>http://firoyang.org/net/l4/</link>
+      <link>http://firoyang.org/net/tcp/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/l4/</guid>
+      <guid>http://firoyang.org/net/tcp/</guid>
       <description>
 
 &lt;h1 id=&#34;rfc&#34;&gt;RFC&lt;/h1&gt;
@@ -2069,70 +1990,6 @@ My conclusion: in practice TCP is a mixture between both GBN and SR.&lt;/p&gt;&l
 &lt;li&gt;&lt;p&gt;Selective repeat&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;congestion-control&#34;&gt;Congestion control&lt;/h1&gt;
-
-&lt;p&gt;icsk_ca_ops;&lt;br /&gt;
-tcp_ack {&lt;br /&gt;
-tcp_cong_avoid&lt;br /&gt;
-tcp_fastretrans_alert&lt;br /&gt;
-tcp_slow_start}&lt;br /&gt;
-TCP send queue len /proc/sys/net/core/wmem_default&lt;br /&gt;
-今天想聊一聊, tcp的拥塞控制, 13年那会, 走自己一个人非常偏执的想把整个协议栈都看完.&lt;br /&gt;
-当时看得书不好, 加上自己脑袋已经僵化, 书看得很死性.&lt;br /&gt;
-一个人的青春时光不长, 大家要好好珍惜.&lt;br /&gt;
-所谓拥塞, 现实生活中也能经常遇到, 比如北京早本的交通, taobao双11的快递物流.&lt;br /&gt;
-所以tcp的拥塞控制, 可以说是这一类问题的最为理想化的工程场景.&lt;br /&gt;
-简单来看, 为什么会拥塞?发的报文太多了, 网络设备传输不过来了.&lt;br /&gt;
-改怎么办? 现实社会中, 可以通过单双号现行的方法, 来减少出行的车辆, 尽量避免交通拥堵.&lt;br /&gt;
-或者, 等待时间慢慢流逝, 上班堵车的时候就这么干的, 可是效率非常低啊. 我从镶黄旗去中关村&lt;br /&gt;
-不堵车,也就20~30分钟, 一堵车就要40 ~50分钟了.&lt;br /&gt;
-在计算机的世界, 我们可以控制发送报文的数量, 而不像真实生活一样, 有车的人出行开车与否,&lt;br /&gt;
-都是要依据个人意愿的,很难控制.&lt;br /&gt;
-这里, 我直接说tcp, 是如何解决的.&lt;br /&gt;
-我们下载电影, 升级系统的时候, 你会发现速度是一点点变快, 最终停留在一个较为固定速度值.&lt;br /&gt;
-没错这里就暗含这tcp的拥塞控制思想, tcp的想法是, 我不知道网络带宽到底是多少, 我不能贸然的&lt;br /&gt;
-向网络发太多的数据包, 有可能网络本来就很糟了, 更是雪上加霜. 当然运气好, 就没问题了.&lt;br /&gt;
-但linux的实现是保守的! 我一点点慢慢的浸满网络, 也就是slow start, 这个方法一点也不满,&lt;br /&gt;
-这是个指数增长的算法, 一开始发一个, 网络好, 发2个, 4个.所以增长速度很快的.slow是只起点低.&lt;br /&gt;
-但终极这么个长法, 早晚会浸满网络, 之后你再发包, 网络就不通常了.&lt;br /&gt;
-tcp既要保守, 又想获取更多的网络带宽.slow start一直长,不加控制, 拥塞是早晚的事, 即便这种方法&lt;br /&gt;
-能够在某些时候带来, 快速网络带宽利用, 但是最终确实也很快让网络拥塞了.&lt;br /&gt;
-所以tcp, 没有让slow start一直持续着, 相对潜在快速发包, 他们更怕拥塞.&lt;br /&gt;
-所以slow start控制的发包数量涨到一点阶段, 就停了. 网上找到的这个临界点是ssthresh的值是65536byte.&lt;br /&gt;
-ss就是slow start的缩写, 我没有验证过这个值.&lt;br /&gt;
-涨到这个值之后, tcp就谨小慎微地控制发包数量的增长了, 线下的增加发包数量, 指数式不敢再用了.&lt;br /&gt;
-即便是这样的增长, 早晚还是要触发拥塞. 拥塞了怎么办?&lt;br /&gt;
-已经出去的报文, 你控制不了了. 只能控制将要发送的报文, tcp是直接把当前速度削半作为ssthresh.&lt;br /&gt;
-实际又回到slow start 从1 开始一点点的从新晚上增长, 慢慢的等待网络变好.&lt;br /&gt;
-这套思想就叫AIMD原则，即加法增大、乘法减小.&lt;br /&gt;
-我这里只是,通俗的介绍了拥塞控制,以上帝视角来看一切都是那么合理.&lt;br /&gt;
-不过, 做学问有一点, 就是要追根溯源, 这几乎和实践验证同等重要.&lt;br /&gt;
-&lt;a href=&#34;http://ee.lbl.gov/papers/congavoid.pdf&#34;&gt;Congestion Avoidance and Control&lt;/a&gt;&lt;br /&gt;
-这个paper道出了拥塞控制的初衷, 先驱不是神, 他也踩着坑过来的!&lt;br /&gt;
-86年10月LBL to UC Berkeley的网络带宽速率从32 Kbps 降到 40 bps, 才促使了拥塞控制的开始.&lt;br /&gt;
-到底传输的流量多少和网络整体传输速度有什么关系呢? 也就是说, 我什么都不做就让整个网络的报文&lt;br /&gt;
-一点点的变多, 看看网络的性能是如何变化?&lt;br /&gt;
-&lt;a href=&#34;http://www.cs.virginia.edu/~cs757/slidespdf/757-13-congestion.pdf&#34;&gt;Transport Level Congestion Control&lt;/a&gt;&lt;br /&gt;
-这个paper将的比较好.&lt;br /&gt;
-下面说tcp的优化.&lt;/p&gt;
-
-&lt;h2 id=&#34;fast-retrans&#34;&gt;Fast retrans&lt;/h2&gt;
-
-&lt;p&gt;这个解决丢包timeout太慢的问题.&lt;br /&gt;
-tcp认为收到3个重复确认相同ack序号的报文, 就认为有报文丢了, 我要重传了.&lt;br /&gt;
-比如1 2 3 4 5, 发了这个5个报文, 他收到了3个1序号的ack, 那么他就认为2 丢失了就重传.&lt;br /&gt;
-这比等超时, 要快.所以叫快重传. 为什么快重传, 收到重复ack, 说明网络很可能是好的.&lt;br /&gt;
-那其实, 我们也没必要再来次slow start了. 而是进入了拥塞避免阶段了, 这个叫做快速恢复.&lt;br /&gt;
-我说的比较粗, 细节还是要看rfc和协议栈实现, 但是大致的道理是这样的.&lt;br /&gt;
-现在, 我们回过头总结一下:&lt;br /&gt;
-协议栈的拥塞算法宏观上看是, slow start, 拥塞避免, 拥塞控制.&lt;br /&gt;
-而且目标是让状态机维持在拥塞避免这个状态附近.&lt;br /&gt;
-就到这里了.&lt;/p&gt;
-
-&lt;h2 id=&#34;sack-and-dsack&#34;&gt;SACK and DSACK&lt;/h2&gt;
-
-&lt;p&gt;看cool shell就够了, 其实很好理解.&lt;/p&gt;
-
 &lt;p&gt;#FAQ&lt;br /&gt;
 * What about TCP sequence number warp around&lt;br /&gt;
 PAWS use timestamp and RTT to solve this problem.&lt;br /&gt;
@@ -2155,12 +2012,6 @@ Nagle算法的初衷：避免发送大量的小包，防止小包泛滥于网络
 
 &lt;p&gt;CORK算法的初衷：提高网络利用率，理想情况下，完全避免发送小包，仅仅发送满包以及不得不发的小包。&lt;br /&gt;
 CORK的真正初衷是提高载荷率，提高网络利用率&lt;/p&gt;
-
-&lt;h2 id=&#34;tso&#34;&gt;TSO&lt;/h2&gt;
-
-&lt;p&gt;搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文,&lt;br /&gt;
-当然skb-&amp;gt;len得大于mss_now才有意义.&lt;br /&gt;
-tcp_set_skb_tso_segs&lt;/p&gt;
 
 &lt;h2 id=&#34;fixme&#34;&gt;FIXME&lt;/h2&gt;
 

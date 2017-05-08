@@ -15,7 +15,39 @@
       <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/entry/</guid>
-      <description>&lt;p&gt;Documentation/x86/entry_64.txt&lt;/p&gt;
+      <description>
+
+&lt;p&gt;Documentation/x86/entry_64.txt&lt;br /&gt;
+&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.groad.net/bbs/thread-3276-1-1.html&#34;&gt;选择内存屏障指令|alternative&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;fs and gs register&lt;br /&gt;
+For using in TLS, please check &lt;a href=&#34;http://wiki.osdev.org/Thread_Local_Storage#ABI&#34;&gt;OSDEV TLS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;#ifdef CONFIG_X86_64&lt;br /&gt;
+#define __percpu_seg            gs&lt;br /&gt;
+#define __percpu_mov_op         movq&lt;br /&gt;
+#else&lt;br /&gt;
+#define __percpu_seg            fs&lt;br /&gt;
+#define __percpu_mov_op         movl&lt;br /&gt;
+#endif&lt;/p&gt;
+
+&lt;p&gt;Steps to handle intterrupt&lt;/p&gt;
+
+&lt;p&gt;For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.&lt;br /&gt;
+For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.&lt;br /&gt;
+For more details on stack switching, please check the Figure 5-13. Stack Switching During an Interprivilege-Level Call&lt;br /&gt;
+For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures&lt;br /&gt;
+For TSS and TR, check 3a 7.2&lt;br /&gt;
+For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions&lt;/p&gt;
+
+&lt;h1 id=&#34;for-syscall&#34;&gt;For syscall&lt;/h1&gt;
+
+&lt;p&gt;Common path for syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
+just for vDSO syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
 </description>
     </item>
     
@@ -1463,6 +1495,36 @@ adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;
 我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.&lt;br /&gt;
 终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora&lt;br /&gt;
 之上.&lt;/p&gt;
+
+&lt;h1 id=&#34;intel-vt-x&#34;&gt;Intel VT-x&lt;/h1&gt;
+
+&lt;p&gt;VMCS manages transitons into and out of VMX non-root operation(VM entries and VM exits) as well as processor behavior&lt;br /&gt;
+in VMX non-root operation.&lt;br /&gt;
+ORGANIZATION OF VMCS DATA&lt;br /&gt;
+The VMCS data are organized into six logical groups:&lt;br /&gt;
+Guest-state area. Processor state is saved into the guest-state area on VM exits and loaded from there on VM entries.&lt;br /&gt;
+Host-state area. Processor state is loaded from the host-state area on VM exits.&lt;br /&gt;
+VM-exit control fields. These fields control VM exits.&lt;br /&gt;
+VM-execution control fields. These fields control processor behavior in VMX non-root operation. They determine in part the causes of VM exits.&lt;br /&gt;
+VM-entry control fields. These fields control VM entries.&lt;br /&gt;
+VM-exit information fields. These fields receive information on VM exits and describe the cause and the nature of VM exits. On some processors, these fields are read-only. 3&lt;/p&gt;
+
+&lt;p&gt;VMX NON-ROOT OPERATION&lt;br /&gt;
+INSTRUCTIONS THAT CAUSE VM EXITS&lt;br /&gt;
+Relative Priority of Faults and VM Exits&lt;br /&gt;
+Instructions That Cause VM Exits Unconditionally&lt;br /&gt;
+Instructions That Cause VM Exits Conditionally&lt;br /&gt;
+OTHER CAUSES OF VM EXITS&lt;/p&gt;
+
+&lt;p&gt;CHANGES TO INSTRUCTION BEHAVIOR IN VMX NON-ROOT OPERATION&lt;/p&gt;
+
+&lt;p&gt;VM ENTRIES&lt;/p&gt;
+
+&lt;p&gt;VM EXITS&lt;/p&gt;
+
+&lt;p&gt;VMX SUPPORT FOR ADDRESS TRANSLATION&lt;/p&gt;
+
+&lt;p&gt;APIC VIRTUALIZATION AND VIRTUAL INTERRUPTS&lt;/p&gt;
 
 &lt;h1 id=&#34;代码实现&#34;&gt;代码实现&lt;/h1&gt;
 

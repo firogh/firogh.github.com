@@ -1,0 +1,35 @@
+
+# Queue
+tcp_add_backlog
+tcp_prequeue:ucopy.prequeue
+tcp_copy_to_iovec:ucopy.msg,
+tcp_queue_rcv:sk->sk_receive_queue
+tcp_data_queue: ooo?
+
+sk_backlog_rcv=tcp_v4_do_rcv
+
+# What about the skbs in sk_receive_queue?
+sk→receive_queue contains processed TCP segments, which means that all the pro-
+tocol headers are stripped and data are ready to be copied to the user application.
+
+# When was the socket lock owned user?
+grep owned = 1, you will find tcp_ioctl/sendmsg/recvmsg() will call lock_sock().
+In tcp_recvmsg, the prequeue and sk_receive_queue will be processed.
+So we know that the owned is used to protect receive queue and prequeue.
+In other words, if owned = 1, we cannot queue skb in either receive queue and prequeue.
+That means only sk_backlog queue is the home for skb temporarily.
+
+# What does ucopy.task mean?
+ucopy.task was temporarily enabled in tcp_recvmsg in order to read more data after processing receive queue.
+It will be disabled in the same fuction. So go back to tcp_prequeue, we know if user need more data, then we queue new skb in ucopy.preueue otherwise not.
+In tcp_rcv_established(), the tp->ucopy.task == current indicats we are in process context.
+
+
+# Lock
+lock_sock_fast
+lock_sock_nested
+
+# steps of tcp_rcvmsg
+https://www.spinics.net/lists/newbies/msg14465.html
+[Best explnations of set_task_state to running in tcp_rcv_established, see eexplorer](http://bbs.chinaunix.net/forum.php?mod=viewthread&action=printable&tid=4114007)
+Even through you know above , I think you should also know if a task was scheduled with task state == RUNNING, the schedule will use put_prev_task_fair-> put_prev_entity->__enqueue_entity as prev->on_rq inpick_next_task_fair()

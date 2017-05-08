@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="3057">
+<meta itemprop="wordCount" content="2721">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/net/net/">
 
@@ -177,62 +177,10 @@
 <a href="http://www.tecmint.com/ipv4-and-ipv6-comparison/">What’s wrong with IPv4 and Why we are moving to IPv6</a><br />
 <a href="https://lwn.net/Articles/629155/">Improving Linux networking performance</a></p>
 
-<h1 id="network">Network</h1>
-
-<p>When we talk about network, what we talk about?<br />
+<p>The Feynman map of network, check <a href="https://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough">Thomas Graf&rsquo;s DevConf 2014 Kernel Networking Walkthrough</a><br />
+When we talk about network, what we talk about?<br />
 Transfer; Truely we are talking about transfer including three component:src, dst, channel.<br />
 Address has two properties: relation and scope.</p>
-
-<h1 id="4-3-ip-address">4.3 IP address</h1>
-
-<p>IPv6 wrl6<br />
-__ipv6_addr_type<br />
-ip6addrlbl_init_table<br />
-ip6_input or ip6_output<br />
-ipv6_addr_v4mapped<br />
-* 0:<br />
-1 ok IPV6_ADDR_LOOPBACK ::<sup>1</sup>&frasl;<sub>128</sub><br />
-2 ok IPV6_ADDR_ANY ::/128<br />
-3 ok IPV6_ADDR_MAPPED ::ffff:0:0/96<br />
-4 ? IPV6_ADDR_COMPATv4  0000::/96 ipgre_tunnel_xmit ddr_type &amp; IPV6_ADDR_COMPATv4) == 0 ; goto tx_error_icmp;<br />
-5 G?<br />
-* 0100::/64, NG, Used by CISCO<br />
-A Discard Prefix for IPv6<br />
-Discard-Only Address Block<br />
-<a href="https://tools.ietf.org/html/rfc6666">https://tools.ietf.org/html/rfc6666</a><br />
- Remote Triggered Black Hole (RTBH)<br />
-<a href="https://tools.ietf.org/html/rfc5635">https://tools.ietf.org/html/rfc5635</a><br />
-* 0200::/7,  NG, Deprecated<br />
-OSI NSAPs and IPv6<br />
-<a href="http://tools.ietf.org/html/rfc1888">http://tools.ietf.org/html/rfc1888</a><br />
-Internet Code Point (ICP) Assignments for NSAP Addresses<br />
-<a href="http://tools.ietf.org/html/rfc4548">http://tools.ietf.org/html/rfc4548</a><br />
-Interfaces between protocol layers<br />
-<a href="http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html">http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html</a><br />
-Network Service Access Point (NSAP): v4,v6?<br />
-<a href="http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point">http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point</a><br />
-* 0400::/6, NG, No information, maybe used as Global address see __ipv6_addr_type<br />
-* 0800::/5, NG, ditto<br />
-* (000, 111)x::/3, OK, unicasts. For more details please reference __ipv6_addr_type<br />
-1000::/4, OK, ditto<br />
-2000::/3, OK, Global Unicast,<br />
-2002::/16, OK, SIT, 6in4<br />
-<a href="http://tools.ietf.org/html/rfc3056">http://tools.ietf.org/html/rfc3056</a><br />
-2001::/32, OK, used in Default policy table for routing<br />
-2001:10::/28, OK, Ditto<br />
-* e000::/4, NG?, No information in google; but used as GU in and kernel by default.<br />
-* fc00::/7, OK,<br />
-IPV6_ADDR_UNICAST<br />
-* fe80::/10, OK,<br />
-IPV6_ADDR_LINKLOCAL<br />
-* fec0::/10, OK, But deprecated by RFC3879, used in kernel?<br />
-IPV6_ADDR_SITELOCAL<br />
-Deprecating Site Local Addresses<br />
-<a href="http://tools.ietf.org/html/rfc3879">http://tools.ietf.org/html/rfc3879</a><br />
-* ff00::/8, OK<br />
-IPV6_ADDR_MULTICAST<br />
-<a href="http://tools.ietf.org/html/rfc4291">http://tools.ietf.org/html/rfc4291</a><br />
-* addr not described in __ipv6_addr_type working as global unicast</p>
 
 <h2 id="什么是internet">什么是Internet</h2>
 
@@ -736,22 +684,6 @@ ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题l
 如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.<br />
 compound page</p>
 
-<h2 id="offload">offload</h2>
-
-<ul>
-<li>TSO in tcp_v4_connect<br />
-<a href="https://tejparkash.wordpress.com/2010/03/06/tso-explained/">TSO Explained</a><br />
-One Liner says: It is a method to reduce cpu workload of packet cutting in 1500byte and asking hardware to perform the same functionality.<br /></li>
-<li>GSO<br />
-<a href="http://thread.gmane.org/gmane.linux.network/37287">GSO: Generic Segmentation Offload</a><br />
-TSO = GSO_TCPV4<br />
-frags = sg I/O<br />
-frag_list<br />
-*GRO<br />
-napi -&gt; dev -&gt;inet-&gt;skb<br />
-<br /></li>
-</ul>
-
 <h1 id="inet">INET</h1>
 
 <p>现在我们来看具体的network stack的实现.<br />
@@ -803,8 +735,6 @@ icsk-&gt;icsk_af_ops<br /></li>
 是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos<br /></li>
 <li>packet_type &ndash; l3 rcv in ptype_all and ptype_base<br />
 pt_prev-&gt;func<br />
-<br />
-<br />
 <br /></li>
 </ul>
 
@@ -1114,9 +1044,7 @@ sk_filter<br />
 tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb<br />
 上面主要是和cork和nagle有关<br />
 完了<br />
-在tcp协议的5点基础属性, 后世对tcp做了很多优化!</p>
-
-<p>Details in l4.md<br />
+在tcp协议的5点基础属性, 后世对tcp做了很多优化!<br />
 #Network layer<br />
 ip_append_data 和ip_push_pending_frames弄frag_list<br />
 ip_push_pending_frames -&gt; __ip_make_skb &amp; ip_send_skb -&gt;ip_local_out<br />
@@ -1139,45 +1067,6 @@ Details in l3.md</p>
 <br /></li>
 </ul>
 
-<p>#Net initialization<br />
-start_kernel-&gt; parse_early_param irq timers softirq -&gt; rest_init(): kthread<br />
-{<br />
-    do_basic_setup()<br />
-    {<br />
-        driver_init<br />
-        sock_init<br />
-        do_initcalls()<br />
-        {<br />
-            net_dev_init: Initializing the Device Handling Layer<br />
-            {<br />
-                per-CPU<br />
-                proc<br />
-                sysfs<br />
-                ptype_base<br />
-                dst_init<br />
-                softirq: net_rx/tx_action<br />
-                dev_cpu_callback: CPU hotplug.<br />
-            }<br />
-        }<br />
-    }<br />
-    free_init_mem()<br />
-    run_init_process()<br />
-}</p>
-
-<h2 id="network-init">network init</h2>
-
-<p>inet_init()-&gt;ip_init()-&gt;ip_rt_init()-&gt;ip_fib_init()-&gt;fib_hash_init():create kmem_cache</p>
-
-<h2 id="net-device-init">net device init</h2>
-
-<ul>
-<li>net_dev_init<br /></li>
-<li>nic init<br />
-e100_init_module    pci_register_driver:构建结构    driver_regiser:注册到内核    really_probe()drv-&gt;probe:初始化。<br />
-vconfig add     regiser_vlan_device：构建结构    register_netdevice:注册到内核    dev-&gt;init():初始化<br />
-<br /></li>
-</ul>
-
 <h1 id="old-log">OLD log</h1>
 
 <h2 id="net">net</h2>
@@ -1196,25 +1085,6 @@ switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以�
 net_poll<br />
 napi<br />
 * What is Head-of-line blocking</p>
-
-<p>#Netlink<br />
-* Group<br />
-enum rtnetlink_groups<br />
-##What is netlink<br />
-Networking related kernel configuration and monitoring interfaces.<br />
-* IPC between kernel and user spacess process.<br />
-ioctl<br />
-* prarts<br />
-    libnl<br />
-    libnl-route<br />
-    libnl-genl<br />
-    libnl-nf</p>
-
-<ul>
-<li>How many parts does libnl-route has?<br />
-Address,  links, neighboring, routing, TC<br />
-<br /></li>
-</ul>
 
 <h2 id="need-patch">Need patch</h2>
 

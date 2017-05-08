@@ -15,7 +15,39 @@
       <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/entry/</guid>
-      <description>&lt;p&gt;Documentation/x86/entry_64.txt&lt;/p&gt;
+      <description>
+
+&lt;p&gt;Documentation/x86/entry_64.txt&lt;br /&gt;
+&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.groad.net/bbs/thread-3276-1-1.html&#34;&gt;选择内存屏障指令|alternative&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;fs and gs register&lt;br /&gt;
+For using in TLS, please check &lt;a href=&#34;http://wiki.osdev.org/Thread_Local_Storage#ABI&#34;&gt;OSDEV TLS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;#ifdef CONFIG_X86_64&lt;br /&gt;
+#define __percpu_seg            gs&lt;br /&gt;
+#define __percpu_mov_op         movq&lt;br /&gt;
+#else&lt;br /&gt;
+#define __percpu_seg            fs&lt;br /&gt;
+#define __percpu_mov_op         movl&lt;br /&gt;
+#endif&lt;/p&gt;
+
+&lt;p&gt;Steps to handle intterrupt&lt;/p&gt;
+
+&lt;p&gt;For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.&lt;br /&gt;
+For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.&lt;br /&gt;
+For more details on stack switching, please check the Figure 5-13. Stack Switching During an Interprivilege-Level Call&lt;br /&gt;
+For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures&lt;br /&gt;
+For TSS and TR, check 3a 7.2&lt;br /&gt;
+For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions&lt;/p&gt;
+
+&lt;h1 id=&#34;for-syscall&#34;&gt;For syscall&lt;/h1&gt;
+
+&lt;p&gt;Common path for syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
+just for vDSO syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
 </description>
     </item>
     
@@ -1167,7 +1199,8 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
 Perfbook&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://queue.acm.org/detail.cfm?id=2698990&#34;&gt;Scalability Techniques for Practical Synchronization Primitives&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf&#34;&gt;test-and-set&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf&#34;&gt;test-and-set&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://people.cs.clemson.edu/~mark/synch.html&#34;&gt;Synchronization Instructions&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;why-we-need-synchronization&#34;&gt;Why we need synchronization&lt;/h1&gt;
 
@@ -1243,42 +1276,6 @@ if you can not get a semaphore, your task will put itself on the wait queue, and
 up the semaphore is released.&lt;br /&gt;
 sleepable&lt;br /&gt;
 preemptable&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-barrier&#34;&gt;Memory barrier&lt;/h1&gt;
-
-&lt;h2 id=&#34;refernce&#34;&gt;Refernce&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
-Documentation/memory-barriers.txt&lt;/p&gt;
-
-&lt;h2 id=&#34;common&#34;&gt;Common&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping&lt;br /&gt;
-to ensure that the program executes as if all memory operations were performed in the order&lt;br /&gt;
-specified by the programmer (program order), so memory barriers are not necessary.&lt;br /&gt;
-However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor&lt;br /&gt;
-system, or memory mapped peripherals, out-of-order access may affect program behavior.&lt;br /&gt;
-For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
-
-&lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different&#34;&gt;The Linux kernel has a variety of different barriers that act at different&lt;/h2&gt;
-
-&lt;p&gt;levels:&lt;br /&gt;
-(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
-(&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
-(*) MMIO write barrier.&lt;/p&gt;
-
-&lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Does it work cast a variable to volatile?&lt;br /&gt;
-No, there is no efects on cast a variable to volatile.&lt;br /&gt;
-Because, access variable is before volatile cast! That means you&lt;br /&gt;
-still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
-Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
-&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
@@ -1343,28 +1340,7 @@ more details in lwn, lkd&lt;/p&gt;
 
 &lt;p&gt;vm的提出是为了解决。easy to use。&lt;br /&gt;
 1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。&lt;br /&gt;
-2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。&lt;br /&gt;
-##Page table&lt;br /&gt;
-mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))&lt;br /&gt;
-原来低12位里面存了flag啊!&lt;br /&gt;
-__pte(((phys_addr_t)page_nr &amp;lt;&amp;lt; PAGE_SHIFT) | massage_pgprot(pgprot));&lt;br /&gt;
-For vmalloc(), chechk here vmap_page_range_noflush()&lt;br /&gt;
-For kmap(), check kmap_init()&lt;br /&gt;
-&lt;a href=&#34;http://edsionte.com/techblog/archives/1966&#34;&gt;How to emulate the process of translate va to pa?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;copy-to-user&#34;&gt;copy_to_user&lt;/h2&gt;
-
-&lt;p&gt;not in kernel?&lt;br /&gt;
-read only?&lt;/p&gt;
-
-&lt;h2 id=&#34;flush-tlb-after-page-table-modification&#34;&gt;flush tlb after page table modification.&lt;/h2&gt;
-
-&lt;h2 id=&#34;direct-mapping-area&#34;&gt;Direct mapping area&lt;/h2&gt;
-
-&lt;p&gt;high_memory (-128UL &amp;lt;&amp;lt; 20)&lt;br /&gt;
-__get_free_pages()&lt;br /&gt;
-kmalloc()&lt;br /&gt;
-kmem_cache_alloc()/slab&lt;/p&gt;
+2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。&lt;/p&gt;
 
 &lt;h2 id=&#34;vmalloc&#34;&gt;Vmalloc&lt;/h2&gt;
 
@@ -1378,22 +1354,6 @@ struct vm_struct likes struct address_space, functionlly;&lt;br /&gt;
 struct vmap_area likes struct vm_area_struct.&lt;br /&gt;
 map_vm_area 页表映射&lt;br /&gt;
 the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!&lt;/p&gt;
-
-&lt;h3 id=&#34;vmalloc-coherence-with-vfree-after-vmalloc-sync-one&#34;&gt;Vmalloc coherence with vfree() after vmalloc_sync_one&lt;/h3&gt;
-
-&lt;p&gt;在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。&lt;br /&gt;
-deatils in vmalloc_sync_one() and vunmap_pte_range()&lt;br /&gt;
-只释放pte&lt;/p&gt;
-
-&lt;h2 id=&#34;persistent-kernel-mappings&#34;&gt;Persistent Kernel Mappings&lt;/h2&gt;
-
-&lt;p&gt;kmap(struct page *)&lt;br /&gt;
-How kmap works?&lt;br /&gt;
-    Check kmap_init(), later!&lt;/p&gt;
-
-&lt;h2 id=&#34;temporay-mappings-fixmaps&#34;&gt;Temporay Mappings(Fixmaps)&lt;/h2&gt;
-
-&lt;p&gt;kmap_atomic()&lt;/p&gt;
 
 &lt;p&gt;##Process virtual memory&lt;br /&gt;
 * struct vm_area_struct: The intervals of legal address are called &lt;em&gt;memory areas&lt;/em&gt; is permitted to access.&lt;br /&gt;

@@ -1,0 +1,44 @@
+---
+tags: [ kernel ] 
+layout: post
+date: 2014-12-28
+title: Linux memory management
+category: cs
+---
+
+All processes's page table(task_strcut pgd) was derived form init_mm's swapper_pg_dir which inited in native_pagetable_init(). #FIXME.
+
+##Page table
+mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
+原来低12位里面存了flag啊!
+__pte(((phys_addr_t)page_nr << PAGE_SHIFT) | massage_pgprot(pgprot));
+For vmalloc(), chechk here vmap_page_range_noflush()
+For kmap(), check kmap_init()
+[How to emulate the process of translate va to pa?](http://edsionte.com/techblog/archives/1966)
+
+
+## flush tlb after page table modification.
+
+## Direct mapping area
+high_memory (-128UL << 20)
+__get_free_pages()
+kmalloc()
+kmem_cache_alloc()/slab
+
+## Vmalloc
+map_vm_area 页表映射
+the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address! 
+
+### Vmalloc coherence with vfree() after vmalloc_sync_one
+在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
+deatils in vmalloc_sync_one() and vunmap_pte_range()
+只释放pte
+
+## Persistent Kernel Mappings
+kmap(struct page *)
+How kmap works? 
+	Check kmap_init(), later!
+
+## Temporay Mappings(Fixmaps)
+kmap_atomic()
+

@@ -161,14 +161,46 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1">
+<meta itemprop="wordCount" content="160">
 <meta itemprop="datePublished" content="2017-04-26">
 <meta itemprop="url" content="http://firoyang.org/cs/entry/">
 
 
 	  <div>
 		<article itemprop="articleBody" id="content">
-		   <p>Documentation/x86/entry_64.txt</p>
+		   
+
+<p>Documentation/x86/entry_64.txt<br />
+<a href="http://www.lenky.info/archives/2013/03/2245">对Linux x86-64架构上硬中断的重新认识</a><br />
+<a href="https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/">The Definitive Guide to Linux System Calls</a><br />
+<a href="http://www.groad.net/bbs/thread-3276-1-1.html">选择内存屏障指令|alternative</a></p>
+
+<p>fs and gs register<br />
+For using in TLS, please check <a href="http://wiki.osdev.org/Thread_Local_Storage#ABI">OSDEV TLS</a></p>
+
+<p>#ifdef CONFIG_X86_64<br />
+#define __percpu_seg            gs<br />
+#define __percpu_mov_op         movq<br />
+#else<br />
+#define __percpu_seg            fs<br />
+#define __percpu_mov_op         movl<br />
+#endif</p>
+
+<p>Steps to handle intterrupt</p>
+
+<p>For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.<br />
+For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.<br />
+For more details on stack switching, please check the Figure 5-13. Stack Switching During an Interprivilege-Level Call<br />
+For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures<br />
+For TSS and TR, check 3a 7.2<br />
+For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions</p>
+
+<h1 id="for-syscall">For syscall</h1>
+
+<p>Common path for syscalls<br />
+glibc -&gt; AT_SYSINFO-&gt; __kernel_vsyscall -&gt; sysenter/syscall/in0x80<br />
+just for vDSO syscalls<br />
+glibc -&gt; AT_SYSINFO_EHDR-&gt; vDSO elf</p>
 
 		</article>
 	  </div>
