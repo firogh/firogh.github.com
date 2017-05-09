@@ -260,23 +260,6 @@ with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
       <guid>http://firoyang.org/net/link/</guid>
       <description>
 
-&lt;p&gt;#data link layer&lt;br /&gt;
-##Reference&lt;br /&gt;
-* IEEE 802 suite&lt;br /&gt;
-IEEE 802.1—概述、体系结构和网络互连，以及网络管理和性能测量。&lt;br /&gt;
-IEEE 802.2—逻辑链路控制LLC。最高层协议与任何一种局域网MAC子层的接口。&lt;br /&gt;
-IEEE 802.3—CSMA/CD网络，定义CSMA/CD总线网的MAC子层和物理层的规范。&lt;br /&gt;
-IEEE 802.4—令牌总线网。定义令牌传递总线网的MAC子层和物理层的规范。&lt;br /&gt;
-IEEE 802.5—令牌环形网。定义令牌传递环形网的MAC子层和物理层的规范。&lt;br /&gt;
-IEEE 802.6—城域网。&lt;br /&gt;
-IEEE 802.7—宽带技术。&lt;br /&gt;
-IEEE 802.8—光纤技术。&lt;br /&gt;
-IEEE 802.9—综合话音数据局域网。&lt;br /&gt;
-IEEE 802.10—可互操作的局域网的安全。&lt;br /&gt;
-IEEE 802.11—无线局域网。&lt;br /&gt;
-IEEE 802.12—优先高速局域网(100Mb/s)。&lt;br /&gt;
-IEEE 802.13—有线电视(Cable-TV)。&lt;/p&gt;
-
 &lt;p&gt;##Common concepts&lt;br /&gt;
 * The link layer&lt;br /&gt;
 is the group of methods and communications protocols that only operate on the link that a host is physically connected to.&lt;/p&gt;
@@ -604,8 +587,7 @@ Internet protocol suite,是结网的策略方法核心.&lt;/p&gt;
 &lt;p&gt;The Internet protocol suite is the computer networking model and set of&lt;br /&gt;
 communications protocols used on the Internet and similar computer networks.&lt;/p&gt;
 
-&lt;p&gt;Network stack严格的表述是network protocol stack.&lt;br /&gt;
-通常简称&lt;a href=&#34;http://en.wikipedia.org/wiki/Protocol_stack&#34;&gt;protocol stack&lt;/a&gt;, 即协议栈&lt;br /&gt;
+&lt;p&gt;通常简称&lt;a href=&#34;http://en.wikipedia.org/wiki/Protocol_stack&#34;&gt;protocol stack&lt;/a&gt;, 即协议栈&lt;br /&gt;
 The protocol stack is an implementation of a computer networking protocol suite.&lt;br /&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Internet_protocol_suite&#34;&gt;Internet protocol suite &amp;ndash; TCP/IP&lt;/a&gt;就是一种&lt;a href=&#34;http://en.wikipedia.org/wiki/List_of_network_protocol_stacks&#34;&gt;protocol stack.&lt;/a&gt;&lt;/p&gt;
 
@@ -675,298 +657,15 @@ they are commonly imagined as layers in a stack of protocols.&lt;br /&gt;
 &lt;p&gt;&lt;a href=&#34;http://ccr.sigcomm.org/archive/1995/jan95/ccr-9501-clark.pdf&#34;&gt;The Design Philosophy of the DARPA Internet Protocols&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.cs.rice.edu/~eugeneng/teaching/s04/comp629/reviews/Cla88.txt&#34;&gt;Reviews from RICE edu&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://zoo.cs.yale.edu/classes/cs633/Reviews/Cla88.msl38.html&#34;&gt;Reviews of Michael S. Liu Yale&lt;/a&gt;&lt;br /&gt;
-我们在这里探讨的是通用的信息交换协议, 也就是说UDP, TCP, IP共有的性质, 之后我们会结合Stevens的&lt;br /&gt;
-书籍和linux 内核的实现, 去探讨这些协议具体的差异, 当然是偏重为什么导致这种差异.&lt;br /&gt;
-方法还是思考(意淫).&lt;br /&gt;
-我们还是从地址开始，&lt;br /&gt;
 Address formate: 有了地址我们就要有地址的具体格式如哪个街道，哪个小区几号楼几室。&lt;br /&gt;
 Route: 找到收信人, 计算机网络包括linker, network 和transportlayer&lt;br /&gt;
 Data formate: 接下来就是信封格式，对应头部。&lt;br /&gt;
 Reliability:发的信可能丢了，要在写一封吗？&lt;br /&gt;
-Detection of transmission errors:如信被人篡改了,如&lt;a href=&#34;http://www.iqiyi.com/dianshiju/20110608/3773df277f51d210.html&#34;&gt;浔阳楼宋江题反诗，梁山泊戴宗传假信&lt;/a&gt;&lt;br /&gt;
-这些都是信息交换常见的问题场景.还有一些和计算机相关的问题.&lt;br /&gt;
-Connection-oriented communication: in order and connect-wared&lt;br /&gt;
-Flow control&lt;br /&gt;
-Congestion control&lt;br /&gt;
-信息交换协议, 基本上就是解决这些问题.TCP, UDP, IP这些协议也全是为了解决这些问题.&lt;br /&gt;
-另外, 用户态用stream socket指代了connection-oriented, realiability等问题.&lt;br /&gt;
-是一个高度复杂的概念, 用户态可以通过sock的类型安排协议, 传输层和网络层都不是必须.&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-network-infrastructure&#34;&gt;Kernel network infrastructure&lt;/h1&gt;
-
-&lt;h2 id=&#34;skb-http-vger-kernel-org-davem-skb-html&#34;&gt;&lt;a href=&#34;http://vger.kernel.org/~davem/skb.html&#34;&gt;skb&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.skbuff.net/skbbasic.html&#34;&gt;Basic functions for sk_buff&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://vger.kernel.org/~davem/skb_data.html&#34;&gt;SKB data area handling&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;Things that need to get done in the Linux kernel networking&lt;/a&gt;&lt;br /&gt;
-现在poor network stack 基本功能已经实现了, 用户要在twitter上分享一个心机婊的自拍照.&lt;br /&gt;
-另外, 我认为心机婊还是非常可爱的一群人.协议栈接到用户态的数据后,&lt;br /&gt;
-内核要用一个buff存储照片, 好了把照片copy进去.我们走道了transport layer.&lt;br /&gt;
-我们要encapuslate一个poor transport header. 靠忘记在照片数据前面留点空间给头部了.&lt;br /&gt;
-可以遇见的往下走的网络层和linker也会遇到这问题, 留大点.&lt;br /&gt;
-每encapuslate都应该有一个pointer指向这个header, 便于下次加头部时候能&lt;br /&gt;
-推算((char *)old header pointer - new header len)出写入到buff的起始地址.&lt;br /&gt;
-同样我们也应该知道这个buffer的起始地址.&lt;br /&gt;
-当我们穿过协议栈时, 我们需要一个list成员, 把这个数据放到相应协议层处理队列上去.&lt;br /&gt;
-实际内存区域buff, 指向buff的各种表明位置的指针, 还有一个关联buff的list成员.&lt;br /&gt;
-如何组织他们?这里把实际的报文数据和管理相关的数据分开管理最合适了.&lt;br /&gt;
-就有了内核sk_buff这个结构了.&lt;/p&gt;
-
-&lt;p&gt;我们再来看看发包的过程,&lt;br /&gt;
-在申请发送数据的缓存区, 我们也要为管理数据sk_buff申请空间.&lt;br /&gt;
-我们已经设计好了, 不是吗? alloc_skb跟我们的想法一致.&lt;br /&gt;
-接下来, 我们为了不在吃苦头, 我们需要为各层留个header的空间.&lt;br /&gt;
-我们先来看看skb_reverve 和skb_put 这个两个函数都修改了tail这个成员&lt;br /&gt;
-那么这个data 和tail代表什么涵义呢? 代表实际有效数据的起始和结尾!&lt;br /&gt;
-这个语义非常重要, 必须理解记忆!&lt;br /&gt;
-我们如何知道改刘多少呢? 另外, 实际上我们先加头和先加数据都是可以的.&lt;br /&gt;
-读了上面的design philosophy你就应该知道, transport和network层原来&lt;br /&gt;
-是一个东西.对于头部大小的确定, 显然, 如果不是固定的大小,&lt;br /&gt;
-由不同协议自身来定使最好的, 像tcp 和ip这种时不时还毛出个option, 显然&lt;br /&gt;
-你是无法在最开始旧reserve出来空间大小的. 那copy用户态数据也要延迟了&amp;hellip;.&lt;br /&gt;
-ip_ufo_append_data函数中我们可以看到skb_reverve是为linker header留了空间.&lt;br /&gt;
-而udp和ip是通过skb_put来计算tail的偏移.&lt;br /&gt;
-skb_reserve的comment上面写明只能用在没有有效数据sk buff.&lt;br /&gt;
-现在, 我们看看skb_push与skb_put的比较语义研究.&lt;br /&gt;
-skb的data和tai标志有效数据的起始位置.&lt;br /&gt;
-skb_push关注data, skb_put关注tail. push和put都有往里放的涵义.&lt;br /&gt;
-push有promote 提升含义. 隐含扩大data的涵义.&lt;br /&gt;
-put是常见的放在什么上的涵义.是建立在已有数据的接触上, 显然skb_put就是&lt;br /&gt;
-做这样的事情, 放一个在旧的上之后增加tail&lt;br /&gt;
-好吧这算是意淫.我只想让你知道data和tail的语义非常重要.&lt;br /&gt;
-如果我们要是按照先添加报文header再添加数据, 就是一个个skb_put, copy操作.&lt;br /&gt;
-如果你是事前reserve了那就是skb_push.&lt;br /&gt;
-往前加是push, 后加是put, easy.&lt;br /&gt;
-真实的协议栈header数msg的添加, 会有很多不同的实现, 也就是put和push多种使用方法.&lt;br /&gt;
-就这样, 我门算是把头部和数据加到了skb中.&lt;br /&gt;
-有一个问题比如我们的照片太大了20MB, 而一个skb通常的内核肯定不能分除这么大那么.&lt;br /&gt;
-就有多个skb的来存储了.&lt;br /&gt;
-&lt;a href=&#34;http://people.sissa.it/~inno/pubs/skb.pdf&#34;&gt;Skbuffs - A tutorial&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://people.sissa.it/~inno/pubs/skb-reduced.pdf&#34;&gt;Network buffers The BSD, Unix SVR4 and Linux approaches&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://marc.info/?l=linux-netdev&amp;amp;m=115508038817177&amp;amp;w=2&#34;&gt;skb_shared_info&lt;/a&gt;&lt;br /&gt;
-This &amp;ldquo;shared info&amp;rdquo; (so called because it can be shared among copies of the skb&lt;br /&gt;
-within the networking code)  &amp;ndash;LDD3 17.10&lt;br /&gt;
-关于&lt;a href=&#34;http://stackoverflow.com/questions/10039744/difference-between-skbuff-frags-and-frag-list/&#34;&gt; frags 和 frag_list &lt;/a&gt; 看我的答案&lt;br /&gt;
-现在我们的skb 就填好了.&lt;br /&gt;
-有一个问题当你把skb 加到某个队列时, 你应该主义到.skb用的不是标准的kernel style list!&lt;br /&gt;
-而是&lt;br /&gt;
-struct sk_buff      *next;&lt;br /&gt;
-struct sk_buff      *prev;&lt;br /&gt;
-这就是传统c风格(名字不确定, 我这么叫)的链表.&lt;br /&gt;
-不用怀疑, 这里肯定有猫腻!&lt;br /&gt;
-1. 不需要pointer -&amp;gt; entry转化了&lt;br /&gt;
-2. skb的list操作多数需要返回entry, list_head是不支持的如skb_dqueue_tail.&lt;br /&gt;
-所以, 自己动手丰衣足食.&lt;br /&gt;
-在有了一个他填满poor network stack的报文后, 我们就可以做一些操作了.&lt;br /&gt;
-实际存报文的内存叫skb data.其他的名字head rom, tail rom, paged data, head data&lt;br /&gt;
-也应该知道.有了paged data整个结构看上去有点像章鱼, 所以有了head, 强行解释:-)&lt;br /&gt;
-dataref标识的仅仅head data共享的次数也就是skb_clone.&lt;br /&gt;
-而frags 是get_page, frag_list 是skb_get.&lt;br /&gt;
-内核的命名方式, 有时糟糕透了, 完全不符合:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;概念性or推理性的认知.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;skb-&amp;gt;data_len这个成员就非常不直观!他是paged-data的长度.&lt;br /&gt;
-data_len= len - (tail-data)&lt;br /&gt;
-难道, data到tail这段就不是数据了吗? 非常杀脑细胞.&lt;br /&gt;
-继续吐槽, skb_get,skb_put根本就不是一会事啊.&lt;br /&gt;
-还是kref_get/put看着顺眼.&lt;br /&gt;
-就好比标准库的strcpy, strlcpy, strncpy. 我们要看看内核这几个得到skb的函数using case.&lt;br /&gt;
-首先看明白kfree_skb结合上面的函数分析, 你就知道这几个函数基本区别了.&lt;br /&gt;
-了解这些函数的使用场景将成为, 本文的第二个亮点, 应为这以为着, 你讲对内核的数据流转&lt;br /&gt;
-过程非常清楚.本文的第一个亮点, 揭示了网络协议是如何创建的.&lt;br /&gt;
-本文还将有两个亮点!第三个是: 我将从内核提供的功能角度如napi, rps, netfilter这些角度.&lt;br /&gt;
-解释为什么内核这么实现这些功能, 起始这些和协议就没什么关系了.&lt;br /&gt;
- 第四个亮点, 我们将回到协议栈本身, 谈谈为什么linux内核网络栈是怎么实现的.&lt;br /&gt;
-现在是周日凌晨1点09距离周一还有23个小时, 哎.&lt;br /&gt;
-好, 我们开始探索协议栈的数据流也就是报文生命周期的问题.&lt;br /&gt;
-为了更好的理解协议栈的数据流walkthrough, 我们先看看skb_get/clone/copy, pskb_copy这几&lt;br /&gt;
-个函数的使用特征, 也就是什么时候该使用什么函数.&lt;br /&gt;
-先从最简答的skb_get开始, skb_get背后的技术&lt;a href=&#34;http://en.wikipedia.org/wiki/Reference_counting&#34;&gt;reference counting&lt;/a&gt;引用计数.&lt;br /&gt;
-严格说来, 引用计数不是一种synchronization方法! 对数据并发依然需要同步方法.&lt;br /&gt;
-引用计数, 最常用在内存对象的生命周期管理, 在c里面, 对象有三种周期, auto, static, allocate.&lt;br /&gt;
-引用计数就是管理allocate, 动态分配的heap上的内存. 引用计数, 保证数据的可访问.&lt;br /&gt;
-但是访问共享数据依然需要同步方法避免竞态的出现.&lt;br /&gt;
-所以skb_get, 使用场景readonly, 也就是不能修改报文的所有skb, skb data都不可以.&lt;br /&gt;
-一个错误的使用场景:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git show 18fa11efc279c20af5eefff2bbe814ca067
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;在dev_queue_xmit, 一进来就修改了skb-&amp;gt;mac_header in skb_reset_mac_header().&lt;br /&gt;
-接下来还有skb_update_prio(). 总之很多修改, 在skb_get之后, 再有两个以上的并发&lt;br /&gt;
-访问修改skb, 就是并发访问, 因为所有的skb成员mac_header priority都是共享数据啊!&lt;br /&gt;
-首先, 你使用skb_get就以为着你知道, 可定存在着另一个进程 or 中断会对这个skb进行访问.&lt;br /&gt;
-使用skb_get的情况就是, 你能肯定, 其他流程, 包括你这个流程没有修改skb的内容, or&lt;br /&gt;
-对并发访问做了良好的同步处理.显然后面这种并发的处理通常是不合适的, 一个skb的内容依靠&lt;br /&gt;
-获取锁的顺序, 显然是令人难以接收的. 我现在是4.0的代码,通过cscope只看到了87次skb_get&lt;br /&gt;
-的使用, 近35次是driver, net/irda占了30次, 另外net/nfc, net/llc占了13次,&lt;br /&gt;
-也就是说内核协议栈很少使用这个方法!我会把其他几个重点看下:&lt;br /&gt;
-net/netlink/af_netlink.c&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;if (skb_shared(p-&amp;gt;skb)) {
-    p-&amp;gt;skb2 = skb_clone(p-&amp;gt;skb, p-&amp;gt;allocation);
-} else {
-    p-&amp;gt;skb2 = skb_get(p-&amp;gt;skb);
-...
-netlink_broadcast_deliver(sk, p-&amp;gt;skb2)//这个函数修改了skb
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这段代码,如果被多个人共享, 显然要clone一个;反之, 到现在只有我们一个user.&lt;br /&gt;
-按照通常, 我们就直接修改了, 想想这样对吗?你直接改了, 那么别人也可以这么干.&lt;br /&gt;
-所以skb_get 第一种使用方法就是:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;如果不是共享的skb_get, 后直修改使用.
-如果是共享的, skb_clone!
-这么做的好处是减少了一次skb_clone, 只有在第二个人修改时才clone.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这是skb_get在修改的情况使用, 在这里我们使用的技巧是, 节省了一次clone的使用.&lt;br /&gt;
-我们在这里使用了skb_get, 却做了修改. 这有反于, 我门通常认识的skb_get的使用.&lt;br /&gt;
-但要记住这里不是并发访问!我们是可以修改的.为什么使用skb_get是为了在并发的情况&lt;br /&gt;
-节省一次skb_clone.&lt;br /&gt;
-貌似fast open很火啊&lt;br /&gt;
-net/ipv4/tcp_fastopen.c tcp_fastopen_create_child()这个函数:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;if (unlikely(skb_shared(skb)))
-    skb2 = skb_clone(skb, GFP_ATOMIC);
-    else
-            skb2 = skb_get(skb);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;使用了同样的技巧!&lt;br /&gt;
-同样代码出现在net/packet/af_packet.c tpacket_rcv()&lt;/p&gt;
-
-&lt;p&gt;第二种用法&lt;br /&gt;
-net/core/skbuff.c skb_clone_fraglist这个函数&lt;br /&gt;
-就是skb_get最原始的用法, 不修改这是保证对象存活.&lt;br /&gt;
-net/tipc/msg.h &amp;lt;&lt;tipc_skb_peek&gt;&amp;gt;, 也是这种用法.&lt;br /&gt;
-这种方法, 实际上是最为复杂, 因为他暗含着某处代码会把skb是放掉!&lt;br /&gt;
-就看到这里吧, 或许, 还有其他的方法.&lt;/p&gt;
-
-&lt;p&gt;再看skb_clone, 上面也涉及到了.还是看些对比的用法.&lt;br /&gt;
-tcp_transmit_skb这个函数:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;if (unlikely(skb_cloned(skb)))
-            skb = pskb_copy(skb, gfp_mask);
-    else
-            skb = skb_clone(skb, gfp_mask);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;用到了类似的skb_get的模式.&lt;br /&gt;
-skb_shared 很好理解users &amp;gt; 1 is true.&lt;br /&gt;
-skb_cloned 就有点复杂了:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;return skb-&amp;gt;cloned &amp;amp;&amp;amp;
-           (atomic_read(&amp;amp;skb_shinfo(skb)-&amp;gt;dataref) &amp;amp; SKB_DATAREF_MASK) != 1;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这里的问题是, 我们为什么不能通过skb-&amp;gt;cloned表明是否是cloned的skb, 我们知道&lt;br /&gt;
-skb_clone会n-&amp;gt;cloned = 1;把new oldskb都置cloned标志.&lt;br /&gt;
-这里还检测了dataref是否&amp;gt;1. 我们摘掉clone后dataref是被加1的, 那什么情况cloned有,&lt;br /&gt;
-但dataref不是&amp;lt; 2;那就是clone后一个报文kfree_skb了, kfree_skb虽然能释放一个clone出&lt;br /&gt;
-来的skb却对另一个clone的skb爱莫能助. 所以虽然, cloned标志位存在但clone实质已无;&lt;br /&gt;
-Got it?回到tcp_transmit_skb, 这里如果我们没有cloned 就clone一个如果cloneed.&lt;br /&gt;
-这是什么逻辑?这里的差异是否创造一个skb head data的副本.&lt;br /&gt;
-答案在这里&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/206211/focus=206215&#34;&gt;pskb_copy() in tcp_transmit_skb()&lt;/a&gt;&lt;br /&gt;
-我们仅从pskb_copy 和skb_clone函数的语义是不可能知道这个答案, 这超出了函数能表达的&lt;br /&gt;
-涵义范围, 此时我们只能了解整个函数栈的数据流图才行.&lt;br /&gt;
-tcp_transmit_skb我们要对skb 和skb data 都要修改, 这是目标.&lt;br /&gt;
-如果cloned我们对skb data修改势必造成早先cloned出来的skb corruption!可能里面的&lt;br /&gt;
-各种header指针不对了.在AF_PACKET这种情况就是, tcpdump希望收到原始的报文, 因为&lt;br /&gt;
-我们的retransmit是修改了skb data造成AF PACKET收到的将不是他希望的就报文, 有可能&lt;br /&gt;
-tcpdump收到的是一个修改一般的报文, 更糟.&lt;br /&gt;
-什么也不管直接pskb copy, consume掉就的skb, 是可以的.所以这里还是换汤不换药,为了&lt;br /&gt;
-节省一次pskb copy!&lt;br /&gt;
-这里我们发现了三条数据流, 发送, 重传, af packet, 下面会再次探索.&lt;br /&gt;
-所以这些skb_get/clone/copy, pskb用法:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;都是结合skb_cloned skb_shared一起用的, 当然不绝对如
-skb_get就可以用引用计数器那种. 具体怎么用还是要结合代码进行分析的!
-貌似skb_copy 和 pskb_copy, 应该是一个差不多的用法见skb_unshare这个函数.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;还有一个问题, skb_get和 skb_clone pskb_copy, 这三种算法如果重叠着用会出现什么问题?&lt;br /&gt;
-比如先skb_get了一下, 之后有clone了.是完全不相干的逻辑, 在skb_clone时考虑到这点所以&lt;br /&gt;
-调用的是atomic_set(&amp;amp;n-&amp;gt;users, 1);, 没有直接复制.&lt;/p&gt;
-
-&lt;p&gt;也差不多该分析, 协议栈的数据流图, 在这之前先挑重点总结下linux/skbuff.h里面的函数&lt;br /&gt;
-先整体分析下类:&lt;br /&gt;
-申请skb 空间: alloc_skb, build_skb, __napi_alloc_skb, __alloc_rx_skb&lt;br /&gt;
-frag fraglist相关:&lt;br /&gt;
-skb释放: kfree_skb, consume_skb等等&lt;br /&gt;
-协议相关的: vlan checksum, memcpy_from_msg等&lt;br /&gt;
-链表操作:&lt;br /&gt;
-操纵skb 和skb data: get clone copy put push&lt;br /&gt;
-skb成员赋值的操作: 比较多余, 可能比较工整写, 模块化.&lt;br /&gt;
-还有一些比较附在的操作函数, 在这里分析一下:&lt;br /&gt;
-* skb_pull&lt;br /&gt;
-和skb_push, 相对, 应该是拆包的时候用的.&lt;br /&gt;
-* __skb_trim: 重新设置了 len.不是坚守也可能变大.非线性什么不做, 给个警告.&lt;br /&gt;
-* ___pskb_trim: 考虑了paged data.&lt;br /&gt;
-* skb_header_pointer: 这个函数在smartqos里面用过, 主要就是考虑大nonlinear区的问题.&lt;br /&gt;
-用来在skb去一块数据, 如果数据大小在headlen里面最容易了, 直接返回data + offset.&lt;br /&gt;
-否则skb_copy_bits&lt;br /&gt;
-* skb_copy_bits: WARNING fraglist藏在skb_walk_frags里面.&lt;br /&gt;
-核心就是一个frags的for循环一点点小心翼翼的copy就行了.&lt;br /&gt;
-要注意这里有个kmap_atomic的操作!这是加深对page理解的千载难逢的机会.&lt;br /&gt;
-kmap_atomic如果是直接映射区的页表由cpu主动完成.从一个page里面copy东西的时候.&lt;br /&gt;
-低端页返回地址, 高端页映射到kmap_pte.之后开始copy.copy完了kunmap_atomic.&lt;br /&gt;
-这里的问题是为什么要在这里做这种映射?&lt;br /&gt;
-可能是用户态的高端page传到内核, &lt;strong&gt;ip_append_data里面的&lt;/strong&gt;skb_fill_page_desc&lt;br /&gt;
-会把page存到frags[i]里面.可能在进程上下文这些页面ok, 但是到了内核态切不是相关&lt;br /&gt;
-进程的上下文, 这时候高端页,的映射页表就不对了, 因为每个进程的页表是不同的, 所以&lt;br /&gt;
-要用kmap_atomic来一下.&lt;br /&gt;
-* page_address这个函数如果已经映射page_solt里面取, pas保证了多个vaddr 映射到paddr.&lt;br /&gt;
-继续看, 下面看三个非常复杂的三个函数, 好吧是因为我之前没看过.&lt;br /&gt;
-___pskb_trim, pskb_pull, pskb_expand_head;&lt;br /&gt;
-* 最核心的就是pskb_expand_head.&lt;br /&gt;
-先把他看了, 函数注释说sk_buff不变, 且返回后需要重新reload. 改的是skb 的head data.&lt;br /&gt;
-如何sk_buff shared BUG()!显然pskb是针对private non-shared, 如果针对shared改了那么&lt;br /&gt;
-别的执行流上sk_buff的成员都失效, 有可能coredump!所以直接BUG()了.&lt;br /&gt;
-还有nhead &amp;lt; 0 直接BUG, why? 因为下面的memcpy&lt;br /&gt;
-显示申请新空间, ok.之后旧的数据copy过来. ok&lt;br /&gt;
-之后是shinfo, 为了性能优化考了nr frags个, 屌.&lt;br /&gt;
-这里copy shinfo时dst是data+size, 这个size是slab的对应obj的size不是&lt;br /&gt;
-上面申请时的size为什么这么做? obj 的size 应该大于申请的size.&lt;br /&gt;
-这里是尽量利用所有空间了.更新下sk_buff相应成员OK了.&lt;br /&gt;
-期间还处理skb_cloned的情况为什么? shared直接BUG&lt;br /&gt;
-如果cloned则在多个sk_buff之间共享frags, skb_orphan_frags, 先把frags copy到现申请内核page&lt;br /&gt;
-之后put user page, 在把内核page装入frags, 在get 内核page.&lt;br /&gt;
-expand之后, 包括frags旧都是内核数据了.之后把旧的skb head data数据释放掉.&lt;br /&gt;
-也就是说, 为什么我们不能直接把用户的frags, fill到新的head data的shinfo呢?&lt;br /&gt;
-* skb_orphan_frags 大哥问号.&lt;br /&gt;
-反正expand后head 大了, frags 内核page了, frag list 也get了.&lt;br /&gt;
-* pskb_pull:我不看了, 函数注释很明确.&lt;br /&gt;
-     The function makes a sense only on a fragmented &amp;amp;sk_buff,&lt;br /&gt;
-       it expands header moving its tail forward and copying necessary&lt;br /&gt;
-       data from fragmented part.&lt;br /&gt;
-* pskb_trim:基本上看懂就是加上了paged 数据的处理&lt;br /&gt;
-* skb_unclone: pskb_expand_head(skb, 0, 0, pri);&lt;br /&gt;
-* skb_copy:之后全都线性了.  pskb_expand_head(skb, 0, 0, pri); identical to old data.&lt;br /&gt;
-其他的以后再看吧, 这些够用了.&lt;/p&gt;
-
-&lt;h2 id=&#34;fclone-fast-clone&#34;&gt;fclone &amp;ndash; fast clone&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=d179cd12928443f3ec29cfbc3567439644bd0afc&#34;&gt;NET Implement SKB fast cloning.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/140552/&#34;&gt;Fast SKB cloning, continued&lt;/a&gt;&lt;br /&gt;
-use in skb_clone function&lt;br /&gt;
-use case 1: tcpdump and network stack&lt;br /&gt;
-fclones-&amp;gt;fclone_ref 这就是引用, 用处见skb_clone&lt;br /&gt;
-skbuff_head_cache alloc的skb对应n-&amp;gt;fclone = SKB_FCLONE_UNAVAILABLE;&lt;br /&gt;
-* pskb_pull &amp;ndash; p abbrivated from oprivate&lt;br /&gt;
-* truesize &amp;ndash; len of sk_buff + head_len + frags + frag_list&lt;br /&gt;
-* data_len &amp;ndash; len of frags + frag_list&lt;br /&gt;
-* len &amp;ndash; head_len + frgas + frag_list&lt;/p&gt;
-
-&lt;p&gt;正文开始&lt;/p&gt;
+Detection of transmission errors:如信被人篡改了&lt;/p&gt;
 
 &lt;h1 id=&#34;linux-network-stack-workthrough&#34;&gt;Linux network stack workthrough&lt;/h1&gt;
 
-&lt;p&gt;skb的流向和socket有关skb就是在socket中流的.&lt;br /&gt;
-所以找到socket就行了.&lt;br /&gt;
-&lt;a href=&#34;http://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough&#34;&gt;DevConf 2014 Kernel Networking Walkthrough&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough&#34;&gt;DevConf 2014 Kernel Networking Walkthrough&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.slideshare.net/minibobo/linux-tcp-ip?related=1&#34;&gt;introduction to linux kernel tcp/ip ptocotol stack&lt;/a&gt;&lt;br /&gt;
 taobao的第5也说明了问题.&lt;br /&gt;
 这是通常的skb的流向. 就是在socket里面按着协议走, 包括tcp的重传.&lt;br /&gt;
@@ -984,9 +683,7 @@ atomic_inc(&amp;amp;skb-&amp;gt;users);为什么不是skb_get&lt;br /&gt;
 很多pptp协议就是这么干的.&lt;br /&gt;
 其实最经典还是pskb_copy和clone的那个场景!&lt;br /&gt;
 这个应该多积累, 我感觉挺重要的.&lt;br /&gt;
-&lt;a href=&#34;http://www.cubrid.org/blog/dev-platform/understanding-tcp-ip-network-stack/&#34;&gt;Understanding TCP/IP Network Stack &amp;amp; Writing Network Apps&lt;/a&gt;&lt;br /&gt;
-这篇文章的介绍很好.&lt;br /&gt;
-好吧我是有这个传统的很早以前, 我就喜欢这么搞&amp;hellip;.&lt;/p&gt;
+&lt;a href=&#34;http://www.cubrid.org/blog/dev-platform/understanding-tcp-ip-network-stack/&#34;&gt;Understanding TCP/IP Network Stack &amp;amp; Writing Network Apps&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;out&#34;&gt;out&lt;/h2&gt;
 
@@ -1060,609 +757,60 @@ ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_out
 1 NAPI has not netif_rx():input_pkt_queue.&lt;br /&gt;
 2 NAPI and Non-NAPI used different napi-&amp;gt;poll 决定本质上的区别。&lt;br /&gt;
 3 vortex_rx() 多，e100_rx_clean()多！这点可以看出不同优势来。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Need clean&lt;br /&gt;
-net_tx_action-&amp;gt;output_queue/每个设备的qdisc and  clear_bit__QDISC_STATE_SCHED qdisc_run add back&lt;br /&gt;
-__QDISC_STATE_SCHED是否加入softdata&lt;br /&gt;
-qdisc_restart: 如果队列有数据就返回大于零 继续减小weight_p&lt;br /&gt;
-__qdisc_run queue no data __QDISC_STATE_SCHED not set, only in this case!&lt;br /&gt;
-driver tx, stack xmit&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;h1 id=&#34;linux-network-technical-feature&#34;&gt;Linux network technical feature&lt;/h1&gt;
-
-&lt;p&gt;内核协议栈(包含底层设备链路层)提供了很多技术机制, 比如&lt;br /&gt;
-SG I/O, TSO, RPS, NAPI等等. 这些技术的目的都是什么呢?&lt;br /&gt;
-这个问题重要到, 如果你知道了他, 这些技术就不再那么高深么测了, 神秘感全无.&lt;br /&gt;
-最为重要的就是, 你再也不用为了记住这些技术而头疼了.&lt;br /&gt;
-首先协议栈本身, 就是完成信息交换这个简单的目的. 搞出那么多名堂来是为什么呢?&lt;br /&gt;
-就内核提供这些技术而言, 基本上都是为了提高性能!&lt;br /&gt;
-我严格区分性能提高, 功能实现. 虽然很多技术的疆界不是那么明晰.&lt;/p&gt;
-
-&lt;h2 id=&#34;sg-io&#34;&gt;SG IO&lt;/h2&gt;
-
-&lt;p&gt;如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!&lt;br /&gt;
-p_append_data&lt;br /&gt;
-这是设备的一个feature. 内核和协议栈只是小角色, 边角料.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/153666&#34;&gt;NETIF_F_FRAGLIST and NETIF_F_SG difference&lt;/a&gt;&lt;br /&gt;
-validate_xmit_skb()-&amp;gt;__skb_linearize()&lt;br /&gt;
-ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.&lt;br /&gt;
-如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.&lt;br /&gt;
-compound page&lt;/p&gt;
-
-&lt;h1 id=&#34;inet&#34;&gt;INET&lt;/h1&gt;
-
-&lt;p&gt;现在我们来看具体的network stack的实现.&lt;br /&gt;
-linux kernel的tcp/ip实现是有自己的名字的就叫INET!&lt;br /&gt;
-An implementation of the TCP/IP protocol suite for the LINUX operating system.&lt;br /&gt;
-INET is implemented using the  BSD Socket interface as the means of communication&lt;br /&gt;
-with the user level.&lt;/p&gt;
-
-&lt;h2 id=&#34;内核协议栈的代码可以分为&#34;&gt;内核协议栈的代码可以分为:&lt;/h2&gt;
-
-&lt;ol&gt;
-&lt;li&gt;协议相关, bsd socket也算是吧, qdisc也是.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;内核提供的基础架构skb&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;内核的优化rss, rps, gso, napi之类的.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;增强功能af_packet, netlink, netfilter, 不属于协议的, 也算不上内核的东西,只是&lt;br /&gt;
-一个外界的需求抓包哎, 防火墙之类的.&lt;br /&gt;
-接下来要看看具体的linux TCP/IP network stack的实现了.&lt;br /&gt;
-有些实现看似夹着协议的前缀如__ip_append_data实际上内核优化frags的体现, 不要眯了眼.&lt;br /&gt;
-但是, 通过这些隐含的功能去探索, 标注,理解代码却非常赞!&lt;/p&gt;
-
-&lt;h2 id=&#34;协议栈运行的本质&#34;&gt;协议栈运行的本质?&lt;/h2&gt;
-
-&lt;p&gt;出去一层层依据协议类型和参数&lt;a href=&#34;http://en.wikipedia.org/wiki/Encapsulation_(networking)&#34;&gt;Encapuslation&lt;/a&gt;&lt;br /&gt;
-进来一层层decapuslation 报文头部, 根据头部, 协议, 还有参数进行操作.&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
 
 &lt;h2 id=&#34;package-name-in-different-layer&#34;&gt;package name in different layer&lt;/h2&gt;
 
 &lt;p&gt;An individual package of transmitted data is commonly called a frame on the link layer, L2;&lt;br /&gt;
 a packet on the network layer; a segment on the transport layer; and a message on the application layer.&lt;/p&gt;
 
-&lt;h2 id=&#34;fixme-implemention-of-protocols&#34;&gt;FIXME Implemention of protocols&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;inet_create&lt;br /&gt;
-sock-&amp;gt;ops = inet_protosw-&amp;gt;ops = inet_stream_ops&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;proto&lt;em&gt;ops &amp;ndash; fops&lt;br /&gt;
-is a good name stand for all PF&lt;/em&gt;*, all 协议族, but sock_generic_ops is better 具体协议与BSD socket api的通用接口&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;proto, &amp;ndash; specific fs, like ext,  btfs in &lt;em&gt;inetsw&lt;/em&gt;&lt;br /&gt;
-sock的lab决定具体的slab, 如tcp_sock/udp_sock, 根本的发送方法tcp_sendmsg, 协议的真正实体!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;越来越具体&lt;br /&gt;
-BSD socket api -&amp;gt;proto_ops(sock type base)协议通用api -&amp;gt;proto (udp/tcp_prot)&lt;br /&gt;
-sys_bind -&amp;gt; inet_stream_ops -&amp;gt;inet_bind -&amp;gt;sk_prot-&amp;gt;bind(likely, is NULL)&lt;br /&gt;
-write-&amp;gt;inet_stream_ops-&amp;gt;sendmsg-&amp;gt;tcp_sendmsg&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inet_connection_sock_af_ops&lt;br /&gt;
-icsk-&amp;gt;icsk_af_ops&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;net_protocol &amp;ndash; l4 rcv in &lt;em&gt;inet_protos&lt;/em&gt;&lt;br /&gt;
-是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;packet_type &amp;ndash; l3 rcv in ptype_all and ptype_base&lt;br /&gt;
-pt_prev-&amp;gt;func&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;bsd-socket-layer&#34;&gt;BSD socket layer&lt;/h1&gt;
-
-&lt;p&gt;Details and skills in Stevens Unix network programming.&lt;br /&gt;
-我们现在开始探索linux 网络协议栈的socket layer.&lt;br /&gt;
-以socket()这个系统调用开始.&lt;br /&gt;
-我门首先要了解什么是socket. 就好像, 小时候拿两个纸杯中间用线连起来,&lt;br /&gt;
-模拟电话传消息一样. socket 起始也这么会事, 可以说socket也是一种&lt;br /&gt;
-communication protocol, 和network layer 一样地址就是最重要的, 也是第一位的.&lt;br /&gt;
-What is socket in wikipedia?&lt;br /&gt;
-A socket is one endpoint of a two-way communication link between two programs&lt;br /&gt;
-running on the network. An Internet socket is characterized by at least the following :&lt;br /&gt;
-Local socket address: Local IP address and port number&lt;br /&gt;
-Protocol: A transport protocol (e.g., TCP, UDP, raw IP, or others).&lt;br /&gt;
-Remote socket address, if connected to another socket.&lt;br /&gt;
-我们在用户态这头有endpoint, 套接字的一头. 还需要另外一头.&lt;br /&gt;
-没错!我们要找到另外一头. 怎么找? 比如你和小伙伴, 那么纸杯+线的就够了.&lt;br /&gt;
-如果你要给异地的情人 or 亲人通话, 那个破纸杯肯定不够了. 这时候你就需要真的电话了&lt;br /&gt;
-玩cs野战的时候, 对讲机就够了.所以说, 从通信手段上就决定了我们的另一头的位置.&lt;br /&gt;
-这样说有些本末倒置, 毕竟, 你是先有了说话的对象之后决定具体用什么方法.&lt;br /&gt;
-那在网络世界, 所谓的说话对象是什么呢? 其实是, network layers.&lt;br /&gt;
-正是layer, 才是网络世界的真正实体, 比如抓包你像和自己的linker层建立一个socket&lt;br /&gt;
-电话线, 用来私语.比如ping你想和另外一台主机的network 层眉目传情.&lt;br /&gt;
-最常见的就是应用层的信息交互, 也就是常见的tcp or udp socket.&lt;br /&gt;
-所以回头来看看我们的socket系统调用:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;int socket(int domain, int type, int protocol);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;你看到没有socket的第一个参数是叫domain, 不是狭隘的protocol协议族之类的!&lt;br /&gt;
-什么叫domain, 就是领域, 范围的意思, 这完全符合socket作为一个工具的性质!&lt;br /&gt;
-你要先确定你沟通的范围, man手册给出的例子, 注意这里是以AF开头, 明白了吧:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;       Name                Purpose                          Man page
-   AF_UNIX, AF_LOCAL   Local communication              unix(7)
-   AF_INET             IPv4 Internet protocols          ip(7)
-   AF_INET6            IPv6 Internet protocols          ipv6(7)
-   AF_IPX              IPX - Novell protocols
-   AF_NETLINK          Kernel user interface device     netlink(7)
-   AF_X25              ITU-T X.25 / ISO-8208 protocol   x25(7)
-   AF_AX25             Amateur radio AX.25 protocol
-   AF_ATMPVC           Access to raw ATM PVCs
-   AF_APPLETALK        AppleTalk                        ddp(7)
-   AF_PACKET           Low level packet interface       packet(7)
-   AF_ALG              Interface to kernel crypto API
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;AF_UNIX/LOCAL: 你在同一台电脑上的应用层通信.&lt;br /&gt;
-AF_NETLINK: 应用层和内核通信(linker, ip, tcp等多层, 甚至是非网络的内容).&lt;br /&gt;
-AF_APPLETALK: 这个主要是苹果的设备进行通信, 具体不了解.&lt;br /&gt;
-AF_PACKET: 这个就是dev_queue_xmit和netif_receive_skb照顾的接口, 应用层与linker层通信.&lt;br /&gt;
-AF_INET: 这个是应用层与internet网络上的主机进行通信, 范围很广,遍布互联网,多个层.&lt;br /&gt;
-现实中通信质量是有区别的, 就好比你是用上世界哔哔机, 大哥大还是现在android 苹果.&lt;br /&gt;
-socket的第2个参数, 就是确定通信质量的.&lt;br /&gt;
-       SOCK_STREAM     Provides sequenced, reliable, two-way, connection-based byte streams.&lt;br /&gt;
-            An out-of-band data transmission  mechanism  may  be supported.&lt;br /&gt;
-       SOCK_DGRAM      Supports datagrams (connectionless, unreliable messages of a fixed maximum length).&lt;br /&gt;
-       SOCK_SEQPACKET  Provides  a  sequenced,  reliable, two-way connection-based data transmission path&lt;br /&gt;
-            for datagrams of fixed maximum length; a consumer is required to read&lt;br /&gt;
-            an entire packet with each input system call.&lt;br /&gt;
-       SOCK_RAW        Provides raw network protocol access.&lt;br /&gt;
-       SOCK_RDM        Provides a reliable datagram layer that does not guarantee ordering.&lt;br /&gt;
-       SOCK_PACKET     Obsolete and should not be used in new programs; see packet(7).&lt;br /&gt;
-SOCK_RDM完全没有听过啊, 不过注意RDM表示reliable, 但是不代表有序ordering,&lt;br /&gt;
-也就是说, 包不会丢失有重传, 但收到顺序不保证.这里想说的是, 一个socket的各种性质是分开的.&lt;br /&gt;
-而这些性质就是所谓的通信质量! You buy a bog, 顺序反了就成a bog buy you.&lt;br /&gt;
-我见过的就是stream, dgram, raw三种.&lt;br /&gt;
-现在我们来探索下所谓的raw和stream, dgram到底有什么区别.这些都是非常基本的概念,&lt;br /&gt;
-之前都被我忽略掉了.&lt;br /&gt;
-man手册上 A raw socket receives or sends the raw datagram not including link level headers.&lt;br /&gt;
-加上对于af packet我们知道他是在dev_queue_xmit和netif_receive_skb处得到, 所以这个raw是相对来说.&lt;br /&gt;
-他包含了一些协议的头部, 但同时限于ip往上的头部.&lt;br /&gt;
-而stream和dgram. 看上去和dgram很像, 但raw可能收到重复的packet而dgram缺不会(就原始协议来讲)&lt;br /&gt;
-ping就是用的这种socket:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;为什么要用这种, 我说的协议的语义上.stream和dgram不行吗?&lt;br /&gt;
-原因是ping连接到的是icmp 他是在network层. 而另另外的stream 和dgram都是封装了&lt;br /&gt;
-transport layer的内容后直接到的network 层的ip, 我们没有办法访问到icmp协议.&lt;br /&gt;
-raw的另外一个特性, 就是允许跨国transport layer自己构建包.&lt;br /&gt;
-这让我想起了电影里面钻到电线里面的情节, 没错你的能力够你也可以.&lt;br /&gt;
-从没有保证这点看raw和dgram很像. 而dgram就是传输层的raw!&lt;br /&gt;
-下面我们来看看, 到底一个高质量的通信线路是什么样的, 具有什么性质.&lt;br /&gt;
-stream 是一个非常重要, 且牛x的概念, 我在I/O部分, 解释过.&lt;br /&gt;
-这里简单说一句, stream最牛b的地方在于他在数学上是有专门的定义!&lt;br /&gt;
-那么在这里stream 表示的是复合的概念, 对于tcp实现就是:&lt;br /&gt;
-connection-oriented, reliability, error-check, flow control, congestion control&lt;br /&gt;
-记住这五个概念这是所有高质量传输的共性.&lt;br /&gt;
-接下来简单的说一下.&lt;/p&gt;
-
-&lt;h2 id=&#34;connection-based&#34;&gt;connection-based&lt;/h2&gt;
-
-&lt;p&gt;到底什么是面向连接的网上只有wikipedia给的解释最合理, 其他的扯到了别的性质.&lt;br /&gt;
-两点: session and in order.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Session&lt;br /&gt;
-In computer science, in particular networking, a session is a semi-permanent&lt;br /&gt;
-interactive information interchange.&lt;br /&gt;
-session，中文经常翻译为会话，其本来的含义是指*有始有终*的一系列动作/消息&lt;br /&gt;
-&lt;a href=&#34;http://www.scottklement.com/rpg/socktut/overview.html&#34;&gt;Instance of tcp session in BSD socket&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.dummies.com/how-to/content/network-basics-tcp-session-establishment-handshaki.html&#34;&gt;TCP Session - Handshaking in protocol&lt;/a&gt;&lt;br /&gt;
-这个对应tcp的三次握手, 4次挥手,&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;in order&lt;br /&gt;
-涉及到的另外一个概念Virtul circuit&lt;br /&gt;
-A virtual circuit (VC) is a means of transporting data over a packet switched&lt;br /&gt;
-computer network in such a way that it appears as though there is a dedicated&lt;br /&gt;
-physical layer link between the source and destination end systems of this data.&lt;br /&gt;
-对应tcp 的接收队列, seq number&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;reliability&#34;&gt;Reliability&lt;/h2&gt;
-
-&lt;p&gt;sliding window&lt;br /&gt;
-ARQ(go back n)&lt;br /&gt;
-显然seq number这些也是需要的.&lt;/p&gt;
-
-&lt;h2 id=&#34;error-check&#34;&gt;error-check&lt;/h2&gt;
-
-&lt;p&gt;checksum&lt;/p&gt;
-
-&lt;h2 id=&#34;flow-control&#34;&gt;flow control&lt;/h2&gt;
-
-&lt;p&gt;qdisc&lt;/p&gt;
-
-&lt;h2 id=&#34;congestion-control&#34;&gt;congestion control&lt;/h2&gt;
-
-&lt;p&gt;cubic, reno这些.&lt;br /&gt;
-slow start&lt;/p&gt;
-
-&lt;p&gt;之于第三个socket()参数嘛, android还有国产天语阿里云和google nexus 6之分.&lt;br /&gt;
-socket的参数protocol不是指trnasport layer,而是domain的一个instance(ETH_P_IP)&lt;br /&gt;
-另外socket的第一个参数被称为domain而不是协议族, 暗含像PF_PACKET这种定义.&lt;br /&gt;
-但实际上PF_Packet只是一种socket, 参见man 7 packet.&lt;br /&gt;
-PF前缀这里体现了内核定义的混乱! 他不符合protocol layer的定义, 所以不是protocol!&lt;/p&gt;
-
-&lt;p&gt;介绍完socket()接口后我们进一步, 来看看这个socket()产生的具体&amp;rsquo;纸杯线&amp;rsquo;&lt;br /&gt;
-也就是所谓的sock, 文章的质量是不能降低, 不仅意味着, 不能吸引到读者更重要的是&lt;br /&gt;
-浪费了自己的时间. 所以再开始sock的探索前, 要明确我们要的是什么? 这很难.&lt;br /&gt;
-FIXME, 我不知道, 先看着吧.好吧先看workthough, 之后看下address, 就完了.就这么定了.&lt;br /&gt;
-显示alloc sock: sock_alloc 这和alloc_skb没什么本质差异.这个socket就是&lt;a href=&#34;http://movie.douban.com/subject/5308201/&#34;&gt;霸王的卵&lt;/a&gt;&lt;br /&gt;
-这里有个问题内核使用sockfs来完成socket结构的申请, 把sock和一个inode放到一起了.&lt;br /&gt;
-为什么? 这事为了使其它的read write close之类的也能对socket fd生效.&lt;br /&gt;
-要知道网络这几个接口, 脑袋是有反骨的, 死活没有融合到unix的哲学当中:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;一切皆文件
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;愣是多了几个socket, bin connect, accept才降服, open弱爆了.&lt;br /&gt;
-&lt;a href=&#34;http://isomerica.net/~dpn/socket_vfs.pdf&#34;&gt;Linux Sockets and the Virtual Filesystem&lt;/a&gt;&lt;br /&gt;
-这一句非常屌:　&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;sock-&amp;gt;type = type;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;申请完sock后就是, &lt;a href=&#34;http://en.wikipedia.org/wiki/Incarnation&#34;&gt;incarnation&lt;/a&gt; a sock, 这个需要dominator的帮助.&lt;br /&gt;
-domainator在内核叫net_proto_family, 也没什么错. 因为角度不同:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;struct net_proto_family __rcu *net_families[NPROTO] __read_mostly;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;通过sock_register注册一共三十几个全在这呢, cscope全能看到.这表明我们还在sock层.&lt;br /&gt;
-挑几个重要的:inet_create, netlink_create, unix_create, packet_create&lt;br /&gt;
-到现在你应该明白, 整个socket就是一个&lt;a href=&#34;http://movie.douban.com/subject/7051375/&#34;&gt;受肉仪式&lt;/a&gt;&lt;br /&gt;
-妈妈生孩子是受肉, 格里菲斯鲜红的贝黑利特也是.我们先看inet_create()&lt;br /&gt;
-这里用到了inetsw(和inetsw_array本质一样)是个链表数组表头是SOCK_RAW/STREAM/DGRAM/MAX&lt;br /&gt;
-这些, node是inet_protosw结构包含proto, type, protocol等.&lt;br /&gt;
-proto就是protocol对应的协议, 这个必须记住!&lt;br /&gt;
-struct proto_ops inet_stream_ops.这里是对应的sock的操作. 我们思考一下.&lt;br /&gt;
-感觉上我们只要有一个proto就够了, 为什么多了一个proto_ops为什么?&lt;br /&gt;
-我直观上认为proto 本身就是ops了!&lt;br /&gt;
-实际上这些proto_ops是proto的抽象, 中间层, 最终还是要调用proto, 如tcp_prot&lt;br /&gt;
-只能怪proto_ops名字起地不好.更好的名字是:&lt;br /&gt;
-proto_ops -&amp;gt; inet_ops(内核里真没这个名字)&lt;br /&gt;
-proto -&amp;gt; proto_ops&lt;br /&gt;
-算了.&lt;br /&gt;
-受肉开始:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;sock-&amp;gt;ops = answer-&amp;gt;ops;sock是socket, ops是proto_ops如inet_stream_ops
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;此时socket对应的是domain和type抽象结合的ops, 如inet_stream_ops. 这就是亮点.&lt;br /&gt;
-实际上是属于socket layer的ops!应为落脚点是stream/sockraw这些&lt;br /&gt;
-接下来申请真正的sock结构&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;sk = sk_prot_alloc(prot
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;交织的线&lt;br /&gt;
-socket -&amp;gt; sock&lt;br /&gt;
-proto_ops -&amp;gt; proto&lt;br /&gt;
-sock这个结构是真正属于domain的, 不同于socket. socket和sock是指针的关系.&lt;br /&gt;
-而sock和tcp/inet sock这些是千面神的关系, 一个本体.&lt;br /&gt;
-申请后就是处世化, 先是inet 层, 之后是具体的proto 如sk-&amp;gt;sk_prot-&amp;gt;init&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;tcp_v4_init_sock
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这是和协议相关的, 这里inet_connection_sock *icsk = inet_csk(sk);&lt;br /&gt;
-先获得tcp connect的属性的sock, 初始化这个ops:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;icsk-&amp;gt;icsk_af_ops = &amp;amp;ipv4_specific;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;我们详细看看, 这个函数的语义, icsk_af_ops这里指定了, 所谓的基于连接的&lt;br /&gt;
-socket的ops方法.这是什么语义呢? 或者说为什么来了个这个.&lt;br /&gt;
-为什么叫这个名字, 首先能确认的是icsk_af_ops都是和ip相关的也就是&amp;rdquo;地址&amp;rdquo;了.&lt;br /&gt;
-显然纵观tcp的5个属性只有icsk这个是和地址关系最为密切的!所以network层相关的&lt;br /&gt;
-放到这里ok!&lt;br /&gt;
-我们看到了一个熟悉的面孔tcp_transmit_skb() 就是skb_clone和pskb遇到的.&lt;br /&gt;
-这个函数调用了icsk-&amp;gt;icsk_af_ops-&amp;gt;queue_xmit=ip_queue_xmit&lt;br /&gt;
-这下子就全明白了, tcp的下面的疆界是icsk_af_ops!!!&lt;br /&gt;
-这也是ip的起始之地, 轮回的广场!&lt;br /&gt;
-我们来回忆一下整个受肉的过程.&lt;br /&gt;
-先是sockfs那里申请socket 拿到proto_ops.&lt;br /&gt;
-之后是申请sock, inet_sock初始化, tcp初始化和icsk-&amp;gt;icsk_af_ops = &amp;amp;ipv4_specific;&lt;br /&gt;
-完了.&lt;br /&gt;
-socket和inode放到一起.&lt;br /&gt;
-下面几个tcp/inet/icsk sock 一初始化就完了. 起始很简单.&lt;br /&gt;
-接下来, socket和fd关联下就完了, 这就是walkthrough啊:&lt;br /&gt;
-sock_map_fd这个函数是真正关联read和socket的!&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;sock_alloc_file 关联socket_file_ops到file!read就是这里取的.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;看下connect&lt;br /&gt;
-sock = sockfd_lookup_light(fd,&lt;br /&gt;
-完了, sock是socket.&lt;/p&gt;
-
-&lt;p&gt;看下read&lt;br /&gt;
-file-&amp;gt;f_op-&amp;gt;read_iter =sock_read_iter-&amp;gt; sock-&amp;gt;ops-&amp;gt;recvmsg&lt;br /&gt;
-其中struct socket *sock = file-&amp;gt;private_data;&lt;br /&gt;
-那么这个inode有毛用啊?可能是inode保存了, mode, u/gid为了权限吧.貌似这样.FIXME!&lt;br /&gt;
-好吧这样 bsd socket layer就结束了.&lt;br /&gt;
-显示申请socket 和inode 初始化proto_ops.&lt;br /&gt;
-申请sock附上proto, 之后是inet_sock, 再是具体协议相关的tcp_sock,&lt;br /&gt;
- 和icsk_af_ops = &amp;amp;ipv4_specific&lt;br /&gt;
-之后是file结构和对应socket_file_ops没了, 真的完了.&lt;br /&gt;
-换了raw 和icmp呢?kao,竟然就叫ping_prot, 这他妈逼格也太高了吧.&lt;br /&gt;
-直接通过socket_file_ops连接到了ping_v4_sendmsg 直接ipv4了&lt;br /&gt;
-收的化是用户态&amp;amp;sk-&amp;gt;sk_receive_queue. ping_recvmsg-&amp;gt;skb_recv_datagram&lt;br /&gt;
-底层是icmp_rcv-&amp;gt; icmp_pointers-&amp;gt;ping_rcv -&amp;gt;sock_queue_rcv_skb到sk_receive_queue&lt;br /&gt;
-ping可以用dgram和raw两种方法实现.&lt;br /&gt;
-看来这就是netstat看不到ping的原因.虽然不是端口&lt;br /&gt;
-发送的时候inet_sendmsg -&amp;gt; ping_get_port-&amp;gt;inet_num, 竟然是ping table比较ping的地址&lt;br /&gt;
-再看一言PF packet&lt;br /&gt;
-po的名字太恶心叫 p_sock 不好吗?&lt;br /&gt;
-        po-&amp;gt;prot_hook.func = packet_rcv;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    if (sock-&amp;gt;type == SOCK_PACKET)
-            po-&amp;gt;prot_hook.func = packet_rcv_spkt;
-
-    po-&amp;gt;prot_hook.af_packet_priv = sk;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这就是packet的真相, 实现的不错!&lt;/p&gt;
-
-&lt;p&gt;那么socket layer还有什么&lt;br /&gt;
-sk_backlog_rcv 是在!sock_owned_by_user(sk)调用的.貌似用户态在ioctl吧.&lt;br /&gt;
-暂时backlog 收包.那么l2tp_ip_recv 调sk_receive_skb-&amp;gt;他 做什么用呢?&lt;br /&gt;
-原来是所谓的l2tpcontrol报文啊.&lt;br /&gt;
-proto是l2tp_ip_prot&lt;br /&gt;
-也就是说sock 层可以暂存报文.&lt;br /&gt;
-没了&lt;br /&gt;
-感觉sock就是初始化sock, 之后收包找sock, 发包ping需要bind port就完了.&lt;br /&gt;
-收发包用什么队列还是proto自己说了算的.&lt;/p&gt;
-
 &lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Need clean&lt;br /&gt;
+net_tx_action-&amp;gt;output_queue/每个设备的qdisc and  clear_bit__QDISC_STATE_SCHED qdisc_run add back&lt;br /&gt;
+__QDISC_STATE_SCHED是否加入softdata&lt;br /&gt;
+qdisc_restart: 如果队列有数据就返回大于零 继续减小weight_p&lt;br /&gt;
+__qdisc_run queue no data __QDISC_STATE_SCHED not set, only in this case!&lt;br /&gt;
+driver tx, stack xmit&lt;/p&gt;
 
 &lt;h3 id=&#34;socket-lock&#34;&gt;socket lock&lt;/h3&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.spinics.net/lists/netdev/msg136306.html&#34;&gt;lock_sock or sock_hold&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.linuxfoundation.org/collaborate/workgroups/networking/socket_locks&#34;&gt;bh_lock_sock&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://www.linuxfoundation.org/collaborate/workgroups/networking/socket_locks&#34;&gt;bh_lock_sock&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 
-&lt;ul&gt;
-&lt;li&gt;FIXME sock-&amp;gt;pfmemealloc&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;FIXME sock-&amp;gt;pfmemealloc&lt;br /&gt;
 Yes, I only wanted to drop the packet if we were under pressure&lt;br /&gt;
 when skb was allocated. If we hit pressure between when skb was&lt;br /&gt;
 allocated and when __netdev_alloc_page is called,&lt;br /&gt;
-+in sk_filter&lt;br /&gt;
 &lt;a href=&#34;https://groups.google.com/forum/#!msg/linux_net/-YtWB66adxY/Qqm_y4U09IAJ&#34;&gt;netvm: Allow skb allocation to use PFMEMALLOC reserves&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;netvm: Allow skb allocation to use PFMEMALLOC reserves - gmane 08/14&lt;/a&gt;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+socket是跟协议族绑定的概念, 所以要用inet_create, netlink_create&lt;/p&gt;&lt;/li&gt;
 
-&lt;p&gt;socket是跟协议族绑定的概念, 所以要用inet_create, netlink_create&lt;/p&gt;
-
-&lt;ul&gt;
 &lt;li&gt;&lt;p&gt;FIXME inet_timewait_sock&lt;br /&gt;
 deal heavily loaded servers without violating the protocol specification&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;sk_set_memalloc&lt;br /&gt;
 SOCK_MEMALLOC, sock has feature mem alloc for free memory.&lt;br /&gt;
-只有到了sock层才能分辨, sock是否是memalloc的.&lt;br /&gt;
-sk_filter&lt;br /&gt;
-在socket layer, 我们看到我们有linker以上的收发包的能力, 内核栈还是很灵活的.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+只有到了sock层才能分辨, sock是否是memalloc的.&lt;/p&gt;&lt;/li&gt;
 
-&lt;p&gt;下面进入到核心tcp 和 ip协议.&lt;br /&gt;
-#Transport layer&lt;br /&gt;
-不涉及具体的协议内容:), 只是看看内核都做了哪些优化, 变种特工.&lt;br /&gt;
-tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb&lt;br /&gt;
-上面主要是和cork和nagle有关&lt;br /&gt;
-完了&lt;br /&gt;
-在tcp协议的5点基础属性, 后世对tcp做了很多优化!&lt;br /&gt;
-#Network layer&lt;br /&gt;
-ip_append_data 和ip_push_pending_frames弄frag_list&lt;br /&gt;
-ip_push_pending_frames -&amp;gt; __ip_make_skb &amp;amp; ip_send_skb -&amp;gt;ip_local_out&lt;br /&gt;
-把&amp;amp;sk-&amp;gt;sk_write_queue上的数据最后编程skb链表变成了, 还skb pull掉了潜在的ip 头部&lt;br /&gt;
-第一个skb-&amp;gt;frag_list的成员. 用的不太多啊.&lt;br /&gt;
-ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&lt;br /&gt;
-否则就生成一串skb挂到&amp;amp;sk-&amp;gt;sk_write_queue上,&lt;br /&gt;
-Details in l3.md&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;first_device 用途？&lt;br /&gt;
+subsys 在前, device在后.&lt;/p&gt;&lt;/li&gt;
 
-&lt;h1 id=&#34;data-link-layer&#34;&gt;Data link layer&lt;/h1&gt;
-
-&lt;p&gt;Details in l2.md&lt;/p&gt;
-
-&lt;h1 id=&#34;physical-layer-phy&#34;&gt;Physical layer &amp;ndash; PHY&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Physical Coding Sublayer&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Physical Medium Attachment Sublayer&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Physical Medium Dependent Sublayer&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;old-log&#34;&gt;OLD log&lt;/h1&gt;
-
-&lt;h2 id=&#34;net&#34;&gt;net&lt;/h2&gt;
-
-&lt;p&gt;*first_device 用途？&lt;br /&gt;
-subsys 在前, device在后.&lt;br /&gt;
-* What is bridge?&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;What is bridge?&lt;br /&gt;
 linux bridge&lt;br /&gt;
 netdev_rx_handler_register(dev, br_handle_frame, p);&lt;br /&gt;
 __netif_receive_skb -&amp;gt; rx_handler=br_handle_frame&lt;br /&gt;
 and generic concept: hub, switch?&lt;br /&gt;
 hub: layer 1, bradcast, exclusive share, 报文可被侦听.&lt;br /&gt;
 switch: layer 2,  mac port route, CAM table in linux bridge module!&lt;br /&gt;
-switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以是layer层技术.&lt;br /&gt;
-* What is the type in ip link?&lt;br /&gt;
-net_poll&lt;br /&gt;
-napi&lt;br /&gt;
-* What is Head-of-line blocking&lt;/p&gt;
+switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以是layer层技术.&lt;/p&gt;&lt;/li&gt;
 
-&lt;h2 id=&#34;need-patch&#34;&gt;Need patch&lt;/h2&gt;
+&lt;li&gt;&lt;p&gt;What is Head-of-line blocking&lt;/p&gt;&lt;/li&gt;
 
-&lt;p&gt;skbedit action&lt;br /&gt;
-cgroup classifier&lt;br /&gt;
-tun/tap dev&lt;br /&gt;
-gre tunnel dev&lt;br /&gt;
-tc classifier/action&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Linux net device</title>
-      <link>http://firoyang.org/net/netdevice/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/netdevice/</guid>
-      <description>
-
-&lt;h1 id=&#34;common-interface-felling&#34;&gt;Common Interface felling&lt;/h1&gt;
-
-&lt;h2 id=&#34;no-driver-tg3&#34;&gt;No driver tg3&lt;/h2&gt;
-
-&lt;p&gt;I remove all kernel 4.0  moduls that ip ad just only output lo interface info.&lt;/p&gt;
-
-&lt;h2 id=&#34;hiwifi&#34;&gt;Hiwifi&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Disable network(netifd) in hiwifi openwrt&lt;br /&gt;
-root@Hiwifi:/# ip ad&lt;br /&gt;
-1: lo: &lt;LOOPBACK&gt; mtu 16436 qdisc noop state DOWN&lt;br /&gt;
-link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00&lt;br /&gt;
-2: eth2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-3: ra0: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
-link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-4: sit0: &lt;NOARP&gt; mtu 1480 qdisc noop state DOWN&lt;br /&gt;
-link/sit 0.0.0.0 brd 0.0.0.0&lt;br /&gt;
-5: gre0: &lt;NOARP&gt; mtu 1476 qdisc noop state DOWN&lt;br /&gt;
-link/gre 0.0.0.0 brd 0.0.0.0&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Enable network(netifd) in hiwifi openwrt&lt;br /&gt;
-1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 16436 qdisc noqueue state UNKNOWN&lt;br /&gt;
-link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00&lt;br /&gt;
-inet 127.0.0.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;8&lt;/sub&gt; scope host lo&lt;br /&gt;
-inet6 ::&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;128&lt;/sub&gt; scope host&lt;br /&gt;
-   valid_lft forever preferred_lft forever&lt;br /&gt;
-2: eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UNKNOWN qlen 1000&lt;br /&gt;
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-inet6 fe80::d6ee:7ff:fe07:75c2/64 scope link&lt;br /&gt;
-   valid_lft forever preferred_lft forever&lt;br /&gt;
-3: ra0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast master br-lan state UNKNOWN qlen 1000&lt;br /&gt;
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-4: sit0: &lt;NOARP&gt; mtu 1480 qdisc noop state DOWN&lt;br /&gt;
-link/sit 0.0.0.0 brd 0.0.0.0&lt;br /&gt;
-5: gre0: &lt;NOARP&gt; mtu 1476 qdisc noop state DOWN&lt;br /&gt;
-link/gre 0.0.0.0 brd 0.0.0.0&lt;br /&gt;
-6: br-lan: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP&lt;br /&gt;
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-inet 10.1.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;24&lt;/sub&gt; brd 10.1.1.255 scope global br-lan&lt;br /&gt;
-inet6 fe80::d6ee:7ff:fe07:75c2/64 scope link&lt;br /&gt;
-   valid_lft forever preferred_lft forever&lt;br /&gt;
-7: eth2.1@eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue master br-lan state UP&lt;br /&gt;
-link/ether d4:ee:07:07:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-8: eth2.2@eth2: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP&lt;br /&gt;
-link/ether d4:ee:07:07:75:c3 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-inet 192.168.199.&lt;sup&gt;223&lt;/sup&gt;&amp;frasl;&lt;sub&gt;24&lt;/sub&gt; brd 192.168.199.255 scope global eth2.2&lt;br /&gt;
-inet6 fe80::d6ee:7ff:fe07:75c3/64 scope link&lt;br /&gt;
-   valid_lft forever preferred_lft forever&lt;br /&gt;
-9: ra1: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
-link/ether d6:ee:07:04:75:c2 brd ff:ff:ff:ff:ff:ff&lt;br /&gt;
-10: apcli0: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN qlen 1000&lt;br /&gt;
-link/ether d6:ee:07:05:75:c2 brd ff:ff:ff:ff:ff:ff&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Why can I receive ethernet frames bigger than my current MTU size?&lt;br /&gt;
+&lt;a href=&#34;http://serverfault.com/questions/749110/why-can-i-receive-ethernet-frames-bigger-than-my-current-mtu-size&#34;&gt;http://serverfault.com/questions/749110/why-can-i-receive-ethernet-frames-bigger-than-my-current-mtu-size&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;p&gt;#Bridging&lt;br /&gt;
-* A bridge behaves like a virtual network switch, 一样.&lt;br /&gt;
-Bridging is a router using MAC address at L2 in essence.&lt;br /&gt;
-A bridge transparently relays traffic between multiple network interfaces.&lt;br /&gt;
-In plain English this means that a bridge connects two or more physical Ethernets together to form one bigger (logical) Ethernet.&lt;/p&gt;
-
-&lt;h2 id=&#34;spanning-tree-protocol-rapid-stp-multiple-stp&#34;&gt;Spanning tree protocol(Rapid STP,Multiple STP)&lt;/h2&gt;
-
-&lt;p&gt;the algorithm is not executed on a single host that later distributes the result to all the others;&lt;br /&gt;
-instead, this is a distributed protocol.&lt;/p&gt;
-
-&lt;h2 id=&#34;bpud-bridge-protocol-data-units&#34;&gt;BPUD Bridge protocol data units&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Configuration BPDU&lt;br /&gt;
-Used to define the loop-free topology.&lt;br /&gt;
-Topology Change Notification (TCN) BPDU&lt;br /&gt;
-Used by a bridge to notify the root bridge about a detected topology change.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;BPDU Aging&lt;br /&gt;
-On a stable network, the time depends mainly on how loaded the bridges are and how fast they can process BPDUs.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Root Bridge&lt;br /&gt;
-The root bridge is the only bridge that generates BPDUs&lt;br /&gt;
-The root bridge makes sure each bridge in the network comes to know about a topology change when one occurs&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Designated Bridges&lt;br /&gt;
-While each tree has only one root bridge, there is one designated bridge for each LAN,&lt;br /&gt;
-which becomes the bridge all hosts and bridges on the LAN use to reach the root.&lt;br /&gt;
-The designated bridge is chosen by determining which bridge on the LAN has the lowest path cost to the root bridge.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Bridge Port&lt;br /&gt;
-While root ports lead toward the root of the tree (i.e., the root bridge), designated ports lead toward the leaves.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;function&#34;&gt;Function&lt;/h2&gt;
-
-&lt;p&gt;Rassive learning&lt;br /&gt;
-Flooding&lt;br /&gt;
-Aging&lt;br /&gt;
-Bridging Loops&lt;br /&gt;
-Switch:&lt;/p&gt;
-
-&lt;h2 id=&#34;details&#34;&gt;Details&lt;/h2&gt;
-
-&lt;p&gt;newe_bridge_dev() create net_device and net_bridge.&lt;/p&gt;
-
-&lt;h1 id=&#34;vlan&#34;&gt;vlan&lt;/h1&gt;
-
-&lt;p&gt;Vlans are a way to split up a layer2 broadcasting domain, VLANs allow you to create multiple separated networks with only a single switch.&lt;br /&gt;
-In a vlan-capable network there are 2 types of connections : &amp;ldquo;access&amp;rdquo; connections and &amp;ldquo;trunk&amp;rdquo; connections&lt;br /&gt;
-Vlan packet&lt;/p&gt;
-
-&lt;h2 id=&#34;vlan-packet&#34;&gt;Vlan packet&lt;/h2&gt;
-
-&lt;p&gt;Preamble 56 alternating bits | SFD10101011 | dst mac | src mac | TPID 0x8100 | TCI:PCP DEI VID| Ether type 0x86DD ipv6 &amp;hellip;|CRC FCS&lt;/p&gt;
-
-&lt;h2 id=&#34;802-1q-vlan-header&#34;&gt;802.1Q/Vlan header&lt;/h2&gt;
-
-&lt;p&gt;TPID is the same as 0x86DD just a Ether type 0x8100  | PCP 3bis  DEI 1bit VID 12bis&lt;/p&gt;
-
-&lt;h2 id=&#34;access-connection&#34;&gt;Access connection&lt;/h2&gt;
-
-&lt;p&gt;An access connection looks like a normal connection to an ethernet switch,&lt;br /&gt;
-only that switch will only forward your packets within the same vlan, so they will not be able to reach ports that are in a different vlan.&lt;br /&gt;
-For access ports, the switch will add (or overwrite) this tag value on any incoming(it means transfer out of host) packet before forwarding&lt;/p&gt;
-
-&lt;h2 id=&#34;trunk-connnection&#34;&gt;Trunk connnection&lt;/h2&gt;
-
-&lt;p&gt;&amp;ldquo;Trunk&amp;rdquo; ports can communicate with multiple vlans, but you need to send special packets that contain&lt;br /&gt;
-both the packet and an indication in what vlan they are to be forwarded.&lt;br /&gt;
-For trunk ports, the value is supposed to be present. If it is not, the value of the &amp;ldquo;native vlan&amp;rdquo; will be added.&lt;/p&gt;
-
-&lt;h2 id=&#34;split-up-a-layer2-broadcasting-domain&#34;&gt;Split up a layer2 broadcasting domain&lt;/h2&gt;
-
-&lt;p&gt;vlan 什么都别想, 你总的有个vlan吧. 对上来就创建一个vlan-device.&lt;br /&gt;
-vconfig add eth0 vid&lt;br /&gt;
-for trunk routing between the different vlans we need ip_forward&lt;/p&gt;
-
-&lt;h2 id=&#34;details-of-implemention&#34;&gt;Details of implemention&lt;/h2&gt;
-
-&lt;p&gt;net/8021q/&lt;/p&gt;
-
-&lt;h3 id=&#34;initialize&#34;&gt;initialize&lt;/h3&gt;
-
-&lt;p&gt;vlan_proto_init()&lt;br /&gt;
-这个函数最重要的是映射了iocctl函数， 因为接下来的所有操作都要用到ioctl。&lt;/p&gt;
-
-&lt;h3 id=&#34;application&#34;&gt;application&lt;/h3&gt;
-
-&lt;p&gt;vconfig eth0 1&lt;br /&gt;
-vlan_ioctl_handler()-&amp;gt;register_vlan_device():&lt;br /&gt;
-alloc net_device.&lt;br /&gt;
-vlan_setup()函数非常重要，设置dev-&amp;gt;priv_flags 为 802.1q！tx queue 为0.&lt;br /&gt;
-设置open函数为vlan_dev_open;&lt;br /&gt;
-register_vlan_dev(）把这个设备注册到内核。&lt;/p&gt;
 </description>
     </item>
     
@@ -1778,12 +926,19 @@ fib_info:route info&lt;br /&gt;
 fib_config:&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;add new rule&lt;br /&gt;
 iproute2 &amp;hellip;-&amp;gt;inet_rtm_newroute()-&amp;gt;fib_new_table()-&amp;gt;fib_hash_table()&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Multi-time line&lt;br /&gt;
-fib_create_info(): create a fib_info&lt;/p&gt;
-
-&lt;h2 id=&#34;netfilter&#34;&gt;Netfilter&lt;/h2&gt;&lt;/li&gt;
+&lt;li&gt;Multi-time line&lt;br /&gt;
+fib_create_info(): create a fib_info&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
+
+&lt;h1 id=&#34;send&#34;&gt;send&lt;/h1&gt;
+
+&lt;p&gt;ip_append_data 和ip_push_pending_frames弄frag_list&lt;br /&gt;
+ip_push_pending_frames -&amp;gt; __ip_make_skb &amp;amp; ip_send_skb -&amp;gt;ip_local_out&lt;br /&gt;
+把&amp;amp;sk-&amp;gt;sk_write_queue上的数据最后编程skb链表变成了, 还skb pull掉了潜在的ip 头部&lt;br /&gt;
+第一个skb-&amp;gt;frag_list的成员. 用的不太多啊.&lt;br /&gt;
+ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&lt;br /&gt;
+否则就生成一串skb挂到&amp;amp;sk-&amp;gt;sk_write_queue上,&lt;/p&gt;
 </description>
     </item>
     
@@ -1862,6 +1017,21 @@ For every ack packet received, the window slides by one packet (logically) to tr
 &lt;p&gt;Error &amp;ndash;  checksum, the transport protocol may check that the data is not corrupted&lt;/p&gt;
 
 &lt;h1 id=&#34;connection-oriented-communications&#34;&gt;Connection-oriented communications&lt;/h1&gt;
+
+&lt;p&gt;到底什么是面向连接的网上只有wikipedia给的解释最合理, 其他的扯到了别的性质.&lt;br /&gt;
+两点: session and in order.&lt;br /&gt;
+* Session&lt;br /&gt;
+In computer science, in particular networking, a session is a semi-permanent&lt;br /&gt;
+interactive information interchange.&lt;br /&gt;
+&lt;a href=&#34;http://www.scottklement.com/rpg/socktut/overview.html&#34;&gt;Instance of tcp session in BSD socket&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.dummies.com/how-to/content/network-basics-tcp-session-establishment-handshaki.html&#34;&gt;TCP Session - Handshaking in protocol&lt;/a&gt;&lt;br /&gt;
+这个对应tcp的三次握手, 4次挥手,&lt;br /&gt;
+* in order&lt;br /&gt;
+涉及到的另外一个概念Virtul circuit&lt;br /&gt;
+A virtual circuit (VC) is a means of transporting data over a packet switched&lt;br /&gt;
+ computer network in such a way that it appears as though there is a dedicated&lt;br /&gt;
+physical layer link between the source and destination end systems of this data.&lt;br /&gt;
+对应tcp 的接收队列, seq number&lt;/p&gt;
 
 &lt;h2 id=&#34;handshak&#34;&gt;Handshak&lt;/h2&gt;
 
@@ -2031,6 +1201,7 @@ tcp_retransmiter_timer()&amp;hellip;-&amp;gt;tcp_transmit_skb()&lt;br /&gt;&lt;/
 tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;tcp_v4_rcv&lt;br /&gt;
 &lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/85613/focus=85614&#34;&gt;skb-&amp;gt;dev = NULL;&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>

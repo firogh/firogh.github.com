@@ -1,0 +1,115 @@
+
+* inet_create
+sock->ops = inet_protosw->ops = inet_stream_ops
+* proto_ops -- fops 
+is a good name stand for all PF_*, all 协议族, but sock_generic_ops is better 具体协议与BSD socket api的通用接口
+* proto, -- specific fs, like ext,  btfs in *inetsw*
+sock的lab决定具体的slab, 如tcp_sock/udp_sock, 根本的发送方法tcp_sendmsg, 协议的真正实体!
+* 越来越具体
+BSD socket api ->proto_ops(sock type base)协议通用api ->proto (udp/tcp_prot)
+sys_bind -> inet_stream_ops ->inet_bind ->sk_prot->bind(likely, is NULL)
+write->inet_stream_ops->sendmsg->tcp_sendmsg
+* inet_connection_sock_af_ops
+icsk->icsk_af_ops
+* net_protocol -- l4 rcv in *inet_protos*
+是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos
+* packet_type -- l3 rcv in ptype_all and ptype_base
+pt_prev->func
+
+
+# BSD socket layer
+以socket()这个系统调用开始.
+我门首先要了解什么是socket. 就好像, 小时候拿两个纸杯中间用线连起来,
+模拟电话传消息一样. socket 起始也这么会事, 可以说socket也是一种
+communication protocol, 和network layer 一样地址就是最重要的, 也是第一位的.
+What is socket in wikipedia?
+A socket is one endpoint of a two-way communication link between two programs 
+running on the network. An Internet socket is characterized by at least the following :
+Local socket address: Local IP address and port number
+Protocol: A transport protocol (e.g., TCP, UDP, raw IP, or others).
+Remote socket address, if connected to another socket.
+我们在用户态这头有endpoint, 套接字的一头. 还需要另外一头.
+没错!我们要找到另外一头. 怎么找? 比如你和小伙伴, 那么纸杯+线的就够了.
+如果你要给异地的情人 or 亲人通话, 那个破纸杯肯定不够了. 这时候你就需要真的电话了
+玩cs野战的时候, 对讲机就够了.所以说, 从通信手段上就决定了我们的另一头的位置.
+这样说有些本末倒置, 毕竟, 你是先有了说话的对象之后决定具体用什么方法.
+那在网络世界, 所谓的说话对象是什么呢? 其实是, network layers.
+正是layer, 才是网络世界的真正实体, 比如抓包你像和自己的linker层建立一个socket
+电话线, 用来私语.比如ping你想和另外一台主机的network 层眉目传情.
+最常见的就是应用层的信息交互, 也就是常见的tcp or udp socket.
+所以回头来看看我们的socket系统调用:
+
+	int socket(int domain, int type, int protocol);
+你看到没有socket的第一个参数是叫domain, 不是狭隘的protocol协议族之类的!
+什么叫domain, 就是领域, 范围的意思, 这完全符合socket作为一个工具的性质!
+你要先确定你沟通的范围, man手册给出的例子, 注意这里是以AF开头, 明白了吧:
+
+socket的第2个参数, 就是确定通信质量的.
+man手册上 A raw socket receives or sends the raw datagram not including link level headers.
+加上对于af packet我们知道他是在dev_queue_xmit和netif_receive_skb处得到, 所以这个raw是相对来说.
+他包含了一些协议的头部, 但同时限于ip往上的头部.
+而stream和dgram. 看上去和dgram很像, 但raw可能收到重复的packet而dgram缺不会(就原始协议来讲)
+ping就是用的这种socket:
+
+	socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
+为什么要用这种, 我说的协议的语义上.stream和dgram不行吗?
+原因是ping连接到的是icmp 他是在network层. 而另另外的stream 和dgram都是封装了
+transport layer的内容后直接到的network 层的ip, 我们没有办法访问到icmp协议.
+raw的另外一个特性, 就是允许跨国transport layer自己构建包.
+这让我想起了电影里面钻到电线里面的情节, 没错你的能力够你也可以.
+从没有保证这点看raw和dgram很像. 而dgram就是传输层的raw!
+下面我们来看看, 到底一个高质量的通信线路是什么样的, 具有什么性质.
+stream 是一个非常重要, 且牛x的概念, 我在I/O部分, 解释过.
+这里简单说一句, stream最牛b的地方在于他在数学上是有专门的定义!
+
+
+这里有个问题内核使用sockfs来完成socket结构的申请, 把sock和一个inode放到一起了.
+为什么? 这事为了使其它的read write close之类的也能对socket fd生效.
+要知道网络这几个接口, 脑袋是有反骨的, 死活没有融合到unix的哲学当中:
+
+	一切皆文件
+愣是多了几个socket, bin connect, accept才降服, open弱爆了.
+[Linux Sockets and the Virtual Filesystem](http://isomerica.net/~dpn/socket_vfs.pdf)
+这一句非常屌:　
+
+	sock->type = type;
+申请完sock后就是, [incarnation](http://en.wikipedia.org/wiki/Incarnation) a sock, 这个需要dominator的帮助.
+domainator在内核叫net_proto_family, 也没什么错. 因为角度不同:
+
+	struct net_proto_family __rcu *net_families[NPROTO] __read_mostly;
+通过sock_register注册一共三十几个全在这呢, cscope全能看到.这表明我们还在sock层.
+挑几个重要的:inet_create, netlink_create, unix_create, packet_create
+到现在你应该明白, 整个socket就是一个[受肉仪式](http://movie.douban.com/subject/7051375/)
+妈妈生孩子是受肉, 格里菲斯鲜红的贝黑利特也是.我们先看inet_create()
+这里用到了inetsw(和inetsw_array本质一样)是个链表数组表头是SOCK_RAW/STREAM/DGRAM/MAX
+这些, node是inet_protosw结构包含proto, type, protocol等.
+proto就是protocol对应的协议, 这个必须记住!
+struct proto_ops inet_stream_ops.这里是对应的sock的操作. 我们思考一下.
+感觉上我们只要有一个proto就够了, 为什么多了一个proto_ops为什么?
+我直观上认为proto 本身就是ops了!
+实际上这些proto_ops是proto的抽象, 中间层, 最终还是要调用proto, 如tcp_prot
+只能怪proto_ops名字起地不好.更好的名字是:
+proto_ops -> inet_ops(内核里真没这个名字)
+proto -> proto_ops
+算了.
+受肉开始:
+
+	sock->ops = answer->ops;sock是socket, ops是proto_ops如inet_stream_ops
+此时socket对应的是domain和type抽象结合的ops, 如inet_stream_ops. 这就是亮点.
+实际上是属于socket layer的ops!应为落脚点是stream/sockraw这些
+接下来申请真正的sock结构
+
+	sk = sk_prot_alloc(prot
+交织的线
+socket -> sock
+proto_ops -> proto
+sock这个结构是真正属于domain的, 不同于socket. socket和sock是指针的关系.
+而sock和tcp/inet sock这些是千面神的关系, 一个本体.
+申请后就是处世化, 先是inet 层, 之后是具体的proto 如sk->sk_prot->init
+
+	tcp_v4_init_sock
+这是和协议相关的, 这里inet_connection_sock *icsk = inet_csk(sk);
+先获得tcp connect的属性的sock, 初始化这个ops:
+
+	icsk->icsk_af_ops = &ipv4_specific;
+我们详细看看, 这个函数的语义, icsk_af_ops这里指定了, 所谓的基于连接的
