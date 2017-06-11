@@ -1,2 +1,107 @@
 [x86 calling conventions](http://redstack.net/blog/x86-calling-conventions.html)
 [ Linux Foundation Referenced Specifications](http://refspecs.linuxbase.org/)
+
+# Unwind
+frame_unwind_append_unwinder (gdbarch, &amd64_frame_unwind);
+amd64_frame_unwind
+amd64_frame_this_id
+
+get_prev_frame_if_no_cycle
+compute_frame_id->
+frame_unwind_find_by_frame
+-> amd64_frame_prev_register
+-> value_of_register_lazy
+-> frame_id_p
+
+#5  0x0000000000000003 in ?? ()
+{ get_prev_frame_1 (this_frame=5) { frame_id_inner (l={stack=0x7ffe6c07c928,code=0x0,!special},r={stack=0x7ffe6c07c920,code=0x0,!special}) -> 0 }
+{ frame_unwind_arch (next_frame=5) -> i386:x86-64 }
+{ frame_unwind_register_value (frame=5,regnum=16(rip),...) -> address=0x7ffe6c07c920 bytes=[00a5312ec87f0000] }
+{ frame_unwind_register_value (frame=4,regnum=16(rip),...) -> address=0x7ffe6c07c918 bytes=[0300000000000000] }
+-> {level=6,type=<unknown>,unwind=<unknown>,pc=<unknown>,id=<unknown>,func=<unknown>} }
+{ compute_frame_id (fi=6) { frame_unwind_register_value (frame=5,regnum=16(rip),...) -> address=0x7ffe6c07c920 bytes=[00a5312ec87f0000] }
+{ frame_unwind_pc (this_frame=5) -> 0x7fc82e31a500 }
+{ get_frame_func (this_frame=6) -> 0x0 }
+{ frame_unwind_register_value (frame=5,regnum=7(rsp),...) -> computed bytes=[28c9076cfe7f0000] }
+{ frame_id_p (l={stack=0x7ffe6c07c930,code=0x0,!special}) -> 1 }
+-> {stack=0x7ffe6c07c930,code=0x0,!special} }
+#6  0x00007fc82e31a500 in ?? () from /lib64/libc.so.6
+{ get_prev_frame_1 (this_frame=6) { frame_id_inner (l={stack=0x7ffe6c07c930,code=0x0,!special},r={stack=0x7ffe6c07c928,code=0x0,!special}) -> 0 }
+{ frame_unwind_arch (next_frame=6) -> i386:x86-64 }
+{ frame_unwind_register_value (frame=6,regnum=16(rip),...) -> address=0x7ffe6c07c928 bytes=[2100000000000000] }
+{ frame_unwind_register_value (frame=5,regnum=16(rip),...) -> address=0x7ffe6c07c920 bytes=[00a5312ec87f0000] }
+-> {level=7,type=<unknown>,unwind=<unknown>,pc=<unknown>,id=<unknown>,func=<unknown>} }
+{ compute_frame_id (fi=7) { frame_unwind_register_value (frame=6,regnum=16(rip),...) -> address=0x7ffe6c07c928 bytes=[2100000000000000] }
+{ frame_unwind_pc (this_frame=6) -> 0x21 }
+{ get_frame_func (this_frame=7) -> 0x0 }
+{ frame_unwind_register_value (frame=6,regnum=7(rsp),...) -> computed bytes=[30c9076cfe7f0000] }
+{ frame_id_p (l={stack=0x7ffe6c07c938,code=0x0,!special}) -> 1 }
+-> {stack=0x7ffe6c07c938,code=0x0,!special} }
+#7  0x0000000000000021 in ?? ()
+
+
+(gdb) info frame
+Stack level 0, frame at 0x7fffffffdde0: # below thi palses, has a long size return addr.
+ rip = 0x400551 in myfunc (f.c:18); saved rip = 0x40061b # return addr;
+ called by frame at 0x7fffffffde10 #?
+ source language c.
+ Arglist at 0x7fffffffddd0, args: a=1, b=2, c=3, d=4, e=5, f=6, g=7, h=8; # Confusing, Arglist is not the passing args's address. Just local variables.
+ Locals at 0x7fffffffddd0, Previous frame's sp is 0x7fffffffdde0; # it's just below return addr. Previous sp is just above return addr.
+ Saved registers:
+  rbx at 0x7fffffffddc8, rbp at 0x7fffffffddd0, rip at 0x7fffffffddd8
+
+(gdb) x/x 0x7fffffffdde0
+0x7fffffffdde0:	0x07
+
+# calling frame layout high addr -> low addr
+0x7fffffffdde8: 0x8		# the last arg
+0x7fffffffdde0: 0x7		# the 7th arg, Previous frame's sp is 0x7fffffffdde0, that means the passing args is belonged to previous stack frame!
+0x7fffffffddd8: <main+56>	# rip: return addr, frame at 0x7fffffffdde0, to be accuracy, frame at (0x7fffffffdde0 - sizeof(long)), that means a frame start at return addr.
+0x7fffffffddd0: 0x7fffffffde00	# rbp: previouse rbp; current rbp is 0x7fffffffddd0, namely right here.
+0x7fffffffddc8: 0		# rbx: saved rbx
+
+(gdb) x/32a 0x7fffffffdd78
+0x7fffffffdd78:	0x6	0x5
+0x7fffffffdd88:	0x4	0x3
+0x7fffffffdd98:	0x2	0x1
+0x7fffffffdda8:	0x7465675f6f736476	0x0
+0x7fffffffddb8:	0x0	0x1
+0x7fffffffddc8:	0x0	0x7fffffffde00		   #=============== 0x7fffffffde00 previouse ebp
+0x7fffffffddd8:	0x40061b <main+56>	0x7        #=============== main+56 is return addr; 0x7 is parameter
+0x7fffffffdde8:	0x8	0x7fffffffdee0		   #=============== 0x8 is parameter
+0x7fffffffddf8:	0x100000000	0x400630 <__libc_csu_init>
+0x7fffffffde08:	0x7ffff7a2e830 <__libc_start_main+240>	0x0
+0x7fffffffde18:	0x7fffffffdee8	0x1f7ffcca0
+0x7fffffffde28:	0x4005e3 <main>	0x0
+0x7fffffffde38:	0x4ae127dff0774231	0x4003e0 <_start>
+0x7fffffffde48:	0x7fffffffdee0	0x0
+0x7fffffffde58:	0x0	0xb51ed8a040374231
+0x7fffffffde68:	0xb51ec81a33c74231	0x7fff00000000
+(gdb) info registers 
+rax            0x4005e3	4195811
+rbx            0x0	0
+rcx            0x4	4
+rdx            0x3	3
+rsi            0x2	2
+rdi            0x1	1
+rbp            0x7fffffffddd0	0x7fffffffddd0
+rsp            0x7fffffffdd78	0x7fffffffdd78
+r8             0x5	5
+r9             0x6	6
+r10            0x846	2118
+r11            0x7ffff7a2e740	140737348036416
+r12            0x4003e0	4195296
+r13            0x7fffffffdee0	140737488346848
+r14            0x0	0
+r15            0x0	0
+rip            0x400551	0x400551 <myfunc+33>
+eflags         0x206	[ PF IF ]
+cs             0x33	51
+ss             0x2b	43
+ds             0x0	0
+es             0x0	0
+fs             0x0	0
+gs             0x0	0
+(gdb) bt
+#0  myfunc (a=1, b=2, c=3, d=4, e=5, f=6, g=7, h=8) at f.c:18
+#1  0x000000000040061b in main () at f.c:27

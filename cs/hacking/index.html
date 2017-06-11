@@ -161,7 +161,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="684">
+<meta itemprop="wordCount" content="953">
 <meta itemprop="datePublished" content="2015-04-25">
 <meta itemprop="url" content="http://firoyang.org/cs/hacking/">
 
@@ -169,6 +169,102 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="resources">Resources</h1>
+
+<p><a href="https://lwn.net/Articles/283982/">Writing an OS in Rust</a></p>
+
+<h1 id="subscribe-linux-kenrel-maillist">Subscribe linux kenrel maillist</h1>
+
+<h1 id="linux-next-source-code">linux next source code</h1>
+
+<p><a href="https://www.kernel.org/doc/man-pages/linux-next.html">Working with linux-next</a><br />
+要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.<br />
+我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.<br />
+我的linux next remote 就叫next, 基于其创建开发分支.</p>
+
+<h1 id="source-code-navigation">Source code navigation</h1>
+
+<p><a href="https://lwn.net/Articles/283982/">&lsquo;Source code reading&rsquo; related sites</a></p>
+
+<h1 id="applying-patches">Applying patches</h1>
+
+<p><a href="https://www.youtube.com/watch?v=6zUVS4kJtrA">100 Linux Tutorials: How to Apply a Patch to the Linux Kernel Stable Tree</a></p>
+
+<h1 id="setup-kvm-test-machine">Setup kvm test machine</h1>
+
+<p><a href="https://kernelnewbies.org/KernelProjects">Building a KVM host machine.</a></p>
+
+<h1 id="how-to-build-a-minimal-kernel-for-testing">How to build a minimal kernel for testing?</h1>
+
+<p><a href="https://tiny.wiki.kernel.org/">tiny config @ kernel.org</a><br />
+<a href="http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html">3 attempts to reduce the configurations</a><br />
+<a href="7">Fedora equivalent of debootstrap</a><br />
+Then enable following config option<br />
+CONFIG_CHR_DEV_SG<br />
+Some ftrace stuff<br />
+CONFIG_SLUB<br />
+CONFIG_KASAN</p>
+
+<h1 id="for-nfs">For nfs</h1>
+
+<p>exports0<br />
+ cat var/exports0<br />
+/buildarea1/firo/x564 (rw,no_root_squash,no_all_squash,insecure)</p>
+
+<p>/buildarea1/firo/x564/host-cross/usr/bin/pseudo /buildarea1/firo/x564/host-cross/usr/sbin/unfsd -p -N -i /buildarea1/firo/x564/var/nfs0.pid -e /buildarea1/firo/x564/var/exports0 -x 11111 -n 3049 -y 21111 -m 3048<br />
+ /buildarea1/firo/x564/host-cross/usr/bin/qemu-system-x86_64 -nographic -k en-us -kernel /buildarea1/firo/x564/bitbake_build/tmp/deploy/images/bzImage-qemux86-64.bin -redir udp:20485::17185 -redir tcp:7747::1534 -redir udp:7747::1534 -redir tcp:7748::80 -redir udp:7745::6443 -redir tcp:7741::23 -redir tcp:7740::22 -redir tcp:8998::5698 -redir tcp:8978::5678 -redir tcp:6633::3333 -net user,hostname=qemu33 -net nic,macaddr=52:54:0:12:34:77,model=i82557b -show-cursor -usb -usbdevice wacom-tablet -vga vmware -gdb tcp::4534 -append console=ttyS0,115200 ip=dhcp root=/dev/nfs nfsroot=10.0.2.2:/buildarea1/firo/x564/export/dist,nfsvers=3,port=6349,mountprog=24411,nfsprog=14411,udp,mountport=6348 rw clocksource=pit oprofile.timer=1 UMA=1 -pidfile /buildarea1/firo/x564/host-cross/var/qemu33.pid</p>
+
+<h2 id="for-sda">For sda</h2>
+
+<p>./kernel/configs/kvm_guest.config<br />
+VFS: Cannot open root device &ldquo;sda&rdquo; or unknown-block(0,0): error -6<br />
+Please append a correct &ldquo;root=&rdquo; boot option; here are the available partitions:<br />
+Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)<br />
+Kernel Offset: disabled<br />
+CONFIG_BLK_DEV_SD<br />
+CONFIG_SATA_AHCI XX<br />
+CONFIG_ATA XX<br />
+CONFIG_ATA_PIIX ok<br />
+process 1 (init) attempted a POSIX timer syscall while CONFIG_POSIX_TIMERS is not set</p>
+
+<p>CONFIG_POSIX_TIMERS<br />
+FILE_LOCK if udev<br />
+PACKET if udev<br />
+UNIX if udev<br />
+DEVTMPFS if udev<br />
+CONFIG_INOTIFY_USER if udev<br />
+CONFIG_TMPFS if udev<br />
+CONFIG_DEBUG_INFO_REDUCED if CONFIG_DEBUG_INFO</p>
+
+<p>CONFIG_NETFILTER<br />
+smp<br />
+ext4<br />
+CONFIG_SERIAL_NONSTANDARD=y</p>
+
+<p>udev requires hotplug support, not started &hellip; failed!<br />
+not cpu hotplug<br />
+CONFIG_HOTPLUG=y<br />
+CONFIG_UEVENT_HELPER_PATH=‚Äù&rdquo;<br />
+CONFIG_NET=y<br />
+CONFIG_UNIX=y<br />
+CONFIG_SYSFS=y<br />
+CONFIG_SYSFS_DEPRECATED*=n<br />
+CONFIG_PROC_FS=y<br />
+CONFIG_TMPFS=y<br />
+CONFIG_TMPFS_POSIX_ACL=y¬†<br />
+CONFIG_INOTIFY=y<br />
+CONFIG_SIGNALFD=y</p>
+
+<h1 id="hacker">Hacker</h1>
+
+<p><a href="https://lwn.net/Articles/286244/">Peter Zijlstra: From DOS to kernel hacking</a></p>
+
+<h1 id="what-to-fix">What to fix?</h1>
+
+<p><a href="https://kernelnewbies.org/KernelProjects">KernelProjects</a><br />
+<a href="https://lwn.net/Articles/283982/">linux-wanking@vger.kernel.org</a><br />
+<a href="https://www.linux.com/publications/how-participate-linux-community">2.7 GETTING STARTED WITH KERNEL DEVELOPMENT</a></p>
 
 <h1 id="reference">Reference</h1>
 
@@ -249,17 +345,6 @@ Linus 之前说过, 搞得内核你得用起来. uml 是个不错的开端.<br /
 
 <p>#git<br />
 <a href="http://git-scm.com/docs/gittutorial">gittutorial - A tutorial introduction to Git</a></p>
-
-<h1 id="linux-source-code">linux source code</h1>
-
-<p><a href="https://www.kernel.org/doc/man-pages/linux-next.html">Working with linux-next</a><br />
-要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.<br />
-我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.<br />
-我的linux next remote 就叫next, 基于其创建开发分支.</p>
-
-<pre><code>git branch now next/master
-git pull next master:now
-</code></pre>
 
 <h1 id="你提patch-社区的困惑是什么">你提patch, 社区的困惑是什么?</h1>
 

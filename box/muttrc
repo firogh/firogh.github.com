@@ -1,0 +1,178 @@
+#======================================================#
+# Boring details
+set realname ="Firo Yang"
+set from = firogm@gmail.com
+set use_from = yes
+set envelope_from ="yes"
+
+# Send mail
+set sendmail="/usr/bin/msmtp"
+
+# If not set in environment variables:
+set spoolfile = /var/spool/mail/firo
+
+# Index Format
+# %-20.20A: receive addr
+# %O: sender mail name: e.g. support, firogm, noreply
+# %2.2M: hidden mails in thread
+# %.3m: total mail.
+set index_format="%Z %2.2e/%-2.2E %[%b%d %R] %4C |%P: %-15.15L %s"
+
+set strict_threads=yes
+
+# status format
+# http://lists.netisland.net/archives/plug/plug-2002-07/msg00725.html
+set status_format="New mail mailboxes: %b Mailbox: %f new: %n old/total unread: %o/%u shown: %M total: %m [%v]"
+
+# Scroll 
+# https://hroy.eu/tips/mutt/first/
+# http://rhonda.deb.at/config/mutt/keys
+bind pager k previous-line #scroll inside the message rather than the index
+bind pager j next-line
+bind pager \c<space> previous-page #scroll up page
+# bind pager \aj	next-entry
+# bind pager \ak	next-entry
+
+# index
+# https://github.com/Gonzih/.mutt/blob/master/keybindings.muttrc
+bind index <tab>    sync-mailbox
+bind index <space>  collapse-thread
+
+
+# Collapse 
+# https://heipei.net/2009/09/10/mutt-threading-like-a-pro/
+bind index _ collapse-all
+# Set collapse-all as default
+# https://groups.google.com/forum/#!topic/comp.mail.mutt/EJzdRyY-5Tk
+folder-hook . "exec collapse-all"
+
+# Auto Sync
+# https://wolfermann.org/mutt.html
+#set timeout=60
+#timeout-hook . "exec sync-mailbox"
+
+# Speed up
+# https://hroy.eu/tips/mutt/first/
+set sleep_time=0 # be fast
+
+# Abort
+# Ctrl + g
+# ESC
+# http://openbsd-archive.7691.n7.nabble.com/mutt-esc-key-to-cancel-commands-td313682.html
+#bind index <esc> abort
+
+#======================================================#
+# Folders
+set folder="~/Mail"                # Mailboxes in here
+set record="+sent"                 # where to store sent messages
+set postponed="+postponed"         # where to store draft messages
+set move=no                        # Don't move mail from the spool.
+
+#======================================================#
+# Watch these mailboxes for new mail:
+mailboxes ! +Gmail/k +Gmail/kernel +Gmail/netdev +Gmail/kvm +Fetchmail +slrn +mutt
+set sort_browser=alpha    # Sort mailboxes by alpha(bet)
+
+#======================================================#
+# Order of headers and what to show
+hdr_order Date: From: User-Agent: X-Mailer \
+          To: Cc: Reply-To: Subject:
+ignore *
+unignore Date: From: User-Agent: X-Mailer  \
+         To: Cc: Reply-To: Subject:
+               
+#======================================================#
+# which editor do you want to use? 
+# vim of course!
+set editor="vim -c 'set tw=70 et' '+/^$' " 
+set edit_headers          # See the headers when editing
+
+#======================================================#
+# Aliases
+
+set sort_alias=alias     # sort aliases in alpha order by alias name
+
+#======================================================#
+# Odds and ends
+set markers          # mark wrapped lines of text in the pager with a +
+set smart_wrap       # Don't wrap mid-word
+set pager_context=5  # Retain 5 lines of previous page when scrolling.
+set status_on_top    # Status bar on top.
+push <show-version>  # Shows mutt version at startup
+
+# Not close connection
+set timeout=10
+
+
+# Kernel
+set include
+set indent_str=">"
+# set sort=date
+set charset="utf-8"
+set send_charset="us-ascii:utf-8"
+
+# Pop
+#set pop_last=yes
+#set pop_user=firogm@gmail.com
+#set pop_pass=”kernelakasha”
+#set pop_host=”pops://pop.gmail.com”
+
+# Imap
+set imap_user='firogm@gmail.com'
+set imap_pass='kernelakasha'
+set spoolfile = imaps://imap.gmail.com/INBOX
+set folder = "imaps://imap.gmail.com/"
+#set record="imaps://imap.gmail.com/[Gmail]/Sent Mail"
+set postponed="imaps://imap.gmail.com/[Gmail]/Drafts"
+#set trash="imaps://imap.gmail.com/[Gmail]/Trash"
+bind index G imap-fetch-mail
+set imap_idle=yes
+unset imap_passive
+set imap_keepalive=900
+
+# Cache
+set header_cache="~/.mutt/cache/headers"
+set message_cachedir="~/.mutt/cache/bodies"
+
+set certificate_file=~/.mutt/certificates
+
+
+# Sort
+set sort=threads
+#set sort = reverse-threads
+#set sort_browser=reverse-date
+#set sort_aux=last-date-received
+set sort_aux = reverse-last-date-received
+
+#Trash
+#folder-hook . 'unset trash'
+#folder-hook imaps://imap.gmail.com 'set trash="=[Gmail]/Trash"'
+
+# Delete
+set delete=yes
+
+# Misc
+set beep=no
+#set signature="~/.signature"
+
+# Chrome
+#
+#
+
+# Slidebar
+set sidebar_width=30
+set sidebar_visible=yes
+set sidebar_delim='|'
+set sidebar_sort=yes
+mailboxes =inbox =ml
+mailboxes =inbox =ml
+bind index CP sidebar-prev
+bind index CN sidebar-next
+bind index CO sidebar-open
+bind pager CP sidebar-prev
+bind pager CN sidebar-next
+bind pager CO sidebar-open
+macro index b '<enter-command>toggle sidebar_visible<enter>'
+macro pager b '<enter-command>toggle sidebar_visible<enter>'
+bind index B bounce-message
+

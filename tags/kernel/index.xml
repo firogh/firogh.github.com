@@ -59,6 +59,10 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
       <guid>http://firoyang.org/cs/page_reclaim/</guid>
       <description>
 
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/383162/&#34;&gt;The case of the overly anonymous anon_vma&lt;/a&gt;&lt;/p&gt;
+
 &lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
     Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
     No enough memory for a large memory alloc.&lt;br /&gt;
@@ -187,6 +191,8 @@ Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
 &lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
 Includes the interruptable task.&lt;br /&gt;
 Causes: deadlock, race condition&lt;/p&gt;
+
+&lt;h1 id=&#34;kprobes&#34;&gt;kprobes&lt;/h1&gt;
 
 &lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
 
@@ -462,6 +468,102 @@ Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq
       <guid>http://firoyang.org/cs/hacking/</guid>
       <description>
 
+&lt;h1 id=&#34;resources&#34;&gt;Resources&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;Writing an OS in Rust&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;subscribe-linux-kenrel-maillist&#34;&gt;Subscribe linux kenrel maillist&lt;/h1&gt;
+
+&lt;h1 id=&#34;linux-next-source-code&#34;&gt;linux next source code&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;&lt;br /&gt;
+要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.&lt;br /&gt;
+我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.&lt;br /&gt;
+我的linux next remote 就叫next, 基于其创建开发分支.&lt;/p&gt;
+
+&lt;h1 id=&#34;source-code-navigation&#34;&gt;Source code navigation&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;&amp;lsquo;Source code reading&amp;rsquo; related sites&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;applying-patches&#34;&gt;Applying patches&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=6zUVS4kJtrA&#34;&gt;100 Linux Tutorials: How to Apply a Patch to the Linux Kernel Stable Tree&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;setup-kvm-test-machine&#34;&gt;Setup kvm test machine&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kernelnewbies.org/KernelProjects&#34;&gt;Building a KVM host machine.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;how-to-build-a-minimal-kernel-for-testing&#34;&gt;How to build a minimal kernel for testing?&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://tiny.wiki.kernel.org/&#34;&gt;tiny config @ kernel.org&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;3 attempts to reduce the configurations&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;7&#34;&gt;Fedora equivalent of debootstrap&lt;/a&gt;&lt;br /&gt;
+Then enable following config option&lt;br /&gt;
+CONFIG_CHR_DEV_SG&lt;br /&gt;
+Some ftrace stuff&lt;br /&gt;
+CONFIG_SLUB&lt;br /&gt;
+CONFIG_KASAN&lt;/p&gt;
+
+&lt;h1 id=&#34;for-nfs&#34;&gt;For nfs&lt;/h1&gt;
+
+&lt;p&gt;exports0&lt;br /&gt;
+ cat var/exports0&lt;br /&gt;
+/buildarea1/firo/x564 (rw,no_root_squash,no_all_squash,insecure)&lt;/p&gt;
+
+&lt;p&gt;/buildarea1/firo/x564/host-cross/usr/bin/pseudo /buildarea1/firo/x564/host-cross/usr/sbin/unfsd -p -N -i /buildarea1/firo/x564/var/nfs0.pid -e /buildarea1/firo/x564/var/exports0 -x 11111 -n 3049 -y 21111 -m 3048&lt;br /&gt;
+ /buildarea1/firo/x564/host-cross/usr/bin/qemu-system-x86_64 -nographic -k en-us -kernel /buildarea1/firo/x564/bitbake_build/tmp/deploy/images/bzImage-qemux86-64.bin -redir udp:20485::17185 -redir tcp:7747::1534 -redir udp:7747::1534 -redir tcp:7748::80 -redir udp:7745::6443 -redir tcp:7741::23 -redir tcp:7740::22 -redir tcp:8998::5698 -redir tcp:8978::5678 -redir tcp:6633::3333 -net user,hostname=qemu33 -net nic,macaddr=52:54:0:12:34:77,model=i82557b -show-cursor -usb -usbdevice wacom-tablet -vga vmware -gdb tcp::4534 -append console=ttyS0,115200 ip=dhcp root=/dev/nfs nfsroot=10.0.2.2:/buildarea1/firo/x564/export/dist,nfsvers=3,port=6349,mountprog=24411,nfsprog=14411,udp,mountport=6348 rw clocksource=pit oprofile.timer=1 UMA=1 -pidfile /buildarea1/firo/x564/host-cross/var/qemu33.pid&lt;/p&gt;
+
+&lt;h2 id=&#34;for-sda&#34;&gt;For sda&lt;/h2&gt;
+
+&lt;p&gt;./kernel/configs/kvm_guest.config&lt;br /&gt;
+VFS: Cannot open root device &amp;ldquo;sda&amp;rdquo; or unknown-block(0,0): error -6&lt;br /&gt;
+Please append a correct &amp;ldquo;root=&amp;rdquo; boot option; here are the available partitions:&lt;br /&gt;
+Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)&lt;br /&gt;
+Kernel Offset: disabled&lt;br /&gt;
+CONFIG_BLK_DEV_SD&lt;br /&gt;
+CONFIG_SATA_AHCI XX&lt;br /&gt;
+CONFIG_ATA XX&lt;br /&gt;
+CONFIG_ATA_PIIX ok&lt;br /&gt;
+process 1 (init) attempted a POSIX timer syscall while CONFIG_POSIX_TIMERS is not set&lt;/p&gt;
+
+&lt;p&gt;CONFIG_POSIX_TIMERS&lt;br /&gt;
+FILE_LOCK if udev&lt;br /&gt;
+PACKET if udev&lt;br /&gt;
+UNIX if udev&lt;br /&gt;
+DEVTMPFS if udev&lt;br /&gt;
+CONFIG_INOTIFY_USER if udev&lt;br /&gt;
+CONFIG_TMPFS if udev&lt;br /&gt;
+CONFIG_DEBUG_INFO_REDUCED if CONFIG_DEBUG_INFO&lt;/p&gt;
+
+&lt;p&gt;CONFIG_NETFILTER&lt;br /&gt;
+smp&lt;br /&gt;
+ext4&lt;br /&gt;
+CONFIG_SERIAL_NONSTANDARD=y&lt;/p&gt;
+
+&lt;p&gt;udev requires hotplug support, not started &amp;hellip; failed!&lt;br /&gt;
+not cpu hotplug&lt;br /&gt;
+CONFIG_HOTPLUG=y&lt;br /&gt;
+CONFIG_UEVENT_HELPER_PATH=‚Äù&amp;rdquo;&lt;br /&gt;
+CONFIG_NET=y&lt;br /&gt;
+CONFIG_UNIX=y&lt;br /&gt;
+CONFIG_SYSFS=y&lt;br /&gt;
+CONFIG_SYSFS_DEPRECATED*=n&lt;br /&gt;
+CONFIG_PROC_FS=y&lt;br /&gt;
+CONFIG_TMPFS=y&lt;br /&gt;
+CONFIG_TMPFS_POSIX_ACL=y¬†&lt;br /&gt;
+CONFIG_INOTIFY=y&lt;br /&gt;
+CONFIG_SIGNALFD=y&lt;/p&gt;
+
+&lt;h1 id=&#34;hacker&#34;&gt;Hacker&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/286244/&#34;&gt;Peter Zijlstra: From DOS to kernel hacking&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;what-to-fix&#34;&gt;What to fix?&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kernelnewbies.org/KernelProjects&#34;&gt;KernelProjects&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;linux-wanking@vger.kernel.org&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.linux.com/publications/how-participate-linux-community&#34;&gt;2.7 GETTING STARTED WITH KERNEL DEVELOPMENT&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;br /&gt;
@@ -541,17 +643,6 @@ Linus 之前说过, 搞得内核你得用起来. uml 是个不错的开端.&lt;b
 
 &lt;p&gt;#git&lt;br /&gt;
 &lt;a href=&#34;http://git-scm.com/docs/gittutorial&#34;&gt;gittutorial - A tutorial introduction to Git&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;linux-source-code&#34;&gt;linux source code&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;&lt;br /&gt;
-要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.&lt;br /&gt;
-我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.&lt;br /&gt;
-我的linux next remote 就叫next, 基于其创建开发分支.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git branch now next/master
-git pull next master:now
-&lt;/code&gt;&lt;/pre&gt;
 
 &lt;h1 id=&#34;你提patch-社区的困惑是什么&#34;&gt;你提patch, 社区的困惑是什么?&lt;/h1&gt;
 
@@ -751,7 +842,8 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.fieldses.org/~bfields/kernel/vfs.txt&#34;&gt;VFS notes&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.fieldses.org/~bfields/kernel/vfs.txt&#34;&gt;VFS notes&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148&#34;&gt;Linux: Replacing atime With relatime&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;open&#34;&gt;open()&lt;/h1&gt;
 
@@ -1289,7 +1381,8 @@ preemptable&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
 
