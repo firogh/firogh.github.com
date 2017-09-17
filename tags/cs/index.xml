@@ -58,6 +58,10 @@ kernel&lt;br /&gt;
       <guid>http://firoyang.org/cs/kernel_dbg/</guid>
       <description>
 
+&lt;h1 id=&#34;debug-boot-problem&#34;&gt;Debug boot problem&lt;/h1&gt;
+
+&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
+
 &lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
 
 &lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
@@ -79,7 +83,8 @@ THese functions are like pr_func&lt;/p&gt;
 &lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
 
 &lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
 
@@ -985,9 +990,27 @@ KVM. source code level and hands-on lkml&lt;/p&gt;
 &lt;p&gt;Reverse engineering&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How debuggers work&lt;/a&gt;&lt;/p&gt;
 
+&lt;h1 id=&#34;info&#34;&gt;info&lt;/h1&gt;
+
+&lt;p&gt;Host OS name and version number.&lt;br /&gt;
+I40e driver version number.&lt;br /&gt;
+Host OS Linux Kernel log.&lt;br /&gt;
+VF driver version number.&lt;br /&gt;
+NIC hardware model and PBA number.&lt;br /&gt;
+NIC Firmware NVM version number.&lt;/p&gt;
+
 &lt;h1 id=&#34;core-pattern&#34;&gt;Core pattern&lt;/h1&gt;
 
 &lt;p&gt;echo /tmp/core-%e-%p-%s-%c-%P &amp;gt; /proc/sys/kernel/core_pattern&lt;/p&gt;
+
+&lt;h1 id=&#34;from-assembly-to-c&#34;&gt;From assembly to C&lt;/h1&gt;
+
+&lt;p&gt;addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
+addr2line -e vmlinux -i ffffffff81f04b7a ffffffff81508daa&lt;/p&gt;
+
+&lt;h1 id=&#34;from-elf-to-c&#34;&gt;From ELF to C&lt;/h1&gt;
+
+&lt;p&gt;pahole -C &amp;lsquo;block_device&amp;rsquo; vmlinux&lt;/p&gt;
 
 &lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
 
@@ -1036,8 +1059,8 @@ E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;g
 make kernel/sched.s V=1&lt;br /&gt;
 readelf, objdump&lt;br /&gt;
 c++filt&lt;br /&gt;
-addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
-./scripts/decodecode &amp;lt; Oops.txt&lt;/p&gt;&lt;/li&gt;
+./scripts/decodecode &amp;lt; Oops.txt&lt;br /&gt;
+echo&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;load software&lt;br /&gt;
 LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
