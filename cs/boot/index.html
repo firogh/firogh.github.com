@@ -124,14 +124,15 @@
 	</nav>
 	<nav id="nav">
                <ul id="social">
+
             <li id="follow">
                 
                 
                 <div class="dropdown follow">
                     <ul class="social">
-                        
                         <li> <a href="http://www.twitter.com/firoyang" target="_blank" class="twitter"><span class="icon icon-twitter"></span>Twitter</a> </li>
-                        <li> <a href="mailto:firogm@gmail.com" style="color:#B22222;" target="_blank" class="gmail"><span style="color:#B22222;" class="icon icon-mail"></span>Gmail</a> </li-->
+                        <li> <a href="mailto:firogm@gmail.com" style="color:#B22222;"  class="gmail"><span style="color:#B22222;" class="icon icon-mail"></span>Gmail</a> </li-->
+                        
                         
                         
                         
@@ -178,7 +179,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="450">
+<meta itemprop="wordCount" content="755">
 <meta itemprop="datePublished" content="2015-11-12">
 <meta itemprop="url" content="http://firoyang.org/cs/boot/">
 
@@ -189,7 +190,113 @@
 
 <h1 id="reference">Reference</h1>
 
-<p><a href="http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/">Article: Introducing initramfs, a new model for initial RAM disks</a></p>
+<p>The must reading - Documentation/x86/boot.txt<br />
+<a href="http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/">Introducing initramfs, a new model for initial RAM disks</a></p>
+
+<p><a href="http://duartes.org/gustavo/blog/post/kernel-boot-process/">The Kernel Boot Process</a></p>
+
+<h1 id="kernel-boot-process">kernel boot process</h1>
+
+<p>arch/x86/boot/header.S::start_of_setup<br />
+arch/x86/boot/main.c::main()<br />
+    arch/x86/boot/memory.c::detect_memory()<br />
+    arch/x86/boot/memory.c::detect_memory_e820() = boot_params.e820_entries<br />
+    &hellip;<br />
+    arch/x86/boot/pm.c::go_to_protected_mode()<br />
+arch/x86/boot/pmjump.S::protected_mode_jump<br />
+arch/x86/kernel/compressed/head_64.S::startup_32<br />
+arch/x86/kernel/compressed/head_64.S::startup_64<br />
+arch/x86/kernel/head_64.S::startup_64<br />
+kernel/main.c::start_kernel()<br />
+    &hellip;<br />
+    arch/x86/kernel/setup_64.c::setup_arch()<br />
+        &hellip;<br />
+        arch/x86/kernel/setup_64.c::memory_setup()<br />
+        arch/x86/kernel/e820_64.c::machine_specific_memory_setup()<br />
+        arch/x86/kernel/e820_64.c::sanitize_e820_map(boot_params.e820_map, &amp;boot_params.e820_entries)<br />
+        &hellip;<br />
+        arch/x86/kernel/e820_64.c::finish_e820_parsing()<br />
+        &hellip;<br />
+        arch/x86/kernel/e820_64.c::e820_register_active_regions()<br />
+        &hellip;<br />
+        arch/x86/kernel/acpi/boot.c::acpi_boot_table_init()<br />
+        arch/x86/kernel/pci-dma.c::dma32_reserve_bootmem()<br />
+        arch/x86/kernel/acpi/sleep.c::acpi_reserve_bootmem()<br />
+        arch/x86/kernel/efi_64.c::efi_reserve_bootmem()<br />
+        &hellip;<br />
+        arch/x86/kernel/acpi/boot.c::acpi_boot_init()<br />
+        &hellip;<br />
+        arch/x86/kernel/e820_64.c::e820_reserve_resources()<br />
+        arch/x86/kernel/e820_64.c::e820_mark_nosave_regions()<br />
+        arch/x86/kernel/e820_64.c::e820_setup_gap()<br />
+        &hellip;<br />
+    }<br />
+    drivers/acpi/bus.c::acpi_early_init()<br />
+    kernel/main.c::rest_init()<br />
+        arch/x86/kernel/process_32.c::kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);<br />
+}<br />
+kernel/main.c::kernel_init()<br />
+ &hellip;<br />
+ do_basic_setup()<br />
+  &hellip;<br />
+  drivers/base/init.c::driver_init()<br />
+  &hellip;<br />
+  init/main.c::do_initcalls()<br />
+ }<br />
+ &hellip;<br />
+ init/main.c::init_post()<br />
+}</p>
+
+<h1 id="reloctaion-for-decompress">Reloctaion for decompress</h1>
+
+<p>974f221c84b05b1dc2f5ea50dc16d2a9d1e95eda<br />
+x86/boot: Move compressed kernel to the end of the decompression buffer</p>
+
+<h1 id="realmode">Realmode</h1>
+
+<p>The first 640KB RAM<br />
+cat /proc/iomem<br />
+00000000-00000fff : reserved<br />
+00001000-000913ff : System RAM<br />
+00091400-0009ffff : reserved<br />
+000a0000-000bffff : PCI Bus 0000:00<br />
+000c0000-000cfdff : Video ROM<br />
+000d0000-000d99ff : Adapter ROM<br />
+000da000-000dafff : Adapter ROM<br />
+000e0000-000fffff : reserved<br />
+  000f0000-000fffff : System ROM<br />
+00100000-bcb01fff : System RAM   # 1MB; Bootloader uses real_to_prot and prot_to_real to load the kernel image to this place.<br />
+  01000000-0183d36c : Kernel code # That&rsquo;s why the kernel was called big kernel.<br />
+  0183d36d-01f42d3f : Kernel data<br />
+  020c1000-02209fff : Kernel bss</p>
+
+<h1 id="horrable-commit-description-on-phys-base">Horrable commit description on phys_base</h1>
+
+<p>commit 1ab60e0f72f71ec54831e525a3e1154f1c092408<br />
+Author: Vivek Goyal <a href="mailto:vgoyal@in.ibm.com">vgoyal@in.ibm.com</a><br />
+Date:   Wed May 2 19:27:07 2007 +0200</p>
+
+<pre><code>[PATCH] x86-64: Relocatable Kernel Support
+</code></pre>
+
+<h1 id="normalize-cs">Normalize %cs</h1>
+
+<p>程序的起始地址在链接脚本中被设置为 0，如果 setup 被加载到其他地方(起始地<br />
+址不为 0 的地方)，那么指令里面访问的全局符号都会有重定位的问题。由于 Boot Loader<br />
+跳转到上面这段代码的时候，把 DS 设置为 setup 加载的基地址，而第 17 行访问_end 默认<br />
+是用数据段寄存器 DS 的，所以不会有重定位的问题。但是在 38 行转移指令用的 CS 寄存器，<br />
+而符号 main 的地址是在链接期决定的，现在加载的基地址改变了，那肯定会出问题了。所<br />
+以事先在第 24 行把 CS 设置为和 DS 一样，这样就解决了重定位的问题了。代码的最后跳转<br />
+到了 arch/x86/boot/main.c 中的 main 函数中继续执行。</p>
+
+<h1 id="print-with-int-0x10">print with int $0x10</h1>
+
+<p><a href="https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu">https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu</a></p>
+
+<h1 id="a20">A20</h1>
+
+<p>[Why enable A20 line in Protected Mode?][<a href="https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode">https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode</a>]<br />
+This gate, (the A20 gate), is controlled by a GPIO pin on the keyboard controller IC. Thus, you need to enable it before going into protected mode. If you didn&rsquo;t, (and say you flat-mapped all 4GB of physical memory), then as Micheal Petch indicated, &ldquo;every odd numbered megabyte region will be inaccessible. So 1mb-2mb will actually reference 0-1mb, 3mb-4mb will reference 2mb-3mb etc.&rdquo; See also:</p>
 
 <h1 id="contents">Contents</h1>
 

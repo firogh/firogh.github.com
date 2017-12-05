@@ -1,0 +1,49 @@
+
+
+# Driver source code
+i40e_clean_asq 
+
+# Reference
+[Single Root I/O Virtualization (SR-IOV)][1]
+
+[1]:https://www.kernel.org/doc/Documentation/PCI/pci-iov-howto.txt
+
+# Using sriov
+Questions:
+Commands used to setup the VFs in the above
+o    echo 3 > /sys/class/net/eth2/device/sriov_numvfs
+o    echo 2 > /sys/class/net/eth3/device/sriov_numvfs
+Commands used to configure the VFs in Calvados
+       ifconfig eth1 down
+       ip link set eth1 name eth-vf1
+       ifconfig eth-vf1 mtu 9700
+           
+            After this VLAN  3073 is added. And on top of eth-vf1.3073 we configure the MTU, IP address and MAC address.
+ 
+Commands used to configure the VFs in XR
+From the VF in XR, we create two VLAN based interfaces and configure them. One of the interfaces with VLAN 3073 is used for XR to talk to calvados. And the other interface (with VLAN 3074) is used for XR to talk to other XR VMs in the chassis.
+ 
+# Setup eth-vf1.3073 interface.
+ip link set eth0 name eth-vf1
+ifconfig eth-vf1 mtu 9700
+ifconfig eth-vf1 up
+/usr/sbin/ethtool -K eth-vf1 gro off
+/sbin/vconfig add eth-vf1 3073
+/sbin/ifconfig eth-vf1.3073 ${GUEST_IP_ADDR} netmask 255.0.0.0 up    <<<<< GUEST_IP_ADDR varies by the card slot.
+/sbin/ifconfig eth-vf1.3073 hw ether ${GUEST_MAC_ADDR} up       <<<<< GUEST_MAC_ADDR varies by the card slot
+/sbin/ifconfig eth-vf1.3073 mtu 9700 up
+          /usr/sbin/ethtool -K eth-vf1.3073 gro off
+                       
+/sbin/vconfig add eth-vf1 3074
+/sbin/ifconfig eth-vf1.3074 172.0.${PD_SLOT_NUM}.${INSTANCE} netmask 255.0.0.0 up"
+/sbin/ifconfig eth-vf1.3074 hw ether 56:4b:47:00:${MAC_BYTE4}:${MAC_BYTE5} up"
+/sbin/ifconfig eth-vf1.3074 mtu 9700 up"
+/usr/sbin/ethtool -K eth-vf1.3074 gro off"
+ 
+For each device we set the ingress and egress map with the following loop.
+ 
+    for i in {0..7}
+    do
+         vconfig set_egress_map $dev $i $i  > /dev/null 2>&1
+         vconfig set_ingress_map $dev $i $i  > /dev/null 2>&1
+    done

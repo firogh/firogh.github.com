@@ -16,3 +16,192 @@ Before kernel supported the relocatable, [the kdump users had to compile the cap
 
 [1]: http://www.mindfruit.co.uk/2012/06/interpreting-readelf-r-in-this-case.html
 [2]: http://www.mindfruit.co.uk/2012/06/relocations-relocations.html
+[3]: https://gcc.gnu.org/ml/gcc-help/2009-07/msg00351.html
+[4]: https://stackoverflow.com/questions/28119365/what-are-the-differences-comparing-pie-pic-code-and-executable-on-64-bit-x86-pl
+[5]: https://kernelnewbies.org/Linux_2_6_20#head-3c215483506a27123005168c491eea0f2e5549dd
+[6]: https://www.ibm.com/developerworks/cn/linux/l-cn-sdlstatic/index.htm
+ 
+ [fpie vs -fpic][3]
+ They are also different in whether calls to locally defined functions go through the PLT.
+ I did a few experiments on this but got nothing on it.
+ [What are the differences comparing PIE, PIC code and executable on 64-bit x86 platfomr][4]
+[技巧：多共享动态库中同名对象重复析构问题的解决方法][6]
+
+[fpie vs -fpic][3]
+They are also different in whether calls to locally defined functions go through the PLT.
+I did a few experiments on this but got nothing on it.
+[What are the differences comparing PIE, PIC code and executable on 64-bit x86 platfomr][4]
+
+# Relocation type
+
+
+# fpic vs fpie
+firo@pek-yyang4-l1:~/ws$ readelf -r lgcc.o
+
+Relocation section '.rela.text' at offset 0x2d8 contains 5 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+000000000005  000c00000004 R_X86_64_PLT32    0000000000000000 __errno_location - 4
+000000000010  000500000002 R_X86_64_PC32     0000000000000000 .rodata - 4
+00000000001a  000d00000004 R_X86_64_PLT32    0000000000000000 printf - 4
+000000000029  000a00000004 R_X86_64_PLT32    0000000000000000 lgf - 4
+000000000033  00090000002a R_X86_64_REX_GOTP 0000000000000000 lgv - 4
+
+Relocation section '.rela.eh_frame' at offset 0x350 contains 2 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+000000000020  000200000002 R_X86_64_PC32     0000000000000000 .text + 0
+000000000040  000200000002 R_X86_64_PC32     0000000000000000 .text + 20
+firo@pek-yyang4-l1:~/ws$ readelf -r lgce.o
+
+Relocation section '.rela.text' at offset 0x2d8 contains 5 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+000000000005  000c00000004 R_X86_64_PLT32    0000000000000000 __errno_location - 4
+000000000010  000500000002 R_X86_64_PC32     0000000000000000 .rodata - 4
+00000000001a  000d00000004 R_X86_64_PLT32    0000000000000000 printf - 4
+000000000029  000a00000002 R_X86_64_PC32     0000000000000000 lgf - 4
+000000000032  000900000002 R_X86_64_PC32     0000000000000000 lgv - 8
+
+Relocation section '.rela.eh_frame' at offset 0x350 contains 2 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+000000000020  000200000002 R_X86_64_PC32     0000000000000000 .text + 0
+000000000040  000200000002 R_X86_64_PC32     0000000000000000 .text + 20
+
+## disas
+firo@pek-yyang4-l1:~/ws$ gdb -q lgce.o
+Reading symbols from lgce.o...(no debugging symbols found)...done.
+(gdb) disas/r main
+Dump of assembler code for function main:
+   0x0000000000000020 <+0>:	55	push   %rbp
+   0x0000000000000021 <+1>:	48 89 e5	mov    %rsp,%rbp
+   0x0000000000000024 <+4>:	48 83 ec 10	sub    $0x10,%rsp
+   0x0000000000000028 <+8>:	e8 00 00 00 00	callq  0x2d <main+13>
+   0x000000000000002d <+13>:	89 45 fc	mov    %eax,-0x4(%rbp)
+   0x0000000000000030 <+16>:	c7 05 00 00 00 00 02 00 00 00	movl   $0x2,0x0(%rip)        # 0x3a <main+26>
+   0x000000000000003a <+26>:	b8 00 00 00 00	mov    $0x0,%eax
+   0x000000000000003f <+31>:	c9	leaveq 
+   0x0000000000000040 <+32>:	c3	retq   
+End of assembler dump.
+(gdb) disas/r lgf
+Dump of assembler code for function lgf:
+   0x0000000000000000 <+0>:	55	push   %rbp
+   0x0000000000000001 <+1>:	48 89 e5	mov    %rsp,%rbp
+   0x0000000000000004 <+4>:	e8 00 00 00 00	callq  0x9 <lgf+9>
+   0x0000000000000009 <+9>:	8b 00	mov    (%rax),%eax
+   0x000000000000000b <+11>:	89 c6	mov    %eax,%esi
+   0x000000000000000d <+13>:	48 8d 3d 00 00 00 00	lea    0x0(%rip),%rdi        # 0x14 <lgf+20>
+   0x0000000000000014 <+20>:	b8 00 00 00 00	mov    $0x0,%eax
+   0x0000000000000019 <+25>:	e8 00 00 00 00	callq  0x1e <lgf+30>
+   0x000000000000001e <+30>:	5d	pop    %rbp
+   0x000000000000001f <+31>:	c3	retq   
+End of assembler dump.
+
+firo@pek-yyang4-l1:~/ws$ gdb -q lgcc.o
+Reading symbols from lgcc.o...(no debugging symbols found)...done.
+(gdb) disas/r main 
+Dump of assembler code for function main:
+   0x0000000000000020 <+0>:	55	push   %rbp
+   0x0000000000000021 <+1>:	48 89 e5	mov    %rsp,%rbp
+   0x0000000000000024 <+4>:	48 83 ec 10	sub    $0x10,%rsp
+   0x0000000000000028 <+8>:	e8 00 00 00 00	callq  0x2d <main+13>
+   0x000000000000002d <+13>:	89 45 fc	mov    %eax,-0x4(%rbp)
+   0x0000000000000030 <+16>:	48 8b 05 00 00 00 00	mov    0x0(%rip),%rax        # 0x37 <main+23>
+   0x0000000000000037 <+23>:	c7 00 02 00 00 00	movl   $0x2,(%rax)
+   0x000000000000003d <+29>:	b8 00 00 00 00	mov    $0x0,%eax
+   0x0000000000000042 <+34>:	c9	leaveq 
+   0x0000000000000043 <+35>:	c3	retq   
+End of assembler dump.
+(gdb) disas/r lgf
+Dump of assembler code for function lgf:
+   0x0000000000000000 <+0>:	55	push   %rbp
+   0x0000000000000001 <+1>:	48 89 e5	mov    %rsp,%rbp
+   0x0000000000000004 <+4>:	e8 00 00 00 00	callq  0x9 <lgf+9>
+   0x0000000000000009 <+9>:	8b 00	mov    (%rax),%eax
+   0x000000000000000b <+11>:	89 c6	mov    %eax,%esi
+   0x000000000000000d <+13>:	48 8d 3d 00 00 00 00	lea    0x0(%rip),%rdi        # 0x14 <lgf+20>
+   0x0000000000000014 <+20>:	b8 00 00 00 00	mov    $0x0,%eax
+   0x0000000000000019 <+25>:	e8 00 00 00 00	callq  0x1e <lgf+30>
+   0x000000000000001e <+30>:	5d	pop    %rbp
+   0x000000000000001f <+31>:	c3	retq   
+End of assembler dump.
+(gdb) 
+
+
+
+# ASLR
+                         */
+load_elf_binary()
+                        if (elf_interpreter) { /* PIE */
+                                load_bias = ELF_ET_DYN_BASE;
+                                if (current->flags & PF_RANDOMIZE)
+                                        load_bias += arch_mmap_rnd();
+                                elf_flags |= MAP_FIXED;
+
+# Relocated libc
+(gdb) break main 
+Breakpoint 1 at 0x40065a
+(gdb) r
+Starting program: /home/firo/ws/teste 
+
+Breakpoint 1, 0x000000000040065a in main ()
+(gdb) info sharedlibrary 
+From                To                  Syms Read   Shared Object Library
+0x00007ffff7dd7ac0  0x00007ffff7df5640  Yes         /lib64/ld-linux-x86-64.so.2
+0x00007ffff7a2d8b0  0x00007ffff7b7ff14  Yes         /lib/x86_64-linux-gnu/libc.so.6
+(gdb) info proc mappings 
+process 6947
+Mapped address spaces:
+
+          Start Addr           End Addr       Size     Offset objfile
+            0x400000           0x401000     0x1000        0x0 /home/firo/ws/teste
+            0x600000           0x601000     0x1000        0x0 /home/firo/ws/teste
+            0x601000           0x602000     0x1000     0x1000 /home/firo/ws/teste
+      0x7ffff7a0e000     0x7ffff7bcd000   0x1bf000        0x0 /lib/x86_64-linux-gnu/libc-2.23.so
+      0x7ffff7bcd000     0x7ffff7dcd000   0x200000   0x1bf000 /lib/x86_64-linux-gnu/libc-2.23.so
+      0x7ffff7dcd000     0x7ffff7dd1000     0x4000   0x1bf000 /lib/x86_64-linux-gnu/libc-2.23.so
+      0x7ffff7dd1000     0x7ffff7dd3000     0x2000   0x1c3000 /lib/x86_64-linux-gnu/libc-2.23.so
+      0x7ffff7dd3000     0x7ffff7dd7000     0x4000        0x0 
+      0x7ffff7dd7000     0x7ffff7dfd000    0x26000        0x0 /lib/x86_64-linux-gnu/ld-2.23.so
+      0x7ffff7fd7000     0x7ffff7fda000     0x3000        0x0 
+      0x7ffff7ff6000     0x7ffff7ff8000     0x2000        0x0 
+      0x7ffff7ff8000     0x7ffff7ffa000     0x2000        0x0 [vvar]
+      0x7ffff7ffa000     0x7ffff7ffc000     0x2000        0x0 [vdso]
+      0x7ffff7ffc000     0x7ffff7ffd000     0x1000    0x25000 /lib/x86_64-linux-gnu/ld-2.23.so
+      0x7ffff7ffd000     0x7ffff7ffe000     0x1000    0x26000 /lib/x86_64-linux-gnu/ld-2.23.so
+      0x7ffff7ffe000     0x7ffff7fff000     0x1000        0x0 
+      0x7ffffffde000     0x7ffffffff000    0x21000        0x0 [stack]
+  0xffffffffff600000 0xffffffffff601000     0x1000        0x0 [vsyscall]
+
+# Relocatable kernel
+x86-64: Relocatable Kernel Support
+1ab60e0f72f71ec54831e525a3e1154f1c092408
+[Relocatable kernel support for x86][5]
+ x86, relocs: Move ELF relocation handling to C
+handle_relocations()
+i386: Relocatable kernel support/968de4f02621db35b8ae5239c8cfc6664fb872d8
+States that ' Resulting in a kernel that is relocatable
+    with no runtime overhead and no need to modify the source code.'
+Quite smart.
+## kernel organize
+o/arch/x86/boot/compressed/.vmlinux.cmd
+o/arch/x86/boot/.setup.bin.cmd 
+o/arch/x86/boot/.bzImage.cmd 
+## emit-relocations
+ld/lexsup.c
+link_info.emitrelocations = TRUE;
+bfd/elf.c
+elf_fake_sections
+bfd/elflink.c
+elf_link_input_bfd
+bfd_elf_final_link
+  emit_relocs = (bfd_link_relocatable (info)      
+                 || info->emitrelocations);
+elf_link_sort_relocs
+## arch/x86/tools/relocs
+16276                                           R_X86_64_PC32
+9528                                            R_X86_64_32 // all but 2 are __crc_*
+4563                                            R_X86_64_64
+1180                                            R_X86_64_32S
+1                                               R_X86_64_NONE
+
+## kernel PIE
+CONFIG_X86_PIE
+x86/modules: Adapt module loading for PIE support

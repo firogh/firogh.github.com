@@ -58,6 +58,10 @@ kernel&lt;br /&gt;
       <guid>http://firoyang.org/cs/kernel_dbg/</guid>
       <description>
 
+&lt;h1 id=&#34;debug-boot-problem&#34;&gt;Debug boot problem&lt;/h1&gt;
+
+&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
+
 &lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
 
 &lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
@@ -79,7 +83,8 @@ THese functions are like pr_func&lt;/p&gt;
 &lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
 
 &lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
 
@@ -391,7 +396,113 @@ When kernel code becomes preemptible again.&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/&#34;&gt;Article: Introducing initramfs, a new model for initial RAM disks&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The must reading - Documentation/x86/boot.txt&lt;br /&gt;
+&lt;a href=&#34;http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/&#34;&gt;Introducing initramfs, a new model for initial RAM disks&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://duartes.org/gustavo/blog/post/kernel-boot-process/&#34;&gt;The Kernel Boot Process&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel-boot-process&#34;&gt;kernel boot process&lt;/h1&gt;
+
+&lt;p&gt;arch/x86/boot/header.S::start_of_setup&lt;br /&gt;
+arch/x86/boot/main.c::main()&lt;br /&gt;
+    arch/x86/boot/memory.c::detect_memory()&lt;br /&gt;
+    arch/x86/boot/memory.c::detect_memory_e820() = boot_params.e820_entries&lt;br /&gt;
+    &amp;hellip;&lt;br /&gt;
+    arch/x86/boot/pm.c::go_to_protected_mode()&lt;br /&gt;
+arch/x86/boot/pmjump.S::protected_mode_jump&lt;br /&gt;
+arch/x86/kernel/compressed/head_64.S::startup_32&lt;br /&gt;
+arch/x86/kernel/compressed/head_64.S::startup_64&lt;br /&gt;
+arch/x86/kernel/head_64.S::startup_64&lt;br /&gt;
+kernel/main.c::start_kernel()&lt;br /&gt;
+    &amp;hellip;&lt;br /&gt;
+    arch/x86/kernel/setup_64.c::setup_arch()&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        arch/x86/kernel/setup_64.c::memory_setup()&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::machine_specific_memory_setup()&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::sanitize_e820_map(boot_params.e820_map, &amp;amp;boot_params.e820_entries)&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::finish_e820_parsing()&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::e820_register_active_regions()&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        arch/x86/kernel/acpi/boot.c::acpi_boot_table_init()&lt;br /&gt;
+        arch/x86/kernel/pci-dma.c::dma32_reserve_bootmem()&lt;br /&gt;
+        arch/x86/kernel/acpi/sleep.c::acpi_reserve_bootmem()&lt;br /&gt;
+        arch/x86/kernel/efi_64.c::efi_reserve_bootmem()&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        arch/x86/kernel/acpi/boot.c::acpi_boot_init()&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::e820_reserve_resources()&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::e820_mark_nosave_regions()&lt;br /&gt;
+        arch/x86/kernel/e820_64.c::e820_setup_gap()&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+    }&lt;br /&gt;
+    drivers/acpi/bus.c::acpi_early_init()&lt;br /&gt;
+    kernel/main.c::rest_init()&lt;br /&gt;
+        arch/x86/kernel/process_32.c::kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);&lt;br /&gt;
+}&lt;br /&gt;
+kernel/main.c::kernel_init()&lt;br /&gt;
+ &amp;hellip;&lt;br /&gt;
+ do_basic_setup()&lt;br /&gt;
+  &amp;hellip;&lt;br /&gt;
+  drivers/base/init.c::driver_init()&lt;br /&gt;
+  &amp;hellip;&lt;br /&gt;
+  init/main.c::do_initcalls()&lt;br /&gt;
+ }&lt;br /&gt;
+ &amp;hellip;&lt;br /&gt;
+ init/main.c::init_post()&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;reloctaion-for-decompress&#34;&gt;Reloctaion for decompress&lt;/h1&gt;
+
+&lt;p&gt;974f221c84b05b1dc2f5ea50dc16d2a9d1e95eda&lt;br /&gt;
+x86/boot: Move compressed kernel to the end of the decompression buffer&lt;/p&gt;
+
+&lt;h1 id=&#34;realmode&#34;&gt;Realmode&lt;/h1&gt;
+
+&lt;p&gt;The first 640KB RAM&lt;br /&gt;
+cat /proc/iomem&lt;br /&gt;
+00000000-00000fff : reserved&lt;br /&gt;
+00001000-000913ff : System RAM&lt;br /&gt;
+00091400-0009ffff : reserved&lt;br /&gt;
+000a0000-000bffff : PCI Bus 0000:00&lt;br /&gt;
+000c0000-000cfdff : Video ROM&lt;br /&gt;
+000d0000-000d99ff : Adapter ROM&lt;br /&gt;
+000da000-000dafff : Adapter ROM&lt;br /&gt;
+000e0000-000fffff : reserved&lt;br /&gt;
+  000f0000-000fffff : System ROM&lt;br /&gt;
+00100000-bcb01fff : System RAM   # 1MB; Bootloader uses real_to_prot and prot_to_real to load the kernel image to this place.&lt;br /&gt;
+  01000000-0183d36c : Kernel code # That&amp;rsquo;s why the kernel was called big kernel.&lt;br /&gt;
+  0183d36d-01f42d3f : Kernel data&lt;br /&gt;
+  020c1000-02209fff : Kernel bss&lt;/p&gt;
+
+&lt;h1 id=&#34;horrable-commit-description-on-phys-base&#34;&gt;Horrable commit description on phys_base&lt;/h1&gt;
+
+&lt;p&gt;commit 1ab60e0f72f71ec54831e525a3e1154f1c092408&lt;br /&gt;
+Author: Vivek Goyal &lt;a href=&#34;mailto:vgoyal@in.ibm.com&#34;&gt;vgoyal@in.ibm.com&lt;/a&gt;&lt;br /&gt;
+Date:   Wed May 2 19:27:07 2007 +0200&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[PATCH] x86-64: Relocatable Kernel Support
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;normalize-cs&#34;&gt;Normalize %cs&lt;/h1&gt;
+
+&lt;p&gt;程序的起始地址在链接脚本中被设置为 0，如果 setup 被加载到其他地方(起始地&lt;br /&gt;
+址不为 0 的地方)，那么指令里面访问的全局符号都会有重定位的问题。由于 Boot Loader&lt;br /&gt;
+跳转到上面这段代码的时候，把 DS 设置为 setup 加载的基地址，而第 17 行访问_end 默认&lt;br /&gt;
+是用数据段寄存器 DS 的，所以不会有重定位的问题。但是在 38 行转移指令用的 CS 寄存器，&lt;br /&gt;
+而符号 main 的地址是在链接期决定的，现在加载的基地址改变了，那肯定会出问题了。所&lt;br /&gt;
+以事先在第 24 行把 CS 设置为和 DS 一样，这样就解决了重定位的问题了。代码的最后跳转&lt;br /&gt;
+到了 arch/x86/boot/main.c 中的 main 函数中继续执行。&lt;/p&gt;
+
+&lt;h1 id=&#34;print-with-int-0x10&#34;&gt;print with int $0x10&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu&#34;&gt;https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;a20&#34;&gt;A20&lt;/h1&gt;
+
+&lt;p&gt;[Why enable A20 line in Protected Mode?][&lt;a href=&#34;https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode&#34;&gt;https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode&lt;/a&gt;]&lt;br /&gt;
+This gate, (the A20 gate), is controlled by a GPIO pin on the keyboard controller IC. Thus, you need to enable it before going into protected mode. If you didn&amp;rsquo;t, (and say you flat-mapped all 4GB of physical memory), then as Micheal Petch indicated, &amp;ldquo;every odd numbered megabyte region will be inaccessible. So 1mb-2mb will actually reference 0-1mb, 3mb-4mb will reference 2mb-3mb etc.&amp;rdquo; See also:&lt;/p&gt;
 
 &lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
 
@@ -857,12 +968,15 @@ insert 7:&lt;/p&gt;
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
 
+&lt;p&gt;What&amp;rsquo;s the computer science? Have ever asked yourself? It&amp;rsquo;s not a science!&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;components-of-cs&#34;&gt;COmponents of cs&lt;/h1&gt;
+&lt;h1 id=&#34;components-of-cs&#34;&gt;Components of cs&lt;/h1&gt;
 
 &lt;p&gt;design(pattern) and algorithm, programming(debugging, hacking)&lt;br /&gt;
 pl,assembly, compile(gcc), link, load(cll)&lt;br /&gt;
@@ -982,9 +1096,27 @@ KVM. source code level and hands-on lkml&lt;/p&gt;
 &lt;p&gt;Reverse engineering&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How debuggers work&lt;/a&gt;&lt;/p&gt;
 
+&lt;h1 id=&#34;info&#34;&gt;info&lt;/h1&gt;
+
+&lt;p&gt;Host OS name and version number.&lt;br /&gt;
+I40e driver version number.&lt;br /&gt;
+Host OS Linux Kernel log.&lt;br /&gt;
+VF driver version number.&lt;br /&gt;
+NIC hardware model and PBA number.&lt;br /&gt;
+NIC Firmware NVM version number.&lt;/p&gt;
+
 &lt;h1 id=&#34;core-pattern&#34;&gt;Core pattern&lt;/h1&gt;
 
 &lt;p&gt;echo /tmp/core-%e-%p-%s-%c-%P &amp;gt; /proc/sys/kernel/core_pattern&lt;/p&gt;
+
+&lt;h1 id=&#34;from-assembly-to-c&#34;&gt;From assembly to C&lt;/h1&gt;
+
+&lt;p&gt;addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
+addr2line -e vmlinux -i ffffffff81f04b7a ffffffff81508daa&lt;/p&gt;
+
+&lt;h1 id=&#34;from-elf-to-c&#34;&gt;From ELF to C&lt;/h1&gt;
+
+&lt;p&gt;pahole -C &amp;lsquo;block_device&amp;rsquo; vmlinux&lt;/p&gt;
 
 &lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
 
@@ -1033,8 +1165,8 @@ E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;g
 make kernel/sched.s V=1&lt;br /&gt;
 readelf, objdump&lt;br /&gt;
 c++filt&lt;br /&gt;
-addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
-./scripts/decodecode &amp;lt; Oops.txt&lt;/p&gt;&lt;/li&gt;
+./scripts/decodecode &amp;lt; Oops.txt&lt;br /&gt;
+echo&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;load software&lt;br /&gt;
 LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;

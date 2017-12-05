@@ -156,6 +156,10 @@ __handle_mm_fault&lt;br /&gt;
       <guid>http://firoyang.org/cs/kernel_dbg/</guid>
       <description>
 
+&lt;h1 id=&#34;debug-boot-problem&#34;&gt;Debug boot problem&lt;/h1&gt;
+
+&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
+
 &lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
 
 &lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
@@ -177,7 +181,8 @@ THese functions are like pr_func&lt;/p&gt;
 &lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
 
 &lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
 
@@ -1530,9 +1535,6 @@ early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&
 init_mem_mapping //set page table and cr3.&lt;br /&gt;
 initmem_init ; NUMA init&lt;br /&gt;
 x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
-mm_init&lt;br /&gt;
-memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
-bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;br /&gt;
 a little history e820_register_active_region replaced by lmb &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by&lt;/a&gt; memblock&lt;br /&gt;
 reserve_initrd ; // RAMDISK&lt;br /&gt;
 总结下, 内存初始化需要的基础.&lt;/p&gt;&lt;/li&gt;
@@ -1542,31 +1544,101 @@ reserve_initrd ; // RAMDISK&lt;br /&gt;
 &lt;li&gt;&lt;p&gt;set PF trap do_page_fault.&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;set page table and cr3.&lt;br /&gt;
-这就完了. 之后开始开始加工.&lt;br /&gt;
-arch 相关的x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
-sparse_init&lt;br /&gt;
-{&lt;br /&gt;
-memblock_virt_alloc // sizeof(struct page *) * NR_MEM_SECTIONS;NR_MEM_SECTIONS = 1 &amp;lt;&amp;lt; 19, Is it big?&lt;br /&gt;
-// alloc memory region will be marked in memory_reserved.&lt;br /&gt;
-}&lt;br /&gt;
-zone_sizes_init.&lt;br /&gt;
-{&lt;br /&gt;
-calculate_node_totalpages // 每个zone的page数.&lt;br /&gt;
-free_area_init_node-&amp;gt; alloc_node_mem_map // alloc mem_map for FLAT&lt;br /&gt;
-free_area_init_core&lt;br /&gt;
-{&lt;br /&gt;
-    calc_memmap_size // 1/4k of spanned or present used for memmap. heuristic?&lt;br /&gt;
-    zone_pcp_init // init percpu pageset with boot_pageset&lt;br /&gt;
-    set_pageblock_migratetype(page, MIGRATE_MOVABLE);// 512 per zone&lt;br /&gt;
-    memmap_init_zone-&amp;gt; __init_single_page // init every page in a zone.&lt;br /&gt;
-}&lt;br /&gt;
-}&lt;br /&gt;
-arch independent,&lt;br /&gt;
-build_all_zonelists&lt;br /&gt;
-page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug&lt;br /&gt;
-mm_init&lt;br /&gt;
-Zone watermarks core_initcall(init_per_zone_wmark_min)&lt;/p&gt;&lt;/li&gt;
+这就完了. 之后开始开始加工.&lt;/p&gt;
+
+&lt;h1 id=&#34;setting-up-arch-specific-and-creating-memblock&#34;&gt;Setting up arch specific and creating memblock&lt;/h1&gt;
+
+&lt;h2 id=&#34;arch-specific-x86-64&#34;&gt;Arch specific x86_64&lt;/h2&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;memblock&#34;&gt;Memblock&lt;/h2&gt;
+
+&lt;p&gt;memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
+bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
+
+&lt;h1 id=&#34;using-memblock-to-prepare-for-buddy-system&#34;&gt;Using memblock to prepare for buddy system&lt;/h1&gt;
+
+&lt;h2 id=&#34;zones-and-free-area-free-list&#34;&gt;Zones and free_area.free_list&lt;/h2&gt;
+
+&lt;p&gt;paging_init-&amp;gt;zone_sizes_init.&lt;br /&gt;
+{&lt;br /&gt;
+    free_area_init_node-&amp;gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;prsent-pages&#34;&gt;prsent_pages&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;    calculate_node_totalpages
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;mem-map-page-array&#34;&gt;mem_map/page array:&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;    // mem_map for FLAT, but not for us because we use sparsemem
+    alloc_node_mem_map
+    free_area_init_core
+    {
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;managed-pages&#34;&gt;managed_pages&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;        zone-&amp;gt;managed_pages = zone-&amp;gt;present_pages - memmap_pages - DMA?dma_reserve:0
+        // init percpu pageset with boot_pageset
+        zone_pcp_init 
+        // free_area.free_list
+        init_currently_empty_zone(zone, zone_start_pfn, size);
+        // Set all page to reserved. MIGRATE_MOVABLE?
+        // Set node, zone to page-&amp;gt;flags; set_page_links
+        memmap_init_zone 
+
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h2 id=&#34;set-fallback-for-every-zone-and-init-pcp&#34;&gt;Set fallback for every zone and init PCP&lt;/h2&gt;
+
+&lt;p&gt;build_all_zonelists // dmesg&lt;/p&gt;
+
+&lt;h3 id=&#34;precondition&#34;&gt;Precondition&lt;/h3&gt;
+
+&lt;h2 id=&#34;sparse&#34;&gt;Sparse&lt;/h2&gt;
+
+&lt;p&gt;paging_init-&amp;gt;sparse_init&lt;/p&gt;
+
+&lt;h1 id=&#34;mirgate-memory-from-memblock-to-buddy-system&#34;&gt;Mirgate memory from memblock to buddy system&lt;/h1&gt;
+
+&lt;h2 id=&#34;preconditions&#34;&gt;Preconditions&lt;/h2&gt;
+
+&lt;p&gt;mem_map/page array&lt;/p&gt;
+
+&lt;h2 id=&#34;memblock-constantly-y-for-x86&#34;&gt;memblock (constantly Y for x86)&lt;/h2&gt;
+
+&lt;p&gt;memblock_free_late-&amp;gt;&lt;strong&gt;memblock_free_late-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
+
+&lt;h2 id=&#34;bootmem-discarded-by-x86&#34;&gt;bootmem (discarded by x86)&lt;/h2&gt;
+
+&lt;p&gt;memblock_free_late-&amp;gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
+free_all_bootmem-&amp;gt;free_all_bootmem_core-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
+
+&lt;h2 id=&#34;nobootmem&#34;&gt;nobootmem&lt;/h2&gt;
+
+&lt;p&gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
+free_all_bootmem-&amp;gt;free_low_memory_core_early-&amp;gt;&lt;/strong&gt;free_memory_core-&amp;gt;&lt;em&gt;__free_pages_memory&lt;/em&gt;-&amp;gt;&lt;strong&gt;free_pages_bootmem-&amp;gt;&lt;/strong&gt;free_pages_boot_core&lt;/p&gt;
+
+&lt;h2 id=&#34;free-bootmem-core-earyly&#34;&gt;free bootmem core/earyly&lt;/h2&gt;
+
+&lt;p&gt;mm_init-&amp;gt;mem_init-&amp;gt;free_all_bootmem&lt;/p&gt;
+
+&lt;h2 id=&#34;free-bootmem-late&#34;&gt;free bootmem late&lt;/h2&gt;
+
+&lt;p&gt;start_kernel-&amp;gt;efi_free_boot_services-&amp;gt;free_bootmem_late-&amp;gt;__free_pages_bootmem&lt;/p&gt;
+
+&lt;h1 id=&#34;zone-watermarks&#34;&gt;Zone watermarks&lt;/h1&gt;
+
+&lt;p&gt;core_initcall(init_per_zone_wmark_min)&lt;/p&gt;
+
+&lt;p&gt;build_all_zonelists: Just init zones, nothing else. But we have vm_total_pages/zone-&amp;gt;managed_pages initialized in free_all_bootmem();.&lt;br /&gt;
+page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug&lt;/p&gt;
 </description>
     </item>
     
