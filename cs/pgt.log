@@ -1,6 +1,8 @@
 # Links
 [1]: http://larmbr.com/2014/01/19/the-evolution-of-4-level-page-talbe-in-linux/
 [2]: http://ytliu.info/blog/2016/03/14/linuxnei-cun-chu-shi-hua-assembly/
+[3]: https://lwn.net/Articles/253361/
+[4]: http://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf
 # x86 64
 [Linux内核4级页表的演进][1]
 [Linux内存初始化][2]
@@ -67,7 +69,21 @@ For kmap(), check kmap_init()
 [How to emulate the process of translate va to pa?](http://edsionte.com/techblog/archives/1966)
 
 
-## flush tlb after page table modification.
+# TLB
+[Memory part 3: Virtual Memory][3]
+Because the processor does not ensure that the data that it caches are always consistent with the structures in memory, it is important for software developers to understand how and when the processor may cache such data. They should also understand what actions software can take to remove cached
+data that may be inconsistent and when it should do so.-- SDM 4.10 CACHING TRANSLATION INFORMATION
+4.10.4 Invalidation of TLBs and Paging-Structure Caches
+https://www.kernel.org/doc/Documentation/x86/tlb.txt
+[Paging: Faster Translations TLBs][4]
+
+## PCID
+1.10. Longer-lived TLB Entries with PCID in kernel newbies: 
+The relatted commit: x86/mm: Give each mm TLB flush generation a unique ID
+f39681ed0f48498b80455095376f11535feea332
+x86/mm: Implement PCID based optimization: try to preserve old TLB entries using PCID
+10af6235e0d327d42e1bad974385197817923dc1
+
 
 ## Direct mapping area
 high_memory (-128UL << 20)
@@ -87,7 +103,7 @@ deatils in vmalloc_sync_one() and vunmap_pte_range()
 ## Persistent Kernel Mappings
 kmap(struct page *)
 How kmap works? 
-	Check kmap_init(), later!
+Check kmap_init(), later!
 
 ## Temporay Mappings(Fixmaps)
 kmap_atomic()
