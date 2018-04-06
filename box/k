@@ -1,0 +1,57 @@
+#!/bin/bash
+
+case $1 in
+# Disk
+d)
+	qemu-kvm -snapshot -m 2048 -enable-kvm -nographic -full-screen -net nic -net user,host=10.0.2.10,hostfwd=tcp::51727-:22 -display none -no-reboot -numa node,nodeid=0,cpus=0-1 -numa node,nodeid=1,cpus=2-3 -smp sockets=2,cores=2,threads=1 -enable-kvm -usb -usbdevice mouse -usbdevice tablet -soundhw all -hda /home/firo/kernel/k/wheezy.img -kernel /home/firo/kernel/bzImag -append "console=ttyS0,earlyprintk=ttyS0,115200 vsyscall=native ftrace_dump_on_oops=orig_cpu earlyprintk=serial slub_debug=UZ net.ifnames=0 biosdevname=0   root=/dev/sda memblock=debug debug ignore_loglevel vga=normal debug nosplash firo_memblock" 
+	;;
+# NFS tewaked from yocto
+n)
+	qemu-system-x86_64 -nographic -enable-kvm  -kernel /home/firo/kernel/bzImag  -append ' console=ttyS0,115200 ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw nfsrootdebug raid=noautodetect selinux=0 enforcing=0 audit=0'
+	#qemu-system-x86_64 -nographic -k en-us -kernel /home/firo/kernel/bzImag -append "console=ttyS0,115200 raid=noautodetect root=/dev/nfs nfsroot=10.0.2.2:/home/firo/kernel/k/testfs ignore_loglevel init=/bin/bash rw "  -netdev type=user,id=usernet -device netdev=usernet,driver=virtio-net -pidfile /tmp/qemu33.pid
+# -netdev user,id=mynet0,net=192.168.76.0/24,dhcpstart=192.168.76.9
+	;;
+nb)
+	qemu-system-x86_64 -nographic -enable-kvm  -kernel /home/firo/kernel/bzImag  -append ' console=ttyS0,115200 init=/bin/bash ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw raid=noautodetect selinux=0 enforcing=0 audit=0'
+	;;	
+o)
+	qemu-system-x86_64 -nographic -enable-kvm -device e1000,netdev=inet -netdev bridge,id=inet -kernel ./bzImag  -append 'console=ttyS0 ip=dhcp root=/dev/nfs nfsroot=127.0.0.1:/home/firo/kernel/k/testfs,nfsvers=4.1,tcp rw nfsrootdebug'
+	;;
+i)
+	if [ $# -ne 2 ]; then
+		echo 'Package?'
+	else
+		sudo dnf --releasever=27 --installroot=/home/firo/kernel/k/testfs/ --setopt=reposdir=/home/firo/kernel/k/testfs/etc/yum.repos.d install $2
+	fi
+	;;
+s)
+	sudo mount -t tmpfs tmpfs /home/firo/kernel/o
+	if [ $? -eq 0 ]; then
+		echo "Mount kernel/o successfully."
+		rsync -rltOD --delete  /home/firo/kernel/O/ /home/firo/kernel/o/
+	else
+		echo "Error: Failed to mount kernel/o."
+	fi
+	;;
+c)
+	o_fstype=$(stat -f -c %T /home/firo/kernel/o)
+	if [ "x$o_fstype" = "xtmpfs" ]; then
+		echo "/home/firo/kernel/o/ is mounted bofore."
+		echo "Try to sync back tmpfs o/ to disk O/:"
+		rsync -rltOD --delete  /home/firo/kernel/o/ /home/firo/kernel/O/
+		if [ $? -eq 0 ]; then
+			echo "Sync o/ back to O/ successfully."
+		else
+			echo "Failed to sync o/ back to O/ successfully."
+		fi
+	else
+		echo "/home/firo/kernel/o/ isn't mounted bofore."
+	fi
+	;;
+esac	
+
+#qemu-kvm -m 2048 -enable-kvm -nographic -full-screen -net nic -net user,host=10.0.2.10,hostfwd=tcp::51727-:22 -display none -no-reboot -numa node,nodeid=0,cpus=0-1 -numa node,nodeid=1,cpus=2-3 -smp sockets=2,cores=2,threads=1 -enable-kvm -usb -usbdevice mouse -usbdevice tablet -soundhw all -hda /home/firo/kernel/kvm/wheezy.img -kernel /home/firo/kernel/arch/x86/boot/bzImage -append "debug  ignore_loglevel console=ttyS0 vsyscall=native initcall_debug ftrace_dump_on_oops=orig_cpu earlyprintk=serial,keep log_buf_len=16M slub_debug=UZ net.ifnames=0 biosdevname=0   root=/dev/sda" 
+#qemu-kvm -m 2048 -enable-kvm -nographic -full-screen -net nic -net user,host=10.0.2.10,hostfwd=tcp::51727-:22 -display none -no-reboot -numa node,nodeid=0,cpus=0-1 -numa node,nodeid=1,cpus=2-3 -smp sockets=2,cores=2,threads=1 -enable-kvm -usb -usbdevice mouse -usbdevice tablet -soundhw all -hda /home/firo/kernel/kvm/wheezy.img -kernel /home/firo/kernel/arch/x86/boot/bzImage -append "debug  ignore_loglevel console=ttyS0 vsyscall=native initcall_debug rodata=n ftrace_dump_on_oops=orig_cpu earlyprintk=serial,keep log_buf_len=16M slub_debug=UZ net.ifnames=0 biosdevname=0   root=/dev/sda" 
+#qemu-kvm -m 2048 -enable-kvm -nographic -full-screen -net nic -net user,host=10.0.2.10,hostfwd=tcp::51727-:22 -display none -no-reboot -numa node,nodeid=0,cpus=0-1 -numa node,nodeid=1,cpus=2-3 -smp sockets=2,cores=2,threads=1 -enable-kvm -usb -usbdevice mouse -usbdevice tablet -soundhw all -hda /home/firo/kernel/kvm/wheezy.img -kernel /home/firo/kernel/arch/x86/boot/bzImage -append "console=ttyS0 vsyscall=native initcall_debug rodata=n ftrace_dump_on_oops=orig_cpu earlyprintk=serial slub_debug=UZ net.ifnames=0 biosdevname=0  kvm-intel.nested=1 kvm-intel.unrestricted_guest=1 kvm-intel.vmm_exclusive=1 kvm-intel.fasteoi=1  kvm-intel.ept=1 kvm-intel.flexpriority=1  kvm-intel.vpid=1 kvm-intel.emulate_invalid_guest_state=1 kvm-intel.eptad=1  kvm-intel.enable_shadow_vmcs=1 kvm-intel.pml=1 kvm-intel.enable_apicv=1 root=/dev/sda" 
+# qemu-kvm -m 2048 -net nic -net user,host=10.0.2.10,hostfwd=tcp::51727-:22 -display none -no-reboot -numa node,nodeid=0,cpus=0-1 -numa node,nodeid=1,cpus=2-3 -smp sockets=2,cores=2,threads=1 -enable-kvm -usb -usbdevice mouse -usbdevice tablet -soundhw all -hda /home/firo/kernel/kvm/wheezy.img -snapshot -kernel /home/firo/kernel/arch/x86/boot/bzImage -append "console=ttyS0 vsyscall=native rodata=n oops=panic panic_on_warn=1 panic=86400 ftrace_dump_on_oops=orig_cpu earlyprintk=serial slub_debug=UZ net.ifnames=0 biosdevname=0  kvm-intel.nested=1 kvm-intel.unrestricted_guest=1 kvm-intel.vmm_exclusive=1 kvm-intel.fasteoi=1  kvm-intel.ept=1 kvm-intel.flexpriority=1  kvm-intel.vpid=1 kvm-intel.emulate_invalid_guest_state=1 kvm-intel.eptad=1  kvm-intel.enable_shadow_vmcs=1 kvm-intel.pml=1 kvm-intel.enable_apicv=1 root=/dev/sda" -enable-kvm -nographic -full-screen
+#qemu-kvm -m 2048 -enable-kvm -nographic -full-screen -net nic -net user,host=10.0.2.10,hostfwd=tcp::51727-:22 -display none -no-reboot -numa node,nodeid=0,cpus=0-1 -numa node,nodeid=1,cpus=2-3 -smp sockets=2,cores=2,threads=1 -enable-kvm -usb -usbdevice mouse -usbdevice tablet -soundhw all -hda /home/firo/kernel/kvm/wheezy.img -kernel /boot/vmlinuz-4.10.14-200.fc25.x86_64 -append "debug  ignore_loglevel console=ttyS0 vsyscall=native initcall_debug rodata=n ftrace_dump_on_oops=orig_cpu earlyprintk=serial,keep log_buf_len=16M slub_debug=UZ net.ifnames=0 biosdevname=0   root=/dev/sda" 

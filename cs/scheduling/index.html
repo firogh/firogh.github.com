@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="500">
+<meta itemprop="wordCount" content="614">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -186,6 +186,34 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="context-switch">Context switch</h1>
+
+<p>inactive_task_frame __switch_to_asm</p>
+
+<p>sp0 load_sp0 userspace stack pointer? sdm v3a 7.2.1 Task-State Segment (TSS)<br />
+No, it isn&rsquo;t. sp0 is kernel stack spointer.<br />
+Comparing to __switch_to_asm()&rsquo;s movq TASK_threadsp(%rsi), %rsp and popq, to examine copy_thread_tls<br />
+context_switch - switch to the new MM and the new thread&rsquo;s register state.<br />
+and ret_from_fork.</p>
+
+<p>What about start_thread_common()?<br />
+next&rsquo;s ret address of switch_to() is the new ip after changing stack.<br />
+switch_to() is the core.</p>
+
+<p>See the following; it exposures lots of information sp vs sp0.</p>
+
+<pre><code>    p-&gt;thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;
+    childregs = task_pt_regs(p);
+    fork_frame = container_of(childregs, struct fork_frame, regs);
+    frame = &amp;fork_frame-&gt;frame;
+    frame-&gt;bp = 0;
+    frame-&gt;ret_addr = (unsigned long) ret_from_fork;
+    p-&gt;thread.sp = (unsigned long) fork_frame;
+    p-&gt;thread.io_bitmap_ptr = NULL;
+</code></pre>
+
+<h1 id="etc">etc</h1>
 
 <p>Customer demand -&gt; multitasking/concurrent<br />
 Some other issues arise from multitasking/concurrent.<br />

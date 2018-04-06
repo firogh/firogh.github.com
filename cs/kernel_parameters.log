@@ -1,0 +1,55 @@
+
+
+# parsing boot cmdline
+## 1st parsing
+start_kernel->steup_arch()->parse_early_param->parse_early_options
+## 2nd parsing
+start_kernel->
+        pr_notice("Kernel command line: %s\n", boot_command_line);
+        parse_early_param(); // Do nothing just return as done by above calling for x86.
+        parse_args("Booting kernel", static_command_line, __start___param,
+                   __stop___param - __start___param,
+                   -1, -1, &unknown_bootoption);
+
+## __setup normal param
+include/linux/init.h
+1. #define __setup_param(str, unique_id, fn, early)			\
+	static const char __setup_str_##unique_id[] __initconst		\
+		__aligned(1) = str; 					\
+	static struct obs_kernel_param __setup_##unique_id		\
+		__used __section(.init.setup)				\
+		__attribute__((aligned((sizeof(long)))))		\
+		= { __setup_str_##unique_id, fn, early }
+2. #define __setup(str, fn)						\
+	__setup_param(str, fn, fn, 0)
+
+include/asm-generic/vmlinux.lds.h
+3. #define INIT_SETUP(initsetup_align)					\
+		. = ALIGN(initsetup_align);				\
+		VMLINUX_SYMBOL(__setup_start) = .;			\
+		KEEP(*(.init.setup))					\
+		VMLINUX_SYMBOL(__setup_end) = .;
+
+
+## kernel module param
+include/asm-generic/vmlinux.lds.h
+	/* Built-in module parameters. */				\
+	__param : AT(ADDR(__param) - LOAD_OFFSET) {			\
+		VMLINUX_SYMBOL(__start___param) = .;			\
+		KEEP(*(__param))					\
+		VMLINUX_SYMBOL(__stop___param) = .;			\
+	}	
+
+module_param
+/* This is the fundamental function for registering boot/module
+   parameters. */
+#define __module_param_call(prefix, name, ops, arg, perm, level)        \
+        /* Default value instead of permissions? */                     \
+        static int __param_perm_check_##name __attribute__((unused)) =  \
+        BUILD_BUG_ON_ZERO((perm) < 0 || (perm) > 0777 || ((perm) & 2))  \
+        + BUILD_BUG_ON_ZERO(sizeof(""prefix) > MAX_PARAM_PREFIX_LEN);   \
+        static const char __param_str_##name[] = prefix #name;          \
+        static struct kernel_param __moduleparam_const __param_##name   \
+        __used                                                          \
+    __attribute__ ((unused,__section__ ("__param"),aligned(sizeof(void *)))) \
+        = { __param_str_##name, ops, perm, level, { arg } }

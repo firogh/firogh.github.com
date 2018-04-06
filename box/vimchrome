@@ -1,0 +1,48 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]
+then
+	echo "vimchrome /path/to/chrome"
+	exit 1
+fi
+
+# Chrome
+#IDC_SELECT_PREVIOUS_TAB: 前一个tab 
+#Ctl+ Prev Tab -> Alt + j 
+#0900000006000000e1840000
+#4A00000008000000e1840000
+#
+#Ctl + Next Tab -> Alt + k 
+#0900000004000000e0840000
+#4B00000008000000e0840000
+#
+#IDC_BACK
+#{ ui::VKEY_LEFT, ui::EF_ALT_DOWN, IDC_BACK }
+#bgrep -C 8 2500000008000000e8800000 ./chrome
+#Alt + Left -> Alt + h 
+#2500000008000000e8800000
+#4800000008000000e8800000
+#
+#IDC_FORWARD
+#Alt + Right -> Alt + l 
+#2700000008000000e9800000
+#4C00000008000000e9800000
+chrome=$1
+shortcuts_src=(0900000006000000e1840000 0900000004000000e0840000 2500000008000000e8800000 2700000008000000e9800000)
+shortcuts_dst=(4A00000008000000e1840000 4B00000008000000e0840000 4800000008000000e8800000 4C00000008000000e9800000)
+
+for i in $(seq 0 3);
+do 
+	output=$(bgrep  ${shortcuts_src[i]} $chrome 2> /dev/null)
+	if [ -n "$output" ]; then
+		offset="0x"$(echo $output | awk '{print $2}')
+
+		echo "Changing shortcuts from" ${shortcuts_src[i]} " to " ${shortcuts_dst[i]}
+		binary_editor.py $chrome $offset 12 ${shortcuts_dst[i]}
+		echo ""
+		#cbyte.py chome	0x0086bf48	12	4A00000008000000e1840000
+		#cbyte.py file	offset		size	new-shortcuts
+	else
+		echo "Failed to change shortcuts from" ${shortcuts_src[i]} " to " ${shortcuts_dst[i]}
+	fi
+done

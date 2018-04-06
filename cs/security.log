@@ -16,9 +16,45 @@ PEM
 # LSM
 include/linux/lsm_hooks.h
 [Linux Security Module Framework][1]
+# x509 
+Unique Identifiers should be the fingerprint
+
+# RSA
+https://www.ietf.org/rfc/rfc3447.txt
+
+# Cert self-signed
+commit ad3043fda39db0361d9601685356db4512e914be
+Author: David Howells <dhowells@redhat.com>
+Date:   Wed Apr 6 16:13:34 2016 +0100
+
+    X.509: Fix self-signed determination
+    
+    There's a bug in the code determining whether a certificate is self-signed
+    or not: if they have neither AKID nor SKID then we just assume that the
+    cert is self-signed, which may not be true.
+    
+    Fix this by checking that the raw subject name matches the raw issuer name
+    and that the public key algorithm for the key and signature are both the
+    same in addition to requiring that the AKID bits match.
+    
+    Signed-off-by: David Howells <dhowells@redhat.com>
+
+
 
 # SELinux
 [SELinux Explained with Examples in Easy Language]
+security/selinux/selinuxfs.c: sysfs_create_mount_point: create /sys/fs/selinux mount point. then mount the selinuxfs on selinux_null???
+upstart will mount selinuxfs at /sys/fs/selinux
+bash-4.3# mount
+/dev/sda2 on / type ext3 (ro,relatime,errors=continue,user_xattr,acl,barrier=1,data=ordered)
+proc on /proc type proc (rw,relatime)
+sysfs on /sys type sysfs (rw,relatime)
+bash-4.3# cat /proc/cmdline 
+BOOT_IMAGE=vmlinuz rootwait max_loop=255 ro clock=pit console=ttyS0,115200 root=LABEL=wr_usb_boot initrd=initrd init=/bin/bash selinux=1 
+bash-4.3# ls /sys/fs/selinux/
+bash-4.3# cat /proc/filesystems  | grep selinux
+nodev	selinuxfs
+bash-4.3# mount -t selinuxfs selinuxfs /sys/fs/selinux/
 
 # IMA
 ## Digital signature
@@ -26,6 +62,9 @@ include/linux/lsm_hooks.h
 Doc =>hasing()=>Message digest=>Encrypt with Private Key()=>Signature=>Decrypt with Public Key()=>Message digest=>Compare with hashing Doc()=>OK?
 ## Hook point
 include/linux/ima.h
+
+## IMA behaviors
+1. if no kernel cmdline parameters + apply policy + default enabled appraise, wont work dmesg shows miss-hash. Need ima_tcb and ima_appraise_tcb
 
 # Capabilities
 
@@ -38,10 +77,6 @@ certs/Kconfig
 system_certificate_list
 Porting certs patches from 4.3
 2. [ IMA: Use the the system trusted keyrings instead of .ima_mok](https://patchwork.kernel.org/patch/8504271/)
-
-
-
-
 
 
 # Cryptograhy

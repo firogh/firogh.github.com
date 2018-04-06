@@ -346,6 +346,34 @@ int   $0x80
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
 
+&lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
+
+&lt;p&gt;inactive_task_frame __switch_to_asm&lt;/p&gt;
+
+&lt;p&gt;sp0 load_sp0 userspace stack pointer? sdm v3a 7.2.1 Task-State Segment (TSS)&lt;br /&gt;
+No, it isn&amp;rsquo;t. sp0 is kernel stack spointer.&lt;br /&gt;
+Comparing to __switch_to_asm()&amp;rsquo;s movq TASK_threadsp(%rsi), %rsp and popq, to examine copy_thread_tls&lt;br /&gt;
+context_switch - switch to the new MM and the new thread&amp;rsquo;s register state.&lt;br /&gt;
+and ret_from_fork.&lt;/p&gt;
+
+&lt;p&gt;What about start_thread_common()?&lt;br /&gt;
+next&amp;rsquo;s ret address of switch_to() is the new ip after changing stack.&lt;br /&gt;
+switch_to() is the core.&lt;/p&gt;
+
+&lt;p&gt;See the following; it exposures lots of information sp vs sp0.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    p-&amp;gt;thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;
+    childregs = task_pt_regs(p);
+    fork_frame = container_of(childregs, struct fork_frame, regs);
+    frame = &amp;amp;fork_frame-&amp;gt;frame;
+    frame-&amp;gt;bp = 0;
+    frame-&amp;gt;ret_addr = (unsigned long) ret_from_fork;
+    p-&amp;gt;thread.sp = (unsigned long) fork_frame;
+    p-&amp;gt;thread.io_bitmap_ptr = NULL;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;etc&#34;&gt;etc&lt;/h1&gt;
+
 &lt;p&gt;Customer demand -&amp;gt; multitasking/concurrent&lt;br /&gt;
 Some other issues arise from multitasking/concurrent.&lt;br /&gt;
 Scheduling is used to implement the multitasking/concurrent and solve the arose issues.&lt;br /&gt;
@@ -1016,7 +1044,7 @@ insert 7:&lt;/p&gt;
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
 
-&lt;p&gt;What&amp;rsquo;s the computer science? Have ever asked yourself? It&amp;rsquo;s not a science!&lt;br /&gt;
+&lt;p&gt;What&amp;rsquo;s the computer science? Have you ever asked yourself? It&amp;rsquo;s not a science!&lt;br /&gt;
 Underlying our approach to this subject is our conviction that “com-&lt;br /&gt;
 puter science” is not a science and that its significance has lile to do&lt;br /&gt;
 with computers. The computer revolution is a revolution in the way we&lt;br /&gt;
@@ -1120,23 +1148,17 @@ maybe effiency of quantaties/times of transfer. 是确定的行为, 不同与cac
 time-sharing: multi-task from batch processing&lt;br /&gt;
 prallel process: increas quantanties of process.&lt;/p&gt;
 
-&lt;p&gt;现在我们以新的视角看待os演化过程, 即以process/change, quantaties/state, relation/order这些natural origin为wilds,&lt;br /&gt;
-辅以will意志的origin:&lt;br /&gt;
-performance/efficiency&lt;br /&gt;
+&lt;p&gt;performance/efficiency&lt;br /&gt;
 Easy to use&lt;br /&gt;
 Security/Protection/isolation&lt;br /&gt;
 Reliability&lt;br /&gt;
 Energy-efficiency&lt;/p&gt;
 
-&lt;h1 id=&#34;kerenl&#34;&gt;kerenl&lt;/h1&gt;
-
-&lt;p&gt;General subsystem: schedule, memory, fork, lock, vfs. April 4, 8 days&lt;br /&gt;
-Network + redhat requirements. 8 days&lt;br /&gt;
-KVM. source code level and hands-on lkml&lt;/p&gt;
-
 &lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/library/os-aapseudo1/os-aapseudo1-pdf.pdf&#34;&gt;All about pseudo&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kernel&#34;&gt;kernel&lt;/h1&gt;
 </description>
     </item>
     

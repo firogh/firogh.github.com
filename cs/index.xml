@@ -141,50 +141,6 @@ kernel&lt;br /&gt;
     </item>
     
     <item>
-      <title>Linux page reclaim</title>
-      <link>http://firoyang.org/cs/page_reclaim/</link>
-      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_reclaim/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/383162/&#34;&gt;The case of the overly anonymous anon_vma&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
-    Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
-    No enough memory for a large memory alloc.&lt;br /&gt;
-    Manually initate&lt;br /&gt;
-What pages do we want to reclaim?&lt;br /&gt;
-    All user space pages, except some pages.&lt;br /&gt;
-    Do not reclaim kernel page in order to make things simple.&lt;br /&gt;
-Where to store the pages?&lt;br /&gt;
-    There may be many processes which use the same pages.&lt;br /&gt;
-    We put list of pages in a global site.&lt;br /&gt;
-How to organize the pages.&lt;br /&gt;
-    LRU&lt;br /&gt;
-    When to add the page to LRU&lt;br /&gt;
-How to reclaim in deatils.&lt;br /&gt;
-    For memory-mapped file page, write back.&lt;br /&gt;
-    For private and anonymous, swap.&lt;br /&gt;
-    For memroy-mapped file page without modification.&lt;br /&gt;
-    How to distinguish kernel page from user space page?&lt;br /&gt;
-How to modify the process&amp;rsquo;s pte to let it know the page has been reclaimed.&lt;br /&gt;
-    Reverse mapping.&lt;/p&gt;
-
-&lt;h1 id=&#34;anonymous-reverse-mappinng&#34;&gt;Anonymous reverse mappinng&lt;/h1&gt;
-
-&lt;p&gt;Where do reverse mappings come from?&lt;br /&gt;
-    syscall: mmap(ANONYMOUS | PRIVATE)&lt;br /&gt;
-    Proceass address space: Heap, stack.&lt;br /&gt;
-mm: change anon_vma linking to fix multi-process server scalability issue&lt;br /&gt;
-5beb49305251e5669852ed541e8e2f2f7696c53e&lt;br /&gt;
-When we fork a child process, it will associate multiple anon_vmas with a VMA.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Page fault</title>
       <link>http://firoyang.org/cs/page_fault/</link>
       <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
@@ -485,6 +441,34 @@ int   $0x80
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
 
+&lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
+
+&lt;p&gt;inactive_task_frame __switch_to_asm&lt;/p&gt;
+
+&lt;p&gt;sp0 load_sp0 userspace stack pointer? sdm v3a 7.2.1 Task-State Segment (TSS)&lt;br /&gt;
+No, it isn&amp;rsquo;t. sp0 is kernel stack spointer.&lt;br /&gt;
+Comparing to __switch_to_asm()&amp;rsquo;s movq TASK_threadsp(%rsi), %rsp and popq, to examine copy_thread_tls&lt;br /&gt;
+context_switch - switch to the new MM and the new thread&amp;rsquo;s register state.&lt;br /&gt;
+and ret_from_fork.&lt;/p&gt;
+
+&lt;p&gt;What about start_thread_common()?&lt;br /&gt;
+next&amp;rsquo;s ret address of switch_to() is the new ip after changing stack.&lt;br /&gt;
+switch_to() is the core.&lt;/p&gt;
+
+&lt;p&gt;See the following; it exposures lots of information sp vs sp0.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    p-&amp;gt;thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;
+    childregs = task_pt_regs(p);
+    fork_frame = container_of(childregs, struct fork_frame, regs);
+    frame = &amp;amp;fork_frame-&amp;gt;frame;
+    frame-&amp;gt;bp = 0;
+    frame-&amp;gt;ret_addr = (unsigned long) ret_from_fork;
+    p-&amp;gt;thread.sp = (unsigned long) fork_frame;
+    p-&amp;gt;thread.io_bitmap_ptr = NULL;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;etc&#34;&gt;etc&lt;/h1&gt;
+
 &lt;p&gt;Customer demand -&amp;gt; multitasking/concurrent&lt;br /&gt;
 Some other issues arise from multitasking/concurrent.&lt;br /&gt;
 Scheduling is used to implement the multitasking/concurrent and solve the arose issues.&lt;br /&gt;
@@ -590,7 +574,8 @@ When kernel code becomes preemptible again.&lt;/p&gt;
 &lt;p&gt;Why dose we use /dev/xxx to represent the &amp;ldquo;tty&amp;rdquo; device?&lt;/p&gt;
 
 &lt;blockquote&gt;
-&lt;p&gt;The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&amp;gt; have nothing to do with each other), but the fact that you can use common tools to operate on different things. &amp;ndash; Linus&lt;/p&gt;
+&lt;p&gt;The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&lt;br /&gt;
+have nothing to do with each other), but the fact that you can use common tools to operate on different things. &amp;ndash; Linus&lt;/p&gt;
 &lt;/blockquote&gt;
 
 &lt;p&gt;So we got the key point!&lt;br /&gt;
@@ -1710,6 +1695,220 @@ vcpu_svm    kvm_svm.h&lt;br /&gt;
 &lt;h1 id=&#34;qemu-system-ppc&#34;&gt;qemu-system-ppc&lt;/h1&gt;
 
 &lt;p&gt;-mem-path:&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Algorithms and data structues</title>
+      <link>http://firoyang.org/cs/algorithm/</link>
+      <pubDate>Wed, 27 May 2015 12:42:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/algorithm/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;&lt;br /&gt;
+Algorithms: Design Techniques and Analysis&lt;br /&gt;
+The Algorithm Design Manual 2nd Edition&lt;/p&gt;
+
+&lt;h1 id=&#34;世界本源-the-origin-of-the-world-l-origine-du-monde&#34;&gt;世界本源, the origin of the world, L&amp;rsquo;Origine du monde&lt;/h1&gt;
+
+&lt;p&gt;being(4), abyss(0)&lt;br /&gt;
+material(1) change, quality, quantity, relation, space, time&lt;br /&gt;
+process(2), tansfer, truth, signifier(3), bijection, Causality, structure&lt;br /&gt;
+connectivity&lt;/p&gt;
+
+&lt;h1 id=&#34;排序算法的分析&#34;&gt;排序算法的分析&lt;/h1&gt;
+
+&lt;p&gt;排序的结果全序.&lt;br /&gt;
+在确定排序的思想/算法后, 排序的过程是从无序to 有序的过程.&lt;br /&gt;
+我们排序的过程等价成一次算术运算.&lt;br /&gt;
+每一次, 在特定的算法下, 数据有序度增加or不增加, 但不减少.&lt;br /&gt;
+我们把有序度看成一个quantity.那么此时排序的过程等价于有序度增加的过程.&lt;br /&gt;
+怎么定义有序度set内元素构成=&amp;lt;就是一度粗有序度. 严谨的连续元素构成=&amp;lt;关系.&lt;br /&gt;
+比如1 2 3 4 5 , bold order:4 + 3+ 2 +1; 严谨有序度:４&lt;/p&gt;
+
+&lt;p&gt;也就是一个算法, 对如3 2 5 4 1. bo:2 + 2 ; 严谨有序度:0&lt;br /&gt;
+bo: 2+2 to 10&lt;br /&gt;
+严谨: 0 to 4&lt;br /&gt;
+就算完成.此时我们没做一次排序, 都在做加法运算.只是每一步转换成一个变量了.&lt;br /&gt;
+这似乎对我们理解sorting起不了多大的帮助.&lt;br /&gt;
+直觉应该没错.确实不应该关心过程, 而应该关系变化本身, process不等于变化本身.&lt;br /&gt;
+只是process是变化的动力, 却不是原因.变化的因果并不是恒定不变的.process成了变化的&lt;br /&gt;
+结果了, 因为要这样所以才有了process, 不是这个process才怎么怎么了.&lt;br /&gt;
+这样我们知道从raw set to ordered set, 这个过程, 一定可以有多个sort algorithms来完成.&lt;br /&gt;
+那么选取哪个sort algorithm就是有改变的形式决定的.&lt;br /&gt;
+所以我们依然在探讨结构上的变化. 而不是纯粹的process过程.&lt;br /&gt;
+比如先确定边界元素的有序度, 从一边向另一边逐渐演化. 这就是selection sort.&lt;br /&gt;
+注意!我们通过等价变换causlity, 原来近乎process主导的问题变为了, quantity structure渐变的问题了.&lt;br /&gt;
+原来是伸手不见五指的变, 现在是看的见有形的变.&lt;br /&gt;
+再看其他的算法, 比如我们想确定由中间quantity发起向两侧的有序变化, 就是快排.快排为什么快?&lt;br /&gt;
+但是我们发现, 这种有中间发起的有序度变多的过程, 有两个疑点.&lt;br /&gt;
+1. 这个所谓中间值是我们随机指定的, 几乎不可能是真正意义上的&amp;rdquo;中间值&amp;rdquo;.&lt;br /&gt;
+2. 也是疑惑最大, 这种中起的有序度变化, 严格有序度不像边沿变化那样连续, 但是关于所谓中间值的bold order&lt;br /&gt;
+确是丝毫没有耗损的! 也就是bold order是非常细腻的, 而Strict order, 是非常粗野的.&lt;br /&gt;
+我们可以武断地下个定论, 满足严格有序的算法效率差!后面会给出严谨的证明.&lt;br /&gt;
+我们继续, 另外务必注意, 我们这里没有任何关于已知算法的信息.&lt;br /&gt;
+已知的各种算法是就是符号系统里面的signifier, 在我们分析的过程中纯粹的就是个名字而已.&lt;br /&gt;
+更可怜的是, 这个名字是我们从signified推出来的.&lt;br /&gt;
+我们现在已经推出了冒泡, 选择, 快排 三种算法了.&lt;br /&gt;
+另外还有merge sort, heap sort, insertion sort, shell sort.&lt;br /&gt;
+我只是看了merge sort之后的名字了, 具体的算法, 内容我都忘了(刻意不去想).&lt;br /&gt;
+现在看了quick sort确认的是任意一点为为核心的orderness的增多过程. 增加的形式由中间开启.topdown.可以强调中间的含义.&lt;br /&gt;
+insertion sort是select的一个generalize的版本, 他不强求strict order的满足. 也是有一边向另一边的orderness增多过程.&lt;br /&gt;
+merge sort: 从全部的个体单元开始的开始有序度增多, bottomup过程.不强加中间的含义.&lt;br /&gt;
+构成了以raw 元素为开始的, 从东南西北开始的四面埋伏是的有序度增多过程.&lt;br /&gt;
+看来我的感觉没错.&lt;br /&gt;
+算法的分析就结束了, 意外的收获颇多.本以为行不通的.&lt;/p&gt;
+
+&lt;h1 id=&#34;查找算法的分析-searching-algorithm&#34;&gt;查找算法的分析 searching algorithm&lt;/h1&gt;
+
+&lt;p&gt;搜索的效率完全在于搜索路径的长短.&lt;br /&gt;
+查找是在a set of objects, 找到特定的目标. the structure of the set of objects可能是任意的.&lt;br /&gt;
+计算机中如线性的linked list, array, tree, graph. structure并不只是量之间的quality, relation.&lt;br /&gt;
+还包括了, change, 即operation, access/get也是一种change, 效果是没有change.&lt;br /&gt;
+那么What is the form causality of searching?上面分析sorting的时候, 我们没有分析sorting算法的效率.&lt;br /&gt;
+因为排序的form是orderness, 不是效率. 当然效率也很重要.&lt;br /&gt;
+而查找算法,直观上要比sorting要简单, 他只关心特定的目标, 找到or not found.&lt;br /&gt;
+但是有一点, 我们是万分确信的. 那就是类似sorting, searching的目的也是确定的, 也就是目的因的存在.&lt;br /&gt;
+我们通过类似蒙太奇的手法, 去从差异中需找这种量. 寻找一些差异来自于我们找到target的最终结果和每步尝试之间.&lt;br /&gt;
+每一步, 我们都比上一步离target更近了. 我想这是searching的form之一.&lt;br /&gt;
+我定义为reachness(我瞎起的). 我们知道在特定的算法确定的情况下, 在特定的数据结构下(也就是搜寻的具体空间),&lt;br /&gt;
+reachness这个quantity用来刻画我们searching的process, 因为算法确定, 数据结构确定, 没有数据的update.&lt;br /&gt;
+那么我们前后两次searching到同一个target的reachness是一样的!没有差异, 我们不能仅仅用他来区分不同的searching process.&lt;br /&gt;
+那么我们如何用这个reachness刻画不同searching algorithm呢?在说一次,&lt;br /&gt;
+ 我们分析过程不关心算法的效率(这种马后炮式的分析,很无聊, 但巨大现实意义), 不属于本次的topic!&lt;br /&gt;
+我们的目的是为了理解区分而刻画不同的searching algorithm.实际上在上面分析排序算法的过程中我们隐式的分析对象就是数据结构,&lt;br /&gt;
+不过我们忽视了他的存在. 我们分析的内容是确定的:&lt;br /&gt;
+数据有序, 能显著减少搜索的空间? 为什么有序order的数据, 就能减少搜索的次数呢?&lt;br /&gt;
+a) 查找本身就是做order判断.&lt;br /&gt;
+b)  而有序的数据潜在做完了判断.&lt;br /&gt;
+也就是还有一个判断读的问题 or orderness. 那么final reachness的最大值就是描述在不同的数据结构中, 得到target经历的quantity.&lt;br /&gt;
+if orderness = 0. every structure&amp;rsquo;s final reachness = max space.&lt;br /&gt;
+else final reachness &amp;lt; max space; // maybe half of max space&lt;br /&gt;
+那么树形结构和linear 结构有什么区别呢? 结构上的已经清楚了.实际上, 我们知道计算机中树就是用linear实现的.&lt;br /&gt;
+无序的链表和无序的tree是一样的.可以说无序的树是无意义的.&lt;br /&gt;
+树是链表的超集. 有什么事树可以, 链表不可以.二分查找和二叉树查找是一样的.&lt;br /&gt;
+但是二分只能应用到array上. 主要是因为没办法找到中间点.如果我们加个指针指向有序链表中间向他变成了什么?&lt;br /&gt;
+没错树, 这应该就是树的重要本质了, accessable &amp;ldquo;中间&amp;rdquo;的quantity.除了叶节点职位的quantity都是内部&amp;rdquo;中间&amp;rdquo;quantity.&lt;br /&gt;
+tree的两个后继则是边缘的一种展示.相比链表, 我们能第一时间知道正set of quantities的中间quantities.&lt;br /&gt;
+实际上, 顺着middle pointer我们能够找到所有的interior middle quantities; 意外吧. 但是我们想知道其他的&lt;br /&gt;
+中间节点时间耗费就是增多了.比如2049个节点. dfs只要最多8次就能找到任意&amp;rdquo;interior middle pointer&amp;rdquo;可是link list&lt;br /&gt;
+全是512次啊tree有效的控制了reachness. 当然树是完全平衡的二叉树.&lt;br /&gt;
+我现在到底在说什么呢? 我们试图用reachness和orderness描述tree, 我们辨析了tree和链表在reachness上的差异, 前提full order.&lt;br /&gt;
+tree毫无疑问有link list来的.也就是说我们现在把searching 等价成了tree的结构.&lt;br /&gt;
+那么维持reachness在较低值就是算法优劣关键. 那么如何保持reachness最小, 也就是orderness最大.&lt;br /&gt;
+是什么让tree在reachness比link list优势这么大? 是存在于tree中隐式的判断.链式是一点点线性的变化, 而tree中的隐式判断确实二分的.&lt;br /&gt;
+orderness小于1的tree没有意义.&lt;br /&gt;
+记下来看看:avl tree, redblack tree, treap, splay tree, Size Balanced Tree, B-tree, B+ tree. but Trie or 霍夫曼树.&lt;br /&gt;
+也就是说我们现在要考察这些tree structure. 基本考察完, 我的算法就同了. 后面还有DP, 贪婪, 数值, PNP之类都是思想了.&lt;br /&gt;
+所以基本上本周5能把algorithm, 完事, 周6 设计模式. 周日开始sicp.&lt;br /&gt;
+开始, 树结构的分析, 因为尽管是有形的visible structure, 我们依然无法给霍夫曼树和red black一个合理分析视角,&lt;br /&gt;
+根本原因就是他们的form causality or 目的因不同.由上面可知orderness和reachness是我门刻画binary balance tree的quantities.&lt;br /&gt;
+我们前面也分析了如何从link list到链表. 确定小, 中, 大,即 left, root, right这种模式下所有set of quantities的构成tree有多种可能.&lt;br /&gt;
+如 1 2 3 4 5; left subtree 可以是 NULL, 1, 2, 还可以是1, 2, NULL.常见的旋转可以打到前者的情况. or不旋转:&lt;br /&gt;
+5是root. 之后3是left 也是subtree的root, 1是left, 4是right,  1是root 2是right.&lt;br /&gt;
+有序的link list和二叉树在插入删除是都做order判断调整, 由此一点我们不能判断出书有效的. 那什么是树比link list有效的呢?当然前提是&lt;br /&gt;
+整个set 是order的.对1 2 3 4 5, reachness可能是5也可能是3. 对与1024个数据可能是1024, 可能是9.&lt;br /&gt;
+树的高度height能有效衡量reachness.现在我们知道了, avl, red black, trap, splay这些tree的目标都是height的最小化.&lt;br /&gt;
+但同时, 我们也知道height是一个描述最终结果.并不是process quantity. 我们找到与process动态同步的quantity.&lt;br /&gt;
+这个process准确说就是构建balance tree的过程. 那么这个量就是描述balance tree.如 1 2 3 4 5 6 7 8 9, 5做root,&lt;br /&gt;
+1 2 3 4 全是left child, 6 7 8 9全是right child. 二叉树的最raw的形态应该是link list那种.也就是说除了leaf node, 每个node至少&lt;br /&gt;
+和两个node相连.也就是天然的形态. 那么我们把同时连着两个的node的connectivity作为1. 反之为0.链表起始是right side tree,&lt;br /&gt;
+我的天, 这样链表的connectivity就是0啊.比如1,2,3,4,5,6,7的connectivity在0~3, 这是strict connectivity.那么bold connectivity就是&lt;br /&gt;
+只要有连着就行link list对于1 to 7 这种情况是6.和二叉树没差. 比如 1 2 3 4 5. connectivity是1 or 2对search是没有影响的.&lt;br /&gt;
+饶了一圈发现还是height最好用.那如何保证height最小. 看来还差树的form是保证height=(logN+1向上取整)&lt;br /&gt;
+现在searching问题就转换成了二叉树构造的问题了.成了一个动态的过程了.&lt;br /&gt;
+我们现在完全不考虑算法实现. 只是单纯的考虑一个过程前后两个state的差异, 类似蒙太奇手法.&lt;br /&gt;
+重点是确认前后的两个state是什么? 前一个状态是raw, 我们不关心具体什么, 因为他可以是二叉树可能存在的各种状态.那么后一个状态呢?&lt;br /&gt;
+我们期望的是什么. 我们可以为binary tree的各种形态用数值量化表示. 我们不用complete binary tree来表示理性的便于搜索的二叉树.&lt;br /&gt;
+因为在最右在层, leaf node是否连续, 对searching的worst-case time O(log n) 没影响.所以我们叫piled tree.&lt;/p&gt;
+
+&lt;p&gt;如果存在3个点向来的情况就认为 connectivity is 1。整个树的connectivity 是每个点的加和结果。&lt;br /&gt;
+比如1到7的set那么max connectivity&lt;br /&gt;
+4&lt;br /&gt;
+&lt;sup&gt;2&lt;/sup&gt;&amp;frasl;&lt;sub&gt;5&lt;/sub&gt;&lt;br /&gt;
+&lt;sup&gt;13&lt;/sup&gt;&amp;frasl;&lt;sub&gt;67&lt;/sub&gt;&lt;br /&gt;
+所以是3这种情况也就是最有利于searching的。&lt;br /&gt;
+同样1到7。&lt;br /&gt;
+4&lt;br /&gt;
+&lt;sup&gt;3&lt;/sup&gt;&amp;frasl;&lt;sub&gt;5&lt;/sub&gt;&lt;br /&gt;
+&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;67&lt;/sub&gt;&lt;br /&gt;
+2&lt;br /&gt;
+这种情况connectivity不是max，是2。也对应不是对searching最优的结构。&lt;br /&gt;
+how to prove the consistency between connectivity and searching effiency？&lt;br /&gt;
+Delay this job to future。&lt;br /&gt;
+So oncemore we transfer our hunting target to how to build a  binary tree that with max connectivity.&lt;br /&gt;
+In other words, all the popular self banlancing tree inherit this intrsic.&lt;br /&gt;
+what we can do to modify the structure of  binary searching tree.&lt;br /&gt;
+1 link  or unlink&lt;br /&gt;
+2 counterclockwise weight inreasing&lt;br /&gt;
+3 right shift(left roation); left shift(right roation)&lt;br /&gt;
+4 只有insert和delete会影响.&lt;br /&gt;
+尝试这却理解redblack tree.&lt;br /&gt;
+逐一分析性质:&lt;br /&gt;
+分出red black, 根叶都是黑.&lt;br /&gt;
+red node不联通.&lt;br /&gt;
+每个路径上黑node个数相同.&lt;br /&gt;
+如果对于特定数量的nodes, 我们确认他能构成一定数量对应height在log(N+1), 也就是最优的searching.&lt;br /&gt;
+所以说specific number nodes可以组成很多种binary searching tree.按照node的height在log(N+1)的数量.&lt;br /&gt;
+avl 要严格rb-tree.这就是bst的form. 我们来总结下.&lt;br /&gt;
+numbers of node &amp;lt; log(N +1) 取上.&lt;br /&gt;
+那么rb是如何保证logN呢?&lt;br /&gt;
+一个潜在的性质是插入是红.红永远小于黑,&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://gregfjohnson.com/cgi-bin/redblackbuilder&#34;&gt;http://gregfjohnson.com/cgi-bin/redblackbuilder&lt;/a&gt; 生成1 2 3 4 5 6逐一插入的算法.&lt;br /&gt;
+                                                                             2  (b)&lt;br /&gt;
+                                                                               |&lt;br /&gt;
+                                                                   +&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;&amp;mdash;-+&lt;br /&gt;
+                                                                   |                      |&lt;br /&gt;
+                                                                 1  (b)                 4  &amp;reg;&lt;br /&gt;
+                                                                                          |&lt;br /&gt;
+                                                                                  +&amp;mdash;&amp;mdash;-+&amp;mdash;&amp;mdash;-+&lt;br /&gt;
+                                                                                  |               |&lt;br /&gt;
+                                                                                3  (b)          5  (b)&lt;br /&gt;
+                                                                                                  |&lt;br /&gt;
+                                                                                                  +&amp;mdash;-+&lt;br /&gt;
+                                                                                                       |&lt;br /&gt;
+                                                                                                     6  &amp;reg;&lt;br /&gt;
+insert 7:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;                                                                         2  (b)                                 
+                                                                           |                                    
+                                                              +------------+------------+                       
+                                                              |                         |                       
+                                                            1  (b)                    4  (r)                    
+                                                                                        |                       
+                                                                             +----------+----------+            
+                                                                             |                     |            
+                                                                           3  (b)                6  (b)         
+                                                                                                   |            
+                                                                                            +------+------+     
+                                                                                            |             |     
+                                                                                          5  (r)        7  (r) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;insert 8:&lt;br /&gt;
+                                                                             4  (b)&lt;br /&gt;
+                                                                               |&lt;br /&gt;
+                                                                 +&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;+&lt;br /&gt;
+                                                                 |                            |&lt;br /&gt;
+                                                               2  &amp;reg;                       6  &amp;reg;&lt;br /&gt;
+                                                                 |                            |&lt;br /&gt;
+                                                          +&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+             +&amp;mdash;&amp;mdash;-+&amp;mdash;&amp;mdash;-+&lt;br /&gt;
+                                                          |             |             |               |&lt;br /&gt;
+                                                        1  (b)        3  (b)        5  (b)          7  (b)&lt;br /&gt;
+                                                                                                      |&lt;br /&gt;
+                                                                                                      +&amp;mdash;-+&lt;br /&gt;
+                                                                                                           |&lt;br /&gt;
+                                                                                                         8  &amp;reg;&lt;br /&gt;
+从6和7我们能看出来rb tree不是严格小于log(N+1) 分别有1和2个node height超过(logN+1), 第一个插入的是4那么就能保证complete了.&lt;br /&gt;
+那么rb tree是如何保证每条路径上黑node相同呢?貌似是个副产品.可是非常重要.&lt;br /&gt;
+如果父和叔都是r, 都变b, 祖父r.&lt;br /&gt;
+如果叔是黑, 父黑, 祖父r. 父变root.&lt;br /&gt;
+删除:&lt;br /&gt;
+要复杂很多.&lt;/p&gt;
 </description>
     </item>
     

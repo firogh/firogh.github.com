@@ -52,50 +52,6 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
     </item>
     
     <item>
-      <title>Linux page reclaim</title>
-      <link>http://firoyang.org/cs/page_reclaim/</link>
-      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_reclaim/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/383162/&#34;&gt;The case of the overly anonymous anon_vma&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;When or why do we wnant to reclaim pages?&lt;br /&gt;
-    Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
-    No enough memory for a large memory alloc.&lt;br /&gt;
-    Manually initate&lt;br /&gt;
-What pages do we want to reclaim?&lt;br /&gt;
-    All user space pages, except some pages.&lt;br /&gt;
-    Do not reclaim kernel page in order to make things simple.&lt;br /&gt;
-Where to store the pages?&lt;br /&gt;
-    There may be many processes which use the same pages.&lt;br /&gt;
-    We put list of pages in a global site.&lt;br /&gt;
-How to organize the pages.&lt;br /&gt;
-    LRU&lt;br /&gt;
-    When to add the page to LRU&lt;br /&gt;
-How to reclaim in deatils.&lt;br /&gt;
-    For memory-mapped file page, write back.&lt;br /&gt;
-    For private and anonymous, swap.&lt;br /&gt;
-    For memroy-mapped file page without modification.&lt;br /&gt;
-    How to distinguish kernel page from user space page?&lt;br /&gt;
-How to modify the process&amp;rsquo;s pte to let it know the page has been reclaimed.&lt;br /&gt;
-    Reverse mapping.&lt;/p&gt;
-
-&lt;h1 id=&#34;anonymous-reverse-mappinng&#34;&gt;Anonymous reverse mappinng&lt;/h1&gt;
-
-&lt;p&gt;Where do reverse mappings come from?&lt;br /&gt;
-    syscall: mmap(ANONYMOUS | PRIVATE)&lt;br /&gt;
-    Proceass address space: Heap, stack.&lt;br /&gt;
-mm: change anon_vma linking to fix multi-process server scalability issue&lt;br /&gt;
-5beb49305251e5669852ed541e8e2f2f7696c53e&lt;br /&gt;
-When we fork a child process, it will associate multiple anon_vmas with a VMA.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Page fault</title>
       <link>http://firoyang.org/cs/page_fault/</link>
       <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
@@ -473,6 +429,19 @@ Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq
       <guid>http://firoyang.org/cs/hacking/</guid>
       <description>
 
+&lt;h1 id=&#34;build-minimal-bootable-rootfs&#34;&gt;Build minimal bootable rootfs&lt;/h1&gt;
+
+&lt;p&gt;./etc/yum.repos.d/&lt;br /&gt;
+./etc/yum.repos.d/fedora-updates-testing.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora-updates.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora-cisco-openh264.repo&lt;br /&gt;
+can be gotten by supermin &amp;ndash;prepare bash -o /tmp/supermin.d&lt;br /&gt;
+or just copy from you host to some place like /home/firo/kernel/k/testfs/&lt;br /&gt;
+sudo dnf &amp;ndash;releasever=27 &amp;ndash;installroot=/home/firo/kernel/k/testfs/ &amp;ndash;setopt=reposdir=/home/firo/kernel/k/testfs/etc/yum.repos.d install dnf udev passwd&lt;/p&gt;
+
+&lt;h1 id=&#34;boot-the-kernel-using-this-directroy-as-rootfs-through-qemu&#34;&gt;Boot the kernel using this directroy as rootfs through qemu&lt;/h1&gt;
+
 &lt;h1 id=&#34;resources&#34;&gt;Resources&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;Writing an OS in Rust&lt;/a&gt;&lt;/p&gt;
@@ -510,6 +479,84 @@ CONFIG_SLUB&lt;br /&gt;
 CONFIG_KASAN&lt;/p&gt;
 
 &lt;h1 id=&#34;for-nfs&#34;&gt;For nfs&lt;/h1&gt;
+
+&lt;p&gt;dnf install nfs-utils&lt;br /&gt;
+cat /etc/exports # For more details, man exports&lt;br /&gt;
+/home/firo/kernel/k/testfs 127.0.0.1(rw,sync,fsid=0,no_root_squash)&lt;br /&gt;
+systemctl start nfs-server.service&lt;br /&gt;
+systemctl status nfs-server.service&lt;br /&gt;
+● nfs-server.service - NFS server and services&lt;br /&gt;
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; disabled; vendor preset: disabled)&lt;br /&gt;
+   Active: active (exited) since Sat 2018-03-17 17:52:29 CST; 4s ago&lt;/p&gt;
+
+&lt;h2 id=&#34;test-the-nfs&#34;&gt;Test the nfs&lt;/h2&gt;
+
+&lt;p&gt;sudo mount -t nfs localhost://home/firo/kernel/k/testfs /mnt&lt;br /&gt;
+ls /mnt/&lt;br /&gt;
+bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var&lt;br /&gt;
+if touch prermission denied&lt;br /&gt;
+add no_all_squash to/etc/exports&lt;/p&gt;
+
+&lt;h2 id=&#34;nfs-vers&#34;&gt;NFS vers&lt;/h2&gt;
+
+&lt;p&gt;rpcinfo -t localhost nfs&lt;br /&gt;
+program 100003 version 3 ready and waiting&lt;br /&gt;
+program 100003 version 4 ready and waiting&lt;/p&gt;
+
+&lt;p&gt;rpcinfo -p | grep nfs&lt;br /&gt;
+    100003    3   tcp   2049  nfs&lt;br /&gt;
+    100003    4   tcp   2049  nfs&lt;br /&gt;
+    100227    3   tcp   2049  nfs_acl&lt;/p&gt;
+
+&lt;h2 id=&#34;nfs-errors&#34;&gt;NFS errors&lt;/h2&gt;
+
+&lt;p&gt;[   54.600121] NFS: sending MNT request for 10.0.2.2:/buildarea1/firo/ima/export/dist&lt;br /&gt;
+[   54.600121] NFS: failed to create MNT RPC client, status=-101&lt;br /&gt;
+[   54.600121] NFS: unable to mount server 10.0.2.2, error -101&lt;br /&gt;
+CONFIG_E100 CONFIG_E1000 &amp;hellip;and IP_PNP and DHCP BOOTP RARP&lt;/p&gt;
+
+&lt;h1 id=&#34;qemu-boot-systemd&#34;&gt;Qemu boot systemd&lt;/h1&gt;
+
+&lt;p&gt;qemu-system-x86_64 -nographic -enable-kvm  -kernel ./bzImag  -append &amp;lsquo; console=ttyS0 ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw nfsrootdebug debug  raid=noautodetect selinux=0 enforcing=0 &amp;lsquo;&lt;/p&gt;
+
+&lt;p&gt;nfsvers=3,tcp and 192.168.0.104 or 10.0.2.2 are mandatory!&lt;/p&gt;
+
+&lt;h2 id=&#34;dev-ttys0-device&#34;&gt;dev-ttyS0.device&lt;/h2&gt;
+
+&lt;p&gt;[**    ] A start job is running for dev-ttyS0.device (7s / 1min 30s)&lt;br /&gt;
+[ TIME ] Timed out waiting for device dev-ttyS0.device.&lt;br /&gt;
+[DEPEND] Dependency failed for Serial Getty on ttyS0.&lt;/p&gt;
+
+&lt;p&gt;CONFIG_FHANDLE=y&lt;br /&gt;
+&lt;a href=&#34;https://github.com/systemd/systemd/issues/3446&#34;&gt;https://github.com/systemd/systemd/issues/3446&lt;/a&gt;&lt;br /&gt;
+And install systemd-udev&lt;/p&gt;
+
+&lt;h1 id=&#34;input-comand-overwrite-itself&#34;&gt;input comand overwrite itself?&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://shallowsky.com/blog/tags/embedded/&#34;&gt;http://shallowsky.com/blog/tags/embedded/&lt;/a&gt;&lt;br /&gt;
+resize&lt;br /&gt;
+xterm-resize-330-3.fc27.x86_64&lt;br /&gt;
+/etc/profile&lt;br /&gt;
+PS1=&amp;rsquo;[[\033[0;32m]\u@\h:[\033[36m]\W[\033[0m]]\$ &amp;lsquo;&lt;/p&gt;
+
+&lt;h1 id=&#34;qemu&#34;&gt;qemu&lt;/h1&gt;
+
+&lt;p&gt;access denied by acl file&lt;br /&gt;
+qemu-system-x86_64: -netdev bridge,id=inet: bridge helper failed&lt;br /&gt;
+&lt;a href=&#34;https://blog.christophersmart.com/2016/08/31/configuring-qemu-bridge-helper-after-access-denied-by-acl-file-error/&#34;&gt;https://blog.christophersmart.com/2016/08/31/configuring-qemu-bridge-helper-after-access-denied-by-acl-file-error/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;sudo ip link set enp0s31f6 master br0&lt;/p&gt;
+
+&lt;h1 id=&#34;systemd&#34;&gt;systemd&lt;/h1&gt;
+
+&lt;p&gt;autologin&lt;br /&gt;
+Change /usr/lib/systemd/system/serial-getty@.service to&lt;/p&gt;
+
+&lt;h1 id=&#34;execstart-sbin-agetty-o-p-u-keep-baud-115200-38400-9600-i-term&#34;&gt;ExecStart=-/sbin/agetty -o &amp;lsquo;-p &amp;ndash; \u&amp;rsquo; &amp;ndash;keep-baud 115200,38400,9600 %I $TERM&lt;/h1&gt;
+
+&lt;p&gt;ExecStart=-/sbin/agetty -a root &amp;ndash;keep-baud 115200,38400,9600 %I $TERM&lt;/p&gt;
+
+&lt;h2 id=&#34;unuseful-unfsd-obselete&#34;&gt;Unuseful unfsd obselete&lt;/h2&gt;
 
 &lt;p&gt;exports0&lt;br /&gt;
  cat var/exports0&lt;br /&gt;
@@ -838,28 +885,47 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
     </item>
     
     <item>
-      <title>An introduction to VFS layer in Linux Kernel</title>
-      <link>http://firoyang.org/cs/vfs/</link>
+      <title>An introduction to File system in Linux operating system</title>
+      <link>http://firoyang.org/cs/fs/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/vfs/</guid>
+      <guid>http://firoyang.org/cs/fs/</guid>
       <description>
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.fieldses.org/~bfields/kernel/vfs.txt&#34;&gt;VFS notes&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148&#34;&gt;Linux: Replacing atime With relatime&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148&#34;&gt;Linux: Replacing atime With relatime&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/&#34;&gt;Why is Linux&amp;rsquo;s filesystem designed as a single directory tree?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/5376116/design-a-file-system&#34;&gt;Design a file system&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;open&#34;&gt;open()&lt;/h1&gt;
+&lt;h1 id=&#34;everything-is-a-file&#34;&gt;Everything is a file&lt;/h1&gt;
 
-&lt;p&gt;最烦, 看什么系统调用参数了.&lt;br /&gt;
-那一大堆很少用到的组合还有undefined, 太扯淡了.&lt;br /&gt;
-也说不上碎碎的问题, 要理解着来, 看man 手册, 贴子显然不是&lt;br /&gt;
-最后的注意还是看实现吧.&lt;br /&gt;
-build_open_flags()还是看不出&lt;br /&gt;
-man里面有一句&lt;br /&gt;
- The (undefined) effect of O_RDONLY | O_TRUNC varies among implementations.&lt;br /&gt;
-On many systems the file is actually truncated.&lt;/p&gt;
+&lt;p&gt;The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some&lt;br /&gt;
+random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&lt;br /&gt;
+have nothing to do with each other), but the fact that you can use common&lt;br /&gt;
+tools to operate on different things. - &lt;a href=&#34;http://yarchive.net/comp/linux/everything_is_file.html&#34;&gt;Linus&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;file-and-directory&#34;&gt;File and directory&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://math.stackexchange.com/a/854656/38596&#34;&gt;What is the meaning/purpose of finding the “foundations of mathematics”?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;file-operations-onset-nucleus-coda&#34;&gt;File operations - onset, nucleus, coda&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://unix.stackexchange.com/questions/265620/on-unix-systems-why-do-we-have-to-explicitly-open-and-close-files-to-be/265621&#34;&gt;On Unix systems, why do we have to explicitly &lt;code&gt;open()&lt;/code&gt; and &lt;code&gt;close()&lt;/code&gt; files to be able to &lt;code&gt;read()&lt;/code&gt; or &lt;code&gt;write()&lt;/code&gt; them?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;onset-the-preparing-open&#34;&gt;onset - the preparing open()&lt;/h2&gt;
+
+&lt;p&gt;Prepare the object for processing.&lt;br /&gt;
+* Name to inode.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;make dentry&lt;br /&gt;
+d_alloc() alloc new dentry&lt;br /&gt;
+parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;&lt;br /&gt;
+set inode to dentry&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;p&gt;#Hacks&lt;br /&gt;
 I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.&lt;/p&gt;
@@ -889,8 +955,13 @@ In unix, fs are mounted at a specific mount point in global hierarchy known as a
 &lt;li&gt;dentry: accelerate access fs, dcache! a single component of a path, certainly include &lt;em&gt;regular&lt;/em&gt; file.&lt;br /&gt;
 VFS treats directory as non-exist &lt;em&gt;normal&lt;/em&gt; file. directory and dentry is not the same at all, different congitive level!&lt;br /&gt;
 In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file: an open normal file as associated with a process.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;file: an open normal file as associated with a process.&lt;/p&gt;
+
+&lt;h2 id=&#34;init-rootfs&#34;&gt;Init Rootfs&lt;/h2&gt;
+
+&lt;p&gt;init_mount_tree&lt;br /&gt;
+and sys_chroot&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;##Step of how to use ext2 fs&lt;br /&gt;
@@ -915,68 +986,6 @@ file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;##How make dentry&lt;br /&gt;
-d_alloc() alloc new dentry&lt;br /&gt;
-parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;&lt;br /&gt;
-set inode to dentry&lt;/p&gt;
-
-&lt;p&gt;#Procfs&lt;br /&gt;
-##How many parts does procfs has?&lt;br /&gt;
-* process-specific read only /proc/&lt;pid&gt;/&lt;br /&gt;
-* process tuneable interface. /proc/&lt;pid&gt;/&lt;br /&gt;
-* kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs&amp;hellip;&lt;br /&gt;
-* Read only kernel infomation. /proc&lt;br /&gt;
-##I think, important directory need to know.&lt;br /&gt;
-/proc/sys/kernel&lt;/p&gt;
-
-&lt;h1 id=&#34;sysfs&#34;&gt;Sysfs&lt;/h1&gt;
-
-&lt;p&gt;sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!&lt;/p&gt;
-
-&lt;h1 id=&#34;ramfs&#34;&gt;Ramfs&lt;/h1&gt;
-
-&lt;p&gt;fs/ramfs&lt;/p&gt;
-
-&lt;p&gt;##reference&lt;br /&gt;
-&lt;a href=&#34;http://www.thegeekstuff.com/2008/11/overview-of-ramfs-and-tmpfs-on-linux/&#34;&gt;Overview of RAMFS and TMPFS on Linux&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#tmpfs&lt;br /&gt;
-mm/shmem.c&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/&#34;&gt;关于 tmpfs&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#rootfs&lt;br /&gt;
-init/do_mounts.c&lt;br /&gt;
-init_rootfs()&lt;br /&gt;
-init_mount_tree&lt;br /&gt;
-rootfs = IS_ENABLED(CONFIG_TMPFS) ? tmpfs : ramfs&lt;br /&gt;
-但是在do_basic_setup才初始化.&lt;br /&gt;
-rootfs_initcall(populate_rootfs);&lt;/p&gt;
-
-&lt;p&gt;#initramfs&lt;br /&gt;
-init/initramfs.c&lt;/p&gt;
-
-&lt;p&gt;initrd-&amp;gt;initramfs&lt;br /&gt;
-{&lt;br /&gt;
-    linus&amp;rsquo; ramfs -&amp;gt; /tmpfs&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;p&gt;##Difference with initrd&lt;br /&gt;
-initrd is image with specific fs type, like ext2, need driver built-in kernel.&lt;br /&gt;
-initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs&lt;/p&gt;
-
-&lt;p&gt;##request hard drive driver maybe fs driver&lt;br /&gt;
-ata_host_register-&amp;gt;ata_scsi_scan_host-&amp;gt;__scsi_add_device-&amp;gt;scsi_probe_and_add_lun -&amp;gt;scsi_add_lun&lt;/p&gt;
-
-&lt;p&gt;subsys_initcall(genhd_device_init);-&amp;gt;kobj_map_init{bdev_map.probe.get = base_probe}&lt;/p&gt;
-
-&lt;p&gt;subsys_initcall(init_scsi);4-&amp;gt;scsi_sysfs_register{autoprobe = 1;}&lt;br /&gt;
-rootfs_initcall(populate_rootfs);-&amp;gt;{unpack_to_rootfs; 解压initramfs到rootfs}&lt;br /&gt;
-module_initinit_sd;6-&amp;gt;scsi_register_driver -&amp;gt;driver_register-&amp;gt;bus_add_driver -&amp;gt;driver_attach -&amp;gt;driver_probe_device-&amp;gt; drv-&amp;gt;probe(dev)=sd_probe_async-&amp;gt;add_disk -&amp;gt; register_disk -&amp;gt; get_gendisk -&amp;gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}&lt;/p&gt;
-
-&lt;p&gt;##mount fs&lt;br /&gt;
-kernel_init_freeable-&amp;gt; if /init in initramfs 可以访问 根文件系统挂在和chroot交给/init也就是systemd&lt;br /&gt;
-如果/init不可以访问 prepare_namespace{挂在真正的文件系统}&lt;/p&gt;
-
 &lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
 
 &lt;h2 id=&#34;forbid-ln&#34;&gt;forbid ln&lt;/h2&gt;
@@ -995,19 +1004,6 @@ hard link to file accross partitions, may led confilict with inode number.&lt;/p
 &lt;h3 id=&#34;atime&#34;&gt;atime&lt;/h3&gt;
 
 &lt;p&gt;perhaps the most stupid Unix design idea of all times,&amp;rdquo; adding: &amp;ldquo;[T]hink about this a bit: &amp;lsquo;For every file that is read from the disk, lets do a &amp;hellip; write to the disk! And, for every file that is already cached and which we read from the cache &amp;hellip; do a write to the disk!&amp;rsquo;&amp;rdquo; He further emphasized the performance impact thus:&lt;/p&gt;
-
-&lt;h4 id=&#34;find-relatime-options&#34;&gt;find relatime options&lt;/h4&gt;
-
-&lt;p&gt;cat /proc/mounts&lt;br /&gt;
-man mount&lt;/p&gt;
-
-&lt;p&gt;##mount root device&lt;br /&gt;
-root= name_to_dev_t, mount_root in prepare_namespace&lt;br /&gt;
-如果/init不能 sys_access, 则prepare_namespace,切换到真正的root=指定的设备上设备在sd_probe上初始化了.&lt;br /&gt;
-systemd负责挂在文件系统, 切换.&lt;/p&gt;
-
-&lt;p&gt;subsys_initcall 4 genhd_device_init with base_probe{ request_module()}&lt;br /&gt;
-module_init 6 -&amp;gt;init_sd-&amp;gt;sync_schedule_domain(sd_probe_async&lt;/p&gt;
 </description>
     </item>
     
@@ -1024,10 +1020,6 @@ Driver porting: Device model overview: &lt;a href=&#34;http://lwn.net/Articles/3
 /Documentation/driver-model&lt;br /&gt;
 The Linux Kernel Driver Model&lt;/p&gt;
 
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Why abstruction?&lt;/p&gt;
-
 &lt;h1 id=&#34;device-tree&#34;&gt;Device tree&lt;/h1&gt;
 
 &lt;ul&gt;
@@ -1036,80 +1028,11 @@ HW platform识别，runtime parameter传递以及硬件设备描述&lt;br /&gt;
 for platform device init see arch/powerpc/platforms/52xx/media5200.c ppc_init&lt;br /&gt;
 mpc52xx_declare_of_platform_devices&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;How does the device tree subsystem read and parse the dts file?&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Why DDM?&lt;br /&gt;
-The device model was originally intended to make power management tasks easier&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;linux-设备驱动模型&#34;&gt;linux 设备驱动模型&lt;/h1&gt;
-
-&lt;p&gt;分为三层：&lt;br /&gt;
-从结构上看，每一层都有对应的数据结构。&lt;br /&gt;
-1 设备驱动层，驱动开发工程师，也就是码农们，设计的akashadevice  akashadriver 结构体。&lt;br /&gt;
-2 驱动程序核心层 ，是一个通用层，内核中的标准结构，device device_driver bus_type.&lt;br /&gt;
-3 Kobject核心层，也是一个通用层， kobject kobj_type kset 组成。&lt;br /&gt;
-其实下面还有一个sys文件系统层。&lt;/p&gt;
-
-&lt;p&gt;从操作上看，也是分为三类，初始化 注册 注销&lt;br /&gt;
-1 初始化，是局限于每一层的。&lt;br /&gt;
-2 注册和注销就是贯穿三层的。&lt;/p&gt;
-
-&lt;p&gt;，我们知道其实总线就是铁轨，而各种设备就是北京东站，大连站。&lt;br /&gt;
-我们人呢，就是铁轨上跑的数据。driver还用说就是火车了呗。&lt;br /&gt;
-Bus总线这类设备比较特殊,需要内核对总线支持，即总线的核心层；&lt;br /&gt;
-另一部分在外设的驱动程序中，负责把驱动挂接到总线，如pci_driver, usb_driver, i2c_driver。记住，这是说的总线的驱动。和挂接在总线上的设备驱动不同。&lt;br /&gt;
-就好像open系统调用和驱动程序中file_operations中xxx_open的关系一样。&lt;br /&gt;
-作为中间传输用途的总线设备的驱动是在内核当中，已经写好了，不用像各种总线上的设备一样，再写什么专门服务pci，i2c，spi等&lt;br /&gt;
-总线设备的驱动，这里感谢下内核，又轻松了不少。pci之类的总线的，驱动就是match probe remove的函数，&lt;br /&gt;
-不用专门封装成一个结构体，像我们遇到的block char设备，他们才是真中的外设。总之总线要单独看。&lt;br /&gt;
-作为一个外设的驱动是很不容易除了要完成外设本身功能的部分还要处理好和总线的关系。对于pci总线上设备驱动就是由pci_driver来调和的。&lt;/p&gt;
-
-&lt;p&gt;kobject核心层的注册有点小技巧，他是先在作为参数kobj结构体中指定了，这个结构体属于哪里kset，之后在注册函数里，在kset里把kobj链入。&lt;br /&gt;
-PS：设备注册和驱动注册是分开的。当设备注册后通过udev开始寻找驱动的过程。驱动是通过pci_device_id和相应设备建立关联的，不是major 和minor设备号。&lt;br /&gt;
-可别高乱了。&lt;/p&gt;
-
-&lt;h1 id=&#34;sys-文件系统&#34;&gt;Sys 文件系统&lt;/h1&gt;
-
-&lt;p&gt;bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。&lt;br /&gt;
-class, 类树按功能分类设备。&lt;br /&gt;
-device，干货，其他的目录都指向这里。&lt;/p&gt;
-
-&lt;h1 id=&#34;kobject&#34;&gt;Kobject&lt;/h1&gt;
-
-&lt;p&gt;清0，init，set name，get，put&lt;br /&gt;
-在sys中是dir，attr 是文件&lt;/p&gt;
-
-&lt;h1 id=&#34;kobj-type&#34;&gt;kobj_type&lt;/h1&gt;
-
-&lt;p&gt;release(),&lt;/p&gt;
-
-&lt;h1 id=&#34;kset&#34;&gt;Kset&lt;/h1&gt;
-
-&lt;p&gt;添加kobject到kset（指针，add）&lt;/p&gt;
-
-&lt;h1 id=&#34;bus-device-driver&#34;&gt;Bus, device, driver.&lt;/h1&gt;
-
-&lt;p&gt;#devres&lt;br /&gt;
-* devm_kfree&lt;br /&gt;
+#devres&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;devm_kfree&lt;br /&gt;
 &lt;a href=&#34;http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html&#34;&gt;devm_kfree does not need for fail case of probe function and for remove function.&lt;/a&gt;&lt;br /&gt;
 __device_release_driver&lt;br /&gt;
-really_probe&lt;/p&gt;
-
-&lt;ul&gt;
+really_probe&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;a must use devm_kfree Julia Lawall&lt;br /&gt;
 The function at91_dt_node_to_map is ultimately called by the function&lt;br /&gt;
 &amp;gt; pinctrl_get, which is an exported function.  Since it is possible that this&lt;br /&gt;
@@ -1401,6 +1324,11 @@ preemptable&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;slab&#34;&gt;SLAB&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand011.html&#34;&gt;The slab allocator has three principle aims:&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2000/8/7/65&#34;&gt;Re: When to use kmem_cache_alloc&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
 

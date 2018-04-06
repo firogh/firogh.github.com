@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="953">
+<meta itemprop="wordCount" content="1277">
 <meta itemprop="datePublished" content="2015-04-25">
 <meta itemprop="url" content="http://firoyang.org/cs/hacking/">
 
@@ -186,6 +186,19 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="build-minimal-bootable-rootfs">Build minimal bootable rootfs</h1>
+
+<p>./etc/yum.repos.d/<br />
+./etc/yum.repos.d/fedora-updates-testing.repo<br />
+./etc/yum.repos.d/fedora.repo<br />
+./etc/yum.repos.d/fedora-updates.repo<br />
+./etc/yum.repos.d/fedora-cisco-openh264.repo<br />
+can be gotten by supermin &ndash;prepare bash -o /tmp/supermin.d<br />
+or just copy from you host to some place like /home/firo/kernel/k/testfs/<br />
+sudo dnf &ndash;releasever=27 &ndash;installroot=/home/firo/kernel/k/testfs/ &ndash;setopt=reposdir=/home/firo/kernel/k/testfs/etc/yum.repos.d install dnf udev passwd</p>
+
+<h1 id="boot-the-kernel-using-this-directroy-as-rootfs-through-qemu">Boot the kernel using this directroy as rootfs through qemu</h1>
 
 <h1 id="resources">Resources</h1>
 
@@ -224,6 +237,84 @@ CONFIG_SLUB<br />
 CONFIG_KASAN</p>
 
 <h1 id="for-nfs">For nfs</h1>
+
+<p>dnf install nfs-utils<br />
+cat /etc/exports # For more details, man exports<br />
+/home/firo/kernel/k/testfs 127.0.0.1(rw,sync,fsid=0,no_root_squash)<br />
+systemctl start nfs-server.service<br />
+systemctl status nfs-server.service<br />
+● nfs-server.service - NFS server and services<br />
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; disabled; vendor preset: disabled)<br />
+   Active: active (exited) since Sat 2018-03-17 17:52:29 CST; 4s ago</p>
+
+<h2 id="test-the-nfs">Test the nfs</h2>
+
+<p>sudo mount -t nfs localhost://home/firo/kernel/k/testfs /mnt<br />
+ls /mnt/<br />
+bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var<br />
+if touch prermission denied<br />
+add no_all_squash to/etc/exports</p>
+
+<h2 id="nfs-vers">NFS vers</h2>
+
+<p>rpcinfo -t localhost nfs<br />
+program 100003 version 3 ready and waiting<br />
+program 100003 version 4 ready and waiting</p>
+
+<p>rpcinfo -p | grep nfs<br />
+    100003    3   tcp   2049  nfs<br />
+    100003    4   tcp   2049  nfs<br />
+    100227    3   tcp   2049  nfs_acl</p>
+
+<h2 id="nfs-errors">NFS errors</h2>
+
+<p>[   54.600121] NFS: sending MNT request for 10.0.2.2:/buildarea1/firo/ima/export/dist<br />
+[   54.600121] NFS: failed to create MNT RPC client, status=-101<br />
+[   54.600121] NFS: unable to mount server 10.0.2.2, error -101<br />
+CONFIG_E100 CONFIG_E1000 &hellip;and IP_PNP and DHCP BOOTP RARP</p>
+
+<h1 id="qemu-boot-systemd">Qemu boot systemd</h1>
+
+<p>qemu-system-x86_64 -nographic -enable-kvm  -kernel ./bzImag  -append &lsquo; console=ttyS0 ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw nfsrootdebug debug  raid=noautodetect selinux=0 enforcing=0 &lsquo;</p>
+
+<p>nfsvers=3,tcp and 192.168.0.104 or 10.0.2.2 are mandatory!</p>
+
+<h2 id="dev-ttys0-device">dev-ttyS0.device</h2>
+
+<p>[**    ] A start job is running for dev-ttyS0.device (7s / 1min 30s)<br />
+[ TIME ] Timed out waiting for device dev-ttyS0.device.<br />
+[DEPEND] Dependency failed for Serial Getty on ttyS0.</p>
+
+<p>CONFIG_FHANDLE=y<br />
+<a href="https://github.com/systemd/systemd/issues/3446">https://github.com/systemd/systemd/issues/3446</a><br />
+And install systemd-udev</p>
+
+<h1 id="input-comand-overwrite-itself">input comand overwrite itself?</h1>
+
+<p><a href="http://shallowsky.com/blog/tags/embedded/">http://shallowsky.com/blog/tags/embedded/</a><br />
+resize<br />
+xterm-resize-330-3.fc27.x86_64<br />
+/etc/profile<br />
+PS1=&rsquo;[[\033[0;32m]\u@\h:[\033[36m]\W[\033[0m]]\$ &lsquo;</p>
+
+<h1 id="qemu">qemu</h1>
+
+<p>access denied by acl file<br />
+qemu-system-x86_64: -netdev bridge,id=inet: bridge helper failed<br />
+<a href="https://blog.christophersmart.com/2016/08/31/configuring-qemu-bridge-helper-after-access-denied-by-acl-file-error/">https://blog.christophersmart.com/2016/08/31/configuring-qemu-bridge-helper-after-access-denied-by-acl-file-error/</a></p>
+
+<p>sudo ip link set enp0s31f6 master br0</p>
+
+<h1 id="systemd">systemd</h1>
+
+<p>autologin<br />
+Change /usr/lib/systemd/system/serial-getty@.service to</p>
+
+<h1 id="execstart-sbin-agetty-o-p-u-keep-baud-115200-38400-9600-i-term">ExecStart=-/sbin/agetty -o &lsquo;-p &ndash; \u&rsquo; &ndash;keep-baud 115200,38400,9600 %I $TERM</h1>
+
+<p>ExecStart=-/sbin/agetty -a root &ndash;keep-baud 115200,38400,9600 %I $TERM</p>
+
+<h2 id="unuseful-unfsd-obselete">Unuseful unfsd obselete</h2>
 
 <p>exports0<br />
  cat var/exports0<br />
