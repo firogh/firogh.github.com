@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="614">
+<meta itemprop="wordCount" content="727">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -186,6 +186,54 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="sd">SD</h1>
+
+<p>set sd<br />
+kernel_init_freeable-&gt;<br />
+sched_init_smp-&gt;<br />
+init_sched_domains-&gt;build_sched_domains:-&gt;<br />
+<strong>visit_domain_allocation_hell()-&gt;</strong>sdt_alloc() alloc the sdd-&gt;sg which is used by build groups<br />
+and sg = kzalloc_node(sizeof(struct sched_group) + cpumask_size(); it covered the size of cpumask<br />
+/* Build the groups for the domains */<br />
+detach_destroy_domains<br />
+cpu_attach_domain</p>
+
+<p>CONFIG_SCHED_MC=y<br />
+static noinline struct sched_domain *                                   <br />
+sd<em>init</em>##type(struct sched_domain_topology_level *tl, int cpu)         <br />
+{                                                                       <br />
+        struct sched_domain *sd = *per_cpu<em>ptr(tl-&gt;data.sd, cpu);       <br />
+        *sd = SD</em>##type##_INIT;                                         <br />
+        SD_INIT_NAME(sd, type);                                         <br />
+        sd-&gt;private = &amp;tl-&gt;data;                                        <br />
+        return sd;                                                      <br />
+}<br />
+tl-&gt;mask(cpu)<br />
+static struct sched_domain_topology_level default_topology[] = {<br />
+#ifdef CONFIG_SCHED_SMT<br />
+        { sd_init_SIBLING, cpu_smt_mask, },<br />
+#endif<br />
+#ifdef CONFIG_SCHED_MC<br />
+        { sd_init_MC, cpu_coregroup_mask, },<br />
+#endif<br />
+#ifdef CONFIG_SCHED_BOOK<br />
+        { sd_init_BOOK, cpu_book_mask, },<br />
+#endif<br />
+        { sd_init_CPU, cpu_cpu_mask, },<br />
+        { NULL, },<br />
+};</p>
+
+<p>CONFIG_CPUSETS=y</p>
+
+<p>get sd<br />
+idle_balance<br />
+for_each_domain</p>
+
+<p>panic<br />
+find_busiest_group<br />
+find_next_bit<br />
+__next_cpu</p>
 
 <h1 id="context-switch">Context switch</h1>
 

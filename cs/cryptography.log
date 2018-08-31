@@ -1,2 +1,19 @@
+# Generate cert and key
+openssl req -x509 -nodes -newkey rsa:1024 -keyout keyfile.key -out certificate.cer
 
+# Sign a file for detached signature
+openssl cms -sign -signer ./certificate.cer -inkey keyfile.key -binary -in ./bar -outform DER -out bar.der.sig
+
+# Show the signature
+openssl pkcs7 -inform der -in bar.der.sig -noout -print
+
+# Verify the signature
+openssl cms -verify -binary -content bar -CAfile certificate.cer -inform der -in bar.der.sig  >/dev/null
+
+
+# ASN1 parse signature
+openssl asn1parse -inform DER -in bar.der.sig
+  985:d=7  hl=2 l=   9 prim: OBJECT            :messageDigest
+  996:d=7  hl=2 l=  34 cons: SET               
+  998:d=8  hl=2 l=  32 prim: OCTET STRING      [HEX DUMP]:C833131C0EC89014C71F5F7F7F85AE5E6211061FC7C1F3182BEAA7AD442FC065
 

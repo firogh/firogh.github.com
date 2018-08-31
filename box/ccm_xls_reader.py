@@ -54,7 +54,9 @@ def read_from_sow_xls(sow_xls_tuple):
 
 def read_from_cve_xls(cve_xls_tuple):
 	cve_xls = cve_xls_tuple[0]
+	print 'cve_xls', cve_xls
 	wb = open_workbook(cve_xls)
+	print 'open cve_xls'
 	for s in wb.sheets():
 		print 'Sheet:',s.name
 		for row in range(s.nrows):

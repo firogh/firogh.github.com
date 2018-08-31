@@ -59,6 +59,18 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
       <guid>http://firoyang.org/cs/page_fault/</guid>
       <description>
 
+&lt;h1 id=&#34;three-cases-where-page-fault-might-happen&#34;&gt;three cases where page fault might happen&lt;/h1&gt;
+
+&lt;p&gt;the first is if the VA is simply not mapped at all into VAS of the process that&amp;rsquo;s requesting it.&lt;br /&gt;
+Another case is if a process has in sufficient permissions for this address. so you&amp;rsquo;re trying to write into something that&amp;rsquo;s read-only for example.&lt;br /&gt;
+the third is if the VA is valid but it&amp;rsquo;s swapped out.&lt;/p&gt;
+
+&lt;h2 id=&#34;use-case&#34;&gt;Use case&lt;/h2&gt;
+
+&lt;p&gt;not mapped&lt;br /&gt;
+lazy allocation&lt;br /&gt;
+swapping&lt;/p&gt;
+
 &lt;p&gt;#Page faults&lt;br /&gt;
 Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
 
@@ -899,6 +911,10 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 &lt;a href=&#34;https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/&#34;&gt;Why is Linux&amp;rsquo;s filesystem designed as a single directory tree?&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/5376116/design-a-file-system&#34;&gt;Design a file system&lt;/a&gt;&lt;/p&gt;
 
+&lt;h1 id=&#34;naming-flaw&#34;&gt;Naming flaw&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.win.tue.nl/~aeb/linux/lk/lk-8.html&#34;&gt;https://www.win.tue.nl/~aeb/linux/lk/lk-8.html&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;fs-hacks&#34;&gt;fs hacks&lt;/h1&gt;
 
 &lt;p&gt;To get the full path call dentry_path_raw(filp-&amp;gt;f_path.dentry,buf,buflen).&lt;/p&gt;
@@ -1328,6 +1344,15 @@ preemptable&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;addresses&#34;&gt;Addresses&lt;/h1&gt;
+
+&lt;p&gt;the VA is at fixed offset from the PA. They&amp;rsquo;re shifted by exactly the page offset. so if your page offset is 3 GBs that means 3 GBs in VM corresponds to 0 in PM&lt;br /&gt;
+kernel Virutal addresses are used for two different things&lt;br /&gt;
+this first is noncontiguous memory mappings; this is often used for large buffer on small memory system.&lt;br /&gt;
+the other thing they&amp;rsquo;re used for  is memory mapped i/o.&lt;/p&gt;
+
+&lt;p&gt;VM area struct represents a mapping&lt;/p&gt;
 
 &lt;h1 id=&#34;slab&#34;&gt;SLAB&lt;/h1&gt;
 

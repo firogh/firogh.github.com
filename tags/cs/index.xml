@@ -353,6 +353,54 @@ int   $0x80
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
 
+&lt;h1 id=&#34;sd&#34;&gt;SD&lt;/h1&gt;
+
+&lt;p&gt;set sd&lt;br /&gt;
+kernel_init_freeable-&amp;gt;&lt;br /&gt;
+sched_init_smp-&amp;gt;&lt;br /&gt;
+init_sched_domains-&amp;gt;build_sched_domains:-&amp;gt;&lt;br /&gt;
+&lt;strong&gt;visit_domain_allocation_hell()-&amp;gt;&lt;/strong&gt;sdt_alloc() alloc the sdd-&amp;gt;sg which is used by build groups&lt;br /&gt;
+and sg = kzalloc_node(sizeof(struct sched_group) + cpumask_size(); it covered the size of cpumask&lt;br /&gt;
+/* Build the groups for the domains */&lt;br /&gt;
+detach_destroy_domains&lt;br /&gt;
+cpu_attach_domain&lt;/p&gt;
+
+&lt;p&gt;CONFIG_SCHED_MC=y&lt;br /&gt;
+static noinline struct sched_domain *                                   &lt;br /&gt;
+sd&lt;em&gt;init&lt;/em&gt;##type(struct sched_domain_topology_level *tl, int cpu)         &lt;br /&gt;
+{                                                                       &lt;br /&gt;
+        struct sched_domain *sd = *per_cpu&lt;em&gt;ptr(tl-&amp;gt;data.sd, cpu);       &lt;br /&gt;
+        *sd = SD&lt;/em&gt;##type##_INIT;                                         &lt;br /&gt;
+        SD_INIT_NAME(sd, type);                                         &lt;br /&gt;
+        sd-&amp;gt;private = &amp;amp;tl-&amp;gt;data;                                        &lt;br /&gt;
+        return sd;                                                      &lt;br /&gt;
+}&lt;br /&gt;
+tl-&amp;gt;mask(cpu)&lt;br /&gt;
+static struct sched_domain_topology_level default_topology[] = {&lt;br /&gt;
+#ifdef CONFIG_SCHED_SMT&lt;br /&gt;
+        { sd_init_SIBLING, cpu_smt_mask, },&lt;br /&gt;
+#endif&lt;br /&gt;
+#ifdef CONFIG_SCHED_MC&lt;br /&gt;
+        { sd_init_MC, cpu_coregroup_mask, },&lt;br /&gt;
+#endif&lt;br /&gt;
+#ifdef CONFIG_SCHED_BOOK&lt;br /&gt;
+        { sd_init_BOOK, cpu_book_mask, },&lt;br /&gt;
+#endif&lt;br /&gt;
+        { sd_init_CPU, cpu_cpu_mask, },&lt;br /&gt;
+        { NULL, },&lt;br /&gt;
+};&lt;/p&gt;
+
+&lt;p&gt;CONFIG_CPUSETS=y&lt;/p&gt;
+
+&lt;p&gt;get sd&lt;br /&gt;
+idle_balance&lt;br /&gt;
+for_each_domain&lt;/p&gt;
+
+&lt;p&gt;panic&lt;br /&gt;
+find_busiest_group&lt;br /&gt;
+find_next_bit&lt;br /&gt;
+__next_cpu&lt;/p&gt;
+
 &lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
 
 &lt;p&gt;inactive_task_frame __switch_to_asm&lt;/p&gt;
@@ -1181,6 +1229,12 @@ Energy-efficiency&lt;/p&gt;
 
 &lt;p&gt;Reverse engineering&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How debuggers work&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;debuging&#34;&gt;debuging&lt;/h1&gt;
+
+&lt;p&gt;signle step instruction&lt;br /&gt;
+Core-dump&lt;br /&gt;
+printf debugging; this is very effective.&lt;/p&gt;
 
 &lt;h1 id=&#34;info&#34;&gt;info&lt;/h1&gt;
 

@@ -196,6 +196,18 @@ kernel&lt;br /&gt;
       <guid>http://firoyang.org/cs/page_fault/</guid>
       <description>
 
+&lt;h1 id=&#34;three-cases-where-page-fault-might-happen&#34;&gt;three cases where page fault might happen&lt;/h1&gt;
+
+&lt;p&gt;the first is if the VA is simply not mapped at all into VAS of the process that&amp;rsquo;s requesting it.&lt;br /&gt;
+Another case is if a process has in sufficient permissions for this address. so you&amp;rsquo;re trying to write into something that&amp;rsquo;s read-only for example.&lt;br /&gt;
+the third is if the VA is valid but it&amp;rsquo;s swapped out.&lt;/p&gt;
+
+&lt;h2 id=&#34;use-case&#34;&gt;Use case&lt;/h2&gt;
+
+&lt;p&gt;not mapped&lt;br /&gt;
+lazy allocation&lt;br /&gt;
+swapping&lt;/p&gt;
+
 &lt;p&gt;#Page faults&lt;br /&gt;
 Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
 
@@ -495,6 +507,54 @@ int   $0x80
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
+
+&lt;h1 id=&#34;sd&#34;&gt;SD&lt;/h1&gt;
+
+&lt;p&gt;set sd&lt;br /&gt;
+kernel_init_freeable-&amp;gt;&lt;br /&gt;
+sched_init_smp-&amp;gt;&lt;br /&gt;
+init_sched_domains-&amp;gt;build_sched_domains:-&amp;gt;&lt;br /&gt;
+&lt;strong&gt;visit_domain_allocation_hell()-&amp;gt;&lt;/strong&gt;sdt_alloc() alloc the sdd-&amp;gt;sg which is used by build groups&lt;br /&gt;
+and sg = kzalloc_node(sizeof(struct sched_group) + cpumask_size(); it covered the size of cpumask&lt;br /&gt;
+/* Build the groups for the domains */&lt;br /&gt;
+detach_destroy_domains&lt;br /&gt;
+cpu_attach_domain&lt;/p&gt;
+
+&lt;p&gt;CONFIG_SCHED_MC=y&lt;br /&gt;
+static noinline struct sched_domain *                                   &lt;br /&gt;
+sd&lt;em&gt;init&lt;/em&gt;##type(struct sched_domain_topology_level *tl, int cpu)         &lt;br /&gt;
+{                                                                       &lt;br /&gt;
+        struct sched_domain *sd = *per_cpu&lt;em&gt;ptr(tl-&amp;gt;data.sd, cpu);       &lt;br /&gt;
+        *sd = SD&lt;/em&gt;##type##_INIT;                                         &lt;br /&gt;
+        SD_INIT_NAME(sd, type);                                         &lt;br /&gt;
+        sd-&amp;gt;private = &amp;amp;tl-&amp;gt;data;                                        &lt;br /&gt;
+        return sd;                                                      &lt;br /&gt;
+}&lt;br /&gt;
+tl-&amp;gt;mask(cpu)&lt;br /&gt;
+static struct sched_domain_topology_level default_topology[] = {&lt;br /&gt;
+#ifdef CONFIG_SCHED_SMT&lt;br /&gt;
+        { sd_init_SIBLING, cpu_smt_mask, },&lt;br /&gt;
+#endif&lt;br /&gt;
+#ifdef CONFIG_SCHED_MC&lt;br /&gt;
+        { sd_init_MC, cpu_coregroup_mask, },&lt;br /&gt;
+#endif&lt;br /&gt;
+#ifdef CONFIG_SCHED_BOOK&lt;br /&gt;
+        { sd_init_BOOK, cpu_book_mask, },&lt;br /&gt;
+#endif&lt;br /&gt;
+        { sd_init_CPU, cpu_cpu_mask, },&lt;br /&gt;
+        { NULL, },&lt;br /&gt;
+};&lt;/p&gt;
+
+&lt;p&gt;CONFIG_CPUSETS=y&lt;/p&gt;
+
+&lt;p&gt;get sd&lt;br /&gt;
+idle_balance&lt;br /&gt;
+for_each_domain&lt;/p&gt;
+
+&lt;p&gt;panic&lt;br /&gt;
+find_busiest_group&lt;br /&gt;
+find_next_bit&lt;br /&gt;
+__next_cpu&lt;/p&gt;
 
 &lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
 
