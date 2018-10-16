@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="558">
+<meta itemprop="wordCount" content="774">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/fs/">
 
@@ -187,126 +187,263 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="reference">Reference</h1>
+<h1 id="ref">ref</h1>
 
-<p><a href="http://www.fieldses.org/~bfields/kernel/vfs.txt">VFS notes</a><br />
-<a href="http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148">Linux: Replacing atime With relatime</a><br />
-<a href="https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/">Why is Linux&rsquo;s filesystem designed as a single directory tree?</a><br />
-<a href="https://stackoverflow.com/questions/5376116/design-a-file-system">Design a file system</a></p>
+<p><a href="https://www.samba.org/samba/samba/ftp/cifs-cvs/ols2006-fs-tutorial-smf.pdf">Linux Filesystems in 21 days 45 minutes</a><br />
+Documentation/filesystems/vfs.txt<br />
+<a href="https://unix.stackexchange.com/a/265680/16335">Why does open before read/write?</a></p>
 
-<h1 id="naming-flaw">Naming flaw</h1>
+<h1 id="init-rootfs">Init rootfs</h1>
 
-<p><a href="https://www.win.tue.nl/~aeb/linux/lk/lk-8.html">https://www.win.tue.nl/~aeb/linux/lk/lk-8.html</a></p>
+<p>init_mount_tree<br />
+and sys_chroot</p>
 
-<h1 id="fs-hacks">fs hacks</h1>
+<h1 id="mkfs-ext2">?? mkfs.ext2</h1>
 
-<p>To get the full path call dentry_path_raw(filp-&gt;f_path.dentry,buf,buflen).</p>
+<p>e2fsprog</p>
 
-<h1 id="everything-is-a-file">Everything is a file</h1>
+<h1 id="vfs-and-ops">VFS and Ops</h1>
+
+<h2 id="principles">Principles</h2>
+
+<p>Layering<br />
+Abstraction<br />
+Object-oriented programming<br />
+Performance: translation cache: decache<br />
+Onset/nuclus/coda: KISS</p>
+
+<h2 id="tasks">tasks</h2>
+
+<p>mount<br />
+content operations: i_fop<br />
+dirent operations: i_op lookup, create, remove</p>
+
+<h2 id="app">app</h2>
+
+<p>file descriptor<br />
+1. cache the translation from full path to inode<br />
+2. onset-operation cache;</p>
+
+<h2 id="vfs">vfs</h2>
+
+<ul>
+<li>lookup interpreatation<br />
+decach layer dentry name interpretation cache<br />
+inode-&gt; lookup<br /></li>
+<li>create<br />
+func: lookup_open<br />
+lookup -&gt; inode-&gt; create<br /></li>
+<li>remove<br />
+unlink<br /></li>
+
+<li><p>content operations - read/write<br />
+file: operation cache</p>
+
+<h2 id="fs">fs</h2>
+
+<p>inode layer</p></li>
+</ul>
+
+<h1 id="fs-and-ops">FS and Ops</h1>
+
+<h2 id="tasks-1">Tasks</h2>
+
+<p>Alloc an inode<br />
+Remove an inode<br />
+Read the content of an inode<br />
+Write contents of an inode</p>
+
+<h2 id="principles-1">Principles</h2>
+
+<p>Layering<br />
+Performance: page cache</p>
+
+<h2 id="thinking-over">Thinking over</h2>
+
+<p>Backdev info<br />
+FS format<br />
+inode content space index</p>
+
+<h2 id="fs-1">FS</h2>
+
+<p>Read the first block<br />
+buffer head:hard drive locations and sizes; memory addr<br />
+alloc an inode: linked to parent and mark parent dirty in memory, then write to disk<br />
+alloc spare space: record the locations of the spare space in inode<br />
+write the dirty space: user the buffer head record the locations<br />
+* page cache<br />
+address_space a_ops<br />
+page size vs block size<br />
+VMA: process map a whole page and use vma to descirbe it.<br />
+but if write overflow? the adjacent  buffer head will corrupt.<br />
+* block io<br />
+buffer head: unite 512</p>
+
+<h3 id="fs-block-size">FS block size</h3>
+
+<p>blockdev &ndash;getbsz /dev/sda1<br />
+4096<br />
+sudo tune2fs -l /dev/sda1 | grep size</p>
+
+<h2 id="hard-drive-driver">Hard drive driver</h2>
+
+<p>Parameters: locations and size<br />
+Read content from disk<br />
+Write content form disk</p>
+
+<h1 id="buffer-head">buffer head</h1>
+
+<p>__getblk_slow<br />
+grow_buffers<br />
+grow_dev_page<br />
+alloc_page_buffers</p>
+
+<h1 id="fs-format">FS format</h1>
+
+<p>fs-sb; fs-inode space; Spare space<br />
+The hierarchy of inode is mantained linked lists.</p>
+
+<h1 id="inode-hashtable">inode_hashtable</h1>
+
+<p>ext2_iget<br />
+{<br />
+    inode = iget_locked(sb, ino);<br />
+    {<br />
+        head = inode_hashtable + hash(sb, ino)<br />
+        if !inode &amp;&amp; alloc_inode(sb)<br />
+        then<br />
+            hlist_add_head(&amp;inode-&gt;i_hash, head);<br />
+        fi<br />
+    }</p>
+
+<p>}</p>
+
+<h1 id="no-hashtable">no hashtable</h1>
+
+<p>ramfs_get_inode<br />
+{<br />
+    new_inode-&gt;new_inode_pseudo-&gt; alloc_inode<br />
+    still inode_sb_list_add<br />
+}</p>
+
+<h1 id="dentry">dentry</h1>
+
+<p>d_alloc()<br />
+To get the full path call dentry_path_raw(filp-&gt;f_path.dentry,buf,buflen).</p>
+
+<h1 id="struct-path">struct path</h1>
+
+<p>get the meaning of this struct by looking d_path().It includes the two endpoints of a path which are mnt and dentry.<br />
+<a href="https://lwn.net/Articles/206758/">Upcoming API change: struct path</a></p>
+
+<h1 id="mount">mount</h1>
+
+<p>do_new_mount<br />
+{<br />
+    vfs_kern_mount<br />
+    {<br />
+        root = mount_fs -&gt; ramfs_mount -&gt; ramfs_fill_super<br />
+        {<br />
+            ramfs_get_inode<br />
+            sb-&gt;s_root = d_make_root(inode);<br />
+        }<br />
+        mnt-&gt;mnt.mnt_root = root;<br />
+    }<br />
+    do_add_mount<br />
+    {<br />
+        lock_mount<br />
+        {<br />
+            mnt = lookup_mnt(path);<br />
+            retry until !mnt, then create new mp<br />
+        }<br />
+        graft_tree-&gt;attach_recursive_mnt<br />
+        {<br />
+            get_mountpoint-&gt;d_set_mounted<br />
+            mnt_set_mountpoint<br />
+            commit_tree -&gt; child mnt.mnt_hash -&gt; mount_hashtable<br />
+        }</p>
+
+<pre><code>}
+</code></pre>
+
+<p>}</p>
+
+<h2 id="lqo">LQO</h2>
+
+<p>Check follow_managed<br />
+* for DCACHE_MOUNTED in get_mountpoint<br />
+Amnt: Protect the mountpoint hashtable with mount_lock - 3895dbf8985f656675b5bde610723a29cbce3fa7<br />
+* monutpoint<br />
+get rid of full-hash scan on detaching vfsmounts - 84d17192d2afd52aeba88c71ae4959a015f56a38<br />
+* d_mounted -&gt; DCACHE_MOUNTED<br />
+    The mounted state of a dentry is only used to speculatively take a look in the<br />
+    mount hash table if it is set &ndash; before following the mount, vfsmount lock is<br />
+    taken and mount re-checked without races.<br />
+fs: dcache remove d_mounted - 5f57cbcc02cf18f6b22ef4066bb10afeb8f930ff</p>
+
+<h1 id="open">open</h1>
+
+<p>sys_open -&gt;<br />
+    path_init()<br />
+    1. get start point current-&gt;fs{root, pwd}<br />
+    2. link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)<br />
+    do_last()<br />
+    1. dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&gt;s_dentry_op<br />
+    2. file, if not open, file-&gt;f_op = inode-&gt;i_fop</p>
+
+<h2 id="open-flags">open flags</h2>
+
+<p>Check open_flags.c</p>
+
+<h1 id="write">write</h1>
+
+<p>sys_write -&gt; file-&gt;f_op-&gt;write()&hellip;</p>
+
+<h1 id="file-mode-bits">file mode bits</h1>
+
+<p>man chmod</p>
+
+<h2 id="t-vs-t">T vs t</h2>
+
+<p>只有owner 和root才能删除这个文件, 用于/tmp<br />
+touch /tmp/firo; ls -l /tmp/firo<br />
+-rw-rw-r&ndash; 1 firo firo 0 Sep 24 21:20 /tmp/firo<br />
+chmod +t /tmp/firo; ls -l /tmp/firo<br />
+-rw-rw-r-T 1 firo firo 0 Sep 24 21:20 /tmp/firo<br />
+chmod +x /tmp/firo; ls -l /tmp/firo<br />
+-rwxrwxr-t 1 firo firo 0 Sep 24 21:20 /tmp/firo</p>
+
+<h2 id="x">?? X</h2>
+
+<h1 id="design-a-filesystem">Design a filesystem</h1>
+
+<p><a href="https://stackoverflow.com/questions/5376116/design-a-file-system">Design a file system</a><br />
+<a href="https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/">Why is Linux&rsquo;s filesystem designed as a single directory tree?</a></p>
+
+<h2 id="set-vs-directory">Set vs directory</h2>
+
+<p><a href="https://math.stackexchange.com/a/854656/38596">What is the meaning/purpose of finding the “foundations of mathematics”?</a></p>
+
+<h2 id="linus-on-atime">Linus on atime</h2>
+
+<p>perhaps the most stupid Unix design idea of all times,&rdquo; adding: &ldquo;Think about this a bit: &lsquo;For every file that is read from the disk, lets do a &hellip; write to the disk! And, for every file that is already cached and which we read from the cache &hellip; do a write to the disk!&rsquo;&rdquo; He further emphasized the performance impact thus:<br />
+<a href="http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148">Linux: Replacing atime With relatime</a></p>
+
+<h2 id="linus-on-everything-is-a-file">Linus on  Everything is a file</h2>
 
 <p>The whole point with &ldquo;everything is a file&rdquo; is not that you have some<br />
 random filename (indeed, sockets and pipes show that &ldquo;file&rdquo; and &ldquo;filename&rdquo;<br />
 have nothing to do with each other), but the fact that you can use common<br />
 tools to operate on different things. - <a href="http://yarchive.net/comp/linux/everything_is_file.html">Linus</a></p>
 
-<h1 id="file-and-directory">File and directory</h1>
-
-<p><a href="https://math.stackexchange.com/a/854656/38596">What is the meaning/purpose of finding the “foundations of mathematics”?</a></p>
-
-<h1 id="file-operations-onset-nucleus-coda">File operations - onset, nucleus, coda</h1>
-
-<p><a href="https://unix.stackexchange.com/questions/265620/on-unix-systems-why-do-we-have-to-explicitly-open-and-close-files-to-be/265621">On Unix systems, why do we have to explicitly <code>open()</code> and <code>close()</code> files to be able to <code>read()</code> or <code>write()</code> them?</a></p>
-
-<h2 id="onset-the-preparing-open">onset - the preparing open()</h2>
-
-<p>Prepare the object for processing.<br />
-* Name to inode.</p>
-
-<ul>
-<li>make dentry<br />
-d_alloc() alloc new dentry<br />
-parent_entry-&gt;d_inode-&gt;i_op-&gt;lookup=ext2_lookup()-&gt; ext2_iget() -&gt; use raw_inode make inode-&gt;<br />
-set inode to dentry<br />
-<br /></li>
-</ul>
-
-<p>#Hacks<br />
-I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.</p>
-
-<p>#VFS<br />
-##Common concepts<br />
-* VFS:Common fs interface plus fs anstraction layer!</p>
-
-<h2 id="unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points">Unix fs-related abstractions: file, directory entries, inodes, and mount points.</h2>
-
-<ul>
-<li>Filesytem: a hierarchial storage of data adhering to a specific structure.<br />
-In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.<br /></li>
-<li>file: and ordered string of bytes.<br /></li>
-<li>directory: analogous to a folder and usally contains related files.<br /></li>
-<li>dentry: Each component of a path is called a directory entry.<br /></li>
-<li>inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!<br /></li>
-<li>supreblock: a data structure containing information about the filesystem as a whole.<br />
-<br /></li>
-</ul>
-
-<h2 id="vfs-primary-objects-superblock-inode-dentry-file">VFS primary objects: superblock, inode, dentry, file.</h2>
-
-<ul>
-<li>supreblock: a specific mounted filesystem.<br /></li>
-<li>inode: unit for fs. all the information needed by the kernel to manipulate a file or directory.<br /></li>
-<li>dentry: accelerate access fs, dcache! a single component of a path, certainly include <em>regular</em> file.<br />
-VFS treats directory as non-exist <em>normal</em> file. directory and dentry is not the same at all, different congitive level!<br />
-In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!<br /></li>
-
-<li><p>file: an open normal file as associated with a process.</p>
-
-<h2 id="init-rootfs">Init Rootfs</h2>
-
-<p>init_mount_tree<br />
-and sys_chroot</p></li>
-</ul>
-
-<p>##Step of how to use ext2 fs<br />
-* Register a fs type in kernel.<br />
-struct file_system_type: basic fs driver codes!</p>
-
-<ul>
-<li>mkfs.ext2<br /></li>
-<li>shell mount -&gt; sys_mount -&gt; file_system_type-&gt;mount =&gt; root dentry and dentry-&gt;d_sb!<br /></li>
-<li>sys_open -&gt;<br />
-path_init()<br />
-
-<ol>
-<li>get start point current-&gt;fs{root, pwd}<br /></li>
-<li>link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)<br />
-do_last()<br /></li>
-<li>dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&gt;s_dentry_op<br /></li>
-<li>file, if not open, file-&gt;f_op = inode-&gt;i_fop<br /></li>
-</ol></li>
-<li>sys_write -&gt;<br />
-file-&gt;f_op-&gt;write()&hellip;<br />
-<br /></li>
-</ul>
-
-<h1 id="faq">FAQ</h1>
-
-<h2 id="forbid-ln">forbid ln</h2>
+<h2 id="hard-link">Hard Link</h2>
 
 <p>hard link to directory, recursive<br />
 hard link to file accross partitions, may led confilict with inode number.</p>
 
-<h2 id="stick-bit">stick bit</h2>
+<h2 id="lqo-1">LQO</h2>
 
-<p>chmod +t<br />
-1777<br />
-只有owner 和root才能删除这个文件, 用于/tmp</p>
-
-<h2 id="time-of-file">time of file</h2>
-
-<h3 id="atime">atime</h3>
-
-<p>perhaps the most stupid Unix design idea of all times,&rdquo; adding: &ldquo;[T]hink about this a bit: &lsquo;For every file that is read from the disk, lets do a &hellip; write to the disk! And, for every file that is already cached and which we read from the cache &hellip; do a write to the disk!&rsquo;&rdquo; He further emphasized the performance impact thus:</p>
+<p><a href="https://unix.stackexchange.com/questions/265620/on-unix-systems-why-do-we-have-to-explicitly-open-and-close-files-to-be/265621">On Unix systems, why do we have to explicitly <code>open()</code> and <code>close()</code> files to be able to <code>read()</code> or <code>write()</code> them?</a></p>
 
 		</article>
 	  </div>

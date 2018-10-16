@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="574">
+<meta itemprop="wordCount" content="509">
 <meta itemprop="datePublished" content="2015-05-10">
 <meta itemprop="url" content="http://firoyang.org/net/netfilter/">
 
@@ -187,99 +187,82 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="reference">Reference</h1>
+<h1 id="filter">Filter</h1>
 
-<p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html">Linux netfilter Hacking HOWTO</a><br />
-<a href="http://www.karlrupp.net/en/computer/nat_tutorial">NAT - Network Address Translation</a><br />
-man iptables and man iptables-extension</p>
+<p>conditions and actions</p>
 
-<h1 id="introduction-to-netfilter">Introduction to netfilter</h1>
+<h1 id="packet-filter">Packet filter</h1>
 
-<p>Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.<br />
-Netfilter的本质就是内核协议栈上的Hook的集合.<br />
-对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言</p>
+<p>type: filter</p>
 
-<blockquote>
-<p>Firstly, each protocol defines &ldquo;hooks&rdquo; (IPv4 defines 5) which are well-defined points in a packet&rsquo;s traversal of that protocol stack.</p>
-</blockquote>
-
-<p>到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.<br />
-与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.<br />
-Netfilter的历史请查阅wikipedia.<br />
-内核基于netfilter构建了 iptables 和 connection track两套系统.<br />
-从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.<br />
-netfilter<br />
-ct| |iptables<br />
-nat,filter,mangle,kproxy,smartqos<br />
-当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.</p>
-
-<h1 id="netfilter">netfilter</h1>
-
-<h2 id="source">source</h2>
-
-<p>netfilter 公共: net/netfilter<br />
-ipv4协议的netfilter细节在: net/ipv4/netfilter/</p>
-
-<h2 id="init">Init</h2>
-
-<p>~/linux/net/netfilter/core.c<br />
-netfilter_init()</p>
-
-<h2 id="hook-point">Hook point</h2>
-
-<p>local_in local_out forward pre_routing post_routing</p>
-
-<h1 id="iptables">Iptables</h1>
-
-<p>Iptables is a packet selecttion system (包括内核和用户态两部分).<br />
-iptables 的ip是IP(Internet Protocol).<br />
-xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.<br />
-<a href="http://en.wikipedia.org/wiki/Iptables#Overview">Overview of xtables in wikipedia</a></p>
-
-<h2 id="details-of-iptables">Details of iptables</h2>
+<h2 id="what-packets-and-where-to-filter">What packets and where to filter</h2>
 
 <ul>
-<li><p>iptables command<br />
-直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target<br />
-如:iptables -t filter -I INPUT -p tcp &ndash;dport 22 -j ACCEPT<br />
-特别: 从-p开始到-j 之前这是一个 match!<br />
-更多的match 和 target, please, man iptables-extension<br />
-一个table的内置chain,就是他所在的hook点.</p></li>
+<li>Filter rules<br /></li>
+<li>Condition<br />
+IP addr<br />
+Port<br />
+Level 4 protocol type<br /></li>
 
-<li><p>kernel code<br />
-ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.</p></li>
+<li><p>Action<br />
+accept<br />
+drop</p></li>
+
+<li><p>Filter checkpoints<br />
+Ingress<br />
+Outgress<br />
+Route</p></li>
 </ul>
 
-<h2 id="step-of-exution">Step of exution</h2>
+<h1 id="hooking">Hooking</h1>
 
-<h3 id="init-1">Init</h3>
-
-<ul>
-<li>如mangle表的初始化见iptable_mangle_init<br />
-xt_table: ipt_register_table<br />
-    struct xt_table         *iptable_filter;<br />
-    struct xt_table         *iptable_mangle;<br />
-    struct xt_table         *iptable_raw;<br />
-    struct xt_table         *arptable_filter;<br />
-    struct xt_table         *iptable_security;<br />
-    struct xt_table         *nat_table;<br /></li>
-
-<li><p>如mark match的初始化 mark_mt_init<br />
-xt_match: xt_register_match</p></li>
-
-<li><p>如MARK target 的初始化 也在 mark_mt_init<br />
-xt_target: xt_register_target</p></li>
-</ul>
-
-<h3 id="the-mangle-journal">The mangle journal</h3>
-
-<p>netfilter hook -&gt;  iptable_mangle_hook -&gt; ipt_do_table -&gt;&hellip;</p>
+<p>Interceptor pattern</p>
 
 <h1 id="connection-tracking">Connection tracking</h1>
 
+<p><a href="http://people.netfilter.org/pablo/docs/login.pdf">Netfilter’s connection tracking system</a><br />
+<a href="https://www.netdevconf.org/2.1/session.html?westphal">netfilters connection tracking subsystem</a><br />
+<a href="https://www.linuxjournal.com/article/4234">Network Probes Explained: Understanding Port Scans and Ping Sweeps</a></p>
+
+<h1 id="netfilter">Netfilter</h1>
+
+<p>a set of hooks: Local_in local_out forward pre_routing post_routing<br />
+packet filter<br />
+Connection tracking:<br />
+NAT</p>
+
+<h1 id="software-implementation">Software implementation</h1>
+
+<p><a href="http://en.wikipedia.org/wiki/Iptables#Overview">Overview of xtables in wikipedia</a><br />
+* Init<br />
+net/netfilter/core.c<br />
+netfilter_init()<br />
+如mangle表的初始化见iptable_mangle_init<br />
+xt_table: ipt_register_table<br />
+        struct xt_table         *iptable_filter;<br />
+        struct xt_table         *iptable_mangle;<br />
+        struct xt_table         *iptable_raw;<br />
+        struct xt_table         *arptable_filter;<br />
+        struct xt_table         *iptable_security;<br />
+        struct xt_table         *nat_table;<br />
+如mark match的初始化 mark_mt_init<br />
+xt_match: xt_register_match</p>
+
+<p>如MARK target 的初始化 也在 mark_mt_init<br />
+xt_target: xt_register_target</p>
+
+<ul>
+<li>Nuclus<br />
+netfilter hook -&gt;  iptable_mangle_hook -&gt; ipt_do_table -&gt;&hellip;<br />
+ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.<br />
+<br /></li>
+</ul>
+
+<h1 id="connection-tracking-1">Connection tracking</h1>
+
 <p>Conntrack 的实现不依赖iptables, 很独立.</p>
 
-<h2 id="init-2">init</h2>
+<h2 id="init">init</h2>
 
 <p>nf_conntrack_standalone_init()<br />
 nf_conntrack_l3proto_ipv4_init()</p>
@@ -310,8 +293,9 @@ ALG</p>
 这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。<br />
 徐琛,也这么说!</p>
 
-<p>#NAT<br />
-<a href="https://www.ietf.org/rfc/rfc3489.txt">https://www.ietf.org/rfc/rfc3489.txt</a><br />
+<h1 id="nat">NAT</h1>
+
+<p><a href="https://www.ietf.org/rfc/rfc3489.txt">https://www.ietf.org/rfc/rfc3489.txt</a><br />
 symmetric nat, 端口不复用, 访问同一个服务器.<br />
 linux 内核的NAT是基于iptables 和 conntrack实现的.</p>
 
@@ -418,7 +402,12 @@ with the release of version 3.12 of the Linux kernel mainline</p>
 
 <p>#FAQ<br />
 * 如何查看某个table 具体在那几个hook点.<br />
-去看内核代码 or iptables -L -t &ldquo;table 名&rdquo;</p>
+iptables -L -t &ldquo;table 名&rdquo;</p>
+
+<h1 id="reference">Reference</h1>
+
+<p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html">Linux netfilter Hacking HOWTO</a><br />
+<a href="http://www.karlrupp.net/en/computer/nat_tutorial">NAT - Network Address Translation</a></p>
 
 		</article>
 	  </div>

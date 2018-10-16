@@ -1,0 +1,160 @@
+# SKB
+## [skb](http://vger.kernel.org/~davem/skb.html)
+[Basic functions for sk_buff](http://www.skbuff.net/skbbasic.html)
+[SKB data area handling](http://vger.kernel.org/~davem/skb_data.html)
+[Things that need to get done in the Linux kernel networking](http://vger.kernel.org/~davem/net_todo.html)
+[Skbuffs - A tutorial](http://people.sissa.it/~inno/pubs/skb.pdf)
+[Network buffers The BSD, Unix SVR4 and Linux approaches](http://people.sissa.it/~inno/pubs/skb-reduced.pdf)
+[skb_shared_info](http://marc.info/?l=linux-netdev&m=115508038817177&w=2)
+This "shared info" (so called because it can be shared among copies of the skb within the networking code)  --LDD3 17.10
+关于[ frags 和 frag_list ](http://stackoverflow.com/questions/10039744/difference-between-skbuff-frags-and-frag-list/) 看我的答案
+dataref标识的仅仅head data共享的次数也就是skb_clone.
+而frags 是get_page, frag_list 是skb_get.
+skb->data_len这个成员就非常不直观!他是paged-data的长度.
+
+
+也差不多该分析, 协议栈的数据流图, 在这之前先挑重点总结下linux/skbuff.h里面的函数
+先整体分析下类:
+申请skb 空间: alloc_skb, build_skb, __napi_alloc_skb, __alloc_rx_skb
+frag fraglist相关:
+skb释放: kfree_skb, consume_skb等等
+协议相关的: vlan checksum, memcpy_from_msg等
+链表操作:
+操纵skb 和skb data: get clone copy put push
+skb成员赋值的操作: 比较多余, 可能比较工整写, 模块化.
+## fclone -- fast clone
+[NET Implement SKB fast cloning.](http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=d179cd12928443f3ec29cfbc3567439644bd0afc)
+[Fast SKB cloning, continued](http://lwn.net/Articles/140552/)
+use in skb_clone function
+use case 1: tcpdump and network stack
+fclones->fclone_ref 这就是引用, 用处见skb_clone
+skbuff_head_cache alloc的skb对应n->fclone = SKB_FCLONE_UNAVAILABLE;
+* pskb_pull -- p abbrivated from oprivate
+* truesize -- len of sk_buff + head_len + frags + frag_list
+* data_len -- len of frags + frag_list
+* len -- head_len + frgas + frag_list
+
+# Socket layer
+[What's Wrong With Sockets Performance And How to Fix It][1]
+[1]: http://natsys-lab.blogspot.com/2013/03/whats-wrong-with-sockets-performance.html
+
+* inet_create
+sock->ops = inet_protosw->ops = inet_stream_ops
+* proto_ops -- fops
+is a good name stand for all PF_*, all 协议族, but sock_generic_ops is better 具体协议与BSD socket api的通用接口
+* proto, -- specific fs, like ext,  btfs in *inetsw*
+sock的lab决定具体的slab, 如tcp_sock/udp_sock, 根本的发送方法tcp_sendmsg, 协议的真正实体!
+* 越来越具体
+BSD socket api ->proto_ops(sock type base)协议通用api ->proto (udp/tcp_prot)
+sys_bind -> inet_stream_ops ->inet_bind ->sk_prot->bind(likely, is NULL)
+write->inet_stream_ops->sendmsg->tcp_sendmsg
+* inet_connection_sock_af_ops
+icsk->icsk_af_ops
+* net_protocol -- l4 rcv in *inet_protos*
+是iphdr中protocol成员的延伸, 所以有了tcp_protocol/udp_protocol all in inet_protos
+* packet_type -- l3 rcv in ptype_all and ptype_base
+pt_prev->func
+
+# Queue
+tcp_add_backlog
+tcp_prequeue:ucopy.prequeue
+tcp_copy_to_iovec:ucopy.msg,
+tcp_queue_rcv:sk->sk_receive_queue
+tcp_data_queue: ooo?
+
+sk_backlog_rcv=tcp_v4_do_rcv
+
+# What about the skbs in sk_receive_queue?
+sk→receive_queue contains processed TCP segments, which means that all the pro-
+tocol headers are stripped and data are ready to be copied to the user application.
+
+# When was the socket lock owned user?
+grep owned = 1, you will find tcp_ioctl/sendmsg/recvmsg() will call lock_sock().
+In tcp_recvmsg, the prequeue and sk_receive_queue will be processed.
+So we know that the owned is used to protect receive queue and prequeue.
+In other words, if owned = 1, we cannot queue skb in either receive queue and prequeue.
+That means only sk_backlog queue is the home for skb temporarily.
+
+# What does ucopy.task mean?
+ucopy.task was temporarily enabled in tcp_recvmsg in order to read more data after processing receive queue.
+It will be disabled in the same fuction. So go back to tcp_prequeue, we know if user need more data, then we queue new skb in ucopy.preueue otherwise not.
+In tcp_rcv_established(), the tp->ucopy.task == current indicats we are in process context.
+
+
+# Lock
+lock_sock_fast
+lock_sock_nested
+
+# steps of tcp_rcvmsg
+https://www.spinics.net/lists/newbies/msg14465.html
+[Best explnations of set_task_state to running in tcp_rcv_established, see eexplorer](http://bbs.chinaunix.net/forum.php?mod=viewthread&action=printable&tid=4114007)
+Even through you know above , I think you should also know if a task was scheduled with task state == RUNNING, the schedule will use put_prev_task_fair-> put_prev_entity->__enqueue_entity as prev->on_rq inpick_next_task_fair()
+
+
+# VF
+[1]: https://docs.microsoft.com/en-us/windows-hardware/drivers/network/sr-iov-vf-data-path
+[2]: https://blog.scottlowe.org/2009/12/02/what-is-sr-iov/
+[SR-IOV VF Data Path][1]
+[What is SR-IOV][2]
+
+#Netlink
+* Group
+enum rtnetlink_groups
+##What is netlink
+Networking related kernel configuration and monitoring interfaces.
+* IPC between kernel and user spacess process.
+ioctl
+* prarts
+        libnl
+        libnl-route
+        libnl-genl
+        libnl-nf
+
+* How many parts does libnl-route has?
+Address,  links, neighboring, routing, TC
+
+# Offload
+[GSO: Generic Segmentation Offload](https://lwn.net/Articles/188489/)
+## TSO
+搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文,
+当然skb->len得大于mss_now才有意义.
+tcp_set_skb_tso_segs
+
+## offload
+* TSO in tcp_v4_connect
+[TSO Explained](https://tejparkash.wordpress.com/2010/03/06/tso-explained/)
+One Liner says: It is a method to reduce cpu workload of packet cutting in 1500byte and asking hardware to perform the same functionality.
+* GSO
+[GSO: Generic Segmentation Offload](http://thread.gmane.org/gmane.linux.network/37287)
+TSO = GSO_TCPV4
+frags = sg I/O
+frag_list
+*GRO
+napi -> dev ->inet->skb
+
+# Network monitor
+User-level packet capture
+[Packet filter](http://www.tcpdump.org/papers/bpf-usenix93.pdf)
+
+## User-level packet capture
+Because network monitors run as user-level processes, packets must be copied acrossthe kernel/user-space protection boundary
+
+## Packet filter
+* Causality - Performace
+1. This copying can be minimized by deploying a kernel agent called a packet filter, which discards unwanted packets as early as possible
+2. The original Unix packetfilter was designed around a stack-based filter evaluator that performs sub-optimally on current RISC CPUs. 
+3. BPF also uses a straightforward buffering strategy that makes its overall performance up to 100 times faster than Sun’s NIT running on the same hardware
+* Origins
+Virtual machine
+[Stack based vs Register based Virtual Machine Architecture, and the Dalvik VM](https://markfaction.wordpress.com/2012/07/15/stack-based-vs-register-based-virtual-machine-architecture-and-the-dalvik-vm/)
+* The big map rehearsal
+https://www.kernel.org/doc/Documentation/networking/filter.txt
+
+## eBPF
+[A thorough introduction to eBPF](https://lwn.net/Articles/740157/)
+
+### Implementation
+bpf_prog_load
+echo > /sys event
+PERF_EVENT_IOC_SET_BPF
+BPF_PROG_RUN trace_call_bpf

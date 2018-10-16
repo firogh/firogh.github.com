@@ -1,0 +1,99 @@
+## [skb](http://vger.kernel.org/~davem/skb.html)
+[Basic functions for sk_buff](http://www.skbuff.net/skbbasic.html)
+[SKB data area handling](http://vger.kernel.org/~davem/skb_data.html)
+[Things that need to get done in the Linux kernel networking](http://vger.kernel.org/~davem/net_todo.html)
+[Skbuffs - A tutorial](http://people.sissa.it/~inno/pubs/skb.pdf)
+[Network buffers The BSD, Unix SVR4 and Linux approaches](http://people.sissa.it/~inno/pubs/skb-reduced.pdf)
+[skb_shared_info](http://marc.info/?l=linux-netdev&m=115508038817177&w=2)
+This "shared info" (so called because it can be shared among copies of the skb within the networking code)  --LDD3 17.10
+关于[ frags 和 frag_list ](http://stackoverflow.com/questions/10039744/difference-between-skbuff-frags-and-frag-list/) 看我的答案
+dataref标识的仅仅head data共享的次数也就是skb_clone.
+而frags 是get_page, frag_list 是skb_get.
+skb->data_len这个成员就非常不直观!他是paged-data的长度.
+
+
+也差不多该分析, 协议栈的数据流图, 在这之前先挑重点总结下linux/skbuff.h里面的函数
+先整体分析下类:
+申请skb 空间: alloc_skb, build_skb, __napi_alloc_skb, __alloc_rx_skb
+frag fraglist相关:
+skb释放: kfree_skb, consume_skb等等
+协议相关的: vlan checksum, memcpy_from_msg等
+链表操作:
+操纵skb 和skb data: get clone copy put push
+skb成员赋值的操作: 比较多余, 可能比较工整写, 模块化.
+## fclone -- fast clone
+[NET Implement SKB fast cloning.](http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=d179cd12928443f3ec29cfbc3567439644bd0afc)
+[Fast SKB cloning, continued](http://lwn.net/Articles/140552/)
+use in skb_clone function
+use case 1: tcpdump and network stack
+fclones->fclone_ref 这就是引用, 用处见skb_clone
+skbuff_head_cache alloc的skb对应n->fclone = SKB_FCLONE_UNAVAILABLE;
+* pskb_pull -- p abbrivated from oprivate
+* truesize -- len of sk_buff + head_len + frags + frag_list
+* data_len -- len of frags + frag_list
+* len -- head_len + frgas + frag_list
+
+* skb_pull
+和skb_push, 相对, 应该是拆包的时候用的.
+* __skb_trim: 重新设置了 len.不是坚守也可能变大.非线性什么不做, 给个警告.
+* ___pskb_trim: 考虑了paged data.
+* skb_header_pointer: 这个函数在smartqos里面用过, 主要就是考虑大nonlinear区的问题.
+用来在skb去一块数据, 如果数据大小在headlen里面最容易了, 直接返回data + offset.
+否则skb_copy_bits
+* skb_copy_bits: WARNING fraglist藏在skb_walk_frags里面.
+核心就是一个frags的for循环一点点小心翼翼的copy就行了. 
+要注意这里有个kmap_atomic的操作!这是加深对page理解的千载难逢的机会.
+kmap_atomic如果是直接映射区的页表由cpu主动完成.从一个page里面copy东西的时候.
+低端页返回地址, 高端页映射到kmap_pte.之后开始copy.copy完了kunmap_atomic.
+这里的问题是为什么要在这里做这种映射?
+可能是用户态的高端page传到内核, __ip_append_data里面的__skb_fill_page_desc
+会把page存到frags[i]里面.可能在进程上下文这些页面ok, 但是到了内核态切不是相关
+进程的上下文, 这时候高端页,的映射页表就不对了, 因为每个进程的页表是不同的, 所以
+要用kmap_atomic来一下.
+* page_address这个函数如果已经映射page_solt里面取, pas保证了多个vaddr 映射到paddr.
+继续看, 下面看三个非常复杂的三个函数, 好吧是因为我之前没看过.
+___pskb_trim, pskb_pull, pskb_expand_head; 
+* 最核心的就是pskb_expand_head.
+先把他看了, 函数注释说sk_buff不变, 且返回后需要重新reload. 改的是skb 的head data.
+如何sk_buff shared BUG()!显然pskb是针对private non-shared, 如果针对shared改了那么
+别的执行流上sk_buff的成员都失效, 有可能coredump!所以直接BUG()了.
+还有nhead < 0 直接BUG, why? 因为下面的memcpy
+显示申请新空间, ok.之后旧的数据copy过来. ok
+之后是shinfo, 为了性能优化考了nr frags个, 屌.
+这里copy shinfo时dst是data+size, 这个size是slab的对应obj的size不是
+上面申请时的size为什么这么做? obj 的size 应该大于申请的size.
+这里是尽量利用所有空间了.更新下sk_buff相应成员OK了.
+期间还处理skb_cloned的情况为什么? shared直接BUG
+如果cloned则在多个sk_buff之间共享frags, skb_orphan_frags, 先把frags copy到现申请内核page
+之后put user page, 在把内核page装入frags, 在get 内核page.
+expand之后, 包括frags旧都是内核数据了.之后把旧的skb head data数据释放掉.
+也就是说, 为什么我们不能直接把用户的frags, fill到新的head data的shinfo呢?
+* skb_orphan_frags 大哥问号.
+反正expand后head 大了, frags 内核page了, frag list 也get了.
+* pskb_pull:我不看了, 函数注释很明确.
+     The function makes a sense only on a fragmented &sk_buff,
+       it expands header moving its tail forward and copying necessary
+       data from fragmented part.
+* pskb_trim:基本上看懂就是加上了paged 数据的处理
+* skb_unclone: pskb_expand_head(skb, 0, 0, pri);
+* skb_copy:之后全都线性了.  pskb_expand_head(skb, 0, 0, pri); identical to old data.
+
+
+# FAQ
+这里的问题是, 我们为什么不能通过skb->cloned表明是否是cloned的skb, 我们知道
+skb_clone会n->cloned = 1;把new oldskb都置cloned标志.
+这里还检测了dataref是否>1. 我们摘掉clone后dataref是被加1的, 那什么情况cloned有,
+但dataref不是< 2;那就是clone后一个报文kfree_skb了, kfree_skb虽然能释放一个clone出
+来的skb却对另一个clone的skb爱莫能助. 所以虽然, cloned标志位存在但clone实质已无;
+Got it?回到tcp_transmit_skb, 这里如果我们没有cloned 就clone一个如果cloneed.
+这是什么逻辑?这里的差异是否创造一个skb head data的副本. 
+答案在这里[pskb_copy() in tcp_transmit_skb()](http://thread.gmane.org/gmane.linux.network/206211/focus=206215)
+我们仅从pskb_copy 和skb_clone函数的语义是不可能知道这个答案, 这超出了函数能表达的
+涵义范围, 此时我们只能了解整个函数栈的数据流图才行.
+tcp_transmit_skb我们要对skb 和skb data 都要修改, 这是目标.
+如果cloned我们对skb data修改势必造成早先cloned出来的skb corruption!可能里面的
+各种header指针不对了.在AF_PACKET这种情况就是, tcpdump希望收到原始的报文, 因为
+我们的retransmit是修改了skb data造成AF PACKET收到的将不是他希望的就报文, 有可能
+tcpdump收到的是一个修改一般的报文, 更糟.
+什么也不管直接pskb copy, consume掉就的skb, 是可以的.所以这里还是换汤不换药,为了
+节省一次pskb copy!

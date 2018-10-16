@@ -1,0 +1,14 @@
+#! /usr/bin/env stap
+
+probe kernel.function("d_alloc").call {
+	printf ("%s -> %s\n", thread_indent(1), probefunc())
+	printf("%s[%ld] %s %s\n", execname(), pid(), pp(), probefunc())
+}
+
+probe kernel.function("__d_free").call {
+    printf("%s[%ld] %s %s\n", execname(), pid(), pp(), probefunc())
+}
+probe timer.s(5) {
+    exit()
+}
+

@@ -1,0 +1,321 @@
+
+# Ref
+https://people.cs.clemson.edu/~mark/hist.html
+[GEB](https://ocw.mit.edu/high-school/humanities-and-social-sciences/godel-escher-bach/lecture-notes/)
+
+# Resource 
+Resource: Track, Using alloc, Return
+space
+## Alloc
+occasions
+## State of alloced reource
+in-use.
+available for use.
+## Reclaim
+* occasions
+Periodical
+* methods: 
+a)change structure; or 
+b) mark the state of resource; for example, array in lc 146.
+# Change
+energized change structured 
+type: resource, instant
+implying: space 
+property: [subject, form, lack](https://faculty.washington.edu/smcohen/320/archange.htm)
+energy is invisiable
+structured matter for controling energy
+data or state
+kinetic and protenial energy
+## wakeup
+* occassions
+Periodical: 
+Demand: seems overlap 
+## sleep
+
+# Repeat
+Iteration
+Recursion
+
+# poll
+__blk_mq_poll
+
+# model 1
+human demands
+energy
+origins
+
+# Alloc
+imply: free
+space
+object
+construct/desctruct
+SMP
+NUMA
+DEBUG
+## object-caching
+[However](https://www.usenix.org/legacy/publications/library/proceedings/bos94/full_papers/bonwick.a),in many cases the cost of initializing and destroying the object exceeds the cost of allocating and freeing memory for it.
+Firo: From my understanding, the initializing/construct and destroying is another 'alloc and free' and it can be avoided. For example, in linux kernel, we 'construct' the task_struct object by first allocing memory from buddy-system to SLAB then from SLAB to users. It's a common techniques.
+??slab: cache friendly
+slub:
+## problems
+bestfit
+fast
+[fragmentation](https://en.wikipedia.org/wiki/Fragmentation_(computing)#Internal_fragmentation)
+
+
+
+# Schedule: Distributing the workloads across resources.
+
+# Scheduling of processes
+Fairness: dynamic compensation
+Unit: 
+States of process: Runnable, unrunnable
+Latency
+Priority
+Energy
+
+# Processor
+a set of strcutured matter for controling energy. 
+an instance of change
+
+# Change of processes - linkage
+context: pc,registers, stack, address space
+save -> entry -> return
+x86 registers: check ABI, parameter passing and search r10
+
+# Process
+type: resource, change
+unit: instruction, subroutine, change of processes
+change structure 
+space & machine states
+## atomic operation
+Definition: [An atomic operation is an operation that will always be executed without any other process being able to read or change state that is read orchanged during the operation](https://wiki.osdev.org/Atomic_operation)
+
+## Procedure or subroutine
+https://people.cs.clemson.edu/~mark/subroutines.html
+https://en.wikipedia.org/wiki/Subroutine
+* 1945 Turing on subroutines in [Proposed electronic calculator.](http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html)
+In Chapter 6. Outline of Logical Control.
+We also wish to be able to arrange for the splitting up of operations into...
+When we wish to start on a subsidiary operation we need only make a note
+of where we left off the major operation...
+* 1952 [The use of sub-routines in programmes](http://www.laputan.org/pub/papers/wheeler.pdf)
+The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born     in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out     of sight.
+
+## Linkage
+1960 [Dijkstra, E. W. (1960). "Recursive Programming"](https://link.springer.com/article/10.1007%2FBF01386232)
+https://en.wikipedia.org/wiki/Link_register
+?? [The Linux x86 ORC Stack Unwinder](http://www.codeblueprint.co.uk/2017/07/31/the-orc-unwinder.html)
+[The ORCs are coming](https://lwn.net/Articles/728339/)
+
+# Boundary
+* page_fault idtentry
+movq    $-1, ORIG_RAX(%rsp)
+
+# Search
+algorithm.md
+
+# Divide
+
+# Data (implying resource space)
+search and structure
+resource space
+state
+
+# Queue
+Link list: needs spin lock
+
+# Synchronization
+Exclusion: Exclusive use of shared resources
+Wait: Wait for resources/process
+## exclusion basic form
+atomic opertion and unlocked value and locked value, multiple-reader
+processes
+wait: 
+### case 1
+no one holds the lock
+rax: old
+cmpxchg new mem
+### case 2
+lock held by other process
+wait 
+## Wait
+* Basic form
+Busy waiting/polling
+Event driven
+* Component
+Optimistic
+Sleepable
+* [Criteria](https://en.wikipedia.org/wiki/Ticket_lock#Comparison_of_Locks)
+Fairness guarantee
+Storage
+Wait traffic
+1 Release max traffic
+Uncontended latency
+Cache-line bouncing
+### Wait queue
+condition: unavailabe and wakeup
+wait structure
+wait process
+wake up process
+### completion
+wait for process
+based on wait queue
+
+# Operation cache
+slab
+open for read/write
+
+# Cache
+type: data, motion
+## Problems: slowness of storage medium
+page cache: speed up the access to data on the secondary storage
+dcache: speed up the access to data on the secondary storage
+cpu cache: speed up the access to data on main memory
+memory latency is the time (the latency) between initiating a request for a byte or word in memory until it is retrieved by a processor.
+Bandwidth is the number of access per unit time.
+[Cache motivation](https://www.coursera.org/learn/comparch/lecture/5girw/motivation-for-caches)
+[Bandwidth vs. Throughput](https://www.youtube.com/watch?v=VWxGtl5J7WM)
+## problems
+cache pollution
+## methods
+a) locality: resouce space, medium: put data in a fast medium: Disk -> RAM; RAM -> cache; usually, the fast medium is small
+b) locality: put hot data in a small place
+### physics 
+### search structure
+### replacement polices
+algorithm.md
+### reclaim method
+No explicit size limit
+### Replacement vs Reclaim
+Replacement: usually operating/sort on access
+Reclaim: usually operating/scanning on reclaim
+### Write behavior
+[Write policy](https://www.youtube.com/watch?v=Aqxb-uO2Z-Q)
+* write miss
+write-allocate
+write-around/no-write-allocate: non-temporal write operations
+* write hit
+write-through cache implementation;
+write-back cache implementation.
+write-combining; and
+uncacheable.
+### cache coherency
+* [MESI Cache Coherence Protocol](https://www.youtube.com/watch?v=-p9tfMMu1PE)
+[Module 2.4 - Cache Coherence - 740: Computer Architecture 2013 - Carnegie Mellon - Onur Mutlu](https://www.youtube.com/watch?v=flbg-MKkwmk)
+[MIT 6.004 L21: Cache Coherence](https://www.youtube.com/watch?v=OLGEtXV4U3I)
+* Write propagation: Changes to the data in any cache must be propagated to other copies(of that cache line) in the peer caches.
+write-invalidate
+write-update
+* Write serialization
+Snooping
+Directory-based
+two cores require write acess to the same memory address at the same exact moment? one proceeds and one stalls
+## Examples
+### Kenrel
+Kernel uses reclaim to implicitly limit the size of cache
+shrinker and shrink_list
+
+# Numbers of Computing
+https://www.akkadia.org/drepper/cpumemory.pdf
+https://manybutfinite.com/post/what-your-computer-does-while-you-wait/
+
+# Terms in Computing
+
+# ToC
+[2. Models of Computation, Document Distance](https://www.youtube.com/watch?v=Zc54gFhdpLA)
+
+# Turning machine
+M=Q,Gamma ,b,Sigma ,delta ,q_{0},F
+## Program Symbols
+Gamma is a finite, non-empty set of tape alphabet symbols;
+b in Gamma is the blank symbol (the only symbol allowed to occur on the tape infinitely often at any step during the computation);
+Sigma subseteq Gamma setminus {b}: is the set of input symbols, that is, the set of symbols allowed to appear in the initial tape contents;
+## Machine States
+Q: is a finite, non-empty set of states;
+q_{0} in Q is the initial state;
+F subseteq Q is the set of final or accepting states.The initial tape contents is said to be accepted by M if it eventually halts in a state from F.
+## Transition function/computing
+type: structure causality
+delta :(Q setminus F) * Gamma -> Q * Gamma * {L,R}:  is a partial function called the transition function, where L is left shift, R is right shift. (A relatively uncommon variant allows "no shift", say N, as a third element of the latter set.) If delta is not defined on the current state and the current tape symbol, then the machine halts;
+
+# IO
+type: motion
+Interrupts and memory mapping
+
+# Channel & routing
+Circuit switching - physical link
+Packet switching - connection-oriented or connectionless
+
+# Control
+End to end protocol
+Swith
+
+# Transfer
+type: motion
+Data
+Channel & routing
+Control
+
+# Lifetime
+no ref
+refcount
+
+# Forces
+direction
+fundamental forces
+
+# Motion
+data
+directions
+distance
+force controls
+forces
+## Motion concurrent
+### Synchronization of same direction forces control - same direction concurrent
+
+### Synchronization of different direction forces - different concurrent
+
+
+# Fairness
+## Class-based fairness
+## Same class fairness
+### Fairness of order - FIFO
+#### numeric order: atomic inc
+* [Ticket spinlocks](https://lwn.net/Articles/267968/) and [Remove Ticket spinlocks](https://patchwork.kernel.org/patch/9121811/)
+#### structural order
+[MCS spinlocks](http://www.cs.rochester.edu/~scott/papers/1991_TOCS_synch.pdf)
+Queue spink locks is based on MCS spinlocks, but it has some differences.
+queued_spin_lock_slowpath
+[MCS locks and qspinlocks](MCS locks and qspinlocks)
+?? RW LOCK fariness
+### Fairness of quantaty
+#### Dynamic compensation
+New: compensation
+Running: compensator records used resources.
+Next:  next one to compensate.
+Unrunnable: compenser updates statistics
+Resuming: compensation, compenser updates
+* compensation
+compenser
+avg of all runnable 
+compensation: avg or lowest + 1 unit
+
+# Priority
+[nice](https://en.wikipedia.org/wiki/Nice_(Unix)#Etymology)
+
+# Latency
+
+
+# Ops
+type: process
+object
+provider
+providing time
+
+# Show
+data to show
+Place to show
+
+# Monitor
+type: Show

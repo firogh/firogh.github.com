@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="435">
+<meta itemprop="wordCount" content="776">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/synchronization/">
 
@@ -187,12 +187,15 @@
 		<article itemprop="articleBody" id="content">
 		   
 
+<h1 id="ref">ref</h1>
+
+<p><a href="https://yarchive.net/comp/linux/recursive_locks.html">Linus on recursive lock</a><br />
+<a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html">Unreliable Guide To Locking</a></p>
+
 <h1 id="hp">HP</h1>
 
-<p>A program is synchro-<br />
-nized if all accesses to shared data are ordered by synchronization operations.<br />
-A<br />
-data reference is ordered by a synchronization operation if, in every possible<br />
+<p>A program is synchronized if all accesses to shared data are ordered by synchronization operations.<br />
+A data reference is ordered by a synchronization operation if, in every possible<br />
 execution, a write of a variable by one processor and an access (either a read or a<br />
 write) of that variable by another processor are separated by a pair of synchroni-<br />
 zation operations, one executed after the write by the writing processor and one<br />
@@ -200,11 +203,9 @@ executed before the access by the second processor???. Cases where variables may
 be updated without ordering by synchronization are called data races because the<br />
 execution outcome depends on the relative speed of the processors, and, like<br />
 races in hardware design, the outcome is unpredictable, which leads to another<br />
-name for synchronized programs: data-race-free.</p>
-
-<p>#Reference<br />
+name for synchronized programs: data-race-free.<br />
+#Reference<br />
 Perfbook<br />
-<a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html">Unreliable Guide To Locking</a><br />
 <a href="http://queue.acm.org/detail.cfm?id=2698990">Scalability Techniques for Practical Synchronization Primitives</a><br />
 <a href="http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf">test-and-set</a><br />
 <a href="https://people.cs.clemson.edu/~mark/synch.html">Synchronization Instructions</a></p>
@@ -251,36 +252,146 @@ Dining philosophers problem<br />
 * Prioirty inversion<br />
 * Busy waiting</p>
 
-<h1 id="mutual-exclusion">Mutual exclusion</h1>
+<h1 id="ref-1">ref</h1>
 
-<h2 id="spinlock-unsleepable-mutex">spinlock - unsleepable mutex</h2>
+<p>0xax<br />
+Waiman Long: Recent Locking Improvements in the Linux Kernel</p>
 
-<p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/">Linux 内核的排队自旋锁FIFO Ticket Spinlock</a><br />
-spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了<br />
-context switch, 相对semaphore效率高.<br />
-显然对于little critical section 使用semaphore而不是spinlock,将带来性能<br />
-上的巨大损耗.<br />
-* rw_lock</p>
+<h1 id="memory-barier">Memory barier</h1>
 
-<h2 id="mutex">Mutex</h2>
+<h1 id="per-cpu">Per-CPU</h1>
 
-<p>Monitor lock before sleep.</p>
+<h1 id="atomic">Atomic</h1>
 
-<h2 id="rcu-lockless">RCU &ndash; lockless</h2>
+<h2 id="x86-locked-atomic-operations">x86 locked atomic operations:</h2>
 
-<p>Check The Journey to RCU for more details</p>
+<p>v3a chapter 8<br />
+* Guaranteed atomic operations<br />
+* Bus locking, using the LOCK# signal and the LOCK instruction prefix<br />
+* ??Cache coherency protocols that ensure that atomic operations can be carried out on cached data structures(cache lock); this mechanism is present in the Pentium 4, Intel Xeon, and P6 family processors</p>
 
-<h1 id="cooperative">Cooperative</h1>
+<h2 id="uniprocessor">Uniprocessor</h2>
 
-<h2 id="semaphore">semaphore</h2>
+<p><a href="https://wiki.osdev.org/Atomic_operation#Single_processor-single_core_systems">all signle instructions is atomic, including cmpxchg</a><br />
+<a href="https://stackoverflow.com/a/39358907/1025001">Anything is atomic if you do it with interrupts disabled on a UP system</a></p>
 
-<p>it was implement based on spinlock.<br />
+<h2 id="smp">SMP</h2>
+
+<p>cmpxchg isn&rsquo;t atomic; it needs LOCK prefix.</p>
+
+<h1 id="examples">Examples</h1>
+
+<p>x86 inc isn&rsquo;t atomic; check atomic_inc.c</p>
+
+<h2 id="rmw">RMW</h2>
+
+<p><a href="http://preshing.com/20130618/atomic-vs-non-atomic-operations/">Atomic vs. Non-Atomic Operations</a></p>
+
+<h2 id="misalgined-access">misalgined access</h2>
+
+<p><a href="https://support.amd.com/TechDocs/24593.pdf#page=224">AMD 7.3.2 Access Atomicity</a><br />
+Also check Intel 8.1.1<br />
+<a href="https://stackoverflow.com/questions/36624881/why-is-integer-assignment-on-a-naturally-aligned-variable-atomic-on-x86/36685056#36685056">naturally-aligned  vs atomic vs cache</a></p>
+
+<h2 id="why-cas">Why CAS?</h2>
+
+<h2 id="cache-locking">Cache locking</h2>
+
+<p>v3a: 8.1.4<br />
+Effects of a LOCK Operation on Internal Processor Caches</p>
+
+<h2 id="cmpxchg-vs-xchg-on-lock-prefix-implicit">cmpxchg vs xchg on LOCK prefix implicit</h2>
+
+<p><a href="https://stackoverflow.com/a/44273130/1025001">Check Linux SMP alternatives</a></p>
+
+<h2 id="interrupt-exception-vs-non-atomic-operation">interrupt/exception vs non-atomic operation</h2>
+
+<p>v3a 6.6<br />
+To allow the restarting of program or task following the handling of an exception or an interrupt, all exceptions<br />
+(except aborts) are guaranteed to report exceptions on an instruction boundary. All interrupts are guaranteed to be<br />
+taken on an instruction boundary.</p>
+
+<h2 id="two-processor-writing-to-the-same-address">Two processor writing to the same address</h2>
+
+<p><a href="https://www.quora.com/What-happens-when-two-CPU-cores-require-write-access-to-the-same-memory-address-at-the-same-exact-moment">What happens when two CPU cores require write access to the same memory address at the same exact moment?</a><br />
+<a href="https://www.quora.com/When-an-interrupt-occurs-what-happens-to-the-process-that-is-currently-getting-executed">When an interrupt occurs, what happens to the process that is currently getting executed?</a></p>
+
+<h1 id="local-interrupt-disabling">Local Interrupt Disabling</h1>
+
+<h1 id="disabling-and-enabling-deferrable-functions">Disabling and Enabling Deferrable Functions</h1>
+
+<h1 id="spinlock-unsleepable-mutex">Spinlock - unsleepable mutex</h1>
+
+<p><a href="https://lwn.net/Articles/590243/">MCS locks and qspinlocks</a><br />
+<a href="https://www.quora.com/How-does-an-MCS-lock-work">MCS locks on quora</a></p>
+
+<h2 id="bit-spinlock">Bit spinlock</h2>
+
+<p>include/linux/bit_spinlock.h</p>
+
+<h1 id="optimistic-spin-queue">Optimistic spin queue</h1>
+
+<p><a href="https://lwn.net/Articles/604130/">Cancellable MCS spinlock rework</a><br />
+<a href="http://events17.linuxfoundation.org/sites/events/files/slides/linuxcon-2014-locking-final.pdf">An Overview of Kernel Lock Improvements</a></p>
+
+<h1 id="mutex">Mutex</h1>
+
+<p>Monitor lock before sleep.<br />
+Faireness: queue, rt mutex</p>
+
+<h1 id="rw-lock">RW Lock</h1>
+
+<h2 id="rwlock">rwlock</h2>
+
+<p>include/linux/rwlock.h<br />
+_QW_WMASK<br />
+_QW_WAITING<br />
+queued_read_trylock<br />
+queued_read_lock</p>
+
+<h1 id="semaphore">Semaphore</h1>
+
+<p><a href="https://yarchive.net/comp/linux/semaphores.html">Linus on semaphore</a><br />
+ 150    213  kernel/printk/printk.c &lt;<down_console_sem>&gt;<br />
+             down(&amp;console_sem);<br />
+ 151    231  net/core/netpoll.c &lt;<netpoll_poll_disable>&gt;<br />
+             down(&amp;ni-&gt;dev_lock);<br />
+it was implement based on spinlock.<br />
 it can have more than one holder at any time (the number decided at initialization time),<br />
 although it is most commonly used as a single-holder lock (a mutex).<br />
 if you can not get a semaphore, your task will put itself on the wait queue, and be woken<br />
 up the semaphore is released.<br />
 sleepable<br />
-preemptable</p>
+preemptable<br />
+* xadd vs spinlock</p>
+
+<h2 id="lqo">LQO</h2>
+
+<ul>
+<li>%k1 %w1 in kernel up_write<br />
+<a href="https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#x86Operandmodifiers">https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#x86Operandmodifiers</a><br />
+<a href="https://stackoverflow.com/questions/34459803/in-gnu-c-inline-asm-whatre-the-modifiers-for-xmm-ymm-zmm-for-a-single-operand?rq=1">https://stackoverflow.com/questions/34459803/in-gnu-c-inline-asm-whatre-the-modifiers-for-xmm-ymm-zmm-for-a-single-operand?rq=1</a><br />
+<br /></li>
+</ul>
+
+<h1 id="rw-semaphore">RW semaphore</h1>
+
+<p><a href="https://lwn.net/Articles/598577/">rwsem: Support optimistic spinning</a></p>
+
+<h1 id="rcu-lockless">RCU &ndash; lockless</h1>
+
+<p>Check The Journey to RCU for more details</p>
+
+<h1 id="examples-1">examples</h1>
+
+<p>list_add_tail_rcu(&amp;p-&gt;tasks, &amp;init_task.tasks); in copy_process<br />
+no rcu read block and unlock</p>
+
+<h1 id="lqo-1">LQO</h1>
+
+<p>##When to save irq rather than just disable irq, recusive?<br />
+local_irq_disable() used in the code path that never disabled interrupts.<br />
+local_irq_save(flags) used in the code path that already disabled interrupts.</p>
 
 		</article>
 	  </div>

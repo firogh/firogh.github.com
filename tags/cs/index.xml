@@ -99,80 +99,6 @@ kernel&lt;br /&gt;
     </item>
     
     <item>
-      <title>Kernel debugging primer</title>
-      <link>http://firoyang.org/cs/kernel_dbg/</link>
-      <pubDate>Wed, 05 Apr 2017 14:45:21 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/kernel_dbg/</guid>
-      <description>
-
-&lt;h1 id=&#34;debug-boot-problem&#34;&gt;Debug boot problem&lt;/h1&gt;
-
-&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
-
-&lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
-
-&lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
-How to use it during kernel booting?&lt;br /&gt;
-Use boot option:&lt;br /&gt;
-dyndbg=&amp;ldquo;file drivers/usb/host/ehci-hcd.c +p; file&lt;br /&gt;
-drivers/usb/host/ehci-ppc-of.c +p&amp;rdquo; loglevel=8&lt;br /&gt;
-loglevel=8 dyndbg=&amp;ldquo;module ehci_pci +p;&lt;br /&gt;
-module ehci_hcd +p; module usbcore +p&amp;rdquo;&lt;br /&gt;
-After booting:&lt;br /&gt;
-/sys/kernel/debug/dynamic_debug/control&lt;/p&gt;
-
-&lt;h1 id=&#34;dev-print-functions&#34;&gt;Dev print functions&lt;/h1&gt;
-
-&lt;p&gt;drivers/base/core.c&lt;br /&gt;
-define_dev_printk_level&lt;br /&gt;
-THese functions are like pr_func&lt;/p&gt;
-
-&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
-
-&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
-
-&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
-Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
-
-&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
-
-&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
-Includes the interruptable task.&lt;br /&gt;
-Causes: deadlock, race condition&lt;/p&gt;
-
-&lt;h1 id=&#34;kprobes&#34;&gt;kprobes&lt;/h1&gt;
-
-&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
-
-&lt;p&gt;Lockdep&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
-
-&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
-
-&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
-free_pages_prepare posion&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>IO and events</title>
       <link>http://firoyang.org/cs/io/</link>
       <pubDate>Tue, 04 Apr 2017 20:08:35 CST</pubDate>
@@ -256,92 +182,26 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
     </item>
     
     <item>
-      <title>Interrupt and exception</title>
+      <title>x86 interrupt and exception</title>
       <link>http://firoyang.org/cs/interrupt_and_exception/</link>
       <pubDate>Mon, 03 Apr 2017 13:02:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/interrupt_and_exception/</guid>
       <description>
 
-&lt;h1 id=&#34;link-to-process-stack-from-irq-stack&#34;&gt;Link to process stack from irq stack&lt;/h1&gt;
-
-&lt;p&gt;commit a2bbe75089d5eb9a3a46d50dd5c215e213790288&lt;br /&gt;
-x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt;
-       /* Save previous stack value &lt;em&gt;/&lt;br /&gt;
-       movq %rsp, %rsi&lt;br /&gt;
-&amp;hellip;&lt;br /&gt;
-2:     /&lt;/em&gt; Store previous stack value */&lt;br /&gt;
-       pushq %rsi&lt;br /&gt;
-&lt;a href=&#34;https://www.exploit-db.com/papers/13146/&#34;&gt;Obtain sys_call_table on amd64 &lt;/a&gt;&lt;/p&gt;
-
 &lt;p&gt;#Interrupt&lt;/p&gt;
 
 &lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
 
-&lt;p&gt;native_init_IRQ()-&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
+&lt;p&gt;native_init_IRQ() -&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
 irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
 
 &lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
-* in_irq&lt;br /&gt;
-in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!&lt;br /&gt;
-+irq disable 部设计preempt_cout&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;in_softirq&lt;br /&gt;
-should rename to in_softirq_or_bh_disable()&lt;br /&gt;
-local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)&lt;br /&gt;
-__do_softirq use __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET), damn it!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;in_interrupt&lt;br /&gt;
-一种是irq路径上的do_softirq, 即in_serving_softirq&lt;br /&gt;
-+local_bh_disbale()&lt;br /&gt;
-//not in softirq context!!!&lt;br /&gt;
-+local_bh_enable()&lt;br /&gt;
-硬中断呢?&lt;br /&gt;
-do_IRQ,肯定是.&lt;br /&gt;
-local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check&lt;br /&gt;
-[Question about in_interrupt() semantics with regard to softirqs]()&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#FAQ&lt;br /&gt;
-##When to save irq rather than just disable irq&lt;br /&gt;
-local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
-local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
-
-&lt;p&gt;##what about irq nested?&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;triggering-a-gp-exception&#34;&gt;Triggering a #GP exception&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
-if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
-But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
-Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;
-.data&lt;br /&gt;
-    .quad msg&lt;/p&gt;
-
-&lt;p&gt;msg:&lt;br /&gt;
-    .ascii &amp;ldquo;Hello, world!\n&amp;rdquo;&lt;br /&gt;
-    len = . - msg&lt;br /&gt;
-saved_idt:&lt;br /&gt;
-        .long 0,0&lt;/p&gt;
-
-&lt;p&gt;.text&lt;br /&gt;
-    .global _start&lt;/p&gt;
-
-&lt;p&gt;_start:&lt;br /&gt;
-    movl  $4, %eax&lt;br /&gt;
-    movl  $1, %ebx&lt;br /&gt;
-    movl  $msg, %ecx&lt;br /&gt;
-    sidt  saved_idt&lt;br /&gt;
-    lidt  saved_idt  ;===============&amp;gt; crashed at here&lt;br /&gt;
-    movl  $len, %edx&lt;br /&gt;
-    int   $0x80&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;movl  $1, %eax
-xorl  %ebx, %ebx 
-int   $0x80
-&lt;/code&gt;&lt;/pre&gt;
+* interrupt context - in_irq or in_interrupt&lt;br /&gt;
+irq_enter&lt;br /&gt;
+* bh context - in_softirq&lt;br /&gt;
+local_bh_disable&lt;br /&gt;
+__do_softirq -&amp;gt; __local_bh_disable_ip&lt;/p&gt;
 </description>
     </item>
     
@@ -353,9 +213,215 @@ int   $0x80
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
 
+&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+
+&lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
+&lt;a href=&#34;https://tampub.uta.fi/bitstream/handle/10024/96864/GRADU-1428493916.pdf&#34;&gt;A complete guide to Linux process scheduling&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
+
+&lt;h2 id=&#34;why-scheduling&#34;&gt;Why scheduling?&lt;/h2&gt;
+
+&lt;p&gt;Customers demand multitasking/concurrent&lt;br /&gt;
+Processes are blocked&lt;/p&gt;
+
+&lt;h2 id=&#34;fairness&#34;&gt;Fairness&lt;/h2&gt;
+
+&lt;p&gt;Unit: /proc/sys/kernel/sched_min_granularity_ns&lt;/p&gt;
+
+&lt;h1 id=&#34;running-compensator-records-the-running-process&#34;&gt;Running Compensator records the running process&lt;/h1&gt;
+
+&lt;p&gt;scheduler_tick&lt;br /&gt;
+{&lt;br /&gt;
+    update_rq_clock&lt;br /&gt;
+    task_tick_fair -&amp;gt; entity_tick&lt;br /&gt;
+    {&lt;br /&gt;
+        update_curr&lt;br /&gt;
+        {&lt;br /&gt;
+            sum_exec_runtime - total runtime&lt;br /&gt;
+            cfs_rq-&amp;gt;exec_clock - cfs_rq runtime&lt;br /&gt;
+            vruntime    - inverse proportion to the weight or priority&lt;br /&gt;
+            update_min_vruntime&lt;br /&gt;
+            {&lt;br /&gt;
+                cfs_rq-&amp;gt;curr, leftmost, min_vruntime, who is min?&lt;br /&gt;
+            }&lt;br /&gt;
+            cpuacct - cpu sys/user time&lt;br /&gt;
+        }&lt;br /&gt;
+    }&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;next-pick-next-task-fair&#34;&gt;Next -&amp;gt; pick_next_task_fair&lt;/h1&gt;
+
+&lt;p&gt;put_prev_entity: update_curr; insert into rb-tree;&lt;br /&gt;
+pick_next_entity: left most of rb-tree.&lt;br /&gt;
+set_next_entity: remove next from tree since it will disturb inserting and deleting when it is being updated.&lt;/p&gt;
+
+&lt;h1 id=&#34;unrunnable&#34;&gt;Unrunnable&lt;/h1&gt;
+
+&lt;p&gt;dequeue_task&lt;/p&gt;
+
+&lt;h1 id=&#34;resuming&#34;&gt;Resuming&lt;/h1&gt;
+
+&lt;p&gt;try_to_wake_up-&amp;gt;ttwu_queue-&amp;gt;ttwu_do_activate-&amp;gt; or local wakeup: schedule-&amp;gt;try_to_wake_up_local-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    ttwu_activate               #=== speical compensation and enqueue rq&lt;br /&gt;
+    {&lt;br /&gt;
+        activate_task&lt;br /&gt;
+        p-&amp;gt;on_rq = TASK_ON_RQ_QUEUED    #=== 1) rq for task; 2)&lt;br /&gt;
+    }&lt;br /&gt;
+    ttwu_do_wakeup              #=== normal compensation&lt;br /&gt;
+    {&lt;br /&gt;
+        check_preempt_curr&lt;br /&gt;
+        p-&amp;gt;state = TASK_RUNNING;&lt;br /&gt;
+    }&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;p&gt;enqueue_task-&amp;gt; place_entity compensation for wakeup process&lt;/p&gt;
+
+&lt;h2 id=&#34;wake-up-a-sleep-task&#34;&gt;wake up a sleep task&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;se-&amp;gt;on_rq &amp;amp; TASK_ON_RQ_QUEUED; deactivate_task set on_rq to 0;
+enqueue_task_fair handles group stuff
+enqueue_entity deals with sched_entity - uptodate the vruntime, load average, account load numa perfering,
+sysctl_sched_latency: the cfs pledge to the pre-existing tasks that they have 6ms to run before new task to run.
+try_to_wake_up_local for local task
+try_to_wake_up for any task
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;new-task&#34;&gt;New task&lt;/h1&gt;
+
+&lt;p&gt;speical debit compensation: sched_fork-&amp;gt;task_fork_fair-&amp;gt;place_entity - compensation for new process&lt;br /&gt;
+normal compensation: wake_up_new_task&lt;br /&gt;
+{&lt;br /&gt;
+    activate_task               #=== speical compensation&lt;br /&gt;
+    check_preempt_curr          #=== normal compensation&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;priority&#34;&gt;Priority&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;weight&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;priority&lt;br /&gt;
+DEFAULT_PRIO&lt;br /&gt;
+fs/proc/array.c&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;latency&#34;&gt;Latency&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;sched_nr_latency= /proc/sys/kernel/sched_latency_ns / /proc/sys/kernel/sched_min_granularity_ns&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if running process &amp;gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity&lt;/p&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;sched_slice&lt;/p&gt;
+
+&lt;h1 id=&#34;energy&#34;&gt;Energy&lt;/h1&gt;
+
+&lt;p&gt;blocked &amp;amp; schedule&lt;br /&gt;
+check preempt &amp;amp; schedule&lt;br /&gt;
+check_preempt_tick              # new preempts curr&lt;br /&gt;
+{&lt;br /&gt;
+curr running time &amp;gt; sched_slice     # enough time to yield.&lt;br /&gt;
+curr - leftmost &amp;gt; sched_slice       # nice to others.&lt;br /&gt;
+}&lt;br /&gt;
+check_preempt_wakeup                # the wakeuped preempts curr&lt;br /&gt;
+{&lt;br /&gt;
+curr - wakeuped &amp;gt; sysctl_sched_wakeup_granularity;  # pass the wakeup-preempt-delay&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;io-wait&#34;&gt;io wait&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/342378/&#34;&gt;https://lwn.net/Articles/342378/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;load-avg&#34;&gt;Load avg&lt;/h1&gt;
+
+&lt;p&gt;update_load&lt;em&gt;avg&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Load&#34;&gt;https://en.wikipedia.org/wiki/Load&lt;/a&gt;&lt;/em&gt;(computing)&lt;br /&gt;
+Check External links&lt;br /&gt;
+calc_load_fold_active&lt;/p&gt;
+
+&lt;h2 id=&#34;etymology-avenrun&#34;&gt;Etymology - avenrun&lt;/h2&gt;
+
+&lt;p&gt;average nr. of running processes during&lt;br /&gt;
+&lt;a href=&#34;https://casper.berkeley.edu/svn/trunk/roach/sw/linux/arch/s390/appldata/appldata_os.c&#34;&gt;https://casper.berkeley.edu/svn/trunk/roach/sw/linux/arch/s390/appldata/appldata_os.c&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
+sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;
+&lt;a href=&#34;https://groups.google.com/forum/#!topic/linux.kernel/gRzxHclMy50&#34;&gt;https://groups.google.com/forum/#!topic/linux.kernel/gRzxHclMy50&lt;/a&gt;&lt;br /&gt;
+&amp;lsquo;root&amp;rsquo;&lt;br /&gt;
+\&lt;br /&gt;
+&amp;lsquo;A&amp;rsquo;&lt;br /&gt;
+/ \&lt;br /&gt;
+t1 t2&lt;br /&gt;
+root.nr_running := 2&lt;br /&gt;
+root.h_nr_running := 2&lt;br /&gt;
+Check enqueue_task_fair()&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;group schedule&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;idle&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/136065/&#34;&gt;improve SMP reschedule and idle routines&lt;/a&gt;&lt;br /&gt;
+TIF_POLLING_NRFLAG -&amp;gt; Need-Resched-Flag?&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;process migration&lt;br /&gt;
+e761b7725234276a802322549cee5255305a0930&lt;br /&gt;
+Introduce cpu_active_map and redo sched domain managment&lt;br /&gt;
+When to migration&lt;br /&gt;
+    sched_setaffinity __set_cpus_allowed_ptr manuly&lt;br /&gt;
+    Selecting a new CPU during wak up a sleeper&lt;br /&gt;
+    For balancing, selecting CPU during  wake up new process in _do_fork&lt;br /&gt;
+    execve&amp;rsquo;s sched_exec&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;shceduler clock&lt;br /&gt;
+rq-&amp;gt;clock is nano seconds?&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;clock_task and wraps&lt;br /&gt;
+fe44d62122829959e960bc699318d58966922a69&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;ul&gt;
+&lt;li&gt;START_DEBIT&lt;br /&gt;
+no standalone commit&lt;br /&gt;
+bf0f6f24a1ece8988b243aefe84ee613099a9245&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;why ahead?&lt;br /&gt;
+8 /*&lt;br /&gt;
+9  * Place new tasks ahead so that they do not starve already running&lt;br /&gt;
+10  * tasks&lt;br /&gt;
+11  */&lt;br /&gt;
+12 SCHED_FEAT(START_DEBIT, true)&lt;br /&gt;
+the tree is named timeline&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://lwn.net/Articles/404993/&#34;&gt;Improving scheduler latency &lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;skip next last buddy&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;git-log&#34;&gt;Git log&lt;/h1&gt;
+
+&lt;p&gt;e9c8431185d6c406887190519f6dbdd112641686&lt;br /&gt;
+TASK_WAKING; see migrate_task_rq_fair and try_to_wake_up&lt;br /&gt;
+88ec22d3edb72b261f8628226cd543589a6d5e1b&lt;br /&gt;
+In order to remove the cfs_rq dependency from set_task_cpu() we need to ensure the task is cfs_rq invariant for all callsites.&lt;br /&gt;
+2f950354e6d535b892f133d20bd6a8b09430424c&lt;br /&gt;
+sched/fair: Fix fairness issue on migration&lt;br /&gt;
+&lt;a href=&#34;http://linux.kernel.narkive.com/p15Wmn0i/migrated-cfs-task-getting-an-unfair-advantage&#34;&gt;Migrated CFS task getting an unfair advantage&lt;/a&gt;&lt;br /&gt;
+30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;br /&gt;
+curr was not kept in rb-tree&lt;/p&gt;
+
 &lt;h1 id=&#34;sd&#34;&gt;SD&lt;/h1&gt;
 
-&lt;p&gt;set sd&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/80911/&#34;&gt;Scheduling domains&lt;/a&gt;&lt;br /&gt;
+set sd&lt;br /&gt;
 kernel_init_freeable-&amp;gt;&lt;br /&gt;
 sched_init_smp-&amp;gt;&lt;br /&gt;
 init_sched_domains-&amp;gt;build_sched_domains:-&amp;gt;&lt;br /&gt;
@@ -388,11 +454,9 @@ static struct sched_domain_topology_level default_topology[] = {&lt;br /&gt;
 #endif&lt;br /&gt;
         { sd_init_CPU, cpu_cpu_mask, },&lt;br /&gt;
         { NULL, },&lt;br /&gt;
-};&lt;/p&gt;
-
-&lt;p&gt;CONFIG_CPUSETS=y&lt;/p&gt;
-
-&lt;p&gt;get sd&lt;br /&gt;
+};&lt;br /&gt;
+CONFIG_CPUSETS=y&lt;br /&gt;
+get sd&lt;br /&gt;
 idle_balance&lt;br /&gt;
 for_each_domain&lt;/p&gt;
 
@@ -400,120 +464,6 @@ for_each_domain&lt;/p&gt;
 find_busiest_group&lt;br /&gt;
 find_next_bit&lt;br /&gt;
 __next_cpu&lt;/p&gt;
-
-&lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
-
-&lt;p&gt;inactive_task_frame __switch_to_asm&lt;/p&gt;
-
-&lt;p&gt;sp0 load_sp0 userspace stack pointer? sdm v3a 7.2.1 Task-State Segment (TSS)&lt;br /&gt;
-No, it isn&amp;rsquo;t. sp0 is kernel stack spointer.&lt;br /&gt;
-Comparing to __switch_to_asm()&amp;rsquo;s movq TASK_threadsp(%rsi), %rsp and popq, to examine copy_thread_tls&lt;br /&gt;
-context_switch - switch to the new MM and the new thread&amp;rsquo;s register state.&lt;br /&gt;
-and ret_from_fork.&lt;/p&gt;
-
-&lt;p&gt;What about start_thread_common()?&lt;br /&gt;
-next&amp;rsquo;s ret address of switch_to() is the new ip after changing stack.&lt;br /&gt;
-switch_to() is the core.&lt;/p&gt;
-
-&lt;p&gt;See the following; it exposures lots of information sp vs sp0.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    p-&amp;gt;thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;
-    childregs = task_pt_regs(p);
-    fork_frame = container_of(childregs, struct fork_frame, regs);
-    frame = &amp;amp;fork_frame-&amp;gt;frame;
-    frame-&amp;gt;bp = 0;
-    frame-&amp;gt;ret_addr = (unsigned long) ret_from_fork;
-    p-&amp;gt;thread.sp = (unsigned long) fork_frame;
-    p-&amp;gt;thread.io_bitmap_ptr = NULL;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1 id=&#34;etc&#34;&gt;etc&lt;/h1&gt;
-
-&lt;p&gt;Customer demand -&amp;gt; multitasking/concurrent&lt;br /&gt;
-Some other issues arise from multitasking/concurrent.&lt;br /&gt;
-Scheduling is used to implement the multitasking/concurrent and solve the arose issues.&lt;br /&gt;
-Questions we need to solve:&lt;br /&gt;
-1. how to switch to the context of the next process?&lt;br /&gt;
-    context_switch&lt;br /&gt;
-2. how to determine the next process? Fairness?&lt;br /&gt;
-2.1 There should be many shcheduling algorithms; how to manage them?&lt;br /&gt;
-    sched_class&lt;br /&gt;
-2.2 where to keep/find the processes?&lt;br /&gt;
-    All the ruunale process are put in cpu_rq, but they are in different places rt_rq, dl_rq, cfs_rq, stop, idle.&lt;br /&gt;
-    Why different palces? Simple.&lt;br /&gt;
-2.3 If we use CFS algoritm, how does it work?&lt;br /&gt;
-    The core source code of CFS is the members of fair_sched_class&lt;br /&gt;
-    The main idea of CFS is compensating the process which is deficient of running CPU time.&lt;br /&gt;
-    CFS use vruntime to reflect the CPU time a process used.&lt;br /&gt;
-    But what makes CFS complex? Two points:&lt;br /&gt;
-    a. CFS is compatiable with the traditional priority(the nice value).&lt;br /&gt;
-    b. make the vruntime suitable. For example, what&amp;rsquo;s the vrumtime of a new process?&lt;br /&gt;
-3. when to perform shcheduling?&lt;br /&gt;
-    new task, task dies&lt;br /&gt;
-    exception, interrupt&lt;br /&gt;
-    preempt_schedule_irq&lt;br /&gt;
-    retint_kernel; kernel preempt&lt;br /&gt;
-3.1 Scheduling timer&lt;br /&gt;
-alloc_intr_gate(LOCAL_TIMER_VECTOR, apic_timer_interrupt);&lt;br /&gt;
-apic_timer_interrupt smp_apic_timer_interrupt local_apic_timer_interrupt&lt;br /&gt;
-tick_handle_periodic -&amp;gt; tick_periodic-&amp;gt; scheduler_tick -&amp;gt; tick_periodic -&amp;gt;.task_tick= task_tick_fair,&lt;br /&gt;
-4. States and actions&lt;br /&gt;
-4.1 wake up a sleep task&lt;br /&gt;
-    not runnable -&amp;gt; activate_task -&amp;gt; runnable -&amp;gt;deactivate_task-&amp;gt; not runnable&lt;br /&gt;
-    se-&amp;gt;on_rq &amp;amp; TASK_ON_RQ_QUEUED; deactivate_task set on_rq to 0;&lt;br /&gt;
-    enqueue_task_fair handles group stuff&lt;br /&gt;
-    enqueue_entity deals with sched_entity - uptodate the vruntime, load average, account load numa perfering,&lt;br /&gt;
-    sysctl_sched_latency: the cfs pledge to the pre-existing tasks that they have 6ms to run before new task to run.&lt;br /&gt;
-    try_to_wake_up_local for local task&lt;br /&gt;
-    try_to_wake_up for any task&lt;br /&gt;
-4.2 Choses a entity&lt;br /&gt;
-    set_next_entity is, actually, setup the next entity being running. remove entity from rb-tree.&lt;br /&gt;
-4.3 What about a new task&lt;br /&gt;
-4.4 process migration&lt;br /&gt;
-e761b7725234276a802322549cee5255305a0930&lt;br /&gt;
-Introduce cpu_active_map and redo sched domain managment&lt;br /&gt;
-    When to migration&lt;br /&gt;
-        sched_setaffinity __set_cpus_allowed_ptr manuly&lt;br /&gt;
-        Selecting a new CPU during wak up a sleeper&lt;br /&gt;
-        For balancing, selecting CPU during  wake up new process in _do_fork&lt;br /&gt;
-        execve&amp;rsquo;s sched_exec&lt;/p&gt;
-
-&lt;p&gt;4.x worker&lt;br /&gt;
-    sleep -&amp;gt; waking -&amp;gt; woken&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;how to deal with load balancing of multiple CPU?&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;how to control the cost of scheduling.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;git-log&#34;&gt;Git log&lt;/h1&gt;
-
-&lt;p&gt;e9c8431185d6c406887190519f6dbdd112641686&lt;br /&gt;
-TASK_WAKING; see migrate_task_rq_fair and try_to_wake_up&lt;br /&gt;
-88ec22d3edb72b261f8628226cd543589a6d5e1b&lt;br /&gt;
-In order to remove the cfs_rq dependency from set_task_cpu() we need to ensure the task is cfs_rq invariant for all callsites.&lt;br /&gt;
-2f950354e6d535b892f133d20bd6a8b09430424c&lt;br /&gt;
-sched/fair: Fix fairness issue on migration&lt;br /&gt;
-&lt;a href=&#34;http://linux.kernel.narkive.com/p15Wmn0i/migrated-cfs-task-getting-an-unfair-advantage&#34;&gt;Migrated CFS task getting an unfair advantage&lt;/a&gt;&lt;br /&gt;
-30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;br /&gt;
-curr was not kept in rb-tree&lt;/p&gt;
-
-&lt;p&gt;##Preemption&lt;br /&gt;
-* Linux kernel user mode is always User preemption.&lt;br /&gt;
-When returning to user-space from a system call.&lt;br /&gt;
-When returning to user-space from an interrupt hander.&lt;br /&gt;
-* Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;br /&gt;
-If a task in the kernel explicitly calls schedule()&lt;br /&gt;
-If a task in the kernel blocked (which results in a all to schedule())&lt;br /&gt;
-* Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;br /&gt;
-schedule + blcoked&lt;br /&gt;
-When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-When kernel code becomes preemptible again.&lt;/p&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -744,6 +694,17 @@ if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
       <guid>http://firoyang.org/cs/arch/</guid>
       <description>
 
+&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/architects.html&#34;&gt;https://people.cs.clemson.edu/~mark/architects.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;asm&#34;&gt;ASM&lt;/h1&gt;
+
+&lt;p&gt;Reference asm global label in C&lt;br /&gt;
+char _text[];           x86_64_64;&lt;br /&gt;
+unsigned long _text;    x86_64_PC32&lt;br /&gt;
+They are different in amrithmatic operstion.&lt;/p&gt;
+
 &lt;p&gt;##Reference&lt;br /&gt;
 &lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
@@ -853,9 +814,11 @@ which increases the system&amp;rsquo;s performance due to the way the CPU handle
 &lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;&lt;br /&gt;
 应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.&lt;br /&gt;
 这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,&lt;br /&gt;
-之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;br /&gt;
-* &lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;br /&gt;
-这样就可以更好的理解iphdr:&lt;br /&gt;
+之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;/p&gt;
+
+&lt;h2 id=&#34;bit-endianness-https-en-wikipedia-org-wiki-bit-numbering&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;这样就可以更好的理解iphdr:&lt;br /&gt;
 #if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
     &lt;strong&gt;u8    ihl:4,&lt;br /&gt;
         version:4;&lt;br /&gt;
@@ -891,203 +854,142 @@ ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
 Algorithms: Design Techniques and Analysis&lt;br /&gt;
 The Algorithm Design Manual 2nd Edition&lt;/p&gt;
 
-&lt;h1 id=&#34;世界本源-the-origin-of-the-world-l-origine-du-monde&#34;&gt;世界本源, the origin of the world, L&amp;rsquo;Origine du monde&lt;/h1&gt;
+&lt;h1 id=&#34;computational-complexity-theory&#34;&gt;Computational complexity theory&lt;/h1&gt;
 
-&lt;p&gt;being(4), abyss(0)&lt;br /&gt;
-material(1) change, quality, quantity, relation, space, time&lt;br /&gt;
-process(2), tansfer, truth, signifier(3), bijection, Causality, structure&lt;br /&gt;
-connectivity&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://bigocheatsheet.com/&#34;&gt;http://bigocheatsheet.com/&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;排序算法的分析&#34;&gt;排序算法的分析&lt;/h1&gt;
+&lt;h1 id=&#34;core-conceptions&#34;&gt;Core conceptions&lt;/h1&gt;
 
-&lt;p&gt;排序的结果全序.&lt;br /&gt;
-在确定排序的思想/算法后, 排序的过程是从无序to 有序的过程.&lt;br /&gt;
-我们排序的过程等价成一次算术运算.&lt;br /&gt;
-每一次, 在特定的算法下, 数据有序度增加or不增加, 但不减少.&lt;br /&gt;
-我们把有序度看成一个quantity.那么此时排序的过程等价于有序度增加的过程.&lt;br /&gt;
-怎么定义有序度set内元素构成=&amp;lt;就是一度粗有序度. 严谨的连续元素构成=&amp;lt;关系.&lt;br /&gt;
-比如1 2 3 4 5 , bold order:4 + 3+ 2 +1; 严谨有序度:４&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;representations&lt;br /&gt;
+&lt;a href=&#34;https://www.geeksforgeeks.org/binary-tree-array-implementation/&#34;&gt;Linked vs sequential&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;ADT vs data structure&lt;br /&gt;
+ADT is a data type defined by its behavior.&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Data_type#Abstract_data_types&#34;&gt;Any type that does not specify an implementation is an abstract data type.&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;p&gt;也就是一个算法, 对如3 2 5 4 1. bo:2 + 2 ; 严谨有序度:0&lt;br /&gt;
-bo: 2+2 to 10&lt;br /&gt;
-严谨: 0 to 4&lt;br /&gt;
-就算完成.此时我们没做一次排序, 都在做加法运算.只是每一步转换成一个变量了.&lt;br /&gt;
-这似乎对我们理解sorting起不了多大的帮助.&lt;br /&gt;
-直觉应该没错.确实不应该关心过程, 而应该关系变化本身, process不等于变化本身.&lt;br /&gt;
-只是process是变化的动力, 却不是原因.变化的因果并不是恒定不变的.process成了变化的&lt;br /&gt;
-结果了, 因为要这样所以才有了process, 不是这个process才怎么怎么了.&lt;br /&gt;
-这样我们知道从raw set to ordered set, 这个过程, 一定可以有多个sort algorithms来完成.&lt;br /&gt;
-那么选取哪个sort algorithm就是有改变的形式决定的.&lt;br /&gt;
-所以我们依然在探讨结构上的变化. 而不是纯粹的process过程.&lt;br /&gt;
-比如先确定边界元素的有序度, 从一边向另一边逐渐演化. 这就是selection sort.&lt;br /&gt;
-注意!我们通过等价变换causlity, 原来近乎process主导的问题变为了, quantity structure渐变的问题了.&lt;br /&gt;
-原来是伸手不见五指的变, 现在是看的见有形的变.&lt;br /&gt;
-再看其他的算法, 比如我们想确定由中间quantity发起向两侧的有序变化, 就是快排.快排为什么快?&lt;br /&gt;
-但是我们发现, 这种有中间发起的有序度变多的过程, 有两个疑点.&lt;br /&gt;
-1. 这个所谓中间值是我们随机指定的, 几乎不可能是真正意义上的&amp;rdquo;中间值&amp;rdquo;.&lt;br /&gt;
-2. 也是疑惑最大, 这种中起的有序度变化, 严格有序度不像边沿变化那样连续, 但是关于所谓中间值的bold order&lt;br /&gt;
-确是丝毫没有耗损的! 也就是bold order是非常细腻的, 而Strict order, 是非常粗野的.&lt;br /&gt;
-我们可以武断地下个定论, 满足严格有序的算法效率差!后面会给出严谨的证明.&lt;br /&gt;
-我们继续, 另外务必注意, 我们这里没有任何关于已知算法的信息.&lt;br /&gt;
-已知的各种算法是就是符号系统里面的signifier, 在我们分析的过程中纯粹的就是个名字而已.&lt;br /&gt;
-更可怜的是, 这个名字是我们从signified推出来的.&lt;br /&gt;
-我们现在已经推出了冒泡, 选择, 快排 三种算法了.&lt;br /&gt;
-另外还有merge sort, heap sort, insertion sort, shell sort.&lt;br /&gt;
-我只是看了merge sort之后的名字了, 具体的算法, 内容我都忘了(刻意不去想).&lt;br /&gt;
-现在看了quick sort确认的是任意一点为为核心的orderness的增多过程. 增加的形式由中间开启.topdown.可以强调中间的含义.&lt;br /&gt;
-insertion sort是select的一个generalize的版本, 他不强求strict order的满足. 也是有一边向另一边的orderness增多过程.&lt;br /&gt;
-merge sort: 从全部的个体单元开始的开始有序度增多, bottomup过程.不强加中间的含义.&lt;br /&gt;
-构成了以raw 元素为开始的, 从东南西北开始的四面埋伏是的有序度增多过程.&lt;br /&gt;
-看来我的感觉没错.&lt;br /&gt;
-算法的分析就结束了, 意外的收获颇多.本以为行不通的.&lt;/p&gt;
+&lt;h1 id=&#34;linked-list&#34;&gt;Linked list&lt;/h1&gt;
 
-&lt;h1 id=&#34;查找算法的分析-searching-algorithm&#34;&gt;查找算法的分析 searching algorithm&lt;/h1&gt;
+&lt;h2 id=&#34;static-linked-list&#34;&gt;Static linked list&lt;/h2&gt;
 
-&lt;p&gt;搜索的效率完全在于搜索路径的长短.&lt;br /&gt;
-查找是在a set of objects, 找到特定的目标. the structure of the set of objects可能是任意的.&lt;br /&gt;
-计算机中如线性的linked list, array, tree, graph. structure并不只是量之间的quality, relation.&lt;br /&gt;
-还包括了, change, 即operation, access/get也是一种change, 效果是没有change.&lt;br /&gt;
-那么What is the form causality of searching?上面分析sorting的时候, 我们没有分析sorting算法的效率.&lt;br /&gt;
-因为排序的form是orderness, 不是效率. 当然效率也很重要.&lt;br /&gt;
-而查找算法,直观上要比sorting要简单, 他只关心特定的目标, 找到or not found.&lt;br /&gt;
-但是有一点, 我们是万分确信的. 那就是类似sorting, searching的目的也是确定的, 也就是目的因的存在.&lt;br /&gt;
-我们通过类似蒙太奇的手法, 去从差异中需找这种量. 寻找一些差异来自于我们找到target的最终结果和每步尝试之间.&lt;br /&gt;
-每一步, 我们都比上一步离target更近了. 我想这是searching的form之一.&lt;br /&gt;
-我定义为reachness(我瞎起的). 我们知道在特定的算法确定的情况下, 在特定的数据结构下(也就是搜寻的具体空间),&lt;br /&gt;
-reachness这个quantity用来刻画我们searching的process, 因为算法确定, 数据结构确定, 没有数据的update.&lt;br /&gt;
-那么我们前后两次searching到同一个target的reachness是一样的!没有差异, 我们不能仅仅用他来区分不同的searching process.&lt;br /&gt;
-那么我们如何用这个reachness刻画不同searching algorithm呢?在说一次,&lt;br /&gt;
- 我们分析过程不关心算法的效率(这种马后炮式的分析,很无聊, 但巨大现实意义), 不属于本次的topic!&lt;br /&gt;
-我们的目的是为了理解区分而刻画不同的searching algorithm.实际上在上面分析排序算法的过程中我们隐式的分析对象就是数据结构,&lt;br /&gt;
-不过我们忽视了他的存在. 我们分析的内容是确定的:&lt;br /&gt;
-数据有序, 能显著减少搜索的空间? 为什么有序order的数据, 就能减少搜索的次数呢?&lt;br /&gt;
-a) 查找本身就是做order判断.&lt;br /&gt;
-b)  而有序的数据潜在做完了判断.&lt;br /&gt;
-也就是还有一个判断读的问题 or orderness. 那么final reachness的最大值就是描述在不同的数据结构中, 得到target经历的quantity.&lt;br /&gt;
-if orderness = 0. every structure&amp;rsquo;s final reachness = max space.&lt;br /&gt;
-else final reachness &amp;lt; max space; // maybe half of max space&lt;br /&gt;
-那么树形结构和linear 结构有什么区别呢? 结构上的已经清楚了.实际上, 我们知道计算机中树就是用linear实现的.&lt;br /&gt;
-无序的链表和无序的tree是一样的.可以说无序的树是无意义的.&lt;br /&gt;
-树是链表的超集. 有什么事树可以, 链表不可以.二分查找和二叉树查找是一样的.&lt;br /&gt;
-但是二分只能应用到array上. 主要是因为没办法找到中间点.如果我们加个指针指向有序链表中间向他变成了什么?&lt;br /&gt;
-没错树, 这应该就是树的重要本质了, accessable &amp;ldquo;中间&amp;rdquo;的quantity.除了叶节点职位的quantity都是内部&amp;rdquo;中间&amp;rdquo;quantity.&lt;br /&gt;
-tree的两个后继则是边缘的一种展示.相比链表, 我们能第一时间知道正set of quantities的中间quantities.&lt;br /&gt;
-实际上, 顺着middle pointer我们能够找到所有的interior middle quantities; 意外吧. 但是我们想知道其他的&lt;br /&gt;
-中间节点时间耗费就是增多了.比如2049个节点. dfs只要最多8次就能找到任意&amp;rdquo;interior middle pointer&amp;rdquo;可是link list&lt;br /&gt;
-全是512次啊tree有效的控制了reachness. 当然树是完全平衡的二叉树.&lt;br /&gt;
-我现在到底在说什么呢? 我们试图用reachness和orderness描述tree, 我们辨析了tree和链表在reachness上的差异, 前提full order.&lt;br /&gt;
-tree毫无疑问有link list来的.也就是说我们现在把searching 等价成了tree的结构.&lt;br /&gt;
-那么维持reachness在较低值就是算法优劣关键. 那么如何保持reachness最小, 也就是orderness最大.&lt;br /&gt;
-是什么让tree在reachness比link list优势这么大? 是存在于tree中隐式的判断.链式是一点点线性的变化, 而tree中的隐式判断确实二分的.&lt;br /&gt;
-orderness小于1的tree没有意义.&lt;br /&gt;
-记下来看看:avl tree, redblack tree, treap, splay tree, Size Balanced Tree, B-tree, B+ tree. but Trie or 霍夫曼树.&lt;br /&gt;
-也就是说我们现在要考察这些tree structure. 基本考察完, 我的算法就同了. 后面还有DP, 贪婪, 数值, PNP之类都是思想了.&lt;br /&gt;
-所以基本上本周5能把algorithm, 完事, 周6 设计模式. 周日开始sicp.&lt;br /&gt;
-开始, 树结构的分析, 因为尽管是有形的visible structure, 我们依然无法给霍夫曼树和red black一个合理分析视角,&lt;br /&gt;
-根本原因就是他们的form causality or 目的因不同.由上面可知orderness和reachness是我门刻画binary balance tree的quantities.&lt;br /&gt;
-我们前面也分析了如何从link list到链表. 确定小, 中, 大,即 left, root, right这种模式下所有set of quantities的构成tree有多种可能.&lt;br /&gt;
-如 1 2 3 4 5; left subtree 可以是 NULL, 1, 2, 还可以是1, 2, NULL.常见的旋转可以打到前者的情况. or不旋转:&lt;br /&gt;
-5是root. 之后3是left 也是subtree的root, 1是left, 4是right,  1是root 2是right.&lt;br /&gt;
-有序的link list和二叉树在插入删除是都做order判断调整, 由此一点我们不能判断出书有效的. 那什么是树比link list有效的呢?当然前提是&lt;br /&gt;
-整个set 是order的.对1 2 3 4 5, reachness可能是5也可能是3. 对与1024个数据可能是1024, 可能是9.&lt;br /&gt;
-树的高度height能有效衡量reachness.现在我们知道了, avl, red black, trap, splay这些tree的目标都是height的最小化.&lt;br /&gt;
-但同时, 我们也知道height是一个描述最终结果.并不是process quantity. 我们找到与process动态同步的quantity.&lt;br /&gt;
-这个process准确说就是构建balance tree的过程. 那么这个量就是描述balance tree.如 1 2 3 4 5 6 7 8 9, 5做root,&lt;br /&gt;
-1 2 3 4 全是left child, 6 7 8 9全是right child. 二叉树的最raw的形态应该是link list那种.也就是说除了leaf node, 每个node至少&lt;br /&gt;
-和两个node相连.也就是天然的形态. 那么我们把同时连着两个的node的connectivity作为1. 反之为0.链表起始是right side tree,&lt;br /&gt;
-我的天, 这样链表的connectivity就是0啊.比如1,2,3,4,5,6,7的connectivity在0~3, 这是strict connectivity.那么bold connectivity就是&lt;br /&gt;
-只要有连着就行link list对于1 to 7 这种情况是6.和二叉树没差. 比如 1 2 3 4 5. connectivity是1 or 2对search是没有影响的.&lt;br /&gt;
-饶了一圈发现还是height最好用.那如何保证height最小. 看来还差树的form是保证height=(logN+1向上取整)&lt;br /&gt;
-现在searching问题就转换成了二叉树构造的问题了.成了一个动态的过程了.&lt;br /&gt;
-我们现在完全不考虑算法实现. 只是单纯的考虑一个过程前后两个state的差异, 类似蒙太奇手法.&lt;br /&gt;
-重点是确认前后的两个state是什么? 前一个状态是raw, 我们不关心具体什么, 因为他可以是二叉树可能存在的各种状态.那么后一个状态呢?&lt;br /&gt;
-我们期望的是什么. 我们可以为binary tree的各种形态用数值量化表示. 我们不用complete binary tree来表示理性的便于搜索的二叉树.&lt;br /&gt;
-因为在最右在层, leaf node是否连续, 对searching的worst-case time O(log n) 没影响.所以我们叫piled tree.&lt;/p&gt;
+&lt;p&gt;Reprented in an array.&lt;/p&gt;
 
-&lt;p&gt;如果存在3个点向来的情况就认为 connectivity is 1。整个树的connectivity 是每个点的加和结果。&lt;br /&gt;
-比如1到7的set那么max connectivity&lt;br /&gt;
-4&lt;br /&gt;
-&lt;sup&gt;2&lt;/sup&gt;&amp;frasl;&lt;sub&gt;5&lt;/sub&gt;&lt;br /&gt;
-&lt;sup&gt;13&lt;/sup&gt;&amp;frasl;&lt;sub&gt;67&lt;/sub&gt;&lt;br /&gt;
-所以是3这种情况也就是最有利于searching的。&lt;br /&gt;
-同样1到7。&lt;br /&gt;
-4&lt;br /&gt;
-&lt;sup&gt;3&lt;/sup&gt;&amp;frasl;&lt;sub&gt;5&lt;/sub&gt;&lt;br /&gt;
-&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;67&lt;/sub&gt;&lt;br /&gt;
-2&lt;br /&gt;
-这种情况connectivity不是max，是2。也对应不是对searching最优的结构。&lt;br /&gt;
-how to prove the consistency between connectivity and searching effiency？&lt;br /&gt;
-Delay this job to future。&lt;br /&gt;
-So oncemore we transfer our hunting target to how to build a  binary tree that with max connectivity.&lt;br /&gt;
-In other words, all the popular self banlancing tree inherit this intrsic.&lt;br /&gt;
-what we can do to modify the structure of  binary searching tree.&lt;br /&gt;
-1 link  or unlink&lt;br /&gt;
-2 counterclockwise weight inreasing&lt;br /&gt;
-3 right shift(left roation); left shift(right roation)&lt;br /&gt;
-4 只有insert和delete会影响.&lt;br /&gt;
-尝试这却理解redblack tree.&lt;br /&gt;
-逐一分析性质:&lt;br /&gt;
-分出red black, 根叶都是黑.&lt;br /&gt;
-red node不联通.&lt;br /&gt;
-每个路径上黑node个数相同.&lt;br /&gt;
-如果对于特定数量的nodes, 我们确认他能构成一定数量对应height在log(N+1), 也就是最优的searching.&lt;br /&gt;
-所以说specific number nodes可以组成很多种binary searching tree.按照node的height在log(N+1)的数量.&lt;br /&gt;
-avl 要严格rb-tree.这就是bst的form. 我们来总结下.&lt;br /&gt;
-numbers of node &amp;lt; log(N +1) 取上.&lt;br /&gt;
-那么rb是如何保证logN呢?&lt;br /&gt;
-一个潜在的性质是插入是红.红永远小于黑,&lt;/p&gt;
+&lt;h2 id=&#34;internal-vs-external-liked&#34;&gt;Internal vs external liked&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://gregfjohnson.com/cgi-bin/redblackbuilder&#34;&gt;http://gregfjohnson.com/cgi-bin/redblackbuilder&lt;/a&gt; 生成1 2 3 4 5 6逐一插入的算法.&lt;br /&gt;
-                                                                             2  (b)&lt;br /&gt;
-                                                                               |&lt;br /&gt;
-                                                                   +&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;+&amp;mdash;&amp;mdash;&amp;mdash;-+&lt;br /&gt;
-                                                                   |                      |&lt;br /&gt;
-                                                                 1  (b)                 4  &amp;reg;&lt;br /&gt;
-                                                                                          |&lt;br /&gt;
-                                                                                  +&amp;mdash;&amp;mdash;-+&amp;mdash;&amp;mdash;-+&lt;br /&gt;
-                                                                                  |               |&lt;br /&gt;
-                                                                                3  (b)          5  (b)&lt;br /&gt;
-                                                                                                  |&lt;br /&gt;
-                                                                                                  +&amp;mdash;-+&lt;br /&gt;
-                                                                                                       |&lt;br /&gt;
-                                                                                                     6  &amp;reg;&lt;br /&gt;
-insert 7:&lt;/p&gt;
+&lt;p&gt;Sometimes, SLUB put freelist in object&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;                                                                         2  (b)                                 
-                                                                           |                                    
-                                                              +------------+------------+                       
-                                                              |                         |                       
-                                                            1  (b)                    4  (r)                    
-                                                                                        |                       
-                                                                             +----------+----------+            
-                                                                             |                     |            
-                                                                           3  (b)                6  (b)         
-                                                                                                   |            
-                                                                                            +------+------+     
-                                                                                            |             |     
-                                                                                          5  (r)        7  (r) 
-&lt;/code&gt;&lt;/pre&gt;
+&lt;h1 id=&#34;bl-list&#34;&gt;BL list&lt;/h1&gt;
 
-&lt;p&gt;insert 8:&lt;br /&gt;
-                                                                             4  (b)&lt;br /&gt;
-                                                                               |&lt;br /&gt;
-                                                                 +&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;-+&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;+&lt;br /&gt;
-                                                                 |                            |&lt;br /&gt;
-                                                               2  &amp;reg;                       6  &amp;reg;&lt;br /&gt;
-                                                                 |                            |&lt;br /&gt;
-                                                          +&amp;mdash;&amp;mdash;+&amp;mdash;&amp;mdash;+             +&amp;mdash;&amp;mdash;-+&amp;mdash;&amp;mdash;-+&lt;br /&gt;
-                                                          |             |             |               |&lt;br /&gt;
-                                                        1  (b)        3  (b)        5  (b)          7  (b)&lt;br /&gt;
-                                                                                                      |&lt;br /&gt;
-                                                                                                      +&amp;mdash;-+&lt;br /&gt;
-                                                                                                           |&lt;br /&gt;
-                                                                                                         8  &amp;reg;&lt;br /&gt;
-从6和7我们能看出来rb tree不是严格小于log(N+1) 分别有1和2个node height超过(logN+1), 第一个插入的是4那么就能保证complete了.&lt;br /&gt;
-那么rb tree是如何保证每条路径上黑node相同呢?貌似是个副产品.可是非常重要.&lt;br /&gt;
-如果父和叔都是r, 都变b, 祖父r.&lt;br /&gt;
-如果叔是黑, 父黑, 祖父r. 父变root.&lt;br /&gt;
-删除:&lt;br /&gt;
-要复杂很多.&lt;/p&gt;
+&lt;p&gt;kernel: add bl_list - 4e35e6070b1ceed89c3bba2af4216c286fb1dafd&lt;/p&gt;
+
+&lt;h1 id=&#34;double-linked-list&#34;&gt;Double linked list&lt;/h1&gt;
+
+&lt;h1 id=&#34;associative-array&#34;&gt;Associative array&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=qTZJLJ3Gm6Q&#34;&gt;Essentials: Brian Kernighan on Associative Arrays - Computerphile&lt;/a&gt;&lt;br /&gt;
+vs indexed array&lt;/p&gt;
+
+&lt;h2 id=&#34;associativity&#34;&gt;Associativity&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;trade-off&lt;br /&gt;
+a) Checking more places takes more power and chip area,&lt;br /&gt;
+b) and potentially more time. On the other hand, caches with more associativity suffer fewer misses&lt;br /&gt;
+fully associative - the best miss rates, but practical only for a small number of entries&lt;br /&gt;
+N-way set associative cache: 8 is a common choice for later implementations&lt;br /&gt;
+direct-mapped cache - if two locations map to the same entry, they may continually knock each other out. anti-fragmantion worsens this case.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;judy-array&#34;&gt;Judy array&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://judy.sourceforge.net/&#34;&gt;http://judy.sourceforge.net/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;hashtable&#34;&gt;Hashtable&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/510202/&#34;&gt;A generic hash table&lt;/a&gt;&lt;br /&gt;
+hash function&lt;/p&gt;
+
+&lt;h1 id=&#34;bst&#34;&gt;BST&lt;/h1&gt;
+
+&lt;p&gt;Pre-order&lt;br /&gt;
+In-order traversal&lt;br /&gt;
+Post-order&lt;br /&gt;
+postfix and prefix and sort&lt;/p&gt;
+
+&lt;h1 id=&#34;redblack-tree&#34;&gt;Redblack tree&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&#34;&gt;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://yuex.in/post/2017/08/red-black-tree-in-action.html&#34;&gt;http://yuex.in/post/2017/08/red-black-tree-in-action.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;interval-tree-in-kernel&#34;&gt;Interval tree in kernel&lt;/h1&gt;
+
+&lt;p&gt;anonymous page: anon_vma_interval_tree_insert&lt;/p&gt;
+
+&lt;h1 id=&#34;trie&#34;&gt;Trie&lt;/h1&gt;
+
+&lt;p&gt;Trie is prefix tree.&lt;br /&gt;
+Trees only store keys.&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=AXjmTQ8LEoI&#34;&gt;Trie Data Structure&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=MC-iQHFdEDI&#34;&gt;Trie with numeric key&lt;/a&gt;&lt;br /&gt;
+* terms very confused&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/14708134/what-is-the-difference-between-trie-and-radix-trie-data-structures&#34;&gt;Radix tree vs Trie, check radix meaning&lt;/a&gt;&lt;br /&gt;
+Patricia is compact trie or Patricia is radix = 2 trie?&lt;/p&gt;
+
+&lt;h1 id=&#34;radix-tree-in-kernel-not-wikipedia&#34;&gt;Radix tree in kernel not wikipedia&lt;/h1&gt;
+
+&lt;p&gt;page cache: page_cache_tree_insert&lt;br /&gt;
+Wikipedia: Radix tree looks like a compact trie.&lt;br /&gt;
+Kernel: Radix tree was more like a Multi-level index associative arrya or judy array.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/175432/&#34;&gt;Trees I: Radix trees&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://events17.linuxfoundation.org/sites/events/files/slides/LinuxConNA2016%20-%20Radix%20Tree.pdf&#34;&gt;Enhancing the Linux Radix Tree&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=v0C9_Fp-co4&#34;&gt;The design and implementation of the XArray&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/688130/&#34;&gt;A multi-order radix tree&lt;/a&gt;&lt;br /&gt;
+radix_tree_init_maxnodes(): height is 11 in kernel?&lt;br /&gt;
+&lt;strong&gt;radix_tree_create() add one page&lt;/strong&gt;&lt;br /&gt;
+radix_tree_lookup_slot: find one page&lt;/p&gt;
+
+&lt;h1 id=&#34;search&#34;&gt;Search&lt;/h1&gt;
+
+&lt;p&gt;Data property: unique key, indexed&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Search_data_structure&#34;&gt;Search data structure&lt;/a&gt;&lt;br /&gt;
+Sequencial array: binary search&lt;br /&gt;
+Associative array&lt;br /&gt;
+BST&lt;br /&gt;
+Hashtable&lt;/p&gt;
+
+&lt;h2 id=&#34;which-algorithm&#34;&gt;Which algorithm?&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.geeksforgeeks.org/advantages-of-bst-over-hash-table/&#34;&gt;Advantages of BST over Hash Table&lt;/a&gt;&lt;br /&gt;
+1. Can get all keys in sorted order  by just doing in-order traversal of BST&lt;br /&gt;
+2. Doing order statistics, finding closest lower and greater elements, doing range  queries  are easy to do with BSTs.&lt;br /&gt;
+3. BSTs are easy to implement compared to hashing.&lt;br /&gt;
+4. With Self Balancing BSTs, all operations are guarnateed to work in O(logN) time.&lt;/p&gt;
+
+&lt;h1 id=&#34;replacement-polices&#34;&gt;Replacement polices&lt;/h1&gt;
+
+&lt;p&gt;Pseudo-LRU&lt;/p&gt;
+
+&lt;h1 id=&#34;lru&#34;&gt;LRU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://leetcode.com/problems/lru-cache/description/&#34;&gt;Leetcode 146 LRU cache&lt;/a&gt;&lt;br /&gt;
+Order items by access times&lt;/p&gt;
+
+&lt;h2 id=&#34;pseudo-lru-2-second-chance-and-queue&#34;&gt;Pseudo LRU/2 - Second chance and queue&lt;/h2&gt;
+
+&lt;p&gt;type: Reclaim&lt;br /&gt;
+Order items by enqueueing sequence&lt;br /&gt;
+dcache&lt;/p&gt;
+
+&lt;h2 id=&#34;second-chance-and-2q-https-pdfs-semanticscholar-org-d62d-e5f995164fff50f5ce61c0113f6bc9f04225-pdf&#34;&gt;Second chance and &lt;a href=&#34;https://pdfs.semanticscholar.org/d62d/e5f995164fff50f5ce61c0113f6bc9f04225.pdf&#34;&gt;2Q&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;Page reclaim algorithm&lt;br /&gt;
+type: Reclaim&lt;/p&gt;
+
+&lt;h1 id=&#34;lock&#34;&gt;Lock&lt;/h1&gt;
+
+&lt;p&gt;MCS lock&lt;/p&gt;
 </description>
     </item>
     
@@ -1101,7 +1003,7 @@ insert 7:&lt;/p&gt;
 
 &lt;p&gt;What&amp;rsquo;s the computer science? Have you ever asked yourself? It&amp;rsquo;s not a science!&lt;br /&gt;
 Underlying our approach to this subject is our conviction that “com-&lt;br /&gt;
-puter science” is not a science and that its significance has lile to do&lt;br /&gt;
+puter science” is not a science and that its significance has little to do&lt;br /&gt;
 with computers. The computer revolution is a revolution in the way we&lt;br /&gt;
 think and in the way we express what we think. The essence of this&lt;br /&gt;
 change is the emergence of what might best be called procedural epis-&lt;br /&gt;
@@ -1116,93 +1018,6 @@ framework for dealing precisely with notions of “how to.”  &amp;ndash; The o
 &lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;components-of-cs&#34;&gt;Components of cs&lt;/h1&gt;
-
-&lt;p&gt;design(pattern) and algorithm, programming(debugging, hacking)&lt;br /&gt;
-pl,assembly, compile(gcc), link, load(cll)&lt;br /&gt;
-process, quantaties, order(synchronization)&lt;br /&gt;
-turing, arch, os(boot, console, fedora, fs, process, mm, pm, time, virt, synchronization)&lt;br /&gt;
-math, logic, electronics&lt;/p&gt;
-
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;OS Service&lt;/th&gt;
-&lt;th&gt;Hardware Support&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td&gt;Protection&lt;/td&gt;
-&lt;td&gt;Kernel/user mode, protected instructions, base/limit registers&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;Interrupts&lt;/td&gt;
-&lt;td&gt;Interrupt vectors&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;System calls&lt;/td&gt;
-&lt;td&gt;Trap instructions and trap vectors&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;I/O&lt;/td&gt;
-&lt;td&gt;Interrupts and memory mapping&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;Scheduling, error recovery,accounting&lt;/td&gt;
-&lt;td&gt;Timer&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;Synchronization&lt;/td&gt;
-&lt;td&gt;Atomic instructions&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;Virtual memory&lt;/td&gt;
-&lt;td&gt;Translation look-aside buffers&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;form&lt;/td&gt;
-&lt;td&gt;os&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;&amp;mdash;&amp;ndash;&lt;/td&gt;
-&lt;td&gt;&amp;mdash;-&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;change, computation, transfer .&lt;/td&gt;
-&lt;td&gt;instructions(memory,IO), Process, interrupt&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;relation, order&lt;/td&gt;
-&lt;td&gt;synchronization/atomic, scheduling, interrupt&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;
-&lt;td&gt;quantaties, state&lt;/td&gt;
-&lt;td&gt;fs, memory, device, driver&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h1 id=&#34;the-advert-of-new-world-origin-performance&#34;&gt;the advert of new world origin - performance&lt;/h1&gt;
-
-&lt;p&gt;cache: in order to improve performace, cache tries to reduce the access time of transfer of future.&lt;br /&gt;
-buffer: What does buffer do? temporary(Not future) place for data,reducing access time of transfer and&lt;br /&gt;
-maybe effiency of quantaties/times of transfer. 是确定的行为, 不同与cache的统计学原理.&lt;br /&gt;
-time-sharing: multi-task from batch processing&lt;br /&gt;
-prallel process: increas quantanties of process.&lt;/p&gt;
-
 &lt;p&gt;performance/efficiency&lt;br /&gt;
 Easy to use&lt;br /&gt;
 Security/Protection/isolation&lt;br /&gt;
@@ -1212,8 +1027,6 @@ Energy-efficiency&lt;/p&gt;
 &lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/library/os-aapseudo1/os-aapseudo1-pdf.pdf&#34;&gt;All about pseudo&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel&#34;&gt;kernel&lt;/h1&gt;
 </description>
     </item>
     
@@ -1225,16 +1038,123 @@ Energy-efficiency&lt;/p&gt;
       <guid>http://firoyang.org/cs/debugging/</guid>
       <description>
 
+&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=g7Qm0NpPAz4&#34;&gt;https://www.youtube.com/watch?v=g7Qm0NpPAz4&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;boot-issues&#34;&gt;Boot issues&lt;/h1&gt;
+
+&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
+
+&lt;h1 id=&#34;lockup&#34;&gt;Lockup&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;oob&#34;&gt;OOB&lt;/h1&gt;
+
+&lt;h2 id=&#34;slub-redzone&#34;&gt;SLUB Redzone&lt;/h2&gt;
+
+&lt;h1 id=&#34;use-after-free&#34;&gt;Use after free&lt;/h1&gt;
+
+&lt;p&gt;Record the owner, who free.&lt;/p&gt;
+
+&lt;h1 id=&#34;deadlock&#34;&gt;Deadlock&lt;/h1&gt;
+
+&lt;p&gt;Lockdep&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;print&#34;&gt;Print&lt;/h1&gt;
+
+&lt;h2 id=&#34;user-mode-print&#34;&gt;User mode print&lt;/h2&gt;
+
+&lt;p&gt;define witcher(fmt, args&amp;hellip;) do{FILE * fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); &lt;br /&gt;
+fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
+* make specific&lt;br /&gt;
+-s, -n, -p, &amp;ndash;warn-undefined-variables&lt;br /&gt;
+$(warning &amp;hellip;)&lt;/p&gt;
+
+&lt;h2 id=&#34;early-print&#34;&gt;Early print&lt;/h2&gt;
+
+&lt;p&gt;putstr&lt;br /&gt;
+early_printk&lt;br /&gt;
+Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;/p&gt;
+
+&lt;h2 id=&#34;dynamic-print&#34;&gt;Dynamic print&lt;/h2&gt;
+
+&lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
+How to use it during kernel booting?&lt;br /&gt;
+Use boot option:&lt;br /&gt;
+dyndbg=&amp;ldquo;file drivers/usb/host/ehci-hcd.c +p; file&lt;br /&gt;
+drivers/usb/host/ehci-ppc-of.c +p&amp;rdquo; loglevel=8&lt;br /&gt;
+loglevel=8 dyndbg=&amp;ldquo;module ehci_pci +p;&lt;br /&gt;
+module ehci_hcd +p; module usbcore +p&amp;rdquo;&lt;br /&gt;
+After booting:&lt;br /&gt;
+/sys/kernel/debug/dynamic_debug/control&lt;/p&gt;
+
+&lt;h2 id=&#34;dev-print&#34;&gt;Dev print&lt;/h2&gt;
+
+&lt;p&gt;drivers/base/core.c&lt;br /&gt;
+define_dev_printk_level&lt;br /&gt;
+THese functions are like pr_func&lt;br /&gt;
+dev_debug&lt;/p&gt;
+
+&lt;h1 id=&#34;tracing&#34;&gt;Tracing&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/html/v4.18/trace/index.html&#34;&gt;Linux Tracing Technologies&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;user-mode-tracing&#34;&gt;User mode tracing&lt;/h2&gt;
+
+&lt;p&gt;ltrace, strace, bash -x&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How does strace work?&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;PTRACE_PEEKDATA for showing pointer parameter(e.g. 2nd arg of read)&lt;/p&gt;
+
+&lt;h1 id=&#34;kprobes&#34;&gt;Kprobes&lt;/h1&gt;
+
+&lt;h1 id=&#34;stap&#34;&gt;Stap&lt;/h1&gt;
+
+&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
+
+&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
+free_pages_prepare posion&lt;/p&gt;
+
+&lt;h1 id=&#34;fs&#34;&gt;FS&lt;/h1&gt;
+
+&lt;p&gt;lsof&lt;/p&gt;
+
+&lt;h1 id=&#34;kasan&#34;&gt;Kasan&lt;/h1&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Reverse engineering&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How debuggers work&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;debuging&#34;&gt;debuging&lt;/h1&gt;
+&lt;h1 id=&#34;core-dump&#34;&gt;Core dump&lt;/h1&gt;
 
-&lt;p&gt;signle step instruction&lt;br /&gt;
-Core-dump&lt;br /&gt;
-printf debugging; this is very effective.&lt;/p&gt;
+&lt;p&gt;echo /tmp/core-%e-%p-%s-%c-%P &amp;gt; /proc/sys/kernel/core_pattern&lt;/p&gt;
+
+&lt;h1 id=&#34;ebpf&#34;&gt;eBPF&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/740157/&#34;&gt;https://lwn.net/Articles/740157/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;gdb&#34;&gt;Gdb&lt;/h1&gt;
+
+&lt;p&gt;signle step instruction&lt;/p&gt;
+
+&lt;h2 id=&#34;debug-glibc&#34;&gt;Debug glibc&lt;/h2&gt;
+
+&lt;p&gt;directory ~/ws/glibc-2.23/libio&lt;br /&gt;
+set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
 
 &lt;h1 id=&#34;info&#34;&gt;info&lt;/h1&gt;
 
@@ -1244,10 +1164,6 @@ Host OS Linux Kernel log.&lt;br /&gt;
 VF driver version number.&lt;br /&gt;
 NIC hardware model and PBA number.&lt;br /&gt;
 NIC Firmware NVM version number.&lt;/p&gt;
-
-&lt;h1 id=&#34;core-pattern&#34;&gt;Core pattern&lt;/h1&gt;
-
-&lt;p&gt;echo /tmp/core-%e-%p-%s-%c-%P &amp;gt; /proc/sys/kernel/core_pattern&lt;/p&gt;
 
 &lt;h1 id=&#34;from-assembly-to-c&#34;&gt;From assembly to C&lt;/h1&gt;
 
@@ -1272,10 +1188,6 @@ NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.g
 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
 
-&lt;h1 id=&#34;use-after-free&#34;&gt;use after free&lt;/h1&gt;
-
-&lt;p&gt;record the owner, who free.&lt;/p&gt;
-
 &lt;h1 id=&#34;general-debugging-steps&#34;&gt;General debugging steps&lt;/h1&gt;
 
 &lt;p&gt;Debugging的逻辑过程是&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;. 我们以此进行推导.&lt;br /&gt;
@@ -1296,73 +1208,30 @@ E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;g
 
 &lt;h3 id=&#34;get-observations&#34;&gt;Get observations&lt;/h3&gt;
 
-&lt;p&gt;首先我们要理清中间的各个流程, 以及相关的observations:&lt;/p&gt;
-
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;coding&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;compilation&lt;br /&gt;
+&lt;li&gt;compilation&lt;br /&gt;
 make kernel/sched.s V=1&lt;br /&gt;
 readelf, objdump&lt;br /&gt;
 c++filt&lt;br /&gt;
 ./scripts/decodecode &amp;lt; Oops.txt&lt;br /&gt;
-echo&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;load software&lt;br /&gt;
+echo&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;load software&lt;br /&gt;
 LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
-ldd /usr/bin/git&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;software running&lt;br /&gt;
-&amp;gt; #define debugme(fmt, args&amp;hellip;) do{FILE *fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); &lt;br /&gt;
-&amp;gt; fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
-lsof, ltrace, strace, bash -x, coredump&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;kernel specific&lt;br /&gt;
-putstr early_printk vs printk pr_debug vs dev_debug dump_stack&lt;br /&gt;
-Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;br /&gt;
-how to use serial-port addr&lt;br /&gt;
-ioctl/netlink, SysRq, ftrace expect,kgtp, lockdep, kdump, kgdboc&lt;br /&gt;
-print signal This is just a hiwifi wonderful kernel patch #931&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;network specific&lt;br /&gt;
-tcpdump netstat iptables wireshark&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;u-boot&lt;br /&gt;
-print_tlb&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;make specific&lt;br /&gt;
--s, -n, -p, &amp;ndash;warn-undefined-variables&lt;br /&gt;
-$(warning &amp;hellip;)&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;有的类型的Bug会阻止我们收集observations&lt;br /&gt;
-这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.&lt;br /&gt;
-这时要扩大目标struct的大小, 把observations加进去.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
+ldd /usr/bin/git&lt;br /&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;software imediately stop&lt;br /&gt;
 Use atexit() register a stackdump or a wrapped print&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
 
-&lt;h1 id=&#34;inference&#34;&gt;Inference&lt;/h1&gt;
-
-&lt;p&gt;From observatons to source code/mind&lt;br /&gt;
-追BUG实际上就是, 找关联度最高的.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;tips&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;tips&lt;br /&gt;
 If an page oops close to zero, for example 0xfffffff4&lt;br /&gt;
 It maybe ERR_PTR(-12);&lt;br /&gt;
 &lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;&lt;br /&gt;
-code reordering inlining Optimized-away variables Tailcall optimization&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;oops&lt;br /&gt;
+code reordering inlining Optimized-away variables Tailcall optimization&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;oops&lt;br /&gt;
 From ASM to c language&lt;br /&gt;
 &lt;a href=&#34;http://yarchive.net/comp/linux/oops_decoding.html&#34;&gt;lkml-Linus-Al-Viro-oops-debug&lt;/a&gt;&lt;br /&gt;
-&lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
+&lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&#34;一些比较通用的调试工具&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
@@ -1424,11 +1293,6 @@ static int data_var=0;&lt;br /&gt;
 printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);&lt;br /&gt;
 printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);}&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;h1 id=&#34;debug-glibc&#34;&gt;Debug glibc&lt;/h1&gt;
-
-&lt;p&gt;directory ~/ws/glibc-2.23/libio&lt;br /&gt;
-set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
 </description>
     </item>
     
@@ -1439,6 +1303,21 @@ set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/programming/</guid>
       <description>
+
+&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;GNU AS&lt;br /&gt;
+inline asm &amp;lsquo;=&amp;rsquo;?&lt;br /&gt;
+&amp;amp; &lt;a href=&#34;https://stackoverflow.com/questions/45895564/how-does-r-differ-from-r&#34;&gt;https://stackoverflow.com/questions/45895564/how-does-r-differ-from-r&lt;/a&gt;&lt;br /&gt;
+&amp;ldquo;memory clobber&amp;rdquo;?&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;cps&#34;&gt;CPS&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://spin.atomicobject.com/2012/11/01/hey-c-is-a-functional-language-too/&#34;&gt;https://spin.atomicobject.com/2012/11/01/hey-c-is-a-functional-language-too/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Direct_style&#34;&gt;https://en.wikipedia.org/wiki/Direct_style&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -1499,6 +1378,45 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;http://googletesting.blogspot.com/&#34;&gt;Google testing blog&lt;/a&gt;&lt;br /&gt;
 1.Black-box testing test software function.&lt;br /&gt;
 2.White-box testing test software internal logic.&lt;/p&gt;
+
+&lt;h1 id=&#34;good-taste&#34;&gt;Good taste&lt;/h1&gt;
+
+&lt;p&gt;remove_list_entry(entry)&lt;br /&gt;
+{&lt;br /&gt;
+  // The &amp;ldquo;indirect&amp;rdquo; pointer points to the&lt;br /&gt;
+  // &lt;em&gt;address&lt;/em&gt; of the thing we&amp;rsquo;ll update&lt;br /&gt;
+  indirect = &amp;head;&lt;/p&gt;
+
+&lt;p&gt;// Walk the list, looking for the thing that&lt;br /&gt;
+  // points to the entry we want to remove&lt;/p&gt;
+
+&lt;p&gt;while ((*indirect) != entry)&lt;br /&gt;
+    indirect = &amp;amp;(*indirect)-&amp;gt;next;&lt;/p&gt;
+
+&lt;p&gt;// .. and just remove it&lt;br /&gt;
+  *indirect = entry-&amp;gt;next;&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;p&gt;remove_list_entry(entry)&lt;br /&gt;
+{&lt;br /&gt;
+  prev = NULL;&lt;br /&gt;
+  walk = head;&lt;/p&gt;
+
+&lt;p&gt;// Walk the list&lt;/p&gt;
+
+&lt;p&gt;while (walk != entry) {&lt;br /&gt;
+    prev = walk;&lt;br /&gt;
+    walk = walk-&amp;gt;next;&lt;br /&gt;
+  }&lt;/p&gt;
+
+&lt;p&gt;// Remove the entry by updating the&lt;br /&gt;
+  // head or the previous entry&lt;/p&gt;
+
+&lt;p&gt;if (!prev)&lt;br /&gt;
+    head = entry-&amp;gt;next;&lt;br /&gt;
+  else&lt;br /&gt;
+    prev-&amp;gt;head = entry-&amp;gt;next;&lt;br /&gt;
+}&lt;/p&gt;
 </description>
     </item>
     
@@ -1803,60 +1721,16 @@ strcspn: s1开始有多少不在s2中.&lt;br /&gt;
 strpbrk: s2中第一次出现的位置&lt;br /&gt;
 strstr: 找子串, 用memcmp&lt;/p&gt;
 
-&lt;h1 id=&#34;asm-in-c-code&#34;&gt;ASM in c code&lt;/h1&gt;
-
-&lt;p&gt;c语言嵌入汇编这不是c语言的特性是编译器的feature.&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html#Using-Assembly-Language-with-C&#34;&gt;How to Use Inline Assembly Language in C Code&lt;/a&gt;&lt;br /&gt;
-#MIPS&lt;br /&gt;
-bdi 4, 8 delay solt&lt;br /&gt;
-mips instruction size is fixed, 32bit, 4byte.&lt;br /&gt;
-instruction address:  instrction in hex formate    instruction in string formate, 260&lt;br /&gt;
-8002c28c:   8c440104    lw  a0,260(v0)&lt;br /&gt;
-##ASM codes Fixme&lt;br /&gt;
-move &amp;lt;-&lt;br /&gt;
-j long jump&lt;br /&gt;
-b short jump&lt;br /&gt;
-a0, a1&amp;hellip;99% is parameters.&lt;br /&gt;
-##lwr &amp;amp; lwl&lt;br /&gt;
-load a word&lt;br /&gt;
-different with endianess&lt;br /&gt;
-register 63&amp;hellip;..32&amp;hellip;&amp;hellip;0&lt;br /&gt;
-big endian: lwl high bits in b + 0&lt;br /&gt;
-little endian: lwl high in b + off&lt;br /&gt;
-向中心&lt;/p&gt;
-
-&lt;h1 id=&#34;x86&#34;&gt;x86&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://heather.cs.ucdavis.edu/~matloff/50/PLN/lock.pdf&#34;&gt;Intel’s ‘cmpxchg’ instruction&lt;/a&gt;&lt;br /&gt;
-eax: e stand for 32&lt;br /&gt;
-rax: r stand for 64&lt;br /&gt;
-&lt;a href=&#34;http://x86.renejeschke.de/html/file_module_x86_id_159.html&#34;&gt;lock prefix in x86&lt;/a&gt;&lt;br /&gt;
-the lock prefix make instruction atomic!&lt;/p&gt;
-
-&lt;h2 id=&#34;registers-purpose&#34;&gt;registers&amp;rsquo; purpose&lt;/h2&gt;
-
-&lt;h2 id=&#34;register&#34;&gt;Register&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;gs&lt;br /&gt;
-The linux kernel uses GS to access cpu-specific memory.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;gdtr&lt;br /&gt;
-GDT&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;tr&lt;br /&gt;
-TSS addressing&lt;br /&gt;
-#Wildcards&lt;br /&gt;
+&lt;p&gt;#Wildcards&lt;br /&gt;
 &lt;a href=&#34;http://whatis.techtarget.com/definition/wildcard-character&#34;&gt;A wildcard character is a type of meta character&lt;/a&gt;&lt;br /&gt;
 ##Type&lt;/p&gt;
 
 &lt;h3 id=&#34;standard-wildcards-globbing-patterns&#34;&gt;Standard Wildcards (globbing patterns)&lt;/h3&gt;
 
 &lt;p&gt;File and directory patterns&lt;br /&gt;
-?: must stand for a character&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Regular expression&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;SQL&lt;br /&gt;
+?: must stand for a character&lt;br /&gt;
+* Regular expression&lt;br /&gt;
+* SQL&lt;br /&gt;
 #Shell&lt;/p&gt;
 
 &lt;h2 id=&#34;test&#34;&gt;test&lt;/h2&gt;
@@ -1869,23 +1743,20 @@ TSS addressing&lt;br /&gt;
 
 &lt;p&gt;-l: show hardlinks of file/dir in 2nd column&lt;br /&gt;
 drwsrwsr-T: T stand for sticky bit no other execution bit&lt;br /&gt;
-##eval&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;create variable name&lt;br /&gt;
-&lt;strong&gt;var=&amp;ldquo;name&amp;rdquo;&lt;br /&gt;
-eval &amp;ldquo;export &amp;ndash; \&amp;ldquo;$&lt;/strong&gt;var=firo\&amp;ldquo;&amp;rdquo;&lt;br /&gt;
-set | grep firo&lt;br /&gt;
-__var=&amp;lsquo;name&amp;rsquo;&lt;br /&gt;
-bbb=&amp;lsquo;firo&amp;rsquo;&lt;br /&gt;
+##eval&lt;br /&gt;
+* create variable name&lt;br /&gt;
+    &lt;strong&gt;var=&amp;ldquo;name&amp;rdquo;&lt;br /&gt;
+    eval &amp;ldquo;export &amp;ndash; \&amp;ldquo;$&lt;/strong&gt;var=firo\&amp;ldquo;&amp;rdquo;&lt;br /&gt;
+    set | grep firo&lt;br /&gt;
+    __var=&amp;lsquo;name&amp;rsquo;&lt;br /&gt;
+    bbb=&amp;lsquo;firo&amp;rsquo;&lt;br /&gt;
 ##expr&lt;br /&gt;
 expr &amp;ldquo;$name&amp;rdquo; : &amp;lsquo;(.*).conf&amp;rsquo;&lt;br /&gt;
-##find&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;find symbols in object&lt;br /&gt;
-find . -name &amp;lsquo;a.out&amp;rsquo; -exec nm -D {} \; -print&lt;br /&gt;
-find . -name &amp;lsquo;*.o&amp;rsquo; -print0 | xargs -0 nm -A | egrep &amp;lsquo; (i|y)$&amp;rsquo;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;rm&lt;br /&gt;
+##find&lt;br /&gt;
+* find symbols in object&lt;br /&gt;
+    find . -name &amp;lsquo;a.out&amp;rsquo; -exec nm -D {} \; -print&lt;br /&gt;
+    find . -name &amp;lsquo;*.o&amp;rsquo; -print0 | xargs -0 nm -A | egrep &amp;lsquo; (i|y)$&amp;rsquo;&lt;br /&gt;
+* rm&lt;br /&gt;
 find . -name ‘your_pattern*’ -exec rm -f {} \;&lt;br /&gt;
 find . -name ‘your_pattern*’ -delete&lt;/p&gt;
 
@@ -1895,18 +1766,307 @@ find . -name ‘your_pattern*’ -delete&lt;/p&gt;
 ##pipe&lt;br /&gt;
 find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo &amp;ldquo;$cnt $d&amp;rdquo;; done | sort -n &amp;gt;stat&lt;br /&gt;
 #AWK&lt;br /&gt;
-netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;&lt;/p&gt;
 </description>
     </item>
     
     <item>
-      <title>The computational process</title>
+      <title>The computing processes</title>
       <link>http://firoyang.org/cs/process/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/process/</guid>
       <description>
+
+&lt;h1 id=&#34;processes&#34;&gt;Processes&lt;/h1&gt;
+
+&lt;h2 id=&#34;instructions&#34;&gt;Instructions&lt;/h2&gt;
+
+&lt;p&gt;opcode,&lt;br /&gt;
+registers and RAM&lt;/p&gt;
+
+&lt;h2 id=&#34;subroutine-and-procedure&#34;&gt;Subroutine and procedure&lt;/h2&gt;
+
+&lt;p&gt;a group of instructions&lt;br /&gt;
+stack&lt;/p&gt;
+
+&lt;h2 id=&#34;interrupt-handler&#34;&gt;interrupt handler&lt;/h2&gt;
+
+&lt;p&gt;procdure + optional own stack&lt;/p&gt;
+
+&lt;h2 id=&#34;softirq-handler&#34;&gt;softirq handler&lt;/h2&gt;
+
+&lt;p&gt;procdure + optional own stack&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-thread&#34;&gt;kernel thread&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf&#34;&gt;thread vs event&lt;/a&gt;&lt;br /&gt;
+change of processes: associate change structure with a object and has more states; event-driven -&amp;gt; schedule&lt;br /&gt;
+space: +kernel address space, more kind of resource space&lt;br /&gt;
+change: implict changings.&lt;/p&gt;
+
+&lt;h2 id=&#34;process-horizantal&#34;&gt;process(horizantal)&lt;/h2&gt;
+
+&lt;p&gt;change: linkage of user space code&lt;br /&gt;
+space: whole address space&lt;/p&gt;
+
+&lt;h2 id=&#34;thread&#34;&gt;thread&lt;/h2&gt;
+
+&lt;p&gt;share process address space&lt;br /&gt;
+tls&lt;br /&gt;
+&lt;a href=&#34;http://www.maxwellxxx.com/TLS&#34;&gt;Linux线程TLS（Thread-Local Storage）相关 GS段寄存器作用&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;usage&#34;&gt;usage&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.quora.com/What-is-the-relation-between-the-number-of-threads-and-the-number-of-CPU-cores&#34;&gt;https://www.quora.com/What-is-the-relation-between-the-number-of-threads-and-the-number-of-CPU-cores&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;change-of-processes&#34;&gt;Change of processes&lt;/h1&gt;
+
+&lt;h2 id=&#34;instructions-1&#34;&gt;Instructions&lt;/h2&gt;
+
+&lt;p&gt;pc + 1&lt;/p&gt;
+
+&lt;h2 id=&#34;subroutine-and-procedure-1&#34;&gt;Subroutine and procedure&lt;/h2&gt;
+
+&lt;p&gt;save: push pc + 1; optional caller saved registers&lt;br /&gt;
+entry: save rbp; callee saved registers&lt;br /&gt;
+return: mov rbp -&amp;gt; rsp; pop rbp; ret&lt;/p&gt;
+
+&lt;h2 id=&#34;softirq&#34;&gt;softirq&lt;/h2&gt;
+
+&lt;h2 id=&#34;system-call&#34;&gt;system call&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead&#34;&gt;Measurements of system call performance and overhead&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://reverseengineering.stackexchange.com/a/16511/16996&#34;&gt;AMD vs Intel and syscall vs sysenter&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm&#34;&gt;System Call Optimization with the SYSENTER Instruction&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;kernel documentation&lt;/a&gt;&lt;br /&gt;
+Meltdown and Spectre&lt;/p&gt;
+
+&lt;h3 id=&#34;syscall&#34;&gt;syscall&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;save: pc + 1, old rsp, registers&lt;br /&gt;
+pc + 1-&amp;gt; RCX&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;entry: pc&lt;br /&gt;
+IA32_LSTAR -&amp;gt; pc&lt;/p&gt;
+
+&lt;h3 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h3&gt;
+
+&lt;p&gt;64-bit long mode: syscall; check syscall_init&lt;br /&gt;
+64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts&lt;br /&gt;
+??32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
+
+&lt;h3 id=&#34;vdso-and-vsyscall&#34;&gt;vDSO and vsyscall&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;64-bit without COMPAT&lt;em&gt;32&lt;/em&gt;/compatible kernel&lt;br /&gt;
+./int80&lt;br /&gt;
+[  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]&lt;br /&gt;
+Segmentation fault (core dumped)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;64-bit syscall&lt;br /&gt;
+syscall.S&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;signal&#34;&gt;signal&lt;/h2&gt;
+
+&lt;h2 id=&#34;interrupt&#34;&gt;interrupt&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/interrupts.html&#34;&gt;history of interrupts&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://virtualirfan.com/history-of-interrupts&#34;&gt;Another History of interrupts with video&lt;/a&gt;&lt;br /&gt;
+Interrupts: asynonymous(passively received), external&lt;br /&gt;
+Exception: synonymous(actively detected), internal&lt;br /&gt;
+Software interrupts: is a trap. int/int3, into, bound.&lt;br /&gt;
+IPI:&lt;br /&gt;
+&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;hardlockup&#34;&gt;Hardlockup&lt;/h3&gt;
+
+&lt;p&gt;www.kernel.org/doc/Documentation/lockup-watchdogs.txt&lt;/p&gt;
+
+&lt;h3 id=&#34;mask-exception&#34;&gt;Mask exception&lt;/h3&gt;
+
+&lt;p&gt;RF in EFLAGS for masking #DB&lt;br /&gt;
+SS &amp;amp; SP&lt;/p&gt;
+
+&lt;h2 id=&#34;exception&#34;&gt;exception&lt;/h2&gt;
+
+&lt;h2 id=&#34;thread-switch&#34;&gt;Thread switch&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h3&gt;
+
+&lt;p&gt;((last) = __switch_to_asm((prev), (next)));             #=====&amp;gt; call&lt;/p&gt;
+
+&lt;p&gt;jmp     __switch_to                         #=====&amp;gt; jmp + ret&lt;/p&gt;
+
+&lt;h3 id=&#34;old-version-switch-to-push-jmp-ret&#34;&gt;Old version switch_to - push+jmp+ret&lt;/h3&gt;
+
+&lt;p&gt;switch_to&lt;br /&gt;
+-       asm volatile(&amp;ldquo;pushl %%ebp\n\t&amp;rdquo;          /* save    EBP   &lt;em&gt;/     &lt;br /&gt;
+-                    &amp;ldquo;movl %%esp,%[prev_sp]\n\t&amp;rdquo;        /&lt;/em&gt; save    ESP   &lt;em&gt;/ \   #=====&amp;gt;PREV: Save ESP into task struct thread.&lt;br /&gt;
+-                    &amp;ldquo;movl %[next_sp],%%esp\n\t&amp;rdquo;        /&lt;/em&gt; restore ESP   &lt;em&gt;/ \   #=====&amp;gt;NEXT: Setup stack for linkage from task struct thread.&lt;br /&gt;
+-                    &amp;ldquo;movl $1f,%[prev_ip]\n\t&amp;rdquo;  /&lt;/em&gt; save    EIP   &lt;em&gt;/     \   #=====&amp;gt;PREV: Save PC into task sturct thread.&lt;br /&gt;
+-                    &amp;ldquo;pushl %[next_ip]\n\t&amp;rdquo;     /&lt;/em&gt; restore EIP   &lt;em&gt;/     \   #=====&amp;gt;NEXT: push - Store PC on stack from task struct thread;&lt;br /&gt;
+-                    &amp;ldquo;jmp __switch_to\n&amp;rdquo;        /&lt;/em&gt; regparm call  &lt;em&gt;/     \   #=====&amp;gt;NEXT: jmp + ret - Return and restore PC.&lt;br /&gt;
+-                    &amp;ldquo;1:\t&amp;rdquo;                                             &lt;br /&gt;
+-                    &amp;ldquo;popl %%ebp\n\t&amp;rdquo;           /&lt;/em&gt; restore EBP   &lt;em&gt;/     &lt;br /&gt;
+-                                                                       &lt;br /&gt;
+-                    /&lt;/em&gt; output parameters &lt;em&gt;/                            &lt;br /&gt;
+-                    : [prev_sp] &amp;ldquo;=m&amp;rdquo; (prev-&amp;gt;thread.sp),                &lt;br /&gt;
+-                      [prev_ip] &amp;ldquo;=m&amp;rdquo; (prev-&amp;gt;thread.ip),                &lt;br /&gt;
+-                      &amp;ldquo;=a&amp;rdquo; (last),                                     &lt;br /&gt;
+-                                                                       &lt;br /&gt;
+-                      /&lt;/em&gt; clobbered output registers: &lt;em&gt;/                &lt;br /&gt;
+-                      &amp;ldquo;=b&amp;rdquo; (ebx), &amp;ldquo;=c&amp;rdquo; (ecx), &amp;ldquo;=d&amp;rdquo; (edx),              &lt;br /&gt;
+-                      &amp;ldquo;=S&amp;rdquo; (esi), &amp;ldquo;=D&amp;rdquo; (edi)                           &lt;br /&gt;
+-                      /&lt;/em&gt; input parameters: */                          &lt;br /&gt;
+-                    : [next_sp]  &amp;ldquo;m&amp;rdquo; (next-&amp;gt;thread.sp),                &lt;br /&gt;
+-                      [next_ip]  &amp;ldquo;m&amp;rdquo; (next-&amp;gt;thread.ip),                &lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-thread-1&#34;&gt;Kernel thread&lt;/h2&gt;
+
+&lt;p&gt;kernel_thread-&amp;gt;kthread-&amp;gt;do_exit&lt;/p&gt;
+
+&lt;h2 id=&#34;task-switching&#34;&gt;Task switching&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2016/3/21/517&#34;&gt;https://lkml.org/lkml/2016/3/21/517&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;dbg-softlockup&#34;&gt;DBG: Softlockup&lt;/h3&gt;
+
+&lt;p&gt; ps aux | grep watchdog&lt;br /&gt;
+root        13  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/0]&lt;br /&gt;
+root        16  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/1]&lt;br /&gt;
+root        22  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/2]&lt;br /&gt;
+root        28  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/3]&lt;/p&gt;
+
+&lt;h3 id=&#34;dbg-hung-tasks-bugs&#34;&gt;DBG: Hung tasks bugs&lt;/h3&gt;
+
+&lt;h4 id=&#34;think-for-myself&#34;&gt;think for myself&lt;/h4&gt;
+
+&lt;p&gt;A kernel bug casuse task to be stuck in &amp;ldquo;D&amp;rdquo; state indefinitely.&lt;br /&gt;
+1. A D state task wait list.&lt;br /&gt;
+2. Hung task timeout.&lt;br /&gt;
+3. Timestamp on adding task to &amp;ldquo;D&amp;rdquo; state wait list.&lt;br /&gt;
+4. Kernel thread for detecting hung tasks - schedule timeout; why kthread?&lt;/p&gt;
+
+&lt;h5 id=&#34;problems&#34;&gt;Problems&lt;/h5&gt;
+
+&lt;p&gt;How could I find all the D state tasks?&lt;br /&gt;
+1. kernel must use specific functions to put D-task on wait list.&lt;br /&gt;
+2. Embeded codes into specific functions to catch &amp;rsquo;D&amp;rsquo; state tasks and put them in the wait list for Hung tasks detecting.&lt;/p&gt;
+
+&lt;h4 id=&#34;kernel-implemention&#34;&gt;Kernel Implemention&lt;/h4&gt;
+
+&lt;p&gt;DETECT_HUNG_TASK&lt;br /&gt;
+kernel/hung_task.c&lt;br /&gt;
+check_hung_uninterruptible_tasks&lt;br /&gt;
+* diffeneces&lt;br /&gt;
+1: kenrel task list - init_task.tasks and p-&amp;gt;signal-&amp;gt;thread_head in copy_process&lt;br /&gt;
+3: t-&amp;gt;nvcsw + t-&amp;gt;nivcsw, t-&amp;gt;last_switch_count and timeout&lt;br /&gt;
+cat /proc/self/status | grep ctxt_switches&lt;/p&gt;
+
+&lt;h3 id=&#34;preemption&#34;&gt;Preemption&lt;/h3&gt;
+
+&lt;h4 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
+syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
+retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+
+&lt;h4 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h4&gt;
+
+&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
+If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
+
+&lt;h4 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h4&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
+tick: check_preempt_tick or entity_tick&lt;br /&gt;
+fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
+wakeup: check_preempt_wakeup&lt;br /&gt;
+&amp;hellip;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;
+
+&lt;h4 id=&#34;lqo&#34;&gt;LQO&lt;/h4&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule why prev-&amp;gt;state?&lt;br /&gt;
+it&amp;rsquo;s because of need_resched&lt;br /&gt;
+?? schedule_idle&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;canary&lt;br /&gt;
+&lt;a href=&#34;https://my.oschina.net/macwe/blog/610357&#34;&gt;https://my.oschina.net/macwe/blog/610357&lt;/a&gt;&lt;br /&gt;
+boot_init_stack_canary&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;bug??&lt;br /&gt;
+__do_softirq&lt;br /&gt;
+258         pending = local_softirq_pending();&lt;br /&gt;
+259         account_irq_enter_time(current);&lt;br /&gt;
+260&lt;br /&gt;
+261         __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET);&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;os presentations&lt;br /&gt;
+&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/&#34;&gt;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;procedure-and-subroutine-and-linkage-method&#34;&gt;Procedure and subroutine and linkage method&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;https://people.cs.clemson.edu/~mark/subroutines.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;https://en.wikipedia.org/wiki/Subroutine&lt;/a&gt;&lt;br /&gt;
+* 1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;&lt;br /&gt;
+In Chapter 6. Outline of Logical Control.&lt;br /&gt;
+We also wish to be able to arrange for the splitting up of operations into&amp;hellip;&lt;br /&gt;
+When we wish to start on a subsidiary operation we need only make a note&lt;br /&gt;
+of where we left off the major operation&amp;hellip;&lt;br /&gt;
+* 1952 &lt;a href=&#34;http://www.laputan.org/pub/papers/wheeler.pdf&#34;&gt;The use of sub-routines in programmes&lt;/a&gt;&lt;br /&gt;
+The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out of sight.&lt;br /&gt;
+* 1960 &lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;linkage&#34;&gt;linkage&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Link_register&#34;&gt;https://en.wikipedia.org/wiki/Link_register&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;structred-programming&#34;&gt;Structred programming&lt;/h1&gt;
+
+&lt;p&gt;Structured Programming - Dijkstra&lt;/p&gt;
+
+&lt;h1 id=&#34;kthread&#34;&gt;kthread&lt;/h1&gt;
+
+&lt;h2 id=&#34;resource&#34;&gt;resource&lt;/h2&gt;
+
+&lt;h2 id=&#34;change&#34;&gt;Change&lt;/h2&gt;
+
+&lt;p&gt;Periodical: schedule_timeout&lt;br /&gt;
+Demand:&lt;/p&gt;
+
+&lt;h2 id=&#34;inter-process-info&#34;&gt;inter-process info&lt;/h2&gt;
+
+&lt;h1 id=&#34;call-stack&#34;&gt;Call stack&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Call_stack#Functions_of_the_call_stack&#34;&gt;https://en.wikipedia.org/wiki/Call_stack#Functions_of_the_call_stack&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2716018#.W5zV9yqRi-c.twitter&#34;&gt;https://dl.acm.org/citation.cfm?id=2716018#.W5zV9yqRi-c.twitter&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;fork-a-new-process&#34;&gt;Fork a new process&lt;/h1&gt;
 

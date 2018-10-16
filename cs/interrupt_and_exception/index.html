@@ -16,7 +16,7 @@
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="Interrupt and exception : firoyang.org"/>
+<meta property="og:title" content="x86 interrupt and exception : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
@@ -35,7 +35,7 @@
 
 
     <base href="http://firoyang.org/">
-    <title> Interrupt and exception</title>
+    <title> x86 interrupt and exception</title>
     <link rel="canonical" href="http://firoyang.org/cs/interrupt_and_exception/">
 
     
@@ -156,7 +156,7 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >Interrupt and exception</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >x86 interrupt and exception</h1>
 	  
 
 <aside id="meta">
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="242">
+<meta itemprop="wordCount" content="30">
 <meta itemprop="datePublished" content="2017-04-03">
 <meta itemprop="url" content="http://firoyang.org/cs/interrupt_and_exception/">
 
@@ -187,85 +187,19 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="link-to-process-stack-from-irq-stack">Link to process stack from irq stack</h1>
-
-<p>commit a2bbe75089d5eb9a3a46d50dd5c215e213790288<br />
-x86: Don&rsquo;t use frame pointer to save old stack on irq entry<br />
-       /* Save previous stack value <em>/<br />
-       movq %rsp, %rsi<br />
-&hellip;<br />
-2:     /</em> Store previous stack value */<br />
-       pushq %rsi<br />
-<a href="https://www.exploit-db.com/papers/13146/">Obtain sys_call_table on amd64 </a></p>
-
 <p>#Interrupt</p>
 
 <h2 id="init">init</h2>
 
-<p>native_init_IRQ()-&gt;  set_intr_gate(i, irq_entries_start&hellip;<br />
+<p>native_init_IRQ() -&gt;  set_intr_gate(i, irq_entries_start&hellip;<br />
 irq_entries_start define in arch/x86/kernel/entry_32.S</p>
 
 <p>##Interrupt Context terminology<br />
-* in_irq<br />
-in __irq_enter I found preempt_count_add(HARDIRQ_OFFSET) only in here!<br />
-+irq disable 部设计preempt_cout</p>
-
-<ul>
-<li><p>in_softirq<br />
-should rename to in_softirq_or_bh_disable()<br />
-local_bh_disable use SOFTIRQ_DISABLE_OFFSET  (2 * SOFTIRQ_OFFSET)<br />
-__do_softirq use __local_bh_disable_ip(_RET<em>IP</em>, SOFTIRQ_OFFSET), damn it!</p></li>
-
-<li><p>in_interrupt<br />
-一种是irq路径上的do_softirq, 即in_serving_softirq<br />
-+local_bh_disbale()<br />
-//not in softirq context!!!<br />
-+local_bh_enable()<br />
-硬中断呢?<br />
-do_IRQ,肯定是.<br />
-local_irq_disable,不是, 但是no operation with preempt_count() 这种情况x86 in_interrupt是无感的.use irqs_disabled to check<br />
-[Question about in_interrupt() semantics with regard to softirqs]()</p></li>
-</ul>
-
-<p>#FAQ<br />
-##When to save irq rather than just disable irq<br />
-local_irq_disable() used in the code path that never disabled interrupts.<br />
-local_irq_save(flags) used in the code path that already disabled interrupts.</p>
-
-<p>##what about irq nested?<br />
-<a href="http://lwn.net/Articles/380937/">http://lwn.net/Articles/380937/</a></p>
-
-<h1 id="triggering-a-gp-exception">Triggering a #GP exception</h1>
-
-<p><a href="http://wiki.osdev.org/Exceptions">Exceptions</a><br />
-if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).<br />
-But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.<br />
-Privilege instructions in V3a chapter 5 Protection<br />
-.data<br />
-    .quad msg</p>
-
-<p>msg:<br />
-    .ascii &ldquo;Hello, world!\n&rdquo;<br />
-    len = . - msg<br />
-saved_idt:<br />
-        .long 0,0</p>
-
-<p>.text<br />
-    .global _start</p>
-
-<p>_start:<br />
-    movl  $4, %eax<br />
-    movl  $1, %ebx<br />
-    movl  $msg, %ecx<br />
-    sidt  saved_idt<br />
-    lidt  saved_idt  ;===============&gt; crashed at here<br />
-    movl  $len, %edx<br />
-    int   $0x80</p>
-
-<pre><code>movl  $1, %eax
-xorl  %ebx, %ebx 
-int   $0x80
-</code></pre>
+* interrupt context - in_irq or in_interrupt<br />
+irq_enter<br />
+* bh context - in_softirq<br />
+local_bh_disable<br />
+__do_softirq -&gt; __local_bh_disable_ip</p>
 
 		</article>
 	  </div>
@@ -277,7 +211,7 @@ int   $0x80
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
     var disqus_identifier = 'http:\/\/firoyang.org\/cs\/interrupt_and_exception\/';
-    var disqus_title = 'Interrupt and exception';
+    var disqus_title = 'x86 interrupt and exception';
     var disqus_url = 'http:\/\/firoyang.org\/cs\/interrupt_and_exception\/';
 
     (function() {

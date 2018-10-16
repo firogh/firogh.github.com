@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="569">
+<meta itemprop="wordCount" content="641">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/debugging/">
 
@@ -187,16 +187,123 @@
 		<article itemprop="articleBody" id="content">
 		   
 
+<h1 id="ref">ref</h1>
+
+<p><a href="https://www.youtube.com/watch?v=g7Qm0NpPAz4">https://www.youtube.com/watch?v=g7Qm0NpPAz4</a></p>
+
+<h1 id="boot-issues">Boot issues</h1>
+
+<p>debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf</p>
+
+<h1 id="lockup">Lockup</h1>
+
+<p><a href="https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt">kernle doc - Softlockup detector and hardlockup detector</a></p>
+
+<h1 id="oob">OOB</h1>
+
+<h2 id="slub-redzone">SLUB Redzone</h2>
+
+<h1 id="use-after-free">Use after free</h1>
+
+<p>Record the owner, who free.</p>
+
+<h1 id="deadlock">Deadlock</h1>
+
+<p>Lockdep<br />
+<a href="https://lwn.net/Articles/185666/">The kernel lock validator</a><br />
+<a href="https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt">Runtime locking correctness validator</a><br />
+<a href="https://lkml.org/lkml/2013/2/4/4">https://lkml.org/lkml/2013/2/4/4</a><br />
+<a href="http://bbs.chinaunix.net/thread-4183696-1-1.html">http://bbs.chinaunix.net/thread-4183696-1-1.html</a></p>
+
+<h1 id="print">Print</h1>
+
+<h2 id="user-mode-print">User mode print</h2>
+
+<p>define witcher(fmt, args&hellip;) do{FILE * fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); <br />
+fprintf(fdebug,&ldquo;%s,%s,%d:&ldquo;fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)<br />
+* make specific<br />
+-s, -n, -p, &ndash;warn-undefined-variables<br />
+$(warning &hellip;)</p>
+
+<h2 id="early-print">Early print</h2>
+
+<p>putstr<br />
+early_printk<br />
+Linux serial-port driver is interrupt driven, if irq-off console will not work!</p>
+
+<h2 id="dynamic-print">Dynamic print</h2>
+
+<p>Precondition: CONFIG_DYNAMIC_DEBUG<br />
+How to use it during kernel booting?<br />
+Use boot option:<br />
+dyndbg=&ldquo;file drivers/usb/host/ehci-hcd.c +p; file<br />
+drivers/usb/host/ehci-ppc-of.c +p&rdquo; loglevel=8<br />
+loglevel=8 dyndbg=&ldquo;module ehci_pci +p;<br />
+module ehci_hcd +p; module usbcore +p&rdquo;<br />
+After booting:<br />
+/sys/kernel/debug/dynamic_debug/control</p>
+
+<h2 id="dev-print">Dev print</h2>
+
+<p>drivers/base/core.c<br />
+define_dev_printk_level<br />
+THese functions are like pr_func<br />
+dev_debug</p>
+
+<h1 id="tracing">Tracing</h1>
+
+<p><a href="https://www.kernel.org/doc/html/v4.18/trace/index.html">Linux Tracing Technologies</a></p>
+
+<h2 id="user-mode-tracing">User mode tracing</h2>
+
+<p>ltrace, strace, bash -x</p>
+
+<p><a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">How does strace work?</a></p>
+
+<p>PTRACE_PEEKDATA for showing pointer parameter(e.g. 2nd arg of read)</p>
+
+<h1 id="kprobes">Kprobes</h1>
+
+<h1 id="stap">Stap</h1>
+
+<h1 id="config-debug-pagealloc">CONFIG_DEBUG_PAGEALLOC</h1>
+
+<p>check_poison_mem in alloc_pages<br />
+free_pages_prepare posion</p>
+
+<h1 id="fs">FS</h1>
+
+<p>lsof</p>
+
+<h1 id="kasan">Kasan</h1>
+
+<p>setup_arch-&gt;kasan_init<br />
+<a href="http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf">KernelAddressSanitizer a fast memory error detector for the Linux kernel</a><br />
+<a href="https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506">kasan found stack out of bounds</a><br />
+<a href="https://lwn.net/Articles/612153/">lwn The kernel address sanitizer</a><br />
+<a href="https://lkml.org/lkml/2014/12/3/128">out of bounds</a></p>
+
 <h1 id="reference">Reference</h1>
 
 <p>Reverse engineering<br />
 <a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">How debuggers work</a></p>
 
-<h1 id="debuging">debuging</h1>
+<h1 id="core-dump">Core dump</h1>
 
-<p>signle step instruction<br />
-Core-dump<br />
-printf debugging; this is very effective.</p>
+<p>echo /tmp/core-%e-%p-%s-%c-%P &gt; /proc/sys/kernel/core_pattern</p>
+
+<h1 id="ebpf">eBPF</h1>
+
+<p><a href="https://lwn.net/Articles/740157/">https://lwn.net/Articles/740157/</a></p>
+
+<h1 id="gdb">Gdb</h1>
+
+<p>signle step instruction</p>
+
+<h2 id="debug-glibc">Debug glibc</h2>
+
+<p>directory ~/ws/glibc-2.23/libio<br />
+set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/</p>
 
 <h1 id="info">info</h1>
 
@@ -206,10 +313,6 @@ Host OS Linux Kernel log.<br />
 VF driver version number.<br />
 NIC hardware model and PBA number.<br />
 NIC Firmware NVM version number.</p>
-
-<h1 id="core-pattern">Core pattern</h1>
-
-<p>echo /tmp/core-%e-%p-%s-%c-%P &gt; /proc/sys/kernel/core_pattern</p>
 
 <h1 id="from-assembly-to-c">From assembly to C</h1>
 
@@ -234,10 +337,6 @@ NVD的Bug分类也采用类似的构建方式.<a href="https://nvd.nist.gov/cwe.
 涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了<br />
 <a href="https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs">Common types of computer bugs in wikipedia</a>.</p>
 
-<h1 id="use-after-free">use after free</h1>
-
-<p>record the owner, who free.</p>
-
 <h1 id="general-debugging-steps">General debugging steps</h1>
 
 <p>Debugging的逻辑过程是<a href="https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction">Abductive reasoning</a>. 我们以此进行推导.<br />
@@ -258,73 +357,30 @@ E: ∅ -&gt; Bug type(可能经过是多种Bug types的过渡状态) -&gt; Expla
 
 <h3 id="get-observations">Get observations</h3>
 
-<p>首先我们要理清中间的各个流程, 以及相关的observations:</p>
-
 <ul>
-<li><p>coding</p></li>
-
-<li><p>compilation<br />
+<li>compilation<br />
 make kernel/sched.s V=1<br />
 readelf, objdump<br />
 c++filt<br />
 ./scripts/decodecode &lt; Oops.txt<br />
-echo</p></li>
-
-<li><p>load software<br />
+echo<br /></li>
+<li>load software<br />
 LD_TRACE_LOADED_OBJECTS=1 git<br />
-ldd /usr/bin/git</p></li>
-
-<li><p>software running<br />
-&gt; #define debugme(fmt, args&hellip;) do{FILE *fdebug=fopen(&ldquo;/tmp/d.log&rdquo;, &ldquo;a+&rdquo;); <br />
-&gt; fprintf(fdebug,&ldquo;%s,%s,%d:&ldquo;fmt, <strong>TIME</strong>, <strong>FUNCTION</strong>, <strong>LINE</strong>, ##args);fclose(fdebug);} while(0)<br />
-lsof, ltrace, strace, bash -x, coredump</p>
-
-<ul>
-<li>kernel specific<br />
-putstr early_printk vs printk pr_debug vs dev_debug dump_stack<br />
-Linux serial-port driver is interrupt driven, if irq-off console will not work!<br />
-how to use serial-port addr<br />
-ioctl/netlink, SysRq, ftrace expect,kgtp, lockdep, kdump, kgdboc<br />
-print signal This is just a hiwifi wonderful kernel patch #931<br /></li>
-<li>network specific<br />
-tcpdump netstat iptables wireshark<br /></li>
-<li>u-boot<br />
-print_tlb<br /></li>
-<li>make specific<br />
--s, -n, -p, &ndash;warn-undefined-variables<br />
-$(warning &hellip;)<br /></li>
-<li>有的类型的Bug会阻止我们收集observations<br />
-这时候就要增加observations,让我们能收集到. 比如use after free, buffer errors.<br />
-这时要扩大目标struct的大小, 把observations加进去.<br />
-<br /></li>
-</ul></li>
+ldd /usr/bin/git<br /></li>
 
 <li><p>software imediately stop<br />
 Use atexit() register a stackdump or a wrapped print</p></li>
-</ul>
 
-<h1 id="inference">Inference</h1>
-
-<p>From observatons to source code/mind<br />
-追BUG实际上就是, 找关联度最高的.</p>
-
-<ul>
-<li>tips<br />
+<li><p>tips<br />
 If an page oops close to zero, for example 0xfffffff4<br />
 It maybe ERR_PTR(-12);<br />
 <a href="http://www.stlinux.com/devel/debug/jtag/build?q=node/82">Tips on debugging optimized code</a><br />
-code reordering inlining Optimized-away variables Tailcall optimization<br /></li>
-<li>oops<br />
+code reordering inlining Optimized-away variables Tailcall optimization</p></li>
+
+<li><p>oops<br />
 From ASM to c language<br />
 <a href="http://yarchive.net/comp/linux/oops_decoding.html">lkml-Linus-Al-Viro-oops-debug</a><br />
-<strong>asm</strong>(), 常量, loop codes format, char *, ip<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br />
-<br /></li>
+<strong>asm</strong>(), 常量, loop codes format, char *, ip</p></li>
 </ul>
 
 <h1 id="一些比较通用的调试工具">一些比较通用的调试工具</h1>
@@ -386,11 +442,6 @@ static int data_var=0;<br />
 printk(KERN_ALERT &ldquo;Data Location .data(Data Segment):%p\n&rdquo;,&amp;data_var);<br />
 printk(KERN_ALERT &ldquo;BSS Location: .bss(BSS Segment):%p\n&rdquo;,&amp;bss_var);}</p></li>
 </ul>
-
-<h1 id="debug-glibc">Debug glibc</h1>
-
-<p>directory ~/ws/glibc-2.23/libio<br />
-set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/</p>
 
 		</article>
 	  </div>

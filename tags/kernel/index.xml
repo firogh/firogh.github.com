@@ -17,6 +17,12 @@
       <guid>http://firoyang.org/cs/entry/</guid>
       <description>
 
+&lt;p&gt;Definitive? Actually, it&amp;rsquo;s not and going to die.&lt;/p&gt;
+
+&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&lt;/a&gt;&lt;/p&gt;
+
 &lt;p&gt;Documentation/x86/entry_64.txt&lt;br /&gt;
 &lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
@@ -59,134 +65,247 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
       <guid>http://firoyang.org/cs/page_fault/</guid>
       <description>
 
-&lt;h1 id=&#34;three-cases-where-page-fault-might-happen&#34;&gt;three cases where page fault might happen&lt;/h1&gt;
-
-&lt;p&gt;the first is if the VA is simply not mapped at all into VAS of the process that&amp;rsquo;s requesting it.&lt;br /&gt;
-Another case is if a process has in sufficient permissions for this address. so you&amp;rsquo;re trying to write into something that&amp;rsquo;s read-only for example.&lt;br /&gt;
-the third is if the VA is valid but it&amp;rsquo;s swapped out.&lt;/p&gt;
-
-&lt;h2 id=&#34;use-case&#34;&gt;Use case&lt;/h2&gt;
-
-&lt;p&gt;not mapped&lt;br /&gt;
-lazy allocation&lt;br /&gt;
-swapping&lt;/p&gt;
-
-&lt;p&gt;#Page faults&lt;br /&gt;
-Page fault: If a process accesses a part of virtual address space not yet associated with a page in memory&lt;/p&gt;
+&lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Segemnt fault&lt;br /&gt;
-Segment fault: address is not in VMA, namely invalid address! Check bad_area() in x86.&lt;br /&gt;
+&lt;li&gt;&lt;p&gt;page-fault exceptions error code&lt;br /&gt;
+v3a: 4.7 - Figure 4-12. Page-Fault Error Code&lt;br /&gt;
+P, W/R, U/S, I/D, RSVD&lt;br /&gt;
+user/kernel mode, kerne space/userspace addr, good/bad area&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-mode&#34;&gt;kernel mode&lt;/h2&gt;
+
+&lt;h3 id=&#34;userspace-address&#34;&gt;Userspace address&lt;/h3&gt;
+
+&lt;p&gt;Ondemanding page&lt;br /&gt;
+COW - do_wp_page&lt;/p&gt;
+
+&lt;h3 id=&#34;kernel-address&#34;&gt;kernel address&lt;/h3&gt;
+
+&lt;p&gt;vmalloc&lt;/p&gt;
+
+&lt;h3 id=&#34;an-invalide-address-nocontext&#34;&gt;An invalide address - nocontext&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;fixup_exception&lt;br /&gt;
+&lt;a href=&#34;https://www.linuxjournal.com/article/2135&#34;&gt;Kernel-Level Exception Handling&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&lt;/a&gt;&lt;br /&gt;
-Null pointer: probably, mostly catched in below 0x08048000.&lt;/p&gt;&lt;/li&gt;
+ex_handler&lt;br /&gt;
+SIGSEGV the task since it passed the invalid address to kernel&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Demanding page&lt;br /&gt;
-vmalloc_fault(), 进程从用户态进入内核态不会引起CR3的改变.页表同步!&lt;br /&gt;
-expand_stack()/handle_mm_fault()&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;kernel oops&lt;br /&gt;
+the address wasn&amp;rsquo;t from user space. It should be a kernel bug.&lt;br /&gt;
+kproxy module error&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;vmalloc fault&lt;/p&gt;&lt;/li&gt;
+&lt;h2 id=&#34;user-mode&#34;&gt;User mode&lt;/h2&gt;
+
+&lt;h3 id=&#34;bad-area&#34;&gt;Bad area&lt;/h3&gt;
+
+&lt;p&gt;PF_USER ? SIGSEGV&lt;/p&gt;
+
+&lt;h2 id=&#34;do-page-fault-nuclus&#34;&gt;do_page_fault() - nuclus&lt;/h2&gt;
+
+&lt;h3 id=&#34;kernel-address-1&#34;&gt;kernel address:&lt;/h3&gt;
+
+&lt;p&gt;vmalloc,spurious_fault, kprobes_fault, PF_USER ? bad_are_nosemaphore SIGSEGV, no_context&lt;/p&gt;
+
+&lt;h3 id=&#34;user-space-address&#34;&gt;user space address:&lt;/h3&gt;
+
+&lt;h4 id=&#34;bad-area-1&#34;&gt;Bad area&lt;/h4&gt;
+
+&lt;p&gt;1) !find_vma&lt;br /&gt;
+2) !Permission&lt;/p&gt;
+
+&lt;h4 id=&#34;stack&#34;&gt;stack&lt;/h4&gt;
+
+&lt;p&gt;premise: grows down: address &amp;gt; 65536 + 32 * sizeof(unsigned long) + rsp&lt;br /&gt;
+expand_stack(): expand vma of stack; + good area workflow.&lt;/p&gt;
+
+&lt;h4 id=&#34;good-area&#34;&gt;good area&lt;/h4&gt;
+
+&lt;p&gt;handle_mm_fault &amp;amp;&amp;amp; error_handle&lt;/p&gt;
+
+&lt;h2 id=&#34;handle-mm-fault-good-area&#34;&gt;handle_mm_fault - good area&lt;/h2&gt;
+
+&lt;p&gt;FAULT_FLAG_WRITE        0x01    /* Fault was a write access &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_MKWRITE      0x02    /&lt;/em&gt; Fault was mkwrite of existing pte &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_ALLOW_RETRY  0x04    /&lt;/em&gt; Retry fault if blocking &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_RETRY_NOWAIT 0x08    /&lt;/em&gt; Don&amp;rsquo;t drop mmap_sem and wait when retrying &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_KILLABLE     0x10    /&lt;/em&gt; The fault task is in SIGKILL killable region &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_TRIED        0x20    /&lt;/em&gt; Second try &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_USER         0x40    /&lt;/em&gt; The fault originated in userspace &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_REMOTE       0x80    /&lt;/em&gt; faulting for non current tsk/mm &lt;em&gt;/&lt;br /&gt;
+FAULT_FLAG_INSTRUCTION  0x100   /&lt;/em&gt; The fault was during an instruction fetch */&lt;/p&gt;
+
+&lt;h3 id=&#34;do-anonymous-page&#34;&gt;do_anonymous_page&lt;/h3&gt;
+
+&lt;p&gt;page: alloc_zeroed_user_highpage_movable&lt;br /&gt;
+page_add_new_anon_rmap&lt;br /&gt;
+set_pte_at&lt;/p&gt;
+
+&lt;h3 id=&#34;do-fault&#34;&gt;do_fault&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;normal read - do_read_fault&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;file private mappings - do_cow_fault&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;shared(file or anonymous mappings) - do_shared_fault&lt;/p&gt;
+
+&lt;h3 id=&#34;do-swap-page&#34;&gt;do_swap_page&lt;/h3&gt;
+
+&lt;h3 id=&#34;do-wp-page&#34;&gt;do_wp_page&lt;/h3&gt;
+
+&lt;p&gt;true cow&lt;/p&gt;
+
+&lt;h2 id=&#34;dbg-kernel-oops&#34;&gt;DBG: Kernel oops&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;mm-fault-handler&#34;&gt;mm fault handler&lt;/h2&gt;
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
 
-&lt;p&gt;arch/powerpc/mm/fault.c&lt;br /&gt;
-deatils of trap is in bad_page_fault&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;why down_read in page_fault&lt;br /&gt;
+&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
 
-&lt;p&gt;sigbus&lt;br /&gt;
-__handle_mm_fault&lt;br /&gt;
-{&lt;br /&gt;
-        hugetlb_fault CONFIG_HUGETLB_PAGE&lt;br /&gt;
-        handle_pte_fault-&amp;gt;&lt;br /&gt;
-        {&lt;br /&gt;
-                do_linear_fault -&amp;gt; __do_fault&lt;br /&gt;
-                {&lt;br /&gt;
-                        vma-&amp;gt;vm_ops-&amp;gt;fault(vma, &amp;amp;vmf);&lt;br /&gt;
-                }&lt;br /&gt;
-                do_anonymous_page&lt;br /&gt;
-                {&lt;br /&gt;
-                        check_stack_guard_page&lt;br /&gt;
-                }&lt;br /&gt;
-                do_nonlinear_fault&lt;br /&gt;
-                do_swap_page&lt;br /&gt;
-                do_wp_page&lt;br /&gt;
-                {&lt;br /&gt;
-                        vma-&amp;gt;vm_ops-&amp;gt;page_mkwrite(vma, &amp;amp;vmf); //??&lt;br /&gt;
-                }&lt;br /&gt;
-}&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Kernel debugging primer</title>
-      <link>http://firoyang.org/cs/kernel_dbg/</link>
-      <pubDate>Wed, 05 Apr 2017 14:45:21 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/kernel_dbg/</guid>
-      <description>
+&lt;li&gt;&lt;p&gt;enable IRQ in page fault&lt;br /&gt;
+for user mode&lt;br /&gt;
+commit 891cffbd6bcba26409869c19c07ecd4bfc0c2460&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Sun Oct 12 13:16:12 2008 -0700&lt;/p&gt;
 
-&lt;h1 id=&#34;debug-boot-problem&#34;&gt;Debug boot problem&lt;/h1&gt;
+&lt;p&gt;x86/mm: do not trigger a kernel warning if user-space disables interrupts and generates a page fault&lt;br /&gt;
+for kernel mode&lt;br /&gt;
+简直精髓&lt;/p&gt;&lt;/li&gt;
 
-&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;What about down_read(&amp;amp;mm-&amp;gt;mmap_sem)?&lt;br /&gt;
+linux-tglx&lt;br /&gt;
+commit b50661029222940e24d2fba7c982ac0774a38c78&lt;br /&gt;
+Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
+Date:   Thu Sep 16 22:00:12 2004 -0700&lt;/p&gt;
 
-&lt;h1 id=&#34;dynamic-debug&#34;&gt;Dynamic debug&lt;/h1&gt;
+&lt;p&gt;[PATCH] x86-64: avoid deadlock in page fault handler&lt;/p&gt;
 
-&lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
-How to use it during kernel booting?&lt;br /&gt;
-Use boot option:&lt;br /&gt;
-dyndbg=&amp;ldquo;file drivers/usb/host/ehci-hcd.c +p; file&lt;br /&gt;
-drivers/usb/host/ehci-ppc-of.c +p&amp;rdquo; loglevel=8&lt;br /&gt;
-loglevel=8 dyndbg=&amp;ldquo;module ehci_pci +p;&lt;br /&gt;
-module ehci_hcd +p; module usbcore +p&amp;rdquo;&lt;br /&gt;
-After booting:&lt;br /&gt;
-/sys/kernel/debug/dynamic_debug/control&lt;/p&gt;
+&lt;p&gt;Avoid deadlock when kernel fault happens inside mmap sem.&lt;br /&gt;
+Check ULKv3 Page 380.&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2004/5/19/108&#34;&gt;https://lkml.org/lkml/2004/5/19/108&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/5/13/418&#34;&gt;https://lkml.org/lkml/2013/5/13/418&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;h1 id=&#34;dev-print-functions&#34;&gt;Dev print functions&lt;/h1&gt;
+&lt;h1 id=&#34;memory-mappings&#34;&gt;memory mappings&lt;/h1&gt;
 
-&lt;p&gt;drivers/base/core.c&lt;br /&gt;
-define_dev_printk_level&lt;br /&gt;
-THese functions are like pr_func&lt;/p&gt;
+&lt;p&gt;TLPI:chapter 49&lt;br /&gt;
+LSP: Chapter 8&lt;br /&gt;
+rmap: anonymous page: asyn: page fault&lt;br /&gt;
+rmap: file page: syn vma_link_file&lt;/p&gt;
 
-&lt;h1 id=&#34;oops&#34;&gt;oops&lt;/h1&gt;
+&lt;h2 id=&#34;anonymouse-private-mappings&#34;&gt;Anonymouse private mappings&lt;/h2&gt;
 
-&lt;p&gt;Kernel oops relates to invalid memory access, including sigev and sigbus.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;anonymous page&lt;br /&gt;
+* onset&lt;br /&gt;
+malloc exploit it to alloc memory&lt;br /&gt;
+* nuclus&lt;br /&gt;
+do_anonymous_page&lt;/p&gt;
 
-&lt;h1 id=&#34;lockup&#34;&gt;lockup&lt;/h1&gt;
+&lt;h2 id=&#34;file-private-mappings-text-and-iniliazed-data&#34;&gt;File private mappings -text and iniliazed data.&lt;/h2&gt;
 
-&lt;p&gt;phenomenon: LOCKUP_DETECTOR&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.av8n.com/computer/htm/kernel-lockup.htm&#34;&gt;Debugging Linux Kernel Lockup / Panic / Oops&lt;/a&gt;&lt;br /&gt;
-Causes: deadlock, hardware, irqoff and loop&lt;/p&gt;
+&lt;p&gt;双空, anonymous page&lt;br /&gt;
+* onset - mmap&lt;br /&gt;
+do_mmap -&amp;gt; mmap_region -&amp;gt; call_mmap-&amp;gt;generic_file_mmap-&amp;gt;vma-&amp;gt;vm_ops = &amp;amp; generic_file_vm_ops&lt;br /&gt;
+* nuclus -&amp;gt; page fault -&amp;gt; do_cow_page&lt;br /&gt;
+1. get page and cow:  __do_fault-&amp;gt; vma-&amp;gt;vm_ops-&amp;gt;fault = filemap_fault -&amp;gt; page cache ? page_cache_read add to lru&lt;br /&gt;
+2. add page to anon lru list: finish_fault-&amp;gt;alloc_set_pte-&amp;gt; page_add_new_anon_rmap -&amp;gt; __SetPageSwapBacked&lt;/p&gt;
 
-&lt;h1 id=&#34;hung-task&#34;&gt;hung task&lt;/h1&gt;
+&lt;h3 id=&#34;example-text-and-initalized-data&#34;&gt;Example text and initalized data&lt;/h3&gt;
 
-&lt;p&gt;phenomenon: DETECT_HUNG_TASK&lt;br /&gt;
-Includes the interruptable task.&lt;br /&gt;
-Causes: deadlock, race condition&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.greenend.org.uk/rjk/tech/dataseg.html#summary&#34;&gt;??&amp;mdash;p PROT_NOME mapping&lt;/a&gt;&lt;br /&gt;
+show_vma_header_prefix&lt;br /&gt;
+cat /proc/self/maps&lt;br /&gt;
+7ffff7a17000-7ffff7bcc000 r-xp 00000000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; text&lt;br /&gt;
+7ffff7bcc000-7ffff7dcc000 &amp;mdash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; PROT_NONE&lt;br /&gt;
+7ffff7dcc000-7ffff7dd0000 r&amp;ndash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; read only data&lt;br /&gt;
+7ffff7dd0000-7ffff7dd2000 rw-p 001b9000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; initialized&lt;br /&gt;
+7ffff7dd2000-7ffff7dd6000 rw-p 00000000 00:00 0&lt;br /&gt;
+strace -e mmap,mprotect cat /dev/null&lt;br /&gt;
+mmap(NULL, 3926752, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7a17000       ===&amp;gt; text&lt;br /&gt;
+mprotect(0x7ffff7bcc000, 2097152, PROT_NONE) = 0                                ======================&amp;gt; PROT_NONE&lt;br /&gt;
+mmap(0x7ffff7dcc000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b5000) = 0x7ffff7dcc000&lt;br /&gt;
+mmap(0x7ffff7dd2000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7dd2000&lt;br /&gt;
+mprotect(0x7ffff7dcc000, 16384, PROT_READ) = 0                                          ========&amp;gt; read only data&lt;/p&gt;
 
-&lt;h1 id=&#34;kprobes&#34;&gt;kprobes&lt;/h1&gt;
+&lt;h2 id=&#34;anonymouse-shared-mappings-parent-and-child-share-memory&#34;&gt;Anonymouse shared mappings - Parent and child share memory&lt;/h2&gt;
 
-&lt;h1 id=&#34;deadlock&#34;&gt;deadlock&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/174306/&#34;&gt;vmscan: limit VM_EXEC protection to file pages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/452035/&#34;&gt;ashmem&lt;/a&gt;&lt;br /&gt;
+file page: i_mmap&lt;br /&gt;
+* onset - mmap&lt;br /&gt;
+do_mmap -&amp;gt; mmap_region -&amp;gt; vma_link -&amp;gt; (__shmem_file_setup) &amp;amp;&amp;amp; __vma_link_file: into i_mmap interval_tree.&lt;br /&gt;
+* nuclus - share fault&lt;br /&gt;
+do_shared_fault&lt;br /&gt;
+shmem_getpage_gfp&lt;br /&gt;
+mapping = inode-&amp;gt;i_mapping&lt;br /&gt;
+shmem_add_to_page_cache&lt;br /&gt;
+* dirty a shared page since it&amp;rsquo;s write fault&lt;br /&gt;
+do_shared_fault-&amp;gt;fault_dirty_shared_page&lt;br /&gt;
+* what about read fault?&lt;br /&gt;
+seems read won&amp;rsquo;t dirty the shared page.&lt;br /&gt;
+* Swaping out a anonymouse shared page&lt;br /&gt;
+pageout-&amp;gt;shmem_writepage - Move the page from the page cache to the swap cache; and swp_to_radix_entry&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/588802/&#34;&gt;map_pages&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;Lockdep&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&#34;write-protect-for-shared-page&#34;&gt;Write protect for shared page&lt;/h3&gt;
 
-&lt;h1 id=&#34;kasan&#34;&gt;kasan&lt;/h1&gt;
+&lt;p&gt;do_wp_page-&amp;gt; wp_page_reuse&lt;br /&gt;
+[PATCH] mm: tracking shared dirty pages - d08b3851da41d0ee60851f2c75b118e1f7a5fc89&lt;/p&gt;
 
-&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o-b-ipc-using-a-shared-file-mapping&#34;&gt;File shared mappings - a) Memory-mapped I/O, b)IPC using a shared file mapping&lt;/h2&gt;
 
-&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
+&lt;p&gt;file page: i_mmap&lt;/p&gt;
 
-&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
-free_pages_prepare posion&lt;/p&gt;
+&lt;h1 id=&#34;summary&#34;&gt;Summary&lt;/h1&gt;
+
+&lt;p&gt;mapping:  anon &amp;amp; private, anon&lt;br /&gt;
+from: anonymous page, file-backing&lt;br /&gt;
+to: swap area, file on the disk&lt;br /&gt;
+rmap:&lt;br /&gt;
+lru:&lt;br /&gt;
+cache: swap cache, page cache&lt;br /&gt;
+read:&lt;br /&gt;
+write:&lt;br /&gt;
+backend: swap area, disk&lt;br /&gt;
+PageAnon:       f&amp;amp;p, a&amp;amp;p&lt;br /&gt;
+!page_is_file_cache:    f&amp;amp;p, a&amp;amp;p, a&amp;amp;s&lt;/p&gt;
+
+&lt;h2 id=&#34;swap&#34;&gt;swap&lt;/h2&gt;
+
+&lt;p&gt;systemd-&amp;gt;swapon-&amp;gt;sys_swapon&lt;br /&gt;
+&amp;amp;def_blk_fops&lt;/p&gt;
+
+&lt;p&gt;do_shared_fault&lt;br /&gt;
+shmem_fault&lt;br /&gt;
+shmem_alloc_and_acct_page&lt;/p&gt;
+
+&lt;p&gt;swap in&lt;br /&gt;
+swapin_readahead&lt;br /&gt;
+swap_readpage&lt;br /&gt;
+swap_page_sector&lt;/p&gt;
+
+&lt;h2 id=&#34;process-of-swap&#34;&gt;process of swap&lt;/h2&gt;
+
+&lt;h3 id=&#34;swapping-out-pages&#34;&gt;Swapping out pages&lt;/h3&gt;
+
+&lt;p&gt;lru -&amp;gt; swap cache -&amp;gt; updating pte with try to unmap -&amp;gt; write page into swap area -&amp;gt; delete_from_swap_cache()&lt;br /&gt;
+shrink_page_list&lt;br /&gt;
+key commit:&lt;br /&gt;
+mm: cma: discard clean pages during contiguous allocation instead of migration - 02c6de8d757cb32c0829a45d81c3dfcbcafd998b&lt;br /&gt;
+mm: reclaim MADV_FREE pages - 802a3a92ad7ac0b9be9df229dee530a1f0a8039b check mark_page_lazyfree&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/590693/&#34;&gt;mm: support madvise(MADV_FREE)&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;swapping-in-pages&#34;&gt;Swapping in pages&lt;/h3&gt;
+
+&lt;h2 id=&#34;fork&#34;&gt;fork&lt;/h2&gt;
+
+&lt;h2 id=&#34;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&#34;&gt;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&lt;/h2&gt;
 </description>
     </item>
     
@@ -904,126 +1023,263 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
       <guid>http://firoyang.org/cs/fs/</guid>
       <description>
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.fieldses.org/~bfields/kernel/vfs.txt&#34;&gt;VFS notes&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148&#34;&gt;Linux: Replacing atime With relatime&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/&#34;&gt;Why is Linux&amp;rsquo;s filesystem designed as a single directory tree?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/questions/5376116/design-a-file-system&#34;&gt;Design a file system&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.samba.org/samba/samba/ftp/cifs-cvs/ols2006-fs-tutorial-smf.pdf&#34;&gt;Linux Filesystems in 21 days 45 minutes&lt;/a&gt;&lt;br /&gt;
+Documentation/filesystems/vfs.txt&lt;br /&gt;
+&lt;a href=&#34;https://unix.stackexchange.com/a/265680/16335&#34;&gt;Why does open before read/write?&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;naming-flaw&#34;&gt;Naming flaw&lt;/h1&gt;
+&lt;h1 id=&#34;init-rootfs&#34;&gt;Init rootfs&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.win.tue.nl/~aeb/linux/lk/lk-8.html&#34;&gt;https://www.win.tue.nl/~aeb/linux/lk/lk-8.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;init_mount_tree&lt;br /&gt;
+and sys_chroot&lt;/p&gt;
 
-&lt;h1 id=&#34;fs-hacks&#34;&gt;fs hacks&lt;/h1&gt;
+&lt;h1 id=&#34;mkfs-ext2&#34;&gt;?? mkfs.ext2&lt;/h1&gt;
 
-&lt;p&gt;To get the full path call dentry_path_raw(filp-&amp;gt;f_path.dentry,buf,buflen).&lt;/p&gt;
+&lt;p&gt;e2fsprog&lt;/p&gt;
 
-&lt;h1 id=&#34;everything-is-a-file&#34;&gt;Everything is a file&lt;/h1&gt;
+&lt;h1 id=&#34;vfs-and-ops&#34;&gt;VFS and Ops&lt;/h1&gt;
+
+&lt;h2 id=&#34;principles&#34;&gt;Principles&lt;/h2&gt;
+
+&lt;p&gt;Layering&lt;br /&gt;
+Abstraction&lt;br /&gt;
+Object-oriented programming&lt;br /&gt;
+Performance: translation cache: decache&lt;br /&gt;
+Onset/nuclus/coda: KISS&lt;/p&gt;
+
+&lt;h2 id=&#34;tasks&#34;&gt;tasks&lt;/h2&gt;
+
+&lt;p&gt;mount&lt;br /&gt;
+content operations: i_fop&lt;br /&gt;
+dirent operations: i_op lookup, create, remove&lt;/p&gt;
+
+&lt;h2 id=&#34;app&#34;&gt;app&lt;/h2&gt;
+
+&lt;p&gt;file descriptor&lt;br /&gt;
+1. cache the translation from full path to inode&lt;br /&gt;
+2. onset-operation cache;&lt;/p&gt;
+
+&lt;h2 id=&#34;vfs&#34;&gt;vfs&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;lookup interpreatation&lt;br /&gt;
+decach layer dentry name interpretation cache&lt;br /&gt;
+inode-&amp;gt; lookup&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;create&lt;br /&gt;
+func: lookup_open&lt;br /&gt;
+lookup -&amp;gt; inode-&amp;gt; create&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;remove&lt;br /&gt;
+unlink&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;content operations - read/write&lt;br /&gt;
+file: operation cache&lt;/p&gt;
+
+&lt;h2 id=&#34;fs&#34;&gt;fs&lt;/h2&gt;
+
+&lt;p&gt;inode layer&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;fs-and-ops&#34;&gt;FS and Ops&lt;/h1&gt;
+
+&lt;h2 id=&#34;tasks-1&#34;&gt;Tasks&lt;/h2&gt;
+
+&lt;p&gt;Alloc an inode&lt;br /&gt;
+Remove an inode&lt;br /&gt;
+Read the content of an inode&lt;br /&gt;
+Write contents of an inode&lt;/p&gt;
+
+&lt;h2 id=&#34;principles-1&#34;&gt;Principles&lt;/h2&gt;
+
+&lt;p&gt;Layering&lt;br /&gt;
+Performance: page cache&lt;/p&gt;
+
+&lt;h2 id=&#34;thinking-over&#34;&gt;Thinking over&lt;/h2&gt;
+
+&lt;p&gt;Backdev info&lt;br /&gt;
+FS format&lt;br /&gt;
+inode content space index&lt;/p&gt;
+
+&lt;h2 id=&#34;fs-1&#34;&gt;FS&lt;/h2&gt;
+
+&lt;p&gt;Read the first block&lt;br /&gt;
+buffer head:hard drive locations and sizes; memory addr&lt;br /&gt;
+alloc an inode: linked to parent and mark parent dirty in memory, then write to disk&lt;br /&gt;
+alloc spare space: record the locations of the spare space in inode&lt;br /&gt;
+write the dirty space: user the buffer head record the locations&lt;br /&gt;
+* page cache&lt;br /&gt;
+address_space a_ops&lt;br /&gt;
+page size vs block size&lt;br /&gt;
+VMA: process map a whole page and use vma to descirbe it.&lt;br /&gt;
+but if write overflow? the adjacent  buffer head will corrupt.&lt;br /&gt;
+* block io&lt;br /&gt;
+buffer head: unite 512&lt;/p&gt;
+
+&lt;h3 id=&#34;fs-block-size&#34;&gt;FS block size&lt;/h3&gt;
+
+&lt;p&gt;blockdev &amp;ndash;getbsz /dev/sda1&lt;br /&gt;
+4096&lt;br /&gt;
+sudo tune2fs -l /dev/sda1 | grep size&lt;/p&gt;
+
+&lt;h2 id=&#34;hard-drive-driver&#34;&gt;Hard drive driver&lt;/h2&gt;
+
+&lt;p&gt;Parameters: locations and size&lt;br /&gt;
+Read content from disk&lt;br /&gt;
+Write content form disk&lt;/p&gt;
+
+&lt;h1 id=&#34;buffer-head&#34;&gt;buffer head&lt;/h1&gt;
+
+&lt;p&gt;__getblk_slow&lt;br /&gt;
+grow_buffers&lt;br /&gt;
+grow_dev_page&lt;br /&gt;
+alloc_page_buffers&lt;/p&gt;
+
+&lt;h1 id=&#34;fs-format&#34;&gt;FS format&lt;/h1&gt;
+
+&lt;p&gt;fs-sb; fs-inode space; Spare space&lt;br /&gt;
+The hierarchy of inode is mantained linked lists.&lt;/p&gt;
+
+&lt;h1 id=&#34;inode-hashtable&#34;&gt;inode_hashtable&lt;/h1&gt;
+
+&lt;p&gt;ext2_iget&lt;br /&gt;
+{&lt;br /&gt;
+    inode = iget_locked(sb, ino);&lt;br /&gt;
+    {&lt;br /&gt;
+        head = inode_hashtable + hash(sb, ino)&lt;br /&gt;
+        if !inode &amp;amp;&amp;amp; alloc_inode(sb)&lt;br /&gt;
+        then&lt;br /&gt;
+            hlist_add_head(&amp;amp;inode-&amp;gt;i_hash, head);&lt;br /&gt;
+        fi&lt;br /&gt;
+    }&lt;/p&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h1 id=&#34;no-hashtable&#34;&gt;no hashtable&lt;/h1&gt;
+
+&lt;p&gt;ramfs_get_inode&lt;br /&gt;
+{&lt;br /&gt;
+    new_inode-&amp;gt;new_inode_pseudo-&amp;gt; alloc_inode&lt;br /&gt;
+    still inode_sb_list_add&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;dentry&#34;&gt;dentry&lt;/h1&gt;
+
+&lt;p&gt;d_alloc()&lt;br /&gt;
+To get the full path call dentry_path_raw(filp-&amp;gt;f_path.dentry,buf,buflen).&lt;/p&gt;
+
+&lt;h1 id=&#34;struct-path&#34;&gt;struct path&lt;/h1&gt;
+
+&lt;p&gt;get the meaning of this struct by looking d_path().It includes the two endpoints of a path which are mnt and dentry.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/206758/&#34;&gt;Upcoming API change: struct path&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;mount&#34;&gt;mount&lt;/h1&gt;
+
+&lt;p&gt;do_new_mount&lt;br /&gt;
+{&lt;br /&gt;
+    vfs_kern_mount&lt;br /&gt;
+    {&lt;br /&gt;
+        root = mount_fs -&amp;gt; ramfs_mount -&amp;gt; ramfs_fill_super&lt;br /&gt;
+        {&lt;br /&gt;
+            ramfs_get_inode&lt;br /&gt;
+            sb-&amp;gt;s_root = d_make_root(inode);&lt;br /&gt;
+        }&lt;br /&gt;
+        mnt-&amp;gt;mnt.mnt_root = root;&lt;br /&gt;
+    }&lt;br /&gt;
+    do_add_mount&lt;br /&gt;
+    {&lt;br /&gt;
+        lock_mount&lt;br /&gt;
+        {&lt;br /&gt;
+            mnt = lookup_mnt(path);&lt;br /&gt;
+            retry until !mnt, then create new mp&lt;br /&gt;
+        }&lt;br /&gt;
+        graft_tree-&amp;gt;attach_recursive_mnt&lt;br /&gt;
+        {&lt;br /&gt;
+            get_mountpoint-&amp;gt;d_set_mounted&lt;br /&gt;
+            mnt_set_mountpoint&lt;br /&gt;
+            commit_tree -&amp;gt; child mnt.mnt_hash -&amp;gt; mount_hashtable&lt;br /&gt;
+        }&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;p&gt;Check follow_managed&lt;br /&gt;
+* for DCACHE_MOUNTED in get_mountpoint&lt;br /&gt;
+Amnt: Protect the mountpoint hashtable with mount_lock - 3895dbf8985f656675b5bde610723a29cbce3fa7&lt;br /&gt;
+* monutpoint&lt;br /&gt;
+get rid of full-hash scan on detaching vfsmounts - 84d17192d2afd52aeba88c71ae4959a015f56a38&lt;br /&gt;
+* d_mounted -&amp;gt; DCACHE_MOUNTED&lt;br /&gt;
+    The mounted state of a dentry is only used to speculatively take a look in the&lt;br /&gt;
+    mount hash table if it is set &amp;ndash; before following the mount, vfsmount lock is&lt;br /&gt;
+    taken and mount re-checked without races.&lt;br /&gt;
+fs: dcache remove d_mounted - 5f57cbcc02cf18f6b22ef4066bb10afeb8f930ff&lt;/p&gt;
+
+&lt;h1 id=&#34;open&#34;&gt;open&lt;/h1&gt;
+
+&lt;p&gt;sys_open -&amp;gt;&lt;br /&gt;
+    path_init()&lt;br /&gt;
+    1. get start point current-&amp;gt;fs{root, pwd}&lt;br /&gt;
+    2. link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)&lt;br /&gt;
+    do_last()&lt;br /&gt;
+    1. dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;br /&gt;
+    2. file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;/p&gt;
+
+&lt;h2 id=&#34;open-flags&#34;&gt;open flags&lt;/h2&gt;
+
+&lt;p&gt;Check open_flags.c&lt;/p&gt;
+
+&lt;h1 id=&#34;write&#34;&gt;write&lt;/h1&gt;
+
+&lt;p&gt;sys_write -&amp;gt; file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;/p&gt;
+
+&lt;h1 id=&#34;file-mode-bits&#34;&gt;file mode bits&lt;/h1&gt;
+
+&lt;p&gt;man chmod&lt;/p&gt;
+
+&lt;h2 id=&#34;t-vs-t&#34;&gt;T vs t&lt;/h2&gt;
+
+&lt;p&gt;只有owner 和root才能删除这个文件, 用于/tmp&lt;br /&gt;
+touch /tmp/firo; ls -l /tmp/firo&lt;br /&gt;
+-rw-rw-r&amp;ndash; 1 firo firo 0 Sep 24 21:20 /tmp/firo&lt;br /&gt;
+chmod +t /tmp/firo; ls -l /tmp/firo&lt;br /&gt;
+-rw-rw-r-T 1 firo firo 0 Sep 24 21:20 /tmp/firo&lt;br /&gt;
+chmod +x /tmp/firo; ls -l /tmp/firo&lt;br /&gt;
+-rwxrwxr-t 1 firo firo 0 Sep 24 21:20 /tmp/firo&lt;/p&gt;
+
+&lt;h2 id=&#34;x&#34;&gt;?? X&lt;/h2&gt;
+
+&lt;h1 id=&#34;design-a-filesystem&#34;&gt;Design a filesystem&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/questions/5376116/design-a-file-system&#34;&gt;Design a file system&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/&#34;&gt;Why is Linux&amp;rsquo;s filesystem designed as a single directory tree?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;set-vs-directory&#34;&gt;Set vs directory&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://math.stackexchange.com/a/854656/38596&#34;&gt;What is the meaning/purpose of finding the “foundations of mathematics”?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;linus-on-atime&#34;&gt;Linus on atime&lt;/h2&gt;
+
+&lt;p&gt;perhaps the most stupid Unix design idea of all times,&amp;rdquo; adding: &amp;ldquo;Think about this a bit: &amp;lsquo;For every file that is read from the disk, lets do a &amp;hellip; write to the disk! And, for every file that is already cached and which we read from the cache &amp;hellip; do a write to the disk!&amp;rsquo;&amp;rdquo; He further emphasized the performance impact thus:&lt;br /&gt;
+&lt;a href=&#34;http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148&#34;&gt;Linux: Replacing atime With relatime&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;linus-on-everything-is-a-file&#34;&gt;Linus on  Everything is a file&lt;/h2&gt;
 
 &lt;p&gt;The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some&lt;br /&gt;
 random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&lt;br /&gt;
 have nothing to do with each other), but the fact that you can use common&lt;br /&gt;
 tools to operate on different things. - &lt;a href=&#34;http://yarchive.net/comp/linux/everything_is_file.html&#34;&gt;Linus&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;file-and-directory&#34;&gt;File and directory&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://math.stackexchange.com/a/854656/38596&#34;&gt;What is the meaning/purpose of finding the “foundations of mathematics”?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;file-operations-onset-nucleus-coda&#34;&gt;File operations - onset, nucleus, coda&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://unix.stackexchange.com/questions/265620/on-unix-systems-why-do-we-have-to-explicitly-open-and-close-files-to-be/265621&#34;&gt;On Unix systems, why do we have to explicitly &lt;code&gt;open()&lt;/code&gt; and &lt;code&gt;close()&lt;/code&gt; files to be able to &lt;code&gt;read()&lt;/code&gt; or &lt;code&gt;write()&lt;/code&gt; them?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;onset-the-preparing-open&#34;&gt;onset - the preparing open()&lt;/h2&gt;
-
-&lt;p&gt;Prepare the object for processing.&lt;br /&gt;
-* Name to inode.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;make dentry&lt;br /&gt;
-d_alloc() alloc new dentry&lt;br /&gt;
-parent_entry-&amp;gt;d_inode-&amp;gt;i_op-&amp;gt;lookup=ext2_lookup()-&amp;gt; ext2_iget() -&amp;gt; use raw_inode make inode-&amp;gt;&lt;br /&gt;
-set inode to dentry&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Hacks&lt;br /&gt;
-I suddenly find that a good way to understand fs in kernel is to manupulate a small and complete fs, like ramfs or tmpfs.&lt;/p&gt;
-
-&lt;p&gt;#VFS&lt;br /&gt;
-##Common concepts&lt;br /&gt;
-* VFS:Common fs interface plus fs anstraction layer!&lt;/p&gt;
-
-&lt;h2 id=&#34;unix-fs-related-abstractions-file-directory-entries-inodes-and-mount-points&#34;&gt;Unix fs-related abstractions: file, directory entries, inodes, and mount points.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Filesytem: a hierarchial storage of data adhering to a specific structure.&lt;br /&gt;
-In unix, fs are mounted at a specific mount point in global hierarchy known as a namespace.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file: and ordered string of bytes.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;directory: analogous to a folder and usally contains related files.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry: Each component of a path is called a directory entry.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inode: Unix separate the concept of a file from any associated infomation(file metadata) inode!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;supreblock: a data structure containing information about the filesystem as a whole.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;vfs-primary-objects-superblock-inode-dentry-file&#34;&gt;VFS primary objects: superblock, inode, dentry, file.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;supreblock: a specific mounted filesystem.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;inode: unit for fs. all the information needed by the kernel to manipulate a file or directory.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry: accelerate access fs, dcache! a single component of a path, certainly include &lt;em&gt;regular&lt;/em&gt; file.&lt;br /&gt;
-VFS treats directory as non-exist &lt;em&gt;normal&lt;/em&gt; file. directory and dentry is not the same at all, different congitive level!&lt;br /&gt;
-In VFS, file, dentry, and inode all represents dir and file and others, in others words struct file can stand for a dir!&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;file: an open normal file as associated with a process.&lt;/p&gt;
-
-&lt;h2 id=&#34;init-rootfs&#34;&gt;Init Rootfs&lt;/h2&gt;
-
-&lt;p&gt;init_mount_tree&lt;br /&gt;
-and sys_chroot&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;##Step of how to use ext2 fs&lt;br /&gt;
-* Register a fs type in kernel.&lt;br /&gt;
-struct file_system_type: basic fs driver codes!&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;mkfs.ext2&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;shell mount -&amp;gt; sys_mount -&amp;gt; file_system_type-&amp;gt;mount =&amp;gt; root dentry and dentry-&amp;gt;d_sb!&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;sys_open -&amp;gt;&lt;br /&gt;
-path_init()&lt;br /&gt;
-
-&lt;ol&gt;
-&lt;li&gt;get start point current-&amp;gt;fs{root, pwd}&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)&lt;br /&gt;
-do_last()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;br /&gt;&lt;/li&gt;
-&lt;/ol&gt;&lt;/li&gt;
-&lt;li&gt;sys_write -&amp;gt;&lt;br /&gt;
-file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;h2 id=&#34;forbid-ln&#34;&gt;forbid ln&lt;/h2&gt;
+&lt;h2 id=&#34;hard-link&#34;&gt;Hard Link&lt;/h2&gt;
 
 &lt;p&gt;hard link to directory, recursive&lt;br /&gt;
 hard link to file accross partitions, may led confilict with inode number.&lt;/p&gt;
 
-&lt;h2 id=&#34;stick-bit&#34;&gt;stick bit&lt;/h2&gt;
+&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;
 
-&lt;p&gt;chmod +t&lt;br /&gt;
-1777&lt;br /&gt;
-只有owner 和root才能删除这个文件, 用于/tmp&lt;/p&gt;
-
-&lt;h2 id=&#34;time-of-file&#34;&gt;time of file&lt;/h2&gt;
-
-&lt;h3 id=&#34;atime&#34;&gt;atime&lt;/h3&gt;
-
-&lt;p&gt;perhaps the most stupid Unix design idea of all times,&amp;rdquo; adding: &amp;ldquo;[T]hink about this a bit: &amp;lsquo;For every file that is read from the disk, lets do a &amp;hellip; write to the disk! And, for every file that is already cached and which we read from the cache &amp;hellip; do a write to the disk!&amp;rsquo;&amp;rdquo; He further emphasized the performance impact thus:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://unix.stackexchange.com/questions/265620/on-unix-systems-why-do-we-have-to-explicitly-open-and-close-files-to-be/265621&#34;&gt;On Unix systems, why do we have to explicitly &lt;code&gt;open()&lt;/code&gt; and &lt;code&gt;close()&lt;/code&gt; files to be able to &lt;code&gt;read()&lt;/code&gt; or &lt;code&gt;write()&lt;/code&gt; them?&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1235,12 +1491,15 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
       <guid>http://firoyang.org/cs/synchronization/</guid>
       <description>
 
+&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://yarchive.net/comp/linux/recursive_locks.html&#34;&gt;Linus on recursive lock&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;hp&#34;&gt;HP&lt;/h1&gt;
 
-&lt;p&gt;A program is synchro-&lt;br /&gt;
-nized if all accesses to shared data are ordered by synchronization operations.&lt;br /&gt;
-A&lt;br /&gt;
-data reference is ordered by a synchronization operation if, in every possible&lt;br /&gt;
+&lt;p&gt;A program is synchronized if all accesses to shared data are ordered by synchronization operations.&lt;br /&gt;
+A data reference is ordered by a synchronization operation if, in every possible&lt;br /&gt;
 execution, a write of a variable by one processor and an access (either a read or a&lt;br /&gt;
 write) of that variable by another processor are separated by a pair of synchroni-&lt;br /&gt;
 zation operations, one executed after the write by the writing processor and one&lt;br /&gt;
@@ -1248,11 +1507,9 @@ executed before the access by the second processor???. Cases where variables may
 be updated without ordering by synchronization are called data races because the&lt;br /&gt;
 execution outcome depends on the relative speed of the processors, and, like&lt;br /&gt;
 races in hardware design, the outcome is unpredictable, which leads to another&lt;br /&gt;
-name for synchronized programs: data-race-free.&lt;/p&gt;
-
-&lt;p&gt;#Reference&lt;br /&gt;
+name for synchronized programs: data-race-free.&lt;br /&gt;
+#Reference&lt;br /&gt;
 Perfbook&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://queue.acm.org/detail.cfm?id=2698990&#34;&gt;Scalability Techniques for Practical Synchronization Primitives&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf&#34;&gt;test-and-set&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://people.cs.clemson.edu/~mark/synch.html&#34;&gt;Synchronization Instructions&lt;/a&gt;&lt;/p&gt;
@@ -1299,36 +1556,146 @@ Dining philosophers problem&lt;br /&gt;
 * Prioirty inversion&lt;br /&gt;
 * Busy waiting&lt;/p&gt;
 
-&lt;h1 id=&#34;mutual-exclusion&#34;&gt;Mutual exclusion&lt;/h1&gt;
+&lt;h1 id=&#34;ref-1&#34;&gt;ref&lt;/h1&gt;
 
-&lt;h2 id=&#34;spinlock-unsleepable-mutex&#34;&gt;spinlock - unsleepable mutex&lt;/h2&gt;
+&lt;p&gt;0xax&lt;br /&gt;
+Waiman Long: Recent Locking Improvements in the Linux Kernel&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;Linux 内核的排队自旋锁FIFO Ticket Spinlock&lt;/a&gt;&lt;br /&gt;
-spinlock保护的critical section执行时间短且不睡眠, 副产品就是避免了&lt;br /&gt;
-context switch, 相对semaphore效率高.&lt;br /&gt;
-显然对于little critical section 使用semaphore而不是spinlock,将带来性能&lt;br /&gt;
-上的巨大损耗.&lt;br /&gt;
-* rw_lock&lt;/p&gt;
+&lt;h1 id=&#34;memory-barier&#34;&gt;Memory barier&lt;/h1&gt;
 
-&lt;h2 id=&#34;mutex&#34;&gt;Mutex&lt;/h2&gt;
+&lt;h1 id=&#34;per-cpu&#34;&gt;Per-CPU&lt;/h1&gt;
 
-&lt;p&gt;Monitor lock before sleep.&lt;/p&gt;
+&lt;h1 id=&#34;atomic&#34;&gt;Atomic&lt;/h1&gt;
 
-&lt;h2 id=&#34;rcu-lockless&#34;&gt;RCU &amp;ndash; lockless&lt;/h2&gt;
+&lt;h2 id=&#34;x86-locked-atomic-operations&#34;&gt;x86 locked atomic operations:&lt;/h2&gt;
 
-&lt;p&gt;Check The Journey to RCU for more details&lt;/p&gt;
+&lt;p&gt;v3a chapter 8&lt;br /&gt;
+* Guaranteed atomic operations&lt;br /&gt;
+* Bus locking, using the LOCK# signal and the LOCK instruction prefix&lt;br /&gt;
+* ??Cache coherency protocols that ensure that atomic operations can be carried out on cached data structures(cache lock); this mechanism is present in the Pentium 4, Intel Xeon, and P6 family processors&lt;/p&gt;
 
-&lt;h1 id=&#34;cooperative&#34;&gt;Cooperative&lt;/h1&gt;
+&lt;h2 id=&#34;uniprocessor&#34;&gt;Uniprocessor&lt;/h2&gt;
 
-&lt;h2 id=&#34;semaphore&#34;&gt;semaphore&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://wiki.osdev.org/Atomic_operation#Single_processor-single_core_systems&#34;&gt;all signle instructions is atomic, including cmpxchg&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/a/39358907/1025001&#34;&gt;Anything is atomic if you do it with interrupts disabled on a UP system&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;it was implement based on spinlock.&lt;br /&gt;
+&lt;h2 id=&#34;smp&#34;&gt;SMP&lt;/h2&gt;
+
+&lt;p&gt;cmpxchg isn&amp;rsquo;t atomic; it needs LOCK prefix.&lt;/p&gt;
+
+&lt;h1 id=&#34;examples&#34;&gt;Examples&lt;/h1&gt;
+
+&lt;p&gt;x86 inc isn&amp;rsquo;t atomic; check atomic_inc.c&lt;/p&gt;
+
+&lt;h2 id=&#34;rmw&#34;&gt;RMW&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://preshing.com/20130618/atomic-vs-non-atomic-operations/&#34;&gt;Atomic vs. Non-Atomic Operations&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;misalgined-access&#34;&gt;misalgined access&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://support.amd.com/TechDocs/24593.pdf#page=224&#34;&gt;AMD 7.3.2 Access Atomicity&lt;/a&gt;&lt;br /&gt;
+Also check Intel 8.1.1&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/36624881/why-is-integer-assignment-on-a-naturally-aligned-variable-atomic-on-x86/36685056#36685056&#34;&gt;naturally-aligned  vs atomic vs cache&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;why-cas&#34;&gt;Why CAS?&lt;/h2&gt;
+
+&lt;h2 id=&#34;cache-locking&#34;&gt;Cache locking&lt;/h2&gt;
+
+&lt;p&gt;v3a: 8.1.4&lt;br /&gt;
+Effects of a LOCK Operation on Internal Processor Caches&lt;/p&gt;
+
+&lt;h2 id=&#34;cmpxchg-vs-xchg-on-lock-prefix-implicit&#34;&gt;cmpxchg vs xchg on LOCK prefix implicit&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/a/44273130/1025001&#34;&gt;Check Linux SMP alternatives&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;interrupt-exception-vs-non-atomic-operation&#34;&gt;interrupt/exception vs non-atomic operation&lt;/h2&gt;
+
+&lt;p&gt;v3a 6.6&lt;br /&gt;
+To allow the restarting of program or task following the handling of an exception or an interrupt, all exceptions&lt;br /&gt;
+(except aborts) are guaranteed to report exceptions on an instruction boundary. All interrupts are guaranteed to be&lt;br /&gt;
+taken on an instruction boundary.&lt;/p&gt;
+
+&lt;h2 id=&#34;two-processor-writing-to-the-same-address&#34;&gt;Two processor writing to the same address&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.quora.com/What-happens-when-two-CPU-cores-require-write-access-to-the-same-memory-address-at-the-same-exact-moment&#34;&gt;What happens when two CPU cores require write access to the same memory address at the same exact moment?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.quora.com/When-an-interrupt-occurs-what-happens-to-the-process-that-is-currently-getting-executed&#34;&gt;When an interrupt occurs, what happens to the process that is currently getting executed?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;local-interrupt-disabling&#34;&gt;Local Interrupt Disabling&lt;/h1&gt;
+
+&lt;h1 id=&#34;disabling-and-enabling-deferrable-functions&#34;&gt;Disabling and Enabling Deferrable Functions&lt;/h1&gt;
+
+&lt;h1 id=&#34;spinlock-unsleepable-mutex&#34;&gt;Spinlock - unsleepable mutex&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/590243/&#34;&gt;MCS locks and qspinlocks&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.quora.com/How-does-an-MCS-lock-work&#34;&gt;MCS locks on quora&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;bit-spinlock&#34;&gt;Bit spinlock&lt;/h2&gt;
+
+&lt;p&gt;include/linux/bit_spinlock.h&lt;/p&gt;
+
+&lt;h1 id=&#34;optimistic-spin-queue&#34;&gt;Optimistic spin queue&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/604130/&#34;&gt;Cancellable MCS spinlock rework&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://events17.linuxfoundation.org/sites/events/files/slides/linuxcon-2014-locking-final.pdf&#34;&gt;An Overview of Kernel Lock Improvements&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;mutex&#34;&gt;Mutex&lt;/h1&gt;
+
+&lt;p&gt;Monitor lock before sleep.&lt;br /&gt;
+Faireness: queue, rt mutex&lt;/p&gt;
+
+&lt;h1 id=&#34;rw-lock&#34;&gt;RW Lock&lt;/h1&gt;
+
+&lt;h2 id=&#34;rwlock&#34;&gt;rwlock&lt;/h2&gt;
+
+&lt;p&gt;include/linux/rwlock.h&lt;br /&gt;
+_QW_WMASK&lt;br /&gt;
+_QW_WAITING&lt;br /&gt;
+queued_read_trylock&lt;br /&gt;
+queued_read_lock&lt;/p&gt;
+
+&lt;h1 id=&#34;semaphore&#34;&gt;Semaphore&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://yarchive.net/comp/linux/semaphores.html&#34;&gt;Linus on semaphore&lt;/a&gt;&lt;br /&gt;
+ 150    213  kernel/printk/printk.c &amp;lt;&lt;down_console_sem&gt;&amp;gt;&lt;br /&gt;
+             down(&amp;amp;console_sem);&lt;br /&gt;
+ 151    231  net/core/netpoll.c &amp;lt;&lt;netpoll_poll_disable&gt;&amp;gt;&lt;br /&gt;
+             down(&amp;amp;ni-&amp;gt;dev_lock);&lt;br /&gt;
+it was implement based on spinlock.&lt;br /&gt;
 it can have more than one holder at any time (the number decided at initialization time),&lt;br /&gt;
 although it is most commonly used as a single-holder lock (a mutex).&lt;br /&gt;
 if you can not get a semaphore, your task will put itself on the wait queue, and be woken&lt;br /&gt;
 up the semaphore is released.&lt;br /&gt;
 sleepable&lt;br /&gt;
-preemptable&lt;/p&gt;
+preemptable&lt;br /&gt;
+* xadd vs spinlock&lt;/p&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;%k1 %w1 in kernel up_write&lt;br /&gt;
+&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#x86Operandmodifiers&#34;&gt;https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#x86Operandmodifiers&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/34459803/in-gnu-c-inline-asm-whatre-the-modifiers-for-xmm-ymm-zmm-for-a-single-operand?rq=1&#34;&gt;https://stackoverflow.com/questions/34459803/in-gnu-c-inline-asm-whatre-the-modifiers-for-xmm-ymm-zmm-for-a-single-operand?rq=1&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;rw-semaphore&#34;&gt;RW semaphore&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/598577/&#34;&gt;rwsem: Support optimistic spinning&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-lockless&#34;&gt;RCU &amp;ndash; lockless&lt;/h1&gt;
+
+&lt;p&gt;Check The Journey to RCU for more details&lt;/p&gt;
+
+&lt;h1 id=&#34;examples-1&#34;&gt;examples&lt;/h1&gt;
+
+&lt;p&gt;list_add_tail_rcu(&amp;amp;p-&amp;gt;tasks, &amp;amp;init_task.tasks); in copy_process&lt;br /&gt;
+no rcu read block and unlock&lt;/p&gt;
+
+&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;
+
+&lt;p&gt;##When to save irq rather than just disable irq, recusive?&lt;br /&gt;
+local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 </description>
     </item>
     
@@ -1339,6 +1706,89 @@ preemptable&lt;/p&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/mm/</guid>
       <description>
+
+&lt;p&gt;#Page swap&lt;br /&gt;
+PG_swapcace means page is in the swap cache.&lt;br /&gt;
+PG_swapbacked means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.&lt;/p&gt;
+
+&lt;h1 id=&#34;compact&#34;&gt;Compact&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.zhihu.com/question/59053036&#34;&gt;https://www.zhihu.com/question/59053036&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;format-of-page-table-entry&#34;&gt;Format of Page-Table entry&lt;/h1&gt;
+
+&lt;p&gt;v3a: P121:&lt;br /&gt;
+5 (A) Accessed; indicates whether software has accessed the 4-KByte page referenced by this entry (see Section 4.8)&lt;br /&gt;
+6 (D) Dirty; indicates whether software has written to the 4-KByte page referenced by this entry (see Section 4.8)&lt;br /&gt;
+Check this _PAGE_BIT_ACCESSED&lt;/p&gt;
+
+&lt;h1 id=&#34;page-flags&#34;&gt;Page flags&lt;/h1&gt;
+
+&lt;p&gt;PG_active: 表示此页当前是否活跃，当放到或者准备放到活动lru链表时，被置位&lt;br /&gt;
+PG_referenced: 表示此页最近是否被访问，每次页面访问都会被置位&lt;br /&gt;
+PG_lru: 表示此页是处于lru链表中的&lt;br /&gt;
+PG_mlocked: 表示此页被mlock()锁在内存中，禁止换出和释放&lt;br /&gt;
+PG_swapbacked: 表示此页依靠swap，可能是进程的匿名页(堆、栈、数据段)，匿名mmap共享内存映射，shmem共享内存映射&lt;/p&gt;
+
+&lt;h1 id=&#34;struct-page&#34;&gt;struct page&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;page.lru&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;lruvec&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;buddy system&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;slab&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;isolate list&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;page.index&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;file memory mapped page: index is offset in a file&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Anonymous page: linear_page_index in &lt;strong&gt;page_set_anon_rmap()&lt;/strong&gt;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;tlb&#34;&gt;TLB&lt;/h1&gt;
+
+&lt;p&gt;spurious_fault:a stale TLB entry&lt;/p&gt;
+
+&lt;h1 id=&#34;kprobes&#34;&gt;Kprobes&lt;/h1&gt;
+
+&lt;p&gt;kprobes_fault&lt;/p&gt;
+
+&lt;h1 id=&#34;leave-questions-open&#34;&gt;Leave questions open&lt;/h1&gt;
+
+&lt;p&gt;kmmio probe in do_page_fault&lt;br /&gt;
+* pte&lt;br /&gt;
+1216         if (error_code &amp;amp; PF_WRITE) {&lt;br /&gt;
+1217                 /* write, present and write, not present: */&lt;br /&gt;
+1218                 if (unlikely(!(vma-&amp;gt;vm_flags &amp;amp; VM_WRITE)))&lt;br /&gt;
+* madvise&lt;br /&gt;
+* pte_present ?&lt;br /&gt;
+* bug?&lt;br /&gt;
+mm/memory.c:do_anonymous_page: page_add_new_anon_rmap(page, vma, vmf-&amp;gt;address, false);&lt;br /&gt;
+* userfd&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=xhOBc5L_Hkk&#34;&gt;https://www.youtube.com/watch?v=xhOBc5L_Hkk&lt;/a&gt;&lt;br /&gt;
+* Special sections in Linux binaries&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/531148/&#34;&gt;https://lwn.net/Articles/531148/&lt;/a&gt;&lt;br /&gt;
+* COW: for malloc page&lt;br /&gt;
+are the ptes set during fork for child process?&lt;br /&gt;
+check copy_one_pte is_cow_mapping in copy_page_range in dup_mmap&lt;br /&gt;
+VM_WIPEONFORK&lt;br /&gt;
+MADV_WIPEONFORK&lt;br /&gt;
+* DAX&lt;br /&gt;
+* __shmem_file_setup dev/zero&lt;br /&gt;
+* &lt;a href=&#34;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&#34;&gt;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;hardware-bit&#34;&gt;Hardware bit&lt;/h1&gt;
+
+&lt;h1 id=&#34;data-synchronization&#34;&gt;Data synchronization&lt;/h1&gt;
+
+&lt;h1 id=&#34;process-address-space&#34;&gt;process address space&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/90311/&#34;&gt;flexible-mmap-2.6.7-D5&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Reorganizing the address space&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/&#34;&gt;Anatomy of a Program in Memory&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -1356,8 +1806,40 @@ the other thing they&amp;rsquo;re used for  is memory mapped i/o.&lt;/p&gt;
 
 &lt;h1 id=&#34;slab&#34;&gt;SLAB&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand011.html&#34;&gt;The slab allocator has three principle aims:&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2000/8/7/65&#34;&gt;Re: When to use kmem_cache_alloc&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://people.eecs.berkeley.edu/~kubitron/cs194-24/hand-outs/bonwick_slab.pdf&#34;&gt;The Slab Allocator: An Object-Caching Kernel Memory Allocator&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.usenix.org/legacy/publications/library/proceedings/bos94/full_papers/bonwick.a&#34;&gt;Text version&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://mp.weixin.qq.com/s/ragFsK_AJivOGjR47tAhHw&#34;&gt;https://mp.weixin.qq.com/s/ragFsK_AJivOGjR47tAhHw&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf&#34;&gt;https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf&lt;/a&gt;&lt;br /&gt;
+type: resource&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand011.html&#34;&gt;The slab allocator has three principle aims:&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2000/8/7/65&#34;&gt;Re: When to use kmem_cache_alloc&lt;/a&gt;&lt;br /&gt;
+shrink attr&lt;br /&gt;
+/sys/kernel/slab/iint_cache/shrink&lt;br /&gt;
+SLAB_ATTR(shrink);&lt;/p&gt;
+
+&lt;h2 id=&#34;slub&#34;&gt;slub&lt;/h2&gt;
+
+&lt;p&gt;Documentation/vm/slub.txt&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/229984/&#34;&gt;The SLUB allocator&lt;/a&gt;&lt;br /&gt;
+SLUB core - 81819f0fc8285a2a5a921c019e3e3d7b6169d225&lt;br /&gt;
+&lt;a href=&#34;https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf&#34;&gt;https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=h0VMLXavx30&#34;&gt;SLAUOB: Kernel memory allocator design and philosophy&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cnblogs.com/tolimit/p/4654109.html&#34;&gt;linux内存源码分析 - SLUB分配器概述&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.wowotech.net/memory_management/247.html&#34;&gt;http://www.wowotech.net/memory_management/247.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;slub-debug&#34;&gt;SLUB debug&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.wowotech.net/memory_management/427.html&#34;&gt;SLUB DEBUG原理&lt;/a&gt;&lt;br /&gt;
+?? Human index&lt;/p&gt;
+
+&lt;h2 id=&#34;reclaim&#34;&gt;Reclaim&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;occassions&lt;br /&gt;
+Periodical: kswapd&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
 
@@ -1455,9 +1937,7 @@ a physical page and the processes that share the page(used in swap case)&lt;/p&g
 ##Page/buffer cache&lt;br /&gt;
 struct address_space-&amp;gt;page_tree&lt;br /&gt;
 ##Page writeback&lt;br /&gt;
-data synchronization, the flush threads, pdflush&lt;br /&gt;
-##Page swap&lt;br /&gt;
-The available RAM memory in a computer is never enough to meet user needs or to always satisfy memory-intensive applications.&lt;/p&gt;
+data synchronization, the flush threads, pdflush&lt;/p&gt;
 
 &lt;p&gt;#FAQ&lt;br /&gt;
 * Where is Per-CPU variable?&lt;br /&gt;
@@ -1486,8 +1966,10 @@ Mips cpu can be aware of this address!&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;pfmemalloc &amp;ndash; skb 表示申请了紧急内存!&lt;br /&gt;
 page free&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;compound pages&lt;br /&gt;
-18fa11efc279c20af5eefff2bbe814ca067&lt;/p&gt;
+&lt;li&gt;&lt;p&gt;Compound pages&lt;br /&gt;
+18fa11efc279c20af5eefff2bbe814ca067&lt;br /&gt;
+&lt;a href=&#34;https://www.spinics.net/lists/newbies/msg41159.html&#34;&gt;https://www.spinics.net/lists/newbies/msg41159.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;https://lwn.net/Articles/619514/&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h1&gt;
 
@@ -1609,6 +2091,12 @@ free_all_bootmem-&amp;gt;free_low_memory_core_early-&amp;gt;&lt;/strong&gt;free_
 
 &lt;p&gt;build_all_zonelists: Just init zones, nothing else. But we have vm_total_pages/zone-&amp;gt;managed_pages initialized in free_all_bootmem();.&lt;br /&gt;
 page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug&lt;/p&gt;
+
+&lt;h1 id=&#34;madv&#34;&gt;Madv&lt;/h1&gt;
+
+&lt;h2 id=&#34;madv-sequential-and-reclaim&#34;&gt;MADV_SEQUENTIAL and reclaim&lt;/h2&gt;
+
+&lt;p&gt;mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c&lt;/p&gt;
 </description>
     </item>
     

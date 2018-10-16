@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="388">
+<meta itemprop="wordCount" content="434">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/net/ip/">
 
@@ -186,6 +186,23 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="route">Route</h1>
+
+<h2 id="route-1">Route</h2>
+
+<p><a href="https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux">IPv4 route lookup on Linux</a></p>
+
+<ul>
+<li>state structure<br />
+fib_info:route info<br />
+fib_config:<br /></li>
+<li>add new rule<br />
+iproute2 &hellip;-&gt;inet_rtm_newroute()-&gt;fib_new_table()-&gt;fib_hash_table()<br /></li>
+<li>Multi-time line<br />
+fib_create_info(): create a fib_info<br />
+<br /></li>
+</ul>
 
 <p>#Network layer<br />
 * Error detection, unreliable<br />
@@ -277,11 +294,21 @@ decrease the memroy and the time of search route table.</p>
 
 <p>In the Internet addressing architecture, a private network is a network that uses private IP address space.</p>
 
-<p>##IP fragmention/defragmention<br />
-iphdr-&gt;id, iphdr-&gt;frag_off<br />
+<h2 id="fragmention-defragmention">Fragmention/defragmention</h2>
+
+<p>iphdr-&gt;id, iphdr-&gt;frag_off<br />
 skb_shared_info-&gt;frag_list<br />
 ip_fragment/ip_defrag<br />
 <a href="http://tools.ietf.org/html/rfc6864">Updated Specification of the IPv4 ID Field</a></p>
+
+<h2 id="sg-io">SG IO</h2>
+
+<p>如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!<br />
+p_append_data<br />
+<a href="http://thread.gmane.org/gmane.linux.network/153666">NETIF_F_FRAGLIST and NETIF_F_SG difference</a><br />
+validate_xmit_skb()-&gt;__skb_linearize()<br />
+ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.<br />
+如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.</p>
 
 <h1 id="send">send</h1>
 

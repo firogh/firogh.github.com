@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="732">
+<meta itemprop="wordCount" content="757">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/net/tcp/">
 
@@ -186,6 +186,11 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="key-commits">Key commits</h1>
+
+<p>tcp: remove prequeue support - e7942d0633c47c791ece6afa038be9cf977226de<br />
+tcp: remove tcp_tw_recycle - 4396e46187ca5070219b81773c4e65088dac50cc</p>
 
 <h1 id="rfc">RFC</h1>
 
@@ -203,7 +208,7 @@
 
 <p><a href="https://blogs.technet.microsoft.com/networking/2009/08/12/where-do-resets-come-from-no-the-stork-does-not-bring-them/">Where do resets come from? (No, the stork does not bring them.)</a></p>
 
-<h1 id="backlog">Backlog</h1>
+<h1 id="syn-queue-and-listen-queue">Syn queue and listen queue</h1>
 
 <p><a href="http://veithen.github.io/2014/01/01/how-tcp-backlog-works-in-linux.html">How TCP backlog works in Linux</a></p>
 
@@ -286,11 +291,11 @@ physical layer link between the source and destination end systems of this data.
 
 <ul>
 <li><p>kproxy reorder<br />
-chome -&gt;syn(kproxy reocrd syn) -&gt; firoyang.org<br />
-firoyang.org -&gt;sync ack -&gt; chrome<br />
+chome -&gt; syn(kproxy reocrd syn) -&gt; firoyang.org<br />
+firoyang.org -&gt; sync ack -&gt; chrome<br />
 chrome -&gt; ack -&gt; firoyang.org<br />
-chrome -&gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&gt;nginx<br />
-nginx -&gt; tcp send fake syn ack-&gt;chrome<br />
+chrome -&gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&gt; nginx<br />
+nginx -&gt; tcp send fake syn ack-&gt; chrome<br />
 chrome -&gt; ack -&gt; nginx(then -&gt; firoyang.org)<br />
 tcp_v4_do_rcv{<br />
 sk-&gt;sk_state == TCP_ESTABLISHED<br />
@@ -299,8 +304,8 @@ len &lt;= tcp_header_len =&gt;<br />
 tcp_ack -&gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&gt; nginx<br />
 }<br />
 }<br />
-nginx-&gt;GET -&gt;firoyang.org<br />
-firoyang.org-&gt;nginx-&gt;chrome</p>
+nginx-&gt; GET -&gt; firoyang.org<br />
+firoyang.org-&gt; nginx-&gt; chrome</p>
 
 <h2 id="syn-flood">syn flood</h2>
 

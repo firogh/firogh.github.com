@@ -1,9 +1,17 @@
-setup_per_cpu_areas
 
+# ref
+[Per-cpu patches on top of PDA stuff...   Rusty Russell](https://lists.linuxfoundation.org/pipermail/virtualization/2006-September/thread.html#5010)
+[Using %gs for per-cpu areas on x86 ](https://lists.linuxfoundation.org/pipermail/virtualization/2006-September/thread.html#5042)
+[ A graphic explanation](https://www.cnblogs.com/yangjiguang/p/8277720.html)jj
+
+# implementation
+1. load_percpu_segment:load gs with 0 and set gs.base to irq_stack_union.gs_base.
+For x86 64, use gs the segment selector
+2. irq_stack_union is a union and it's the first element is percpu
+3. check SWAPGS in ret_from_fork.
+
+# setup_per_cpu_areas
 [Per-CPU variables at umd.edu ](https://www.cs.umd.edu/class/fall2015/cmsc412/percpu.pdf)
-
-load_percpu_segment
-For x86 64, use gx the segment selector
 # x86_64: kernel cpu
 arch_raw_cpu_ptr
 
@@ -19,4 +27,5 @@ https://lwn.net/Articles/611946/
 struct task_struct *, current_task
 818 #define INIT_THREAD  {                                                    \
 819         .sp0                    = TOP_OF_INIT_STACK,                      \
+
 

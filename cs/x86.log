@@ -1,4 +1,6 @@
-
+# ref
+http://www.sandpile.org/
+http://www.sandpile.org/x86/except.htm
 [1]:http://x86.renejeschke.de/html/file_module_x86_id_147.html
 [2]:https://en.wikipedia.org/wiki/X86-64#History_2
 [3]: http://yarchive.net/comp/linux/x86-64.html
@@ -24,3 +26,318 @@
 jump/call are always pc-relative except register
 Other adresses are always Absolute except register
 >>>>>>> 10fcfd75b6eabf05737e63023e9790d0f2abc2c6
+
+# Interrupt and exception
+[IRQs: the Hard, the Soft, the Threaded and the Preemptible](https://www.youtube.com/watch?v=-pehAzaP1eg)
+[How Dealing with Modern Interrupt Architectures can Affect Your Sanity](https://www.youtube.com/watch?v=YE8cRHVIM4E)
+## Interrupt vector
+arch/x86/include/asm/irq_vectors.h
+## Why do timer interrupt and #DE share the same vector 0.
+cat /proc/interrupts 
+            CPU0       CPU1       CPU2       CPU3       
+   0:         21          0          0          0  IR-IO-APIC    2-edge      timer
+v3a Chapter 6
+0, DE, Divide Error, Fault, No DIV and IDIV instructions.
+Check ULK3 Chapter 4 Interrupt vectors and Linux 技术内幕 7.2.1中断号
+the 0 in /proc/interrupts is a IRQ line number
+The 0 for Divide error is a interrupt vector.
+## An example of threaded irq
+mei_me_probe
+ps axjf | grep irq | grep mei
+    2   499     0     0 ?           -1 S        0   0:00  \_ [irq/126-mei_me]
+## irq nested
+[对Linux x86-64架构上硬中断的重新认识](http://www.lenky.info/archives/2013/03/2245)
+http://lwn.net/Articles/380937/
+## Disable soft interrupt
+https://stackoverflow.com/a/1581729/1025001
+## IPI
+commit 52aec3308db85f4e9f5c8b9f5dc4fbd0138c6fa4
+Author: Alex Shi <alex.shi@intel.com>
+Date:   Thu Jun 28 09:02:23 2012 +0800
+
+    x86/tlb: replace INVALIDATE_TLB_VECTOR by CALL_FUNCTION_VECTOR
+ 73 #define ERROR_APIC_VECTOR               0xfe
+ 74 #define RESCHEDULE_VECTOR               0xfd
+ 75 #define CALL_FUNCTION_VECTOR            0xfc
+ 76 #define CALL_FUNCTION_SINGLE_VECTOR     0xfb
+ 77 #define THERMAL_APIC_VECTOR             0xfa
+ 78 #define THRESHOLD_APIC_VECTOR           0xf9
+ 79 #define REBOOT_VECTOR                   0xf8
+
+## Practices
+* Triggering a #GP exception
+exception_GP_trigger.S
+[Exceptions](http://wiki.osdev.org/Exceptions)
+if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).
+But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.
+Privilege instructions in V3a chapter 5 Protection
+
+* Obtain sys_call_table on amd64
+https://www.exploit-db.com/papers/13146/
+
+## Implementions 
+### irq and exeception init
+type: gate_desc; desc_struct
+file: arch/x86/kernel/idt.c
+start_kernel
+{
+	setup_arch
+	{
+		idt_setup_early_traps		#===> idt_table: ist=0; DB, BP
+		...
+		idt_setup_early_pf		#===> idt_table: PF ist=0;
+	}
+	...
+	trap_init
+	{
+		idt_setup_traps			#===> idt_table: ist=0; DE, 0x80 ... etc.
+		...
+		cpu_init
+		{
+			load_current_idt
+			...
+			ist stacks init - exception_stacks
+			t->x86_tss.ist[v] points to top of each stack.
+		}
+		idt_setup_ist_traps		#===> idt_table: ist=1; DB, NMI, BP, DF, MC;
+		x86_init.irqs.trap_init		#===> if !KVM, noop
+		idt_setup_debugidt_traps	#===> debug_idt_table, check debug stack; INTG; #DB debug; #BP int; check arch/x86/entry/entry_64.S
+				# idtentry debug                  do_debug                has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK
+				# idtentry int3			do_int3                 has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK
+
+	}
+	...
+	early_irq_init = alloc NR_IRQS_LEGACY irq_desc; - 16	#===> [    0.000000] NR_IRQS: 65792, nr_irqs: 1024, preallocated irqs: 16
+	init_IRQ()->x86_init.irqs.intr_init=native_init_IRQ	#===> external interrupt init; 
+	{
+		pre_vector_init = init_ISA_irqs #===> 1) legacy_pic->init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.
+		idt_setup_apic_and_irq_gates	#===> apic normal(from 32) and system interrupts; 
+		...
+	}
+	...
+	softirq_init
+	...
+	local_irq_enable
+	...
+
+}
+### Interrupt and exception stack
+TSS v3a 6.12
+6.14.4 Stack Switching in IA-32e Mode
+#### Exception - page_fault
+Kernel doesn't change the inherit TSS stack
+#### interrupt irq_entries_start
+Kernel change it irq_stack_union in ".macro interrupt"
+SWAPGS 要手动切换.
+ENTER_IRQ_STACK old_rsp=%rdi
+movq    %rsp, \old_rsp		#==========> old_rsp should be %rdi, check https://sourceware.org/binutils/docs/as/Macro.html
+movq    \old_rsp, PER_CPU_VAR(irq_stack_union + IRQ_STACK_SIZE - 8)
+movq    PER_CPU_VAR(irq_stack_ptr), %rsp
+#### IST exception
+6.14.5 Interrupt Stack Table
+Documentation/x86/kernel-stacks
+Why Debug stack is double page? Spare IST pointer.
+
+### Link to process stack from irq stack
+commit a2bbe75089d5eb9a3a46d50dd5c215e213790288
+x86: Don't use frame pointer to save old stack on irq entry
+       /* Save previous stack value */
+       movq %rsp, %rsi
+...
+2:     /* Store previous stack value */
+       pushq %rsi
+## LQO
+### do_nmi do_int3 debug_stack_usage_inc, debug_idt_descr, debug_idt_table,
+load_debug_idt
+commit 42181186ad4db986fcaa40ca95c6e407e9e79372
+Author: Steven Rostedt <srostedt@redhat.com>
+Date:   Fri Dec 16 11:43:02 2011 -0500
+
+    x86: Add counter when debug stack is used with interrupts enabled
+### clear the flags for PF through interrupt gate
+v3a: 6.12.1 Exception- or Interrupt-Handler Procedures
+6.12.1.2 Flag Usage By Exception- or Interrupt-Handler Procedure
+### rbx in page_fault?
+### x86_64 kernel don't use trap gate?
+Yes
+### Paranoid?
+Documentation/x86/entry_64.txt
+### ??Hardware debug watchpoints.
+https://www.kernel.org/doc/ols/2009/ols2009-pages-149-158.pdf
+https://lwn.net/Articles/353050/
+https://stackoverflow.com/questions/19725900/watch-a-variable-memory-address-change-in-linux-kernel-and-print-stack-trace
+
+
+# TSS
+## Implemention
+GDT -> TSS descriptor -> TSS
+tss_struct cpu_tss, ltr, str
+TSS: x86_hw_tss v3a: 7.7
+### init
+arch/x86/include/asm/desc.h
+DECLARE_PER_CPU_PAGE_ALIGNED(struct gdt_page, gdt_page);	#===> GDT
+arch/x86/kernel/process.c
+DEFINE_PER_CPU_SHARED_ALIGNED(struct tss_struct, cpu_tss)	#===> tss_struct
+start_kernel ... ->start_secondary and trap_init->
+cpu_init
+{
+	t->x86_tss.io_bitmap_base = offsetof(struct tss_struct, io_bitmap);
+	...
+	load_sp0(t, &current->thread);	#===> tss->x86_tss.sp0 = thread->sp0
+	set_tss_desc(cpu, t);		#===> set tss descriptor to GDT; tss descriptor.base = tss_struct
+	load_TR_desc();			#===> ltr
+	...
+}
+_do_fork -> copy_process
+{
+	...
+	dup_task_struct
+	{
+		...
+		stack = alloc_thread_stack_node(tsk, node);		# ===> THREAD_SIZE 2 pages.
+		tsk->stack = stack;
+		...
+	}
+	...
+	copy_thread_tls
+	{
+		...
+		# arch/x86/include/asm/processor.h
+		# #define task_pt_regs(tsk)       ((struct pt_regs *)(tsk)->thread.sp0 - 1)
+		p->thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;	# task->stack; THREAD_SIZE 2 pages;
+		childregs = task_pt_regs(p);
+		# struct fork_frame {
+		#	struct inactive_task_frame frame;
+		#	struct pt_regs regs;
+		# };
+		fork_frame = container_of(childregs, struct fork_frame, regs);
+		p->thread.sp = (unsigned long) fork_frame;
+		*childregs = *current_pt_regs();
+		...
+	}
+	# Add child task to run_queue. Then scheded.
+	...
+}
+__switch_to -> load_sp0(tss, next);
+### nuclus
+entry_SYSCALL_64 -> movq    PER_CPU_VAR(cpu_current_top_of_stack), %rsp
+
+# gs
+[History of gs](https://stackoverflow.com/questions/10810203/what-is-the-fs-gs-register-intended-for)
+[x86: Add documentation for rd/wr fs/gs base](https://lore.kernel.org/patchwork/patch/560242/)
+http://drops.xmd5.com/static/drops/papers-4860.html
+## IA32e
+v3a 3.4.4 Segment Loading Instructions in IA-32e Mode
+When FS and GS segment overrides are used in 64-bit mode, their respective base addresses are used in the linear
+address calculation: (FS or GS).base + index + displacement. FS.base and GS.base are then expanded to the full
+linear-address size supported by the implementation. The resulting effective address calculation can wrap across
+positive and negative addresses; the resulting linear address must be canonical.
+...
+The hidden descriptor register fields for FS.base and GS.base are physically mapped to MSRs in order to load all
+address bits supported by a 64-bit implementation. 
+===
+Software with CPL = 0 (privileged software) can load all supported linear-address bits into FS.base or GS.base using WRMSR.
+load_percpu_segment
+__loadsegment_simple(gs, 0);
+wrmsrl(MSR_GS_BASE, (unsigned long)per_cpu(irq_stack_union.gs_base, cpu));
+===
+Addresses written into the 64-bit FS.base and GS.base registers must be in canonical form. 
+A WRMSR instruction that attempts to write a non-canonical address to those registers causes a #GP fault.
+## ?? init thread gsindex and gsbase
+copy_thread_tls()
+## ?? change 
+__switch_to ->load_seg_legacy
+commit 296f781a4b7801ad9c1c0219f9e87b6c25e196fe
+Author: Andy Lutomirski <luto@kernel.org>
+Date:   Tue Apr 26 12:23:29 2016 -0700
+    x86/asm/64: Rename thread_struct's fs and gs to fsbase and gsbase
+## secondary_startup_64
+commit f32ff5388d86518c0375ccdb330d3b459b9c405e
+Author: Tejun Heo <tj@kernel.org>
+Date:   Tue Jan 13 20:41:35 2009 +0900
+
+    x86: load pointer to pda into %gs while brining up a CPU
+    
+    [ Based on original patch from Christoph Lameter and Mike Travis. ]
+    
+    CPU startup code in head_64.S loaded address of a zero page into %gs
+    for temporary use till pda is loaded but address to the actual pda is
+    available at the point.  Load the real address directly instead.
+    
+    This will help unifying percpu and pda handling later on.
+    
+    This patch is mostly taken from Mike Travis' "x86_64: Fold pda into
+    per cpu area" patch.
+## copy_thread_tls
+
+
+# TLB
+v3a Chapter 4.10
+https://github.com/torvalds/linux/blob/master/Documentation/x86/tlb.txt
+[进程切换分析（2）：TLB处理](http://www.wowotech.net/process_management/context-switch-tlb.html)
+https://lwn.net/Articles/379748/
+[Paging: Faster Translations TLBs](http://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf)
+## [Memory part 3: Virtual Memory](https://lwn.net/Articles/253361/)
+Because the processor does not ensure that the data that it caches are always consistent with the structures in memory, it is important for software developers to understand how and when the processor may cache such data. They should also understand what actions software can take to remove cached
+data that may be inconsistent and when it should do so.-- SDM 4.10 CACHING TRANSLATION INFORMATION
+4.10.4 Invalidation of TLBs and Paging-Structure Caches
+## Lazy TLB
+x86/mm: Rework lazy TLB mode and TLB freshness tracking - 94b1b03b519b81c494900cb112aa00ed205cc2d9
+## TLB Shootdown
+[What's TLB shootdown](https://stackoverflow.com/questions/3748384/what-is-tlb-shootdown)
+[Great question and answers on performing TLB shootdown](https://stackoverflow.com/questions/50256740/who-performs-the-tlb-shootdown)
+## ?? PCID
+1.10. Longer-lived TLB Entries with PCID in kernel newbies:
+The relatted commit: x86/mm: Give each mm TLB flush generation a unique ID
+f39681ed0f48498b80455095376f11535feea332
+x86/mm: Implement PCID based optimization: try to preserve old TLB entries using PCID
+10af6235e0d327d42e1bad974385197817923dc1
+## methods
+INVLPG: include global
+mov to CR3: except global
+mov to CR4: include golbal
+INVPCID
+VMX transitions
+
+# Task
+## Intel SDMv3a Chapter 7
+A task is a unit of work that a processor can *dispatch*, *execute*, and *suspend*. It can be used to execute a program,
+a task or process, an operating-system service utility, an interrupt or exception handler, or a kernel or executive
+utility.
+
+The IA-32 architecture provides a mechanism for saving the state of a task, for dispatching tasks for execution, and 
+for switching from one task to another.
+
+A task is made up of two parts: a task execution space and a task-state segment (TSS).
+*The task execution space* consists of a code segment, a stack segment, and one or more data segments (see Figure 7-1). If an operating
+system or executive uses the processor’s privilege-level protection mechanism, the task execution space also
+provides a separate stack for each privilege level.
+
+The TSS specifies the segments that make up the task execution space and provides a storage place for task state
+information. In multitasking systems, the TSS also provides a mechanism for linking tasks.
+
+Task states: segment registers, general-purpose registers, EFLAGS, EIP, CR3, TR, LDTR, I/O map in TSS, Stack pointers to privilege 0,1,2 stacks in TSS.
+
+Ways dispatching a task for execution:
+A explicit call to a task with the CALL instruction.
+A explicit jump to a task with the JMP instruction.
+An implicit call (by the processor) to an interrupt-handler task.
+An implicit call to an exception-handler task.
+A return (initiated with an IRET instruction) when the NT flag in the EFLAGS register is set.
+
+# apic timer
+alloc_intr_gate(LOCAL_TIMER_VECTOR, apic_timer_interrupt);
+apic_timer_interrupt->smp_apic_timer_interrupt->local_apic_timer_interrupt->event_handler=tick_handle_periodic->tick_periodic
+{
+        do_timer
+	{
+		jiffies_64		- vs irq disable
+		calc_global_load	- load average
+	}
+        update_wall_time
+        update_process_times
+	{
+		account_process_tick - user/sys time
+		scheduler_tick - scheduling stuff
+	}
+}

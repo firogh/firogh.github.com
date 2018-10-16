@@ -17,99 +17,82 @@
       <guid>http://firoyang.org/net/netfilter/</guid>
       <description>
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;filter&#34;&gt;Filter&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;&lt;br /&gt;
-man iptables and man iptables-extension&lt;/p&gt;
+&lt;p&gt;conditions and actions&lt;/p&gt;
 
-&lt;h1 id=&#34;introduction-to-netfilter&#34;&gt;Introduction to netfilter&lt;/h1&gt;
+&lt;h1 id=&#34;packet-filter&#34;&gt;Packet filter&lt;/h1&gt;
 
-&lt;p&gt;Netfilter 是Kernel提供在BSD socket API之外进行网络操作的框架.&lt;br /&gt;
-Netfilter的本质就是内核协议栈上的Hook的集合.&lt;br /&gt;
-对于ipv4 or ipv6分别有5个Hook点.正如Rusty Russell所言&lt;/p&gt;
+&lt;p&gt;type: filter&lt;/p&gt;
 
-&lt;blockquote&gt;
-&lt;p&gt;Firstly, each protocol defines &amp;ldquo;hooks&amp;rdquo; (IPv4 defines 5) which are well-defined points in a packet&amp;rsquo;s traversal of that protocol stack.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;到底什么是well-defined, 我个人理解就是这5个点可以cover住所有协议栈中的packet.&lt;br /&gt;
-与Netfilter类似框架, 主要是BSD系的IPFilter, ipfirewall, PF, NPF等.&lt;br /&gt;
-Netfilter的历史请查阅wikipedia.&lt;br /&gt;
-内核基于netfilter构建了 iptables 和 connection track两套系统.&lt;br /&gt;
-从这两个系统, 衍生出了众多的功能, 如防火墙filter, NAT, mangle, kproxy等等.&lt;br /&gt;
-netfilter&lt;br /&gt;
-ct| |iptables&lt;br /&gt;
-nat,filter,mangle,kproxy,smartqos&lt;br /&gt;
-当然, 也可能不依赖iptables 和 conntrack, 或者部分依赖.&lt;/p&gt;
-
-&lt;h1 id=&#34;netfilter&#34;&gt;netfilter&lt;/h1&gt;
-
-&lt;h2 id=&#34;source&#34;&gt;source&lt;/h2&gt;
-
-&lt;p&gt;netfilter 公共: net/netfilter&lt;br /&gt;
-ipv4协议的netfilter细节在: net/ipv4/netfilter/&lt;/p&gt;
-
-&lt;h2 id=&#34;init&#34;&gt;Init&lt;/h2&gt;
-
-&lt;p&gt;~/linux/net/netfilter/core.c&lt;br /&gt;
-netfilter_init()&lt;/p&gt;
-
-&lt;h2 id=&#34;hook-point&#34;&gt;Hook point&lt;/h2&gt;
-
-&lt;p&gt;local_in local_out forward pre_routing post_routing&lt;/p&gt;
-
-&lt;h1 id=&#34;iptables&#34;&gt;Iptables&lt;/h1&gt;
-
-&lt;p&gt;Iptables is a packet selecttion system (包括内核和用户态两部分).&lt;br /&gt;
-iptables 的ip是IP(Internet Protocol).&lt;br /&gt;
-xtable是内核iptables抽象nat, mangle, filter(防火墙)的得到共有的部分.&lt;br /&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;details-of-iptables&#34;&gt;Details of iptables&lt;/h2&gt;
+&lt;h2 id=&#34;what-packets-and-where-to-filter&#34;&gt;What packets and where to filter&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;iptables command&lt;br /&gt;
-直观上iptables命令最重要的组成部分: table, chain, match 参数, -j target&lt;br /&gt;
-如:iptables -t filter -I INPUT -p tcp &amp;ndash;dport 22 -j ACCEPT&lt;br /&gt;
-特别: 从-p开始到-j 之前这是一个 match!&lt;br /&gt;
-更多的match 和 target, please, man iptables-extension&lt;br /&gt;
-一个table的内置chain,就是他所在的hook点.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;Filter rules&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Condition&lt;br /&gt;
+IP addr&lt;br /&gt;
+Port&lt;br /&gt;
+Level 4 protocol type&lt;br /&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;kernel code&lt;br /&gt;
-ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Action&lt;br /&gt;
+accept&lt;br /&gt;
+drop&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Filter checkpoints&lt;br /&gt;
+Ingress&lt;br /&gt;
+Outgress&lt;br /&gt;
+Route&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;step-of-exution&#34;&gt;Step of exution&lt;/h2&gt;
+&lt;h1 id=&#34;hooking&#34;&gt;Hooking&lt;/h1&gt;
 
-&lt;h3 id=&#34;init-1&#34;&gt;Init&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;如mangle表的初始化见iptable_mangle_init&lt;br /&gt;
-xt_table: ipt_register_table&lt;br /&gt;
-    struct xt_table         *iptable_filter;&lt;br /&gt;
-    struct xt_table         *iptable_mangle;&lt;br /&gt;
-    struct xt_table         *iptable_raw;&lt;br /&gt;
-    struct xt_table         *arptable_filter;&lt;br /&gt;
-    struct xt_table         *iptable_security;&lt;br /&gt;
-    struct xt_table         *nat_table;&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如mark match的初始化 mark_mt_init&lt;br /&gt;
-xt_match: xt_register_match&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init&lt;br /&gt;
-xt_target: xt_register_target&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&#34;the-mangle-journal&#34;&gt;The mangle journal&lt;/h3&gt;
-
-&lt;p&gt;netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;/p&gt;
+&lt;p&gt;Interceptor pattern&lt;/p&gt;
 
 &lt;h1 id=&#34;connection-tracking&#34;&gt;Connection tracking&lt;/h1&gt;
 
+&lt;p&gt;&lt;a href=&#34;http://people.netfilter.org/pablo/docs/login.pdf&#34;&gt;Netfilter’s connection tracking system&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.netdevconf.org/2.1/session.html?westphal&#34;&gt;netfilters connection tracking subsystem&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.linuxjournal.com/article/4234&#34;&gt;Network Probes Explained: Understanding Port Scans and Ping Sweeps&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;netfilter&#34;&gt;Netfilter&lt;/h1&gt;
+
+&lt;p&gt;a set of hooks: Local_in local_out forward pre_routing post_routing&lt;br /&gt;
+packet filter&lt;br /&gt;
+Connection tracking:&lt;br /&gt;
+NAT&lt;/p&gt;
+
+&lt;h1 id=&#34;software-implementation&#34;&gt;Software implementation&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;br /&gt;
+* Init&lt;br /&gt;
+net/netfilter/core.c&lt;br /&gt;
+netfilter_init()&lt;br /&gt;
+如mangle表的初始化见iptable_mangle_init&lt;br /&gt;
+xt_table: ipt_register_table&lt;br /&gt;
+        struct xt_table         *iptable_filter;&lt;br /&gt;
+        struct xt_table         *iptable_mangle;&lt;br /&gt;
+        struct xt_table         *iptable_raw;&lt;br /&gt;
+        struct xt_table         *arptable_filter;&lt;br /&gt;
+        struct xt_table         *iptable_security;&lt;br /&gt;
+        struct xt_table         *nat_table;&lt;br /&gt;
+如mark match的初始化 mark_mt_init&lt;br /&gt;
+xt_match: xt_register_match&lt;/p&gt;
+
+&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init&lt;br /&gt;
+xt_target: xt_register_target&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Nuclus&lt;br /&gt;
+netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;br /&gt;
+ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;connection-tracking-1&#34;&gt;Connection tracking&lt;/h1&gt;
+
 &lt;p&gt;Conntrack 的实现不依赖iptables, 很独立.&lt;/p&gt;
 
-&lt;h2 id=&#34;init-2&#34;&gt;init&lt;/h2&gt;
+&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
 
 &lt;p&gt;nf_conntrack_standalone_init()&lt;br /&gt;
 nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
@@ -140,8 +123,9 @@ ALG&lt;/p&gt;
 这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。&lt;br /&gt;
 徐琛,也这么说!&lt;/p&gt;
 
-&lt;p&gt;#NAT&lt;br /&gt;
-&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;&lt;br /&gt;
+&lt;h1 id=&#34;nat&#34;&gt;NAT&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;&lt;br /&gt;
 symmetric nat, 端口不复用, 访问同一个服务器.&lt;br /&gt;
 linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
 
@@ -248,7 +232,12 @@ with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
 
 &lt;p&gt;#FAQ&lt;br /&gt;
 * 如何查看某个table 具体在那几个hook点.&lt;br /&gt;
-去看内核代码 or iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
+iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -552,19 +541,26 @@ enable irq&lt;br /&gt;
 
 &lt;p&gt;Qdisc &amp;ndash; NET_XMIT_SUCCESS&lt;br /&gt;
 dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
+
+&lt;h1 id=&#34;from-pci-id-to-device&#34;&gt;from pci id to device&lt;/h1&gt;
+
+&lt;p&gt;/sys/bus/pci/devices/0000:00:19.0/net/eno1/&lt;/p&gt;
+
+&lt;h1 id=&#34;admin-queue&#34;&gt;Admin queue&lt;/h1&gt;
+
+&lt;p&gt;Intel® Ethernet Controller 710 Series Datasheet Chapter 7.10&lt;/p&gt;
 </description>
     </item>
     
     <item>
-      <title>Linux Network Stack</title>
-      <link>http://firoyang.org/net/net/</link>
+      <title>Linux Network Stack - an obselete article for warning myself that never think or learn in this way</title>
+      <link>http://firoyang.org/net/obselete_net/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:13 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/net/net/</guid>
+      <guid>http://firoyang.org/net/obselete_net/</guid>
       <description>
 
 &lt;p&gt;#Reference&lt;br /&gt;
-&lt;a href=&#34;http://www.protocols.com/pbook/tcpip1.htm&#34;&gt;TCP/IP Reference Page&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.securitywizardry.com/index.php/tools/packet-headers.html&#34;&gt;RAW PACKET FORMATS&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://wangcong.org/2012/10/15/-e4-bb-8e-ipv4-e5-88-b0-ipv6/&#34;&gt;从 IPv4 到 IPv6&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.tecmint.com/ipv4-and-ipv6-comparison/&#34;&gt;What’s wrong with IPv4 and Why we are moving to IPv6&lt;/a&gt;&lt;br /&gt;
@@ -664,7 +660,7 @@ they are commonly imagined as layers in a stack of protocols.&lt;br /&gt;
 &lt;a href=&#34;http://zoo.cs.yale.edu/classes/cs633/Reviews/Cla88.msl38.html&#34;&gt;Reviews of Michael S. Liu Yale&lt;/a&gt;&lt;br /&gt;
 Address formate: 有了地址我们就要有地址的具体格式如哪个街道，哪个小区几号楼几室。&lt;br /&gt;
 Route: 找到收信人, 计算机网络包括linker, network 和transportlayer&lt;br /&gt;
-Data formate: 接下来就是信封格式，对应头部。&lt;br /&gt;
+Data format: 接下来就是信封格式，对应头部。&lt;br /&gt;
 Reliability:发的信可能丢了，要在写一封吗？&lt;br /&gt;
 Detection of transmission errors:如信被人篡改了&lt;/p&gt;
 
@@ -672,8 +668,7 @@ Detection of transmission errors:如信被人篡改了&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.slideshare.net/ThomasGraf5/devconf-2014-kernel-networking-walkthrough&#34;&gt;DevConf 2014 Kernel Networking Walkthrough&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.slideshare.net/minibobo/linux-tcp-ip?related=1&#34;&gt;introduction to linux kernel tcp/ip ptocotol stack&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://wiki.linuxfoundation.org/networking/kernel_flow&#34;&gt;kernel flow&lt;/a&gt;&lt;br /&gt;
-[&lt;/p&gt;
+&lt;a href=&#34;https://wiki.linuxfoundation.org/networking/kernel_flow&#34;&gt;kernel flow&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;taobao的第5也说明了问题.&lt;br /&gt;
 这是通常的skb的流向. 就是在socket里面按着协议走, 包括tcp的重传.&lt;br /&gt;
@@ -767,11 +762,6 @@ ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_out
 3 vortex_rx() 多，e100_rx_clean()多！这点可以看出不同优势来。&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;package-name-in-different-layer&#34;&gt;package name in different layer&lt;/h2&gt;
-
-&lt;p&gt;An individual package of transmitted data is commonly called a frame on the link layer, L2;&lt;br /&gt;
-a packet on the network layer; a segment on the transport layer; and a message on the application layer.&lt;/p&gt;
-
 &lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
 
 &lt;ul&gt;
@@ -829,6 +819,23 @@ switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以�
       <author>Firo Yang</author>
       <guid>http://firoyang.org/net/ip/</guid>
       <description>
+
+&lt;h1 id=&#34;route&#34;&gt;Route&lt;/h1&gt;
+
+&lt;h2 id=&#34;route-1&#34;&gt;Route&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux&#34;&gt;IPv4 route lookup on Linux&lt;/a&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;state structure&lt;br /&gt;
+fib_info:route info&lt;br /&gt;
+fib_config:&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;add new rule&lt;br /&gt;
+iproute2 &amp;hellip;-&amp;gt;inet_rtm_newroute()-&amp;gt;fib_new_table()-&amp;gt;fib_hash_table()&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Multi-time line&lt;br /&gt;
+fib_create_info(): create a fib_info&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;p&gt;#Network layer&lt;br /&gt;
 * Error detection, unreliable&lt;br /&gt;
@@ -920,11 +927,21 @@ decrease the memroy and the time of search route table.&lt;/p&gt;
 
 &lt;p&gt;In the Internet addressing architecture, a private network is a network that uses private IP address space.&lt;/p&gt;
 
-&lt;p&gt;##IP fragmention/defragmention&lt;br /&gt;
-iphdr-&amp;gt;id, iphdr-&amp;gt;frag_off&lt;br /&gt;
+&lt;h2 id=&#34;fragmention-defragmention&#34;&gt;Fragmention/defragmention&lt;/h2&gt;
+
+&lt;p&gt;iphdr-&amp;gt;id, iphdr-&amp;gt;frag_off&lt;br /&gt;
 skb_shared_info-&amp;gt;frag_list&lt;br /&gt;
 ip_fragment/ip_defrag&lt;br /&gt;
 &lt;a href=&#34;http://tools.ietf.org/html/rfc6864&#34;&gt;Updated Specification of the IPv4 ID Field&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;sg-io&#34;&gt;SG IO&lt;/h2&gt;
+
+&lt;p&gt;如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!&lt;br /&gt;
+p_append_data&lt;br /&gt;
+&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/153666&#34;&gt;NETIF_F_FRAGLIST and NETIF_F_SG difference&lt;/a&gt;&lt;br /&gt;
+validate_xmit_skb()-&amp;gt;__skb_linearize()&lt;br /&gt;
+ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.&lt;br /&gt;
+如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.&lt;/p&gt;
 
 &lt;h1 id=&#34;send&#34;&gt;send&lt;/h1&gt;
 
@@ -945,6 +962,11 @@ ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&l
       <guid>http://firoyang.org/net/tcp/</guid>
       <description>
 
+&lt;h1 id=&#34;key-commits&#34;&gt;Key commits&lt;/h1&gt;
+
+&lt;p&gt;tcp: remove prequeue support - e7942d0633c47c791ece6afa038be9cf977226de&lt;br /&gt;
+tcp: remove tcp_tw_recycle - 4396e46187ca5070219b81773c4e65088dac50cc&lt;/p&gt;
+
 &lt;h1 id=&#34;rfc&#34;&gt;RFC&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://tools.ietf.org/html/rfc7414&#34;&gt;A Roadmap for Transmission Control Protocol (TCP) Specification Documents&lt;/a&gt;&lt;br /&gt;
@@ -961,7 +983,7 @@ ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&l
 
 &lt;p&gt;&lt;a href=&#34;https://blogs.technet.microsoft.com/networking/2009/08/12/where-do-resets-come-from-no-the-stork-does-not-bring-them/&#34;&gt;Where do resets come from? (No, the stork does not bring them.)&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;backlog&#34;&gt;Backlog&lt;/h1&gt;
+&lt;h1 id=&#34;syn-queue-and-listen-queue&#34;&gt;Syn queue and listen queue&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://veithen.github.io/2014/01/01/how-tcp-backlog-works-in-linux.html&#34;&gt;How TCP backlog works in Linux&lt;/a&gt;&lt;/p&gt;
 
@@ -1044,11 +1066,11 @@ physical layer link between the source and destination end systems of this data.
 
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;kproxy reorder&lt;br /&gt;
-chome -&amp;gt;syn(kproxy reocrd syn) -&amp;gt; firoyang.org&lt;br /&gt;
-firoyang.org -&amp;gt;sync ack -&amp;gt; chrome&lt;br /&gt;
+chome -&amp;gt; syn(kproxy reocrd syn) -&amp;gt; firoyang.org&lt;br /&gt;
+firoyang.org -&amp;gt; sync ack -&amp;gt; chrome&lt;br /&gt;
 chrome -&amp;gt; ack -&amp;gt; firoyang.org&lt;br /&gt;
-chrome -&amp;gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&amp;gt;nginx&lt;br /&gt;
-nginx -&amp;gt; tcp send fake syn ack-&amp;gt;chrome&lt;br /&gt;
+chrome -&amp;gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&amp;gt; nginx&lt;br /&gt;
+nginx -&amp;gt; tcp send fake syn ack-&amp;gt; chrome&lt;br /&gt;
 chrome -&amp;gt; ack -&amp;gt; nginx(then -&amp;gt; firoyang.org)&lt;br /&gt;
 tcp_v4_do_rcv{&lt;br /&gt;
 sk-&amp;gt;sk_state == TCP_ESTABLISHED&lt;br /&gt;
@@ -1057,8 +1079,8 @@ len &amp;lt;= tcp_header_len =&amp;gt;&lt;br /&gt;
 tcp_ack -&amp;gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&amp;gt; nginx&lt;br /&gt;
 }&lt;br /&gt;
 }&lt;br /&gt;
-nginx-&amp;gt;GET -&amp;gt;firoyang.org&lt;br /&gt;
-firoyang.org-&amp;gt;nginx-&amp;gt;chrome&lt;/p&gt;
+nginx-&amp;gt; GET -&amp;gt; firoyang.org&lt;br /&gt;
+firoyang.org-&amp;gt; nginx-&amp;gt; chrome&lt;/p&gt;
 
 &lt;h2 id=&#34;syn-flood&#34;&gt;syn flood&lt;/h2&gt;
 

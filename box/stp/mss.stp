@@ -1,0 +1,9 @@
+global prog_name = "tcp_test";
+probe begin {
+  printf("--- Ready ---\n");
+}
+probe kernel.function("tcp_current_mss").return {
+  if (execname() == prog_name) {
+    printf("> tcp_current_mss=%d\n", $return);
+  }
+}

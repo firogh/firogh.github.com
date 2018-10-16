@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+      <title>Howto on f(x) </title>
+      <generator uri="https://gohugo.io">Hugo</generator>
+    <link>http://firoyang.org/tags/howto/</link>
+    <language>en-us</language>
+    <author>Firo Yang</author>
+    
+    <updated>Mon, 01 Jan 0001 00:00:00 UTC</updated>
+    
+    <item>
+      <title>Use crash utility to examine the running system</title>
+      <link>http://firoyang.org/howto/crash_utility/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/howto/crash_utility/</guid>
+      <description>
+
+&lt;h1 id=&#34;prepare&#34;&gt;Prepare&lt;/h1&gt;
+
+&lt;h2 id=&#34;kernel-pages-info&#34;&gt;Kernel pages info&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.fedoraproject.org/en-US/fedora/rawhide/system-administrators-guide/kernel-module-driver-configuration/Manually_Upgrading_the_Kernel/&#34;&gt;Overview of Kernel Packages&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;enbale-debuginfo&#34;&gt;Enbale debuginfo&lt;/h2&gt;
+
+&lt;p&gt;/etc/yum.repos.d/fedora-updates.repo&lt;br /&gt;
+/etc/yum.repos.d/fedora.repo&lt;br /&gt;
+or&lt;br /&gt;
+dnf &amp;ndash;enablerepo=debug install kernel-debuginfo&lt;/p&gt;
+
+&lt;h2 id=&#34;locate-vmlinux&#34;&gt;locate vmlinux&lt;/h2&gt;
+
+&lt;p&gt;rpm -ql kernel-debuginfo | grep vmlinux&lt;/p&gt;
+
+&lt;h1 id=&#34;start-to-use-crash&#34;&gt;Start to use crash&lt;/h1&gt;
+
+&lt;p&gt;sudo crash /usr/lib/debug/lib/modules/4.18.9-200.fc28.x86_64/vmlinux&lt;/p&gt;
+
+&lt;h2 id=&#34;help&#34;&gt;help&lt;/h2&gt;
+
+&lt;p&gt;crash help list&lt;/p&gt;
+
+&lt;h2 id=&#34;do-some-practices&#34;&gt;do some practices&lt;/h2&gt;
+
+&lt;p&gt;crash&amp;gt; p file_systems&lt;br /&gt;
+file_systems = $2 = (struct file_system_type *) 0xffffffffad2ab380&lt;br /&gt;
+crash&amp;gt; list file_system_type.next -s file_system_type.name 0xffffffffad2ab380&lt;br /&gt;
+ffffffffad2ab380&lt;br /&gt;
+  name = 0xffffffffad11b3ce &amp;ldquo;sysfs&amp;rdquo;&lt;br /&gt;
+ffffffffad212700&lt;br /&gt;
+  name = 0xffffffffad0e37b9 &amp;ldquo;rootfs&amp;rdquo;&lt;br /&gt;
+ffffffffad2b7460&lt;br /&gt;
+  name = 0xffffffffad0a65af &amp;ldquo;ramfs&amp;rdquo;&lt;br /&gt;
+ffffffffad2a2b40&lt;br /&gt;
+  name = 0xffffffffad0e3e67 &amp;ldquo;bdev&amp;rdquo;&lt;br /&gt;
+&amp;hellip;&lt;br /&gt;
+crash&amp;gt; struct file_system_type ffffffffad2a2b40&lt;br /&gt;
+struct file_system_type {&lt;br /&gt;
+  name = 0xffffffffad0e3e67 &amp;ldquo;bdev&amp;rdquo;,&lt;br /&gt;
+  fs_flags = 0,&lt;br /&gt;
+  mount = 0xffffffffac2e4e60,&lt;br /&gt;
+  kill_sb = 0xffffffffac2a8fd0,&lt;br /&gt;
+  owner = 0x0,&lt;br /&gt;
+  next = 0xffffffffad2ab080,&lt;br /&gt;
+  fs_supers = {&lt;br /&gt;
+    first = 0xffff9f9d5600a0e8&lt;br /&gt;
+  },&lt;br /&gt;
+  s_lock_key = {&lt;No data fields&gt;},&lt;br /&gt;
+  s_umount_key = {&lt;No data fields&gt;},&lt;br /&gt;
+  s_vfs_rename_key = {&lt;No data fields&gt;},&lt;br /&gt;
+  s_writers_key = 0xffffffffad2a2b78,&lt;br /&gt;
+  i_lock_key = {&lt;No data fields&gt;},&lt;br /&gt;
+  i_mutex_key = {&lt;No data fields&gt;},&lt;br /&gt;
+  i_mutex_dir_key = {&lt;No data fields&gt;}&lt;br /&gt;
+}&lt;br /&gt;
+crash&amp;gt; mod -s e1000e&lt;br /&gt;
+     MODULE       NAME                        SIZE  OBJECT FILE&lt;br /&gt;
+ffffffffc0304700  e1000e                    282624  /usr/lib/debug/usr/lib/modules/4.18.9-200.fc28.x86_64/kernel/drivers/net/ethernet/intel/e1000e/e1000e.ko.debug&lt;br /&gt;
+crash&amp;gt; struct module ffffffffc0304700&lt;br /&gt;
+struct module {&lt;br /&gt;
+  state = MODULE_STATE_LIVE,&lt;br /&gt;
+  list = {&lt;br /&gt;
+    next = 0xffffffffc02c4208,&lt;br /&gt;
+    prev = 0xffffffffc033f648&lt;br /&gt;
+  },&lt;br /&gt;
+&amp;hellip;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

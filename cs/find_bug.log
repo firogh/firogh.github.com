@@ -12,8 +12,24 @@ Free “Do not use freed memory.”
 Float “Do not use floating point in the kernel.”
 Size “Allocate enough memory to hold the type for which you are allocating.”
 # BUGs
-pvclock_read_wallclock: replace rmb() with  smp_rmb
+1181 void mark_buffer_write_io_error(struct buffer_head *bh)
+1182 {
+1183         set_buffer_write_io_error(bh);
+1184         /* FIXME: do we need to set this in both places? */
+1185         if (bh->b_page && bh->b_page->mapping)
+1186                 mapping_set_error(bh->b_page->mapping, -EIO);
+1187         if (bh->b_assoc_map)
+1188                 mapping_set_error(bh->b_assoc_map, -EIO);
+
+[PATCH] Fix IO error reporting on fsync() - 58ff407bee5a55f9c1188a3f9d70ffc79485183c
+## pvclock_read_wallclock: replace rmb() with  smp_rmb
 5a48a622718cbd2d26d449f38ba40a2b5f7212cf
+
+## create_kmalloc_caches
+1075                 if (KMALLOC_MIN_SIZE <= 32 && !kmalloc_caches[1] && i == 6)
+1076                         new_kmalloc_cache(1, flags);
+1077                 if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[2] && i == 7)
+1078                         new_kmalloc_cache(2, flags);
 
 
 # Double fetch
