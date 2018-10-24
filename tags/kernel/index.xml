@@ -255,7 +255,7 @@ pageout-&amp;gt;shmem_writepage - Move the page from the page cache to the swap 
 
 &lt;h3 id=&#34;write-protect-for-shared-page&#34;&gt;Write protect for shared page&lt;/h3&gt;
 
-&lt;p&gt;do_wp_page-&amp;gt; wp_page_reuse&lt;br /&gt;
+&lt;p&gt;do_wp_page -&amp;gt; wp_page_reuse&lt;br /&gt;
 [PATCH] mm: tracking shared dirty pages - d08b3851da41d0ee60851f2c75b118e1f7a5fc89&lt;/p&gt;
 
 &lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o-b-ipc-using-a-shared-file-mapping&#34;&gt;File shared mappings - a) Memory-mapped I/O, b)IPC using a shared file mapping&lt;/h2&gt;
@@ -1715,6 +1715,15 @@ PG_swapbacked means page is backed by RAM or Swap. It means this page is no real
 
 &lt;p&gt;&lt;a href=&#34;https://www.zhihu.com/question/59053036&#34;&gt;https://www.zhihu.com/question/59053036&lt;/a&gt;&lt;/p&gt;
 
+&lt;h1 id=&#34;buffer-cache&#34;&gt;Buffer cache&lt;/h1&gt;
+
+&lt;p&gt;&amp;ldquo;Buffers&amp;rdquo; represent how much portion of RAM is dedicated to cache disk blocks&lt;br /&gt;
+1. Open block device directly open(&amp;ldquo;/dev/sdb&amp;rdquo;&amp;hellip;) -&amp;gt; blkdev_open&lt;br /&gt;
+2. Read metadata,including indirect blocks, bitmap,  sb_getblk-&amp;gt;&amp;hellip; -&amp;gt; grow_dev_page&lt;br /&gt;
+meminfo_proc_show&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/&#34;&gt;Memory – Part 2: Understanding Process memory&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;/p&gt;
@@ -1815,31 +1824,150 @@ type: resource&lt;br /&gt;
 &lt;a href=&#34;https://lkml.org/lkml/2000/8/7/65&#34;&gt;Re: When to use kmem_cache_alloc&lt;/a&gt;&lt;br /&gt;
 shrink attr&lt;br /&gt;
 /sys/kernel/slab/iint_cache/shrink&lt;br /&gt;
-SLAB_ATTR(shrink);&lt;/p&gt;
+SLAB_ATTR(shrink);&lt;br /&gt;
+array_cache.entry: cache hotness.&lt;/p&gt;
 
 &lt;h2 id=&#34;slub&#34;&gt;slub&lt;/h2&gt;
 
-&lt;p&gt;Documentation/vm/slub.txt&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=h0VMLXavx30&#34;&gt;SLAUOB: Kernel memory allocator design and philosophy&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=s0lZzP1jOzI&#34;&gt;SLUB fastpath improvements and potential booster shots through bulk alloc and free&lt;/a&gt;&lt;br /&gt;
+Documentation/vm/slub.txt&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/229096/&#34;&gt;SLUB: The unqueued slab allocator V6&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/229984/&#34;&gt;The SLUB allocator&lt;/a&gt;&lt;br /&gt;
 SLUB core - 81819f0fc8285a2a5a921c019e3e3d7b6169d225&lt;br /&gt;
 &lt;a href=&#34;https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf&#34;&gt;https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=h0VMLXavx30&#34;&gt;SLAUOB: Kernel memory allocator design and philosophy&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.cnblogs.com/tolimit/p/4654109.html&#34;&gt;linux内存源码分析 - SLUB分配器概述&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.wowotech.net/memory_management/247.html&#34;&gt;http://www.wowotech.net/memory_management/247.html&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://www.wowotech.net/memory_management/247.html&#34;&gt;http://www.wowotech.net/memory_management/247.html&lt;/a&gt;&lt;br /&gt;
+Freeing a full slab will make it present in per cpu partial of node partial.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/454474/&#34;&gt;Per cpu free list&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/687700/&#34;&gt;slub: reap free slabs periodically&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;freelist-vs-freelist&#34;&gt;Freelist vs Freelist&lt;/h3&gt;
+
+&lt;p&gt;26:00&lt;br /&gt;
+&lt;a href=&#34;http://kouucocu.lofter.com/post/1cdb8c4b_50f6319&#34;&gt;关于page同时被多CPU使用&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;slub-debug&#34;&gt;SLUB debug&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.wowotech.net/memory_management/427.html&#34;&gt;SLUB DEBUG原理&lt;/a&gt;&lt;br /&gt;
 ?? Human index&lt;/p&gt;
 
+&lt;h1 id=&#34;page-frame-reclaiming&#34;&gt;Page frame reclaiming&lt;/h1&gt;
+
+&lt;p&gt;Free memory is low.&lt;br /&gt;
+Occassions&lt;br /&gt;
+Periodical: kswapd&lt;br /&gt;
+Ondemand: not enough memory for alloc pages&lt;br /&gt;
+Mannual trigger: drop_caches&lt;/p&gt;
+
+&lt;h2 id=&#34;what-pages-are-unreclaimable&#34;&gt;What pages are unreclaimable&lt;/h2&gt;
+
+&lt;p&gt;All kernel pages are unreclaimable.&lt;br /&gt;
+Free pages: incldued in buddy systme lists.&lt;br /&gt;
+Reserved pages: PG_reserved&lt;br /&gt;
+Lokced userspace pages:&lt;br /&gt;
+1. Temporarily locked pages: PG_locked,&lt;br /&gt;
+2. Memory locked pages: VM_LOCKED, &lt;a href=&#34;https://eklitzke.org/mlock-and-mlockall&#34;&gt;Misunderstanding mlock&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;recalimable-pages&#34;&gt;Recalimable pages&lt;/h2&gt;
+
+&lt;p&gt;all pages of a User Mode process are reclaimable except locked.&lt;br /&gt;
+Swapbacked pages&lt;br /&gt;
+1. Private&lt;br /&gt;
+1.1 malloc memory map&lt;br /&gt;
+1.2 Dirty file private mapping - data, bbs segments&lt;br /&gt;
+2. Shared - tmpfs:&lt;br /&gt;
+2.1 Anonymous shared mapping memory between P&amp;C;&lt;br /&gt;
+2.2 System v IPC shared memory.&lt;br /&gt;
+Filebacked pages&lt;br /&gt;
+1. Private&lt;br /&gt;
+1.1 Clean file private mapping - text segment&lt;br /&gt;
+2. Shared&lt;br /&gt;
+2.1 Shared file mapping memory.&lt;/p&gt;
+
+&lt;h3 id=&#34;rules-adopted-by-the-pfra&#34;&gt;Rules adopted by the PFRA&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Free the “harmless” pages first&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;LRU 2Q&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;OOM&lt;/p&gt;
+
+&lt;h1 id=&#34;page-cache-and-i-mmap-key&#34;&gt;Page cache and i_mmap key&lt;/h1&gt;
+
+&lt;p&gt;index&lt;br /&gt;
+vm_pgoff&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
 &lt;h2 id=&#34;reclaim&#34;&gt;Reclaim&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;occassions&lt;br /&gt;
-Periodical: kswapd&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h3 id=&#34;writeback&#34;&gt;WriteBack&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;if page is alreday marked reclaim, skip it this time.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;if not makred reclaim, normal writeback, and IO isn&amp;rsquo;t permitted, then mark it as reclaim and will be pended at tail of LRU after writeback complete.&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cgroup cases. Just wait for the complte of writeback.&lt;/p&gt;
+
+&lt;h3 id=&#34;add-to-swap-cache&#34;&gt;Add to swap cache&lt;/h3&gt;
+
+&lt;h3 id=&#34;unmap-pte&#34;&gt;Unmap pte.&lt;/h3&gt;
+
+&lt;h3 id=&#34;dirty-page&#34;&gt;Dirty page&lt;/h3&gt;
+
+&lt;p&gt;Leave kswapd to deal with IO, mark it reclaim and skip it.&lt;/p&gt;
+
+&lt;h3 id=&#34;pageout&#34;&gt;pageout&lt;/h3&gt;
+
+&lt;p&gt;including shared memory&lt;/p&gt;
+
+&lt;h3 id=&#34;reverse-mapping&#34;&gt;Reverse mapping&lt;/h3&gt;
+
+&lt;p&gt;unmapping at once all page table entries of a shared pages&lt;/p&gt;
+
+&lt;h4 id=&#34;anonymous-pages&#34;&gt;Anonymous Pages&lt;/h4&gt;
+
+&lt;p&gt;Page + VMA =&amp;gt; ptes&lt;/p&gt;
+
+&lt;h5 id=&#34;stack-heap-private-anonymous-mapping&#34;&gt;Stack/heap/private anonymous mapping&lt;/h5&gt;
+
+&lt;p&gt;page.index is VFN.&lt;br /&gt;
+do_anonymous_page -&amp;gt; page_add_new_anon_rmap&lt;br /&gt;
+add vma to anon_vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don&amp;rsquo;t use vma. 2.2 exec)&lt;br /&gt;
+in do_mmap, for anonymous mapping, MAP_PRIVATE: pgoff = addr &amp;gt;&amp;gt; PAGE_SHIFT; addr will be vm_start in mmap_region&lt;br /&gt;
+vm_pgoff is pgoff, vm_start &amp;gt;&amp;gt; PAGE_SHIFT, in mmap_region&lt;/p&gt;
+
+&lt;h4 id=&#34;mapped-pages&#34;&gt;Mapped pages&lt;/h4&gt;
+
+&lt;h5 id=&#34;file-mapped-pages&#34;&gt;File mapped pages&lt;/h5&gt;
+
+&lt;p&gt;Page and file are fixed. VMA is dynamic.&lt;br /&gt;
+Page + VMA = Page + VMA.vm_start = Page&amp;rsquo;s offset in VMA + VMA.vm_start = Virtual Address =&amp;gt; ptes&lt;br /&gt;
+Page&amp;rsquo;s offset in VMA = Page&amp;rsquo;s offset in file - VMA&amp;rsquo;s offset in file = page.index - vma.vm_pgoff&lt;/p&gt;
+
+&lt;h5 id=&#34;mapped-pages-of-tmpfs-anonymous-shared-mapping&#34;&gt;Mapped pages of tmpfs - anonymous shared mapping.&lt;/h5&gt;
+
+&lt;p&gt;shmem_add_to_page_cache&lt;br /&gt;
+pgoff is 0; ignored; in do_mmap MAP_SHARED;&lt;br /&gt;
+page.index is vmf-&amp;gt;pgoff in shmem_fault; vmf-&amp;gt;pgoff is linear_page_index(vma, address)in handle_mm_fault; pgoff is offset in vma;&lt;/p&gt;
+
+&lt;h4 id=&#34;vm-pgoff-vs-index&#34;&gt;vm_pgoff vs index&lt;/h4&gt;
+
+&lt;p&gt;anonymous private mapping: vm_start &amp;gt;&amp;gt; PAGE_SHIFT vs VFN&lt;br /&gt;
+anonymous shared mapping: 0,ignored vs page&amp;rsquo;s offset in vma&lt;br /&gt;
+file mapping: vma&amp;rsquo;s offset in file vs page&amp;rsquo;s offset of file&lt;br /&gt;
+不知道理解的是否相同:&lt;br /&gt;
+对于anonymous mapping page:&lt;br /&gt;
+Private: page.index 是page 在所属进程地址空间的虚拟地址&amp;gt;&amp;gt; PAGE_SHIT.&lt;br /&gt;
+Shared: page.index 是page 在所属的VMA内的offset: (page&amp;rsquo;s addr - vm_start)&amp;gt;&amp;gt;PAGE_SHIT.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;writeback-1&#34;&gt;Writeback&lt;/h1&gt;
+
+&lt;p&gt;bdi_wq = alloc_workqueue(&amp;ldquo;writeback&amp;rdquo;, WQ_MEM_RECLAIM | WQ_FREEZABLE&lt;br /&gt;
+root        40  0.0  0.0      0     0 ?        I&amp;lt;   10:08   0:00 [writeback]&lt;br /&gt;
+bdi_list&lt;br /&gt;
+bdi_register_owner(bdi, disk_to_dev(disk));&lt;/p&gt;
 
 &lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
 

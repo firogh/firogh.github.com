@@ -80,6 +80,7 @@ alloc_file
 
 # Page cache
 ## Search structure
+file page cache : key is page.index( offset in file), item is page.
 ### anon page: 
 * Reverse mapping
 rbtree-based Interval tree
@@ -88,7 +89,7 @@ onset:
 exec workflow: 
 exec -> do_execveat_common-> bprm_mm_init setup_arg_pages
 do_anonymous_page -> anon_vma_prepare & page_add_new_anon_rmap
-fork workflow:
+fork workflow:attach to parent; alloc anon_vma for ownself.
 anon_vma_fork() -> anon_vma_chain_link: node: avc, key: avmc.vma->start/last_pgoff page.mapping=anon_vma.rb_root
 rmap: add exclusively owned pages to the newest anon_vma - e8a03feb54ca7f1768bbdc2b491f9ef654e6d01d
 nuclus:
