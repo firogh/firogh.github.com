@@ -1,0 +1,58 @@
+---
+tags: [ kernel ] 
+layout: post
+date: 2014-12-28
+title: Linux memory management
+category: cs
+---
+
+# Memory allocation
+__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d - Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions
+__GFP_IO: allow disk IO
+__GFP_FS: allow fs operations, depend on io.
+## Zone watermarks 
+core_initcall(init_per_zone_wmark_min)
+build_all_zonelists: Just init zones, nothing else. But we have vm_total_pages/zone->managed_pages initialized in free_all_bootmem();.
+page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug
+## Optimization - Hot and cold pages
+[Hot and cold pages](https://lwn.net/Articles/14768/)
+per_cpu_pageset
+## Per cpu variable
+Where is Per-CPU variable?
+static Per-CPU in .data(?) below high_memory!
+runtime Per-CPU, it's GFP_KERNEL in pcpu_create_chunk()
+## Optimization - SLAB 
+[The Slab Allocator: An Object-Caching Kernel Memory Allocator](https://people.eecs.berkeley.edu/~kubitron/cs194-24/hand-outs/bonwick_slab.pdf)
+[Text version](https://www.usenix.org/legacy/publications/library/proceedings/bos94/full_papers/bonwick.a)
+https://mp.weixin.qq.com/s/ragFsK_AJivOGjR47tAhHw
+https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf
+type: resource
+[The slab allocator has three principle aims:](https://www.kernel.org/doc/gorman/html/understand/understand011.html)
+[Re: When to use kmem_cache_alloc](https://lkml.org/lkml/2000/8/7/65)
+shrink attr
+/sys/kernel/slab/iint_cache/shrink
+SLAB_ATTR(shrink);
+array_cache.entry: cache hotness.
+https://lwn.net/Kernel/Index/#Memory_management-Writeback
+## SLUB
+[SLAUOB: Kernel memory allocator design and philosophy](https://www.youtube.com/watch?v=h0VMLXavx30)
+[SLUB fastpath improvements and potential booster shots through bulk alloc and free](https://www.youtube.com/watch?v=s0lZzP1jOzI)
+Documentation/vm/slub.txt
+[SLUB: The unqueued slab allocator V6](https://lwn.net/Articles/229096/)
+[The SLUB allocator](https://lwn.net/Articles/229984/)
+SLUB core - 81819f0fc8285a2a5a921c019e3e3d7b6169d225
+https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf
+[linux内存源码分析 - SLUB分配器概述](https://www.cnblogs.com/tolimit/p/4654109.html)
+http://www.wowotech.net/memory_management/247.html
+Freeing a full slab will make it present in per cpu partial of node partial.
+[Per cpu free list](https://lwn.net/Articles/454474/)
+[slub: reap free slabs periodically](https://lore.kernel.org/patchwork/patch/687700/)
+### Freelist vs Freelist
+26:00
+[关于page同时被多CPU使用](http://kouucocu.lofter.com/post/1cdb8c4b_50f6319)
+
+### SLUB debug
+[SLUB DEBUG原理](http://www.wowotech.net/memory_management/427.html)
+
+# Hot cold page
+[mm, Remove cold parameter from free_hot_cold_page*](https://patchwork.kernel.org/patch/10013971/)

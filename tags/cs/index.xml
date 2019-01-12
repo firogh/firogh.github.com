@@ -7,7 +7,74 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Sat, 16 Dec 2017 15:46:12 CST</updated>
+    <updated>Wed, 02 Jan 2019 00:00:00 UTC</updated>
+    
+    <item>
+      <title>Kernel memory bug - SLAB&#39;s 3 lists are corrupted.</title>
+      <link>http://firoyang.org/cs/bug_mm_1/</link>
+      <pubDate>Wed, 02 Jan 2019 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/bug_mm_1/</guid>
+      <description>
+
+&lt;p&gt;Recently, I was working on a kernel memory bug.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://apibugzilla.suse.com/show_bug.cgi?id=1118875&#34;&gt;https://apibugzilla.suse.com/show_bug.cgi?id=1118875&lt;/a&gt;&lt;br /&gt;
+L3: kernel BUG at ../mm/slab.c:2804! bad LRU list and active values in page structs in possible use-after-free&lt;/p&gt;
+
+&lt;p&gt;After digging the binary vmcore file of kdump, I got the following findings.&lt;/p&gt;
+
+&lt;h1 id=&#34;node-0&#34;&gt;Node 0&lt;/h1&gt;
+
+&lt;h2 id=&#34;partial&#34;&gt;Partial&lt;/h2&gt;
+
+&lt;p&gt;list page.lru  -H 0xffff8801a7c01348 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n0p.log&lt;br /&gt;
+n0p -&amp;gt; n0f=0xffff8801a7c01358&lt;/p&gt;
+
+&lt;h2 id=&#34;full&#34;&gt;Full&lt;/h2&gt;
+
+&lt;p&gt;list page.lru  -H 0xffff8801a7c01358 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n0f.log&lt;br /&gt;
+n0f -&amp;gt;&lt;br /&gt;
+ffffea0006902380&lt;br /&gt;
+    lru = {&lt;br /&gt;
+      next = 0xffffea0080ed53e0,&lt;br /&gt;
+      prev = 0xffffea00405f8ae0&lt;br /&gt;
+    }&lt;br /&gt;
+    s_mem = 0xffff8801a408e000&lt;br /&gt;
+      active = 16&lt;br /&gt;
+    slab_cache = 0xffff8801a7c00400&lt;br /&gt;
+  flags = 6755398367314048&lt;br /&gt;
+ffffea0080ed53c0&lt;br /&gt;
+    lru = {&lt;br /&gt;
+      next = 0xffffea00422a34e0,&lt;br /&gt;
+      prev = 0xffffea00069023a0&lt;br /&gt;
+    }&lt;br /&gt;
+    s_mem = 0xffff88203b54f000&lt;br /&gt;
+      active = 7&lt;br /&gt;
+    slab_cache = 0xffff8801a7c00400&lt;br /&gt;
+  flags = 24769796876796032&lt;br /&gt;
+&amp;hellip; -&amp;gt; n1f = 0xffff881107c00358&lt;/p&gt;
+
+&lt;h1 id=&#34;node-1&#34;&gt;Node 1&lt;/h1&gt;
+
+&lt;h2 id=&#34;partial-1&#34;&gt;Partial&lt;/h2&gt;
+
+&lt;p&gt;crash&amp;gt; list page.lru  -H 0xffff881107c00348 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n1p.log&lt;br /&gt;
+nip-&amp;gt; SLAB ffffea0043ab74e0 -&amp;gt; 0xffff881107c00348 = n1p&lt;br /&gt;
+SLAB ffffea0043ab74e0&amp;rsquo;s prev pointing to 0xffff881107c00358&lt;/p&gt;
+
+&lt;h2 id=&#34;full-1&#34;&gt;Full&lt;/h2&gt;
+
+&lt;p&gt;crash&amp;gt; list page.lru  -H 0xffff881107c00358 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n1f.log&lt;br /&gt;
+n1f-&amp;gt; SLAB ffffea0043ab74e0  -&amp;gt; &amp;hellip; -&amp;gt; 0xffff881107c00348 = n1p&lt;/p&gt;
+
+&lt;p&gt;This issue occured on a NUMA system with 2 memory nodes.&lt;br /&gt;
+Both node 0 and node 1&amp;rsquo;s SLAB&amp;rsquo;s partial and full lists were corrupted. After looking into this issue a few days, I talked to Vlastimil Babka.&lt;br /&gt;
+He provided a fix for this issue. That is 7810e6781e0fcbca78b91cf65053f895bf59e85f - mm, page_alloc: do not break __ GFP_THISNODE by zonelist reset.&lt;/p&gt;
+
+&lt;p&gt;Now, I have a question: why did I cannot solve this issue?&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Memory-ordering model</title>
@@ -230,6 +297,10 @@ Processes are blocked&lt;/p&gt;
 &lt;h2 id=&#34;fairness&#34;&gt;Fairness&lt;/h2&gt;
 
 &lt;p&gt;Unit: /proc/sys/kernel/sched_min_granularity_ns&lt;/p&gt;
+
+&lt;h1 id=&#34;conceptions&#34;&gt;Conceptions&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://android.googlesource.com/kernel/msm/+/android-msm-bullhead-3.10-marshmallow-dr/Documentation/scheduler/sched-hmp.txt&#34;&gt;Cpu capacity&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;running-compensator-records-the-running-process&#34;&gt;Running Compensator records the running process&lt;/h1&gt;
 
@@ -880,9 +951,29 @@ ADT is a data type defined by its behavior.&lt;br /&gt;
 
 &lt;p&gt;Sometimes, SLUB put freelist in object&lt;/p&gt;
 
+&lt;h2 id=&#34;kernel-doubly-linked-list-operations&#34;&gt;kernel doubly linked list operations&lt;/h2&gt;
+
+&lt;h3 id=&#34;add&#34;&gt;add&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;kernel version&lt;br /&gt;
+next-&amp;gt;prev = new;&lt;br /&gt;
+new-&amp;gt;next = next;&lt;br /&gt;
+new-&amp;gt;prev = prev;&lt;br /&gt;
+prev-&amp;gt;next = new;&lt;/p&gt;
+
+&lt;h3 id=&#34;delete&#34;&gt;delete&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kernel version&lt;br /&gt;
+next-&amp;gt;prev = prev;&lt;br /&gt;
+WRITE_ONCE(prev-&amp;gt;next, next);&lt;br /&gt;
+entry-&amp;gt;next = LIST_POISON1;&lt;br /&gt;
+entry-&amp;gt;prev = LIST_POISON2;&lt;/p&gt;
+
 &lt;h1 id=&#34;bl-list&#34;&gt;BL list&lt;/h1&gt;
 
-&lt;p&gt;kernel: add bl_list - 4e35e6070b1ceed89c3bba2af4216c286fb1dafd&lt;/p&gt;
+&lt;p&gt;kernel: add bl_list - 4e35e6070b1ceed89c3bba2af4216c286fb1dafd&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;h1 id=&#34;double-linked-list&#34;&gt;Double linked list&lt;/h1&gt;
 
@@ -1031,6 +1122,11 @@ Security/Protection/isolation&lt;br /&gt;
 Reliability&lt;br /&gt;
 Energy-efficiency&lt;/p&gt;
 
+&lt;h1 id=&#34;the-abilities-of-computer-science-programmer&#34;&gt;The abilities of Computer science programmer&lt;/h1&gt;
+
+&lt;p&gt;Debugging&lt;br /&gt;
+Memory management&lt;/p&gt;
+
 &lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/library/os-aapseudo1/os-aapseudo1-pdf.pdf&#34;&gt;All about pseudo&lt;/a&gt;&lt;/p&gt;
@@ -1047,11 +1143,12 @@ Energy-efficiency&lt;/p&gt;
 
 &lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=g7Qm0NpPAz4&#34;&gt;https://www.youtube.com/watch?v=g7Qm0NpPAz4&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=g7Qm0NpPAz4&#34;&gt;https://www.youtube.com/watch?v=g7Qm0NpPAz4&lt;/a&gt;&lt;br /&gt;
+Debug hacks: a book on how to debug.&lt;/p&gt;
 
 &lt;h1 id=&#34;boot-issues&#34;&gt;Boot issues&lt;/h1&gt;
 
-&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200,keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
+&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200, keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
 
 &lt;h1 id=&#34;lockup&#34;&gt;Lockup&lt;/h1&gt;
 
@@ -1438,12 +1535,21 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
       <guid>http://firoyang.org/cs/pl/</guid>
       <description>
 
+&lt;h1 id=&#34;data-types&#34;&gt;Data types&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://manybutfinite.com/post/closures-objects-heap/&#34;&gt;Closures, Objects, and the Fauna of the Heap&lt;/a&gt;&lt;br /&gt;
+value types and reference types. A value of value type is the actual value. A value of reference type is a reference to another value.&lt;br /&gt;
+value types: stack&lt;br /&gt;
+reference types: heap&lt;/p&gt;
+
+&lt;h1 id=&#34;scope&#34;&gt;Scope&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope&#34;&gt;https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope&lt;/a&gt;&lt;br /&gt;
+Lexical scope vs. dynamic scope&lt;/p&gt;
+
 &lt;p&gt;&lt;a href=&#34;http://www.yinwang.org/blog-cn/2016/03/31/no-longer-pl&#34;&gt;我为什么不再做PL人&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html&#34;&gt;Functors, Applicatives, And Monads In Pictures&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://jozefg.bitbucket.org/posts/2015-08-14-learn-tt.html&#34;&gt;Learn Type Theory&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;∅ ⊢ pl&lt;br /&gt;
-scope: The set of expressions for which a binding defines a name is called the scope of that name.&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -1561,25 +1667,8 @@ indexing on the first dimension for example. So if an int array is named a,&lt;/
 
 &lt;h2 id=&#34;scopes-of-identifiers&#34;&gt;Scopes of identifiers&lt;/h2&gt;
 
-&lt;p&gt;For each different entity that an identifier designates, the identifier is visible (i.e., can be&lt;br /&gt;
-used) only within a region of program text called its scope.&lt;br /&gt;
-* four kinds of scopes: function, file, block, and function prototype&lt;br /&gt;
-If the declarator or type specifier that declares the identifier&lt;br /&gt;
-appears outside of any block or list of parameters, the identifier has file scope, which&lt;br /&gt;
-terminates at the end of the translation unit.&lt;/p&gt;
-
-&lt;p&gt;If the declarator or type specifier that&lt;br /&gt;
-declares the identifier appears inside a block or within the list of parameter declarations in&lt;br /&gt;
-a function definition, the identifier has block scope, which terminates at the end of the&lt;br /&gt;
-associated block.&lt;/p&gt;
-
-&lt;p&gt;If the declarator or type specifier that declares the identifier appears&lt;br /&gt;
-within the list of parameter declarations in a function prototype (not part of a function&lt;br /&gt;
-definition), the identifier has function prototype scope, which terminates at the end of the&lt;br /&gt;
-function declarator.&lt;/p&gt;
-
-&lt;p&gt;If an identifier designates two different entities in the same name&lt;br /&gt;
-space, the scopes might overlap.&lt;/p&gt;
+&lt;p&gt;For each different entity that an identifier designates, the identifier is visible (i.e., can be used) only within a region of program text called its scope.&lt;br /&gt;
+* four kinds of scopes: function, file, block, and function prototype&lt;/p&gt;
 
 &lt;h2 id=&#34;linkages-of-identifiers&#34;&gt;linkages of identifiers&lt;/h2&gt;
 
@@ -1740,43 +1829,7 @@ strstr: 找子串, 用memcmp&lt;/p&gt;
 &lt;p&gt;File and directory patterns&lt;br /&gt;
 ?: must stand for a character&lt;br /&gt;
 * Regular expression&lt;br /&gt;
-* SQL&lt;br /&gt;
-#Shell&lt;/p&gt;
-
-&lt;h2 id=&#34;test&#34;&gt;test&lt;/h2&gt;
-
-&lt;h3 id=&#34;n-is-not-equivalent-to-z&#34;&gt;-n is not equivalent to ! -z&lt;/h3&gt;
-
-&lt;p&gt;Be caution! just juse -z and !-z&lt;/p&gt;
-
-&lt;h2 id=&#34;ls&#34;&gt;ls&lt;/h2&gt;
-
-&lt;p&gt;-l: show hardlinks of file/dir in 2nd column&lt;br /&gt;
-drwsrwsr-T: T stand for sticky bit no other execution bit&lt;br /&gt;
-##eval&lt;br /&gt;
-* create variable name&lt;br /&gt;
-    &lt;strong&gt;var=&amp;ldquo;name&amp;rdquo;&lt;br /&gt;
-    eval &amp;ldquo;export &amp;ndash; \&amp;ldquo;$&lt;/strong&gt;var=firo\&amp;ldquo;&amp;rdquo;&lt;br /&gt;
-    set | grep firo&lt;br /&gt;
-    __var=&amp;lsquo;name&amp;rsquo;&lt;br /&gt;
-    bbb=&amp;lsquo;firo&amp;rsquo;&lt;br /&gt;
-##expr&lt;br /&gt;
-expr &amp;ldquo;$name&amp;rdquo; : &amp;lsquo;(.*).conf&amp;rsquo;&lt;br /&gt;
-##find&lt;br /&gt;
-* find symbols in object&lt;br /&gt;
-    find . -name &amp;lsquo;a.out&amp;rsquo; -exec nm -D {} \; -print&lt;br /&gt;
-    find . -name &amp;lsquo;*.o&amp;rsquo; -print0 | xargs -0 nm -A | egrep &amp;lsquo; (i|y)$&amp;rsquo;&lt;br /&gt;
-* rm&lt;br /&gt;
-find . -name ‘your_pattern*’ -exec rm -f {} \;&lt;br /&gt;
-find . -name ‘your_pattern*’ -delete&lt;/p&gt;
-
-&lt;h2 id=&#34;grep&#34;&gt;grep&lt;/h2&gt;
-
-&lt;p&gt;-c: count of match&lt;br /&gt;
-##pipe&lt;br /&gt;
-find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo &amp;ldquo;$cnt $d&amp;rdquo;; done | sort -n &amp;gt;stat&lt;br /&gt;
-#AWK&lt;br /&gt;
-netstat -n | awk &amp;lsquo;/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}&amp;rsquo;&lt;/p&gt;
+* SQL&lt;/p&gt;
 </description>
     </item>
     

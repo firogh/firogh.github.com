@@ -1,0 +1,83 @@
+---
+tags: [ kernel ] 
+layout: post
+date: 2014-12-28
+title: Linux memory management
+category: cs
+---
+# Page frame reclaiming
+Free memory is low.
+Occassions
+Periodical: kswapd
+Ondemand: not enough memory for alloc pages
+Mannual trigger: drop_caches
+## What pages are unreclaimable
+All kernel pages are unreclaimable.
+Free pages: incldued in buddy systme lists.
+Reserved pages: PG_reserved
+Lokced userspace pages: 
+1. Temporarily locked pages: PG_locked, 
+2. Memory locked pages: VM_LOCKED, [Misunderstanding mlock](https://eklitzke.org/mlock-and-mlockall)
+## Recalimable pages
+all pages of a User Mode process are reclaimable except locked.
+Swapbacked pages
+1. Private
+1.1 malloc memory map
+1.2 Dirty file private mapping - data, bbs segments
+2. Shared - tmpfs: 
+2.1 Anonymous shared mapping memory between P&C; 
+2.2 System v IPC shared memory.
+Filebacked pages
+1. Private
+1.1 Clean file private mapping - text segment
+2. Shared
+2.1 Shared file mapping memory.
+### Rules adopted by the PFRA
+1. Free the “harmless” pages first
+2. LRU 2Q
+3. OOM
+# Page cache and i_mmap key
+index
+vm_pgoff
+## Reclaim
+### WriteBack
+1. if page is alreday marked reclaim, skip it this time.
+2. if not makred reclaim, normal writeback, and IO isn't permitted, then mark it as reclaim and will be pended at tail of LRU after writeback complete.
+3. Cgroup cases. Just wait for the complte of writeback.
+### Add to swap cache
+### Unmap pte.
+### Dirty page
+Leave kswapd to deal with IO, mark it reclaim and skip it.
+### pageout
+including shared memory
+### Reverse mapping
+unmapping at once all page table entries of a shared pages
+#### Anonymous Pages
+Page + VMA => ptes
+##### Stack/heap/private anonymous mapping
+page.index is VFN. 
+do_anonymous_page -> page_add_new_anon_rmap
+add vma to anon_vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don't use vma. 2.2 exec)
+in do_mmap, for anonymous mapping, MAP_PRIVATE: pgoff = addr >> PAGE_SHIFT; addr will be vm_start in mmap_region
+vm_pgoff is pgoff, vm_start >> PAGE_SHIFT, in mmap_region 
+#### Mapped pages
+##### File mapped pages
+Page and file are fixed. VMA is dynamic.
+Page + VMA = Page + VMA.vm_start = Page's offset in VMA + VMA.vm_start = Virtual Address => ptes 
+Page's offset in VMA = Page's offset in file - VMA's offset in file = page.index - vma.vm_pgoff
+##### Mapped pages of tmpfs - anonymous shared mapping.
+shmem_add_to_page_cache
+pgoff is 0; ignored; in do_mmap MAP_SHARED;
+page.index is vmf->pgoff in shmem_fault; vmf->pgoff is linear_page_index(vma, address)in handle_mm_fault; pgoff is offset in vma; 
+#### vm_pgoff vs index
+anonymous private mapping: vm_start >> PAGE_SHIFT vs VFN 
+anonymous shared mapping: 0,ignored vs page's offset in vma
+file mapping: vma's offset in file vs page's offset of file
+不知道理解的是否相同:
+对于anonymous mapping page:
+Private: page.index 是page 在所属进程地址空间的虚拟地址>> PAGE_SHIT.
+Shared: page.index 是page 在所属的VMA内的offset: (page's addr - vm_start)>>PAGE_SHIT.
+## Page swap
+PG_swapcace means page is in the swap cache.
+PG_swapbacked means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.
+

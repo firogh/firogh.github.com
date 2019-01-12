@@ -1707,399 +1707,41 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
       <guid>http://firoyang.org/cs/mm/</guid>
       <description>
 
-&lt;p&gt;#Page swap&lt;br /&gt;
-PG_swapcace means page is in the swap cache.&lt;br /&gt;
-PG_swapbacked means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.&lt;/p&gt;
-
-&lt;h1 id=&#34;compact&#34;&gt;Compact&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.zhihu.com/question/59053036&#34;&gt;https://www.zhihu.com/question/59053036&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;buffer-cache&#34;&gt;Buffer cache&lt;/h1&gt;
-
-&lt;p&gt;&amp;ldquo;Buffers&amp;rdquo; represent how much portion of RAM is dedicated to cache disk blocks&lt;br /&gt;
-1. Open block device directly open(&amp;ldquo;/dev/sdb&amp;rdquo;&amp;hellip;) -&amp;gt; blkdev_open&lt;br /&gt;
-2. Read metadata,including indirect blocks, bitmap,  sb_getblk-&amp;gt;&amp;hellip; -&amp;gt; grow_dev_page&lt;br /&gt;
-meminfo_proc_show&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/&#34;&gt;Memory – Part 2: Understanding Process memory&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;format-of-page-table-entry&#34;&gt;Format of Page-Table entry&lt;/h1&gt;
-
-&lt;p&gt;v3a: P121:&lt;br /&gt;
-5 (A) Accessed; indicates whether software has accessed the 4-KByte page referenced by this entry (see Section 4.8)&lt;br /&gt;
-6 (D) Dirty; indicates whether software has written to the 4-KByte page referenced by this entry (see Section 4.8)&lt;br /&gt;
-Check this _PAGE_BIT_ACCESSED&lt;/p&gt;
-
-&lt;h1 id=&#34;page-flags&#34;&gt;Page flags&lt;/h1&gt;
-
-&lt;p&gt;PG_active: 表示此页当前是否活跃，当放到或者准备放到活动lru链表时，被置位&lt;br /&gt;
-PG_referenced: 表示此页最近是否被访问，每次页面访问都会被置位&lt;br /&gt;
-PG_lru: 表示此页是处于lru链表中的&lt;br /&gt;
-PG_mlocked: 表示此页被mlock()锁在内存中，禁止换出和释放&lt;br /&gt;
-PG_swapbacked: 表示此页依靠swap，可能是进程的匿名页(堆、栈、数据段)，匿名mmap共享内存映射，shmem共享内存映射&lt;/p&gt;
-
-&lt;h1 id=&#34;struct-page&#34;&gt;struct page&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;page.lru&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;lruvec&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;buddy system&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;slab&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;isolate list&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;page.index&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;file memory mapped page: index is offset in a file&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Anonymous page: linear_page_index in &lt;strong&gt;page_set_anon_rmap()&lt;/strong&gt;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;tlb&#34;&gt;TLB&lt;/h1&gt;
-
-&lt;p&gt;spurious_fault:a stale TLB entry&lt;/p&gt;
-
-&lt;h1 id=&#34;kprobes&#34;&gt;Kprobes&lt;/h1&gt;
-
-&lt;p&gt;kprobes_fault&lt;/p&gt;
-
-&lt;h1 id=&#34;leave-questions-open&#34;&gt;Leave questions open&lt;/h1&gt;
-
-&lt;p&gt;kmmio probe in do_page_fault&lt;br /&gt;
-* pte&lt;br /&gt;
-1216         if (error_code &amp;amp; PF_WRITE) {&lt;br /&gt;
-1217                 /* write, present and write, not present: */&lt;br /&gt;
-1218                 if (unlikely(!(vma-&amp;gt;vm_flags &amp;amp; VM_WRITE)))&lt;br /&gt;
-* madvise&lt;br /&gt;
-* pte_present ?&lt;br /&gt;
-* bug?&lt;br /&gt;
-mm/memory.c:do_anonymous_page: page_add_new_anon_rmap(page, vma, vmf-&amp;gt;address, false);&lt;br /&gt;
-* userfd&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=xhOBc5L_Hkk&#34;&gt;https://www.youtube.com/watch?v=xhOBc5L_Hkk&lt;/a&gt;&lt;br /&gt;
-* Special sections in Linux binaries&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/531148/&#34;&gt;https://lwn.net/Articles/531148/&lt;/a&gt;&lt;br /&gt;
-* COW: for malloc page&lt;br /&gt;
-are the ptes set during fork for child process?&lt;br /&gt;
-check copy_one_pte is_cow_mapping in copy_page_range in dup_mmap&lt;br /&gt;
-VM_WIPEONFORK&lt;br /&gt;
-MADV_WIPEONFORK&lt;br /&gt;
-* DAX&lt;br /&gt;
-* __shmem_file_setup dev/zero&lt;br /&gt;
-* &lt;a href=&#34;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&#34;&gt;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;hardware-bit&#34;&gt;Hardware bit&lt;/h1&gt;
-
-&lt;h1 id=&#34;data-synchronization&#34;&gt;Data synchronization&lt;/h1&gt;
-
-&lt;h1 id=&#34;process-address-space&#34;&gt;process address space&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/90311/&#34;&gt;flexible-mmap-2.6.7-D5&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Reorganizing the address space&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/&#34;&gt;Anatomy of a Program in Memory&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;addresses&#34;&gt;Addresses&lt;/h1&gt;
-
-&lt;p&gt;the VA is at fixed offset from the PA. They&amp;rsquo;re shifted by exactly the page offset. so if your page offset is 3 GBs that means 3 GBs in VM corresponds to 0 in PM&lt;br /&gt;
-kernel Virutal addresses are used for two different things&lt;br /&gt;
-this first is noncontiguous memory mappings; this is often used for large buffer on small memory system.&lt;br /&gt;
-the other thing they&amp;rsquo;re used for  is memory mapped i/o.&lt;/p&gt;
-
-&lt;p&gt;VM area struct represents a mapping&lt;/p&gt;
-
-&lt;h1 id=&#34;slab&#34;&gt;SLAB&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://people.eecs.berkeley.edu/~kubitron/cs194-24/hand-outs/bonwick_slab.pdf&#34;&gt;The Slab Allocator: An Object-Caching Kernel Memory Allocator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.usenix.org/legacy/publications/library/proceedings/bos94/full_papers/bonwick.a&#34;&gt;Text version&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://mp.weixin.qq.com/s/ragFsK_AJivOGjR47tAhHw&#34;&gt;https://mp.weixin.qq.com/s/ragFsK_AJivOGjR47tAhHw&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf&#34;&gt;https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf&lt;/a&gt;&lt;br /&gt;
-type: resource&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand011.html&#34;&gt;The slab allocator has three principle aims:&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2000/8/7/65&#34;&gt;Re: When to use kmem_cache_alloc&lt;/a&gt;&lt;br /&gt;
-shrink attr&lt;br /&gt;
-/sys/kernel/slab/iint_cache/shrink&lt;br /&gt;
-SLAB_ATTR(shrink);&lt;br /&gt;
-array_cache.entry: cache hotness.&lt;/p&gt;
-
-&lt;h2 id=&#34;slub&#34;&gt;slub&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=h0VMLXavx30&#34;&gt;SLAUOB: Kernel memory allocator design and philosophy&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=s0lZzP1jOzI&#34;&gt;SLUB fastpath improvements and potential booster shots through bulk alloc and free&lt;/a&gt;&lt;br /&gt;
-Documentation/vm/slub.txt&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/229096/&#34;&gt;SLUB: The unqueued slab allocator V6&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/229984/&#34;&gt;The SLUB allocator&lt;/a&gt;&lt;br /&gt;
-SLUB core - 81819f0fc8285a2a5a921c019e3e3d7b6169d225&lt;br /&gt;
-&lt;a href=&#34;https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf&#34;&gt;https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cnblogs.com/tolimit/p/4654109.html&#34;&gt;linux内存源码分析 - SLUB分配器概述&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.wowotech.net/memory_management/247.html&#34;&gt;http://www.wowotech.net/memory_management/247.html&lt;/a&gt;&lt;br /&gt;
-Freeing a full slab will make it present in per cpu partial of node partial.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/454474/&#34;&gt;Per cpu free list&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/687700/&#34;&gt;slub: reap free slabs periodically&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;freelist-vs-freelist&#34;&gt;Freelist vs Freelist&lt;/h3&gt;
-
-&lt;p&gt;26:00&lt;br /&gt;
-&lt;a href=&#34;http://kouucocu.lofter.com/post/1cdb8c4b_50f6319&#34;&gt;关于page同时被多CPU使用&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;slub-debug&#34;&gt;SLUB debug&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.wowotech.net/memory_management/427.html&#34;&gt;SLUB DEBUG原理&lt;/a&gt;&lt;br /&gt;
-?? Human index&lt;/p&gt;
-
-&lt;h1 id=&#34;page-frame-reclaiming&#34;&gt;Page frame reclaiming&lt;/h1&gt;
-
-&lt;p&gt;Free memory is low.&lt;br /&gt;
-Occassions&lt;br /&gt;
-Periodical: kswapd&lt;br /&gt;
-Ondemand: not enough memory for alloc pages&lt;br /&gt;
-Mannual trigger: drop_caches&lt;/p&gt;
-
-&lt;h2 id=&#34;what-pages-are-unreclaimable&#34;&gt;What pages are unreclaimable&lt;/h2&gt;
-
-&lt;p&gt;All kernel pages are unreclaimable.&lt;br /&gt;
-Free pages: incldued in buddy systme lists.&lt;br /&gt;
-Reserved pages: PG_reserved&lt;br /&gt;
-Lokced userspace pages:&lt;br /&gt;
-1. Temporarily locked pages: PG_locked,&lt;br /&gt;
-2. Memory locked pages: VM_LOCKED, &lt;a href=&#34;https://eklitzke.org/mlock-and-mlockall&#34;&gt;Misunderstanding mlock&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;recalimable-pages&#34;&gt;Recalimable pages&lt;/h2&gt;
-
-&lt;p&gt;all pages of a User Mode process are reclaimable except locked.&lt;br /&gt;
-Swapbacked pages&lt;br /&gt;
-1. Private&lt;br /&gt;
-1.1 malloc memory map&lt;br /&gt;
-1.2 Dirty file private mapping - data, bbs segments&lt;br /&gt;
-2. Shared - tmpfs:&lt;br /&gt;
-2.1 Anonymous shared mapping memory between P&amp;C;&lt;br /&gt;
-2.2 System v IPC shared memory.&lt;br /&gt;
-Filebacked pages&lt;br /&gt;
-1. Private&lt;br /&gt;
-1.1 Clean file private mapping - text segment&lt;br /&gt;
-2. Shared&lt;br /&gt;
-2.1 Shared file mapping memory.&lt;/p&gt;
-
-&lt;h3 id=&#34;rules-adopted-by-the-pfra&#34;&gt;Rules adopted by the PFRA&lt;/h3&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Free the “harmless” pages first&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;LRU 2Q&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;OOM&lt;/p&gt;
-
-&lt;h1 id=&#34;page-cache-and-i-mmap-key&#34;&gt;Page cache and i_mmap key&lt;/h1&gt;
-
-&lt;p&gt;index&lt;br /&gt;
-vm_pgoff&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&#34;reclaim&#34;&gt;Reclaim&lt;/h2&gt;
-
-&lt;h3 id=&#34;writeback&#34;&gt;WriteBack&lt;/h3&gt;
-
-&lt;ol&gt;
-&lt;li&gt;if page is alreday marked reclaim, skip it this time.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;if not makred reclaim, normal writeback, and IO isn&amp;rsquo;t permitted, then mark it as reclaim and will be pended at tail of LRU after writeback complete.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Cgroup cases. Just wait for the complte of writeback.&lt;/p&gt;
-
-&lt;h3 id=&#34;add-to-swap-cache&#34;&gt;Add to swap cache&lt;/h3&gt;
-
-&lt;h3 id=&#34;unmap-pte&#34;&gt;Unmap pte.&lt;/h3&gt;
-
-&lt;h3 id=&#34;dirty-page&#34;&gt;Dirty page&lt;/h3&gt;
-
-&lt;p&gt;Leave kswapd to deal with IO, mark it reclaim and skip it.&lt;/p&gt;
-
-&lt;h3 id=&#34;pageout&#34;&gt;pageout&lt;/h3&gt;
-
-&lt;p&gt;including shared memory&lt;/p&gt;
-
-&lt;h3 id=&#34;reverse-mapping&#34;&gt;Reverse mapping&lt;/h3&gt;
-
-&lt;p&gt;unmapping at once all page table entries of a shared pages&lt;/p&gt;
-
-&lt;h4 id=&#34;anonymous-pages&#34;&gt;Anonymous Pages&lt;/h4&gt;
-
-&lt;p&gt;Page + VMA =&amp;gt; ptes&lt;/p&gt;
-
-&lt;h5 id=&#34;stack-heap-private-anonymous-mapping&#34;&gt;Stack/heap/private anonymous mapping&lt;/h5&gt;
-
-&lt;p&gt;page.index is VFN.&lt;br /&gt;
-do_anonymous_page -&amp;gt; page_add_new_anon_rmap&lt;br /&gt;
-add vma to anon_vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don&amp;rsquo;t use vma. 2.2 exec)&lt;br /&gt;
-in do_mmap, for anonymous mapping, MAP_PRIVATE: pgoff = addr &amp;gt;&amp;gt; PAGE_SHIFT; addr will be vm_start in mmap_region&lt;br /&gt;
-vm_pgoff is pgoff, vm_start &amp;gt;&amp;gt; PAGE_SHIFT, in mmap_region&lt;/p&gt;
-
-&lt;h4 id=&#34;mapped-pages&#34;&gt;Mapped pages&lt;/h4&gt;
-
-&lt;h5 id=&#34;file-mapped-pages&#34;&gt;File mapped pages&lt;/h5&gt;
-
-&lt;p&gt;Page and file are fixed. VMA is dynamic.&lt;br /&gt;
-Page + VMA = Page + VMA.vm_start = Page&amp;rsquo;s offset in VMA + VMA.vm_start = Virtual Address =&amp;gt; ptes&lt;br /&gt;
-Page&amp;rsquo;s offset in VMA = Page&amp;rsquo;s offset in file - VMA&amp;rsquo;s offset in file = page.index - vma.vm_pgoff&lt;/p&gt;
-
-&lt;h5 id=&#34;mapped-pages-of-tmpfs-anonymous-shared-mapping&#34;&gt;Mapped pages of tmpfs - anonymous shared mapping.&lt;/h5&gt;
-
-&lt;p&gt;shmem_add_to_page_cache&lt;br /&gt;
-pgoff is 0; ignored; in do_mmap MAP_SHARED;&lt;br /&gt;
-page.index is vmf-&amp;gt;pgoff in shmem_fault; vmf-&amp;gt;pgoff is linear_page_index(vma, address)in handle_mm_fault; pgoff is offset in vma;&lt;/p&gt;
-
-&lt;h4 id=&#34;vm-pgoff-vs-index&#34;&gt;vm_pgoff vs index&lt;/h4&gt;
-
-&lt;p&gt;anonymous private mapping: vm_start &amp;gt;&amp;gt; PAGE_SHIFT vs VFN&lt;br /&gt;
-anonymous shared mapping: 0,ignored vs page&amp;rsquo;s offset in vma&lt;br /&gt;
-file mapping: vma&amp;rsquo;s offset in file vs page&amp;rsquo;s offset of file&lt;br /&gt;
-不知道理解的是否相同:&lt;br /&gt;
-对于anonymous mapping page:&lt;br /&gt;
-Private: page.index 是page 在所属进程地址空间的虚拟地址&amp;gt;&amp;gt; PAGE_SHIT.&lt;br /&gt;
-Shared: page.index 是page 在所属的VMA内的offset: (page&amp;rsquo;s addr - vm_start)&amp;gt;&amp;gt;PAGE_SHIT.&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;writeback-1&#34;&gt;Writeback&lt;/h1&gt;
-
-&lt;p&gt;bdi_wq = alloc_workqueue(&amp;ldquo;writeback&amp;rdquo;, WQ_MEM_RECLAIM | WQ_FREEZABLE&lt;br /&gt;
-root        40  0.0  0.0      0     0 ?        I&amp;lt;   10:08   0:00 [writeback]&lt;br /&gt;
-bdi_list&lt;br /&gt;
-bdi_register_owner(bdi, disk_to_dev(disk));&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Logic gates: SRAM, DRAM&lt;br /&gt;
-What is data/contrl/addr bus?&lt;br /&gt;
-What problems we will meet in memory management?&lt;br /&gt;
-Memory allocation and release. Bootmem and Buddy system is pretty good. Can we eliminate Bootmem?&lt;br /&gt;
-How to distribute these memory to processes? Virtual memory.&lt;br /&gt;
-How to translate linear address to physical address? Page table.&lt;br /&gt;
-Exchange data between primary memory and second memory. Paging.&lt;/p&gt;
-
-&lt;p&gt;What are the pitfall of manuplate directly physcial memory&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-pagge-cache-and-buffer-cache&#34;&gt;Memory pagge cache and buffer cache.&lt;/h1&gt;
-
-&lt;p&gt;page cache for memory, buffer cache for fs(block size is dependent on filesystem).&lt;br /&gt;
-address_pace-&amp;gt;page_tree: why radix tree, read ahead,&lt;br /&gt;
-do_page_fault-&amp;gt;read_page&lt;/p&gt;
-
-&lt;p&gt;For buffer cache: buffer cache is only a wrapper of page for fs operations.&lt;br /&gt;
-buffer_head is temporary data released in a deeper function than the function allocing the buffer_head.&lt;br /&gt;
-__block_write_full_page&lt;br /&gt;
-block_read_full_page&lt;/p&gt;
-
-&lt;p&gt;I can not cover every corner of kernel, so If need, I will learn it.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Writeback&#34;&gt;The coherency problem, fs-writeback&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/326552/&#34;&gt;Flushing out pdflush&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Swapping&#34;&gt;Swapping&lt;/a&gt;&lt;br /&gt;
-User space process: anonymous mapping(stack,heap,mmap), IPC-share memory(anonymous?), private mapping&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Kernel/Index/#Memory_management-Shrinkers&#34;&gt;Shrink cache&lt;/a&gt;&lt;br /&gt;
-LRU cache&lt;/p&gt;
-
-&lt;h1 id=&#34;page&#34;&gt;page&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;An introduction to compound pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;memroy-mangement&#34;&gt;Memroy mangement&lt;/h1&gt;
-
-&lt;h2 id=&#34;gfp-flags&#34;&gt;GFP flags&lt;/h2&gt;
-
-&lt;p&gt;__GFP_IO: allow disk IO&lt;br /&gt;
-__GFP_FS: allow fs operations, depend on io.&lt;br /&gt;
-more details in lwn, lkd&lt;/p&gt;
-
-&lt;h1 id=&#34;virtual-memory&#34;&gt;Virtual memory&lt;/h1&gt;
-
-&lt;p&gt;vm的提出是为了解决。easy to use。&lt;br /&gt;
-1. decoupling physical memory 符号集合。programmer 不需要关注底层细节。 任务转给操作系统。&lt;br /&gt;
-2. VM相对物理内存增加了表达能力， 有了更多表达符号。着减少了swap or 不必要的页表抖动。&lt;/p&gt;
-
-&lt;h2 id=&#34;vmalloc&#34;&gt;Vmalloc&lt;/h2&gt;
-
-&lt;p&gt;may sleep.&lt;/p&gt;
-
-&lt;h3 id=&#34;hwo-vmalloc-works&#34;&gt;Hwo Vmalloc works?&lt;/h3&gt;
-
-&lt;p&gt;Work in HIGHMEM and NORMALMEM&lt;br /&gt;
-The skeleton is rbtree, root is global variable vmap_area_root.rb_node.&lt;br /&gt;
-struct vm_struct likes struct address_space, functionlly;&lt;br /&gt;
-struct vmap_area likes struct vm_area_struct.&lt;br /&gt;
-map_vm_area 页表映射&lt;br /&gt;
-the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address!&lt;/p&gt;
-
-&lt;p&gt;##Process virtual memory&lt;br /&gt;
-* struct vm_area_struct: The intervals of legal address are called &lt;em&gt;memory areas&lt;/em&gt; is permitted to access.&lt;br /&gt;
-* struct address_space: To establish an association between the regions of the vm and the places where the related data are located.&lt;br /&gt;
-i_mmap: how many processes opened this file.&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2012/8/7/46&#34;&gt;https://lkml.org/lkml/2012/8/7/46&lt;/a&gt;&lt;br /&gt;
-* sturct mm_struct: how many files(vm_area_struct) does this process opened.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Memory mappings&lt;br /&gt;
-syscall remap_file_pages Nolinear mappings is deprecated, since Linux 3.16&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;link&lt;br /&gt;
-a virtual address and physical address. &amp;ndash;page tale&lt;br /&gt;
-a memory region of a process and its virtual page addresses. &amp;ndash;vm_area_struct&lt;br /&gt;
-a region of file(one physical) and all virtual address spaces(many virtual) into which the region is mapped. address_space-&amp;gt;i_mmap.&lt;br /&gt;
-a physical page and the processes that share the page(used in swap case)&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Physical memory&lt;br /&gt;
-* NUMA/UMA pg_data_t: My PC is UMA, numatop, numastat, numactl&lt;br /&gt;
-* ZONE(DMA/NORMAL/HIGHMEM) struct zone:&lt;br /&gt;
-* struct page is the basic unit of kernel mm knowns as page frame.&lt;br /&gt;
-    The goal of strcut page is to describe physical memory, not the data contained therein.&lt;br /&gt;
-* The buddy system is per-zone struct free_area&lt;br /&gt;
-* Physical address is connected to Virtual address by pfn = page - mem_map;&lt;/p&gt;
-
-&lt;h2 id=&#34;page-allocator&#34;&gt;page allocator&lt;/h2&gt;
-
-&lt;p&gt;alloc_pages()&lt;br /&gt;
-##Page/buffer cache&lt;br /&gt;
-struct address_space-&amp;gt;page_tree&lt;br /&gt;
-##Page writeback&lt;br /&gt;
-data synchronization, the flush threads, pdflush&lt;/p&gt;
-
-&lt;p&gt;#FAQ&lt;br /&gt;
-* Where is Per-CPU variable?&lt;br /&gt;
-static Per-CPU in .data(?) below high_memory!&lt;br /&gt;
-runtime Per-CPU, it&amp;rsquo;s GFP_KERNEL in pcpu_create_chunk()&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;Memory mode&lt;br /&gt;
-flat mem -&amp;gt; uma&lt;br /&gt;
+&lt;h1 id=&#34;memory-organization&#34;&gt;memory organization&lt;/h1&gt;
+
+&lt;p&gt;crash&amp;gt; enum zone_type&lt;br /&gt;
+enum zone_type {&lt;br /&gt;
+  ZONE_DMA = 0&lt;br /&gt;
+  ZONE_DMA32 = 1&lt;br /&gt;
+  ZONE_NORMAL = 2&lt;br /&gt;
+  ZONE_MOVABLE = 3&lt;br /&gt;
+  ZONE_DEVICE = 4&lt;br /&gt;
+  __MAX_NR_ZONES = 5&lt;br /&gt;
+};&lt;br /&gt;
+  node_zonelists = {{&lt;br /&gt;
+      _zonerefs = {{&lt;br /&gt;
+          zone = 0xffff88107ffd5d80, # node 0&lt;br /&gt;
+          zone_idx = 2&lt;br /&gt;
+        }, {&lt;br /&gt;
+          zone = 0xffff88107ffd56c0, # node 0&lt;br /&gt;
+          zone_idx = 1&lt;br /&gt;
+        }, {&lt;br /&gt;
+          zone = 0xffff88107ffd5000, # node 0&lt;br /&gt;
+          zone_idx = 0&lt;br /&gt;
+        }, {&lt;br /&gt;
+          zone = 0xffff88207ffd2d80,  # belongs to Node 1&lt;br /&gt;
+          zone_idx = 2&lt;br /&gt;
+        }, {&lt;br /&gt;
+          zone = 0x0,&lt;br /&gt;
+          zone_idx = 0&lt;/p&gt;
+
+&lt;h2 id=&#34;memory-mode&#34;&gt;Memory mode&lt;/h2&gt;
+
+&lt;p&gt;flat mem -&amp;gt; uma&lt;br /&gt;
 discontig -&amp;gt; NUMA&lt;br /&gt;
-sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;&lt;/li&gt;
+sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;When does kernel alloc these struct pages in x86_64?&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/229670/&#34;&gt;http://lwn.net/Articles/229670/&lt;/a&gt;&lt;br /&gt;
-vmemmap silimar to memmap&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When kmap_atomic() BUG_ON effect?&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How cpu resolve address below high_memory?&lt;br /&gt;
-Cpu-spicific!&lt;br /&gt;
-x86 used page table to all address!&lt;br /&gt;
-Mips cpu can be aware of this address!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;How to deal with useless page? : &amp;gt; /home/firo/bigdata&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;pfmemalloc &amp;ndash; skb 表示申请了紧急内存!&lt;br /&gt;
-page free&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Compound pages&lt;br /&gt;
-18fa11efc279c20af5eefff2bbe814ca067&lt;br /&gt;
-&lt;a href=&#34;https://www.spinics.net/lists/newbies/msg41159.html&#34;&gt;https://www.spinics.net/lists/newbies/msg41159.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;https://lwn.net/Articles/619514/&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h1&gt;
+&lt;h2 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h2&gt;
 
 &lt;p&gt;先从bios 拿信息 main -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
 之后real -&amp;gt; protected -&amp;gt; long mode&lt;br /&gt;
@@ -2117,16 +1759,11 @@ initmem_init ; NUMA init&lt;br /&gt;
 x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
 a little history e820_register_active_region replaced by lmb &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by&lt;/a&gt; memblock&lt;br /&gt;
 reserve_initrd ; // RAMDISK&lt;br /&gt;
-总结下, 内存初始化需要的基础.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;e820 get memory region.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;set PF trap do_page_fault.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;set page table and cr3.&lt;br /&gt;
+总结下, 内存初始化需要的基础.&lt;br /&gt;
+1. e820 get memory region.&lt;br /&gt;
+2. set PF trap do_page_fault.&lt;br /&gt;
+3. set page table and cr3.&lt;br /&gt;
 这就完了. 之后开始开始加工.&lt;/p&gt;
-
-&lt;h1 id=&#34;setting-up-arch-specific-and-creating-memblock&#34;&gt;Setting up arch specific and creating memblock&lt;/h1&gt;
 
 &lt;h2 id=&#34;arch-specific-x86-64&#34;&gt;Arch specific x86_64&lt;/h2&gt;
 
@@ -2135,10 +1772,7 @@ reserve_initrd ; // RAMDISK&lt;br /&gt;
 &lt;h2 id=&#34;memblock&#34;&gt;Memblock&lt;/h2&gt;
 
 &lt;p&gt;memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
-bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;using-memblock-to-prepare-for-buddy-system&#34;&gt;Using memblock to prepare for buddy system&lt;/h1&gt;
+bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;/p&gt;
 
 &lt;h2 id=&#34;zones-and-free-area-free-list&#34;&gt;Zones and free_area.free_list&lt;/h2&gt;
 
@@ -2175,56 +1809,122 @@ bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;h2 id=&#34;set-fallback-for-every-zone-and-init-pcp&#34;&gt;Set fallback for every zone and init PCP&lt;/h2&gt;
+&lt;h2 id=&#34;memory-initialization-from-memblock-to-buddy-system&#34;&gt;Memory initialization from memblock to buddy system&lt;/h2&gt;
 
-&lt;p&gt;build_all_zonelists // dmesg&lt;/p&gt;
+&lt;h3 id=&#34;memblock-constantly-y-for-x86&#34;&gt;memblock (constantly Y for x86)&lt;/h3&gt;
 
-&lt;h3 id=&#34;precondition&#34;&gt;Precondition&lt;/h3&gt;
+&lt;p&gt;memblock_free_late-&amp;gt;&lt;strong&gt;memblock_free_late-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
+
+&lt;h3 id=&#34;bootmem-discarded-by-x86&#34;&gt;bootmem (discarded by x86)&lt;/h3&gt;
+
+&lt;p&gt;memblock_free_late-&amp;gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
+free_all_bootmem-&amp;gt;free_all_bootmem_core-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
+
+&lt;h3 id=&#34;nobootmem&#34;&gt;nobootmem&lt;/h3&gt;
+
+&lt;p&gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
+free_all_bootmem-&amp;gt;free_low_memory_core_early-&amp;gt;&lt;/strong&gt;free_memory_core-&amp;gt;&lt;em&gt;__free_pages_memory&lt;/em&gt;-&amp;gt;&lt;strong&gt;free_pages_bootmem-&amp;gt;&lt;/strong&gt;free_pages_boot_core&lt;/p&gt;
+
+&lt;h3 id=&#34;free-bootmem-core-earyly&#34;&gt;free bootmem core/earyly&lt;/h3&gt;
+
+&lt;p&gt;mm_init-&amp;gt;mem_init-&amp;gt;free_all_bootmem&lt;/p&gt;
+
+&lt;h3 id=&#34;free-bootmem-late&#34;&gt;free bootmem late&lt;/h3&gt;
+
+&lt;p&gt;start_kernel-&amp;gt;efi_free_boot_services-&amp;gt;free_bootmem_late-&amp;gt;__free_pages_bootmem&lt;/p&gt;
 
 &lt;h2 id=&#34;sparse&#34;&gt;Sparse&lt;/h2&gt;
 
 &lt;p&gt;paging_init-&amp;gt;sparse_init&lt;/p&gt;
 
-&lt;h1 id=&#34;mirgate-memory-from-memblock-to-buddy-system&#34;&gt;Mirgate memory from memblock to buddy system&lt;/h1&gt;
+&lt;h1 id=&#34;page-migration&#34;&gt;Page migration&lt;/h1&gt;
 
-&lt;h2 id=&#34;preconditions&#34;&gt;Preconditions&lt;/h2&gt;
+&lt;p&gt;Split the free lists for movable and unmovable allocations&lt;br /&gt;
+MIGRATE_RECLAIMABLE:&lt;br /&gt;
+commit e12ba74d8ff3e2f73a583500d7095e406df4d093&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mel@csn.ul.ie&#34;&gt;mel@csn.ul.ie&lt;/a&gt;&lt;br /&gt;
+    Group short-lived and reclaimable kernel allocations&lt;/p&gt;
 
-&lt;p&gt;mem_map/page array&lt;/p&gt;
+&lt;h1 id=&#34;etc&#34;&gt;ETC&lt;/h1&gt;
 
-&lt;h2 id=&#34;memblock-constantly-y-for-x86&#34;&gt;memblock (constantly Y for x86)&lt;/h2&gt;
+&lt;h2 id=&#34;buffer-cache-of-command-free&#34;&gt;Buffer cache of command &amp;lsquo;free&amp;rsquo;&lt;/h2&gt;
 
-&lt;p&gt;memblock_free_late-&amp;gt;&lt;strong&gt;memblock_free_late-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;Buffers&amp;rdquo; represent how much portion of RAM is dedicated to cache disk blocks&lt;br /&gt;
+1. Open block device directly open(&amp;ldquo;/dev/sdb&amp;rdquo;&amp;hellip;) -&amp;gt; blkdev_open&lt;br /&gt;
+2. Read metadata,including indirect blocks, bitmap,  sb_getblk-&amp;gt;&amp;hellip; -&amp;gt; grow_dev_page&lt;br /&gt;
+meminfo_proc_show&lt;/p&gt;
 
-&lt;h2 id=&#34;bootmem-discarded-by-x86&#34;&gt;bootmem (discarded by x86)&lt;/h2&gt;
+&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
 
-&lt;p&gt;memblock_free_late-&amp;gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
-free_all_bootmem-&amp;gt;free_all_bootmem_core-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;An introduction to compound pages&lt;/a&gt;&lt;br /&gt;
+Compound pages&lt;br /&gt;
+18fa11efc279c20af5eefff2bbe814ca067&lt;br /&gt;
+&lt;a href=&#34;https://www.spinics.net/lists/newbies/msg41159.html&#34;&gt;https://www.spinics.net/lists/newbies/msg41159.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;https://lwn.net/Articles/619514/&lt;/a&gt;&lt;br /&gt;
+Watermark&lt;br /&gt;
+MIGRATE_HIGHATOMIC&lt;br /&gt;
+Fair-zone allocation: obesete in 4.x+ kernel&lt;br /&gt;
+What about other cpu when panic&lt;br /&gt;
+kmmio probe in do_page_fault&lt;br /&gt;
+userfd &lt;a href=&#34;https://www.youtube.com/watch?v=xhOBc5L_Hkk&#34;&gt;https://www.youtube.com/watch?v=xhOBc5L_Hkk&lt;/a&gt;&lt;br /&gt;
+* Special sections in Linux binaries&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/531148/&#34;&gt;https://lwn.net/Articles/531148/&lt;/a&gt;&lt;br /&gt;
+* COW: for malloc page&lt;br /&gt;
+are the ptes set during fork for child process?&lt;br /&gt;
+check copy_one_pte is_cow_mapping in copy_page_range in dup_mmap&lt;br /&gt;
+VM_WIPEONFORK&lt;br /&gt;
+MADV_WIPEONFORK&lt;br /&gt;
+* DAX&lt;br /&gt;
+* __shmem_file_setup dev/zero&lt;br /&gt;
+* &lt;a href=&#34;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&#34;&gt;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&lt;/a&gt;&lt;/p&gt;
 
-&lt;h2 id=&#34;nobootmem&#34;&gt;nobootmem&lt;/h2&gt;
+&lt;h2 id=&#34;bug&#34;&gt;BUG&lt;/h2&gt;
 
-&lt;p&gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
-free_all_bootmem-&amp;gt;free_low_memory_core_early-&amp;gt;&lt;/strong&gt;free_memory_core-&amp;gt;&lt;em&gt;__free_pages_memory&lt;/em&gt;-&amp;gt;&lt;strong&gt;free_pages_bootmem-&amp;gt;&lt;/strong&gt;free_pages_boot_core&lt;/p&gt;
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;h2 id=&#34;free-bootmem-core-earyly&#34;&gt;free bootmem core/earyly&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/&#34;&gt;Memory – Part 2: Understanding Process memory&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;mm_init-&amp;gt;mem_init-&amp;gt;free_all_bootmem&lt;/p&gt;
+&lt;h1 id=&#34;vm&#34;&gt;VM&lt;/h1&gt;
 
-&lt;h2 id=&#34;free-bootmem-late&#34;&gt;free bootmem late&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/90311/&#34;&gt;flexible-mmap-2.6.7-D5&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/91829/&#34;&gt;Reorganizing the address space&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/&#34;&gt;Anatomy of a Program in Memory&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;start_kernel-&amp;gt;efi_free_boot_services-&amp;gt;free_bootmem_late-&amp;gt;__free_pages_bootmem&lt;/p&gt;
+&lt;h1 id=&#34;hardware-memory&#34;&gt;Hardware memory&lt;/h1&gt;
 
-&lt;h1 id=&#34;zone-watermarks&#34;&gt;Zone watermarks&lt;/h1&gt;
+&lt;p&gt;Logic gates: SRAM, DRAM&lt;br /&gt;
+What is data/contrl/address bus?&lt;/p&gt;
 
-&lt;p&gt;core_initcall(init_per_zone_wmark_min)&lt;/p&gt;
-
-&lt;p&gt;build_all_zonelists: Just init zones, nothing else. But we have vm_total_pages/zone-&amp;gt;managed_pages initialized in free_all_bootmem();.&lt;br /&gt;
-page_alloc_init // drain percpu pageset when cpu dead or dead frozen for CPU hotplug&lt;/p&gt;
-
-&lt;h1 id=&#34;madv&#34;&gt;Madv&lt;/h1&gt;
+&lt;h1 id=&#34;interface&#34;&gt;Interface&lt;/h1&gt;
 
 &lt;h2 id=&#34;madv-sequential-and-reclaim&#34;&gt;MADV_SEQUENTIAL and reclaim&lt;/h2&gt;
 
 &lt;p&gt;mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c&lt;/p&gt;
+
+&lt;h1 id=&#34;linux-tips&#34;&gt;Linux tips&lt;/h1&gt;
+
+&lt;h2 id=&#34;page-flags&#34;&gt;Page flags&lt;/h2&gt;
+
+&lt;p&gt;PG_active: active page&lt;br /&gt;
+PG_referenced: accessed recently&lt;br /&gt;
+PG_lru: page is on the lru linked list&lt;br /&gt;
+PG_mlocked: mlock()&lt;br /&gt;
+PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem&lt;/p&gt;
+
+&lt;h2 id=&#34;struct-page&#34;&gt;struct page&lt;/h2&gt;
+
+&lt;h3 id=&#34;page-lru&#34;&gt;page.lru&lt;/h3&gt;
+
+&lt;p&gt;lruvec, buddy system, slab, isolate list&lt;/p&gt;
+
+&lt;h3 id=&#34;page-index&#34;&gt;page.index&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;file memory mapped page: index is offset in a file&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Anonymous page: linear_page_index in &lt;strong&gt;page_set_anon_rmap()&lt;/strong&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;
 </description>
     </item>
     

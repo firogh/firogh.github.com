@@ -1,9 +1,37 @@
 Most useful shell commands for daily errands
 
+# awk
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+#eval
+* create variable name
+        __var="name"
+        eval "export -- \"$__var=firo\""
+        set | grep firo
+        __var='name'
+        bbb='firo'
+#expr
+expr "$name" : '\(.*\)\.conf'
 
+#find
+* find symbols in object 
+        find . -name 'a.out' -exec nm -D {} \; -print
+        find . -name '*.o' -print0 | xargs -0 nm -A | egrep ' (i|y)$'
+* rm
+find . -name ‘your_pattern*’ -exec rm -f {} \;
+find . -name ‘your_pattern*’ -delete
+# grep
+-c: count of match
+# ls 
+-l: show hardlinks of file/dir in 2nd column
+drwsrwsr-T: T stand for sticky bit no other execution bit 
+
+# test -n is not equivalent to ! -z
+Be caution! just juse -z and !-z 
+
+#pipe
+find . -type d | while read d; do cnt=$(ls $d | grep tgz | wc -l); echo "$cnt $d"; done | sort -n >stat 
+# ps
+ps -fC vim
 # wget 
 wget -r -l1 --no-parent www.rfc-editor.org/ien/
 '-A *.txt'
-
-# ps
-ps -fC vim

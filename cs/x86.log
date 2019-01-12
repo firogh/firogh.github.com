@@ -9,16 +9,107 @@ http://www.sandpile.org/x86/except.htm
 [6]: https://stackoverflow.com/questions/18447627/what-is-pc-relative-addressing-and-how-can-i-use-it-in-masm
 
 [JMP:Here, the EIP register contains the address of the instruction following the JMP instruction][1]
+# Descriptor
+Segments in GDT or LDT
+Gates: special descriptors in IDT
+
+# GDT
+[GDT Tutorial](https://wiki.osdev.org/GDT_Tutorial)
+[Memory Translation and Segmentation](https://manybutfinite.com/post/memory-translation-and-segmentation/)
+## Segment for memory
+### Types
+code, data, and stack segments that make up the execution environment of a program or procedure
+system segment: the task-state segment (TSS) and the LDT
+[TSS in software multitasking](https://wiki.osdev.org/Task_State_Segment)
+### Format - Segment descriptor
+base address, Adding the base address to a logical memory address yields a linear address.
+limit, specifies how big the segment is.
+DPL, DPL is the descriptor privilege level; itcontrols access to the segment.
+### Segment register
+Each segment register has a hidden part to store the cached descriptor that corresponds to its segment selector.
+The contents of a segment descriptor are cached once they are accessed, so there's no need to actually read the GDT in subsequent accesses, which would kill performance. 
+## Linux
+### Boot
+only 3 segment descriptors are used during boot
+code segment and data segment are flat
+### Flat mode
+set the base address to zero and let logical addresses coincide with linear addresses
+
+# IDT
+The IDT stores a collection of gate descriptors that provide access to interrupt and exception handlers.
+Like the GDT, the IDT is not a segment.The linear address for the base of the IDT is contained in the IDT register (IDTR).
+## Gate for control transfer
+v3a: 2.1.2 System Segments, Segment Descriptors, and Gates
+### Types
+call gates, interrupt gates, trap gates, and task gates
+These provide protected gateways to system procedures and handlers that may operate at a different
+privilege level than application programs and most procedures.
+#### v3a: 7.2.5 Task-Gate Descriptor
+It can be placed in the GDT, an LDT, or the IDT.
+### Format
+v3a 6.11 IDT DESCRIPTORS Figure 6-2. IDT Gate Descriptors
+Segment Selector: The _ _KERNEL_CS Segment Selector of the kernel code segment.
+Offset: The pointer to the system_call( ) system call handler.
+Type: Set to 15. Indicates that the exception is a Trap and that the corresponding handler does not disable maskable interrupts.
+DPL: (Descriptor Privilege Level)
+### Steps for handling interrupt and exception
+6.12.1 Exception- or Interrupt-Handler Procedures
+## Linux
+### Why pushq $(~vector+0x80)?
+x86: 64 bits: shrink and align IRQ stubs - 939b787130bf22887a09d8fd2641a094dcef8c22
+### Why ~vector
+x86: increase interrupt vector range - 19eadf98c8167eac843580683317b99572e2abf0
+The orig_{e,r}ax needs to be < 0 to allow the signal code to distinguish between return from
+interrupt and return from syscall.
+Check do_signal -> syscall_get_nr(current, regs) >= 0 and WHY??
+
+# Exceptions
+## Faults — A fault is an exception that can generally be corrected and that, once corrected, allows the program
+to be restarted with no loss of continuity. When a fault is reported, the processor restores the machine state to
+the state prior to the beginning of execution of the faulting instruction. The return address (saved contents of
+the CS and EIP registers) for the fault handler points to the faulting instruction, rather than to the instruction
+following the faulting instruction.
+## Traps — A trap is an exception that is reported immediately following the execution of the trapping instruction.
+Traps allow execution of a program or task to be continued without loss of program continuity. The return
+address for the trap handler points to the instruction to be executed after the trapping instruction.
+## Aborts — An abort is an exception that does not always report the precise location of the instruction causing
+the exception and does not allow a restart of the program or task that caused the exception. Aborts are used to
+report severe errors, such as hardware errors and inconsistent or illegal values in system tables.
+## kernel handler
+do_error_trap
+
+# DS
+[linux最新内核的一些变化以及我的一些想法](https://blog.csdn.net/dog250/article/details/5303223)
+?? USER_DS
+# Privilege and protection
+[CPU Rings, Privilege, and Protection](https://manybutfinite.com/post/cpu-rings-privilege-and-protection/)
+## CS
+1. First, its contents cannot be set directly by load instructions such as mov, but rather only by instructions that alter the flow of program execution, like call. 
+2. Second, and importantly for us, instead of an RPL field that can be set by code, cs has a Current Privilege Level (CPL) field maintained by the CPU itself. This 2-bit CPL field in the code segment register is always equal to the CPU's current privilege level. 
+## Protection
+Objects: I/O ports, memory, certain instructions
+[Difference between DPL and RPL in x86](https://stackoverflow.com/questions/36617718/difference-between-dpl-and-rpl-in-x86)
+### The CPU protects memory at two crucial points
+1. when a segment selector is loaded
+2. when a page of memory is accessed with a linear address. 
+2.1 Segment protection
+2.2 enforcing privilege
+modern kernels use a flat address space where the user-mode segments can reach the entire linear address space.
+Each memory page is a block of bytes described by a page table entry containing two fields related to protection: a supervisor flag and a read/write flag. The supervisor flag is the primary x86 memory protection mechanism used by kernels. 
+2.2.1 supervisor/user: 
+2.2.2 read/write flag: pages storing binary images (code) are marked as read only, thereby catching some pointer errors if a program attempts to write to these pages. This flag is also used to implement copy on write when a process is forked in Unix.
+
+## Switch privilege levels
+Transfer control to spots in the kernel.
+1. gate descriptors 
+A gate descriptor is a segment descriptor of type system, and comes in four sub-types: call-gate descriptor, interrupt-gate descriptor, trap-gate descriptor, and task-gate descriptor.
+2. sysenter
 
 # x86-64
 [Introduction to x64 Assembly by Chris Lomont][5]
 [Notes on x86-64 programming][4]
 [IA-32e: Intel's name for this instruction set has changed several times.][2]
 [Linus on Intel vs AMD x86-64][3]
-
-<<<<<<< HEAD
-# Go to x86-64
-9.8.5 3A
 
 # movabs
 =======
@@ -166,7 +257,6 @@ Documentation/x86/entry_64.txt
 https://www.kernel.org/doc/ols/2009/ols2009-pages-149-158.pdf
 https://lwn.net/Articles/353050/
 https://stackoverflow.com/questions/19725900/watch-a-variable-memory-address-change-in-linux-kernel-and-print-stack-trace
-
 
 # TSS
 ## Implemention
