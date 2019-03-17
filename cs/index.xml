@@ -111,6 +111,10 @@ He provided a fix for this issue. That is 7810e6781e0fcbca78b91cf65053f895bf59e8
 &lt;a href=&#34;http://www.cl.cam.ac.uk/~pes20/weakmemory/&#34;&gt;Relaxed-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.cl.cam.ac.uk/~pes20/cpp/model.pdf&#34;&gt;Mathematizing C++ Concurrency: The Isabelle/HOL model&lt;/a&gt;&lt;/p&gt;
 
+&lt;h1 id=&#34;c-memory-model&#34;&gt;C++ memory model&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=gpsz8sc6mNU&#34;&gt;The C++ Memory Model - Valentin Ziegler @ Meeting C++ 2014&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;compiler-memory-model&#34;&gt;Compiler memory model&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://preshing.com/20120625/memory-ordering-at-compile-time/&#34;&gt;Memory Ordering at Compile Time&lt;/a&gt;&lt;br /&gt;
@@ -463,6 +467,11 @@ mm: reclaim MADV_FREE pages - 802a3a92ad7ac0b9be9df229dee530a1f0a8039b check mar
 &lt;h2 id=&#34;fork&#34;&gt;fork&lt;/h2&gt;
 
 &lt;h2 id=&#34;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&#34;&gt;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&lt;/h2&gt;
+
+&lt;h1 id=&#34;map-sync&#34;&gt;MAP_SYNC&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/731706/&#34;&gt;https://lwn.net/Articles/731706/&lt;/a&gt;&lt;br /&gt;
+dax_iomap_pte_fault&lt;/p&gt;
 </description>
     </item>
     
@@ -1892,108 +1901,6 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
     </item>
     
     <item>
-      <title>Linux virtualization</title>
-      <link>http://firoyang.org/cs/virt/</link>
-      <pubDate>Wed, 17 Jun 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/virt/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.oenhan.com/kvm-src-3-cpu&#34;&gt;KVM源代码分析3:CPU虚拟化&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html-single/Virtualization_Tuning_and_Optimization_Guide/&#34;&gt;VIRTUALIZATION TUNING AND OPTIMIZATION GUIDE&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;本文着重探讨下kvm的实现, 11年在snia的实习的时候, 接触过一点.&lt;br /&gt;
-已经过去将近4年了,  当初看到qemu的代码, 被吓到了, 我靠, 这代码量赶上内核了!&lt;br /&gt;
-现在kvm核心就1069行当前kernel 4.1 rc7, qemu虽然赶不上kernel但是也不少1144756.&lt;br /&gt;
-看过指环王的, 都知道神奇中土大陆是托尔金虚构的魔幻世界,那里活着阿拉贡和&lt;br /&gt;
-他的朋友们, 以及他们精彩的历程.人的想象力, 如此神奇, 他能使人超越时间与&lt;br /&gt;
-空间去体验到不同生命历程.&lt;br /&gt;
-今天, 我们来探索一下&lt;a href=&#34;https://en.wikipedia.org/wiki/Virtualization&#34;&gt;虚拟化&lt;/a&gt;&lt;br /&gt;
-如wikipedia所说, 虚拟化始于上个世纪60年代, 这是指的计算机领域内的.&lt;br /&gt;
-显然, 我们要把眼光放得更远, 因为我们想洞见一些深层次的内容.&lt;br /&gt;
-法国哲学家福柯一生都在从事&amp;rdquo;知识考古学&amp;rdquo;, 而我也喜欢在研究问题时, 从语言学特别是&lt;br /&gt;
-词源角度开始. virtual这个词, 最早来自于中世纪拉丁文virtualis, 涵义是&lt;br /&gt;
-influencing by physical virtues or capabilities,&lt;br /&gt;
-effective with respect to inherent natural qualities&lt;br /&gt;
-受某种实在的长处能力影响, 源自本质的效用.&lt;br /&gt;
-这里从两种角度理解virtual, 受影响者, 影响者本身.&lt;br /&gt;
-所以这里virtual的真实涵义应该是延续某种内在的本质并施加于外物.&lt;br /&gt;
-这个英文单词的汉语翻译是很有趣的, 摘自金山词霸:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;virtual 音节划分：vir▪tual
-英 [ˈvɜ:tʃuəl] 美 [ˈvɜ:rtʃuəl]
-adj.实质上的，事实上的；（计算机）虚拟的；&amp;lt;物&amp;gt;有效的，虚像的；（粒子）实际存在的
-虚；虚拟艺术；虚拟的；模拟帐户
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个词汇简直是英语翻译界的笑话, 一会实一会虚, 非常让人困惑!&lt;br /&gt;
-话说回来, 这个词的翻译确实有难度.我翻译的话会叫质延.&lt;br /&gt;
-很多事情, 在我们出生前就决定了, 我是89年9月出生的.&lt;br /&gt;
-我们搞懂了所谓&amp;rdquo;虚拟化&amp;rdquo;的实质, 之后就可以继续探索了.&lt;br /&gt;
-如wikipedia, 所说计算机领域的虚拟化更多的是指hardware virtualization.&lt;br /&gt;
-没错就是延伸硬件的特质, 准确说是在软件层继续延伸硬件的特质.&lt;br /&gt;
-好, 首先, 我们要搞懂硬件都有那些特质? 硬件有很多, 在计算机领域指什么呢?&lt;br /&gt;
-没错, CPU, 硬盘, 电路板, 内存, 鼠标键盘等等. 那么他们有什么特质呢?&lt;br /&gt;
-所谓的特质就是特别的性质, 一种属性, 哲学上, 称之为事物对外物的作用的一种表现.&lt;br /&gt;
-那么CPU的最大特质就是指令处理, 我想这也是虚拟化的核心吧!&lt;br /&gt;
-我们硬件虚拟化延伸的终点是让另一个操作系统运行于当前操作系统提供的硬件特质延伸之上.&lt;br /&gt;
-终于进入正文了. 现在我们自己来设计一套虚拟化基础架构, 让一个简单的kernel运行在当前的fedora&lt;br /&gt;
-之上.&lt;/p&gt;
-
-&lt;h1 id=&#34;intel-vt-x&#34;&gt;Intel VT-x&lt;/h1&gt;
-
-&lt;p&gt;VMCS manages transitons into and out of VMX non-root operation(VM entries and VM exits) as well as processor behavior&lt;br /&gt;
-in VMX non-root operation.&lt;br /&gt;
-ORGANIZATION OF VMCS DATA&lt;br /&gt;
-The VMCS data are organized into six logical groups:&lt;br /&gt;
-Guest-state area. Processor state is saved into the guest-state area on VM exits and loaded from there on VM entries.&lt;br /&gt;
-Host-state area. Processor state is loaded from the host-state area on VM exits.&lt;br /&gt;
-VM-exit control fields. These fields control VM exits.&lt;br /&gt;
-VM-execution control fields. These fields control processor behavior in VMX non-root operation. They determine in part the causes of VM exits.&lt;br /&gt;
-VM-entry control fields. These fields control VM entries.&lt;br /&gt;
-VM-exit information fields. These fields receive information on VM exits and describe the cause and the nature of VM exits. On some processors, these fields are read-only. 3&lt;/p&gt;
-
-&lt;p&gt;VMX NON-ROOT OPERATION&lt;br /&gt;
-INSTRUCTIONS THAT CAUSE VM EXITS&lt;br /&gt;
-Relative Priority of Faults and VM Exits&lt;br /&gt;
-Instructions That Cause VM Exits Unconditionally&lt;br /&gt;
-Instructions That Cause VM Exits Conditionally&lt;br /&gt;
-OTHER CAUSES OF VM EXITS&lt;/p&gt;
-
-&lt;p&gt;CHANGES TO INSTRUCTION BEHAVIOR IN VMX NON-ROOT OPERATION&lt;/p&gt;
-
-&lt;p&gt;VM ENTRIES&lt;/p&gt;
-
-&lt;p&gt;VM EXITS&lt;/p&gt;
-
-&lt;p&gt;VMX SUPPORT FOR ADDRESS TRANSLATION&lt;/p&gt;
-
-&lt;p&gt;APIC VIRTUALIZATION AND VIRTUAL INTERRUPTS&lt;/p&gt;
-
-&lt;h1 id=&#34;代码实现&#34;&gt;代码实现&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;KVM architecture&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Kernel running flow&lt;br /&gt;
-svm.ko -&amp;gt; svm_init(svm.c) -&amp;gt; kvm_init(kvm_main.c) -&amp;gt;&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;File&lt;br /&gt;
-svm.c vmx.c kvm_main.c kvm_svm.h&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Function&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Struct&lt;br /&gt;
-kvm_x86_ops x86.h&lt;br /&gt;
-vcpu_svm    kvm_svm.h&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;qemu-system-ppc&#34;&gt;qemu-system-ppc&lt;/h1&gt;
-
-&lt;p&gt;-mem-path:&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Algorithms and data structues</title>
       <link>http://firoyang.org/cs/algorithm/</link>
       <pubDate>Wed, 27 May 2015 12:42:12 CST</pubDate>
@@ -2169,6 +2076,141 @@ type: Reclaim&lt;/p&gt;
 &lt;h1 id=&#34;lock&#34;&gt;Lock&lt;/h1&gt;
 
 &lt;p&gt;MCS lock&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The Journey to RCU</title>
+      <link>http://firoyang.org/cs/rcu/</link>
+      <pubDate>Sun, 24 May 2015 09:52:12 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/rcu/</guid>
+      <description>
+
+&lt;h1 id=&#34;rcu-stalls&#34;&gt;RCU stalls&lt;/h1&gt;
+
+&lt;p&gt;update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;why-do-need-rcu&#34;&gt;Why do need RCU&lt;/h1&gt;
+
+&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.&lt;br /&gt;
+scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.&lt;br /&gt;
+scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.&lt;br /&gt;
+另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.&lt;br /&gt;
+From wikipedia,  A system whose performance improves after adding hardware,&lt;br /&gt;
+proportionally to the capacity added, is said to be a scalable system.&lt;br /&gt;
+&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;&lt;br /&gt;
+言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.&lt;br /&gt;
+Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;br /&gt;
+* Increase in cost of conventional locks&lt;br /&gt;
+第一个原因也是最重要的, 最根本原因.&lt;br /&gt;
+传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;&lt;br /&gt;
+一种新的锁机制减少访问内存,就成了强烈的需求.&lt;br /&gt;
+* Cache benefits of lock-free reads&lt;br /&gt;
+传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.&lt;br /&gt;
+3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的&lt;br /&gt;
+spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,&lt;br /&gt;
+之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.&lt;br /&gt;
+在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
+像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,&lt;br /&gt;
+其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.&lt;br /&gt;
+* Avoiding complicated races&lt;br /&gt;
+No deadlock, 减少了开发维护.&lt;/p&gt;
+
+&lt;h1 id=&#34;how-to-use-rcu&#34;&gt;How to use RCU&lt;/h1&gt;
+
+&lt;p&gt;list rcu&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;what-is-rcu&#34;&gt;What is RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;&lt;br /&gt;
+RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
+
+&lt;h2 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Publish-Subscribe&lt;br /&gt;
+For updater before synchnization_rcu(); similar to softirq rcu&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Observer&lt;br /&gt;
+For updater to wait For Pre-Existing RCU Readers to Complete&lt;br /&gt;
+Maintain Multiple Versions of Recently Updated Objects&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;positivism-implementions&#34;&gt;Positivism Implementions&lt;/h1&gt;
+
+&lt;h2 id=&#34;classic-rcu&#34;&gt;Classic RCU&lt;/h2&gt;
+
+&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules&lt;br /&gt;
+obeyed by the critical sections of pure spinlocks:&lt;br /&gt;
+blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
+
+&lt;h2 id=&#34;preemtible-rcu&#34;&gt;Preemtible RCU&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
+stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
+
+&lt;h2 id=&#34;tree-rcu&#34;&gt;Tree RCU&lt;/h2&gt;
+
+&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
+
+&lt;p&gt;#FAQ&lt;br /&gt;
+* Difference with primitive and atomic&lt;br /&gt;
+* Grace period is synchroinze_rcu or a softirq justment&lt;br /&gt;
+* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
+
+&lt;h1 id=&#34;below-is-how-to-use-rcu&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
+
+&lt;h1 id=&#34;reference-1&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;
+
+&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.&lt;br /&gt;
+本文不关心RCU的实现.&lt;br /&gt;
+本文的核心目标就是了解如何使用RCU.&lt;br /&gt;
+所有使用RCU代码, 都可以分为4部分:&lt;br /&gt;
+RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.&lt;br /&gt;
+update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;&lt;br /&gt;
+synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.&lt;br /&gt;
+free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.&lt;br /&gt;
+Paul的paper总结了5种用法, 并且附上了代码, 便于理解.&lt;br /&gt;
+理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
+
+&lt;h1 id=&#34;wait-for-completion&#34;&gt;Wait for Completion&lt;/h1&gt;
+
+&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施&lt;br /&gt;
+上面的RCU read critical section和synchronize可以构成completion的语义.&lt;br /&gt;
+为什么要用RCU而不是内核自身提供的completion函数呢?&lt;br /&gt;
+Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.&lt;br /&gt;
+所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
+
+&lt;h1 id=&#34;reference-counting&#34;&gt;Reference Counting&lt;/h1&gt;
+
+&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.&lt;br /&gt;
+但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.&lt;br /&gt;
+Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多&lt;br /&gt;
+同样也会带来性能的损耗,而不是almost zero in his paper.&lt;br /&gt;
+引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
+
+&lt;h1 id=&#34;type-safe-memory&#34;&gt;Type Safe Memory&lt;/h1&gt;
+
+&lt;h1 id=&#34;publish-subscribe&#34;&gt;Publish-Subscribe&lt;/h1&gt;
+
+&lt;h1 id=&#34;read-write-lock-alternative&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
 </description>
     </item>
     

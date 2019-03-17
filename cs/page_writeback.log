@@ -1,0 +1,76 @@
+# History of page writeback 
+[In defense of per-BDI writeback](https://lwn.net/Articles/354851/)
+[Flushing out pdflush](https://lwn.net/Articles/326552/)
+[Per backing device writeback jens axboe](https://blog.linuxplumbersconf.org/2009/slides/Jens-Axboe-lpc2009-slides-axboe.pdf)
+[Explaination from Jens on LPC 2009](https://blog.linuxplumbersconf.org/ocw/proposals/22)
+[kernelnewbies Per-backing-device based writeback](https://kernelnewbies.org/Linux_2_6_32#Per-backing-device_based_writeback)
+[Toward less-annoying background writeback](https://lwn.net/Articles/682582/)
+[writeback: convert writeback to unbound workqueue](https://groups.google.com/forum/#!topic/fa.linux.kernel/OnsAP-Zy-s8)
+
+# Page flags
+PG_writeback, lost in past;
+set_page_writeback
+
+# Why does kernel do page writeback?
+The dirty pages will lose, if a system crash or power issue happens.
+Write back pages for page relcaim.
+
+# When to write back?
+User dependent time by sync system call.
+Perioidcal thread.
+write behavior
+page reclaim
+
+# What pages to write back?
+1. specificed range by user.
+2. single page: time
+3. all pages: dirty ratio
+4. specificed pages by page reclaim code
+
+# How to organise these dirty pages
+1. dirty pages list
+2. multiple block disks; each disks has a list
+
+# Write policy
+Sync and async
+throttle
+submit_bio
+
+# Relation
+synchronization,
+swapping
+page frame reclaim
+
+# elementary inference
+occassions
+Objects: file, block device.
+
+# occassions
+uncoditional initiative writeback
+Periodical writeback
+Ondemand of memory allocation
+conditional writeback
+
+# Periodical writeback
+cat /proc/sys/vm/dirty_expire_centisecs 
+3000
+cat /proc/sys/vm/dirty_writeback_centisecs 
+500
+
+# Ondemand of memory allocation
+1024 pages
+
+# Condition writeback
+cat /proc/sys/vm/dirty_background_ratio 
+10
+cat /proc/sys/vm/dirty_ratio 
+20
+
+# Policy
+wb_writeback_work is ssentially a subset of writeback_control
+
+# evolution of writeback
+1. pdflush
+2. bdi_writeback
+Scalability of multiple disks 
+3. cmwq

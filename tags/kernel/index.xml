@@ -306,6 +306,11 @@ mm: reclaim MADV_FREE pages - 802a3a92ad7ac0b9be9df229dee530a1f0a8039b check mar
 &lt;h2 id=&#34;fork&#34;&gt;fork&lt;/h2&gt;
 
 &lt;h2 id=&#34;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&#34;&gt;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&lt;/h2&gt;
+
+&lt;h1 id=&#34;map-sync&#34;&gt;MAP_SYNC&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/731706/&#34;&gt;https://lwn.net/Articles/731706/&lt;/a&gt;&lt;br /&gt;
+dax_iomap_pte_fault&lt;/p&gt;
 </description>
     </item>
     
@@ -1707,7 +1712,49 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
       <guid>http://firoyang.org/cs/mm/</guid>
       <description>
 
+&lt;h1 id=&#34;ref&#34;&gt;Ref&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.usenix.org/system/files/conference/atc16/atc16_paper-huang.pdf&#34;&gt;An Evolutionary Study of Linux Memory Management for Fun and Profit&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;memory-organization&#34;&gt;memory organization&lt;/h1&gt;
+
+&lt;h2 id=&#34;memory-mode&#34;&gt;Memory mode&lt;/h2&gt;
+
+&lt;p&gt;flat mem -&amp;gt; uma&lt;br /&gt;
+discontig -&amp;gt; NUMA&lt;br /&gt;
+sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;
+
+&lt;h2 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h2&gt;
+
+&lt;p&gt;bios -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
+real -&amp;gt; protected -&amp;gt; long mode; &lt;a href=&#34;http://www.delorie.com/djgpp/doc/ug/basics/protected.html&#34;&gt;What does protected mode mean&lt;/a&gt;&lt;br /&gt;
+setup_arch&lt;br /&gt;
+setup_memory_map -&amp;gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&amp;rsquo;s all.&lt;br /&gt;
+max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
+mtrr update max_pfn, see &lt;a href=&#34;https://en.wikipedia.org/wiki/Processor_supplementary_capability&#34;&gt;Processor supplementary capability&lt;/a&gt;&lt;br /&gt;
+trim_low_memory_range // reserve 64k&lt;br /&gt;
+max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block&lt;br /&gt;
+memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
+early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&gt;
+init_mem_mapping //set page table and cr3.&lt;br /&gt;
+initmem_init ; NUMA init&lt;br /&gt;
+x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
+a little history e820_register_active_region &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by lmb &lt;/a&gt; memblock&lt;br /&gt;
+reserve_initrd ; // RAMDISK&lt;br /&gt;
+1. e820 get memory region.&lt;br /&gt;
+2. set PF trap do_page_fault.&lt;br /&gt;
+3. set page table and cr3.&lt;/p&gt;
+
+&lt;h3 id=&#34;arch-specific-x86-64&#34;&gt;Arch specific x86_64&lt;/h3&gt;
+
+&lt;p&gt;setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;memblock&#34;&gt;Memblock&lt;/h2&gt;
+
+&lt;p&gt;memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
+bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;/p&gt;
+
+&lt;h2 id=&#34;zones-and-free-area-free-list&#34;&gt;Zones and free_area.free_list&lt;/h2&gt;
 
 &lt;p&gt;crash&amp;gt; enum zone_type&lt;br /&gt;
 enum zone_type {&lt;br /&gt;
@@ -1734,47 +1781,6 @@ enum zone_type {&lt;br /&gt;
         }, {&lt;br /&gt;
           zone = 0x0,&lt;br /&gt;
           zone_idx = 0&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-mode&#34;&gt;Memory mode&lt;/h2&gt;
-
-&lt;p&gt;flat mem -&amp;gt; uma&lt;br /&gt;
-discontig -&amp;gt; NUMA&lt;br /&gt;
-sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h2&gt;
-
-&lt;p&gt;先从bios 拿信息 main -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
-之后real -&amp;gt; protected -&amp;gt; long mode&lt;br /&gt;
-启动 protected? mode. &lt;a href=&#34;http://www.delorie.com/djgpp/doc/ug/basics/protected.html&#34;&gt;What does protected mode mean&lt;/a&gt;&lt;br /&gt;
-setup_arch&lt;br /&gt;
-setup_memory_map -&amp;gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&amp;rsquo;s all.&lt;br /&gt;
-max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
-mtrr update max_pfn, see &lt;a href=&#34;https://en.wikipedia.org/wiki/Processor_supplementary_capability&#34;&gt;Processor supplementary capability&lt;/a&gt;&lt;br /&gt;
-trim_low_memory_range // reserve 64k&lt;br /&gt;
-max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block&lt;br /&gt;
-memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
-early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&gt;
-init_mem_mapping //set page table and cr3.&lt;br /&gt;
-initmem_init ; NUMA init&lt;br /&gt;
-x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
-a little history e820_register_active_region replaced by lmb &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by&lt;/a&gt; memblock&lt;br /&gt;
-reserve_initrd ; // RAMDISK&lt;br /&gt;
-总结下, 内存初始化需要的基础.&lt;br /&gt;
-1. e820 get memory region.&lt;br /&gt;
-2. set PF trap do_page_fault.&lt;br /&gt;
-3. set page table and cr3.&lt;br /&gt;
-这就完了. 之后开始开始加工.&lt;/p&gt;
-
-&lt;h2 id=&#34;arch-specific-x86-64&#34;&gt;Arch specific x86_64&lt;/h2&gt;
-
-&lt;p&gt;setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;memblock&#34;&gt;Memblock&lt;/h2&gt;
-
-&lt;p&gt;memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
-bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;/p&gt;
-
-&lt;h2 id=&#34;zones-and-free-area-free-list&#34;&gt;Zones and free_area.free_list&lt;/h2&gt;
 
 &lt;p&gt;paging_init-&amp;gt;zone_sizes_init.&lt;br /&gt;
 {&lt;br /&gt;
@@ -1833,26 +1839,31 @@ free_all_bootmem-&amp;gt;free_low_memory_core_early-&amp;gt;&lt;/strong&gt;free_
 
 &lt;p&gt;start_kernel-&amp;gt;efi_free_boot_services-&amp;gt;free_bootmem_late-&amp;gt;__free_pages_bootmem&lt;/p&gt;
 
-&lt;h2 id=&#34;sparse&#34;&gt;Sparse&lt;/h2&gt;
+&lt;h1 id=&#34;sparse&#34;&gt;Sparse&lt;/h1&gt;
 
 &lt;p&gt;paging_init-&amp;gt;sparse_init&lt;/p&gt;
 
-&lt;h1 id=&#34;page-migration&#34;&gt;Page migration&lt;/h1&gt;
+&lt;h2 id=&#34;hotplug&#34;&gt;hotplug&lt;/h2&gt;
 
-&lt;p&gt;Split the free lists for movable and unmovable allocations&lt;br /&gt;
-MIGRATE_RECLAIMABLE:&lt;br /&gt;
-commit e12ba74d8ff3e2f73a583500d7095e406df4d093&lt;br /&gt;
-Author: Mel Gorman &lt;a href=&#34;mailto:mel@csn.ul.ie&#34;&gt;mel@csn.ul.ie&lt;/a&gt;&lt;br /&gt;
-    Group short-lived and reclaimable kernel allocations&lt;/p&gt;
+&lt;p&gt;add_memory&lt;br /&gt;
+|-add_memory_resource&lt;br /&gt;
+ |-add_memory_resource&lt;br /&gt;
+  |-arch_add_memory&lt;br /&gt;
+   |-&lt;strong&gt;add_pages&lt;br /&gt;
+    |-&lt;/strong&gt;add_section&lt;br /&gt;
+     |-sparse_add_one_section&lt;br /&gt;
+      |-kmalloc_section_memmap&lt;br /&gt;
+       |-sparse_mem_map_populate&lt;br /&gt;
+        |-vmemmap_populate&lt;/p&gt;
 
-&lt;h1 id=&#34;etc&#34;&gt;ETC&lt;/h1&gt;
+&lt;h2 id=&#34;vmemmap-pages&#34;&gt;vmemmap pages&lt;/h2&gt;
 
-&lt;h2 id=&#34;buffer-cache-of-command-free&#34;&gt;Buffer cache of command &amp;lsquo;free&amp;rsquo;&lt;/h2&gt;
+&lt;p&gt;vmemmap_populate&lt;/p&gt;
 
-&lt;p&gt;&amp;ldquo;Buffers&amp;rdquo; represent how much portion of RAM is dedicated to cache disk blocks&lt;br /&gt;
-1. Open block device directly open(&amp;ldquo;/dev/sdb&amp;rdquo;&amp;hellip;) -&amp;gt; blkdev_open&lt;br /&gt;
-2. Read metadata,including indirect blocks, bitmap,  sb_getblk-&amp;gt;&amp;hellip; -&amp;gt; grow_dev_page&lt;br /&gt;
-meminfo_proc_show&lt;/p&gt;
+&lt;h2 id=&#34;sparse-init&#34;&gt;sparse_init&lt;/h2&gt;
+
+&lt;p&gt;|-sparse_early_mem_map_alloc if !CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER&lt;br /&gt;
+|-sparse_early_mem_maps_alloc_node if CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER&lt;/p&gt;
 
 &lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
 
@@ -1902,29 +1913,288 @@ What is data/contrl/address bus?&lt;/p&gt;
 &lt;h2 id=&#34;madv-sequential-and-reclaim&#34;&gt;MADV_SEQUENTIAL and reclaim&lt;/h2&gt;
 
 &lt;p&gt;mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Page frame reclaimation</title>
+      <link>http://firoyang.org/cs/page_reclaim/</link>
+      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/page_reclaim/</guid>
+      <description>
 
-&lt;h1 id=&#34;linux-tips&#34;&gt;Linux tips&lt;/h1&gt;
+&lt;h1 id=&#34;move-lru-page-reclaim-from-zones-to-node&#34;&gt;Move LRU page reclaim from zones to node&lt;/h1&gt;
 
-&lt;h2 id=&#34;page-flags&#34;&gt;Page flags&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2015/6/8/298&#34;&gt;1st RFC&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;PG_active: active page&lt;br /&gt;
-PG_referenced: accessed recently&lt;br /&gt;
-PG_lru: page is on the lru linked list&lt;br /&gt;
-PG_mlocked: mlock()&lt;br /&gt;
-PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem&lt;/p&gt;
+&lt;h1 id=&#34;lumpy-reclaim&#34;&gt;Lumpy reclaim&lt;/h1&gt;
 
-&lt;h2 id=&#34;struct-page&#34;&gt;struct page&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2012/3/28/325&#34;&gt;mm: vmscan: Remove lumpy reclaim&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/262301/&#34;&gt;mm: vmscan: Remove dead code related to lumpy reclaim waiting on pages under writeback&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;page-lru&#34;&gt;page.lru&lt;/h3&gt;
+&lt;h1 id=&#34;recalimable-pages&#34;&gt;Recalimable pages&lt;/h1&gt;
 
-&lt;p&gt;lruvec, buddy system, slab, isolate list&lt;/p&gt;
+&lt;p&gt;all pages of a User Mode process are reclaimable except locked.&lt;br /&gt;
+Lokced userspace pages:&lt;br /&gt;
+1. Temporarily locked pages: PG_locked,&lt;br /&gt;
+2. Memory locked pages: VM_LOCKED, &lt;a href=&#34;https://eklitzke.org/mlock-and-mlockall&#34;&gt;Misunderstanding mlock&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;page-index&#34;&gt;page.index&lt;/h3&gt;
+&lt;h2 id=&#34;swapbacked-pages&#34;&gt;Swapbacked pages&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Private&lt;br /&gt;
+1.1 malloc memory map&lt;br /&gt;
+1.2 Dirty file private mapping - data, bbs segments&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Shared - tmpfs:&lt;br /&gt;
+2.1 Anonymous shared mapping memory between P&amp;C;&lt;br /&gt;
+2.2 System v IPC shared memory.&lt;/p&gt;
+
+&lt;h2 id=&#34;filebacked-pages&#34;&gt;Filebacked pages&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Private&lt;br /&gt;
+1.1 Clean file private mapping - text segment&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Shared&lt;br /&gt;
+2.1 Shared file mapping memory.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;pfra&#34;&gt;PFRA&lt;/h1&gt;
+
+&lt;h2 id=&#34;leave-questions-open&#34;&gt;Leave questions open&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;I saw we always shrink active list from the head, what about the tail entries, if the nr_to_scan isn&amp;rsquo;t enough to reach the end of active list?&lt;br /&gt;
+Seems this problem is apporached by isolate_lru_pages with for-loop and list_add insert and move_active_pages_to_lru ( lru - LRU_ACTIVE).&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;activate writeback pages&lt;br /&gt;
+mm: vmscan: move dirty pages out of the way until they&amp;rsquo;re flushed - c55e8d035b28b2867e68b0e2d0eee2c0f1016b43&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;organization&#34;&gt;Organization&lt;/h2&gt;
+
+&lt;p&gt;LRU-2Q&lt;/p&gt;
+
+&lt;h3 id=&#34;active-list-and-inactive-list&#34;&gt;active list and inactive list&lt;/h3&gt;
+
+&lt;p&gt;active list: working set; Am of LRU 2Q; how often&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/495543/&#34;&gt;Better active/inactive list balancing&lt;/a&gt;&lt;br /&gt;
+mark_page_accessed and called sub-functions.&lt;br /&gt;
+active -&amp;gt; inactive head - list_add(&amp;amp;page-&amp;gt;lru, &amp;amp;l_inactive); in shrink_active_list&lt;br /&gt;
+inactive -&amp;gt; active head - __activate_page &amp;lt;- mark_page_accessed &amp;lt;- pagecache_get_page or generic_file_buffered_read&lt;br /&gt;
+inactive -&amp;gt; inactive tail - rotate_reclaimable_page&lt;/p&gt;
+
+&lt;h2 id=&#34;occasions&#34;&gt;Occasions&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
+kswapd_shrink_node&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;No enough memory for a large memory alloc.&lt;br /&gt;
+get_page_from_freelist-&amp;gt;node_claim&lt;br /&gt;
+try_to_free_mem_cgroup_pages&lt;br /&gt;
+try_to_free_pages&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Manually initiate, ondemand&lt;br /&gt;
+hibernate_preallocate_memory-&amp;gt;shrink_all_memory&lt;br /&gt;
+drop_caches&lt;/p&gt;
+
+&lt;h2 id=&#34;policy&#34;&gt;Policy&lt;/h2&gt;
+
+&lt;p&gt;OOM&lt;/p&gt;
+
+&lt;h3 id=&#34;second-chance&#34;&gt;Second chance&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=eHK749r5RGs&#34;&gt;Second Chance Page Replacement Algorithm&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=DFmsm0J8joY&#34;&gt;Second Chance Page Replacement Algorithms and Clock Page Replacement Algorithms&lt;/a&gt;&lt;br /&gt;
+core: page_check_references() in shrink_page_list().&lt;br /&gt;
+shrink_active_list for VM_EXEC page.&lt;br /&gt;
+core: page_referenced in shrink_active_list&lt;br /&gt;
+mark_page_accessed&lt;br /&gt;
+{&lt;br /&gt;
+    inactive,referenced          -&amp;gt;      active,unreferenced&lt;br /&gt;
+    {&lt;br /&gt;
+            if !PageLRU - on the pagevec&lt;br /&gt;
+                    mm: activate !PageLRU pages on mark_page_accessed if page is on local pagevec - 059285a25f30c13ed4f5d91cecd6094b9b20bb7b&lt;br /&gt;
+                    SetPageActive&lt;br /&gt;
+            else&lt;br /&gt;
+                    activate_page&lt;br /&gt;
+    }&lt;br /&gt;
+    {in,}active,unreferenced        -&amp;gt;      {in,}active,referenced&lt;br /&gt;
+    {&lt;br /&gt;
+            SetPageReferenced&lt;br /&gt;
+    }&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h4 id=&#34;active-list&#34;&gt;active list -&amp;gt;&lt;/h4&gt;
+
+&lt;p&gt;if pte with PAGE_ACCESSED - referenced in page_referenced() &amp;amp;&amp;amp; VM_EXEC -&amp;gt; keep it in active list - tail -&amp;gt; head - rotated&lt;br /&gt;
+else&lt;br /&gt;
+de-activate it to inactive list head&lt;/p&gt;
+
+&lt;h4 id=&#34;inactive-list&#34;&gt;inactive list&lt;/h4&gt;
+
+&lt;p&gt;page from tail page_check_references&lt;br /&gt;
+{&lt;br /&gt;
+    3 passes:&lt;br /&gt;
+    1. hardware pte; use and clear pte; might get reference; second chance.&lt;br /&gt;
+    2. software flag: -&amp;gt; RECLAIM Clean page and clear, since dirty page is a good signal that the page was used recently because the flusher threads&lt;br /&gt;
+                            clean pages periodically.&lt;br /&gt;
+    3. reclaim&lt;br /&gt;
+    hardware accessed - if accessed, won&amp;rsquo;t reclaim&lt;br /&gt;
+    {&lt;br /&gt;
+            PAGEREF_ACTIVATE: incline to activate swapbacked page&lt;br /&gt;
+                    PageSwapBacked&lt;br /&gt;
+                    referenced_page&lt;br /&gt;
+                    referenced_ptes &amp;gt; 1&lt;br /&gt;
+                    vm_flags &amp;amp; VM_EXEC&lt;br /&gt;
+            PAGEREF_KEEP&lt;br /&gt;
+    }&lt;br /&gt;
+    else if ?? software accessed - &amp;amp;&amp;amp; dirty won&amp;rsquo;t reclaim&lt;br /&gt;
+    {&lt;br /&gt;
+            vmscan: detect mapped file pages used only once - 645747462435d84c6c6a64269ed49cc3015f753d&lt;br /&gt;
+            vmscan,tmpfs: treat used once pages on tmpfs as used once - 2e30244a7cc1ff09013a1238d415b4076406388e&lt;br /&gt;
+            # From above commits: When a page has PG_referenced, shrink_page_list() discards it only if it&lt;br /&gt;
+            # is not dirty. &amp;hellip; PG_dirty is a good signal that the page was used recently because&lt;br /&gt;
+            # the flusher threads clean pages periodically.  In addition, page writeback&lt;br /&gt;
+            # is costlier than simple page discard.&lt;br /&gt;
+            #  Firo: not incline to reclaim dirty page.&lt;br /&gt;
+            #  Firo: PG_referenced -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
+            file-backed -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
+            swapbacked -&amp;gt; PAGEREF_RECLAIM&lt;br /&gt;
+    } else&lt;br /&gt;
+            PAGEREF_RECLAIM&lt;br /&gt;
+}&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;working-set&#34;&gt;Working set&lt;/h3&gt;
+
+&lt;p&gt;mm: thrash detection-based file cache sizing - a528910e12ec7ee203095eb1711468a66b9b60b0&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2012/5/1/51&#34;&gt;Not merged - mm: refault distance-based file cache sizing&lt;/a&gt;&lt;br /&gt;
+workingset_eviction() and workingset_refault()&lt;br /&gt;
+* WSS&lt;br /&gt;
+&lt;a href=&#34;https://github.com/brendangregg/wss&#34;&gt;https://github.com/brendangregg/wss&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.10tiao.com/html/606/201807/2664605543/1.html&#34;&gt;http://www.10tiao.com/html/606/201807/2664605543/1.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;clock&#34;&gt;Clock ??&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://linux-mm.org/ClockProApproximation&#34;&gt;ClockProApproximation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/147879/&#34;&gt;A CLOCK-Pro page replacement implementation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.usenix.org/legacy/publications/library/proceedings/usenix05/tech/general/full_papers/jiang/jiang_html/html.html&#34;&gt;CLOCK-Pro: An Effective Improvement of the CLOCK Replacement&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;other-notes-on-replacement-polices&#34;&gt;Other notes on Replacement polices&lt;/h3&gt;
+
+&lt;p&gt;replacement policies:&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;https://www.kernel.org/doc/gorman/html/understand/understand013.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;https://linux-mm.org/PageReplacementDesign&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;https://www.kernel.org/doc/gorman/html/understand/understand013.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;PageReplacementDesign&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cnblogs.com/tolimit/p/5447448.html&#34;&gt;https://www.cnblogs.com/tolimit/p/5447448.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;steps-of-reclaim&#34;&gt;Steps of reclaim&lt;/h1&gt;
+
+&lt;h2 id=&#34;writeback&#34;&gt;WriteBack&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt;if page is alreday marked reclaim, skip it this time.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;if not makred reclaim, normal writeback, and IO isn&amp;rsquo;t permitted, then mark it as reclaim and will be pended at tail of LRU after writeback complete.&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Cgroup cases. Just wait for the complte of writeback.&lt;/p&gt;
+
+&lt;h2 id=&#34;add-to-swap-cache&#34;&gt;Add to swap cache&lt;/h2&gt;
+
+&lt;h2 id=&#34;unmap-pte&#34;&gt;Unmap pte.&lt;/h2&gt;
+
+&lt;h2 id=&#34;dirty-page&#34;&gt;Dirty page&lt;/h2&gt;
+
+&lt;p&gt;Leave kswapd to deal with IO, mark it reclaim and skip it.&lt;/p&gt;
+
+&lt;h2 id=&#34;pageout&#34;&gt;pageout&lt;/h2&gt;
+
+&lt;p&gt;including shared memory&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;reverse-mapping&#34;&gt;Reverse mapping&lt;/h1&gt;
+
+&lt;p&gt;unmapping at once all page table entries of a shared pages&lt;/p&gt;
+
+&lt;h2 id=&#34;page-index&#34;&gt;page.index&lt;/h2&gt;
 
 &lt;ol&gt;
 &lt;li&gt;file memory mapped page: index is offset in a file&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Anonymous page: linear_page_index in &lt;strong&gt;page_set_anon_rmap()&lt;/strong&gt;&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Anonymous page: linear_page_index in &lt;strong&gt;page_set_anon_rmap()&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;anonymous-pages&#34;&gt;Anonymous Pages&lt;/h2&gt;
+
+&lt;p&gt;Page + VMA =&amp;gt; ptes&lt;/p&gt;
+
+&lt;h3 id=&#34;stack-heap-private-anonymous-mapping&#34;&gt;Stack/heap/private anonymous mapping&lt;/h3&gt;
+
+&lt;p&gt;page.index is VFN.&lt;br /&gt;
+do_anonymous_page -&amp;gt; page_add_new_anon_rmap&lt;br /&gt;
+add vma to anon_vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don&amp;rsquo;t use vma. 2.2 exec)&lt;br /&gt;
+in do_mmap, for anonymous mapping, MAP_PRIVATE: pgoff = addr &amp;gt;&amp;gt; PAGE_SHIFT; addr will be vm_start in mmap_region&lt;br /&gt;
+vm_pgoff is pgoff, vm_start &amp;gt;&amp;gt; PAGE_SHIFT, in mmap_region&lt;/p&gt;
+
+&lt;h2 id=&#34;mapped-pages&#34;&gt;Mapped pages&lt;/h2&gt;
+
+&lt;h3 id=&#34;file-mapped-pages&#34;&gt;File mapped pages&lt;/h3&gt;
+
+&lt;p&gt;Page and file are fixed. VMA is dynamic.&lt;br /&gt;
+Page + VMA = Page + VMA.vm_start = Page&amp;rsquo;s offset in VMA + VMA.vm_start = Virtual Address =&amp;gt; ptes&lt;br /&gt;
+Page&amp;rsquo;s offset in VMA = Page&amp;rsquo;s offset in file - VMA&amp;rsquo;s offset in file = page.index - vma.vm_pgoff&lt;/p&gt;
+
+&lt;h3 id=&#34;mapped-pages-of-tmpfs-anonymous-shared-mapping&#34;&gt;Mapped pages of tmpfs - anonymous shared mapping.&lt;/h3&gt;
+
+&lt;p&gt;shmem_add_to_page_cache&lt;br /&gt;
+pgoff is 0; ignored; in do_mmap MAP_SHARED;&lt;br /&gt;
+page.index is vmf-&amp;gt;pgoff in shmem_fault; vmf-&amp;gt;pgoff is linear_page_index(vma, address)in handle_mm_fault; pgoff is offset in vma;&lt;/p&gt;
+
+&lt;h2 id=&#34;vm-pgoff-vs-index&#34;&gt;vm_pgoff vs index&lt;/h2&gt;
+
+&lt;p&gt;anonymous private mapping: vm_start &amp;gt;&amp;gt; PAGE_SHIFT vs VFN&lt;br /&gt;
+anonymous shared mapping: 0,ignored vs page&amp;rsquo;s offset in vma&lt;br /&gt;
+file mapping: vma&amp;rsquo;s offset in file vs page&amp;rsquo;s offset of file&lt;br /&gt;
+不知道理解的是否相同:&lt;br /&gt;
+对于anonymous mapping page:&lt;br /&gt;
+Private: page.index 是page 在所属进程地址空间的虚拟地址&amp;gt;&amp;gt; PAGE_SHIT.&lt;br /&gt;
+Shared: page.index 是page 在所属的VMA内的offset: (page&amp;rsquo;s addr - vm_start)&amp;gt;&amp;gt;PAGE_SHIT.&lt;/p&gt;
+
+&lt;h2 id=&#34;anon-page&#34;&gt;anon page:&lt;/h2&gt;
+
+&lt;p&gt;rbtree-based Interval tree&lt;br /&gt;
+&lt;a href=&#34;http://www.wowotech.net/memory_management/reverse_mapping.html&#34;&gt;逆向映射的演进&lt;/a&gt;&lt;br /&gt;
+exec : exec -&amp;gt; do_execveat_common-&amp;gt; bprm_mm_init setup_arg_pages&lt;br /&gt;
+do_anonymous_page -&amp;gt; anon_vma_prepare &amp;amp; page_add_new_anon_rmap&lt;br /&gt;
+fork workflow:attach to parent; alloc anon_vma for ownself.&lt;br /&gt;
+anon_vma_fork() -&amp;gt; anon_vma_chain_link: node: avc, key: avmc.vma-&amp;gt;start/last_pgoff page.mapping=anon_vma.rb_root&lt;br /&gt;
+rmap: add exclusively owned pages to the newest anon_vma - e8a03feb54ca7f1768bbdc2b491f9ef654e6d01d&lt;br /&gt;
+nuclus:&lt;br /&gt;
+rmap_walk_anon()&lt;/p&gt;
+
+&lt;h2 id=&#34;file-page&#34;&gt;file page:&lt;/h2&gt;
+
+&lt;p&gt;rbtree-based interval tree - INTERVAL_TREE_DEFINE in mm/interval_tree.c&lt;br /&gt;
+__vma_adjust -&amp;gt; __vma_link_file: node: vma.shared.rb, key: vma.start_pgoff and vma.last_pgoff  address_space-&amp;gt;i_mmap&lt;br /&gt;
+address_space is premise&lt;br /&gt;
+rmap_walk_file(page.mapping=address_space.i_mmap&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
+
+&lt;h1 id=&#34;page-flags&#34;&gt;Page flags&lt;/h1&gt;
+
+&lt;p&gt;PG_swapcace means page is in the swap cache.&lt;br /&gt;
+PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem, it means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.&lt;br /&gt;
+PG_active: active page&lt;br /&gt;
+PG_referenced: accessed recently&lt;br /&gt;
+PG_lru: page is on the lru linked list&lt;br /&gt;
+PG_mlocked: mlock()&lt;/p&gt;
+
+&lt;h1 id=&#34;struct-page&#34;&gt;struct page&lt;/h1&gt;
+
+&lt;h2 id=&#34;page-lru&#34;&gt;page.lru&lt;/h2&gt;
+
+&lt;p&gt;lruvec, buddy system, slab, isolate list&lt;/p&gt;
 </description>
     </item>
     

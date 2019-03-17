@@ -3,3 +3,33 @@
 [Memory compaction](https://lwn.net/Articles/368869/)
 https://lwn.net/Articles/591998/
 https://kernelnewbies.org/Linux_2_6_35#Memory_compaction
+
+
+# Anti fragmentation
+[The What, The Why and the Where To of Anti-Fragmentation](https://www.kernel.org/doc/ols/2006/ols2006v1-pages-369-384.pdf)
+PLKA - 3.5.2
+mobility
+[Split the free lists for movable and unmovable allocations] - b2a0ac8875a0a3b9f0739b60526f8c5977d2200f
+## MIGRATE_RECLAIMABLE? 
+- Group short-lived and reclaimable kernel allocations e12ba74d8ff3e2f73a583500d7095e406df4d093
+[treewide: remove GFP_TEMPORARY allocation flag](https://lore.kernel.org/patchwork/patch/814997/)
+
+## fallbacks?
+        [MIGRATE_UNMOVABLE]   = { MIGRATE_RECLAIMABLE, MIGRATE_MOVABLE,   MIGRATE_TYPES },
+        [MIGRATE_RECLAIMABLE] = { MIGRATE_UNMOVABLE,   MIGRATE_MOVABLE,   MIGRATE_TYPES },
+        [MIGRATE_MOVABLE]     = { MIGRATE_RECLAIMABLE, MIGRATE_UNMOVABLE, MIGRATE_TYPES },
+find_suitable_fallback
+
+/proc/vmstat
+pgsteal_kswapd 0
+pgsteal_direct 0
+
+vm_event_item PGSTEAL_KSWAPD
+
+set_pageblock_migratetype
+
+# Pages can be isolated and migrated
+Pages on LRU lists
+Pages marked with PageMovable “flag”
+Currently just zsmalloc (used by zram and zswap) and virtio balloon pages
+[Making kernel pages movable](https://lwn.net/Articles/650917/)

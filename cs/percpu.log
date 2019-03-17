@@ -4,22 +4,85 @@
 [Using %gs for per-cpu areas on x86 ](https://lists.linuxfoundation.org/pipermail/virtualization/2006-September/thread.html#5042)
 [ A graphic explanation](https://www.cnblogs.com/yangjiguang/p/8277720.html)jj
 
+# early init
+
+
+
 # implementation
-1. load_percpu_segment:load gs with 0 and set gs.base to irq_stack_union.gs_base.
+<<<<<<< HEAD
+1. load_percpu_segment : load gs with 0 and set gs.base to irq_stack_union.gs_base.
 For x86 64, use gs the segment selector
 2. irq_stack_union is a union and it's the first element is percpu
 3. check SWAPGS in ret_from_fork.
+=======
+## Onset boot cpu
+ per cpu gdt page
+a939098afcfa5f81d3474782ec15c6d114e57763
+x86: move x86_64 gdt closer to i386
+kernel_init->smp_init->cpu_up->do_cpu_up->_cpu_up->...->__cpu_up -> native_cpu_up->
+{
+commit f32ff5388d86518c0375ccdb330d3b459b9c405e
+Author: Tejun Heo <tj@kernel.org>
+Date:   Tue Jan 13 20:41:35 2009 +0900
+
+    x86: load pointer to pda into %gs while brining up a CPU
+    
+    [ Based on original patch from Christoph Lameter and Mike Travis. ]
+    
+    CPU startup code in head_64.S loaded address of a zero page into %gs
+    for temporary use till pda is loaded but address to the actual pda is
+    available at the point.  Load the real address directly instead.
+    
+    This will help unifying percpu and pda handling later on.
+    
+    This patch is mostly taken from Mike Travis' "x86_64: Fold pda into
+    per cpu area" patch.
+    
+    Signed-off-by: Tejun Heo <tj@kernel.org>
+	and check cpu_callin_mask in do_boot_cpu
+
+	common_cpu_up -> initial_gs = per_cpu_offset(cpu)
+	do_boot_cpu -> initial_code = (unsigned long)start_secondary;
+}
+bringup_cpu -> __cpu_up -> smp_ops.cpu_up(cpu, tidle) = native_cpu_up
+## Onset secondary cpu
+setup_real_mode-> trampoline_header->start = (u64) secondary_startup_64;
+commit f37240f16bec91f15ce564515f70a6ca9715ce96
+Author: Jarkko Sakkinen <jarkko.sakkinen@intel.com>
+Date:   Tue May 8 21:22:43 2012 +0300
+
+    x86, realmode: header for trampoline code
+## Nuclus
+ENTRY(startup_64)
+        # Now jump into the kernel using virtual addresses
+        jmpq    *tr_start(%rip)		# secondary_startup_64
+secondary_startup_64 -> 
+{
+	movl    $MSR_GS_BASE,%ecx
+        movl    initial_gs(%rip),%eax
+        movl    initial_gs+4(%rip),%edx
+        wrmsr
+	# and 
+	movq    initial_code(%rip), %rax 
+        pushq   $__KERNEL_CS    # set correct cs
+        pushq   %rax            # target address in negative space
+        lretq
+
+-> start_secondary -> cpu_init 
+{
+	int cpu = raw_smp_processor_id();
+	load_percpu_segment		# load gs with 0 and set gs.base to irq_stack_union.gs_base.
+
+	# For x86 64, use gs the segment selector
+	# irq_stack_union is a union and it's the first element is percpu
+	# check SWAPGS in ret_from_fork.
+}
+>>>>>>> fc9b7a541c5e7472fc4341aad64bae74a6abb6b5
 
 # setup_per_cpu_areas
 [Per-CPU variables at umd.edu ](https://www.cs.umd.edu/class/fall2015/cmsc412/percpu.pdf)
 # x86_64: kernel cpu
 arch_raw_cpu_ptr
-
-# per cpu gdt page
-a939098afcfa5f81d3474782ec15c6d114e57763
-x86: move x86_64 gdt closer to i386
-kernel_init->smp_init->cpu_up->native_cpu_up->do_boot_cpu
-
 # x86_64: per-cpu memory for user-space
 https://lwn.net/Articles/611946/
 

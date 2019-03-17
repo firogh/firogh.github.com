@@ -2,5 +2,53 @@
 Committed_AS and __vm_enough_memory
 [page owner](https://www.kernel.org/doc/html/v4.18/vm/page_owner.html)
 
+# Memory available
+[provide estimated available memory in /proc/meminfo](https://lore.kernel.org/patchwork/patch/417981/)
+equation for calculating all available memory 
+freeram + LRU_ACTIVE_FILE + LRU_INACTIVE_FILE + NR_SLAB_RECLAIMABLE 
 
+# meminfo 
+meminfo_proc_show
+## Buffer cache of command 'free'
+"Buffers" represent how much portion of RAM is dedicated to cache disk blocks
+1. Open block device directly open("/dev/sdb"...) -> blkdev_open
+2. Read metadata,including indirect blocks, bitmap,  sb_getblk->... -> grow_dev_page
+
+# HW availbae memory 
+>>> 6439184 + 36648 + 17089808 + 2511088 - 12524
+26064204
+>>> 4169316 + 31728 + 14645916 + 2200224 - 12520
+21034664
+>>> 5902536 + 49160 + 12616744 + 1400240 - 12524
+19956156
+
+# LQO
+ramfs pages first go to (in)active lists, moves to unevictable later, so it's not really true already. ;)
+why mapping_set_unevictable(inode->i_mapping);  in ramfs_get_inode. Check https://serverfault.com/a/590133/143494
+
+
+# Facts
+LRU_IN/ACTIVE_ANON in cached: error = shmem_add_to_page_cache(page, mapping, index, gfp, NULL); lru_cache_add_anon(page);
+NR_FILE_PAGES includes NR_SHMEM and buffers during add to page cache.
+Cached in meminfo_proc_show() NR_FILE_PAGES includes NR_SHMEM in replace_page_cache_page()
+Shmem: NR_SHMEM
+Mapped: NR_FILE_MAPPED /* pagecache pages mapped into pagetables. do_xx_fault mm/rmap.c:1236:		__inc_zone_page_state(page, NR_FILE_MAPPED);
+AnonPages: NR_ANON_PAGES Mapped anonymous pages do_xx_fault
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+                K(global_page_state(NR_ANON_PAGES)
+                  + global_page_state(NR_ANON_TRANSPARENT_HUGEPAGES) *
+                  HPAGE_PMD_NR)
+
+# /proc/slabinfo
+
+
+
+## RAMFS shmem unevictable
+fs/ramfs/inode.c <<ramfs_get_inode>>
+             mapping_set_unevictable(inode->i_mapping);
+mm/shmem.c <<shmem_lock>>
+             mapping_set_unevictable(file->f_mapping);
+SHM_LOCK (Linux-specific)
+                 Prevent  swapping  of the shared memory segment. 
+=======
 # Memory leak
