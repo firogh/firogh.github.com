@@ -430,9 +430,87 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
       <guid>http://firoyang.org/cs/rcu/</guid>
       <description>
 
+&lt;h1 id=&#34;rcu&#34;&gt;RCU&lt;/h1&gt;
+
+&lt;h2 id=&#34;causality&#34;&gt;Causality&lt;/h2&gt;
+
+&lt;p&gt;Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;/p&gt;
+
+&lt;h2 id=&#34;structure&#34;&gt;Structure&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt&#34;&gt;What is RCU?  &amp;ndash;  &amp;ldquo;Read, Copy, Update&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html&#34;&gt;A Tour Through RCU&amp;rsquo;s Requirements&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;classic-rcu&#34;&gt;Classic RCU&lt;/h1&gt;
+
+&lt;p&gt;commit c17ef45342cc033fdf7bdd5b28615e0090f8d2e7&lt;br /&gt;
+Author: Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Jun 23 17:12:47 2009 -0700&lt;br /&gt;
+    rcu: Remove Classic RCU&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation&#34;&gt;Brief Overview of Classic RCU Implementation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.wowotech.net/kernel_synchronization/linux2-6-11-RCU.html&#34;&gt;Linux2.6.11版本：classic RCU的实现&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;grace-period&#34;&gt;Grace period&lt;/h1&gt;
+
+&lt;p&gt;Documentation/RCU/rcu.txt&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: any period of time during which each reader thread resides in at least one quiescent state is called a grace period.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Start%20a%20new%20grace%20period.&#34;&gt;Start a New Grace Period&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation&#34;&gt;&amp;hellip; after each CPU has passed through at least one quiescent state, the RCU grace period ends.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;quiescent-state&#34;&gt;Quiescent state&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html&#34;&gt;&amp;hellip; after all the CPUs in the system have gone through at least one &amp;ldquo;quiescent&amp;rdquo; state (such as context switch, idle loop, or user code)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.&#34;&gt;The rcu and rcu_bh flavors of RCU have different sets of quiescent states.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;granularity-of-waiting&#34;&gt;granularity of waiting&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/262464/#Wait%20For%20Pre-Existing%20RCU%20Readers%20to%20Complete&#34;&gt;The great advantage of RCU &amp;hellip; without having to explicitly track each and every one of them&lt;/a&gt;&lt;br /&gt;
+In RCU&amp;rsquo;s case, the things waited on are called &amp;ldquo;RCU read-side critical sections&amp;rdquo;. ditto.&lt;/p&gt;
+
+&lt;h1 id=&#34;preemptiable-rcu&#34;&gt;Preemptiable RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/201195/&#34;&gt;The 1st: Read-copy-update for realtime&lt;/a&gt; &lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf&#34;&gt;Papper&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
+The RCU implementation for the -rt patchset is unusual in that it permits read-side critical sections to be preempted and to be blocked waiting for locks. However, it does not handle general blocking (for example, via the wait_event() primitive): if you need that, you should instead use SRCU.&lt;br /&gt;
+&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf&#34;&gt;Realtime RCU&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;srcu&#34;&gt;SRCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/202847/&#34;&gt;Sleepable RCU&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;tasks-rcu&#34;&gt;Tasks RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/607117/&#34;&gt;The RCU-tasks subsystem&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-the-bloatwatch-edition&#34;&gt;RCU: The Bloatwatch Edition&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/323929/&#34;&gt;RCU: The Bloatwatch Edition&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;hierarchical-rcu-tree-rcu&#34;&gt;Hierarchical RCU / Tree RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/305782&#34;&gt;Hierarchical RCU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html&#34;&gt;Tree RCU Grace Period Memory Ordering Components &lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html&#34;&gt;A Tour Through TREE_RCU&amp;rsquo;s Data Structures&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;priority-boosting-rcu&#34;&gt;Priority-Boosting RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/220677/&#34;&gt;Priority-Boosting RCU Read-Side Critical Sections&lt;/a&gt;&lt;br /&gt;
+CONFIG_RCU_BOOST&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-api&#34;&gt;RCU API&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API, 2008 edition&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/418853/&#34;&gt;The RCU API, 2010 Edition&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/609904/&#34;&gt;The RCU API, 2014 Edition&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/777036/&#34;&gt;The RCU API, 2019 edition&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;rcu-stalls&#34;&gt;RCU stalls&lt;/h1&gt;
 
-&lt;p&gt;update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=23_GOr8Sz-E&#34;&gt;Decoding Those Inscrutable RCU CPU Stall Warnings&lt;/a&gt;&lt;br /&gt;
+update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;br /&gt;
+Documentation/RCU/stallwarn.txt&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -441,32 +519,6 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
 &lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;why-do-need-rcu&#34;&gt;Why do need RCU&lt;/h1&gt;
-
-&lt;p&gt;For &lt;a href=&#34;http://en.wikipedia.org/wiki/Scalability&#34;&gt;scalable&lt;/a&gt; mutual exclusion.&lt;br /&gt;
-scale有两个词源涵义Proto-Germanic原始日耳曼, 酒杯, 盘子, 称重的盘子, 后来演化成标量的意思.&lt;br /&gt;
-scalar在数学上是标量, 在c语言指int float, Scalar processor标量计算机也是来源于此.&lt;br /&gt;
-另一个出处是Latin拉丁文scandere, 有攀爬之意, 进而衍生出扩展之意.&lt;br /&gt;
-From wikipedia,  A system whose performance improves after adding hardware,&lt;br /&gt;
-proportionally to the capacity added, is said to be a scalable system.&lt;br /&gt;
-&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-rcu/&#34;&gt;因为rwlock, brlock在多核性能下降.需要个高性能的锁&lt;/a&gt;&lt;br /&gt;
-言下之意, 就是其他的mutual exclusion 机制不能很好的扩展, 需要RCU.&lt;br /&gt;
-Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;br /&gt;
-* Increase in cost of conventional locks&lt;br /&gt;
-第一个原因也是最重要的, 最根本原因.&lt;br /&gt;
-传统的锁the contended lock如spinlock实现上不断访问内存轮询锁当前状态, cpu和内存速度的*越来越*巨大差异;&lt;br /&gt;
-一种新的锁机制减少访问内存,就成了强烈的需求.&lt;br /&gt;
-* Cache benefits of lock-free reads&lt;br /&gt;
-传统锁/tried-and-true 如spinlock一类的实现在多核下, 在出现锁竞争时会导致&lt;a href=&#34;http://www.quora.com/What-is-cache-line-bouncing-How-spinlock-may-trigger-this-frequently&#34;&gt;cache line bouncing&lt;/a&gt;.&lt;br /&gt;
-3个cpu, A占有spinlock, 另外两个轮询尝试获取在test and set版本的&lt;br /&gt;
-spinlock, 如果Bcpu 修改lock那么C cpu的d cache line 就会强制无效,&lt;br /&gt;
-之后c 也修改lock, B的d cache line就无效了.之后B又来了, 就这样.&lt;br /&gt;
-在不同cpu之间同步数据, 会耗费很多cpu 指令周期.&lt;br /&gt;
-像&lt;a href=&#34;https://www.ibm.com/developerworks/cn/linux/l-cn-spinlock/&#34;&gt;x86的spinlock的实现用lock指令前缀锁住总线&lt;/a&gt;,&lt;br /&gt;
-其他cpu or dma就不能访问内存, 降低系统的性能, ibm这篇文章说P6之后的处理器减少这种危害.&lt;br /&gt;
-* Avoiding complicated races&lt;br /&gt;
-No deadlock, 减少了开发维护.&lt;/p&gt;
 
 &lt;h1 id=&#34;how-to-use-rcu&#34;&gt;How to use RCU&lt;/h1&gt;
 
@@ -494,7 +546,7 @@ Maintain Multiple Versions of Recently Updated Objects&lt;br /&gt;
 
 &lt;h1 id=&#34;positivism-implementions&#34;&gt;Positivism Implementions&lt;/h1&gt;
 
-&lt;h2 id=&#34;classic-rcu&#34;&gt;Classic RCU&lt;/h2&gt;
+&lt;h2 id=&#34;classic-rcu-1&#34;&gt;Classic RCU&lt;/h2&gt;
 
 &lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules&lt;br /&gt;
 obeyed by the critical sections of pure spinlocks:&lt;br /&gt;
@@ -1499,7 +1551,8 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
 &lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://yarchive.net/comp/linux/recursive_locks.html&#34;&gt;Linus on recursive lock&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.perfdynamics.com/Manifesto/USLscalability.html&#34;&gt;How to Quantify Scalability&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;hp&#34;&gt;HP&lt;/h1&gt;
 
