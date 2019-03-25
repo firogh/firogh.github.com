@@ -434,7 +434,7 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
 
 &lt;h2 id=&#34;causality&#34;&gt;Causality&lt;/h2&gt;
 
-&lt;p&gt;Read Copy Update HOWTO介绍了当初RCU开发的动机:&lt;/p&gt;
+&lt;p&gt;Read Copy Update HOWTO&lt;/p&gt;
 
 &lt;h2 id=&#34;structure&#34;&gt;Structure&lt;/h2&gt;
 
@@ -511,101 +511,6 @@ CONFIG_RCU_BOOST&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=23_GOr8Sz-E&#34;&gt;Decoding Those Inscrutable RCU CPU Stall Warnings&lt;/a&gt;&lt;br /&gt;
 update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;br /&gt;
 Documentation/RCU/stallwarn.txt&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;iframe frameborder=&#34;no&#34; border=&#34;0&#34; marginwidth=&#34;0&#34; marginheight=&#34;0&#34; width=330 height=86 src=&#34;http://music.163.com/outchain/player?type=2&amp;id=444737&amp;auto=1&amp;height=66&#34;&gt;&lt;/iframe&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcupdate.html&#34;&gt;官网Read-Copy Update Mutual Exclusion&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/index.html&#34;&gt;Read Copy Update HOWTO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/rcupdate_doc.html&#34;&gt;Read-Copy Update Mutual-Exclusion in Linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://pages.cs.wisc.edu/~thanhdo/qual-notes/sync/sync2-rcu.txt&#34;&gt;Thanh Do&amp;rsquo;s notes Read-copy update. In Ottawa Linux Symposium, July 2001&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;how-to-use-rcu&#34;&gt;How to use RCU&lt;/h1&gt;
-
-&lt;p&gt;list rcu&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/263130/&#34;&gt;What is RCU? Part 2: Usage&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;what-is-rcu&#34;&gt;What is RCU&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU, Really?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/262464/&#34;&gt;What is RCU, Fundamentally?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API&lt;/a&gt;&lt;br /&gt;
-RCU supports concurrency between a single updater and multiple readers!&lt;/p&gt;
-
-&lt;h2 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Publish-Subscribe&lt;br /&gt;
-For updater before synchnization_rcu(); similar to softirq rcu&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Observer&lt;br /&gt;
-For updater to wait For Pre-Existing RCU Readers to Complete&lt;br /&gt;
-Maintain Multiple Versions of Recently Updated Objects&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;positivism-implementions&#34;&gt;Positivism Implementions&lt;/h1&gt;
-
-&lt;h2 id=&#34;classic-rcu-1&#34;&gt;Classic RCU&lt;/h2&gt;
-
-&lt;p&gt;Classic RCU requires that read-side critical sections obey the same rules&lt;br /&gt;
-obeyed by the critical sections of pure spinlocks:&lt;br /&gt;
-blocking or sleeping of any sort is strictly prohibited.&lt;/p&gt;
-
-&lt;h2 id=&#34;preemtible-rcu&#34;&gt;Preemtible RCU&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
-stage 的切换是由rcu_read_unlock 推动的!&lt;/p&gt;
-
-&lt;h2 id=&#34;tree-rcu&#34;&gt;Tree RCU&lt;/h2&gt;
-
-&lt;p&gt;For hundreds and thounds CPU cores&lt;/p&gt;
-
-&lt;p&gt;#FAQ&lt;br /&gt;
-* Difference with primitive and atomic&lt;br /&gt;
-* Grace period is synchroinze_rcu or a softirq justment&lt;br /&gt;
-* __rcu sparse will warn you if you access that pointer without the services of one of the variants of rcu_dereference().&lt;/p&gt;
-
-&lt;h1 id=&#34;below-is-how-to-use-rcu&#34;&gt;Below is how to use RCU!&lt;/h1&gt;
-
-&lt;h1 id=&#34;reference-1&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/techreports/RCUUsage.2013.02.24a.pdf&#34;&gt;RCU Usage In the Linux Kernel: One Decade Later&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;
-
-&lt;p&gt;本文内容并非我原创, 实际上是翻译加上个人理解Paul E. McKenney的paper.Credit to Paul and others.&lt;br /&gt;
-本文不关心RCU的实现.&lt;br /&gt;
-本文的核心目标就是了解如何使用RCU.&lt;br /&gt;
-所有使用RCU代码, 都可以分为4部分:&lt;br /&gt;
-RCU read critical section: 就是rcu_read_lock()和rcu_read_unlock()之间的代码.&lt;br /&gt;
-update: 这部分代码在synchronize_rcu/call_rcu之前执行. 比如给pointer = new_data;&lt;br /&gt;
-synchronize: 这部分代码是等待调用synchronize/call_rcu时的所有Rcu read critical section 执行完.&lt;br /&gt;
-free: 这部分是在上面synchronize/call_rcu确认所有对就数据引用的RCU read critical section都执行完了, 安全释放内存.&lt;br /&gt;
-Paul的paper总结了5种用法, 并且附上了代码, 便于理解.&lt;br /&gt;
-理解的过程实质上是用RCU的外衣再次理解这个5种方法!&lt;/p&gt;
-
-&lt;h1 id=&#34;wait-for-completion&#34;&gt;Wait for Completion&lt;/h1&gt;
-
-&lt;p&gt;内核中有&lt;a href=&#34;https://lwn.net/Articles/23993/&#34;&gt;完成量completion&lt;/a&gt;的基础设施&lt;br /&gt;
-上面的RCU read critical section和synchronize可以构成completion的语义.&lt;br /&gt;
-为什么要用RCU而不是内核自身提供的completion函数呢?&lt;br /&gt;
-Paul的文中举的例子实在NMI中要作这样的事情, 显然基于waitqueue的completion是毫无用处的.&lt;br /&gt;
-所以这里的RCU, 应该叫做Completion RCU-version.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference-counting&#34;&gt;Reference Counting&lt;/h1&gt;
-
-&lt;p&gt;传统的引用计数就是往结构体里面内嵌一个atomic,加加减减.&lt;br /&gt;
-但RCU实现的引用计数把实际工作转移到softirq-rcu部分去了.&lt;br /&gt;
-Paul给了一个例子, 我认为是及其不合适的.因为他忽略了softirq部分随着smp的核数增多&lt;br /&gt;
-同样也会带来性能的损耗,而不是almost zero in his paper.&lt;br /&gt;
-引用计数和完成量的区别, 除了语义上的差异, 看起来没有太大的区分.FIXME.&lt;/p&gt;
-
-&lt;h1 id=&#34;type-safe-memory&#34;&gt;Type Safe Memory&lt;/h1&gt;
-
-&lt;h1 id=&#34;publish-subscribe&#34;&gt;Publish-Subscribe&lt;/h1&gt;
-
-&lt;h1 id=&#34;read-write-lock-alternative&#34;&gt;Read-Write Lock Alternative&lt;/h1&gt;
 </description>
     </item>
     
