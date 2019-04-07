@@ -2099,6 +2099,11 @@ type: Reclaim&lt;/p&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt&#34;&gt;What is RCU?  &amp;ndash;  &amp;ldquo;Read, Copy, Update&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html&#34;&gt;A Tour Through RCU&amp;rsquo;s Requirements&lt;/a&gt;&lt;/p&gt;
 
+&lt;h2 id=&#34;history&#34;&gt;History&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/541037/&#34;&gt;As of March 2013: Simplifying RCU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www2.rdrop.com/users/paulmck/RCU/RCUdissertation.2004.07.14e1.pdf&#34;&gt;RCU dissertation.2004.07&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;classic-rcu&#34;&gt;Classic RCU&lt;/h1&gt;
 
 &lt;p&gt;commit c17ef45342cc033fdf7bdd5b28615e0090f8d2e7&lt;br /&gt;
@@ -2119,7 +2124,8 @@ Date:   Tue Jun 23 17:12:47 2009 -0700&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html&#34;&gt;&amp;hellip; after all the CPUs in the system have gone through at least one &amp;ldquo;quiescent&amp;rdquo; state (such as context switch, idle loop, or user code)&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.&#34;&gt;The rcu and rcu_bh flavors of RCU have different sets of quiescent states.&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.&#34;&gt;The rcu and rcu_bh flavors of RCU have different sets of quiescent states.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/&#34;&gt;Using Quiescent States to Reclaim Memory&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;granularity-of-waiting&#34;&gt;granularity of waiting&lt;/h1&gt;
 
@@ -2131,7 +2137,15 @@ In RCU&amp;rsquo;s case, the things waited on are called &amp;ldquo;RCU read-sid
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/201195/&#34;&gt;The 1st: Read-copy-update for realtime&lt;/a&gt; &lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf&#34;&gt;Papper&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
 The RCU implementation for the -rt patchset is unusual in that it permits read-side critical sections to be preempted and to be blocked waiting for locks. However, it does not handle general blocking (for example, via the wait_event() primitive): if you need that, you should instead use SRCU.&lt;br /&gt;
-&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf&#34;&gt;Realtime RCU&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf&#34;&gt;Realtime RCU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html&#34;&gt;RCU-preempt: What happens on a context switch&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;implementation&#34;&gt;Implementation&lt;/h2&gt;
+
+&lt;p&gt;+#define RCU_READ_UNLOCK_NEED_QS (1 &amp;lt;&amp;lt; 2) /* RCU core needs CPU response. */&lt;br /&gt;
+f41d911f8c49a5d65c86504c19e8204bb605c4fd&lt;br /&gt;
+need_qs&lt;br /&gt;
+1d082fd061884a587c490c4fc8a2056ce1e47624&lt;/p&gt;
 
 &lt;h1 id=&#34;srcu&#34;&gt;SRCU&lt;/h1&gt;
 
@@ -2141,15 +2155,23 @@ The RCU implementation for the -rt patchset is unusual in that it permits read-s
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/607117/&#34;&gt;The RCU-tasks subsystem&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;rcu-the-bloatwatch-edition&#34;&gt;RCU: The Bloatwatch Edition&lt;/h1&gt;
+&lt;h1 id=&#34;tiny-rcu-rcu-the-bloatwatch-edition&#34;&gt;Tiny RCU / RCU: The Bloatwatch Edition&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/323929/&#34;&gt;RCU: The Bloatwatch Edition&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/323929/&#34;&gt;RCU: The Bloatwatch Edition&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/396767/&#34;&gt;rcu: Add a TINY_PREEMPT_RCU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/373048/&#34;&gt;rcu: Remove TINY_PREEMPT_RCU&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;hierarchical-rcu-tree-rcu&#34;&gt;Hierarchical RCU / Tree RCU&lt;/h1&gt;
+&lt;h1 id=&#34;tree-rcu-hierarchical-rcu&#34;&gt;Tree RCU / Hierarchical RCU&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/305782&#34;&gt;Hierarchical RCU&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html&#34;&gt;Tree RCU Grace Period Memory Ordering Components &lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html&#34;&gt;A Tour Through TREE_RCU&amp;rsquo;s Data Structures&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html&#34;&gt;A Tour Through TREE_RCU&amp;rsquo;s Data Structures&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html&#34;&gt;A Tour Through TREE_RCU&amp;rsquo;s Expedited Grace Periods&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/453002/&#34;&gt;Tree preempt RCU: 3.0 and RCU: what went wrong&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-bh&#34;&gt;RCU bh&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/ml/linux-kernel/CAJWu+oqCun1Ae6GqPxnS+eCDi3jadGPp+MO8TjOWgs+AiAh79A@mail.gmail.com/&#34;&gt;Questions on rcu-bh design&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;priority-boosting-rcu&#34;&gt;Priority-Boosting RCU&lt;/h1&gt;
 
