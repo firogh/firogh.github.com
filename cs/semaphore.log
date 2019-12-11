@@ -1,0 +1,70 @@
+# Generic semaphore implementation
+commit 64ac24e738823161693bf791f87adc802cf529ff
+Author: Matthew Wilcox <matthew@wil.cx>
+Date:   Fri Mar 7 21:55:58 2008 -0500
+    Generic semaphore implementation
+    Semaphores are no longer performance-critical, so a generic C
+    implementation is better for maintainability, debuggability and
+    extensibility.
+
+# In 1999, Semaphore rewritten by Linus
+History: commit 95857c645ce6136f948ccc9792897cb9906e8e4e (tag: 2.3.15)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:27:05 2007 -0500
+    Linux 2.3.15
+    There's a rather huge patch-set out there now, taking the 2.3.x series to
+    2.3.15.
+    This has a lot of the merge code I've been sent over the last two weeks,
+    but I will invariably have missed some, if for no other reason than simply
+    that I got absolutely _flooded_ by people sending me patches.
+    
+    One of the more interesting things was the SMP pipe cleanup sent by
+    Richard, but try as I might it was never really stable under load on x86 -
+    not with the plain semaphores in 2.3.14, and not with the patches Andrea
+    had either. I assume Richard tested it on an alpha with the much more
+    well-thought-out atomic operation that the alpha provides.
+    
+    I ended up rewriting the x86 semaphore code (and some of Richards pipe
+    code too, for that matter, to get rid of some races in waking things up),
+    and it doesn't show the problems I saw before, but hey, maybe I just
+    exchanged one set of problems for another set that I can't trigger any
+    more. Give me feedback, please.
++++ b/arch/i386/kernel/semaphore.c
++ * (C) Copyright 1999 Linus Torvalds
++ * Semaphores are implemented using a two-way counter:
++ * The "count" variable is decremented for each process
++ * that tries to aquire the semaphore, while the "sleeping"
++ * variable is a count of such aquires.
++ *
++ * Notably, the inline "up()" and "down()" functions can
++ * efficiently test if they need to do any extra work (up
++ * needs to do something only if count was negative before
++ * the increment operation.
++ *
++ * "sleeping" and the contention routine ordering is
++ * protected by the semaphore spinlock.
++ *
++ * Note that these functions are only called when there is
++ * contention on the lock, and as such all this is the
++ * "non-critical" part of the whole semaphore business. The
++ * critical part is the inline stuff in <asm/semaphore.h>
++ * where we want to avoid any extra jumps and calls.
++ * Logic:
++ *  - only on a boundary condition do we need to care. When we go
++ *    from a negative count to a non-negative, we wake people up.
++ *  - when we go from a non-negative count to a negative do we
++ *    (a) synchronize with the "sleeper" count and (b) make sure
++ *    that we're on the wakeup list before we synchronize so that
++ *    we cannot lose wakeup events.
+
+# Introducing two-way contuer semaphore
+History: commit 63038f2586c99489c38238fa647353e0227bf1e8 (tag: 2.0.19)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:11:18 2007 -0500
+    Import 2.0.19
+
+# Fisrt version semaphore
+History: commit 728d1c78765df5aea439c9cba0a650e684be83df (tag: 0.99.15c)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:09:22 2007 -0500
+    Import 0.99.15c

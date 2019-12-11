@@ -1,0 +1,56 @@
+diff --git a/scripts/checkpatch.pl b/scripts/checkpatch.pl
+index 93a7edfe0f05..de8be4d84565 100755
+--- a/scripts/checkpatch.pl
++++ b/scripts/checkpatch.pl
+@@ -25,6 +25,7 @@ use Getopt::Long qw(:config no_auto_abbrev);
+ my $quiet = 0;
+ my $tree = 1;
+ my $chk_signoff = 1;
++my $chk_fixes = 1;
+ my $chk_patch = 1;
+ my $tst_only;
+ my $emacs = 0;
+@@ -199,6 +200,7 @@ GetOptions(
+ 	'q|quiet+'	=> \$quiet,
+ 	'tree!'		=> \$tree,
+ 	'signoff!'	=> \$chk_signoff,
++	'fixes!'	=> \$chk_fixes,
+ 	'patch!'	=> \$chk_patch,
+ 	'emacs!'	=> \$emacs,
+ 	'terse!'	=> \$terse,
+@@ -983,6 +985,7 @@ sub git_commit_info {
+ }
+ 
+ $chk_signoff = 0 if ($file);
++$chk_fixes = 0 if ($file);
+ 
+ my @rawlines = ();
+ my @lines = ();
+@@ -2282,6 +2285,7 @@ sub process {
+ 
+ 	our $clean = 1;
+ 	my $signoff = 0;
++	my $fixes = 0;
+ 	my $author = '';
+ 	my $authorsignoff = 0;
+ 	my $is_patch = 0;
+@@ -2613,6 +2617,19 @@ sub process {
+ 			}
+ 		}
+ 
++# Check the patch for a Fixes:
++		if ($line =~ /^\s*fixes:/i) {
++			$signoff++;
++			$in_commit_log = 0;
++			if ($author ne '') {
++				my $l = $line;
++				$l =~ s/"//g;
++				if ($l =~ /^\s*signed-off-by:\s*\Q$author\E/i) {
++				    $authorsignoff = 1;
++				}
++			}
++		}
++
+ # Check if MAINTAINERS is being updated.  If so, there's probably no need to
+ # emit the "does MAINTAINERS need updating?" message on file add/move/delete
+ 		if ($line =~ /^\s*MAINTAINERS\s*\|/) {

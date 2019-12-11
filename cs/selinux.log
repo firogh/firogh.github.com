@@ -1,3 +1,81 @@
 
+# Refence
+https://danwalsh.livejournal.com/12333.html
+
+# SELinux
+[SELinux Explained with Examples in Easy Language]
+[SELinux/Tutorials/What is this unconfined thingie and tell me about attributes](https://wiki.gentoo.org/wiki/SELinux/Tutorials/What_is_this_unconfined_thingie_and_tell_me_about_attributes)
+security/selinux/selinuxfs.c: sysfs_create_mount_point: create /sys/fs/selinux mount point. then mount the selinuxfs on selinux_null???
+upstart will mount selinuxfs at /sys/fs/selinux
+bash-4.3# mount
+/dev/sda2 on / type ext3 (ro,relatime,errors=continue,user_xattr,acl,barrier=1,data=ordered)
+proc on /proc type proc (rw,relatime)
+sysfs on /sys type sysfs (rw,relatime)
+bash-4.3# cat /proc/cmdline
+BOOT_IMAGE=vmlinuz rootwait max_loop=255 ro clock=pit console=ttyS0,115200 root=LABEL=wr_usb_boot initrd=initrd init=/bin/bash selinux=1
+bash-4.3# ls /sys/fs/selinux/
+bash-4.3# cat /proc/filesystems  | grep selinux
+nodev   selinuxfs
+bash-4.3# mount -t selinuxfs selinuxfs /sys/fs/selinux/
 
 
+# Neverallow
+(gdb) bt
+#0  0x00007ffff794a328 in qpol_policy_get_terule_iter (policy=policy@entry=0x608930, 
+    rule_type_mask=rule_type_mask@entry=112, iter=iter@entry=0x7fffffffdc38) at terule_query.c:51
+#1  0x00007ffff7946ecb in qpol_policy_add_cond_rule_traceback (policy=0x608930) at policy_extend.c:599
+#2  policy_extend (policy=0x608930) at policy_extend.c:1117
+#3  0x00007ffff793ce89 in qpol_policy_open_from_file_opt (
+    path=path@entry=0x6085c0 "/etc/selinux/minimum/policy/policy.29", policy=0x608830, 
+    fn=fn@entry=0x7ffff7bc4210 <qpol_handle_route_to_callback>, varg=0x608830, options=options@entry=4)
+    at policy.c:994
+#4  0x00007ffff7bc4541 in apol_policy_create_from_policy_path (path=0x6081e0, options=options@entry=4, 
+    msg_callback=msg_callback@entry=0x0, varg=varg@entry=0x0) at policy.c:98
+#5  0x000000000040375a in main (argc=2, argv=0x7fffffffdfd8) at sesearch.c:1188
+
+qpol_policy_open_from_file_opt
+        if (qpol_is_file_binpol(infile)) {
+                (*policy)->type = retv = QPOL_POLICY_KERNEL_BINARY;
+                sepol_policy_file_set_fp(pfile, infile);
+                if (sepol_policydb_read((*policy)->p, pfile)) {
+//                      error = EIO;
+                        goto err; 
+                }
+                /* By definition, binary policy cannot have neverallow rules and all other rules are always loaded. */
+                (*policy)->options |= QPOL_POLICY_OPTION_NO_NEVERALLOWS;
+                (*policy)->options &= ~(QPOL_POLICY_OPTION_NO_RULES);
+                if (policy_extend(*policy)) {
+                        error = errno;
+                        goto err;
+                }
+
+
+(gdb) bt
+#0  qpol_policy_has_capability (policy=policy@entry=0x608930, cap=cap@entry=QPOL_CAP_NEVERALLOW)
+    at policy.c:1483
+#1  0x00007ffff792fe4d in qpol_policy_get_avrule_iter (policy=0x608930, rule_type_mask=128, 
+    iter=iter@entry=0x7fffffffdcd8) at avrule_query.c:58
+#2  0x00007ffff7bb1f8e in rule_select (p=p@entry=0x608830, v=0x60c520, rule_type=rule_type@entry=128, 
+    flags=<optimized out>, flags@entry=3840, source_list=0x0, target_list=0x0, class_list=0x0, 
+    perm_list=perm_list@entry=0x0, bool_name=bool_name@entry=0x0) at avrule-query.c:77
+#3  0x00007ffff7bb24e4 in apol_avrule_get_by_query (p=p@entry=0x608830, a=0x60c4e0, v=v@entry=0x7fffffffde30)
+    at avrule-query.c:246
+#4  0x0000000000403bdd in perform_av_query (v=0x7fffffffde30, opt=0x7fffffffde60, policy=0x608830)
+    at sesearch.c:246
+#5  main (argc=<optimized out>, argv=<optimized out>) at sesearch.c:1241
+(gdb) c
+Continuing.
+ERROR: Cannot get avrules: Neverallow rules requested but not available
+
+        if ((rule_type_mask & QPOL_RULE_NEVERALLOW) && !qpol_policy_has_capability(policy, QPOL_CAP_NEVERALLOW)) {
+                ERR(policy, "%s", "Cannot get avrules: Neverallow rules requested but not available");
+                errno = ENOTSUP;
+                return STATUS_ERR;
+        }
+
+## example
+[neverallow statements are allowed in modules, however to detect these the semanage.conf file must have the expand-check=1 entry present.](https://selinuxproject.org/page/AVCRules#neverallow)
+cat brk.cil 
+(allow xdm_t shadow_t(file (read)))
+
+semodule -i brk.cil

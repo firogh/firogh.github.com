@@ -1,0 +1,100 @@
+
+# History
+[OSTEP: Paging: Faster Translations TLBs](http://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf)
+
+# Purposes
+
+# Formal causes
+ULK 3rd: Handling the TLB
+PLKA: 3.7 Processor Cache and TLB Control
+UVM: [3.8  Translation Lookaside Buffer (TLB)](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
+[Memory part 3: Virtual Memory: 4.3 Optimizing Page Table Access](https://lwn.net/Articles/253361/)
+[Understanding TLB from CPUID results on Intel and Firo is Level2 TLB shared?](https://stackoverflow.com/questions/58128776/understanding-tlb-from-cpuid-results-on-intel)
+## Kernel API
+[Cache and TLB Flushing Under Linux](https://www.kernel.org/doc/html/latest/core-api/cachetlb.html)
+## Costs
+[Huge pages part 5: A deeper look at TLBs and costs](https://lwn.net/Articles/379748/)
+## x86
+https://www.kernel.org/doc/Documentation/x86/tlb.txt
+Because the processor does not ensure that the data that it caches are always consistent with the structures in memory, it is important for software developers to understand how and when the processor may cache such data. They should also understand what actions software can take to remove cached data that may be inconsistent and when it should do so.-- SDM 4.10 CACHING TRANSLATION INFORMATION
+4.10.4 Invalidation of TLBs and Paging-Structure Caches
+## fork
+flush_tlb_mm
+## scheduling
+[进程切换分析（2）：TLB处理](http://www.wowotech.net/process_management/context-switch-tlb.html)
+### Lazy TLB
+x86/mm: Rework lazy TLB mode and TLB freshness tracking - 94b1b03b519b81c494900cb112aa00ed205cc2d9
+## PCID
+1.10. Longer-lived TLB Entries with PCID in kernel newbies:
+commit f39681ed0f48498b80455095376f11535feea332
+Author: Andy Lutomirski <luto@kernel.org>
+Date:   Thu Jun 29 08:53:15 2017 -0700
+    x86/mm: Give each mm TLB flush generation a unique ID
+commit 10af6235e0d327d42e1bad974385197817923dc1
+Author: Andy Lutomirski <luto@kernel.org>
+Date:   Mon Jul 24 21:41:38 2017 -0700
+    x86/mm: Implement PCID based optimization: try to preserve old TLB entries using PCID
+
+## TLB shooot down
+[What's TLB shootdown](https://stackoverflow.com/questions/3748384/what-is-tlb-shootdown)
+[Great question and answers on performing TLB shootdown](https://stackoverflow.com/questions/50256740/who-performs-the-tlb-shootdown)
+history: commit a27c6530ff12bab100e64c5b43e84f759fa353ae
+Author: Linus Torvalds <torvalds@athlon.transmeta.com>
+Date:   Mon Feb 4 20:19:13 2002 -0800
+    v2.4.9.12 -> v2.4.9.13
+      - Hugh Dickins: VM/shmem cleanups and swap search speedup
++++ b/include/asm-generic/tlb.h
+@@ -0,0 +1,113 @@
++/* asm-generic/tlb.h
++ *     Generic TLB shootdown code
++ * Copyright 2001 Red Hat, Inc.
++ * Based on code from mm/memory.c Copyright Linus Torvalds and others.
++/* mmu_gather_t is an opaque type used by the mm code for passing around any
++ * data needed by arch specific code for tlb_remove_page.  This structure can
++ * be per-CPU or per-MM as the page table lock is held for the duration of TLB
++ * shootdown.
+-               freed += free_pte(page);
++               if (pte_present(pte)) {
++                       freed ++;
++                       /* This will eventually call __free_pte on the pte. */
++                       tlb_remove_page(tlb, ptep, address + offset);
+Form
++       flush_cache_range(mm, address, end);
++       tlb = tlb_gather_mmu(mm);
++
+        do {
+-               freed += zap_pmd_range(mm, dir, address, end - address);
++               freed += zap_pmd_range(tlb, dir, address, end - address);	# Unhook
+                address = (address + PGDIR_SIZE) & PGDIR_MASK;
+                dir++;
+        } while (address && (address < end));
++
++       /* this will flush any remaining tlb entries */
++       tlb_finish_mmu(tlb, start, end);					# Invalidate
+commit dea2434c23c102b3e7d320849ec1cfeb432edb60
+Author: Peter Zijlstra <peterz@infradead.org>
+Date:   Tue Sep 4 10:43:14 2018 +0200
+    asm-generic/tlb: Provide a comment
+ * Generic MMU-gather implementation.
+ * The mmu_gather data structure is used by the mm code to implement the
+ * correct and efficient ordering of freeing pages and TLB invalidations.
+ * This correct ordering is:
+ *  1) unhook page
+ *  2) TLB invalidate page
+ *  3) free page
+ * That is, we must never free a page before we have ensured there are no live
+ * translations left to it. Otherwise it might be possible to observe (or
+ * worse, change) the page content after it has been reused.
+[The point is: we *never* have the order 1) unhook, 2) TLB invalidate, 3) free. If there is concurrency due to a multi-threaded application we have to do the unhook of the page-table entry and the TLB flush with a single instruction.](https://patchwork.kernel.org/patch/10599105/)
+
+# Material
+v3a Chapter 4.10
+spurious_fault:a stale TLB entry
+## Flush tlb
+INVLPG: include global
+mov to CR3: except global
+mov to CR4: include golbal
+INVPCID
+VMX transitions
+## Dump TLB
+[Dump the contents of TLB buffer of x86 CPU](https:// https://stackoverflow.com/questions/6803762/dump-the-contents-of-tlb-buffer-of-x86-cpu)

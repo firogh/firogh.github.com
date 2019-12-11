@@ -1,0 +1,332 @@
+
+# History
+## bdflush and kupdated
+LKD3rd: History: bdflush, kupdated, and pdflush
+ULK1st: 14.1.5 Writing Dirty Buffers to Disk
+
+history: commit 58cf0ac4320a67b6fa00950c2d375a816ccf3b56 (tag: 2.3.23pre1)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:27:47 2007 -0500
+    Import 2.3.23pre1
++ * This is the kernel update daemon. It was used to live in userspace
++ * but since it's need to run safely we want it unkillable by mistake.
++ * You don't need to change your userspace configuration since
++ * the userspace `update` will do_exit(0) at the first sys_bdflush().
++int kupdate(void * unused) 
+tglx: for_kupdate
+commit 20b96b5225db64dbc4b1226a46dfdb9fd659deb7
+Author: Andrew Morton <akpm@digeo.com>
+Date:   Sat Dec 14 03:17:52 2002 -0800
+    [PATCH] fs-writeback rework.
+
+tglx: wb_kupdate
+commit 090da37209e13c26f3723e847860e9f7ab23e113
+Author: Andrew Morton <akpm@zip.com.au>
+Date:   Mon Apr 29 23:52:10 2002 -0700
+    [PATCH] writeback from address spaces
++ * The interval between `kupdate'-style writebacks.
++static int wb_writeback_jifs = 5 * HZ;
++ * Periodic writeback of "old" data.
++ * Define "old": the first time one of an inode's pages is dirtied, we mark the
++ * dirtying-time in the inode's address_space.  So this periodic writeback code
++ * just walks the superblock inode list, writing back any inodes which are
++ * older than a specific point in time.
++ * Spot the bug: at jiffies wraparound, the attempt to set the inode's dirtying
++ * time won't work, because zero means not-dirty.  That's OK. The data will get
++ * written out later by the VM (at least).
++ * We also limit the number of pages which are written out, to avoid writing
++ * huge amounts of data against a single file, which would cause memory
++ * allocators to block for too long.
++static void wb_kupdate(unsigned long arg)
+
+tglx: merged with pdflush
+commit 9d78e51bbbecd38045bf0d3929bd57249b8659e8
+Author: Andrew Morton <akpm@zip.com.au>
+Date:   Tue Apr 9 21:30:06 2002 -0700
+    [PATCH] replace kupdate and bdflush with pdflush
+
+## pdflush
+Page dirty flush in LKD3 chapter 16
+[R.I.P. pdflush](https://lwn.net/Articles/508212/)
+[Flushing out pdflush](https://lwn.net/Articles/326552/)
+PLKA: chapter 17
+[LINUX缓存写回机制](http://oenhan.com/linux-cache-writeback)
+[In defense of per-BDI writeback](https://lwn.net/Articles/354851/)
+### ULK3rd: Births and deaths are governed by the following rules:
+• There must be at least two pdflush kernel threads and at most eight.
+• If there were no idle pdflush during the last second, a new pdflush should be cre-
+ated.
+• If more than one second elapsed since the last pdflush became idle, a pdflush
+should be removed.
+
+
+## Per-bdi thread writeback - dynamically creating  one thread per bdi
+[A MUST READ: Per backing device writeback](https://blog.linuxplumbersconf.org/2009/slides/Jens-Axboe-lpc2009-slides-axboe.pdf)
+[Explaination from Jens on LPC 2009](https://blog.linuxplumbersconf.org/ocw/proposals/22)
+[Commits: 1.1. Per-backing-device based writeback](https://kernelnewbies.org/Linux_2_6_32#Per-backing-device_based_writeback)
+[Linux内核延迟写机制 - ilinuxkernel](http://www.ilinuxkernel.com/files/Linux.Kernel.Delay.Write.pdf)
+[In defense of per-BDI writeback](https://lwn.net/Articles/354851/)
+commit 03ba3782e8dcc5b0e1efe440d33084f066e38cae
+Author: Jens Axboe <jens.axboe@oracle.com>
+Date:   Wed Sep 9 09:08:54 2009 +0200
+    writeback: switch to per-bdi threads for flushing data
+[Horrible namings! writeback_inodes_wb, writeback vs wb?]https://lore.kernel.org/patchwork/patch/169283/
+
+## ubound workqueue writeback
+[writeback: convert writeback to unbound workqueue](https://groups.google.com/forum/#!topic/fa.linux.kernel/OnsAP-Zy-s8)
+[writback rescuer](http://www.wowotech.net/irq_subsystem/cmwq-intro.html)
+commit 839a8e8660b6777e7fe4e80af1a048aebe2b5977
+Author: Tejun Heo <tj@kernel.org>
+Date:   Mon Apr 1 19:08:06 2013 -0700
+    writeback: replace custom worker pool implementation with unbound workqueue
+wb_workfn, wb_queue_work, wb_wakeup, wb_wakeup_delayed
+### wb_workfn and bdi_wq
+crash> bdi_writeback.dwork.work.func 0xffff880002ad6348
+  dwork.work.func = 0xffffffff812301a0 <wb_workfn>
+### wb_workfn and __writeback_inodes_wb
+__writeback_single_inode -> do_writepages-> a_ops->writepages...-> __block_write_full_page-> submit_bh_wbc-> 
+{
+	bio->bi_bdev = bh->b_bdev
+	submit_bio-> request_queue
+}
+blk_flush_plug
+inode_sync_complete
+
+# Final causes or purpose
+
+## bdflush issues
+LKD3: One of the major flaws in the bdflush solution was that bdflush consisted of one thread.
+This led to possible congestion during heavy page writeback where the single bdflush
+thread would block on a single congested device queue.
+The 2.6 kernel solves this problem by enabling multiple flusher threads to exist. Each
+thread individually flushes dirty pages to disk, allowing different flusher threads to con-
+centrate on different device queues.With the pdflush threads, the number of threads was
+dynamic, and each thread tried to stay busy grabbing data from the per-superblock dirty
+list and writing it back to disk.The pdflush approach prevents a single busy disk from
+starving other disks.This is all good, but what if each pdflush thread were to get hung up
+writing to the same, congested, queue? In that case, the performance of multiple pdflush
+threads would not be an improvement over a single thread.The memory consumed, how-
+ever, would be significantly greater.To mitigate this effect, the pdflush threads employ
+congestion avoidance:They actively try to write back pages whose queues are not con-
+gested.As a result, the pdflush threads spread out their work and refrain from merely
+hammering on the same busy device.
+
+## pdflush issues
+###[Request starvation due to congestion avodience from Per backing device writeback papper](https://blog.linuxplumbersconf.org/2009/slides/Jens-Axboe-lpc2009-slides-axboe.pdf)
+[The fundamental problem with pdflush is that it would back off when the backing device appeared to be congested. But congestion is easy to cause, and no other part of the system backs off in the same way. So pdflush could end up not doing writeback for significant periods of time. Forcing all other writers to back off in the face of congestion could improve things, but that would be a big change which doesn't address the other problem: congestion-based backoff can defeat attempts by filesystem code and the block layer to write large, contiguous segments to disk.](https://lwn.net/Articles/354851/)
+
+Same issue on lwn Flushing out pdflush
+[Another issue with pdflush is request starvation. There is a fixed number of I/O requests available for each queue in the system. If the limit is exceeded, any application requesting I/O will block waiting for a new slot. Since pdflush works on several queues, it cannot block on a single queue. So, it sets the wbc->nonblocking writeback information flag. If other applications continue to write on the device, pdflush will not succeed in allocating request slots. This may lead to starvation of access to the queue, if pdflush repeatedly finds the queue congested.](https://lwn.net/Articles/326552/)
+
+[Solution → blocking pdflush! Wait...](https://blog.linuxplumbersconf.org/2009/slides/Jens-Axboe-lpc2009-slides-axboe.pdf)
+[Detailed explanation on lwn Flushing out pdflush: Jens Axboe in his patch set proposes a new idea of using flusher threads per backing device info (BDI), as a replacement for pdflush threads. Unlike pdflush threads, per-BDI flusher threads focus on a single disk spindle. With per-BDI flushing, when the request_queue is congested, blocking happens on request allocation, avoiding request starvation and providing better fairness.](https://lwn.net/Articles/326552/)
+
+Detailed explanation from LKD3rd:
+Thus, in certain cases pdflush can avoid writing back on a specific disk far
+longer than desired.With the current flusher threads model, available since 2.6.32, the
+threads are associated with a block device, so each thread grabs data from its per-block
+device dirty list and writes it back to its disk.Writeback is thus synchronous and the
+threads, because there is one per disk, do not need to employ complicated congestion
+avoidance.This approach improves fairness and decreases the risk of starvation.
+# Formal causes
+
+## backing_dev_info
+bdi_list and super_blocks
+### pdflush exclusion
+commit 1f6acea0de867d7f5e5a43ba43cf3be744da412c
+Author: Andrew Morton <akpm@zip.com.au>
+Date:   Sun May 19 02:22:01 2002 -0700
+    [PATCH] pdflush exclusion infrastructure
+    Collision avoidance for pdflush threads.
+Avoids the situation where several pdflush threads are sleeping on the
+    same request_queue.
++ * It is a waste of resources to have more than one pdflush thread blocked on
++ * a single request queue.  Exclusion at the request_queue level is obtained
++ * via a flag in the request_queue's backing_dev_info.state.
++ *
++ * Non-request_queue-backed address_spaces will share default_backing_dev_info,
++ * unless they implement their own.  Which is somewhat inefficient, as this
++ * may prevent concurrent writeback against multiple devices.
++ */
++int writeback_acquire(struct backing_dev_info *bdi)
++{
++       return !test_and_set_bit(BDI_pdflush, &bdi->state);
+
+## bdi_writeback
+commit 03ba3782e8dcc5b0e1efe440d33084f066e38cae
+Refs: v2.6.31-14-g03ba3782e8dc
+Author:     Jens Axboe <jens.axboe@oracle.com>
+AuthorDate: Wed Sep 9 09:08:54 2009 +0200
+Commit:     Jens Axboe <jens.axboe@oracle.com>
+CommitDate: Fri Sep 11 09:20:25 2009 +0200
+    writeback: switch to per-bdi threads for flushing data
++       struct bdi_writeback wb;  /* default writeback info for this bdi */
+
+## dirty inode
+### s_dirty
+hitory: commit 6f3ded5fe19cea608b838d9bc86452736e7b6e5a
+Refs: <2.1.49pre1>
+Author:     Linus Torvalds <torvalds@linuxfoundation.org>
+AuthorDate: Fri Nov 23 15:13:43 2007 -0500
+Commit:     Linus Torvalds <torvalds@linuxfoundation.org>
+CommitDate: Fri Nov 23 15:13:43 2007 -0500
+    Import 2.1.49pre1
+
+### b_dirty
+[The first step was moving the dirty inodes to some place where bdi threads could easily get at them. ... One upside of this change is also that now we don't have to do a linear search for the bdi, we have it upfront. - Burying pdflush in the back yard Jens blog](https://axboe.livejournal.com/1819.html)
+
+### s_io
+tglx: commit 799391cc6d6ff6b37192eb49d5ea3e3aa1137e31
+Author: Andrew Morton <akpm@zip.com.au>
+Date:   Sun May 19 02:22:50 2002 -0700
+    [PATCH] improved I/O scheduling for indirect blocks
+and check description of queue_io()
+ * Queue all expired dirty inodes for io, eldest first.
+ * Before
+ *         newly dirtied     b_dirty    b_io    b_more_io
+ *         =============>    gf         edc     BA
+ * After
+ *         newly dirtied     b_dirty    b_io    b_more_io
+ *         =============>    g          fBAedc
+ *                                           |
+ *                                           +--> dequeue for IO
+### s_more_io
+commit 0e0f4fc22ece8e593167eccbb1a4154565c11faa
+Author: Ken Chen <kenchen@google.com>
+Date:   Tue Oct 16 23:30:38 2007 -0700
+    writeback: fix periodic superblock dirty inode flushing
+## b_io b_more_io b_dirty
+commit 66f3b8e2e103a0b93b945764d98e9ba46cb926dd
+Author: Jens Axboe <jens.axboe@oracle.com>
+Date:   Wed Sep 2 09:19:46 2009 +0200
+    writeback: move dirty inodes from super_block to backing_dev_info
+
+## Congestion
+inode_write_congested
+PGDAT_WRITEBACK,
+
+## Throttling
+[Dynamic writeback throttling](https://lwn.net/Articles/405076/)
+### [Buffered writeback throttling](https://lwn.net/Articles/704739/)
+[Toward less-annoying background writeback](https://lwn.net/Articles/682582/)
+[Background writeback](https://lwn.net/Articles/685894/)
+[1.4. Improved writeback management](https://kernelnewbies.org/Linux_4.10#Improved_writeback_management)
+commit 87760e5eef359788047d6fd54fc12eec74ce0d27
+Author: Jens Axboe <axboe@fb.com>
+Date:   Wed Nov 9 12:38:14 2016 -0700
+    block: hook up writeback throttling
+commit e34cbd307477ae07c5d8a8d0bd15e65a9ddaba5c
+Author: Jens Axboe <axboe@fb.com>
+Date:   Wed Nov 9 12:36:15 2016 -0700
+    blk-wbt: add general throttling mechanism
+
+## Cgroup
+[Must-read: Very good picture on writeback代码分析 and cgroup] http://kernel.pursuitofcloud.org/713974
+[Writeback and control groups](https://lwn.net/Articles/648292/)
+
+## Per-bdi flusher threads
+
+
+## Unbound workqueue
+commit f0054bb1e1f3be03cc33369df640db97f10f6172
+Refs: v4.1-rc2-50-gf0054bb1e1f3
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Fri May 22 17:13:30 2015 -0400
+Commit:     Jens Axboe <axboe@fb.com>
+CommitDate: Tue Jun 2 08:33:34 2015 -0600
+    writeback: move backing_dev_info->wb_lock and ->worklist into bdi_writeback
+
+## Writeback action
+[When writeback goes wrong](https://lwn.net/Articles/384093/)
+[Handling writeback errors](https://lwn.net/Articles/718734/)
+[Background writeback](https://lwn.net/Articles/685894/)
+### Inode
+inode_sync_complete
+writeback_inodes_wb => wb_writeback_work
+writeback_sb_inodes => writeback_control wbc
+
+### *start_writeback - just queues dwork
+commit c00ddad39f512b1a81e25b7892217ce10efab0f1
+Refs: v4.1-rc2-71-gc00ddad39f51
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Fri May 22 17:13:51 2015 -0400
+Commit:     Jens Axboe <axboe@fb.com>
+CommitDate: Tue Jun 2 08:33:36 2015 -0600
+    writeback: remove bdi_start_writeback()
+    bdi_start_writeback() is a thin wrapper on top of
+    __wb_start_writeback() which is used only by laptop_mode_timer_fn().
+    This patches removes bdi_start_writeback(), renames
+    __wb_start_writeback() to wb_start_writeback() and makes
+    laptop_mode_timer_fn() use it instead
+- * Description:
+- *   This does WB_SYNC_NONE opportunistic writeback. The IO is only
+- *   started when this function returns, we make no guarantees on
+- *   completion. Caller need not hold sb s_umount semaphore.
+- *
+- */
+-void bdi_start_writeback(struct backing_dev_info *bdi, long nr_pages,
+-                       enum wb_reason reason)
++void wb_start_writeback(struct bdi_writeback *wb, long nr_pages,
+
+and __wakeup_flusher_threads_bdi
+### *start_background_writeback - queues dwork, too.
+
+## Writeback occasions
+### Processes dirty page ->balance_dirty_pages_ratelimited
+wp_page_shared and do_shared_fault -> fault_dirty_shared_page
+generic_perform_write 
+other fs callsites
+domain_dirty_limits
+/proc/sys/vm/dirty_bytes
+/proc/sys/vm/dirty_ratio
+
+### Mark dirty inode
+__mark_inode_dirty -> wb_wakeup_delayed
+
+### wb_workfn -> wb_wakeup_delayed
+
+### Memory pressure
+__alloc_pages_direct_relcaim or try_to_free_mem_cgroup_pages -> .. do_try_to_free_pages
+PFRA check page_writeback.log
+
+# Background cleaning
+/proc/sys/vm/dirty_background_ratio
+/proc/sys/vm/dirty_background_bytes
+fs/fs-writeback.c
+wb_workfn->wb_do_writeback->wb_check_background_flush->wb_over_bg_thresh
+and
+wb_workfn->
+        else if (wb_has_dirty_io(wb) && dirty_writeback_interval)
+                wb_wakeup_delayed(wb);
+ => __block_write_full_page
+ => blkdev_writepage
+ => __writepage
+ => write_cache_pages
+ => generic_writepages
+ => do_writepages
+ => __writeback_single_inode
+ => writeback_sb_inodes
+ => __writeback_inodes_wb
+ => wb_writeback
+ => wb_workfn # wb_check_background_flush 
+
+## kupdate-style flush
+/proc/sys/vm/dirty_expire_centisecs: Max age
+/proc/sys/vm/dirty_writeback_centisecs: Interval between checks and flushes
+dirty_writeback_centisecs_handler -> wakeup_flusher_threads(WB_REASON_PERIODIC)
+wb_workfn->wb_do_writeback->wb_check_old_data_flush...->bio
+and
+        else if (wb_has_dirty_io(wb) && dirty_writeback_interval)
+                wb_wakeup_delayed(wb);
+### Marke the first inode dirty and bdi_wakeup_thread_delayed
+commit 6467716a37673e8d47b4984eb19839bdad0a8353
+Refs: v2.6.35-137-g6467716a3767
+Author:     Artem Bityutskiy <Artem.Bityutskiy@nokia.com>
+AuthorDate: Sun Jul 25 14:29:22 2010 +0300
+Commit:     Jens Axboe <jaxboe@fusionio.com>
+CommitDate: Sat Aug 7 18:53:56 2010 +0200
+    writeback: optimize periodic bdi thread wakeups
+
+
+## fsync(2), sync,  fdatasync(2)
+fsync.log

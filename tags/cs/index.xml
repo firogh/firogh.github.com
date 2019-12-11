@@ -11,10 +11,10 @@
     
     <item>
       <title>Kernel memory bug - SLAB&#39;s 3 lists are corrupted.</title>
-      <link>http://firoyang.org/cs/bug_mm_1/</link>
+      <link>http://firoyang.org/howto/bug_mm_1/</link>
       <pubDate>Wed, 02 Jan 2019 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/bug_mm_1/</guid>
+      <guid>http://firoyang.org/howto/bug_mm_1/</guid>
       <description>
 
 &lt;p&gt;Recently, I was working on a kernel memory bug.&lt;/p&gt;
@@ -77,7 +77,7 @@ He provided a fix for this issue. That is 7810e6781e0fcbca78b91cf65053f895bf59e8
     </item>
     
     <item>
-      <title>Memory-ordering model</title>
+      <title>Memory consistency model</title>
       <link>http://firoyang.org/cs/consistency_model/</link>
       <pubDate>Sat, 16 Dec 2017 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
@@ -86,122 +86,161 @@ He provided a fix for this issue. That is 7810e6781e0fcbca78b91cf65053f895bf59e8
 
 &lt;p&gt;When we are talking on memory model, we are refering memory consistency model or memory ordering model.&lt;/p&gt;
 
-&lt;h1 id=&#34;practices&#34;&gt;Practices&lt;/h1&gt;
+&lt;h1 id=&#34;hisotry&#34;&gt;Hisotry&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://preshing.com/20120515/memory-reordering-caught-in-the-act/&#34;&gt;Memory Reordering Caught in the Act&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;1979&lt;br /&gt;
+&lt;a href=&#34;https://www.microsoft.com/en-us/research/uploads/prod/2016/12/How-to-Make-a-Multiprocessor-Computer-That-Correctly-Executes-Multiprocess-Programs.pdf&#34;&gt;How to Make a Multiprocessor Computer That Correctly Executes Multiprocess Progranm&lt;/a&gt;&lt;br /&gt;
+1987 ~ 1990&lt;br /&gt;
+&lt;a href=&#34;https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf&#34;&gt;Linearizability: A Correctness Condition for Concurrent Objects&lt;/a&gt;&lt;br /&gt;
+1989&lt;br /&gt;
+&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.8.3766&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;processor consistency: CACHE CONSISTENCY AND SEQUENTIAL CONSISTENCY&lt;/a&gt;&lt;br /&gt;
+1990&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=325102&#34;&gt;Release consistency: Memory consistency and event ordering in scalable shared-memory multiprocessors&lt;/a&gt;&lt;br /&gt;
+1991&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=113406&#34;&gt;Proving sequential consistency of high-performance shared memories&lt;/a&gt;&lt;br /&gt;
+1992&lt;br /&gt;
+&lt;a href=&#34;https://www.gaisler.com/doc/sparcv8.pdf&#34;&gt;TSO Sparc v8: A standard memory model called Total Store Ordering (TSO) is defined for SPARC&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://link.springer.com/chapter/10.1007/978-1-4615-3604-8_2&#34;&gt;Formal Specification of Memory Models: and two store ordered models TSO and PSO defined by the Sun Microsystem&amp;rsquo;s SPARC architecture.&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;memory-model&#34;&gt;Memory model&lt;/h1&gt;
+&lt;p&gt;2001 ~ Present&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=WUfvvFD5tAA&#34;&gt;IA64 memory ordering&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://homes.cs.washington.edu/~bornholt/post/memory-models.html#fn:lamport&#34;&gt;Memory Consistency Models: A Primer&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.hpl.hp.com/techreports/Compaq-DEC/WRL-95-7.pdf&#34;&gt;Shared Memory Consistency Models: A Tutorial&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://preshing.com/20120930/weak-vs-strong-memory-models/&#34;&gt;Weak vs. Strong Memory Models&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;purposes&#34;&gt;Purposes&lt;/h1&gt;
 
-&lt;h1 id=&#34;x86-memory-model&#34;&gt;x86 memory model&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cs.cmu.edu/afs/cs/academic/class/15418-s12/www/lectures/14_relaxedReview.pdf&#34;&gt;Motivation: hiding latency&lt;/a&gt;&lt;br /&gt;
+▪ Why are we interested in relaxing ordering requirements?&lt;br /&gt;
+- Performance&lt;br /&gt;
+- Speci!cally, hiding memory latency: overlap memory accesses with other operations&lt;br /&gt;
+- Remember, memory access in a cache coherent system may entail much more then&lt;br /&gt;
+simply reading bits from memory (!nding data, sending invalidations, etc.)&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/users/paulmck/scalability/paper/whymb.2010.06.07c.pdf&#34;&gt;Memory Barriers: a Hardware View for Software Hackers - must read&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/&#34;&gt;x86 is TSO why it borthers fence?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cnblogs.com/caidi/p/6708789.html&#34;&gt;共同进入与饥饿&lt;/a&gt;&lt;br /&gt;
+&lt;h2 id=&#34;why-tso-it-s-because-that-write-buffer-or-store-buffer-is-not-invisible-any-more-for-multiprocessor-https-www-cis-upenn-edu-devietti-classes-cis601-spring2016-sc-tso-pdf&#34;&gt;Why TSO? &lt;a href=&#34;https://www.cis.upenn.edu/~devietti/classes/cis601-spring2016/sc_tso.pdf&#34;&gt;It&amp;rsquo;s because that write buffer or Store buffer is not invisible any more for multiprocessor&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;To abandon SC; to Allow use of a FIFO write buffer.&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.utexas.edu/~bornholt/post/memory-models.html&#34;&gt;An example: There’s no reason why performing event (2) (a read from B) needs to wait until event (1) (a write to A) completes. They don’t interfere with each other at all, and so should be allowed to run in parallel. See Memory Consistency Models: A Primer&lt;/a&gt;&lt;br /&gt;
+Hide the write latency by putting the data in the store buffer.&lt;/p&gt;
+
+&lt;h3 id=&#34;why-not-read-write-reordering&#34;&gt;Why not read-write reordering?&lt;/h3&gt;
+
+&lt;p&gt;reordering read-write is non-sense.&lt;/p&gt;
+
+&lt;h1 id=&#34;formal-cause&#34;&gt;Formal cause&lt;/h1&gt;
+
+&lt;p&gt;Shared memory&lt;br /&gt;
+Multiprocessor&lt;br /&gt;
+Memory access&lt;br /&gt;
+program order&lt;br /&gt;
+&lt;a href=&#34;https://www.hpl.hp.com/techreports/Compaq-DEC/WRL-95-7.pdf&#34;&gt;Recommened by CAAQA: Observity in SC, TSO, PC: Paragraph Relaxing the Write to Read Program Order in Shared Memory Consistency Models: A Tutorial&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.rdrop.com/users/paulmck/scalability/paper/whymb.2010.06.07c.pdf&#34;&gt;Memory Barriers: a Hardware View for Software Hackers - must read&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://15418.courses.cs.cmu.edu/spring2013/article/41&#34;&gt;&amp;lsquo;A Summary of Relaxed Consistency&amp;rsquo; CMU&lt;/a&gt;&lt;a href=&#34;https://www.cs.cmu.edu/afs/cs/academic/class/15418-s12/www/lectures/14_relaxedReview.pdf&#34;&gt;Slides&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;sc&#34;&gt;SC&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.microsoft.com/en-us/research/uploads/prod/2016/12/How-to-Make-a-Multiprocessor-Computer-That-Correctly-Executes-Multiprocess-Programs.pdf&#34;&gt;sequential consistency&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://jepsen.io/consistency/models/sequential#formally&#34;&gt;Formal of Sequential Consistency by Jepsen&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;tso&#34;&gt;TSO&lt;/h2&gt;
+
+&lt;p&gt;Total Store Ordering in Appendix k Sparc v8.&lt;/p&gt;
+
+&lt;h3 id=&#34;tso-in-x86&#34;&gt;TSO in x86&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.cl.cam.ac.uk/~pes20/weakmemory/x86tso-paper.tphols.pdf&#34;&gt;A Better x86 Memory Model: x86-TSO&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/27595595/when-are-x86-lfence-sfence-and-mfence-instructions-required&#34;&gt;When are x86 LFENCE, SFENCE and MFENCE instructions required?&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;c11-memory-model&#34;&gt;C11 memory model&lt;/h1&gt;
+&lt;h3 id=&#34;tso-vs-pc&#34;&gt;TSO vs PC:&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://en.cppreference.com/w/c/atomic/memory_order&#34;&gt;C memory order&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf&#34;&gt;Outlawing Ghosts: Avoiding Out-of-Thin-Air Results&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html&#34;&gt;Out-of-Thin-Air Execution is Vacuous&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.cl.cam.ac.uk/~pes20/weakmemory/&#34;&gt;Relaxed-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cl.cam.ac.uk/~pes20/cpp/model.pdf&#34;&gt;Mathematizing C++ Concurrency: The Isabelle/HOL model&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://15418.courses.cs.cmu.edu/spring2013/article/41&#34;&gt;&amp;lsquo;A Summary of Relaxed Consistency&amp;rsquo; CMU&lt;/a&gt;&lt;a href=&#34;https://www.cs.cmu.edu/afs/cs/academic/class/15418-s12/www/lectures/14_relaxedReview.pdf&#34;&gt;Slides&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;c-memory-model&#34;&gt;C++ memory model&lt;/h1&gt;
+&lt;h3 id=&#34;tso-and-peterson-s-algorithm&#34;&gt;TSO and Peterson&amp;rsquo;s algorithm&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=gpsz8sc6mNU&#34;&gt;The C++ Memory Model - Valentin Ziegler @ Meeting C++ 2014&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/&#34;&gt;Who ordered memory fences on an x86?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cnblogs.com/caidi/p/6708789.html&#34;&gt;共同进入与饥饿&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;compiler-memory-model&#34;&gt;Compiler memory model&lt;/h1&gt;
+&lt;h2 id=&#34;pc&#34;&gt;PC&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.8.3766&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;processor consistency: CACHE CONSISTENCY AND SEQUENTIAL CONSISTENCY&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;wc&#34;&gt;WC&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/oldquiz/p434-dubois.pdf&#34;&gt;weak consistency: Memory access buffering in multiprocessors&lt;/a&gt;&lt;br /&gt;
+They distinguish between ordinary shared accesses and synchronization accesses, where the latter are used to control concurrency&lt;br /&gt;
+between several processes and to maintain the integrity of ordinary shared data.&lt;/p&gt;
+
+&lt;h2 id=&#34;rc&#34;&gt;RC&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=325102&#34;&gt;Firo: a must-read: Release consistency: Memory consistency and event ordering in scalable shared-memory multiprocessors&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://docs.microsoft.com/en-us/windows/win32/dxtecharts/lockless-programming?redirectedfrom=MSDN#read-acquire-and-write-release-barriers&#34;&gt;Must-read: Lockless Programming Considerations for Xbox 360 and Microsoft Windows&lt;/a&gt;&lt;br /&gt;
+At right top of page 6&lt;br /&gt;
+Condition 3.1: Conditions for Release Consistency&lt;br /&gt;
+(A) before an ordinary load or store access is allowed to perform with respect to any other processor,&lt;br /&gt;
+all previous acquire accesses must be performed, and&lt;br /&gt;
+(B) before a release access is allowed to perform with&lt;br /&gt;
+respect to any other processor, all previous ordinary&lt;br /&gt;
+load and store accesses must be performed, and&lt;br /&gt;
+&amp;copy; special accesses are processor consistent with respect to one another.&lt;br /&gt;
+&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://marc.info/?l=linux-kernel&amp;amp;m=151844394031510&amp;amp;w=2&#34;&gt;mm/page_ref: use atomic_set_release in page_ref_unfreeze&lt;/a&gt;&lt;br /&gt;
+commit 7088efa9137a15d7d21e3abce73e40c9c8a18d68&lt;br /&gt;
+Refs: v4.15-rc1-4-g7088efa9137a&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Oct 9 10:04:27 2017 -0700&lt;br /&gt;
+Commit:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+CommitDate: Mon Dec 4 10:52:52 2017 -0800&lt;br /&gt;
+    fs/dcache: Use release-acquire for name/length update&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel&#34;&gt;Kernel&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;Why do we need mb for SLEEP AND WAKE-UP FUNCTIONS?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/718628/&#34;&gt;A formal kernel memory-ordering model&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/720550/&#34;&gt;A formal kernel memory-ordering model (part 2)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0124r4.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0124r6.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf&#34;&gt;Linux-Kernel Memory Ordering: Help Arrives At Last!&lt;/a&gt; and &lt;a href=&#34;https://www.youtube.com/watch?v=ULFytshTvIY&#34;&gt;Talk on youtube on this!&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;compiler&#34;&gt;Compiler&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://preshing.com/20120625/memory-ordering-at-compile-time/&#34;&gt;Memory Ordering at Compile Time&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://blog.regehr.org/archives/232&#34;&gt;A Guide to Undefined Behavior in C and C++, Part 3&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;linux-kernel-memory-model&#34;&gt;Linux kernel memory model&lt;/h1&gt;
+&lt;h2 id=&#34;other-architectures&#34;&gt;Other architectures&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/718628/&#34;&gt;A formal kernel memory-ordering model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/720550/&#34;&gt;A formal kernel memory-ordering model (part 2)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf&#34;&gt;Linux-Kernel Memory Ordering: Help Arrives At Last!&lt;/a&gt; and &lt;a href=&#34;https://www.youtube.com/watch?v=ULFytshTvIY&#34;&gt;Talk on youtube on this!&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Hello world! a journey to computer science</title>
-      <link>http://firoyang.org/cs/hello/</link>
-      <pubDate>Thu, 13 Apr 2017 20:42:49 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/hello/</guid>
-      <description>
+&lt;p&gt;&lt;a href=&#34;http://www.cl.cam.ac.uk/~pes20/weakmemory/&#34;&gt;Relaxed-Memory Concurrency&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;In this series, I will a simple hello world program to explain the every important concept in cmputer science.&lt;br /&gt;
-So let&amp;rsquo;s go.&lt;/p&gt;
+&lt;h2 id=&#34;c11-library-memory-model&#34;&gt;C11(library) memory model&lt;/h2&gt;
 
-&lt;p&gt;Do you know vDSO?&lt;br /&gt;
-If a C program, gtod, calls the system call gettimeofday in vDSO, how does this program know the address of gettimeofday?&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://en.cppreference.com/w/c/atomic/memory_order&#34;&gt;C memory order&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cl.cam.ac.uk/~pes20/cpp/notes42.html&#34;&gt;Don&amp;rsquo;t read: The Thin-air Problem&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf&#34;&gt;Outlawing Ghosts: Avoiding Out-of-Thin-Air Results&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html&#34;&gt;Out-of-Thin-Air Execution is Vacuous&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;ldd gtod&lt;br /&gt;
-    linux-gate.so.1 (0xf7766000)&lt;br /&gt;
-    libdl.so.2 =&amp;gt; /lib/libdl.so.2 (0xf7743000)&lt;br /&gt;
-    libc.so.6 =&amp;gt; /lib/libc.so.6 (0xf7568000)&lt;br /&gt;
-    /lib/ld-linux.so.2 (0x56639000)&lt;br /&gt;
-Check this commit of glibc:&lt;br /&gt;
-30e32d23eb06cbeae02e51c7c4df150736dba795&lt;br /&gt;
-Set up GLRO(dl_sysinfo_dso) under [NEED_DL_SYSINFO_DSO] as well&lt;br /&gt;
-AT_SYSINFO_EHDR&lt;/p&gt;
+&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
 
-&lt;p&gt;Gcc 32bit support&lt;br /&gt;
-ca677d3c3cd0eba7d1f03092517aea553a0e8569&lt;br /&gt;
-Add x86 32 bit vDSO time function support&lt;br /&gt;
-kernel&lt;br /&gt;
-37c975545ec63320789962bf307f000f08fabd48&lt;/p&gt;
+&lt;h2 id=&#34;practices&#34;&gt;Practices&lt;/h2&gt;
 
-&lt;h1 id=&#34;start-the-program&#34;&gt;start the program&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://preshing.com/20120515/memory-reordering-caught-in-the-act/&#34;&gt;Memory Reordering Caught in the Act&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;sysdeps/x86_64/dl-machine.h: -&amp;gt; _start -&amp;gt;_dl_start-&amp;gt;/elf/dl-sysdep.c:83:_dl_sysdep_start-&amp;gt;dl_main&lt;/p&gt;
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://a3f.at/lists/linkers&#34;&gt;Linkers 20 parts by Gold author Ian Lance Taylor&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/#locating-the-vdso-in-memory&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>IO and events</title>
-      <link>http://firoyang.org/cs/io/</link>
-      <pubDate>Tue, 04 Apr 2017 20:08:35 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/io/</guid>
-      <description>
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://stackoverflow.com/questions/87892/what-is-the-status-of-posix-asynchronous-i-o-aio&#34;&gt;What is the status of POSIX asynchronous I/O AIO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://stackoverflow.com/questions/5844955/whats-the-difference-between-event-driven-and-asynchronous-between-epoll-and-a&#34;&gt;hat&amp;rsquo;s the difference between event-driven and asynchronous? Between epoll and AIO?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://davmac.org/davpage/linux/async-io.html&#34;&gt;Asynchronous I/O and event notification on linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.gnu.org/software/libc/manual/html_node/Asynchronous-I_002fO.html&#34;&gt;Gnu Libc Perform I/O Operations in Parallel&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;really-confuing-conceptions&#34;&gt;Really confuing conceptions&lt;/h1&gt;
-
-&lt;p&gt;What is Asynchronous I/O?&lt;br /&gt;
-The onset of I/O is splitted from nuclus.&lt;br /&gt;
-First, asynchronous I/O can be happned in UP machine.&lt;br /&gt;
-AIO is based on Proactor, more portable.&lt;/p&gt;
-
-&lt;h1 id=&#34;aynchoronous-event-notfication&#34;&gt;Aynchoronous event notfication&lt;/h1&gt;
-
-&lt;p&gt;epoll is based on Reactor pattern.&lt;br /&gt;
-signal is based on Observer pattern.&lt;br /&gt;
-For the ease of use, the select loop is implemented as an &lt;em&gt;event loop&lt;/em&gt; with callbacks.&lt;br /&gt;
-libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shadowsocks for using of libev.&lt;/p&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;p&gt;memory-map IO&lt;/p&gt;
+&lt;p&gt;134 static void sysrq_handle_crash(int key)&lt;br /&gt;
+ 135 {&lt;br /&gt;
+ 136         char &lt;em&gt;killer = NULL;&lt;br /&gt;
+ 137&lt;br /&gt;
+ 138         /&lt;/em&gt; we need to release the RCU read lock here,&lt;br /&gt;
+ 139          * otherwise we get an annoying&lt;br /&gt;
+ 140          * &amp;lsquo;BUG: sleeping function called from invalid context&amp;rsquo;&lt;br /&gt;
+ 141          * complaint from the kernel before the panic.&lt;br /&gt;
+ 142          &lt;em&gt;/&lt;br /&gt;
+ 143         rcu_read_unlock();&lt;br /&gt;
+ 144         panic_on_oops = 1;      /&lt;/em&gt; force panic */&lt;br /&gt;
+ 145         wmb();&lt;br /&gt;
+ 146         *killer = 1;&lt;br /&gt;
+ 147 }&lt;/p&gt;
 </description>
     </item>
     
@@ -211,6 +250,105 @@ libevent and libev is a well-designed &lt;em&gt;event loop&lt;/em&gt;.Check shad
       <pubDate>Mon, 03 Apr 2017 13:09:05 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/softirq/</guid>
+      <description>
+
+&lt;h1 id=&#34;the-old-bottom-half&#34;&gt;The old bottom half&lt;/h1&gt;
+
+&lt;p&gt;ULK 1st: 4.6.6 Bottom Half&lt;br /&gt;
+History: commit ad09492558ffa7c67f2b58d23d04dce9ffb9b9dd (tag: 0.99)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:09:07 2007 -0500&lt;br /&gt;
+    [PATCH] Linux-0.99 (December 13, 1992)&lt;br /&gt;
+Firo: There isn&amp;rsquo;t to much useful comment. But the code is very simple. Search bh_base.&lt;/p&gt;
+
+&lt;h1 id=&#34;task-queue&#34;&gt;task queue&lt;/h1&gt;
+
+&lt;p&gt;history: commit 98606bddf430f0a60d21fba93806f4e3c736b170 (tag: 1.1.13)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:09:30 2007 -0500&lt;br /&gt;
+    Import 1.1.13&lt;br /&gt;
++ * New proposed &amp;ldquo;bottom half&amp;rdquo; handlers:&lt;br /&gt;
++ * &amp;copy; 1994 Kai Petzke, wpp@marie.physik.tu-berlin.de&lt;br /&gt;
++ * Advantages:&lt;br /&gt;
++ * - Bottom halfs are implemented as a linked list.  You can have as many&lt;br /&gt;
++ *   of them, as you want.&lt;br /&gt;
++ * - No more scanning of a bit field is required upon call of a bottom half.&lt;br /&gt;
++ * - Support for chained bottom half lists.  The run_task_queue() function can be&lt;br /&gt;
++ *   used as a bottom half handler.  This is for example usefull for bottom&lt;br /&gt;
++ *   halfs, which want to be delayed until the next clock tick.&lt;br /&gt;
++ * Problems:&lt;br /&gt;
++ * - The queue_task_irq() inline function is only atomic with respect to itself.&lt;br /&gt;
++ *   Problems can occur, when queue_task_irq() is called from a normal system&lt;br /&gt;
++ *   call, and an interrupt comes in.  No problems occur, when queue_task_irq()&lt;br /&gt;
++ *   is called from an interrupt or bottom half, and interrupted, as run_task_queue()&lt;br /&gt;
++ *   will not be executed/continued before the last interrupt returns.  If in&lt;br /&gt;
++ *   doubt, use queue_task(), not queue_task_irq().&lt;br /&gt;
++ * - Bottom halfs are called in the reverse order that they were linked into&lt;br /&gt;
++ *   the list.&lt;br /&gt;
++struct tq_struct {&lt;br /&gt;
+Check ULK2nd 4.7.3.1 Extending a bottom half for task queues, especially tq_context and keventd&lt;br /&gt;
+The Old Task Queue Mechanism in LKD3rd. Cition from it below.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/11351/&#34;&gt;The end of task queues&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;softirq&#34;&gt;Softirq&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.cs.unca.edu/brock/classes/Spring2013/csci331/notes/paper-1130.pdf&#34;&gt;I’ll Do It Later: Softirqs, Tasklets, Bottom Halves, Task Queues, Work Queues and Timers&lt;/a&gt;&lt;br /&gt;
+* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
+current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
+* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
+* not percpu&lt;/p&gt;
+
+&lt;h1 id=&#34;occassions-of-softirq&#34;&gt;Occassions of Softirq&lt;/h1&gt;
+
+&lt;p&gt;irq_exit()&lt;br /&gt;
+re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
+ksoftirqd&lt;/p&gt;
+
+&lt;h1 id=&#34;tasklet&#34;&gt;Tasklet&lt;/h1&gt;
+
+&lt;p&gt;History: commit 6cc120a8e71a8d124bf6411fc6e730a884b82701 (tag: 2.3.43pre7)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:30:52 2007 -0500&lt;br /&gt;
+    Import 2.3.43pre7&lt;br /&gt;
++ Tasklets &amp;mdash; multithreaded analogue of BHs.&lt;br /&gt;
++   Main feature differing them of generic softirqs: tasklet&lt;br /&gt;
++   is running only on one CPU simultaneously.&lt;br /&gt;
++   Main feature differing them of BHs: different tasklets&lt;br /&gt;
++   may be run simultaneously on different CPUs.&lt;br /&gt;
++   Properties:&lt;br /&gt;
++   * If tasklet_schedule() is called, then tasklet is guaranteed&lt;br /&gt;
++     to be executed on some cpu at least once after this.&lt;br /&gt;
++   * If the tasklet is already scheduled, but its excecution is still not&lt;br /&gt;
++     started, it will be executed only once.&lt;br /&gt;
++   * If this tasklet is already running on another CPU (or schedule is called&lt;br /&gt;
++     from tasklet itself), it is rescheduled for later.&lt;br /&gt;
++   * Tasklet is strictly serialized wrt itself, but not&lt;br /&gt;
++     wrt another tasklets. If client needs some intertask synchronization,&lt;br /&gt;
++     he makes it with spinlocks.&lt;/p&gt;
+
+&lt;h1 id=&#34;timer&#34;&gt;Timer&lt;/h1&gt;
+
+&lt;h2 id=&#34;irqsafe-timer&#34;&gt;irqsafe timer&lt;/h2&gt;
+
+&lt;p&gt;__run_timers&lt;br /&gt;
+irqsafe = timer-&amp;gt;flags &amp;amp; TIMER_IRQSAFE&lt;br /&gt;
+check del_timer_sync&lt;br /&gt;
+and definition of TIMER_IRQSAFE&lt;br /&gt;
+&lt;a href=&#34;https://patchwork.kernel.org/patch/10811995/&#34;&gt;https://patchwork.kernel.org/patch/10811995/&lt;/a&gt;&lt;br /&gt;
+Is timer pending&lt;/p&gt;
+
+&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Softirq of Linux Kernel</title>
+      <link>http://firoyang.org/dark_ages/softirq/</link>
+      <pubDate>Mon, 03 Apr 2017 13:09:05 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/dark_ages/softirq/</guid>
       <description>
 
 &lt;p&gt;##softirq&lt;br /&gt;
@@ -261,19 +399,244 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
       <guid>http://firoyang.org/cs/interrupt_and_exception/</guid>
       <description>
 
-&lt;p&gt;#Interrupt&lt;/p&gt;
+&lt;h1 id=&#34;references&#34;&gt;References&lt;/h1&gt;
 
-&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/interrupts.html&#34;&gt;history of interrupts&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://virtualirfan.com/history-of-interrupts&#34;&gt;Another History of interrupts with video&lt;/a&gt;&lt;br /&gt;
+Interrupts: asynonymous(passively received), external&lt;br /&gt;
+Exception: synonymous(actively detected), internal&lt;br /&gt;
+Software interrupts: is a trap. int/int3, into, bound.&lt;br /&gt;
+&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=-pehAzaP1eg&#34;&gt;IRQs: the Hard, the Soft, the Threaded and the Preemptible&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=YE8cRHVIM4E&#34;&gt;How Dealing with Modern Interrupt Architectures can Affect Your Sanity&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;native_init_IRQ() -&amp;gt;  set_intr_gate(i, irq_entries_start&amp;hellip;&lt;br /&gt;
-irq_entries_start define in arch/x86/kernel/entry_32.S&lt;/p&gt;
+&lt;h2 id=&#34;mask-exception&#34;&gt;Mask exception&lt;/h2&gt;
 
-&lt;p&gt;##Interrupt Context terminology&lt;br /&gt;
-* interrupt context - in_irq or in_interrupt&lt;br /&gt;
-irq_enter&lt;br /&gt;
-* bh context - in_softirq&lt;br /&gt;
+&lt;p&gt;RF in EFLAGS for masking #DB&lt;br /&gt;
+SS &amp;amp; SP&lt;/p&gt;
+
+&lt;h1 id=&#34;form&#34;&gt;Form&lt;/h1&gt;
+
+&lt;h2 id=&#34;interrupt-context-terminology&#34;&gt;Interrupt Context terminology&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;interrupt context - in_irq or in_interrupt&lt;br /&gt;
+irq_enter&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;bh context - in_softirq&lt;br /&gt;
 local_bh_disable&lt;br /&gt;
-__do_softirq -&amp;gt; __local_bh_disable_ip&lt;/p&gt;
+__do_softirq -&amp;gt; __local_bh_disable_ip&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;recusively-disbale-irq&#34;&gt;Recusively disbale irq&lt;/h2&gt;
+
+&lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
+&lt;h2 id=&#34;irq-nested&#34;&gt;irq nested?&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;Prevent nested interrupts when the IRQ stack is near overflowing v2&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;exceptions&#34;&gt;Exceptions&lt;/h1&gt;
+
+&lt;h2 id=&#34;faults-a-fault-is-an-exception-that-can-generally-be-corrected-and-that-once-corrected-allows-the-program&#34;&gt;Faults — A fault is an exception that can generally be corrected and that, once corrected, allows the program&lt;/h2&gt;
+
+&lt;p&gt;to be restarted with no loss of continuity. When a fault is reported, the processor restores the machine state to&lt;br /&gt;
+the state prior to the beginning of execution of the faulting instruction. The return address (saved contents of&lt;br /&gt;
+the CS and EIP registers) for the fault handler points to the faulting instruction, rather than to the instruction&lt;br /&gt;
+following the faulting instruction.&lt;/p&gt;
+
+&lt;h2 id=&#34;traps-a-trap-is-an-exception-that-is-reported-immediately-following-the-execution-of-the-trapping-instruction&#34;&gt;Traps — A trap is an exception that is reported immediately following the execution of the trapping instruction.&lt;/h2&gt;
+
+&lt;p&gt;Traps allow execution of a program or task to be continued without loss of program continuity. The return&lt;br /&gt;
+address for the trap handler points to the instruction to be executed after the trapping instruction.&lt;/p&gt;
+
+&lt;h2 id=&#34;aborts-an-abort-is-an-exception-that-does-not-always-report-the-precise-location-of-the-instruction-causing&#34;&gt;Aborts — An abort is an exception that does not always report the precise location of the instruction causing&lt;/h2&gt;
+
+&lt;p&gt;the exception and does not allow a restart of the program or task that caused the exception. Aborts are used to&lt;br /&gt;
+report severe errors, such as hardware errors and inconsistent or illegal values in system tables.&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-handler&#34;&gt;kernel handler&lt;/h2&gt;
+
+&lt;p&gt;do_error_trap&lt;/p&gt;
+
+&lt;p&gt;#x86 Interrupt&lt;br /&gt;
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
+##Hardware interrupts&lt;br /&gt;
+are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
+more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
+##software interrupt&lt;br /&gt;
+more details in trap_init().&lt;br /&gt;
+* exception or trap&lt;br /&gt;
+is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
+divide zero painc?&lt;br /&gt;
+* special instruction, for example INT 0x80&lt;br /&gt;
+or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
+
+&lt;h1 id=&#34;x86&#34;&gt;x86&lt;/h1&gt;
+
+&lt;h2 id=&#34;interrupt-vector&#34;&gt;Interrupt vector&lt;/h2&gt;
+
+&lt;p&gt;arch/x86/include/asm/irq_vectors.h&lt;/p&gt;
+
+&lt;h2 id=&#34;why-do-timer-interrupt-and-de-share-the-same-vector-0&#34;&gt;Why do timer interrupt and #DE share the same vector 0.&lt;/h2&gt;
+
+&lt;p&gt;cat /proc/interrupts&lt;br /&gt;
+            CPU0       CPU1       CPU2       CPU3&lt;br /&gt;
+   0:         21          0          0          0  IR-IO-APIC    2-edge      timer&lt;br /&gt;
+v3a Chapter 6&lt;br /&gt;
+0, DE, Divide Error, Fault, No DIV and IDIV instructions.&lt;br /&gt;
+Check ULK3 Chapter 4 Interrupt vectors and Linux 技术内幕 7.2.1中断号&lt;br /&gt;
+the 0 in /proc/interrupts is a IRQ line number&lt;br /&gt;
+The 0 for Divide error is a interrupt vector.&lt;/p&gt;
+
+&lt;h2 id=&#34;an-example-of-threaded-irq&#34;&gt;An example of threaded irq&lt;/h2&gt;
+
+&lt;p&gt;mei_me_probe&lt;br /&gt;
+ps axjf | grep irq | grep mei&lt;br /&gt;
+    2   499     0     0 ?           -1 S        0   0:00  _ [irq/126-mei_me]&lt;/p&gt;
+
+&lt;h2 id=&#34;does-sti-cli-affect-software-interrupt&#34;&gt;Does sti/cli affect software interrupt&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/a/1581729/1025001&#34;&gt;https://stackoverflow.com/a/1581729/1025001&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;ipi&#34;&gt;IPI&lt;/h2&gt;
+
+&lt;p&gt;commit 52aec3308db85f4e9f5c8b9f5dc4fbd0138c6fa4&lt;br /&gt;
+Author: Alex Shi &lt;a href=&#34;mailto:alex.shi@intel.com&#34;&gt;alex.shi@intel.com&lt;/a&gt;&lt;br /&gt;
+Date:   Thu Jun 28 09:02:23 2012 +0800&lt;br /&gt;
+    x86/tlb: replace INVALIDATE_TLB_VECTOR by CALL_FUNCTION_VECTOR&lt;br /&gt;
+ 73 #define ERROR_APIC_VECTOR               0xfe&lt;br /&gt;
+ 74 #define RESCHEDULE_VECTOR               0xfd&lt;br /&gt;
+ 75 #define CALL_FUNCTION_VECTOR            0xfc&lt;br /&gt;
+ 76 #define CALL_FUNCTION_SINGLE_VECTOR     0xfb&lt;br /&gt;
+ 77 #define THERMAL_APIC_VECTOR             0xfa&lt;br /&gt;
+ 78 #define THRESHOLD_APIC_VECTOR           0xf9&lt;br /&gt;
+ 79 #define REBOOT_VECTOR                   0xf8&lt;/p&gt;
+
+&lt;h2 id=&#34;practices&#34;&gt;Practices&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Triggering a #GP exception&lt;br /&gt;
+exception_GP_trigger.S&lt;br /&gt;
+&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
+if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
+But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
+Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;Obtain sys_call_table on amd64&lt;br /&gt;
+&lt;a href=&#34;https://www.exploit-db.com/papers/13146/&#34;&gt;https://www.exploit-db.com/papers/13146/&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
+
+&lt;h2 id=&#34;irq-and-exeception-init&#34;&gt;irq and exeception init&lt;/h2&gt;
+
+&lt;p&gt;type: gate_desc; desc_struct&lt;br /&gt;
+file: arch/x86/kernel/idt.c&lt;br /&gt;
+start_kernel&lt;br /&gt;
+{&lt;br /&gt;
+        setup_arch&lt;br /&gt;
+        {&lt;br /&gt;
+                idt_setup_early_traps           #===&amp;gt; idt_table: ist=0; DB, BP&lt;br /&gt;
+                &amp;hellip;&lt;br /&gt;
+                idt_setup_early_pf              #===&amp;gt; idt_table: PF ist=0;&lt;br /&gt;
+        }&lt;br /&gt;
+        &amp;hellip;&lt;br /&gt;
+        trap_init&lt;br /&gt;
+        {&lt;br /&gt;
+                idt_setup_traps                 #===&amp;gt; idt_table: ist=0; DE, 0x80 &amp;hellip; etc.&lt;br /&gt;
+                &amp;hellip;&lt;br /&gt;
+                cpu_init&lt;br /&gt;
+                {&lt;br /&gt;
+                        load_current_idt&lt;br /&gt;
+                        &amp;hellip;&lt;br /&gt;
+                        ist stacks init - exception_stacks&lt;br /&gt;
+                        t-&amp;gt;x86_tss.ist[v] points to top of each stack.&lt;br /&gt;
+                }&lt;br /&gt;
+                idt_setup_ist_traps             #===&amp;gt; idt_table: ist=1; DB, NMI, BP, DF, MC;&lt;br /&gt;
+                x86_init.irqs.trap_init         #===&amp;gt; if !KVM, noop&lt;br /&gt;
+                idt_setup_debugidt_traps        #===&amp;gt; debug_idt_table, check debug stack; INTG; #DB debug; #BP int; check arch/x86/entry/entry_64.S&lt;br /&gt;
+                                # idtentry debug                  do_debug                has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK&lt;br /&gt;
+                                # idtentry int3                 do_int3                 has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    }
+    early_irq_init = alloc NR_IRQS_LEGACY irq_desc; - 16    #===&amp;gt; [    0.000000] NR_IRQS: 65792, nr_irqs: 1024, preallocated irqs: 16
+    init_IRQ()-&amp;gt;x86_init.irqs.intr_init=native_init_IRQ     #===&amp;gt; external interrupt init; 
+    {
+            pre_vector_init = init_ISA_irqs #===&amp;gt; 1) legacy_pic-&amp;gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.
+            idt_setup_apic_and_irq_gates    #===&amp;gt; apic normal(from 32) and system interrupts; 
+    }
+    softirq_init
+    local_irq_enable
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h3 id=&#34;interrupt-and-exception-stack&#34;&gt;Interrupt and exception stack&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/kernel-stacks&#34;&gt;https://www.kernel.org/doc/Documentation/x86/kernel-stacks&lt;/a&gt;&lt;br /&gt;
+TSS v3a 6.12&lt;br /&gt;
+6.14.4 Stack Switching in IA-32e Mode&lt;/p&gt;
+
+&lt;h4 id=&#34;exception-page-fault&#34;&gt;Exception - page_fault&lt;/h4&gt;
+
+&lt;p&gt;Kernel doesn&amp;rsquo;t change the inherit TSS stack&lt;/p&gt;
+
+&lt;h4 id=&#34;interrupt-irq-entries-start&#34;&gt;interrupt irq_entries_start&lt;/h4&gt;
+
+&lt;p&gt;Kernel change it irq_stack_union in &amp;ldquo;.macro interrupt&amp;rdquo;&lt;br /&gt;
+SWAPGS 要手动切换.&lt;br /&gt;
+ENTER_IRQ_STACK old_rsp=%rdi&lt;br /&gt;
+movq    %rsp, \old_rsp          #==========&amp;gt; old_rsp should be %rdi, check &lt;a href=&#34;https://sourceware.org/binutils/docs/as/Macro.html&#34;&gt;https://sourceware.org/binutils/docs/as/Macro.html&lt;/a&gt;&lt;br /&gt;
+movq    \old_rsp, PER_CPU_VAR(irq_stack_union + IRQ_STACK_SIZE - 8)&lt;br /&gt;
+movq    PER_CPU_VAR(irq_stack_ptr), %rsp&lt;/p&gt;
+
+&lt;h4 id=&#34;ist-exception&#34;&gt;IST exception&lt;/h4&gt;
+
+&lt;p&gt;6.14.5 Interrupt Stack Table&lt;br /&gt;
+Documentation/x86/kernel-stacks&lt;br /&gt;
+Why Debug stack is double page? Spare IST pointer.&lt;/p&gt;
+
+&lt;h3 id=&#34;link-to-process-stack-from-irq-stack&#34;&gt;Link to process stack from irq stack&lt;/h3&gt;
+
+&lt;p&gt;commit a2bbe75089d5eb9a3a46d50dd5c215e213790288&lt;br /&gt;
+x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt;
+       /* Save previous stack value &lt;em&gt;/&lt;br /&gt;
+       movq %rsp, %rsi&lt;br /&gt;
+&amp;hellip;&lt;br /&gt;
+2:     /&lt;/em&gt; Store previous stack value */&lt;br /&gt;
+       pushq %rsi&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/736894/&#34;&gt;Firo: end of EOI; x86/dumpstack: make stack name tags more comprehensible&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;h3 id=&#34;do-nmi-do-int3-debug-stack-usage-inc-debug-idt-descr-debug-idt-table&#34;&gt;do_nmi do_int3 debug_stack_usage_inc, debug_idt_descr, debug_idt_table,&lt;/h3&gt;
+
+&lt;p&gt;load_debug_idt&lt;br /&gt;
+commit 42181186ad4db986fcaa40ca95c6e407e9e79372&lt;br /&gt;
+Author: Steven Rostedt &lt;a href=&#34;mailto:srostedt@redhat.com&#34;&gt;srostedt@redhat.com&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Dec 16 11:43:02 2011 -0500&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;x86: Add counter when debug stack is used with interrupts enabled
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;clear-the-flags-for-pf-through-interrupt-gate&#34;&gt;clear the flags for PF through interrupt gate&lt;/h3&gt;
+
+&lt;p&gt;v3a: 6.12.1 Exception- or Interrupt-Handler Procedures&lt;br /&gt;
+6.12.1.2 Flag Usage By Exception- or Interrupt-Handler Procedure&lt;/p&gt;
+
+&lt;h3 id=&#34;rbx-in-page-fault&#34;&gt;rbx in page_fault?&lt;/h3&gt;
+
+&lt;h3 id=&#34;x86-64-kernel-don-t-use-trap-gate&#34;&gt;x86_64 kernel don&amp;rsquo;t use trap gate?&lt;/h3&gt;
+
+&lt;p&gt;Yes&lt;/p&gt;
+
+&lt;h3 id=&#34;paranoid&#34;&gt;Paranoid?&lt;/h3&gt;
+
+&lt;p&gt;Documentation/x86/entry_64.txt&lt;/p&gt;
 </description>
     </item>
     
@@ -285,11 +648,203 @@ __do_softirq -&amp;gt; __local_bh_disable_ip&lt;/p&gt;
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+
+&lt;h2 id=&#34;preemption&#34;&gt;Preemption&lt;/h2&gt;
+
+&lt;h3 id=&#34;voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259&#34;&gt;&lt;a href=&#34;https://lwn.net/Articles/137259/&#34;&gt;Voluntary Kernel Preemption, 2.6.12-rc4-mm2&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;Voluntary preemption works by adding a cond_resched()&lt;br /&gt;
+(reschedule-if-needed) call to every might_sleep() check. It is lighter&lt;br /&gt;
+than CONFIG_PREEMPT - at the cost of not having as tight latencies. It&lt;br /&gt;
+represents a different latency/complexity/overhead tradeoff.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/questions/5174955/what-is-voluntary-preemption&#34;&gt;voluntary preemption&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/563185/&#34;&gt;Optimizing preemption&lt;/a&gt;&lt;br /&gt;
+commit 41719b03091911028116155deddc5eedf8c45e37&lt;br /&gt;
+Refs: v2.6.29-rc1-226-g41719b030919&lt;br /&gt;
+Author:     Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Jan 14 15:36:26 2009 +0100&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Jan 14 18:09:00 2009 +0100&lt;br /&gt;
+    mutex: preemption fixes&lt;br /&gt;
+    The problem is that dropping the spinlock right before schedule is a voluntary&lt;br /&gt;
+    preemption point and can cause a schedule, right after which we schedule again.&lt;br /&gt;
+    Fix this inefficiency by keeping preemption disabled until we schedule, do this&lt;br /&gt;
+    by explicity disabling preemption and providing a schedule() variant that&lt;br /&gt;
+    assumes preemption is already disabled.&lt;br /&gt;
+Firo: spin_unlock_mutex&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
 &lt;a href=&#34;https://tampub.uta.fi/bitstream/handle/10024/96864/GRADU-1428493916.pdf&#34;&gt;A complete guide to Linux process scheduling&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://helix979.github.io/jkoo/post/os-scheduler/&#34;&gt;JINKYU KOO&amp;rsquo;s Linux kernel scheduler&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html&#34;&gt;TIF_NEED_RESCHED: why is it needed&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;general-runqueues&#34;&gt;General runqueues&lt;/h1&gt;
+
+&lt;p&gt;static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);&lt;br /&gt;
+activate_task - move a task to the runqueue.&lt;br /&gt;
+wake_up_new_task&lt;br /&gt;
+ttwu_do_activate&lt;/p&gt;
+
+&lt;h1 id=&#34;latency&#34;&gt;Latency&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/404993/&#34;&gt;Improving scheduler latency&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;cfs-runqueues&#34;&gt;CFS runqueues&lt;/h1&gt;
+
+&lt;p&gt;cfa_rq&lt;br /&gt;
+on_list&lt;br /&gt;
+sched_entity-&amp;gt;on_rq, check enqueue_entity&lt;/p&gt;
+
+&lt;h2 id=&#34;cfs-runqueue-and-sched-entity&#34;&gt;CFS runqueue and sched entity&lt;/h2&gt;
+
+&lt;p&gt;set_task_rq&lt;/p&gt;
+
+&lt;h2 id=&#34;on-rq&#34;&gt;on_rq&lt;/h2&gt;
+
+&lt;p&gt;on_rq should be same as task-&amp;gt;on_rq. It doesn&amp;rsquo;t mean sched_entity is on cfs_rq, but rq.&lt;br /&gt;
+commit fd2f4419b4cbe8fe90796df9617c355762afd6a4&lt;br /&gt;
+Author: Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Apr 5 17:23:44 2011 +0200&lt;br /&gt;
+    sched: Provide p-&amp;gt;on_rq&lt;br /&gt;
+p-&amp;gt;on_rq on any rq.&lt;br /&gt;
+se-&amp;gt;on_rq on specific rq.&lt;/p&gt;
+
+&lt;h2 id=&#34;cfs-runqueue-and-task-group&#34;&gt;CFS runqueue and task group&lt;/h2&gt;
+
+&lt;p&gt;sched_create_group -&amp;gt; alloc_fair_sched_group -&amp;gt; init_tg_cfs_entry&lt;/p&gt;
+
+&lt;h1 id=&#34;cfs-core-codes&#34;&gt;CFS core codes&lt;/h1&gt;
+
+&lt;p&gt;git log 20b8a59f2461e&lt;/p&gt;
+
+&lt;h1 id=&#34;group-scheduling&#34;&gt;Group scheduling&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;GROUP SCHEDULER EXTENSIONS TO CFS&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.wowotech.net/process_management/449.html&#34;&gt;CFS调度器（3）-组调度&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://oenhan.com/task-group-sched&#34;&gt;Linux进程组调度机制分析&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;two-trees&#34;&gt;Two trees&lt;/h2&gt;
+
+&lt;p&gt;task_group-&amp;gt;parent; task_group-&amp;gt;css.cgroup&lt;br /&gt;
+cgroup-&amp;gt;parent and cgroup_tg: container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id), struct task_group, css);&lt;/p&gt;
+
+&lt;h2 id=&#34;task-group-and-cgroup-is-1-1&#34;&gt;Task group and cgroup is 1:1&lt;/h2&gt;
+
+&lt;h2 id=&#34;system-bootup&#34;&gt;System bootup&lt;/h2&gt;
+
+&lt;p&gt;struct task_group root_task_group; and cpu_cgroup_create;&lt;/p&gt;
+
+&lt;h2 id=&#34;creating-task-group&#34;&gt;Creating task_group&lt;/h2&gt;
+
+&lt;p&gt;sched_create_group&lt;br /&gt;
+task_group 1 : cpu &amp;lsquo;group sched_entity&amp;rsquo;&lt;br /&gt;
+group sched_entity 1 : 1 greoup cfs_rq&lt;br /&gt;
+gse_CPUx&amp;rsquo;s load = grq_CPUx&amp;rsquo;s all se&amp;rsquo;s load * task_group-&amp;gt;shares / grq_CPU&lt;em&gt;&amp;rsquo;s all se&amp;rsquo;s load&lt;br /&gt;
+        /&lt;/em&gt; rq on which this entity is (to be) queued: */&lt;br /&gt;
+        struct cfs_rq           &lt;em&gt;cfs_rq;&lt;br /&gt;
+        /&lt;/em&gt; rq &amp;ldquo;owned&amp;rdquo; by this entity/group: */&lt;br /&gt;
+        struct cfs_rq           *my_q;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/240474/&#34;&gt;CFS group scheduling&lt;/a&gt;&lt;br /&gt;
+commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc&lt;br /&gt;
+Author: Srivatsa Vaddagiri &lt;a href=&#34;mailto:vatsa@linux.vnet.ibm.com&#34;&gt;vatsa@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Oct 15 17:00:07 2007 +0200&lt;br /&gt;
+    sched: group-scheduler core&lt;/p&gt;
+
+&lt;h2 id=&#34;why-double-for-each-sched-entity&#34;&gt;Why double for_each_sched_entity&lt;/h2&gt;
+
+&lt;p&gt;commit 2069dd75c7d0f49355939e5586daf5a9ab216db7&lt;br /&gt;
+Author: Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Nov 15 15:47:00 2010 -0800&lt;br /&gt;
+    sched: Rewrite tg_shares_up)&lt;/p&gt;
+
+&lt;p&gt;371fd7e7a56a5 (Peter Zijlstra       2010-03-24 16:38:48 +0100 1129) enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)&lt;br /&gt;
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1134)     for_each_sched_entity(se) {&lt;br /&gt;
+62fb185130e4d (Peter Zijlstra       2008-02-25 17:34:02 +0100 1135)             if (se-&amp;gt;on_rq)&lt;br /&gt;
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1136)                     break;&lt;br /&gt;
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1137)             cfs_rq = cfs_rq_of(se);&lt;br /&gt;
+88ec22d3edb72 (Peter Zijlstra       2009-12-16 18:04:41 +0100 1138)             enqueue_entity(cfs_rq, se, flags);&lt;br /&gt;
+88ec22d3edb72 (Peter Zijlstra       2009-12-16 18:04:41 +0100 1139)             flags = ENQUEUE_WAKEUP;&lt;br /&gt;
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1140)     }&lt;br /&gt;
+8f4d37ec073c1 (Peter Zijlstra       2008-01-25 21:08:29 +0100 1141)&lt;br /&gt;
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1142)     for_each_sched_entity(se) {&lt;br /&gt;
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1143)             struct cfs_rq *cfs_rq = cfs_rq_of(se);&lt;br /&gt;
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1144)&lt;br /&gt;
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1145)             update_cfs_load(cfs_rq);&lt;br /&gt;
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1146)             update_cfs_shares(cfs_rq);&lt;/p&gt;
+
+&lt;h1 id=&#34;wake-up&#34;&gt;Wake up&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2015/4/19/111&#34;&gt;sched: lockless wake-queues&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=-8c47dHuGIY&#34;&gt;Futex Scaling for Multi-core Systems&lt;/a&gt;&lt;a href=&#34;https://www.slideshare.net/davidlohr/futex-scaling-for-multicore-systems&#34;&gt;Slides&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;program-order-guarantees&#34;&gt;Program-Order guarantees&lt;/h1&gt;
+
+&lt;p&gt;commit 8643cda549ca49a403160892db68504569ac9052&lt;br /&gt;
+Author: Peter Zijlstra &lt;a href=&#34;mailto:peterz@infradead.org&#34;&gt;peterz@infradead.org&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Nov 17 19:01:11 2015 +0100&lt;br /&gt;
+    sched/core, locking: Document Program-Order guarantees&lt;/p&gt;
+
+&lt;h2 id=&#34;lkml-discussions&#34;&gt;LKML discussions&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2015/11/2/311&#34;&gt;scheduler ordering bits&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2015/12/3/323&#34;&gt;scheduler ordering bits -v2&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;pi-lock&#34;&gt;pi_lock&lt;/h2&gt;
+
+&lt;p&gt;commit b29739f902ee76a05493fb7d2303490fc75364f4&lt;br /&gt;
+Author: Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Jun 27 02:54:51 2006 -0700&lt;br /&gt;
+    [PATCH] pi-futex: scheduler support for pi&lt;br /&gt;
+    Add framework to boost/unboost the priority of RT tasks.&lt;/p&gt;
+
+&lt;h1 id=&#34;rq-lock-in-schedule-and-context-switch&#34;&gt;rq-&amp;gt;lock in schedule() and context_switch()&lt;/h1&gt;
+
+&lt;p&gt;commit 3a5f5e488ceee9e08df3dff3f01b12fafc9e7e68&lt;br /&gt;
+Author: Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Jul 14 00:24:27 2006 -0700&lt;br /&gt;
+    [PATCH] lockdep: core, fix rq-lock handling on __ARCH_WANT_UNLOCKED_CTXSW&lt;br /&gt;
++        * Since the runqueue lock will be released by the next&lt;br /&gt;
++        * task&lt;/p&gt;
+
+&lt;h1 id=&#34;etc&#34;&gt;ETC&lt;/h1&gt;
+
+&lt;h2 id=&#34;the-wake-up-lost-problem&#34;&gt;the wake-up lost problem&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.linuxjournal.com/article/8144&#34;&gt;Kernel Korner - Sleeping in the Kernel&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;reordering-issue&#34;&gt;Reordering issue&lt;/h2&gt;
+
+&lt;p&gt;CPU0:Process A&lt;br /&gt;
+while(!done) {&lt;br /&gt;
+        schedule();&lt;br /&gt;
+        set_current_state = *interruptable;&lt;br /&gt;
+}&lt;br /&gt;
+CPU1: Process B&lt;br /&gt;
+done = true;&lt;br /&gt;
+wake_up_process(A);&lt;br /&gt;
+Ordering issue: reorder load of done and store of state;&lt;br /&gt;
+A: load of done&lt;br /&gt;
+B: done = true&lt;br /&gt;
+B: wake up&lt;br /&gt;
+A: set state&lt;br /&gt;
+A: schedule&lt;br /&gt;
+Check bcbd94ff481ec1d7b5c824d90df82d0faafabd35&lt;br /&gt;
+dm crypt: fix a possible hang due to race condition on exit&lt;/p&gt;
+
+&lt;h2 id=&#34;pelt&#34;&gt;PELT&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/531853/&#34;&gt;Per-entity load tracking&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;running-time&#34;&gt;Running time&lt;/h1&gt;
+
+&lt;p&gt;proc_sched_show_task&lt;/p&gt;
 
 &lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
 
@@ -384,7 +939,7 @@ fs/proc/array.c&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;latency&#34;&gt;Latency&lt;/h1&gt;
+&lt;h1 id=&#34;latency-1&#34;&gt;Latency&lt;/h1&gt;
 
 &lt;ol&gt;
 &lt;li&gt;sched_nr_latency= /proc/sys/kernel/sched_latency_ns / /proc/sys/kernel/sched_min_granularity_ns&lt;br /&gt;&lt;/li&gt;
@@ -420,12 +975,8 @@ curr - wakeuped &amp;gt; sysctl_sched_wakeup_granularity;  # pass the wakeup-pre
 &lt;p&gt;update_load&lt;em&gt;avg&lt;br /&gt;
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Load&#34;&gt;https://en.wikipedia.org/wiki/Load&lt;/a&gt;&lt;/em&gt;(computing)&lt;br /&gt;
 Check External links&lt;br /&gt;
-calc_load_fold_active&lt;/p&gt;
-
-&lt;h2 id=&#34;etymology-avenrun&#34;&gt;Etymology - avenrun&lt;/h2&gt;
-
-&lt;p&gt;average nr. of running processes during&lt;br /&gt;
-&lt;a href=&#34;https://casper.berkeley.edu/svn/trunk/roach/sw/linux/arch/s390/appldata/appldata_os.c&#34;&gt;https://casper.berkeley.edu/svn/trunk/roach/sw/linux/arch/s390/appldata/appldata_os.c&lt;/a&gt;&lt;/p&gt;
+calc_load_fold_active&lt;br /&gt;
+Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
 
@@ -440,9 +991,6 @@ t1 t2&lt;br /&gt;
 root.nr_running := 2&lt;br /&gt;
 root.h_nr_running := 2&lt;br /&gt;
 Check enqueue_task_fair()&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;group schedule&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;idle&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt&lt;/a&gt;&lt;br /&gt;
@@ -494,7 +1042,7 @@ sched/fair: Fix fairness issue on migration&lt;br /&gt;
 30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;br /&gt;
 curr was not kept in rb-tree&lt;/p&gt;
 
-&lt;h1 id=&#34;sd&#34;&gt;SD&lt;/h1&gt;
+&lt;h1 id=&#34;load-balancing&#34;&gt;Load balancing&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/80911/&#34;&gt;Scheduling domains&lt;/a&gt;&lt;br /&gt;
 set sd&lt;br /&gt;
@@ -530,16 +1078,107 @@ static struct sched_domain_topology_level default_topology[] = {&lt;br /&gt;
 #endif&lt;br /&gt;
         { sd_init_CPU, cpu_cpu_mask, },&lt;br /&gt;
         { NULL, },&lt;br /&gt;
-};&lt;br /&gt;
-CONFIG_CPUSETS=y&lt;br /&gt;
-get sd&lt;br /&gt;
-idle_balance&lt;br /&gt;
-for_each_domain&lt;/p&gt;
+};&lt;/p&gt;
 
-&lt;p&gt;panic&lt;br /&gt;
-find_busiest_group&lt;br /&gt;
-find_next_bit&lt;br /&gt;
-__next_cpu&lt;/p&gt;
+&lt;h2 id=&#34;leaf-cfs-runqueues-leaf-cfs-rq&#34;&gt;Leaf CFS runqueues leaf_cfs_rq&lt;/h2&gt;
+
+&lt;h3 id=&#34;first&#34;&gt;First&lt;/h3&gt;
+
+&lt;p&gt;commit 6aa645ea5f7a246702e07f29edc7075d487ae4a3&lt;br /&gt;
+Refs: v2.6.22-14-g6aa645ea5f7a&lt;br /&gt;
+Author:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+CommitDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
+    sched: cfs rq data types&lt;br /&gt;
+ * leaf cfs_rqs are those that hold tasks (lowest schedulable entity in&lt;br /&gt;
+ * a hierarchy). Non-leaf lrqs hold other higher schedulable entities&lt;br /&gt;
+ * (like users, containers etc.)&lt;br /&gt;
+ * leaf_cfs_rq_list ties together list of leaf cfs_rq&amp;rsquo;s in a cpu. This&lt;br /&gt;
+ * list is used during load balance.&lt;br /&gt;
+Head of list: rq-&amp;gt;leaf_cfs_rq_list&lt;/p&gt;
+
+&lt;h3 id=&#34;core-load-balance-fair&#34;&gt;Core load_balance_fair&lt;/h3&gt;
+
+&lt;p&gt;commit bf0f6f24a1ece8988b243aefe84ee613099a9245&lt;br /&gt;
+Refs: v2.6.22-10-gbf0f6f24a1ec&lt;br /&gt;
+Author:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+CommitDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
+    sched: cfs core, kernel/sched_fair.c&lt;br /&gt;
+    add kernel/sched_fair.c - which implements the bulk of CFS&amp;rsquo;s&lt;br /&gt;
+    behavioral changes for SCHED_OTHER tasks.&lt;br /&gt;
++load_balance_fair(struct rq *this_rq, int this_cpu, struct rq *busiest,&lt;br /&gt;
++       for_each_leaf_cfs_rq(busiest, busy_cfs_rq) {&lt;/p&gt;
+
+&lt;h3 id=&#34;make-parent-appear-after-us&#34;&gt;make parent appear after us.&lt;/h3&gt;
+
+&lt;p&gt;commit 67e86250f8ea7b8f7da53ac25ea73c6bd71f5cd9&lt;br /&gt;
+Author: Paul Turner &lt;a href=&#34;mailto:pjt@google.com&#34;&gt;pjt@google.com&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Nov 15 15:47:05 2010 -0800&lt;br /&gt;
+    sched: Introduce hierarchal order on shares update list&lt;br /&gt;
+    Avoid duplicate shares update calls by ensuring children always appear before                 # leaf&amp;rsquo;s meaning is changed&lt;br /&gt;
+    parents in rq-&amp;gt;leaf_cfs_rq_list.&lt;br /&gt;
+    This allows us to do a single in-order traversal for update_shares().&lt;br /&gt;
+    Since we always enqueue in bottom-up order this reduces to 2 cases:&lt;br /&gt;
+    1) Our parent is already in the list, e.g.&lt;br /&gt;
+       root&lt;br /&gt;
+         &lt;br /&gt;
+          b&lt;br /&gt;
+          /&lt;br /&gt;
+          c d* (root-&amp;gt;b-&amp;gt;c already enqueued)&lt;br /&gt;
+    Since d&amp;rsquo;s parent is enqueued we push it to the head of the list, implicitly ahead of b.&lt;br /&gt;
+    2) Our parent does not appear in the list (or we have no parent)&lt;br /&gt;
+    In this case we enqueue to the tail of the list, if our parent is subsequently enqueued&lt;br /&gt;
+    (bottom-up) it will appear to our right by the same rule.&lt;/p&gt;
+
+&lt;h3 id=&#34;tmp-alone-branch&#34;&gt;tmp_alone_branch&lt;/h3&gt;
+
+&lt;p&gt;commit 9c2791f936ef5fd04a118b5c284f2c9a95f4a647&lt;br /&gt;
+Refs: v4.9-rc5-195-g9c2791f936ef&lt;br /&gt;
+Author:     Vincent Guittot &lt;a href=&#34;mailto:vincent.guittot@linaro.org&#34;&gt;vincent.guittot@linaro.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Nov 8 10:53:43 2016 +0100&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@kernel.org&#34;&gt;mingo@kernel.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Nov 16 10:29:08 2016 +0100&lt;br /&gt;
+    sched/fair: Fix hierarchical order in rq-&amp;gt;leaf_cfs_rq_list&lt;br /&gt;
+    Fix the insertion of cfs_rq in rq-&amp;gt;leaf_cfs_rq_list to ensure that a&lt;br /&gt;
+    child will always be called before its parent.&lt;br /&gt;
+    The hierarchical order in shares update list has been introduced by&lt;br /&gt;
+    commit:&lt;br /&gt;
+      67e86250f8ea (&amp;ldquo;sched: Introduce hierarchal order on shares update list&amp;rdquo;)&lt;/p&gt;
+
+&lt;p&gt;commit 5d299eabea5a251fbf66e8277704b874bbba92dc&lt;br /&gt;
+Author: Peter Zijlstra &lt;a href=&#34;mailto:peterz@infradead.org&#34;&gt;peterz@infradead.org&lt;/a&gt;&lt;br /&gt;
+Date:   Wed Jan 30 14:41:04 2019 +0100&lt;br /&gt;
+    sched/fair: Add tmp_alone_branch assertion&lt;br /&gt;
+    The magic in list_add_leaf_cfs_rq() requires that at the end of&lt;br /&gt;
+    enqueue_task_fair():&lt;br /&gt;
+      rq-&amp;gt;tmp_alone_branch == &amp;amp;rq-&amp;gt;lead_cfs_rq_list&lt;/p&gt;
+
+&lt;h3 id=&#34;load-balance-fair-removed&#34;&gt;load_balance_fair - removed&lt;/h3&gt;
+
+&lt;p&gt;commit 9763b67fb9f3050c6da739105888327587c30c4d&lt;br /&gt;
+Refs: v3.0-rc7-197-g9763b67fb9f3&lt;br /&gt;
+Author:     Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Jul 13 13:09:25 2011 +0200&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+CommitDate: Thu Jul 21 18:01:46 2011 +0200&lt;br /&gt;
+    sched, cgroup: Optimize load_balance_fair()&lt;br /&gt;
+    Use for_each_leaf_cfs_rq() instead of list_for_each_entry_rcu(), this&lt;br /&gt;
+    achieves that load_balance_fair() only iterates those task_groups that&lt;br /&gt;
+    actually have tasks on busiest, and that we iterate bottom-up, trying to&lt;br /&gt;
+    move light groups before the heavier ones.&lt;/p&gt;
+
+&lt;h1 id=&#34;throttling-entities&#34;&gt;Throttling entities&lt;/h1&gt;
+
+&lt;p&gt;commit 85dac906bec3bb41bfaa7ccaa65c4706de5cfdf8&lt;br /&gt;
+Author: Paul Turner &lt;a href=&#34;mailto:pjt@google.com&#34;&gt;pjt@google.com&lt;/a&gt;&lt;br /&gt;
+Date:   Thu Jul 21 09:43:33 2011 -0700&lt;br /&gt;
+    sched: Add support for throttling group entities&lt;br /&gt;
+    Now that consumption is tracked (via update_curr()) we add support to throttle&lt;br /&gt;
+    group entities (and their corresponding cfs_rqs) in the case where this is no&lt;br /&gt;
+    run-time remaining.&lt;/p&gt;
 </description>
     </item>
     
@@ -551,96 +1190,72 @@ __next_cpu&lt;/p&gt;
       <guid>http://firoyang.org/cs/boot/</guid>
       <description>
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;Documentation/x86/boot.txt&lt;br /&gt;
-&lt;a href=&#34;http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/&#34;&gt;Introducing initramfs, a new model for initial RAM disks&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://duartes.org/gustavo/blog/post/kernel-boot-process/&#34;&gt;The Kernel Boot Process&lt;/a&gt;&lt;/p&gt;
-
 &lt;h1 id=&#34;kernel-boot-process&#34;&gt;kernel boot process&lt;/h1&gt;
 
-&lt;p&gt;arch/x86/boot/header.S::start_of_setup&lt;br /&gt;
+&lt;p&gt;Documentation/x86/boot.txt&lt;br /&gt;
+&lt;a href=&#34;https://manybutfinite.com/post/kernel-boot-process/&#34;&gt;The Kernel Boot Process&lt;/a&gt;&lt;br /&gt;
+arch/x86/boot/header.S::start_of_setup&lt;br /&gt;
 arch/x86/boot/main.c::main()&lt;br /&gt;
     arch/x86/boot/memory.c::detect_memory()&lt;br /&gt;
     arch/x86/boot/memory.c::detect_memory_e820() = boot_params.e820_entries&lt;br /&gt;
-    &amp;hellip;&lt;br /&gt;
     arch/x86/boot/pm.c::go_to_protected_mode()&lt;br /&gt;
 arch/x86/boot/pmjump.S::protected_mode_jump&lt;br /&gt;
 arch/x86/kernel/compressed/head_64.S::startup_32&lt;br /&gt;
 arch/x86/kernel/compressed/head_64.S::startup_64&lt;br /&gt;
 arch/x86/kernel/head_64.S::startup_64&lt;br /&gt;
-kernel/main.c::start_kernel()&lt;br /&gt;
-    &amp;hellip;&lt;br /&gt;
-    arch/x86/kernel/setup_64.c::setup_arch()&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        arch/x86/kernel/setup_64.c::memory_setup()&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::machine_specific_memory_setup()&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::sanitize_e820_map(boot_params.e820_map, &amp;amp;boot_params.e820_entries)&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::finish_e820_parsing()&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::e820_register_active_regions()&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        arch/x86/kernel/acpi/boot.c::acpi_boot_table_init()&lt;br /&gt;
-        arch/x86/kernel/pci-dma.c::dma32_reserve_bootmem()&lt;br /&gt;
-        arch/x86/kernel/acpi/sleep.c::acpi_reserve_bootmem()&lt;br /&gt;
-        arch/x86/kernel/efi_64.c::efi_reserve_bootmem()&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        arch/x86/kernel/acpi/boot.c::acpi_boot_init()&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::e820_reserve_resources()&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::e820_mark_nosave_regions()&lt;br /&gt;
-        arch/x86/kernel/e820_64.c::e820_setup_gap()&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-    }&lt;br /&gt;
-    drivers/acpi/bus.c::acpi_early_init()&lt;br /&gt;
-    kernel/main.c::rest_init()&lt;br /&gt;
-        arch/x86/kernel/process_32.c::kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);&lt;br /&gt;
-}&lt;br /&gt;
-kernel/main.c::kernel_init()&lt;br /&gt;
- &amp;hellip;&lt;br /&gt;
- do_basic_setup()&lt;br /&gt;
-  &amp;hellip;&lt;br /&gt;
-  drivers/base/init.c::driver_init()&lt;br /&gt;
-  &amp;hellip;&lt;br /&gt;
-  init/main.c::do_initcalls()&lt;br /&gt;
- }&lt;br /&gt;
- &amp;hellip;&lt;br /&gt;
- init/main.c::init_post()&lt;br /&gt;
-}&lt;/p&gt;
+kernel/main.c::start_kernel()&lt;/p&gt;
 
-&lt;h1 id=&#34;reloctaion-for-decompress&#34;&gt;Reloctaion for decompress&lt;/h1&gt;
+&lt;h2 id=&#34;reloctaion-for-decompress&#34;&gt;Reloctaion for decompress&lt;/h2&gt;
 
 &lt;p&gt;974f221c84b05b1dc2f5ea50dc16d2a9d1e95eda&lt;br /&gt;
 x86/boot: Move compressed kernel to the end of the decompression buffer&lt;/p&gt;
 
-&lt;h1 id=&#34;realmode&#34;&gt;Realmode&lt;/h1&gt;
-
-&lt;p&gt;The first 640KB RAM&lt;br /&gt;
-cat /proc/iomem&lt;br /&gt;
-00000000-00000fff : reserved&lt;br /&gt;
-00001000-000913ff : System RAM&lt;br /&gt;
-00091400-0009ffff : reserved&lt;br /&gt;
-000a0000-000bffff : PCI Bus 0000:00&lt;br /&gt;
-000c0000-000cfdff : Video ROM&lt;br /&gt;
-000d0000-000d99ff : Adapter ROM&lt;br /&gt;
-000da000-000dafff : Adapter ROM&lt;br /&gt;
-000e0000-000fffff : reserved&lt;br /&gt;
-  000f0000-000fffff : System ROM&lt;br /&gt;
-00100000-bcb01fff : System RAM   # 1MB; Bootloader uses real_to_prot and prot_to_real to load the kernel image to this place.&lt;br /&gt;
-  01000000-0183d36c : Kernel code # That&amp;rsquo;s why the kernel was called big kernel.&lt;br /&gt;
-  0183d36d-01f42d3f : Kernel data&lt;br /&gt;
-  020c1000-02209fff : Kernel bss&lt;/p&gt;
-
-&lt;h1 id=&#34;horrable-commit-description-on-phys-base&#34;&gt;Horrable commit description on phys_base&lt;/h1&gt;
+&lt;h2 id=&#34;horrable-commit-description-on-phys-base&#34;&gt;Horrable commit description on phys_base&lt;/h2&gt;
 
 &lt;p&gt;commit 1ab60e0f72f71ec54831e525a3e1154f1c092408&lt;br /&gt;
 Author: Vivek Goyal &lt;a href=&#34;mailto:vgoyal@in.ibm.com&#34;&gt;vgoyal@in.ibm.com&lt;/a&gt;&lt;br /&gt;
-Date:   Wed May 2 19:27:07 2007 +0200&lt;/p&gt;
+Date:   Wed May 2 19:27:07 2007 +0200&lt;br /&gt;
+    [PATCH] x86-64: Relocatable Kernel Support&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;[PATCH] x86-64: Relocatable Kernel Support
-&lt;/code&gt;&lt;/pre&gt;
+&lt;h1 id=&#34;smp-boot&#34;&gt;SMP boot&lt;/h1&gt;
+
+&lt;p&gt;Check SDM v3 BSP and AP Processors&lt;br /&gt;
+BSP - boot strap processor； AP - application processor&lt;/p&gt;
+
+&lt;h2 id=&#34;core-commit&#34;&gt;Core commit&lt;/h2&gt;
+
+&lt;p&gt;setup_real_mode-&amp;gt; trampoline_header-&amp;gt;start = (u64) secondary_startup_64;&lt;br /&gt;
+commit f37240f16bec91f15ce564515f70a6ca9715ce96&lt;br /&gt;
+Author: Jarkko Sakkinen &lt;a href=&#34;mailto:jarkko.sakkinen@intel.com&#34;&gt;jarkko.sakkinen@intel.com&lt;/a&gt;&lt;br /&gt;
+Date:   Tue May 8 21:22:43 2012 +0300&lt;br /&gt;
+    x86, realmode: header for trampoline code&lt;/p&gt;
+
+&lt;h2 id=&#34;bsp&#34;&gt;BSP&lt;/h2&gt;
+
+&lt;h3 id=&#34;build-time-for-real-mode-header-in-arch-x86-realmode-rm-header-s&#34;&gt;Build time for real_mode_header in arch/x86/realmode/rm/header.S&lt;/h3&gt;
+
+&lt;p&gt;In pasyms.h, git gud!&lt;br /&gt;
+pa_trampoline_header = trampoline_header;&lt;br /&gt;
+pa_trampoline_start = trampoline_start;&lt;br /&gt;
+pa_startup_32 = startup_32;&lt;br /&gt;
+pa_startup_64 = startup_64;&lt;/p&gt;
+
+&lt;h3 id=&#34;early-init&#34;&gt;Early init&lt;/h3&gt;
+
+&lt;p&gt;setup_real_mode-&amp;gt; trampoline_header-&amp;gt;start = (u64) secondary_startup_64;  # tr_start&lt;/p&gt;
+
+&lt;h3 id=&#34;start-kernel&#34;&gt;start_kernel&lt;/h3&gt;
+
+&lt;p&gt;kernel_init-&amp;gt;smp_init-&amp;gt;cpu_up-&amp;gt;do_cpu_up-&amp;gt;_cpu_up-&amp;gt;&lt;br /&gt;
+ap hp threadfn -&amp;gt; bringup_cpu -&amp;gt; __cpu_up -&amp;gt; smp_ops.cpu_up(cpu, tidle) is native_cpu_up&lt;br /&gt;
+        do_boot_cpu is the core function. It set up the code for APs to run and check cpu_callin_mask.&lt;br /&gt;
+        start_eip = real_mode_header-&amp;gt;trampoline_start;&lt;br /&gt;
+        initial_code = (unsigned long)start_secondary                   # initial_code&lt;/p&gt;
+
+&lt;h2 id=&#34;ap&#34;&gt;AP&lt;/h2&gt;
+
+&lt;p&gt;trampoline_start -&amp;gt; &amp;hellip; -&amp;gt; startup_64 -&amp;gt; tr_start(%rip) is secondary_startup_64 -&amp;gt; initial_code(%rip) is start_secondary&lt;br /&gt;
+-&amp;gt; cpu_init&lt;/p&gt;
 
 &lt;h1 id=&#34;normalize-cs&#34;&gt;Normalize %cs&lt;/h1&gt;
 
@@ -660,105 +1275,6 @@ Date:   Wed May 2 19:27:07 2007 +0200&lt;/p&gt;
 
 &lt;p&gt;[Why enable A20 line in Protected Mode?][&lt;a href=&#34;https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode&#34;&gt;https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode&lt;/a&gt;]&lt;br /&gt;
 This gate, (the A20 gate), is controlled by a GPIO pin on the keyboard controller IC. Thus, you need to enable it before going into protected mode. If you didn&amp;rsquo;t, (and say you flat-mapped all 4GB of physical memory), then as Micheal Petch indicated, &amp;ldquo;every odd numbered megabyte region will be inaccessible. So 1mb-2mb will actually reference 0-1mb, 3mb-4mb will reference 2mb-3mb etc.&amp;rdquo; See also:&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;What basic initializations should be perfomed when power on?&lt;br /&gt;
-How do we load the kernel to memory?&lt;br /&gt;
-What does kernel do when kernel boot.&lt;br /&gt;
-MBR vs BIOS?&lt;br /&gt;
-PC vs embedded&lt;br /&gt;
-Kernel init&lt;br /&gt;
-before start_kernel&lt;br /&gt;
-start_kernel&lt;br /&gt;
-reset_init &amp;amp; kernel_init&lt;/p&gt;
-
-&lt;h1 id=&#34;boot-and-init&#34;&gt;Boot and init&lt;/h1&gt;
-
-&lt;p&gt;Power button -&amp;gt; cpu reset -&amp;gt; BIOS -&amp;gt; hard drive -&amp;gt; Grub boot.S/MBR aa5a -&amp;gt; Grub diskboot.S -&amp;gt; &amp;hellip; -&amp;gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S&lt;br /&gt;
-Aligh register, Stack and BSS for C function to run. -&amp;gt; main-&amp;gt;startup_32-&amp;gt;startup_64-&amp;gt; __START_KERNEL_map-&amp;gt;&amp;hellip; start_kernel&lt;br /&gt;
-&lt;a href=&#34;https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130&#34;&gt;Kernel legacy boot sector&lt;/a&gt; start form 4d5a of arch/x86/boot/header.S&lt;br /&gt;
-is only used by something link &amp;lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&amp;rsquo;. It&amp;rsquo;s obsoleted that is what legacy means.&lt;/p&gt;
-
-&lt;h1 id=&#34;p4080-board&#34;&gt;p4080 Board&lt;/h1&gt;
-
-&lt;p&gt;PBL&lt;br /&gt;
-1. initialize I2C, SPI, eLBC, eSDHC.&lt;br /&gt;
-2. Load RCW and boot init commands from above.&lt;br /&gt;
-3. write date to conf register and memory&lt;/p&gt;
-
-&lt;h1 id=&#34;config&#34;&gt;config&lt;/h1&gt;
-
-&lt;p&gt;CCSRBAR -&amp;gt; CCSR&lt;br /&gt;
-default is 0x0_FE00_0000&lt;br /&gt;
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).&lt;br /&gt;
-CCSRBAR always points to itself.&lt;br /&gt;
-holdoff&lt;/p&gt;
-
-&lt;h1 id=&#34;u-boot&#34;&gt;u-boot&lt;/h1&gt;
-
-&lt;p&gt;ft_fixup_cpu -&amp;gt; determine_mp_bootpg(NULL) &amp;amp; fdt_add_mem_rsv&lt;/p&gt;
-
-&lt;p&gt;main_loop-&amp;gt; &amp;hellip;-&amp;gt;./common/bootm_os.c:410:&amp;hellip; do_bootm_states-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-bootm_find_other-&amp;gt;bootm_find_ramdisk_fdt-&amp;gt;bootm_find_fdt-&amp;gt;boot_get_fdt&amp;amp;set_working_fdt_addr(0x0200000)-&amp;gt;IMAGE_FORMAT_FIT-&amp;gt;&lt;br /&gt;
-&amp;amp;&lt;br /&gt;
-boot_fn = bootm_os_get_boot_func(images-&amp;gt;os.os)=[IH_OS_LINUX] =&lt;br /&gt;
-&amp;amp;&lt;br /&gt;
-boot_selected_os-&amp;gt;boot_fn=do_bootm_linux-&amp;gt;boot_body_linux-&amp;gt;image_setup_linux-&amp;gt;image_setup_libfdt-&amp;gt;&lt;br /&gt;
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&amp;gt; ft_cpu_setup-&amp;gt;&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;ppc-multicore-booting&#34;&gt;PPC multicore booting&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;There are two possibilites to make secondary cores booting failed.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;There is a bug in the code executed by Secondary cores&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;CCSRBAR&lt;br /&gt;
-MPC86xx_MCM_OFFSET&lt;br /&gt;
-srio_boot_master_release_slave&lt;/p&gt;
-
-&lt;p&gt;uboot-&amp;gt;&lt;br /&gt;
-set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.&lt;/p&gt;
-
-&lt;p&gt;core0 run, 2nd cores holdoff&lt;br /&gt;
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp&lt;br /&gt;
-core0 -&amp;gt; arch/powerpc/cpu/mpc85xx/start.S-&amp;gt;_start_e500&lt;br /&gt;
-board_init_r-&amp;gt;cpu_init_r-&amp;gt; setup_mp-&amp;gt; {&lt;br /&gt;
-&lt;strong&gt;bootpg_addr = (u32)virt_to_phys(&amp;amp;&lt;/strong&gt;second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page&lt;br /&gt;
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page&lt;br /&gt;
-bootpg = BPTR = __secondary_start_page&lt;br /&gt;
-plat_mp_up-&amp;gt;kick BRR &amp;amp; Boot Space Translation&lt;br /&gt;
-}&lt;br /&gt;
-2nd cores holdoff -&amp;gt; &lt;strong&gt;secondary_start_page&lt;br /&gt;
-kernel-&amp;gt;&lt;br /&gt;
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&amp;rsquo;s spin table by writing  the spin table field with the desired address&lt;br /&gt;
-2nd cores ePAPR-&amp;gt;spintable-&amp;gt;addr_l=&lt;/strong&gt;early_start-&amp;gt;__secondary_start-&amp;gt;smp_ops-&amp;gt;setup_cpu-&amp;gt;cpu_idle&lt;br /&gt;
-arch/powerpc/kernel/head_fsl_booke.S&lt;br /&gt;
-U-boot logs:&lt;br /&gt;
-Reserving MP boot page to 7ffff000^M^M - &amp;ndash;   -   MP spin table&lt;br /&gt;
-address.&lt;br /&gt;
-SPAG : fdt_fixup_fman_firmware, 567^M^M&lt;br /&gt;
-^M^M&lt;br /&gt;
-..r.^M^M&lt;br /&gt;
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M&lt;br /&gt;
-VDBG: Secondary cores are not held in reset.^M^M&lt;br /&gt;
-Kernel Logs:&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 1 (rc -2)^M^M&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 2 (rc -2)^M^M&lt;br /&gt;
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M&lt;br /&gt;
-smp: failed starting cpu 3 (rc -2)^M^M&lt;br /&gt;
-Brought up 1 CPUs^M^M&lt;br /&gt;
-devtmpfs: initialized^M^M&lt;/p&gt;
-
-&lt;p&gt;Note that u-boot can&amp;rsquo;t detect  memory above 2G and we need to check&lt;br /&gt;
-if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
 </description>
     </item>
     
@@ -770,18 +1286,8 @@ if kernel is accessing at high mem of 2G or 4G.&lt;/p&gt;
       <guid>http://firoyang.org/cs/arch/</guid>
       <description>
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/architects.html&#34;&gt;https://people.cs.clemson.edu/~mark/architects.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;asm&#34;&gt;ASM&lt;/h1&gt;
-
-&lt;p&gt;Reference asm global label in C&lt;br /&gt;
-char _text[];           x86_64_64;&lt;br /&gt;
-unsigned long _text;    x86_64_PC32&lt;br /&gt;
-They are different in amrithmatic operstion.&lt;/p&gt;
-
 &lt;p&gt;##Reference&lt;br /&gt;
+&lt;a href=&#34;https://people.cs.clemson.edu/~mark/architects.html&#34;&gt;https://people.cs.clemson.edu/~mark/architects.html&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;br /&gt;
 A Symbolic Analysis of Relay and Switching Circuits&lt;br /&gt;
@@ -798,6 +1304,11 @@ See MIPS run&lt;br /&gt;
 Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide&lt;br /&gt;
 Microelectronics&lt;/p&gt;
 
+&lt;h1 id=&#34;definition&#34;&gt;Definition&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Architectural_state&#34;&gt;Architectural state&lt;/a&gt;&lt;br /&gt;
+microarchitectural state, such as information stored in TLBs and caches&lt;/p&gt;
+
 &lt;h2 id=&#34;isa&#34;&gt;ISA&lt;/h2&gt;
 
 &lt;p&gt;model: 1570s, &amp;ldquo;likeness made to scale; architect&amp;rsquo;s set of designs,&amp;rdquo; from Middle French modelle&lt;br /&gt;
@@ -805,22 +1316,7 @@ Semantics in computer science: In programming language theory, semantics is the 
 with the rigorous mathematical study of the meaning of programming languages.&lt;br /&gt;
 Language primitive&lt;br /&gt;
 ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;br /&gt;
-#x86 Interrupt&lt;br /&gt;
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
-##Hardware interrupts&lt;br /&gt;
-are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
-asynchronus&lt;br /&gt;
-more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
-##software interrupt&lt;br /&gt;
-synchronus&lt;br /&gt;
-more details in trap_init().&lt;br /&gt;
-* exception or trap&lt;br /&gt;
-is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
-divide zero painc?&lt;br /&gt;
-* special instruction, for example INT 0x80&lt;br /&gt;
-or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;/p&gt;
 
 &lt;h1 id=&#34;i-o-ic&#34;&gt;I/O IC&lt;/h1&gt;
 
@@ -829,7 +1325,8 @@ parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
 
 &lt;h1 id=&#34;data-struct-aligment&#34;&gt;Data struct aligment&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&#34;&gt;A bug story: data alignment on x86&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.catb.org/esr/structure-packing/&#34;&gt;The Lost Art of C Structure Packing&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86&#34;&gt;Typical alignment of C structs on x86&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;为什么需要结构体对齐&#34;&gt;为什么需要结构体对齐?&lt;/h2&gt;
@@ -885,34 +1382,20 @@ which increases the system&amp;rsquo;s performance due to the way the CPU handle
 填上所有空.&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h1 id=&#34;endianess&#34;&gt;Endianess&lt;/h1&gt;
+&lt;h1 id=&#34;endianess-and-bitfield&#34;&gt;Endianess and bitfield&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html&#34;&gt;Endianness: Big and Little Endian Byte Order&lt;/a&gt;&lt;br /&gt;
-应该说bit endianess 实际存储只有MSB &amp;hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.&lt;br /&gt;
-这篇文章&lt;a href=&#34;http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/&#34;&gt;再谈C语言位域&lt;/a&gt;,&lt;br /&gt;
-之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Structures-unions-enumerations-and-bit-fields-implementation.html&#34;&gt;The order of allocation of bit-fields within a unit&lt;/a&gt;&lt;br /&gt;
+It&amp;rsquo;s Determined by ABI not Gcc. Check comments on &lt;a href=&#34;https://stackoverflow.com/questions/47600584/bitfield-endianness-in-gcc&#34;&gt;Bitfield endianness in gcc&lt;/a&gt;&lt;/p&gt;
 
-&lt;h2 id=&#34;bit-endianness-https-en-wikipedia-org-wiki-bit-numbering&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Bit_numbering&#34;&gt;bit endianness&lt;/a&gt;&lt;/h2&gt;
+&lt;h2 id=&#34;how-endianness-effects-bitfield-packing-http-mjfrazer-org-mjfrazer-bitfields&#34;&gt;&lt;a href=&#34;http://mjfrazer.org/mjfrazer/bitfields/&#34;&gt;How Endianness Effects Bitfield Packing&lt;/a&gt;&lt;/h2&gt;
 
-&lt;p&gt;这样就可以更好的理解iphdr:&lt;br /&gt;
-#if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
-    &lt;strong&gt;u8    ihl:4,&lt;br /&gt;
-        version:4;&lt;br /&gt;
-#elif defined (&lt;/strong&gt;BIG_ENDIAN_BITFIELD)&lt;br /&gt;
-    __u8    version:4,&lt;br /&gt;
-        ihl:4;&lt;br /&gt;
-#else&lt;br /&gt;
-#error  &amp;ldquo;Please fix &lt;asm/byteorder.h&gt;&amp;ldquo;&lt;br /&gt;
-#endif&lt;br /&gt;
-ipv4 header的拓扑&lt;br /&gt;
-version ihl&lt;br /&gt;
-0100 0101&lt;br /&gt;
-因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl&lt;br /&gt;
-而be的cpu是 msb first, 从最右开始所以version开头.&lt;br /&gt;
-而使用unsigned char ver_ihl&lt;br /&gt;
-(ver_ihl &amp;amp; 0xf0)&amp;gt;&amp;gt; 4 = version&lt;br /&gt;
-ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
-是无关cpu读取顺序的.&lt;/p&gt;
+&lt;p&gt;if defined(__LITTLE_ENDIAN_BITFIELD)&lt;br /&gt;
+    __u8    ihl:4,&lt;br /&gt;
+        version:4;  # MSB, check wikipeida ipv4 header&lt;/p&gt;
+
+&lt;h2 id=&#34;gcc-bug-on-bitfield&#34;&gt;GCC bug on bitfield&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/478657/&#34;&gt;Betrayed by a bitfield&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -929,6 +1412,10 @@ ver_ihl &amp;amp; 0x0f = ihl&lt;br /&gt;
 &lt;p&gt;&lt;a href=&#34;http://cstheory.stackexchange.com/questions/19759/core-algorithms-deployed#&#34;&gt;Core algorithms deployed&lt;/a&gt;&lt;br /&gt;
 Algorithms: Design Techniques and Analysis&lt;br /&gt;
 The Algorithm Design Manual 2nd Edition&lt;/p&gt;
+
+&lt;h1 id=&#34;bitmap&#34;&gt;Bitmap&lt;/h1&gt;
+
+&lt;p&gt;Long array&lt;/p&gt;
 
 &lt;h1 id=&#34;computational-complexity-theory&#34;&gt;Computational complexity theory&lt;/h1&gt;
 
@@ -1020,11 +1507,6 @@ postfix and prefix and sort&lt;/p&gt;
 
 &lt;p&gt;DAG&lt;/p&gt;
 
-&lt;h1 id=&#34;redblack-tree&#34;&gt;Redblack tree&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&#34;&gt;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://yuex.in/post/2017/08/red-black-tree-in-action.html&#34;&gt;http://yuex.in/post/2017/08/red-black-tree-in-action.html&lt;/a&gt;&lt;/p&gt;
-
 &lt;h1 id=&#34;interval-tree-in-kernel&#34;&gt;Interval tree in kernel&lt;/h1&gt;
 
 &lt;p&gt;anonymous page: anon_vma_interval_tree_insert&lt;/p&gt;
@@ -1092,6 +1574,8 @@ type: Reclaim&lt;/p&gt;
 &lt;h1 id=&#34;lock&#34;&gt;Lock&lt;/h1&gt;
 
 &lt;p&gt;MCS lock&lt;/p&gt;
+
+&lt;h1 id=&#34;ring-buffer-or-circular-buffer&#34;&gt;Ring buffer or Circular buffer&lt;/h1&gt;
 </description>
     </item>
     
@@ -1103,8 +1587,59 @@ type: Reclaim&lt;/p&gt;
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
 
-&lt;p&gt;What&amp;rsquo;s the computer science? Have you ever asked yourself? It&amp;rsquo;s not a science!&lt;br /&gt;
-Underlying our approach to this subject is our conviction that “com-&lt;br /&gt;
+&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.chilton-computing.org.uk/acl/technology/atlas/overview.htm&#34;&gt;Atlas&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;unix&#34;&gt;Unix&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://users.soe.ucsc.edu/~sbrandt/221/Papers/History/thompson-bstj78.pdf&#34;&gt;Ken Thompson UNIX Implementation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.grinnell.edu/~curtsinger/teaching/2019S/CSC213/files/unix_evolution.pdf&#34;&gt;The Evolution of the UNIX Time-sharing System&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.oreilly.com/openbook/opensources/book/kirkmck.html&#34;&gt;Twenty Years of Berkeley Unix From AT&amp;amp;T-Owned to Freely Redistributable&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://people.eecs.berkeley.edu/~brewer/cs262/unix.pdf&#34;&gt;The UNIX TimeSharing System Dennis M. Ritchie and Ken Thompson Bell Laboratories&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.bell-labs.com/usr/dmr/www/retro.pdf&#34;&gt;The UNIX Time-sharing SystemA Retrospective&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&#34;&gt;SunOS 1.0 - 4.1.2&lt;/a&gt;&lt;br /&gt;
+Life with Unix&lt;br /&gt;
+&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.107.9119&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Design and Implementation of the Berkeley Virtual Memory Extensions to the UNIX† Operating System‡&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
+
+&lt;p&gt;Concurrency&lt;br /&gt;
+VM&lt;br /&gt;
+IO&lt;br /&gt;
+Memory hierarchy&lt;br /&gt;
+Latency&lt;br /&gt;
+Scalibity&lt;/p&gt;
+
+&lt;h1 id=&#34;etc&#34;&gt;etc&lt;/h1&gt;
+
+&lt;p&gt;performance/efficiency&lt;br /&gt;
+Easy to use&lt;br /&gt;
+Security/Protection/isolation&lt;br /&gt;
+Reliability&lt;br /&gt;
+Energy-efficiency&lt;/p&gt;
+
+&lt;h1 id=&#34;concurrency&#34;&gt;Concurrency&lt;/h1&gt;
+
+&lt;p&gt;CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
+Parallel and Concurrent Programming in Haskell&lt;br /&gt;
+The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Firo: good introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;concurrent-vs-parallel&#34;&gt;concurrent vs parallel&lt;/h2&gt;
+
+&lt;p&gt;Programming vs computing: software vs hardware&lt;br /&gt;
+concurrent programming: multi-thread stress on how to create thread to model the outside world.&lt;br /&gt;
+parallel programming: smp, synchronization, lock, lock-free, atomic&lt;/p&gt;
+
+&lt;h1 id=&#34;documents&#34;&gt;Documents&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Underlying our approach to this subject is our conviction that “com-&lt;br /&gt;
 puter science” is not a science and that its significance has little to do&lt;br /&gt;
 with computers. The computer revolution is a revolution in the way we&lt;br /&gt;
 think and in the way we express what we think. The essence of this&lt;br /&gt;
@@ -1117,27 +1652,29 @@ framework for dealing precisely with notions of “how to.”  &amp;ndash; The o
 &lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.gigamonkeys.com/code-reading/&#34;&gt;Reading code? CODE IS NOT LITERATURE&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://plato.stanford.edu/entries/computer-science/&#34;&gt;The Philosophy of Computer Science&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.tuicool.com/articles/YRZvem&#34;&gt;Mort Yao 程序与证明&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;performance/efficiency&lt;br /&gt;
-Easy to use&lt;br /&gt;
-Security/Protection/isolation&lt;br /&gt;
-Reliability&lt;br /&gt;
-Energy-efficiency&lt;/p&gt;
+&lt;h1 id=&#34;unrelatted-but-interesting-topic-on-memory-models&#34;&gt;Unrelatted but interesting topic on memory models&lt;/h1&gt;
 
-&lt;h1 id=&#34;the-abilities-of-computer-science-programmer&#34;&gt;The abilities of Computer science programmer&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://canonical.org/~kragen/memory-models/&#34;&gt;The memory models that underlie programming languages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=3e1ZF1L1VhY&#34;&gt;History of Memory Models&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;Debugging&lt;br /&gt;
-Memory management&lt;/p&gt;
+&lt;h2 id=&#34;procedure-or-subroutine&#34;&gt;Procedure or subroutine&lt;/h2&gt;
 
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;https://people.cs.clemson.edu/~mark/subroutines.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;https://en.wikipedia.org/wiki/Subroutine&lt;/a&gt;&lt;br /&gt;
+* 1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;&lt;br /&gt;
+In Chapter 6. Outline of Logical Control.&lt;br /&gt;
+We also wish to be able to arrange for the splitting up of operations into&amp;hellip;&lt;br /&gt;
+When we wish to start on a subsidiary operation we need only make a note&lt;br /&gt;
+of where we left off the major operation&amp;hellip;&lt;br /&gt;
+* 1952 &lt;a href=&#34;http://www.laputan.org/pub/papers/wheeler.pdf&#34;&gt;The use of sub-routines in programmes&lt;/a&gt;&lt;br /&gt;
+The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born     in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out     of sight.&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.ibm.com/developerworks/library/os-aapseudo1/os-aapseudo1-pdf.pdf&#34;&gt;All about pseudo&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;linkage&#34;&gt;Linkage&lt;/h2&gt;
 
-&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;p&gt;IOMMU&lt;/p&gt;
+&lt;p&gt;1960 &lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Link_register&#34;&gt;https://en.wikipedia.org/wiki/Link_register&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1149,218 +1686,70 @@ Memory management&lt;/p&gt;
       <guid>http://firoyang.org/cs/debugging/</guid>
       <description>
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+&lt;h1 id=&#34;quote&#34;&gt;Quote&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://d3s.mff.cuni.cz/teaching/crash_dump_analysis/&#34;&gt;http://d3s.mff.cuni.cz/teaching/crash_dump_analysis/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=g7Qm0NpPAz4&#34;&gt;https://www.youtube.com/watch?v=g7Qm0NpPAz4&lt;/a&gt;&lt;br /&gt;
-Debug hacks: a book on how to debug.&lt;/p&gt;
-
-&lt;h1 id=&#34;boot-issues&#34;&gt;Boot issues&lt;/h1&gt;
-
-&lt;p&gt;debug ignore_loglevel earlyprintk=ttyS0,115200, keep keep_bootcon initcall_debug dyndbg=+plmf&lt;/p&gt;
-
-&lt;h1 id=&#34;lockup&#34;&gt;Lockup&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt&#34;&gt;kernle doc - Softlockup detector and hardlockup detector&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;oob&#34;&gt;OOB&lt;/h1&gt;
-
-&lt;h2 id=&#34;slub-redzone&#34;&gt;SLUB Redzone&lt;/h2&gt;
-
-&lt;h1 id=&#34;use-after-free&#34;&gt;Use after free&lt;/h1&gt;
-
-&lt;p&gt;Record the owner, who free.&lt;/p&gt;
-
-&lt;h1 id=&#34;deadlock&#34;&gt;Deadlock&lt;/h1&gt;
-
-&lt;p&gt;Lockdep&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/185666/&#34;&gt;The kernel lock validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/locking/lockdep-design.txt&#34;&gt;Runtime locking correctness validator&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/2/4/4&#34;&gt;https://lkml.org/lkml/2013/2/4/4&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4183696-1-1.html&#34;&gt;http://bbs.chinaunix.net/thread-4183696-1-1.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;print&#34;&gt;Print&lt;/h1&gt;
-
-&lt;h2 id=&#34;user-mode-print&#34;&gt;User mode print&lt;/h2&gt;
-
-&lt;p&gt;define witcher(fmt, args&amp;hellip;) do{FILE * fdebug=fopen(&amp;ldquo;/tmp/d.log&amp;rdquo;, &amp;ldquo;a+&amp;rdquo;); &lt;br /&gt;
-fprintf(fdebug,&amp;ldquo;%s,%s,%d:&amp;ldquo;fmt, &lt;strong&gt;TIME&lt;/strong&gt;, &lt;strong&gt;FUNCTION&lt;/strong&gt;, &lt;strong&gt;LINE&lt;/strong&gt;, ##args);fclose(fdebug);} while(0)&lt;br /&gt;
-* make specific&lt;br /&gt;
--s, -n, -p, &amp;ndash;warn-undefined-variables&lt;br /&gt;
-$(warning &amp;hellip;)&lt;/p&gt;
-
-&lt;h2 id=&#34;early-print&#34;&gt;Early print&lt;/h2&gt;
-
-&lt;p&gt;putstr&lt;br /&gt;
-early_printk&lt;br /&gt;
-Linux serial-port driver is interrupt driven, if irq-off console will not work!&lt;/p&gt;
-
-&lt;h2 id=&#34;dynamic-print&#34;&gt;Dynamic print&lt;/h2&gt;
-
-&lt;p&gt;Precondition: CONFIG_DYNAMIC_DEBUG&lt;br /&gt;
-How to use it during kernel booting?&lt;br /&gt;
-Use boot option:&lt;br /&gt;
-dyndbg=&amp;ldquo;file drivers/usb/host/ehci-hcd.c +p; file&lt;br /&gt;
-drivers/usb/host/ehci-ppc-of.c +p&amp;rdquo; loglevel=8&lt;br /&gt;
-loglevel=8 dyndbg=&amp;ldquo;module ehci_pci +p;&lt;br /&gt;
-module ehci_hcd +p; module usbcore +p&amp;rdquo;&lt;br /&gt;
-After booting:&lt;br /&gt;
-/sys/kernel/debug/dynamic_debug/control&lt;/p&gt;
-
-&lt;h2 id=&#34;dev-print&#34;&gt;Dev print&lt;/h2&gt;
-
-&lt;p&gt;drivers/base/core.c&lt;br /&gt;
-define_dev_printk_level&lt;br /&gt;
-THese functions are like pr_func&lt;br /&gt;
-dev_debug&lt;/p&gt;
-
-&lt;h1 id=&#34;tracing&#34;&gt;Tracing&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/html/v4.18/trace/index.html&#34;&gt;Linux Tracing Technologies&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;user-mode-tracing&#34;&gt;User mode tracing&lt;/h2&gt;
-
-&lt;p&gt;ltrace, strace, bash -x&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How does strace work?&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;PTRACE_PEEKDATA for showing pointer parameter(e.g. 2nd arg of read)&lt;/p&gt;
-
-&lt;h1 id=&#34;kprobes&#34;&gt;Kprobes&lt;/h1&gt;
-
-&lt;h1 id=&#34;systemtap&#34;&gt;Systemtap&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://yq.aliyun.com/articles/131870&#34;&gt;systemtap脚本分析系统中dentry SLAB占用过高问题&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;config-debug-pagealloc&#34;&gt;CONFIG_DEBUG_PAGEALLOC&lt;/h1&gt;
-
-&lt;p&gt;check_poison_mem in alloc_pages&lt;br /&gt;
-free_pages_prepare posion&lt;/p&gt;
-
-&lt;h1 id=&#34;fs&#34;&gt;FS&lt;/h1&gt;
-
-&lt;p&gt;lsof&lt;/p&gt;
-
-&lt;h1 id=&#34;kasan&#34;&gt;Kasan&lt;/h1&gt;
-
-&lt;p&gt;setup_arch-&amp;gt;kasan_init&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf&#34;&gt;KernelAddressSanitizer a fast memory error detector for the Linux kernel&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506&#34;&gt;kasan found stack out of bounds&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/612153/&#34;&gt;lwn The kernel address sanitizer&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2014/12/3/128&#34;&gt;out of bounds&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Everyone knows that debugging is twice as hard as writing a program in the first place. So if you&amp;rsquo;re as clever as you can be when you write it, how will you ever debug it?&lt;br /&gt;
+&amp;ldquo;The Elements of Programming Style&amp;rdquo;, 2nd edition, chapter 2. Brian Kernighan&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;Reverse engineering&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;How debuggers work&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;core-dump&#34;&gt;Core dump&lt;/h1&gt;
-
-&lt;p&gt;echo /tmp/core-%e-%p-%s-%c-%P &amp;gt; /proc/sys/kernel/core_pattern&lt;/p&gt;
-
-&lt;h1 id=&#34;ebpf&#34;&gt;eBPF&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/740157/&#34;&gt;https://lwn.net/Articles/740157/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.yadutaf.fr/2016/03/30/turn-any-syscall-into-event-introducing-ebpf-kernel-probes/&#34;&gt;How to turn any syscall into an event: Introducing eBPF Kernel probes&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;gdb&#34;&gt;Gdb&lt;/h1&gt;
-
-&lt;p&gt;signle step instruction&lt;/p&gt;
-
-&lt;h2 id=&#34;debug-glibc&#34;&gt;Debug glibc&lt;/h2&gt;
-
-&lt;p&gt;directory ~/ws/glibc-2.23/libio&lt;br /&gt;
-set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/&lt;/p&gt;
-
-&lt;h1 id=&#34;info&#34;&gt;info&lt;/h1&gt;
-
-&lt;p&gt;Host OS name and version number.&lt;br /&gt;
-I40e driver version number.&lt;br /&gt;
-Host OS Linux Kernel log.&lt;br /&gt;
-VF driver version number.&lt;br /&gt;
-NIC hardware model and PBA number.&lt;br /&gt;
-NIC Firmware NVM version number.&lt;/p&gt;
-
-&lt;h1 id=&#34;from-assembly-to-c&#34;&gt;From assembly to C&lt;/h1&gt;
-
-&lt;p&gt;addr2line -f -C -a 0xxxx -e ooo.bin&lt;br /&gt;
-addr2line -e vmlinux -i ffffffff81f04b7a ffffffff81508daa&lt;/p&gt;
-
-&lt;h1 id=&#34;from-elf-to-c&#34;&gt;From ELF to C&lt;/h1&gt;
-
-&lt;p&gt;pahole -C &amp;lsquo;block_device&amp;rsquo; vmlinux&lt;/p&gt;
-
-&lt;h1 id=&#34;debugging-and-bug-types&#34;&gt;Debugging and Bug types&lt;/h1&gt;
-
-&lt;p&gt;Does anyone can tell me what is debugging? Debugging is &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
-Theory + Observations =&amp;gt; Explanation&lt;/p&gt;
+&lt;p&gt;Debug hacks: a book on how to debug.&lt;/p&gt;
 
 &lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;BUG type of Jim Gray&lt;/a&gt;,除了Bohrbug,其他都不太好解.&lt;br /&gt;
-The National Vulnerability Database是一个非常有用的网站, 国内鲜少有人提及.尤其是,&lt;br /&gt;
-他的Bug分类方式惊艳无比, 逻辑上非常严密, 就好比数学系统, 由公理系统推导而得.&lt;br /&gt;
-NVD的Bug分类也采用类似的构建方式.&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;CWE Cross Section Mapped into by NVD&lt;/a&gt;&lt;br /&gt;
-涵盖了所有常见的的Bug描述, 而且非常专业.大赞!wikipedia的条目就相形见绌了&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Common_types_of_computer_bugs&#34;&gt;Common types of computer bugs in wikipedia&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Types&#34;&gt;Software bug types&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://cwe.mitre.org/data/definitions/1000.html&#34;&gt;CWE VIEW: Research Concepts&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://cwe.mitre.org/data/definitions/1003.html&#34;&gt;CWE VIEW: Simplified Mapping&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://cwe.mitre.org/data/definitions/699.html&#34;&gt;CWE VIEW: Development Concepts&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;general-debugging-steps&#34;&gt;General debugging steps&lt;/h1&gt;
+&lt;h2 id=&#34;hardware-bugs&#34;&gt;Hardware Bugs&lt;/h2&gt;
 
-&lt;p&gt;Debugging的逻辑过程是&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;. 我们以此进行推导.&lt;br /&gt;
-T: Theory 也就是我们的background, cs的知识技术, 出问题的程序与代码.&lt;br /&gt;
-O: Observations 是Bug发生的现场以及相应的log, 现象.&lt;br /&gt;
-E: Explanation 是最终定位的结论.&lt;br /&gt;
-E ⊆ T; O ⊆ T; E ⊃ (E ∩ O);&lt;br /&gt;
-if E = (E ∩ O); then debugging is done.&lt;br /&gt;
-T, E 与 O理论上都是从∅开始,且O =&amp;gt; E;&lt;br /&gt;
-E: ∅ -&amp;gt; Bug type(可能经过是多种Bug types的过渡状态) -&amp;gt; Explanation&lt;br /&gt;
-很多时候O也会使T扩大.所以O成为debugging的关键.&lt;br /&gt;
-下面严格区分T 和 O. 我们得到O就要不断地结合T进行理性分析.&lt;br /&gt;
-&amp;gt; Another perespective,&lt;br /&gt;
-&amp;gt; the process of debugging is use O to minimize T to E instance.&lt;br /&gt;
-&amp;gt; T is solutions space, E &lt;a href=&#34;https://nvd.nist.gov/cwe.cfm#cweIdEntry-CWE-1&#34;&gt;locates&lt;/a&gt; in T. O is the address to find E.&lt;/p&gt;
+&lt;p&gt;If this has only happened on a single physical machine, I suggest that machine be considered to be faulty.&lt;/p&gt;
 
-&lt;p&gt;基于NVD的CWE我们可知, 收集observations 可能是development和deployment的各个节点.&lt;/p&gt;
+&lt;h2 id=&#34;memory-corruption&#34;&gt;Memory corruption&lt;/h2&gt;
 
-&lt;h3 id=&#34;get-observations&#34;&gt;Get observations&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&#34;https://cwe.mitre.org/data/definitions/119.html&#34;&gt;The generic term &amp;ldquo;memory corruption&amp;rdquo;&lt;/a&gt;is often used to describe the consequences of writing to memory outside the bounds of a buffer, when the root cause is something other than a sequential copies of excessive data from a fixed starting location(i.e., classic buffer overflows or CWE-120). This may include issues such as incorrect pointer arithmetic, accessing invalid pointers due to incomplete initialization or memory release, etc.]&lt;br /&gt;
+&lt;a href=&#34;https://bugzilla.suse.com/show_bug.cgi?id=1155930#c12&#34;&gt;An example by Neil Brown: The corrupted list of inodes could be due to one inode being freed and re-used while still on the list - or it could be due to memory corruption of a forward pointer.&lt;/a&gt;&lt;br /&gt;
+Memory corruption is one of the most intractable class of programming errors, for two reasons:&lt;br /&gt;
+The source of the memory corruption and its manifestation may be far apart, making it hard to correlate the cause and the effect.&lt;br /&gt;
+Symptoms appear under unusual conditions, making it hard to consistently reproduce the error.&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_corruption&#34;&gt;Memory corruption&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_safety&#34;&gt;Memory safety&lt;/a&gt;&lt;br /&gt;
+uninitialized memory: &lt;a href=&#34;https://en.wikipedia.org/wiki/Dangling_pointer#Cause_of_wild_pointers&#34;&gt;wild pointer&lt;/a&gt;&lt;br /&gt;
+use after free: &lt;a href=&#34;https://en.wikipedia.org/wiki/Dangling_pointer#Cause_of_dangling_pointers&#34;&gt;dangling pointer&lt;/a&gt;&lt;br /&gt;
+buffer overflow:&lt;br /&gt;
+unknown source memory corruption: The generic &amp;ldquo;memory corruption&amp;rdquo;.&lt;br /&gt;
+memory leak:&lt;/p&gt;
 
-&lt;ul&gt;
-&lt;li&gt;compilation&lt;br /&gt;
-make kernel/sched.s V=1&lt;br /&gt;
-readelf, objdump&lt;br /&gt;
-c++filt&lt;br /&gt;
-./scripts/decodecode &amp;lt; Oops.txt&lt;br /&gt;
-echo&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;load software&lt;br /&gt;
-LD_TRACE_LOADED_OBJECTS=1 git&lt;br /&gt;
-ldd /usr/bin/git&lt;br /&gt;&lt;/li&gt;
+&lt;h3 id=&#34;phonomenon&#34;&gt;Phonomenon&lt;/h3&gt;
 
-&lt;li&gt;&lt;p&gt;software imediately stop&lt;br /&gt;
-Use atexit() register a stackdump or a wrapped print&lt;/p&gt;&lt;/li&gt;
+&lt;p&gt;Invalid page fault(including NULL pointer dereference)&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;tips&lt;br /&gt;
-If an page oops close to zero, for example 0xfffffff4&lt;br /&gt;
-It maybe ERR_PTR(-12);&lt;br /&gt;
-&lt;a href=&#34;http://www.stlinux.com/devel/debug/jtag/build?q=node/82&#34;&gt;Tips on debugging optimized code&lt;/a&gt;&lt;br /&gt;
-code reordering inlining Optimized-away variables Tailcall optimization&lt;/p&gt;&lt;/li&gt;
+&lt;h1 id=&#34;debugging&#34;&gt;Debugging&lt;/h1&gt;
 
-&lt;li&gt;&lt;p&gt;oops&lt;br /&gt;
-From ASM to c language&lt;br /&gt;
-&lt;a href=&#34;http://yarchive.net/comp/linux/oops_decoding.html&#34;&gt;lkml-Linus-Al-Viro-oops-debug&lt;/a&gt;&lt;br /&gt;
-&lt;strong&gt;asm&lt;/strong&gt;(), 常量, loop codes format, char *, ip&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;&lt;br /&gt;
+Every bug belons to a known type.&lt;/p&gt;
 
-&lt;h1 id=&#34;一些比较通用的调试工具&#34;&gt;一些比较通用的调试工具&lt;/h1&gt;
+&lt;h2 id=&#34;steps-according-to-observations-narrow-down-hypothses-successive-approximation&#34;&gt;Steps according to observations, narrow down Hypothses, successive approximation&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;gdb&lt;br /&gt;
-gdb vmlinux /proc/kcore&lt;br /&gt;
-p jiffies_64&lt;br /&gt;
-text_addr=/sys/module/char-read-write/sections/.text&lt;br /&gt;
-add-symbol-file /home/nkhare/char-read-write.ko $text_addr&lt;br /&gt;
-print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Scientific method&lt;/p&gt;
+
+&lt;h2 id=&#34;get-observations-and-analysis-data&#34;&gt;Get observations and analysis data&lt;/h2&gt;
+
+&lt;p&gt;observation.log&lt;br /&gt;
+Data: whole structure, list corruption;life cycle; which part is ok and which part is wrong, Data connections&lt;br /&gt;
+call paths: related&lt;/p&gt;
+
+&lt;h2 id=&#34;think-backward&#34;&gt;Think backward&lt;/h2&gt;
+
+&lt;p&gt;How far from symptom to root cause could we think?&lt;br /&gt;
+Missing cause:&lt;/p&gt;
+
+&lt;h2 id=&#34;known-bug-types-assumptions&#34;&gt;Known bug types assumptions&lt;/h2&gt;
+
+&lt;p&gt;Mix up Bug types, observations and related all paths&lt;/p&gt;
+
+&lt;h2 id=&#34;connect-to-programming-skills&#34;&gt;Connect to programming skills.&lt;/h2&gt;
 
 &lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
 
@@ -1369,45 +1758,7 @@ print &amp;amp;((struct kmem_cache *)0)-&amp;gt;offset&lt;br /&gt;
 gcc -Wall&lt;br /&gt;
 bash -n&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;static code analysis&lt;br /&gt;
-smatch&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;bug-made-by-me&#34;&gt;BUG made by me&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;print_signal_info wrong pritk parameters position&lt;br /&gt;
-    printk(KERN_NOTICE &amp;ldquo;K %d : %d -&amp;gt; %s %d %s %d\n&amp;rdquo;, sig, q-&amp;gt;info.si_code,&lt;br /&gt;
-            ss&lt;a href=&#34;http://www.opensourceforu.com/2010/10/joy-of-programming-types-of-bugs&#34;&gt;2&lt;/a&gt;, ss&lt;a href=&#34;https://nvd.nist.gov/cwe.cfm&#34;&gt;3&lt;/a&gt;, task_tgid_vnr(r_t), task_tgid_vnr(r_p));&lt;br /&gt;
-Watch compile warning info can be avoid of this bug.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;spin_lock(sighand) invoke down_sem and cond_resched&amp;hellip;&lt;br /&gt;
-__send_signal()&lt;/p&gt;
-
-&lt;h1 id=&#34;examples&#34;&gt;Examples&lt;/h1&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;timer_list-&amp;gt;function = NULL&lt;br /&gt;
-我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.&lt;br /&gt;
-首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations&lt;br /&gt;
-within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在&lt;br /&gt;
-就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.&lt;br /&gt;
-可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace&lt;br /&gt;
-log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.&lt;br /&gt;
-这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及&lt;br /&gt;
-记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来&lt;br /&gt;
-保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而&lt;br /&gt;
-确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use&lt;br /&gt;
-after free的问题是够了, 以后用到这类问题基本可以妙解了.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;module text address&lt;br /&gt;
-cat /sys/module/wmi/sections/.text&lt;br /&gt;
-cat /proc/modules | grep wmi&lt;br /&gt;
-int bss_var;&lt;br /&gt;
-static int hello_init(void)&lt;br /&gt;
-{printk(KERN_ALERT &amp;ldquo;Text location .text(Code Segment):%p\n&amp;rdquo;,hello_init);&lt;br /&gt;
-static int data_var=0;&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;Data Location .data(Data Segment):%p\n&amp;rdquo;,&amp;amp;data_var);&lt;br /&gt;
-printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&amp;amp;bss_var);}&lt;/p&gt;&lt;/li&gt;
+smatch&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -1420,15 +1771,9 @@ printk(KERN_ALERT &amp;ldquo;BSS Location: .bss(BSS Segment):%p\n&amp;rdquo;,&am
       <guid>http://firoyang.org/cs/programming/</guid>
       <description>
 
-&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
+&lt;h1 id=&#34;basic-conceptions&#34;&gt;Basic conceptions&lt;/h1&gt;
 
-&lt;ul&gt;
-&lt;li&gt;GNU AS&lt;br /&gt;
-inline asm &amp;lsquo;=&amp;rsquo;?&lt;br /&gt;
-&amp;amp; &lt;a href=&#34;https://stackoverflow.com/questions/45895564/how-does-r-differ-from-r&#34;&gt;https://stackoverflow.com/questions/45895564/how-does-r-differ-from-r&lt;/a&gt;&lt;br /&gt;
-&amp;ldquo;memory clobber&amp;rdquo;?&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Reentrancy&lt;/p&gt;
 
 &lt;h1 id=&#34;cps&#34;&gt;CPS&lt;/h1&gt;
 
@@ -1440,6 +1785,11 @@ inline asm &amp;lsquo;=&amp;rsquo;?&lt;br /&gt;
 &lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Category:Programming_principles&#34;&gt;Programming principles&lt;/a&gt;&lt;br /&gt;
 programming principles&lt;br /&gt;
 High cohesion low coupling&lt;/p&gt;
+
+&lt;h1 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/336224/&#34;&gt;Linux kernel design patterns&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.cs.fsu.edu/~baker/devices/notes/patterns.html#&#34;&gt;Linux Kernel Programming Patterns&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;computer-programming&#34;&gt;Computer programming&lt;/h1&gt;
 
@@ -1541,620 +1891,57 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
     </item>
     
     <item>
-      <title>The programming language</title>
-      <link>http://firoyang.org/cs/pl/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/pl/</guid>
-      <description>
-
-&lt;h1 id=&#34;data-types&#34;&gt;Data types&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://manybutfinite.com/post/closures-objects-heap/&#34;&gt;Closures, Objects, and the Fauna of the Heap&lt;/a&gt;&lt;br /&gt;
-value types and reference types. A value of value type is the actual value. A value of reference type is a reference to another value.&lt;br /&gt;
-value types: stack&lt;br /&gt;
-reference types: heap&lt;/p&gt;
-
-&lt;h1 id=&#34;scope&#34;&gt;Scope&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope&#34;&gt;https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope&lt;/a&gt;&lt;br /&gt;
-Lexical scope vs. dynamic scope&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.yinwang.org/blog-cn/2016/03/31/no-longer-pl&#34;&gt;我为什么不再做PL人&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html&#34;&gt;Functors, Applicatives, And Monads In Pictures&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://jozefg.bitbucket.org/posts/2015-08-14-learn-tt.html&#34;&gt;Learn Type Theory&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.zhihu.com/question/21843639&#34;&gt;http://www.zhihu.com/question/21843639&lt;/a&gt;&lt;br /&gt;
-貌似正则是type 3, c是type2, 范式角度我现在不好理解, 缺乏语言学的知识.&lt;br /&gt;
-Programming Language Pragmatics 3rd&lt;br /&gt;
-C11&lt;br /&gt;
-C Traps and Pitfalls&lt;br /&gt;
-Expert C Programming&lt;/p&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;Programming language theory&lt;br /&gt;
-Programming language&lt;/p&gt;
-
-&lt;h1 id=&#34;programming-language-theory&#34;&gt;Programming language theory&lt;/h1&gt;
-
-&lt;p&gt;What is formal language and the relationg between fl and pl?&lt;br /&gt;
-Language primitive&lt;/p&gt;
-
-&lt;h2 id=&#34;semantics&#34;&gt;Semantics&lt;/h2&gt;
-
-&lt;h1 id=&#34;c&#34;&gt;C&lt;/h1&gt;
-
-&lt;p&gt;我们还是从使用的角度来看c 语言;&lt;br /&gt;
-c语言自身重要基础性质, 我们需要了解.&lt;br /&gt;
-除此之外, 我们还要了解一些重要的标准库函数.&lt;br /&gt;
-知道这些, 我们就能用c语言.&lt;/p&gt;
-
-&lt;h2 id=&#34;type&#34;&gt;Type&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Object type and function type&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Object &amp;ndash; void, scalar,aggregate types, composite&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Scalar type &amp;ndash; Arithmetic types and pointer types&lt;br /&gt;
-&lt;a href=&#34;http://www.techopedia.com/definition/16441/scalar&#34;&gt;What does Scalar mean?&lt;/a&gt;&lt;br /&gt;
-scalar 词源上由scale演化而来, scalar type来自scalar processor and vector processor.&lt;br /&gt;
-超标量也是来自这里concurrent SISD =&amp;gt;MIMD 所谓的流水线.&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Arithmetic type &amp;ndash; Integer and floating types&lt;/p&gt;
-
-&lt;h2 id=&#34;incomplete-and-complete&#34;&gt;Incomplete and complete&lt;/h2&gt;
-
-&lt;p&gt;void; struct s; union u;&lt;/p&gt;
-
-&lt;h2 id=&#34;conversion&#34;&gt;Conversion&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;only effect to scalar type data&lt;br /&gt;
-error: conversion to non-scalar type requested&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;无符号数 转换成upper rank的有符号数, 还是无符号数, 不管最初是-1!&lt;br /&gt;
-unsigned int i = 1; long f = -10;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true 证明确实usigned 向long转换了.&lt;br /&gt;
-unsigned int i = -3; long f = -5u;if ( i &amp;gt; f ) printf(&amp;ldquo;ok\n&amp;rdquo;); true&lt;br /&gt;
-c11上是ok的!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;做signed 和unsigned 貌似both convert to unsigned gcc才给警告, 否则不给即便是signed和unsigned比较.&lt;/p&gt;
-
-&lt;h2 id=&#34;lvalue-rvalue-modfiable-rvalue&#34;&gt;lvalue rvalue modfiable rvalue&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://eli.thegreenplace.net/2011/12/15/understanding-lvalues-and-rvalues-in-c-and-c&#34;&gt;Understanding lvalues and rvalues in C and C++&lt;/a&gt;&lt;br /&gt;
-If a variable/expression  has a address, it&amp;rsquo;s of lvalue.&lt;/p&gt;
-
-&lt;h2 id=&#34;array-decay&#34;&gt;Array decay&lt;/h2&gt;
-
-&lt;p&gt;数组退化的初衷, 可能是K&amp;amp;R当年计算资源紧缺, 导致不允许函数传值copy数组内容.&lt;br /&gt;
-总之标准委员会介入之前就决定.&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-1031622-1-1.html&#34;&gt;[C] [原创]数组与指针&amp;mdash;都是&amp;rdquo;退化&amp;rdquo;惹的祸&lt;/a&gt;&lt;br /&gt;
-关于char *s错误声明的讲解不错!&lt;br /&gt;
-&lt;a href=&#34;http://stackoverflow.com/questions/17752978/exception-to-array-not-decaying-into-a-pointer&#34;&gt;Exception to array not decaying into a pointer?&lt;/a&gt;&lt;br /&gt;
-在c11 6.3.2.1 Lvalues, arrays, and function designators第3点说明了&lt;br /&gt;
-array不会退化的4种场景. Except when it is&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;the operand of the sizeof operator,&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;the _Alignof operator, or the&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;unary &amp;amp; operator, or&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;is a string literal used to initialize an array, an expression that has type&lt;br /&gt;
-‘‘array of type’’ is converted to an expression with type ‘‘pointer to type’’&lt;br /&gt;
-that points to the initial element of the array object and is not an lvalue.&lt;br /&gt;
-If the array object has register storage class, the behavior is undefined.&lt;br /&gt;
-这4种场景之外, 那么array名退化的结果是pointer.&lt;br /&gt;
-这个pointer和我们最常用的pointer如int *p有什么区别呢?&lt;br /&gt;
-首先array decay是type上的转化array -&amp;gt; pointer.&lt;br /&gt;
-其次数组名原来是lvalue -&amp;gt; not an lvalue更谈不上modifiable.&lt;br /&gt;
-type: tyepof(array[0]) *&lt;br /&gt;
-value: &amp;amp;array[0] or array&lt;br /&gt;
-property: not lvalue&lt;br /&gt;
-当然这只是c11上的说明, 我们只要明白为什么不能修改一个decay数组名就行了.&lt;br /&gt;
-实现的个人猜测是: 根据lvalue的定义decay后数组名还是lvalue, 只不过一直都不是modifiable.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为什么作为函数形参的数组名可以++, 而作为变量的数组名就不可以.&lt;br /&gt;
-因为形参数组名被当初pointer处理modifiable lvalue, 而实参数组名只是传值而已.&lt;br /&gt;
-而普通数组名是一个lvalue,不能修改.&lt;/p&gt;
-
-&lt;h3 id=&#34;why-innermost-dimension-can-be-omit-in-array&#34;&gt;Why innermost dimension can be omit in array&lt;/h3&gt;
-
-&lt;p&gt;用不到.&lt;br /&gt;
-In essence, all arrays in C are one-dimensional.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Because the array will decay to pointer and to calculate offset to&lt;br /&gt;
-the elements of the array you do not need to know the innermost dimension.&lt;/p&gt;
-
-&lt;p&gt;Compiler has to know by how much to increment the pointer when&lt;br /&gt;
-indexing on the first dimension for example. So if an int array is named a,&lt;/p&gt;
-
-&lt;h2 id=&#34;integer-promotion&#34;&gt;Integer Promotion&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.idryman.org/blog/2012/11/21/integer-promotion/&#34;&gt;Deep C: Integer Promotion&lt;/a&gt;&lt;br /&gt;
-* &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/fc9te331.aspx&#34;&gt;Integral Promotions&lt;/a&gt;&lt;br /&gt;
-0xF int&lt;br /&gt;
-0xFFFFFFFF unsigned int&lt;/p&gt;
-
-&lt;h2 id=&#34;scopes-of-identifiers&#34;&gt;Scopes of identifiers&lt;/h2&gt;
-
-&lt;p&gt;For each different entity that an identifier designates, the identifier is visible (i.e., can be used) only within a region of program text called its scope.&lt;br /&gt;
-* four kinds of scopes: function, file, block, and function prototype&lt;/p&gt;
-
-&lt;h2 id=&#34;linkages-of-identifiers&#34;&gt;linkages of identifiers&lt;/h2&gt;
-
-&lt;p&gt;An identifier declared in different scopes or in the same scope more than once can be&lt;br /&gt;
-made to refer to the same object or function by a process called linkage.&lt;br /&gt;
-* There are three kinds of linkage: external, internal, and none.&lt;br /&gt;
-* There is no linkage between different identifiers.&lt;br /&gt;
-* external linkage&lt;br /&gt;
-In the set of translation units and libraries that constitutes an entire program, each&lt;br /&gt;
-declaration of a particular identifier with external linkage denotes the same object or&lt;br /&gt;
-function. &amp;ndash;c11&lt;/p&gt;
-
-&lt;p&gt;If the name has external linkage,&lt;br /&gt;
-the entity that name denotes may be referred to from another translation unit&lt;br /&gt;
-using a distinct declaration for that same name,&lt;br /&gt;
-and from other scopes within the same translation unit using distinct declarations. &amp;ndash;wikipedia&lt;br /&gt;
-* Internal linkage&lt;br /&gt;
-Within one translation unit, each declaration of an identifier with internal&lt;br /&gt;
-linkage denotes the same object or function. &amp;ndash;c11&lt;/p&gt;
-
-&lt;p&gt;Were the name given internal linkage,&lt;br /&gt;
-such a declaration would denote a distinct entity, although using the same name,&lt;br /&gt;
-but its entity could be referred to by distinct declarations within the same translation unit.  &amp;ndash;wikipedia&lt;br /&gt;
-* No linkage&lt;br /&gt;
-Each declaration of an identifier with no linkage denotes a unique entity. &amp;ndash;c11&lt;br /&gt;
-A name that has no linkage at all cannot be referred to from declarations in different scopes,&lt;br /&gt;
-not even from within the same translation unit. &amp;ndash;wikipedia&lt;/p&gt;
-
-&lt;h2 id=&#34;name-spaces-of-identifiers&#34;&gt;Name spaces of identifiers&lt;/h2&gt;
-
-&lt;h2 id=&#34;storage-durations-of-objects&#34;&gt;Storage durations of objects&lt;/h2&gt;
-
-&lt;p&gt;An object has a storage duration that determines its lifetime.&lt;br /&gt;
-There are four storage durations: static, thread, automatic, and allocated.&lt;br /&gt;
-The lifetime of an object is the portion of program execution during which storage is&lt;br /&gt;
-guaranteed to be reserved for it.&lt;br /&gt;
-In book 21st Century C, it was named memory mode.&lt;br /&gt;
-* static storage duration&lt;br /&gt;
-An object whose identifier is declared without the storage-class specifier _Thread_local,&lt;br /&gt;
-and either with external or internal linkage or with the storage-class specifier static(for no linkage &amp;ndash;firo),&lt;br /&gt;
-has static storage duration.&lt;/p&gt;
-
-&lt;p&gt;Its lifetime is the entire execution of the program and its stored value is initialized only once,&lt;br /&gt;
-prior to program startup.&lt;br /&gt;
-* automatic storage duration&lt;br /&gt;
-An object whose identifier is declared with no linkage and without the storage-class&lt;br /&gt;
-specifier static has automatic storage duration, as do some compound literals.&lt;br /&gt;
-* alloced storage duration&lt;br /&gt;
-The lifetime of an allocated object extends from the allocation until the deallocation.&lt;br /&gt;
-* Thread storage duration&lt;br /&gt;
-details in c11&lt;/p&gt;
-
-&lt;h2 id=&#34;alignment-of-objects&#34;&gt;Alignment of objects&lt;/h2&gt;
-
-&lt;p&gt;An alignment is an implementation-defined integer value representing the number of bytes between&lt;br /&gt;
-successive addresses at which a given object can be allocated.&lt;br /&gt;
-More deatils in cs.md&lt;/p&gt;
-
-&lt;h2 id=&#34;declarations&#34;&gt;Declarations&lt;/h2&gt;
-
-&lt;p&gt;A declaration specifies the interpretation and attributes of a set of identifiers.&lt;br /&gt;
-A definition of an identifier is a declaration for that identifier that:&lt;br /&gt;
-for an object, causes storage to be reserved for that object;&lt;br /&gt;
-for a function, includes the function body;&lt;br /&gt;
-for an enumeration constant, is the (only) declaration of the identifier;&lt;br /&gt;
-for a typedef name, is the first (or only) declaration of the identifier.&lt;br /&gt;
-The declaration specifiers consist of a sequence of specifiers that indicate the linkage,&lt;br /&gt;
-storage duration, and part of the type of the entities that the declarators denote.&lt;/p&gt;
-
-&lt;h2 id=&#34;marco&#34;&gt;Marco&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://blog.csdn.net/huyansoft/article/details/2484297&#34;&gt;如果#操作符出现在对象宏的替换列表中,则仅作为一个普通字符,不具有下述含义&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;expressions&#34;&gt;Expressions&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;cast&lt;br /&gt;
-A cast does not yield an lvalue.&lt;/p&gt;
-
-&lt;h2 id=&#34;lexical-element&#34;&gt;Lexical element&lt;/h2&gt;
-
-&lt;h3 id=&#34;character-constants&#34;&gt;Character constants&lt;/h3&gt;
-
-&lt;p&gt;An integer character constant has type int.&lt;/p&gt;
-
-&lt;h2 id=&#34;lexical-pitfall&#34;&gt;lexical pitfall&lt;/h2&gt;
-
-&lt;h2 id=&#34;greedy-lexical-analysis&#34;&gt;Greedy lexical analysis&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Write tokens with blank!&lt;br /&gt;
-x = y/&lt;em&gt;p;  /&lt;/em&gt; oops, hidden error.*/&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Associative&lt;br /&gt;
-You donot need to remember it! Just use it!&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Precedence&lt;br /&gt;
-Need to remember, but if you not sure, parenthess.&lt;/p&gt;
-
-&lt;h2 id=&#34;inline-和宏的区别&#34;&gt;inline 和宏的区别&lt;/h2&gt;
-
-&lt;p&gt;inline的好处与坏处&lt;br /&gt;
-没有调用的开销效率很高, 但是调试代码复杂了, 内链函数的实现是拷贝副本消耗内存.&lt;br /&gt;
-inline有类型检测, 宏没有.&lt;/p&gt;
-
-&lt;h2 id=&#34;c-standard-library&#34;&gt;C standard library&lt;/h2&gt;
-
-&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Logical operation with signed value? x86!&lt;br /&gt;
-int c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; =&amp;gt; d == f;&lt;br /&gt;
-unsigned c = 0xFFFFFFFF;  int d = c &amp;gt;&amp;gt; 31; d!= f;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;shift beyond bits long?&lt;br /&gt;
-c &amp;gt;&amp;gt; 296 == c &amp;gt;&amp;gt; 8&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;变量同名不同类型不同文件, 通过extern, 否则就是multiple definition&lt;br /&gt;
-这是c语言最为迷糊的地方.简单说来类似union, 具体我也不清楚.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;所有名字引用同一个object&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;不同文件中不同类型的sizeof和当前文件类型一直.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;c-standard-library-1&#34;&gt;C standard library&lt;/h1&gt;
-
-&lt;p&gt;NULL?&lt;/p&gt;
-
-&lt;h2 id=&#34;string-handling&#34;&gt;String handling&lt;/h2&gt;
-
-&lt;p&gt;kernel/lib/string.c&lt;br /&gt;
-* Copying functions&lt;br /&gt;
-memcpy: dest&lt;br /&gt;
-memmove: dest&lt;br /&gt;
-strcpy: dest, 拷贝\0&lt;br /&gt;
-strncpy: dest, if src_len &amp;gt;= n; 0 NULL, if src _len &amp;lt; n; (n - len) NULL;&lt;br /&gt;
-strlcpy: src_len, mini(n -1, src_len -1) + \0, src_len 用你返回啊!&lt;br /&gt;
-* Concatenation functions&lt;br /&gt;
-strcat: dest, overwrite dest \0 with src util src \0&lt;br /&gt;
-strncat: dest, 末尾一定有\0&lt;br /&gt;
-* Comparison functions&lt;br /&gt;
-memcmp: 差值,&lt;br /&gt;
-strcmp: -1, 0, 1, 如果整个s1都比完了NULL or &amp;ndash;n ==0 for strncmp, return 0&lt;br /&gt;
-* Search functions&lt;br /&gt;
-memchr, NULL or p;&lt;br /&gt;
-strchr,ditto, 到\0返回NUll&lt;br /&gt;
-strrchr,ditto, last occurence.&lt;br /&gt;
-strspn: s1开始有多少在s2中.&lt;br /&gt;
-strcspn: s1开始有多少不在s2中.&lt;br /&gt;
-strpbrk: s2中第一次出现的位置&lt;br /&gt;
-strstr: 找子串, 用memcmp&lt;/p&gt;
-
-&lt;p&gt;#Wildcards&lt;br /&gt;
-&lt;a href=&#34;http://whatis.techtarget.com/definition/wildcard-character&#34;&gt;A wildcard character is a type of meta character&lt;/a&gt;&lt;br /&gt;
-##Type&lt;/p&gt;
-
-&lt;h3 id=&#34;standard-wildcards-globbing-patterns&#34;&gt;Standard Wildcards (globbing patterns)&lt;/h3&gt;
-
-&lt;p&gt;File and directory patterns&lt;br /&gt;
-?: must stand for a character&lt;br /&gt;
-* Regular expression&lt;br /&gt;
-* SQL&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>The computing processes</title>
-      <link>http://firoyang.org/cs/process/</link>
+      <link>http://firoyang.org/cs/task/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/process/</guid>
+      <guid>http://firoyang.org/cs/task/</guid>
       <description>
 
-&lt;h1 id=&#34;processes&#34;&gt;Processes&lt;/h1&gt;
+&lt;h1 id=&#34;formal-cause&#34;&gt;Formal cause&lt;/h1&gt;
 
-&lt;h2 id=&#34;instructions&#34;&gt;Instructions&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf&#34;&gt;thread vs event&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;opcode,&lt;br /&gt;
-registers and RAM&lt;/p&gt;
+&lt;h2 id=&#34;pid&#34;&gt;PID&lt;/h2&gt;
 
-&lt;h2 id=&#34;subroutine-and-procedure&#34;&gt;Subroutine and procedure&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/606925/&#34;&gt;PIDTYPE_PID&lt;/a&gt;&lt;br /&gt;
+task-&amp;gt;pid: thread id: unique&lt;br /&gt;
+task-&amp;gt;tgid: task group id: child thread share parent&amp;rsquo;s tgid&lt;br /&gt;
+Check copy_process&lt;/p&gt;
 
-&lt;p&gt;a group of instructions&lt;br /&gt;
-stack&lt;/p&gt;
+&lt;h1 id=&#34;kthread-kernel-thread&#34;&gt;kthread - Kernel thread&lt;/h1&gt;
 
-&lt;h2 id=&#34;interrupt-handler&#34;&gt;interrupt handler&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/vm/active_mm.txt&#34;&gt;active_mm&lt;/a&gt;&lt;br /&gt;
+kernel_thead-&amp;gt;kthread-&amp;gt;do_exit&lt;br /&gt;
+#define PF_KTHREAD              0x00200000&lt;br /&gt;
+#define PF_KSWAPD               0x00020000&lt;br /&gt;
+#define PF_IDLE                 0x00000002      /* I am an IDLE thread &lt;em&gt;/&lt;br /&gt;
+#define PF_VCPU                 0x00000010      /&lt;/em&gt; I&amp;rsquo;m a virtual CPU &lt;em&gt;/&lt;br /&gt;
+#define PF_WQ_WORKER            0x00000020      /&lt;/em&gt; I&amp;rsquo;m a workqueue worker */&lt;br /&gt;
+PID: 197    TASK: ffff8bc8dd350480  CPU: 0   COMMAND: &amp;ldquo;kswapd0&amp;rdquo;&lt;br /&gt;
+  flags = 0xa20840,&lt;br /&gt;
+PID: 19     TASK: ffff8bc214160780  CPU: 1   COMMAND: &amp;ldquo;kworker/1:0H&amp;rdquo;&lt;br /&gt;
+  flags = 0x4208060,&lt;br /&gt;
+crash&amp;gt; task -R flags&lt;br /&gt;
+PID: 0      TASK: ffffffff880134c0  CPU: 0   COMMAND: &amp;ldquo;swapper/0&amp;rdquo;&lt;br /&gt;
+  flags = 0x200102,&lt;br /&gt;
+PID: 0      TASK: ffff8bc21476c500  CPU: 14  COMMAND: &amp;ldquo;swapper/14&amp;rdquo;&lt;br /&gt;
+  flags = 0x200042,&lt;/p&gt;
 
-&lt;p&gt;procdure + optional own stack&lt;/p&gt;
+&lt;h2 id=&#34;task-kthread&#34;&gt;task =&amp;gt; kthread&lt;/h2&gt;
 
-&lt;h2 id=&#34;softirq-handler&#34;&gt;softirq handler&lt;/h2&gt;
+&lt;p&gt;to_kthread and vfork_done&lt;br /&gt;
+commit 63706172f332fd3f6e7458ebfb35fa6de9c21dc5&lt;br /&gt;
+Author: Oleg Nesterov &lt;a href=&#34;mailto:oleg@redhat.com&#34;&gt;oleg@redhat.com&lt;/a&gt;&lt;br /&gt;
+Date:   Wed Jun 17 16:27:45 2009 -0700&lt;/p&gt;
 
-&lt;p&gt;procdure + optional own stack&lt;/p&gt;
+&lt;h2 id=&#34;kthread-and-worker&#34;&gt;kthread and worker&lt;/h2&gt;
 
-&lt;h2 id=&#34;kernel-thread&#34;&gt;kernel thread&lt;/h2&gt;
+&lt;p&gt;kthread-&amp;gt;data&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf&#34;&gt;thread vs event&lt;/a&gt;&lt;br /&gt;
-change of processes: associate change structure with a object and has more states; event-driven -&amp;gt; schedule&lt;br /&gt;
-space: +kernel address space, more kind of resource space&lt;br /&gt;
-change: implict changings.&lt;/p&gt;
+&lt;h2 id=&#34;worker-is-rescuer&#34;&gt;worker is rescuer?&lt;/h2&gt;
 
-&lt;h2 id=&#34;process-horizantal&#34;&gt;process(horizantal)&lt;/h2&gt;
-
-&lt;p&gt;change: linkage of user space code&lt;br /&gt;
-space: whole address space&lt;/p&gt;
-
-&lt;h2 id=&#34;thread&#34;&gt;thread&lt;/h2&gt;
-
-&lt;p&gt;share process address space&lt;br /&gt;
-tls&lt;br /&gt;
-&lt;a href=&#34;http://www.maxwellxxx.com/TLS&#34;&gt;Linux线程TLS（Thread-Local Storage）相关 GS段寄存器作用&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;usage&#34;&gt;usage&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.quora.com/What-is-the-relation-between-the-number-of-threads-and-the-number-of-CPU-cores&#34;&gt;https://www.quora.com/What-is-the-relation-between-the-number-of-threads-and-the-number-of-CPU-cores&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;change-of-processes&#34;&gt;Change of processes&lt;/h1&gt;
-
-&lt;h2 id=&#34;instructions-1&#34;&gt;Instructions&lt;/h2&gt;
-
-&lt;p&gt;pc + 1&lt;/p&gt;
-
-&lt;h2 id=&#34;subroutine-and-procedure-1&#34;&gt;Subroutine and procedure&lt;/h2&gt;
-
-&lt;p&gt;save: push pc + 1; optional caller saved registers&lt;br /&gt;
-entry: save rbp; callee saved registers&lt;br /&gt;
-return: mov rbp -&amp;gt; rsp; pop rbp; ret&lt;/p&gt;
-
-&lt;h2 id=&#34;softirq&#34;&gt;softirq&lt;/h2&gt;
-
-&lt;h2 id=&#34;system-call&#34;&gt;system call&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead&#34;&gt;Measurements of system call performance and overhead&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://reverseengineering.stackexchange.com/a/16511/16996&#34;&gt;AMD vs Intel and syscall vs sysenter&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm&#34;&gt;System Call Optimization with the SYSENTER Instruction&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;kernel documentation&lt;/a&gt;&lt;br /&gt;
-Meltdown and Spectre&lt;/p&gt;
-
-&lt;h3 id=&#34;syscall&#34;&gt;syscall&lt;/h3&gt;
-
-&lt;ul&gt;
-&lt;li&gt;save: pc + 1, old rsp, registers&lt;br /&gt;
-pc + 1-&amp;gt; RCX&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;entry: pc&lt;br /&gt;
-IA32_LSTAR -&amp;gt; pc&lt;/p&gt;
-
-&lt;h3 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h3&gt;
-
-&lt;p&gt;64-bit long mode: syscall; check syscall_init&lt;br /&gt;
-64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts&lt;br /&gt;
-??32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
-
-&lt;h3 id=&#34;vdso-and-vsyscall&#34;&gt;vDSO and vsyscall&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;64-bit without COMPAT&lt;em&gt;32&lt;/em&gt;/compatible kernel&lt;br /&gt;
-./int80&lt;br /&gt;
-[  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]&lt;br /&gt;
-Segmentation fault (core dumped)&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;64-bit syscall&lt;br /&gt;
-syscall.S&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;signal&#34;&gt;signal&lt;/h2&gt;
-
-&lt;h2 id=&#34;interrupt&#34;&gt;interrupt&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/interrupts.html&#34;&gt;history of interrupts&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://virtualirfan.com/history-of-interrupts&#34;&gt;Another History of interrupts with video&lt;/a&gt;&lt;br /&gt;
-Interrupts: asynonymous(passively received), external&lt;br /&gt;
-Exception: synonymous(actively detected), internal&lt;br /&gt;
-Software interrupts: is a trap. int/int3, into, bound.&lt;br /&gt;
-IPI:&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;hardlockup&#34;&gt;Hardlockup&lt;/h3&gt;
-
-&lt;p&gt;www.kernel.org/doc/Documentation/lockup-watchdogs.txt&lt;/p&gt;
-
-&lt;h3 id=&#34;mask-exception&#34;&gt;Mask exception&lt;/h3&gt;
-
-&lt;p&gt;RF in EFLAGS for masking #DB&lt;br /&gt;
-SS &amp;amp; SP&lt;/p&gt;
-
-&lt;h2 id=&#34;exception&#34;&gt;exception&lt;/h2&gt;
-
-&lt;h2 id=&#34;thread-switch&#34;&gt;Thread switch&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h3&gt;
-
-&lt;p&gt;((last) = __switch_to_asm((prev), (next)));             #=====&amp;gt; call&lt;/p&gt;
-
-&lt;p&gt;jmp     __switch_to                         #=====&amp;gt; jmp + ret&lt;/p&gt;
-
-&lt;h3 id=&#34;old-version-switch-to-push-jmp-ret&#34;&gt;Old version switch_to - push+jmp+ret&lt;/h3&gt;
-
-&lt;p&gt;switch_to&lt;br /&gt;
--       asm volatile(&amp;ldquo;pushl %%ebp\n\t&amp;rdquo;          /* save    EBP   &lt;em&gt;/     &lt;br /&gt;
--                    &amp;ldquo;movl %%esp,%[prev_sp]\n\t&amp;rdquo;        /&lt;/em&gt; save    ESP   &lt;em&gt;/ \   #=====&amp;gt;PREV: Save ESP into task struct thread.&lt;br /&gt;
--                    &amp;ldquo;movl %[next_sp],%%esp\n\t&amp;rdquo;        /&lt;/em&gt; restore ESP   &lt;em&gt;/ \   #=====&amp;gt;NEXT: Setup stack for linkage from task struct thread.&lt;br /&gt;
--                    &amp;ldquo;movl $1f,%[prev_ip]\n\t&amp;rdquo;  /&lt;/em&gt; save    EIP   &lt;em&gt;/     \   #=====&amp;gt;PREV: Save PC into task sturct thread.&lt;br /&gt;
--                    &amp;ldquo;pushl %[next_ip]\n\t&amp;rdquo;     /&lt;/em&gt; restore EIP   &lt;em&gt;/     \   #=====&amp;gt;NEXT: push - Store PC on stack from task struct thread;&lt;br /&gt;
--                    &amp;ldquo;jmp __switch_to\n&amp;rdquo;        /&lt;/em&gt; regparm call  &lt;em&gt;/     \   #=====&amp;gt;NEXT: jmp + ret - Return and restore PC.&lt;br /&gt;
--                    &amp;ldquo;1:\t&amp;rdquo;                                             &lt;br /&gt;
--                    &amp;ldquo;popl %%ebp\n\t&amp;rdquo;           /&lt;/em&gt; restore EBP   &lt;em&gt;/     &lt;br /&gt;
--                                                                       &lt;br /&gt;
--                    /&lt;/em&gt; output parameters &lt;em&gt;/                            &lt;br /&gt;
--                    : [prev_sp] &amp;ldquo;=m&amp;rdquo; (prev-&amp;gt;thread.sp),                &lt;br /&gt;
--                      [prev_ip] &amp;ldquo;=m&amp;rdquo; (prev-&amp;gt;thread.ip),                &lt;br /&gt;
--                      &amp;ldquo;=a&amp;rdquo; (last),                                     &lt;br /&gt;
--                                                                       &lt;br /&gt;
--                      /&lt;/em&gt; clobbered output registers: &lt;em&gt;/                &lt;br /&gt;
--                      &amp;ldquo;=b&amp;rdquo; (ebx), &amp;ldquo;=c&amp;rdquo; (ecx), &amp;ldquo;=d&amp;rdquo; (edx),              &lt;br /&gt;
--                      &amp;ldquo;=S&amp;rdquo; (esi), &amp;ldquo;=D&amp;rdquo; (edi)                           &lt;br /&gt;
--                      /&lt;/em&gt; input parameters: */                          &lt;br /&gt;
--                    : [next_sp]  &amp;ldquo;m&amp;rdquo; (next-&amp;gt;thread.sp),                &lt;br /&gt;
--                      [next_ip]  &amp;ldquo;m&amp;rdquo; (next-&amp;gt;thread.ip),                &lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel-thread-1&#34;&gt;Kernel thread&lt;/h2&gt;
-
-&lt;p&gt;kernel_thread-&amp;gt;kthread-&amp;gt;do_exit&lt;/p&gt;
-
-&lt;h2 id=&#34;task-switching&#34;&gt;Task switching&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2016/3/21/517&#34;&gt;https://lkml.org/lkml/2016/3/21/517&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;dbg-softlockup&#34;&gt;DBG: Softlockup&lt;/h3&gt;
-
-&lt;p&gt; ps aux | grep watchdog&lt;br /&gt;
-root        13  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/0]&lt;br /&gt;
-root        16  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/1]&lt;br /&gt;
-root        22  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/2]&lt;br /&gt;
-root        28  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/3]&lt;/p&gt;
-
-&lt;h3 id=&#34;dbg-hung-tasks-bugs&#34;&gt;DBG: Hung tasks bugs&lt;/h3&gt;
-
-&lt;h4 id=&#34;think-for-myself&#34;&gt;think for myself&lt;/h4&gt;
-
-&lt;p&gt;A kernel bug casuse task to be stuck in &amp;ldquo;D&amp;rdquo; state indefinitely.&lt;br /&gt;
-1. A D state task wait list.&lt;br /&gt;
-2. Hung task timeout.&lt;br /&gt;
-3. Timestamp on adding task to &amp;ldquo;D&amp;rdquo; state wait list.&lt;br /&gt;
-4. Kernel thread for detecting hung tasks - schedule timeout; why kthread?&lt;/p&gt;
-
-&lt;h5 id=&#34;problems&#34;&gt;Problems&lt;/h5&gt;
-
-&lt;p&gt;How could I find all the D state tasks?&lt;br /&gt;
-1. kernel must use specific functions to put D-task on wait list.&lt;br /&gt;
-2. Embeded codes into specific functions to catch &amp;rsquo;D&amp;rsquo; state tasks and put them in the wait list for Hung tasks detecting.&lt;/p&gt;
-
-&lt;h4 id=&#34;kernel-implemention&#34;&gt;Kernel Implemention&lt;/h4&gt;
-
-&lt;p&gt;DETECT_HUNG_TASK&lt;br /&gt;
-kernel/hung_task.c&lt;br /&gt;
-check_hung_uninterruptible_tasks&lt;br /&gt;
-* diffeneces&lt;br /&gt;
-1: kenrel task list - init_task.tasks and p-&amp;gt;signal-&amp;gt;thread_head in copy_process&lt;br /&gt;
-3: t-&amp;gt;nvcsw + t-&amp;gt;nivcsw, t-&amp;gt;last_switch_count and timeout&lt;br /&gt;
-cat /proc/self/status | grep ctxt_switches&lt;/p&gt;
-
-&lt;h3 id=&#34;preemption&#34;&gt;Preemption&lt;/h3&gt;
-
-&lt;h4 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h4&gt;
-
-&lt;ul&gt;
-&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
-syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
-retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
-
-&lt;h4 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h4&gt;
-
-&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
-If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
-
-&lt;h4 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h4&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
-tick: check_preempt_tick or entity_tick&lt;br /&gt;
-fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
-wakeup: check_preempt_wakeup&lt;br /&gt;
-&amp;hellip;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;
-
-&lt;h4 id=&#34;lqo&#34;&gt;LQO&lt;/h4&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule why prev-&amp;gt;state?&lt;br /&gt;
-it&amp;rsquo;s because of need_resched&lt;br /&gt;
-?? schedule_idle&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;canary&lt;br /&gt;
-&lt;a href=&#34;https://my.oschina.net/macwe/blog/610357&#34;&gt;https://my.oschina.net/macwe/blog/610357&lt;/a&gt;&lt;br /&gt;
-boot_init_stack_canary&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;bug??&lt;br /&gt;
-__do_softirq&lt;br /&gt;
-258         pending = local_softirq_pending();&lt;br /&gt;
-259         account_irq_enter_time(current);&lt;br /&gt;
-260&lt;br /&gt;
-261         __local_bh_disable_ip(_RET&lt;em&gt;IP&lt;/em&gt;, SOFTIRQ_OFFSET);&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;os presentations&lt;br /&gt;
-&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/&#34;&gt;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/&lt;/a&gt;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;procedure-and-subroutine-and-linkage-method&#34;&gt;Procedure and subroutine and linkage method&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;https://people.cs.clemson.edu/~mark/subroutines.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;https://en.wikipedia.org/wiki/Subroutine&lt;/a&gt;&lt;br /&gt;
-* 1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;&lt;br /&gt;
-In Chapter 6. Outline of Logical Control.&lt;br /&gt;
-We also wish to be able to arrange for the splitting up of operations into&amp;hellip;&lt;br /&gt;
-When we wish to start on a subsidiary operation we need only make a note&lt;br /&gt;
-of where we left off the major operation&amp;hellip;&lt;br /&gt;
-* 1952 &lt;a href=&#34;http://www.laputan.org/pub/papers/wheeler.pdf&#34;&gt;The use of sub-routines in programmes&lt;/a&gt;&lt;br /&gt;
-The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out of sight.&lt;br /&gt;
-* 1960 &lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;linkage&#34;&gt;linkage&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Link_register&#34;&gt;https://en.wikipedia.org/wiki/Link_register&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;structred-programming&#34;&gt;Structred programming&lt;/h1&gt;
-
-&lt;p&gt;Structured Programming - Dijkstra&lt;/p&gt;
-
-&lt;h1 id=&#34;kthread&#34;&gt;kthread&lt;/h1&gt;
-
-&lt;h2 id=&#34;resource&#34;&gt;resource&lt;/h2&gt;
-
-&lt;h2 id=&#34;change&#34;&gt;Change&lt;/h2&gt;
-
-&lt;p&gt;Periodical: schedule_timeout&lt;br /&gt;
-Demand:&lt;/p&gt;
-
-&lt;h2 id=&#34;inter-process-info&#34;&gt;inter-process info&lt;/h2&gt;
-
-&lt;h1 id=&#34;call-stack&#34;&gt;Call stack&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Call_stack#Functions_of_the_call_stack&#34;&gt;https://en.wikipedia.org/wiki/Call_stack#Functions_of_the_call_stack&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2716018#.W5zV9yqRi-c.twitter&#34;&gt;https://dl.acm.org/citation.cfm?id=2716018#.W5zV9yqRi-c.twitter&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;fork-a-new-process&#34;&gt;Fork a new process&lt;/h1&gt;
-
-&lt;p&gt;What does the child process need from parent?&lt;br /&gt;
-    sched_fork: setup schduling stuff&lt;br /&gt;
-    memory: copy parent&amp;rsquo;s mm&lt;br /&gt;
-How to share memory stuff with parent process?&lt;br /&gt;
-    Linux use COW technique to do this.&lt;br /&gt;
-    How does COW work?&lt;br /&gt;
-    Why does Linux just share page?&lt;br /&gt;
-How to diverge the child execution flow from parent?&lt;br /&gt;
-    what is the first instruction executed by the child process?&lt;/p&gt;
+&lt;p&gt;current_is_workqueue_rescuer and worker-&amp;gt;rescue_wq&lt;/p&gt;
 
 &lt;h1 id=&#34;insepct-process-status&#34;&gt;Insepct process status&lt;/h1&gt;
 
@@ -2165,26 +1952,17 @@ Kernel mapping: tgid_base_stuff show_map_vma&lt;/p&gt;
 
 &lt;p&gt;3A: Chaper 5&lt;/p&gt;
 
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;p&gt;Check glibc sysdeps/unix/sysv/linux/x86_64/clone.S for creating a new thread.&lt;/p&gt;
-
 &lt;h2 id=&#34;idle-kernel-stack&#34;&gt;idle kernel stack&lt;/h2&gt;
 
 &lt;p&gt;master idle进程的kernel stack在init/init_task.c:init_thread_union&lt;br /&gt;
-其他进程的kernel stack是fork产生.&lt;br /&gt;
 this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;br /&gt;
 this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);&lt;br /&gt;
-主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0 init_idle.&lt;br /&gt;
-Deamonize&lt;/p&gt;
+主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0 init_idle.&lt;/p&gt;
 
-&lt;h1 id=&#34;zombie-process&#34;&gt;Zombie process&lt;/h1&gt;
-
-&lt;h2 id=&#34;defunct&#34;&gt;&lt;defunct&gt;&lt;/h2&gt;
+&lt;h1 id=&#34;zombie-process-defunct&#34;&gt;Zombie process &lt;defunct&gt;&lt;/h1&gt;
 
 &lt;p&gt;forked child not reaped by parent will hooked in process list.&lt;br /&gt;
-if parent was killed and exit &lt;defunct&gt; will repaped.&lt;br /&gt;
-&lt;defunct&gt;表明父活着, 但不收尸.&lt;/p&gt;
+if parent was killed and exit &lt;defunct&gt; will repaped.&lt;/p&gt;
 </description>
     </item>
     

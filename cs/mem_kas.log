@@ -1,0 +1,31 @@
+# 0xffffffff80000000 ~ 2G
+call early_make_pgtable??
+x86_64_start_kernel ->
+init_level4_pgt[511] = early_level4_pgt[511];
+
+# 0xffff880000000000 ~ "0xffff880000000000 +max_fpn << PAGE_SHIFT" or variable high_memory : direct map memory
+(0x1000000000000 -0x880000000000) /1024.0 /1024.0/1024.0/1024.0
+120.0 TB
+
+# Modules text address
+cat /sys/module/wmi/sections/.text
+cat /proc/modules | grep wmi
+int bss_var;
+static int hello_init(void)
+{printk(KERN_ALERT "Text location .text(Code Segment):%p\n",hello_init);
+static int data_var=0;
+printk(KERN_ALERT "Data Location .data(Data Segment):%p\n",&data_var);
+printk(KERN_ALERT "BSS Location: .bss(BSS Segment):%p\n",&bss_var);}
+
+# 32-bit Highmem and mappings
+https://www.kernel.org/doc/Documentation/vm/highmem.txt
+## Persistent Kernel Mappings
+kmap(struct page *)
+How kmap works? 
+Check kmap_init(), later!
+## Temporay Mappings(Fixmaps)
+kmap_atomic()
+
+# Material
+## Onset
+setup_arch -> init_mem_mapping # set page table and cr3.

@@ -16,7 +16,7 @@
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="Memory-ordering model : firoyang.org"/>
+<meta property="og:title" content="Memory consistency model : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
@@ -35,7 +35,7 @@
 
 
     <base href="http://firoyang.org/">
-    <title> Memory-ordering model</title>
+    <title> Memory consistency model</title>
     <link rel="canonical" href="http://firoyang.org/cs/consistency_model/">
 
     
@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -156,7 +156,7 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >Memory-ordering model</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >Memory consistency model</h1>
 	  
 
 <aside id="meta">
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="161">
+<meta itemprop="wordCount" content="716">
 <meta itemprop="datePublished" content="2017-12-16">
 <meta itemprop="url" content="http://firoyang.org/cs/consistency_model/">
 
@@ -189,46 +189,161 @@
 
 <p>When we are talking on memory model, we are refering memory consistency model or memory ordering model.</p>
 
-<h1 id="practices">Practices</h1>
+<h1 id="hisotry">Hisotry</h1>
 
-<p><a href="http://preshing.com/20120515/memory-reordering-caught-in-the-act/">Memory Reordering Caught in the Act</a></p>
+<p>1979<br />
+<a href="https://www.microsoft.com/en-us/research/uploads/prod/2016/12/How-to-Make-a-Multiprocessor-Computer-That-Correctly-Executes-Multiprocess-Programs.pdf">How to Make a Multiprocessor Computer That Correctly Executes Multiprocess Progranm</a><br />
+1987 ~ 1990<br />
+<a href="https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf">Linearizability: A Correctness Condition for Concurrent Objects</a><br />
+1989<br />
+<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.8.3766&amp;rep=rep1&amp;type=pdf">processor consistency: CACHE CONSISTENCY AND SEQUENTIAL CONSISTENCY</a><br />
+1990<br />
+<a href="https://dl.acm.org/citation.cfm?id=325102">Release consistency: Memory consistency and event ordering in scalable shared-memory multiprocessors</a><br />
+1991<br />
+<a href="https://dl.acm.org/citation.cfm?id=113406">Proving sequential consistency of high-performance shared memories</a><br />
+1992<br />
+<a href="https://www.gaisler.com/doc/sparcv8.pdf">TSO Sparc v8: A standard memory model called Total Store Ordering (TSO) is defined for SPARC</a><br />
+<a href="https://link.springer.com/chapter/10.1007/978-1-4615-3604-8_2">Formal Specification of Memory Models: and two store ordered models TSO and PSO defined by the Sun Microsystem&rsquo;s SPARC architecture.</a></p>
 
-<h1 id="memory-model">Memory model</h1>
+<p>2001 ~ Present<br />
+<a href="https://www.youtube.com/watch?v=WUfvvFD5tAA">IA64 memory ordering</a></p>
 
-<p><a href="https://homes.cs.washington.edu/~bornholt/post/memory-models.html#fn:lamport">Memory Consistency Models: A Primer</a><br />
-<a href="http://www.hpl.hp.com/techreports/Compaq-DEC/WRL-95-7.pdf">Shared Memory Consistency Models: A Tutorial</a><br />
-<a href="http://preshing.com/20120930/weak-vs-strong-memory-models/">Weak vs. Strong Memory Models</a></p>
+<h1 id="purposes">Purposes</h1>
 
-<h1 id="x86-memory-model">x86 memory model</h1>
+<p><a href="https://www.cs.cmu.edu/afs/cs/academic/class/15418-s12/www/lectures/14_relaxedReview.pdf">Motivation: hiding latency</a><br />
+▪ Why are we interested in relaxing ordering requirements?<br />
+- Performance<br />
+- Speci!cally, hiding memory latency: overlap memory accesses with other operations<br />
+- Remember, memory access in a cache coherent system may entail much more then<br />
+simply reading bits from memory (!nding data, sending invalidations, etc.)</p>
 
-<p><a href="http://www.rdrop.com/users/paulmck/scalability/paper/whymb.2010.06.07c.pdf">Memory Barriers: a Hardware View for Software Hackers - must read</a><br />
-<a href="https://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/">x86 is TSO why it borthers fence?</a><br />
-<a href="https://www.cnblogs.com/caidi/p/6708789.html">共同进入与饥饿</a><br />
+<h2 id="why-tso-it-s-because-that-write-buffer-or-store-buffer-is-not-invisible-any-more-for-multiprocessor-https-www-cis-upenn-edu-devietti-classes-cis601-spring2016-sc-tso-pdf">Why TSO? <a href="https://www.cis.upenn.edu/~devietti/classes/cis601-spring2016/sc_tso.pdf">It&rsquo;s because that write buffer or Store buffer is not invisible any more for multiprocessor</a></h2>
+
+<p>To abandon SC; to Allow use of a FIFO write buffer.<br />
+<a href="https://www.cs.utexas.edu/~bornholt/post/memory-models.html">An example: There’s no reason why performing event (2) (a read from B) needs to wait until event (1) (a write to A) completes. They don’t interfere with each other at all, and so should be allowed to run in parallel. See Memory Consistency Models: A Primer</a><br />
+Hide the write latency by putting the data in the store buffer.</p>
+
+<h3 id="why-not-read-write-reordering">Why not read-write reordering?</h3>
+
+<p>reordering read-write is non-sense.</p>
+
+<h1 id="formal-cause">Formal cause</h1>
+
+<p>Shared memory<br />
+Multiprocessor<br />
+Memory access<br />
+program order<br />
+<a href="https://www.hpl.hp.com/techreports/Compaq-DEC/WRL-95-7.pdf">Recommened by CAAQA: Observity in SC, TSO, PC: Paragraph Relaxing the Write to Read Program Order in Shared Memory Consistency Models: A Tutorial</a><br />
+<a href="http://www.rdrop.com/users/paulmck/scalability/paper/whymb.2010.06.07c.pdf">Memory Barriers: a Hardware View for Software Hackers - must read</a><br />
+<a href="http://15418.courses.cs.cmu.edu/spring2013/article/41">&lsquo;A Summary of Relaxed Consistency&rsquo; CMU</a><a href="https://www.cs.cmu.edu/afs/cs/academic/class/15418-s12/www/lectures/14_relaxedReview.pdf">Slides</a></p>
+
+<h2 id="sc">SC</h2>
+
+<p><a href="https://www.microsoft.com/en-us/research/uploads/prod/2016/12/How-to-Make-a-Multiprocessor-Computer-That-Correctly-Executes-Multiprocess-Programs.pdf">sequential consistency</a><br />
+<a href="https://jepsen.io/consistency/models/sequential#formally">Formal of Sequential Consistency by Jepsen</a></p>
+
+<h2 id="tso">TSO</h2>
+
+<p>Total Store Ordering in Appendix k Sparc v8.</p>
+
+<h3 id="tso-in-x86">TSO in x86</h3>
+
+<p><a href="https://www.cl.cam.ac.uk/~pes20/weakmemory/x86tso-paper.tphols.pdf">A Better x86 Memory Model: x86-TSO</a><br />
 <a href="https://stackoverflow.com/questions/27595595/when-are-x86-lfence-sfence-and-mfence-instructions-required">When are x86 LFENCE, SFENCE and MFENCE instructions required?</a></p>
 
-<h1 id="c11-memory-model">C11 memory model</h1>
+<h3 id="tso-vs-pc">TSO vs PC:</h3>
 
-<p><a href="http://en.cppreference.com/w/c/atomic/memory_order">C memory order</a><br />
-<a href="https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf">Outlawing Ghosts: Avoiding Out-of-Thin-Air Results</a><br />
-<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html">Out-of-Thin-Air Execution is Vacuous</a><br />
-<a href="http://www.cl.cam.ac.uk/~pes20/weakmemory/">Relaxed-Memory Concurrency</a><br />
-<a href="https://www.cl.cam.ac.uk/~pes20/cpp/model.pdf">Mathematizing C++ Concurrency: The Isabelle/HOL model</a></p>
+<p><a href="http://15418.courses.cs.cmu.edu/spring2013/article/41">&lsquo;A Summary of Relaxed Consistency&rsquo; CMU</a><a href="https://www.cs.cmu.edu/afs/cs/academic/class/15418-s12/www/lectures/14_relaxedReview.pdf">Slides</a></p>
 
-<h1 id="c-memory-model">C++ memory model</h1>
+<h3 id="tso-and-peterson-s-algorithm">TSO and Peterson&rsquo;s algorithm</h3>
 
-<p><a href="https://www.youtube.com/watch?v=gpsz8sc6mNU">The C++ Memory Model - Valentin Ziegler @ Meeting C++ 2014</a></p>
+<p><a href="https://bartoszmilewski.com/2008/11/05/who-ordered-memory-fences-on-an-x86/">Who ordered memory fences on an x86?</a><br />
+<a href="https://www.cnblogs.com/caidi/p/6708789.html">共同进入与饥饿</a></p>
 
-<h1 id="compiler-memory-model">Compiler memory model</h1>
+<h2 id="pc">PC</h2>
+
+<p><a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.8.3766&amp;rep=rep1&amp;type=pdf">processor consistency: CACHE CONSISTENCY AND SEQUENTIAL CONSISTENCY</a></p>
+
+<h2 id="wc">WC</h2>
+
+<p><a href="https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/oldquiz/p434-dubois.pdf">weak consistency: Memory access buffering in multiprocessors</a><br />
+They distinguish between ordinary shared accesses and synchronization accesses, where the latter are used to control concurrency<br />
+between several processes and to maintain the integrity of ordinary shared data.</p>
+
+<h2 id="rc">RC</h2>
+
+<p><a href="https://dl.acm.org/citation.cfm?id=325102">Firo: a must-read: Release consistency: Memory consistency and event ordering in scalable shared-memory multiprocessors</a><br />
+<a href="https://docs.microsoft.com/en-us/windows/win32/dxtecharts/lockless-programming?redirectedfrom=MSDN#read-acquire-and-write-release-barriers">Must-read: Lockless Programming Considerations for Xbox 360 and Microsoft Windows</a><br />
+At right top of page 6<br />
+Condition 3.1: Conditions for Release Consistency<br />
+(A) before an ordinary load or store access is allowed to perform with respect to any other processor,<br />
+all previous acquire accesses must be performed, and<br />
+(B) before a release access is allowed to perform with<br />
+respect to any other processor, all previous ordinary<br />
+load and store accesses must be performed, and<br />
+&copy; special accesses are processor consistent with respect to one another.<br />
+<a href="https://preshing.com/20120913/acquire-and-release-semantics/">Acquire and Release Semantics</a><br />
+<a href="https://www.kernel.org/doc/Documentation/memory-barriers.txt">https://www.kernel.org/doc/Documentation/memory-barriers.txt</a></p>
+
+<h3 id="examples">Examples</h3>
+
+<p><a href="https://marc.info/?l=linux-kernel&amp;m=151844394031510&amp;w=2">mm/page_ref: use atomic_set_release in page_ref_unfreeze</a><br />
+commit 7088efa9137a15d7d21e3abce73e40c9c8a18d68<br />
+Refs: v4.15-rc1-4-g7088efa9137a<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+AuthorDate: Mon Oct 9 10:04:27 2017 -0700<br />
+Commit:     Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+CommitDate: Mon Dec 4 10:52:52 2017 -0800<br />
+    fs/dcache: Use release-acquire for name/length update</p>
+
+<h2 id="kernel">Kernel</h2>
+
+<p><a href="https://www.kernel.org/doc/Documentation/memory-barriers.txt">Why do we need mb for SLEEP AND WAKE-UP FUNCTIONS?</a><br />
+<a href="https://lwn.net/Articles/718628/">A formal kernel memory-ordering model</a><br />
+<a href="https://lwn.net/Articles/720550/">A formal kernel memory-ordering model (part 2)</a><br />
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html">Linux-Kernel Memory Model</a><br />
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0124r4.html">Linux-Kernel Memory Model</a><br />
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0124r6.html">Linux-Kernel Memory Model</a><br />
+<a href="http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf">Linux-Kernel Memory Ordering: Help Arrives At Last!</a> and <a href="https://www.youtube.com/watch?v=ULFytshTvIY">Talk on youtube on this!</a></p>
+
+<h2 id="compiler">Compiler</h2>
 
 <p><a href="http://preshing.com/20120625/memory-ordering-at-compile-time/">Memory Ordering at Compile Time</a><br />
 <a href="https://blog.regehr.org/archives/232">A Guide to Undefined Behavior in C and C++, Part 3</a></p>
 
-<h1 id="linux-kernel-memory-model">Linux kernel memory model</h1>
+<h2 id="other-architectures">Other architectures</h2>
 
-<p><a href="https://lwn.net/Articles/718628/">A formal kernel memory-ordering model</a><br />
-<a href="https://lwn.net/Articles/720550/">A formal kernel memory-ordering model (part 2)</a><br />
-<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html">Linux-Kernel Memory Model</a><br />
-<a href="http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf">Linux-Kernel Memory Ordering: Help Arrives At Last!</a> and <a href="https://www.youtube.com/watch?v=ULFytshTvIY">Talk on youtube on this!</a></p>
+<p><a href="http://www.cl.cam.ac.uk/~pes20/weakmemory/">Relaxed-Memory Concurrency</a></p>
+
+<h2 id="c11-library-memory-model">C11(library) memory model</h2>
+
+<p><a href="http://en.cppreference.com/w/c/atomic/memory_order">C memory order</a><br />
+<a href="https://www.cl.cam.ac.uk/~pes20/cpp/notes42.html">Don&rsquo;t read: The Thin-air Problem</a><br />
+<a href="https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf">Outlawing Ghosts: Avoiding Out-of-Thin-Air Results</a><br />
+<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html">Out-of-Thin-Air Execution is Vacuous</a></p>
+
+<h1 id="material">Material</h1>
+
+<h2 id="practices">Practices</h2>
+
+<p><a href="http://preshing.com/20120515/memory-reordering-caught-in-the-act/">Memory Reordering Caught in the Act</a></p>
+
+<h2 id="lqo">LQO</h2>
+
+<p>134 static void sysrq_handle_crash(int key)<br />
+ 135 {<br />
+ 136         char <em>killer = NULL;<br />
+ 137<br />
+ 138         /</em> we need to release the RCU read lock here,<br />
+ 139          * otherwise we get an annoying<br />
+ 140          * &lsquo;BUG: sleeping function called from invalid context&rsquo;<br />
+ 141          * complaint from the kernel before the panic.<br />
+ 142          <em>/<br />
+ 143         rcu_read_unlock();<br />
+ 144         panic_on_oops = 1;      /</em> force panic */<br />
+ 145         wmb();<br />
+ 146         *killer = 1;<br />
+ 147 }</p>
 
 		</article>
 	  </div>
@@ -240,7 +355,7 @@
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
     var disqus_identifier = 'http:\/\/firoyang.org\/cs\/consistency_model\/';
-    var disqus_title = 'Memory-ordering model';
+    var disqus_title = 'Memory consistency model';
     var disqus_url = 'http:\/\/firoyang.org\/cs\/consistency_model\/';
 
     (function() {

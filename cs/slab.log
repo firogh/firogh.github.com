@@ -1,0 +1,128 @@
+# SLAB 
+man slabinfo
+[Status of the Linux Slab Allocators](https://www.socallinuxexpo.org/scale9x-media/scalemedia/scale/scale9x-media/simple_cfp/presentations/16_30-DavidRientjes-Status_of_the_Linux_Slab_Allocators.pdf)
+[The Slab Allocator: An Object-Caching Kernel Memory Allocator](https://people.eecs.berkeley.edu/~kubitron/cs194-24/hand-outs/bonwick_slab.pdf)
+[Text version](https://www.usenix.org/legacy/publications/library/proceedings/bos94/full_papers/bonwick.a)
+https://mp.weixin.qq.com/s/ragFsK_AJivOGjR47tAhHw
+https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf
+type: resource
+[The slab allocator has three principle aims:](https://www.kernel.org/doc/gorman/html/understand/understand011.html)
+[Re: When to use kmem_cache_alloc](https://lkml.org/lkml/2000/8/7/65)
+shrink attr
+/sys/kernel/slab/iint_cache/shrink
+SLAB_ATTR(shrink);
+array_cache.entry: cache hotness.
+https://lwn.net/Kernel/Index/#Memory_management-Writeback
+## Magazine layer
+[Magazines and Vmem: Extending the Slab Allocator to Many CPUs and Arbitrary Resources](http://www.parrot.org/sites/www.parrot.org/files/vmem.pdf)
+## l3->shared
+[Improve inter-cpu object passing in slab 1/3](https://lwn.net/Articles/32674/)
+[Improve inter-cpu object passing in slab 2/3](https://lwn.net/Articles/32675/)
+
+## objsize vs size
+
+slab size = PAGE_SIZE << gfporder		#SSIZE in kmem -S
+
+# Manage objects
+## struct slab 
+commit 106a74e13b329cf609c145dc198087c04f5f8ca5
+Author: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Date:   Thu Oct 24 10:07:48 2013 +0900
+    slab: replace free and inuse in struct slab with newly introduced active
+### bufctl
+History: commit 7d49055fd2daafd6a5ba83231e57545b81d295d3 (tag: 2.4.0-test3pre6)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:36:16 2007 -0500
+    Import 2.4.0-test3pre6
++ * kmem_bufctl_t:
++ *
++ * Bufctl's are used for linking objs within a slab
++ * linked offsets.
++ *
++ * This implementaion relies on "struct page" for locating the cache &
++ * slab an object belongs to.
++ * This allows the bufctl structure to be small (one int), but limits
++ * the number of objects a slab (not a cache) can contain when off-slab
++ * bufctls are used. The limit is the size of the largest general cache
++ * that does not use off-slab slabs.
++ * For 32bit archs with 4 kB pages, is this 56.
+  * This is not serious, as it is only for large objects, when it is unwise
+  * to have too many per slab.
+  * Note: This limit can be raised by introducing a general cache whose size
+  * is less than 512 (PAGE_SIZE<<3), but greater than 256.
+  */
++#define BUFCTL_END 0xffffFFFF
++#define        SLAB_LIMIT 0xffffFFFE
++typedef unsigned int kmem_bufctl_t;
+
+
+## page->freelist and page->active
+commit 8456a648cf44f14365f1f44de90a3da2526a4776
+Author: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Date:   Thu Oct 24 10:07:49 2013 +0900
+
+    slab: use struct page for slab management
+check get_slabinfo
+
+## slab reclaimable
+commit e12ba74d8ff3e2f73a583500d7095e406df4d093
+Refs: v2.6.23-4359-ge12ba74d8ff3
+Author:     Mel Gorman <mel@csn.ul.ie>
+AuthorDate: Tue Oct 16 01:25:52 2007 -0700
+Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
+CommitDate: Tue Oct 16 09:43:00 2007 -0700
+    Group short-lived and reclaimable kernel allocations
+
+
+# alias
+__kmem_cache_alias()
+        cachep = find_mergeable(size, align, flags, name, ctor);
+        if (cachep) {
+                cachep->refcount++;
+                 * Adjust the object sizes so that we clear
+                 * the complete object on kzalloc.
+                cachep->object_size = max_t(int, cachep->object_size, size);
+
+# Free - kfree
+## objp => array_cache
+objp => kmem_cache->cpu_cache ( or array for older version kernel)
+## array_cache check cache_flusharray()
+ac =>  shared => 
+or if shared reached limit
+ac => page->free_list and marked with page->active
+tglx: commit dd6b3d93b062c8461867d95c86e40b2a8241c43b
+Author: Andrew Morton <akpm@digeo.com>
+Date:   Mon Jun 2 03:38:42 2003 -0700
+    [PATCH] magazine layer for slab
+introduced shared array_cache
++               new_shared->limit = batchcount*shared;
+
+# Debugging
+slab_nomerge
+
+# SLUB
+[How does the SLUB allocator work](https://events.static.linuxfound.org/images/stories/pdf/klf2012_kim.pdf)
+[SLAUOB: Kernel memory allocator design and philosophy](https://www.youtube.com/watch?v=h0VMLXavx30)
+[SLUB fastpath improvements and potential booster shots through bulk alloc and free](https://www.youtube.com/watch?v=s0lZzP1jOzI)
+Documentation/vm/slub.txt
+[SLUB: The unqueued slab allocator V6](https://lwn.net/Articles/229096/)
+[The SLUB allocator](https://lwn.net/Articles/229984/)
+SLUB core - 81819f0fc8285a2a5a921c019e3e3d7b6169d225
+https://events.static.linuxfound.org/sites/events/files/slides/slaballocators.pdf
+[linux内存源码分析 - SLUB分配器概述](https://www.cnblogs.com/tolimit/p/4654109.html)
+http://www.wowotech.net/memory_management/247.html
+Freeing a full slab will make it present in per cpu partial of node partial.
+[Per cpu free list](https://lwn.net/Articles/454474/)
+[slub: reap free slabs periodically](https://lore.kernel.org/patchwork/patch/687700/)
+## Freelist vs Freelist
+26:00
+[关于page同时被多CPU使用](http://kouucocu.lofter.com/post/1cdb8c4b_50f6319)
+
+## SLUB debug
+[SLUB DEBUG原理](http://www.wowotech.net/memory_management/427.html)
+[如何诊断SLUB问题](http://linuxperf.com/?p=184)
+
+
+DEBUG_SLAB_LEAK
+[怎样诊断SLAB泄露问题](http://linuxperf.com/?p=148)
+perf record -a -e kmem:kmalloc --filter "bytes_alloc==64"

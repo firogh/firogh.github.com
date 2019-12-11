@@ -1,18 +1,249 @@
-/proc/meminfo
+
+# E820 memory map
+Kerenl setup header?: detect_memory() Load BIOS memory map into boot_params.e820_map
+setup_arch->
+{
+        setup_memory_map -> default_machine_specific_memory_setup // Save e820 memory map into struct vriable e820 from boot_params.e820_map.
+        max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with <.
+        mtrr update max_pfn, see [Processor supplementary capability](https://en.wikipedia.org/wiki/Processor_supplementary_capability)
+        trim_low_memory_range // reserve 64k
+        max_low_pfn = e820_end_of_low_ram_pfn(); //end of block below 4GB
+}
+
+# Memblock and bootmem
+setup_arch->
+        memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET
+memblock the [implementations](https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html) of memblock is quite simple. static initialization with variable memblock.
+bootmem is discarded by [ARM](https://lkml.org/lkml/2015/12/21/333) and x86
+a little history in e820_register_active_region about memblock [replaced by lmb](https://lkml.org/lkml/2010/7/13/68)
+## What is the meaning of the following notes?
+### memblock (constantly Y for x86)
+memblock_free_late->__memblock_free_late->__free_pages_bootmem
+### bootmem (discarded by x86)
+memblock_free_late->free_bootmem_late->__free_pages_bootmem
+free_all_bootmem->free_all_bootmem_core->__free_pages_bootmem
+### nobootmem
+free_bootmem_late->__free_pages_bootmem
+free_all_bootmem->free_low_memory_core_early->__free_memory_core->*__free_pages_memory*->__free_pages_bootmem->__free_pages_boot_core
+### free bootmem core/earyly
+mm_init->mem_init->free_all_bootmem
+### free bootmem late
+start_kernel->efi_free_boot_services->free_bootmem_late->__free_pages_bootmem
+
+# Memory variables - layout
+extern unsigned long max_low_pfn;
+extern unsigned long min_low_pfn;
+extern unsigned long max_pfn;
 Committed_AS and __vm_enough_memory
+crash> p vmemmap_base
+vmemmap_base = $1 = 0xffffe69900000000
+crash> p vmalloc_base
+vmalloc_base = $2 = 0xffffb7d2c0000000
+p high_memory
+high_memory = $3 = (void *) 0xffff9c0940000000
+arch/x86/include/asm/pgtable_64_types.h
+#define __START_KERNEL_map      _AC(0xffffffff80000000, UL)
+# if kaslr CONFIG_RANDOMIZE_MEMORY=y
+page_offset_base = $4 = 0xffff908900000000 # kaslr
+# else
+#ifdef CONFIG_X86_5LEVEL
+#define __PAGE_OFFSET_BASE      _AC(0xff10000000000000, UL)
+#else
+#define __PAGE_OFFSET_BASE      _AC(0xffff880000000000, UL)
+#endif
+
+__virt_addr_valid
+_pa(kaddr)
+
+percpu
+p pcpu_base_addr 
+pcpu_base_addr = $4 = (void *) 0xffff88023fc00000
+
+## page layout
+page_to_nid
+pfn_to_nid
+pfn_to_page
+page_zone
+virt_to_page
+page_pgdat
+
+
+# Process VM stat
+oom_badness
+dump_tasks
+unsigned long total_vm;         /* Total pages mapped */
+task->mm->total_vm, 
+total_vm is increased in mm/mmap.c
+get_mm_rss(task->mm)
+static inline unsigned long get_mm_rss(struct mm_struct *mm)
+{
+        return get_mm_counter(mm, MM_FILEPAGES) +
+                get_mm_counter(mm, MM_ANONPAGES) +
+                get_mm_counter(mm, MM_SHMEMPAGES);
+These three entries are increased in do_page_fault
+atomic_long_t nr_ptes;                  /* PTE page table pages */
+atomic_long_read(&task->mm->nr_ptes),
+mm_nr_pmds(task->mm), 
+get_mm_counter(task->mm, MM_SWAPENTS), # one of usages is in rmap.c unmap
+
+# Pages
+[Some are in the "page cache" used to store the contents of files.](https://lwn.net/Articles/446317/) 
+Some are "anonymous pages" holding data used by applications. 
+Some are used as "slabs" and divided into pieces to answer kmalloc() requests. 
+Others are simply part of a multi-page allocation or maybe are on a free list waiting to be used. 
+Each of these different use cases could be seen as a subtype of the general class of "page".  -- Neil Brown.
+
+## Page frame reclaimation
+page_is_file_cache
+Check page_check_dirty_writeback() for anonymous pages's definition.
+        /*
+         * Anonymous pages are not handled by flushers and must be written
+         * from reclaim context. Do not stall reclaim based on them
+         */
+        if (!page_is_file_cache(page) ||
+            (PageAnon(page) && !PageSwapBacked(page))) {
+                *dirty = false;
+                *writeback = false;
+                return;
+        }
+
+
+# swap
+total_swap_pages
+nr_swap_pages: available swap slots.
+cat /proc/meminfo  | grep Swap
+SwapCached:            0 kB
+unsigned long total_swapcache_pages(void)
+{
+        for (i = 0; i < MAX_SWAPFILES; i++) {
+                nr = nr_swapper_spaces[i];
+                spaces = rcu_dereference(swapper_spaces[i]);
+                if (!nr || !spaces)
+                        continue;
+                for (j = 0; j < nr; j++)
+                        ret += spaces[j].nrpages;
+SwapTotal:             0 kB
+SwapFree:              0 kB
+void si_swapinfo(struct sysinfo *val)
+{
+        for (type = 0; type < nr_swapfiles; type++) {
+                struct swap_info_struct *si = swap_info[type];
+
+                if ((si->flags & SWP_USED) && !(si->flags & SWP_WRITEOK))
+                        nr_to_be_unused += si->inuse_pages;
+        }
+        val->freeswap = atomic_long_read(&nr_swap_pages) + nr_to_be_unused;
+        val->totalswap = total_swap_pages + nr_to_be_unused;
+
+# VM stat
+vm_stat and vm_event_stats; unit is 4KB; they are same as output of kmem -V in crash-utility.
+totalram_pages
+/proc/meminfo
+[/PROC/MEMINFO之谜](http://linuxperf.com/?p=142)
+meminfo_proc_show
+/proc/zoneinfo
+
+NR_FILE_MAPPED could be larger than NR_ACTIVE_FILE or NR_INACTIVE_FILE because multiple processes map same page to it's process address space. It also includes shmem.
+
+NR_FILE_PAGES: It alos contains the page in the swap cache so it should be larger than NR_INACTIVE_FILE + NR_ACTIVE_FILE.
+commit 347ce434d57da80fd5809c0c836f206a50999c26
+Refs: v2.6.17-4184-g347ce434d57d
+Author:     Christoph Lameter <clameter@sgi.com>
+AuthorDate: Fri Jun 30 01:55:35 2006 -0700
+Commit:     Linus Torvalds <torvalds@g5.osdl.org>
+CommitDate: Fri Jun 30 11:25:34 2006 -0700
+    [PATCH] zoned vm counters: conversion of nr_pagecache to per zone counter
++++ b/mm/swap_state.c
+@@ -87,7 +87,7 @@ static int __add_to_swap_cache(struct page *page, swp_entry_t entry,
+                        SetPageSwapCache(page);
+                        set_page_private(page, entry.val);
+                        total_swapcache_pages++;
+-                       pagecache_acct(1);
++                       __inc_zone_page_state(page, NR_FILE_PAGES);
+                }
+                write_unlock_irq(&swapper_space.tree_lock);
+                radix_tree_preload_end();
+@@ -132,7 +132,7 @@ void __delete_from_swap_cache(struct page *page)
+        set_page_private(page, 0);
+        ClearPageSwapCache(page);
+        total_swapcache_pages--;
+-       pagecache_acct(-1);
++       __dec_zone_page_state(page, NR_FILE_PAGES);
+
+## Process memory usage.
+__show_smap task_mem
+also check tgid_base_stuff
+/proc/self/stat  proc_tgid_stat the corresponding linux kernel function do_task_stat() and child function get_mm_rss() and struct mm_rss_stat rss_stat;
+/proc/self/status task_mem() file = get_mm_counter(mm, MM_FILEPAGES); unit is 4kB.
+/proc/self/statm  proc_pid_statm
+
+
+## Free area
+show_free_areas
+
+## zonelist
+node_zonelist
+NODE_DATA(nid)->node_zonelists + gfp_zonelist(flags);
+
+## GFP ZONE table
+commit b70d94ee438b3fd9c15c7691d7a932a135c18101
+Refs: v2.6.30-5489-gb70d94ee438b
+Author:     Christoph Lameter <cl@linux.com>
+AuthorDate: Tue Jun 16 15:32:46 2009 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Tue Jun 16 19:47:41 2009 -0700
+    page-allocator: use integer fields lookup for gfp_zone and check for errors in flags passed to the page allocator
++ * GFP_ZONE_TABLE is a word size bitstring that is used for looking up the
++ * zone to use given the lowest 4 bits of gfp_t. Entries are ZONE_SHIFT long
++ * and there are 16 of them to cover all possible combinations of
++ * __GFP_DMA, __GFP_DMA32, __GFP_MOVABLE and __GFP_HIGHMEM
++ *
++ * The zone fallback order is MOVABLE=>HIGHMEM=>NORMAL=>DMA32=>DMA.
++ * But GFP_MOVABLE is not only a zone specifier but also an allocation
++ * policy. Therefore __GFP_MOVABLE plus another zone selector is valid.
++ * Only 1bit of the lowest 3 bit (DMA,DMA32,HIGHMEM) can be set to "1".
++ *
++ *       bit       result
++ *       =================
++ *       0x0    => NORMAL
++ *       0x1    => DMA or NORMAL
++ *       0x2    => HIGHMEM or NORMAL
++ *       0x3    => BAD (DMA+HIGHMEM)
++ *       0x4    => DMA32 or DMA or NORMAL
++ *       0x5    => BAD (DMA+DMA32)
++ *       0x6    => BAD (HIGHMEM+DMA32)
++ *       0x7    => BAD (HIGHMEM+DMA32+DMA)
++ *       0x8    => NORMAL (MOVABLE+0)
++ *       0x9    => DMA or NORMAL (MOVABLE+DMA)
++ *       0xa    => MOVABLE (Movable is valid only if HIGHMEM is set too)
++ *       0xb    => BAD (MOVABLE+HIGHMEM+DMA)
++ *       0xc    => DMA32 (MOVABLE+HIGHMEM+DMA32)
++ *       0xd    => BAD (MOVABLE+DMA32+DMA)
++ *       0xe    => BAD (MOVABLE+DMA32+HIGHMEM)
++ *       0xf    => BAD (MOVABLE+DMA32+HIGHMEM+DMA)
+
+
+
+## Buffer cache of command 'free'
+"Buffers" represent how much portion of RAM is dedicated to cache disk blocks
+1. Open block device directly open("/dev/sdb"...) -> blkdev_open
+2. Read metadata,including indirect blocks, bitmap,  sb_getblk->... -> grow_dev_page
+## Shared dirty pages
+[PATCH] mm: tracking shared dirty pages - d08b3851da41d0ee60851f2c75b118e1f7a5fc89
+
+## Threshhold
+Check calculate_normal_threshold
+
+# ETC
 [page owner](https://www.kernel.org/doc/html/v4.18/vm/page_owner.html)
+
+# Slab
+/proc/slabinfo
 
 # Memory available
 [provide estimated available memory in /proc/meminfo](https://lore.kernel.org/patchwork/patch/417981/)
 equation for calculating all available memory 
 freeram + LRU_ACTIVE_FILE + LRU_INACTIVE_FILE + NR_SLAB_RECLAIMABLE 
-
-# meminfo 
-meminfo_proc_show
-## Buffer cache of command 'free'
-"Buffers" represent how much portion of RAM is dedicated to cache disk blocks
-1. Open block device directly open("/dev/sdb"...) -> blkdev_open
-2. Read metadata,including indirect blocks, bitmap,  sb_getblk->... -> grow_dev_page
 
 # HW availbae memory 
 >>> 6439184 + 36648 + 17089808 + 2511088 - 12524
@@ -22,10 +253,42 @@ meminfo_proc_show
 >>> 5902536 + 49160 + 12616744 + 1400240 - 12524
 19956156
 
+# NR_WRITEBACK
+FIXME: pages accounted for in NR_WRITEBACK are not on the LRU lists  any more, right?
+Right. Check right.
+
+# Zone based memory states
+commit 2244b95a7bcf8d24196f8a3a44187ba5dfff754c
+Author: Christoph Lameter <clameter@sgi.com>
+Date:   Fri Jun 30 01:55:33 2006 -0700
+    [PATCH] zoned vm counters: basic ZVC (zoned vm counter) implementation
+
+# Node based memory states
+commit 599d0c954f91d0689c9bb421b5bc04ea02437a41
+Author: Mel Gorman <mgorman@techsingularity.net>
+Date:   Thu Jul 28 15:45:31 2016 -0700
+    mm, vmscan: move LRU lists to node
+commit 11fb998986a72aa7e997d96d63d52582a01228c5
+Author: Mel Gorman <mgorman@techsingularity.net>
+Date:   Thu Jul 28 15:46:20 2016 -0700
+
+    mm: move most file-based accounting to the node
+v4.7-5957-gbca6759258db
+commit bca6759258dbef378bcf5b872177bcd2259ceb68
+Author: Mel Gorman <mgorman@techsingularity.net>
+Date:   Thu Jul 28 15:47:05 2016 -0700
+    mm, vmstat: remove zone and node double accounting by approximating retries
+
+## Zone based memory states partially come back
+commit 71c799f4982d340fff86e751898841322f07f235
+Author: Minchan Kim <minchan@kernel.org>
+Date:   Thu Jul 28 15:47:26 2016 -0700
+    mm: add per-zone lru list stat
+Check update_lru_size
+
 # LQO
 ramfs pages first go to (in)active lists, moves to unevictable later, so it's not really true already. ;)
 why mapping_set_unevictable(inode->i_mapping);  in ramfs_get_inode. Check https://serverfault.com/a/590133/143494
-
 
 # Facts
 LRU_IN/ACTIVE_ANON in cached: error = shmem_add_to_page_cache(page, mapping, index, gfp, NULL); lru_cache_add_anon(page);
@@ -39,10 +302,6 @@ AnonPages: NR_ANON_PAGES Mapped anonymous pages do_xx_fault
                   + global_page_state(NR_ANON_TRANSPARENT_HUGEPAGES) *
                   HPAGE_PMD_NR)
 
-# /proc/slabinfo
-
-
-
 ## RAMFS shmem unevictable
 fs/ramfs/inode.c <<ramfs_get_inode>>
              mapping_set_unevictable(inode->i_mapping);
@@ -50,5 +309,3 @@ mm/shmem.c <<shmem_lock>>
              mapping_set_unevictable(file->f_mapping);
 SHM_LOCK (Linux-specific)
                  Prevent  swapping  of the shared memory segment. 
-=======
-# Memory leak

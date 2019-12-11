@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="649">
+<meta itemprop="wordCount" content="1815">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -187,11 +187,203 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="ref">ref</h1>
+<h1 id="formal-causes">Formal causes</h1>
+
+<h2 id="preemption">Preemption</h2>
+
+<h3 id="voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259"><a href="https://lwn.net/Articles/137259/">Voluntary Kernel Preemption, 2.6.12-rc4-mm2</a></h3>
+
+<p>Voluntary preemption works by adding a cond_resched()<br />
+(reschedule-if-needed) call to every might_sleep() check. It is lighter<br />
+than CONFIG_PREEMPT - at the cost of not having as tight latencies. It<br />
+represents a different latency/complexity/overhead tradeoff.</p>
+
+<p><a href="https://stackoverflow.com/questions/5174955/what-is-voluntary-preemption">voluntary preemption</a><br />
+<a href="https://lwn.net/Articles/563185/">Optimizing preemption</a><br />
+commit 41719b03091911028116155deddc5eedf8c45e37<br />
+Refs: v2.6.29-rc1-226-g41719b030919<br />
+Author:     Peter Zijlstra <a href="mailto:a.p.zijlstra@chello.nl">a.p.zijlstra@chello.nl</a><br />
+AuthorDate: Wed Jan 14 15:36:26 2009 +0100<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Wed Jan 14 18:09:00 2009 +0100<br />
+    mutex: preemption fixes<br />
+    The problem is that dropping the spinlock right before schedule is a voluntary<br />
+    preemption point and can cause a schedule, right after which we schedule again.<br />
+    Fix this inefficiency by keeping preemption disabled until we schedule, do this<br />
+    by explicity disabling preemption and providing a schedule() variant that<br />
+    assumes preemption is already disabled.<br />
+Firo: spin_unlock_mutex</p>
+
+<h1 id="reference">Reference</h1>
 
 <p>Process scheduling in Linux &ndash; Volker Seeker from University of Edinburgh<br />
 <a href="https://tampub.uta.fi/bitstream/handle/10024/96864/GRADU-1428493916.pdf">A complete guide to Linux process scheduling</a><br />
-<a href="https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt">https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt</a></p>
+<a href="https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt">https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt</a><br />
+<a href="https://helix979.github.io/jkoo/post/os-scheduler/">JINKYU KOO&rsquo;s Linux kernel scheduler</a></p>
+
+<p><a href="http://www.joelfernandes.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></p>
+
+<h1 id="general-runqueues">General runqueues</h1>
+
+<p>static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);<br />
+activate_task - move a task to the runqueue.<br />
+wake_up_new_task<br />
+ttwu_do_activate</p>
+
+<h1 id="latency">Latency</h1>
+
+<p><a href="https://lwn.net/Articles/404993/">Improving scheduler latency</a></p>
+
+<h1 id="cfs-runqueues">CFS runqueues</h1>
+
+<p>cfa_rq<br />
+on_list<br />
+sched_entity-&gt;on_rq, check enqueue_entity</p>
+
+<h2 id="cfs-runqueue-and-sched-entity">CFS runqueue and sched entity</h2>
+
+<p>set_task_rq</p>
+
+<h2 id="on-rq">on_rq</h2>
+
+<p>on_rq should be same as task-&gt;on_rq. It doesn&rsquo;t mean sched_entity is on cfs_rq, but rq.<br />
+commit fd2f4419b4cbe8fe90796df9617c355762afd6a4<br />
+Author: Peter Zijlstra <a href="mailto:a.p.zijlstra@chello.nl">a.p.zijlstra@chello.nl</a><br />
+Date:   Tue Apr 5 17:23:44 2011 +0200<br />
+    sched: Provide p-&gt;on_rq<br />
+p-&gt;on_rq on any rq.<br />
+se-&gt;on_rq on specific rq.</p>
+
+<h2 id="cfs-runqueue-and-task-group">CFS runqueue and task group</h2>
+
+<p>sched_create_group -&gt; alloc_fair_sched_group -&gt; init_tg_cfs_entry</p>
+
+<h1 id="cfs-core-codes">CFS core codes</h1>
+
+<p>git log 20b8a59f2461e</p>
+
+<h1 id="group-scheduling">Group scheduling</h1>
+
+<p><a href="https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt">GROUP SCHEDULER EXTENSIONS TO CFS</a><br />
+<a href="http://www.wowotech.net/process_management/449.html">CFS调度器（3）-组调度</a><br />
+<a href="http://oenhan.com/task-group-sched">Linux进程组调度机制分析</a></p>
+
+<h2 id="two-trees">Two trees</h2>
+
+<p>task_group-&gt;parent; task_group-&gt;css.cgroup<br />
+cgroup-&gt;parent and cgroup_tg: container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id), struct task_group, css);</p>
+
+<h2 id="task-group-and-cgroup-is-1-1">Task group and cgroup is 1:1</h2>
+
+<h2 id="system-bootup">System bootup</h2>
+
+<p>struct task_group root_task_group; and cpu_cgroup_create;</p>
+
+<h2 id="creating-task-group">Creating task_group</h2>
+
+<p>sched_create_group<br />
+task_group 1 : cpu &lsquo;group sched_entity&rsquo;<br />
+group sched_entity 1 : 1 greoup cfs_rq<br />
+gse_CPUx&rsquo;s load = grq_CPUx&rsquo;s all se&rsquo;s load * task_group-&gt;shares / grq_CPU<em>&rsquo;s all se&rsquo;s load<br />
+        /</em> rq on which this entity is (to be) queued: */<br />
+        struct cfs_rq           <em>cfs_rq;<br />
+        /</em> rq &ldquo;owned&rdquo; by this entity/group: */<br />
+        struct cfs_rq           *my_q;</p>
+
+<p><a href="https://lwn.net/Articles/240474/">CFS group scheduling</a><br />
+commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc<br />
+Author: Srivatsa Vaddagiri <a href="mailto:vatsa@linux.vnet.ibm.com">vatsa@linux.vnet.ibm.com</a><br />
+Date:   Mon Oct 15 17:00:07 2007 +0200<br />
+    sched: group-scheduler core</p>
+
+<h2 id="why-double-for-each-sched-entity">Why double for_each_sched_entity</h2>
+
+<p>commit 2069dd75c7d0f49355939e5586daf5a9ab216db7<br />
+Author: Peter Zijlstra <a href="mailto:a.p.zijlstra@chello.nl">a.p.zijlstra@chello.nl</a><br />
+Date:   Mon Nov 15 15:47:00 2010 -0800<br />
+    sched: Rewrite tg_shares_up)</p>
+
+<p>371fd7e7a56a5 (Peter Zijlstra       2010-03-24 16:38:48 +0100 1129) enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)<br />
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1134)     for_each_sched_entity(se) {<br />
+62fb185130e4d (Peter Zijlstra       2008-02-25 17:34:02 +0100 1135)             if (se-&gt;on_rq)<br />
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1136)                     break;<br />
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1137)             cfs_rq = cfs_rq_of(se);<br />
+88ec22d3edb72 (Peter Zijlstra       2009-12-16 18:04:41 +0100 1138)             enqueue_entity(cfs_rq, se, flags);<br />
+88ec22d3edb72 (Peter Zijlstra       2009-12-16 18:04:41 +0100 1139)             flags = ENQUEUE_WAKEUP;<br />
+bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1140)     }<br />
+8f4d37ec073c1 (Peter Zijlstra       2008-01-25 21:08:29 +0100 1141)<br />
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1142)     for_each_sched_entity(se) {<br />
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1143)             struct cfs_rq *cfs_rq = cfs_rq_of(se);<br />
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1144)<br />
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1145)             update_cfs_load(cfs_rq);<br />
+2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1146)             update_cfs_shares(cfs_rq);</p>
+
+<h1 id="wake-up">Wake up</h1>
+
+<p><a href="https://lkml.org/lkml/2015/4/19/111">sched: lockless wake-queues</a><br />
+<a href="https://www.youtube.com/watch?v=-8c47dHuGIY">Futex Scaling for Multi-core Systems</a><a href="https://www.slideshare.net/davidlohr/futex-scaling-for-multicore-systems">Slides</a></p>
+
+<h1 id="program-order-guarantees">Program-Order guarantees</h1>
+
+<p>commit 8643cda549ca49a403160892db68504569ac9052<br />
+Author: Peter Zijlstra <a href="mailto:peterz@infradead.org">peterz@infradead.org</a><br />
+Date:   Tue Nov 17 19:01:11 2015 +0100<br />
+    sched/core, locking: Document Program-Order guarantees</p>
+
+<h2 id="lkml-discussions">LKML discussions</h2>
+
+<p><a href="https://lkml.org/lkml/2015/11/2/311">scheduler ordering bits</a><br />
+<a href="https://lkml.org/lkml/2015/12/3/323">scheduler ordering bits -v2</a></p>
+
+<h2 id="pi-lock">pi_lock</h2>
+
+<p>commit b29739f902ee76a05493fb7d2303490fc75364f4<br />
+Author: Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+Date:   Tue Jun 27 02:54:51 2006 -0700<br />
+    [PATCH] pi-futex: scheduler support for pi<br />
+    Add framework to boost/unboost the priority of RT tasks.</p>
+
+<h1 id="rq-lock-in-schedule-and-context-switch">rq-&gt;lock in schedule() and context_switch()</h1>
+
+<p>commit 3a5f5e488ceee9e08df3dff3f01b12fafc9e7e68<br />
+Author: Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+Date:   Fri Jul 14 00:24:27 2006 -0700<br />
+    [PATCH] lockdep: core, fix rq-lock handling on __ARCH_WANT_UNLOCKED_CTXSW<br />
++        * Since the runqueue lock will be released by the next<br />
++        * task</p>
+
+<h1 id="etc">ETC</h1>
+
+<h2 id="the-wake-up-lost-problem">the wake-up lost problem</h2>
+
+<p><a href="https://www.linuxjournal.com/article/8144">Kernel Korner - Sleeping in the Kernel</a></p>
+
+<h2 id="reordering-issue">Reordering issue</h2>
+
+<p>CPU0:Process A<br />
+while(!done) {<br />
+        schedule();<br />
+        set_current_state = *interruptable;<br />
+}<br />
+CPU1: Process B<br />
+done = true;<br />
+wake_up_process(A);<br />
+Ordering issue: reorder load of done and store of state;<br />
+A: load of done<br />
+B: done = true<br />
+B: wake up<br />
+A: set state<br />
+A: schedule<br />
+Check bcbd94ff481ec1d7b5c824d90df82d0faafabd35<br />
+dm crypt: fix a possible hang due to race condition on exit</p>
+
+<h2 id="pelt">PELT</h2>
+
+<p><a href="https://lwn.net/Articles/531853/">Per-entity load tracking</a></p>
+
+<h1 id="running-time">Running time</h1>
+
+<p>proc_sched_show_task</p>
 
 <h1 id="problems">Problems</h1>
 
@@ -286,7 +478,7 @@ fs/proc/array.c<br />
 <br /></li>
 </ul>
 
-<h1 id="latency">Latency</h1>
+<h1 id="latency-1">Latency</h1>
 
 <ol>
 <li>sched_nr_latency= /proc/sys/kernel/sched_latency_ns / /proc/sys/kernel/sched_min_granularity_ns<br /></li>
@@ -322,12 +514,8 @@ curr - wakeuped &gt; sysctl_sched_wakeup_granularity;  # pass the wakeup-preempt
 <p>update_load<em>avg<br />
 <a href="https://en.wikipedia.org/wiki/Load">https://en.wikipedia.org/wiki/Load</a></em>(computing)<br />
 Check External links<br />
-calc_load_fold_active</p>
-
-<h2 id="etymology-avenrun">Etymology - avenrun</h2>
-
-<p>average nr. of running processes during<br />
-<a href="https://casper.berkeley.edu/svn/trunk/roach/sw/linux/arch/s390/appldata/appldata_os.c">https://casper.berkeley.edu/svn/trunk/roach/sw/linux/arch/s390/appldata/appldata_os.c</a></p>
+calc_load_fold_active<br />
+Etymology of avenrun: <a href="https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c">average nr. of running processes during</a></p>
 
 <h1 id="lqo-1">LQO</h1></li>
 
@@ -342,9 +530,6 @@ t1 t2<br />
 root.nr_running := 2<br />
 root.h_nr_running := 2<br />
 Check enqueue_task_fair()</p></li>
-
-<li><p>group schedule<br />
-<a href="https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt">https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt</a></p></li>
 
 <li><p>idle<br />
 <a href="https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt">https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt</a><br />
@@ -396,7 +581,7 @@ sched/fair: Fix fairness issue on migration<br />
 30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186<br />
 curr was not kept in rb-tree</p>
 
-<h1 id="sd">SD</h1>
+<h1 id="load-balancing">Load balancing</h1>
 
 <p><a href="https://lwn.net/Articles/80911/">Scheduling domains</a><br />
 set sd<br />
@@ -432,16 +617,107 @@ static struct sched_domain_topology_level default_topology[] = {<br />
 #endif<br />
         { sd_init_CPU, cpu_cpu_mask, },<br />
         { NULL, },<br />
-};<br />
-CONFIG_CPUSETS=y<br />
-get sd<br />
-idle_balance<br />
-for_each_domain</p>
+};</p>
 
-<p>panic<br />
-find_busiest_group<br />
-find_next_bit<br />
-__next_cpu</p>
+<h2 id="leaf-cfs-runqueues-leaf-cfs-rq">Leaf CFS runqueues leaf_cfs_rq</h2>
+
+<h3 id="first">First</h3>
+
+<p>commit 6aa645ea5f7a246702e07f29edc7075d487ae4a3<br />
+Refs: v2.6.22-14-g6aa645ea5f7a<br />
+Author:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+AuthorDate: Mon Jul 9 18:51:58 2007 +0200<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Mon Jul 9 18:51:58 2007 +0200<br />
+    sched: cfs rq data types<br />
+ * leaf cfs_rqs are those that hold tasks (lowest schedulable entity in<br />
+ * a hierarchy). Non-leaf lrqs hold other higher schedulable entities<br />
+ * (like users, containers etc.)<br />
+ * leaf_cfs_rq_list ties together list of leaf cfs_rq&rsquo;s in a cpu. This<br />
+ * list is used during load balance.<br />
+Head of list: rq-&gt;leaf_cfs_rq_list</p>
+
+<h3 id="core-load-balance-fair">Core load_balance_fair</h3>
+
+<p>commit bf0f6f24a1ece8988b243aefe84ee613099a9245<br />
+Refs: v2.6.22-10-gbf0f6f24a1ec<br />
+Author:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+AuthorDate: Mon Jul 9 18:51:58 2007 +0200<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Mon Jul 9 18:51:58 2007 +0200<br />
+    sched: cfs core, kernel/sched_fair.c<br />
+    add kernel/sched_fair.c - which implements the bulk of CFS&rsquo;s<br />
+    behavioral changes for SCHED_OTHER tasks.<br />
++load_balance_fair(struct rq *this_rq, int this_cpu, struct rq *busiest,<br />
++       for_each_leaf_cfs_rq(busiest, busy_cfs_rq) {</p>
+
+<h3 id="make-parent-appear-after-us">make parent appear after us.</h3>
+
+<p>commit 67e86250f8ea7b8f7da53ac25ea73c6bd71f5cd9<br />
+Author: Paul Turner <a href="mailto:pjt@google.com">pjt@google.com</a><br />
+Date:   Mon Nov 15 15:47:05 2010 -0800<br />
+    sched: Introduce hierarchal order on shares update list<br />
+    Avoid duplicate shares update calls by ensuring children always appear before                 # leaf&rsquo;s meaning is changed<br />
+    parents in rq-&gt;leaf_cfs_rq_list.<br />
+    This allows us to do a single in-order traversal for update_shares().<br />
+    Since we always enqueue in bottom-up order this reduces to 2 cases:<br />
+    1) Our parent is already in the list, e.g.<br />
+       root<br />
+         <br />
+          b<br />
+          /<br />
+          c d* (root-&gt;b-&gt;c already enqueued)<br />
+    Since d&rsquo;s parent is enqueued we push it to the head of the list, implicitly ahead of b.<br />
+    2) Our parent does not appear in the list (or we have no parent)<br />
+    In this case we enqueue to the tail of the list, if our parent is subsequently enqueued<br />
+    (bottom-up) it will appear to our right by the same rule.</p>
+
+<h3 id="tmp-alone-branch">tmp_alone_branch</h3>
+
+<p>commit 9c2791f936ef5fd04a118b5c284f2c9a95f4a647<br />
+Refs: v4.9-rc5-195-g9c2791f936ef<br />
+Author:     Vincent Guittot <a href="mailto:vincent.guittot@linaro.org">vincent.guittot@linaro.org</a><br />
+AuthorDate: Tue Nov 8 10:53:43 2016 +0100<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@kernel.org">mingo@kernel.org</a><br />
+CommitDate: Wed Nov 16 10:29:08 2016 +0100<br />
+    sched/fair: Fix hierarchical order in rq-&gt;leaf_cfs_rq_list<br />
+    Fix the insertion of cfs_rq in rq-&gt;leaf_cfs_rq_list to ensure that a<br />
+    child will always be called before its parent.<br />
+    The hierarchical order in shares update list has been introduced by<br />
+    commit:<br />
+      67e86250f8ea (&ldquo;sched: Introduce hierarchal order on shares update list&rdquo;)</p>
+
+<p>commit 5d299eabea5a251fbf66e8277704b874bbba92dc<br />
+Author: Peter Zijlstra <a href="mailto:peterz@infradead.org">peterz@infradead.org</a><br />
+Date:   Wed Jan 30 14:41:04 2019 +0100<br />
+    sched/fair: Add tmp_alone_branch assertion<br />
+    The magic in list_add_leaf_cfs_rq() requires that at the end of<br />
+    enqueue_task_fair():<br />
+      rq-&gt;tmp_alone_branch == &amp;rq-&gt;lead_cfs_rq_list</p>
+
+<h3 id="load-balance-fair-removed">load_balance_fair - removed</h3>
+
+<p>commit 9763b67fb9f3050c6da739105888327587c30c4d<br />
+Refs: v3.0-rc7-197-g9763b67fb9f3<br />
+Author:     Peter Zijlstra <a href="mailto:a.p.zijlstra@chello.nl">a.p.zijlstra@chello.nl</a><br />
+AuthorDate: Wed Jul 13 13:09:25 2011 +0200<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Thu Jul 21 18:01:46 2011 +0200<br />
+    sched, cgroup: Optimize load_balance_fair()<br />
+    Use for_each_leaf_cfs_rq() instead of list_for_each_entry_rcu(), this<br />
+    achieves that load_balance_fair() only iterates those task_groups that<br />
+    actually have tasks on busiest, and that we iterate bottom-up, trying to<br />
+    move light groups before the heavier ones.</p>
+
+<h1 id="throttling-entities">Throttling entities</h1>
+
+<p>commit 85dac906bec3bb41bfaa7ccaa65c4706de5cfdf8<br />
+Author: Paul Turner <a href="mailto:pjt@google.com">pjt@google.com</a><br />
+Date:   Thu Jul 21 09:43:33 2011 -0700<br />
+    sched: Add support for throttling group entities<br />
+    Now that consumption is tracked (via update_curr()) we add support to throttle<br />
+    group entities (and their corresponding cfs_rqs) in the case where this is no<br />
+    run-time remaining.</p>
 
 		</article>
 	  </div>

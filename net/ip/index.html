@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="434">
+<meta itemprop="wordCount" content="112">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/net/ip/">
 
@@ -187,137 +187,42 @@
 		<article itemprop="articleBody" id="content">
 		   
 
+<h1 id="fragmentation">Fragmentation</h1>
+
+<p>ip_defrag -&gt; ip_frag_queue -&gt; ip_frag_reasm<br />
+ip_fragment<br />
+iphdr-&gt;id, iphdr-&gt;frag_off</p>
+
 <h1 id="route">Route</h1>
 
-<h2 id="route-1">Route</h2>
-
-<p><a href="https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux">IPv4 route lookup on Linux</a></p>
-
-<ul>
-<li>state structure<br />
+<p><a href="https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux">IPv4 route lookup on Linux</a><br />
+* state structure<br />
 fib_info:route info<br />
-fib_config:<br /></li>
-<li>add new rule<br />
-iproute2 &hellip;-&gt;inet_rtm_newroute()-&gt;fib_new_table()-&gt;fib_hash_table()<br /></li>
-<li>Multi-time line<br />
-fib_create_info(): create a fib_info<br />
-<br /></li>
-</ul>
+fib_config:<br />
+* add new rule<br />
+iproute2 &hellip;-&gt;inet_rtm_newroute()-&gt;fib_new_table()-&gt;fib_hash_table()<br />
+* Multi-time line<br />
+fib_create_info(): create a fib_info</p>
 
-<p>#Network layer<br />
-* Error detection, unreliable<br />
-Best effort service,IP has a simple error handling algorithm:<br />
-throw away the datagram and try to send an ICMP message back to the source<br />
-* Host addressing</p>
+<h1 id="dst">dst</h1>
 
-<h1 id="ipv6-wrl6">IPv6 wrl6</h1>
+<p><a href="https://lore.kernel.org/netdev/20170617174244.132862-1-tracywwnj@gmail.com/">remove dst garbage collector logic</a><br />
+commit 222d7dbd258dad4cd5241c43ef818141fad5a87a<br />
+Author: Eric Dumazet <a href="mailto:edumazet@google.com">edumazet@google.com</a><br />
+Date:   Thu Sep 21 09:15:46 2017 -0700<br />
+    net: prevent dst uses after free<br />
+    In linux-4.13, Wei worked hard to convert dst to a traditional<br />
+    refcounted model, removing GC.<br />
+commit 9e1437937807b0122e8da1ca8765be2adca9aee6<br />
+Author: Steffen Klassert <a href="mailto:steffen.klassert@secunet.com">steffen.klassert@secunet.com</a><br />
+Date:   Tue Sep 11 10:31:15 2018 +0200<br />
+    xfrm: Fix NULL pointer dereference when skb_dst_force clears the dst_entry.</p>
 
-<p>__ipv6_addr_type<br />
-ip6_input or ip6_output<br />
-F1: OK<br />
-F2: OK</p>
+<h1 id="ip-header">IP header</h1>
 
-<h1 id="4-3-ip-address">4.3 IP address</h1>
-
-<p>IPv6 wrl6<br />
-__ipv6_addr_type<br />
-ip6addrlbl_init_table<br />
-ip6_input or ip6_output<br />
-ipv6_addr_v4mapped<br />
-* 0:<br />
-1 ok IPV6_ADDR_LOOPBACK ::<sup>1</sup>&frasl;<sub>128</sub><br />
-2 ok IPV6_ADDR_ANY ::/128<br />
-3 ok IPV6_ADDR_MAPPED ::ffff:0:0/96<br />
-4 ? IPV6_ADDR_COMPATv4  0000::/96 ipgre_tunnel_xmit ddr_type &amp; IPV6_ADDR_COMPATv4) == 0 ; goto tx_error_icmp;<br />
-5 G?<br />
-* 0100::/64, NG, Used by CISCO<br />
-A Discard Prefix for IPv6<br />
-Discard-Only Address Block<br />
-<a href="https://tools.ietf.org/html/rfc6666">https://tools.ietf.org/html/rfc6666</a><br />
- Remote Triggered Black Hole (RTBH)<br />
-<a href="https://tools.ietf.org/html/rfc5635">https://tools.ietf.org/html/rfc5635</a><br />
-* 0200::/7,  NG, Deprecated<br />
-OSI NSAPs and IPv6<br />
-<a href="http://tools.ietf.org/html/rfc1888">http://tools.ietf.org/html/rfc1888</a><br />
-Internet Code Point (ICP) Assignments for NSAP Addresses<br />
-<a href="http://tools.ietf.org/html/rfc4548">http://tools.ietf.org/html/rfc4548</a><br />
-Interfaces between protocol layers<br />
-<a href="http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html">http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html</a><br />
-Network Service Access Point (NSAP): v4,v6?<br />
-<a href="http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point">http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point</a><br />
-* 0400::/6, NG, No information, maybe used as Global address see __ipv6_addr_type<br />
-* 0800::/5, NG, ditto<br />
-* (000, 111)x::/3, OK, unicasts. For more details please reference __ipv6_addr_type<br />
-1000::/4, OK, ditto<br />
-2000::/3, OK, Global Unicast,<br />
-2002::/16, OK, SIT, 6in4<br />
-<a href="http://tools.ietf.org/html/rfc3056">http://tools.ietf.org/html/rfc3056</a><br />
-2001::/32, OK, used in Default policy table for routing<br />
-2001:10::/28, OK, Ditto<br />
-* e000::/4, NG?, No information in google; but used as GU in and kernel by default.<br />
-* fc00::/7, OK,<br />
-IPV6_ADDR_UNICAST<br />
-* fe80::/10, OK,<br />
-IPV6_ADDR_LINKLOCAL<br />
-* fec0::/10, OK, But deprecated by RFC3879, used in kernel?<br />
-IPV6_ADDR_SITELOCAL<br />
-Deprecating Site Local Addresses<br />
-<a href="http://tools.ietf.org/html/rfc3879">http://tools.ietf.org/html/rfc3879</a><br />
-* ff00::/8, OK<br />
-IPV6_ADDR_MULTICAST<br />
-<a href="http://tools.ietf.org/html/rfc4291">http://tools.ietf.org/html/rfc4291</a><br />
-* addr not described in __ipv6_addr_type working as global unicast</p>
-
-<p>#IP<br />
-* IP Packet Fragmentation/Defragmentation<br />
-* MSS tcp_sock-&gt;mss_cache in tcp_sync_mss not minus SACK option<br />
-    in <em>tcp_current_mss</em> minus SACK option<br />
-rfc1122<br />
-+ IP option is  fixed in a session icsk-&gt;icsk_ext_hdr_len;<br />
-+ is network header icsk-&gt;icsk_af_ops-&gt;net_header_len<br />
-+ tcp_sock-&gt;tcp_header_len all except SACK option (Not sure)<br />
-##Reference<br />
-<a href="http://www.tecmint.com/ipv4-and-ipv6-comparison/">What’s wrong with IPv4 and Why we are moving to IPv6</a></p>
-
-<h2 id="classless-inter-domain-routing">Classless Inter-Domain Routing</h2>
-
-<p>CIDR is a method for allocating IP addresses and routing Internet Protocol packets.<br />
-IETF introduced CIDR in 1993 to replace the classful network.<br />
-* prefix/length<br />
-* Prefix aggregation</p>
-
-<p>##Supernetwork<br />
-prefix/route aggregation<br />
-decrease the memroy and the time of search route table.</p>
-
-<h2 id="private-network">Private network</h2>
-
-<p>In the Internet addressing architecture, a private network is a network that uses private IP address space.</p>
-
-<h2 id="fragmention-defragmention">Fragmention/defragmention</h2>
-
-<p>iphdr-&gt;id, iphdr-&gt;frag_off<br />
-skb_shared_info-&gt;frag_list<br />
-ip_fragment/ip_defrag<br />
-<a href="http://tools.ietf.org/html/rfc6864">Updated Specification of the IPv4 ID Field</a></p>
-
-<h2 id="sg-io">SG IO</h2>
-
-<p>如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!<br />
-p_append_data<br />
-<a href="http://thread.gmane.org/gmane.linux.network/153666">NETIF_F_FRAGLIST and NETIF_F_SG difference</a><br />
-validate_xmit_skb()-&gt;__skb_linearize()<br />
-ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.<br />
-如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.</p>
-
-<h1 id="send">send</h1>
-
-<p>ip_append_data 和ip_push_pending_frames弄frag_list<br />
-ip_push_pending_frames -&gt; __ip_make_skb &amp; ip_send_skb -&gt;ip_local_out<br />
-把&amp;sk-&gt;sk_write_queue上的数据最后编程skb链表变成了, 还skb pull掉了潜在的ip 头部<br />
-第一个skb-&gt;frag_list的成员. 用的不太多啊.<br />
-ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!<br />
-否则就生成一串skb挂到&amp;sk-&gt;sk_write_queue上,</p>
+<p>rfc1122<br />
+IP option is fixed in a session icsk-&gt;icsk_ext_hdr_len;<br />
+is network header icsk-&gt;icsk_af_ops-&gt;net_header_len</p>
 
 		</article>
 	  </div>

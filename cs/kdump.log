@@ -1,0 +1,71 @@
+# Reference
+Documentation/kdump
+[Reboot Linux faster using kexec](http://web.archive.org/web/20130121033946/http://www.ibm.com/developerworks/linux/library/l-kexec/index.html)
+[kdump: usage and internals](https://events.static.linuxfound.org/sites/events/files/slides/kdump_usage_and_internals.pdf)
+[Kdump history on sourcefoge](http://lse.sourceforge.net/kdump/)
+
+# vmcoreinfo
+[[PATCH 0/3] vmcoreinfo support for dump filtering](http://lists.infradead.org/pipermail/kexec/2007-August/000521.html)
+/sys/kernel/vmcoreinfo
+commit fd59d231f81cb02870b9cf15f456a897f3669b4e
+Author: Ken'ichi Ohmichi <oomichi@mxs.nes.nec.co.jp>
+Date:   Tue Oct 16 23:27:27 2007 -0700
+    Add vmcoreinfo
+    This patch set frees the restriction that makedumpfile users should install a
+    vmlinux file (including the debugging information) into each system.
+    makedumpfile command is the dump filtering feature for kdump.  It creates a
+    small dumpfile by filtering unnecessary pages for the analysis.  To
+    distinguish unnecessary pages, it needs a vmlinux file including the debugging
+    information.  These days, the debugging package becomes a huge file, and it is
+    hard to install it into each system.
+    To solve the problem, kdump developers discussed it at lkml and kexec-ml.  As
+    the result, we reached the conclusion that necessary information for dump
+    filtering (called "vmcoreinfo") should be embedded into the first kernel file
+    and it should be accessed through /proc/vmcore during the second kernel.
+    (http://www.uwsg.iu.edu/hypermail/linux/kernel/0707.0/1806.html)
+
+kexec-tools: commit 2e152ffba39a9234dfa984966deba273824e73c1
+Author: Ken'ichi Ohmichi <oomichi@mxs.nes.nec.co.jp>
+Date:   Wed Aug 22 21:13:39 2007 +0900
+    Pass vmcoreinfo's address and size
+
+makedumpfile: commit fa383368c9e87dcdab734638998cbecab727960f
+Author: ken1_ohmichi <ken1_ohmichi>
+Date:   Fri Sep 7 11:04:05 2007 +0000
+
+    [v1.2.0-05] Extract vmcoreinfo from /proc/vmcore.
+    makedumpfile command extracts the vmcoreinfo data from /proc/vmcore and
+    uses it for dump filtering. It is a part of the following patchset:
+    http://lists.infradead.org/pipermail/kexec/2007-August/000521.html
+
+## Enhanced
+commit 1229384f5b856d83698c38f9dedfd836e26711cb
+Author: Xunlei Pang <xlpang@redhat.com>
+Date:   Wed Jul 12 14:33:21 2017 -0700
+    kdump: protect vmcoreinfo data under the crash memory
+
+# Kexec-tools
+git://git.kernel.org/pub/scm/utils/kernel/kexec/kexec-tools.git
+EADDRNOTAVAIL: Cannot assign requested address
+## elfcorehdr=; it's used to control if /proc/vmcore is generated
+arch/x86: setup_cmdline()
+        if (image->type == KEXEC_TYPE_CRASH) {
+                len = sprintf(cmdline_ptr,
+                        "elfcorehdr=0x%lx ", image->arch.elf_load_addr);
+
+## /usr/sbin/kdump
+commit 7acd257ae67b4ca94f8c23cb8bda0ee0709b9216
+Author: Bhupesh Sharma <bhsharma@redhat.com>
+Date:   Thu May 24 13:08:03 2018 +0530
+    Remove obsolete kdump tool
+
+# makedumpfile
+By using the makedumpfile command, it is possible to shorten the dumpfile of kdump.
+https://sourceforge.net/projects/makedumpfile/
+According to man makedumpfile, makedumpfile provides two DUMPFILE formats (the ELF format and the kdump-compressed format).
+
+# SUSE way on kdump - scripts for kernel dump invoking makedumpfile
+https://github.com/openSUSE/kdump
+man kdump
+/lib/kdump/load.sh
+https://doc.opensuse.org/documentation/leap/tuning/html/book.sle.tuning/cha.tuning.kexec.html

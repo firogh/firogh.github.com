@@ -1,0 +1,45 @@
+
+Documentation/filesystems/porting
+Documentation/filesystems/vfs.rst
+
+# LQO
+s_inode_lru
+s_inodes
+
+## list of super block
+list -H super_blocks -s super_block.s_type
+
+## __I_LOCK
+commit 493267b6ec40026be65e3564fd24b879be3c06d1
+Author:     William Lee Irwin III <wli@holomorphy.com>
+AuthorDate: Mon Oct 18 18:00:17 2004 -0700
+Commit:     Linus Torvalds <torvalds@ppc970.osdl.org>
+CommitDate: Mon Oct 18 18:00:17 2004 -0700
+
+    [PATCH] eliminate inode waitqueue hashtable
+
+    Eliminate the inode waitqueue hashtable using bit_waitqueue() via
+    wait_on_bit() and wake_up_bit() to locate the waitqueue head associated
+    with a bit.
+
+## RCU free inode
+Refs: v2.6.37-35-gfa0d7e3de6d6
+Author:     Nick Piggin <npiggin@kernel.dk>
+AuthorDate: Fri Jan 7 17:49:49 2011 +1100
+Commit:     Nick Piggin <npiggin@kernel.dk>
+CommitDate: Fri Jan 7 17:50:26 2011 +1100
+    fs: icache RCU free inodes
+    RCU free the struct inode. This will allow:
+    - Subsequent store-free path walking patch. The inode must be consulted for
+      permissions when walking, so an RCU inode reference is a must.
+    - sb_inode_list_lock to be moved inside i_lock because sb list walkers who want
+      to take i_lock no longer need to take sb_inode_list_lock to walk the list in
+      the first place. This will simplify and optimize locking.
+    - Could remove some nested trylock loops in dcache code
+    - Could potentially simplify things a bit in VM land. Do not need to take the
+      page lock to follow page->mapping.
+
+
+## Free
+drop_pagecache_sb
+iput_final

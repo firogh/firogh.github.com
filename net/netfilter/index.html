@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="509">
+<meta itemprop="wordCount" content="546">
 <meta itemprop="datePublished" content="2015-05-10">
 <meta itemprop="url" content="http://firoyang.org/net/netfilter/">
 
@@ -187,135 +187,136 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="filter">Filter</h1>
+<h1 id="netfilter">Netfilter</h1>
 
-<p>conditions and actions</p>
+<p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html">Linux netfilter Hacking HOWTO</a><br />
+<a href="http://www.karlrupp.net/en/computer/nat_tutorial">NAT - Network Address Translation</a><br />
+<a href="https://drive.google.com/open?id=1F-qJiqahUPgknv8EHnnYGUf6n6mQfPe-"> Netfilter traversal</a></p>
 
-<h1 id="packet-filter">Packet filter</h1>
+<h2 id="hooks">Hooks</h2>
 
-<p>type: filter</p>
+<p>NF_INET_PRE_ROUTING: ip_rcv<br />
+NF_INET_LOCAL_IN: ip_local_deliver<br />
+NF_INET_FORWARD: ip_forward<br />
+NF_INET_LOCAL_OUT: __ip_local_out<br />
+NF_INET_POST_ROUTING: ip_output</p>
 
-<h2 id="what-packets-and-where-to-filter">What packets and where to filter</h2>
+<h2 id="priority">Priority</h2>
 
-<ul>
-<li>Filter rules<br /></li>
-<li>Condition<br />
-IP addr<br />
-Port<br />
-Level 4 protocol type<br /></li>
+<p>enum nf_ip_hook_priorities {<br />
+        NF_IP_PRI_FIRST = INT_MIN,<br />
+        NF_IP_PRI_RAW_BEFORE_DEFRAG = -450,<br />
+        NF_IP_PRI_CONNTRACK_DEFRAG = -400,<br />
+        NF_IP_PRI_RAW = -300,<br />
+        NF_IP_PRI_SELINUX_FIRST = -225,<br />
+        NF_IP_PRI_CONNTRACK = -200,<br />
+        NF_IP_PRI_MANGLE = -150,<br />
+        NF_IP_PRI_NAT_DST = -100,<br />
+        NF_IP_PRI_FILTER = 0,<br />
+        NF_IP_PRI_SECURITY = 50,<br />
+        NF_IP_PRI_NAT_SRC = 100,<br />
+        NF_IP_PRI_SELINUX_LAST = 225,<br />
+        NF_IP_PRI_CONNTRACK_HELPER = 300,<br />
+        NF_IP_PRI_CONNTRACK_CONFIRM = INT_MAX,<br />
+        NF_IP_PRI_LAST = INT_MAX,};</p>
 
-<li><p>Action<br />
-accept<br />
-drop</p></li>
+<h2 id="xtables">xtables</h2>
 
-<li><p>Filter checkpoints<br />
-Ingress<br />
-Outgress<br />
-Route</p></li>
-</ul>
+<p><a href="http://en.wikipedia.org/wiki/Iptables#Overview">Overview of xtables in wikipedia</a><br />
+xt_table: ipt_register_table<br />
+struct xt_table         *iptable_filter;<br />
+struct xt_table         *iptable_mangle;<br />
+struct xt_table         *iptable_raw;<br />
+struct xt_table         *arptable_filter;<br />
+struct xt_table         *iptable_security;<br />
+struct xt_table         *nat_table;<br />
+xt_target: xt_register_target<br />
+xt_match: xt_register_match</p>
 
-<h1 id="hooking">Hooking</h1>
+<h2 id="nftables">nftables</h2>
 
-<p>Interceptor pattern</p>
+<h2 id="onset">Onset</h2>
+
+<p>netfilter_init(), mark_mt_init</p>
+
+<h2 id="nuclus">Nuclus</h2>
+
+<p>nf_hooks -&gt; iptable_mangle_hook -&gt; ipt_do_table -&gt;&hellip;<br />
+ipt_do_table() nat, filter, mangle.</p>
 
 <h1 id="connection-tracking">Connection tracking</h1>
 
 <p><a href="http://people.netfilter.org/pablo/docs/login.pdf">Netfilter’s connection tracking system</a><br />
 <a href="https://www.netdevconf.org/2.1/session.html?westphal">netfilters connection tracking subsystem</a><br />
-<a href="https://www.linuxjournal.com/article/4234">Network Probes Explained: Understanding Port Scans and Ping Sweeps</a></p>
+<a href="https://www.linuxjournal.com/article/4234">Network Probes Explained: Understanding Port Scans and Ping Sweeps</a><br />
+Each Netfilter connection is uniquely identified by a 5-arry (layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple<br />
+Connection tracking helper: connection tracking can be given knowledge of application-layer protocols<br />
+nf_conntrack: support conntrack templates</p>
 
-<h1 id="netfilter">Netfilter</h1>
+<h2 id="onset-1">Onset</h2>
 
-<p>a set of hooks: Local_in local_out forward pre_routing post_routing<br />
-packet filter<br />
-Connection tracking:<br />
-NAT</p>
+<p>nf_conntrack_standalone_init, nf_conntrack_l3proto_ipv4_init</p>
 
-<h1 id="software-implementation">Software implementation</h1>
+<h2 id="nuclus-1">Nuclus</h2>
 
-<p><a href="http://en.wikipedia.org/wiki/Iptables#Overview">Overview of xtables in wikipedia</a><br />
-* Init<br />
-net/netfilter/core.c<br />
-netfilter_init()<br />
-如mangle表的初始化见iptable_mangle_init<br />
-xt_table: ipt_register_table<br />
-        struct xt_table         *iptable_filter;<br />
-        struct xt_table         *iptable_mangle;<br />
-        struct xt_table         *iptable_raw;<br />
-        struct xt_table         *arptable_filter;<br />
-        struct xt_table         *iptable_security;<br />
-        struct xt_table         *nat_table;<br />
-如mark match的初始化 mark_mt_init<br />
-xt_match: xt_register_match</p>
+<p>conntrack &ndash; user-land tools<br />
+obsolete /proc/net/nf_conntrack</p>
 
-<p>如MARK target 的初始化 也在 mark_mt_init<br />
-xt_target: xt_register_target</p>
+<h3 id="details">Details</h3>
 
-<ul>
-<li>Nuclus<br />
-netfilter hook -&gt;  iptable_mangle_hook -&gt; ipt_do_table -&gt;&hellip;<br />
-ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.<br />
-<br /></li>
-</ul>
+<p>基本思路是：一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。<br />
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。 徐琛,也这么说!</p>
 
-<h1 id="connection-tracking-1">Connection tracking</h1>
+<h1 id="mangle">Mangle</h1>
 
-<p>Conntrack 的实现不依赖iptables, 很独立.</p>
+<h2 id="onset-2">Onset</h2>
 
-<h2 id="init">init</h2>
-
-<p>nf_conntrack_standalone_init()<br />
-nf_conntrack_l3proto_ipv4_init()</p>
-
-<h2 id="conntrack-user-land-tools">conntrack &ndash; user-land tools</h2>
-
-<p>obsolete /proc/net/nf_conntrack</p>
-
-<h2 id="tuple-link-a-socket-5-arry-tuple">tuple &ndash; link a socket 5-arry tuple</h2>
-
-<p>Each Netfilter connection is uniquely identified by a<br />
-(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple<br />
-nf_conntrack_tuple nf_conn</p>
-
-<h2 id="connection-tracking-helper">Connection tracking helper</h2>
-
-<p>connection tracking can be given knowledge of application-layer protocols<br />
-ALG</p>
-
-<h2 id="template">template</h2>
-
-<p>netfilter: nf_conntrack: support conntrack templates</p>
-
-<h2 id="details">Details</h2>
-
-<p>以上的工作事实上都很简单，基本思路是：<br />
-一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。<br />
-这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。<br />
-徐琛,也这么说!</p>
+<p>iptable_mangle_init</p>
 
 <h1 id="nat">NAT</h1>
 
 <p><a href="https://www.ietf.org/rfc/rfc3489.txt">https://www.ietf.org/rfc/rfc3489.txt</a><br />
 symmetric nat, 端口不复用, 访问同一个服务器.<br />
-linux 内核的NAT是基于iptables 和 conntrack实现的.</p>
+Drop ICMP redict in NAT:<a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a><br />
+static const struct nf_hook_ops nf_nat_ipv4_ops[] = {<br />
+        {<br />
+                .hook           = iptable_nat_do_chain,<br />
+                .pf             = NFPROTO_IPV4,<br />
+                .hooknum        = NF_INET_PRE_ROUTING,<br />
+                .priority       = NF_IP_PRI_NAT_DST,<br />
+        },<br />
+        {<br />
+                .hook           = iptable_nat_do_chain,<br />
+                .pf             = NFPROTO_IPV4,<br />
+                .hooknum        = NF_INET_POST_ROUTING,<br />
+                .priority       = NF_IP_PRI_NAT_SRC,<br />
+        },<br />
+        {<br />
+                .hook           = iptable_nat_do_chain,<br />
+                .pf             = NFPROTO_IPV4,<br />
+                .hooknum        = NF_INET_LOCAL_OUT,<br />
+                .priority       = NF_IP_PRI_NAT_DST,<br />
+        },<br />
+        {<br />
+                .hook           = iptable_nat_do_chain,<br />
+                .pf             = NFPROTO_IPV4,<br />
+                .hooknum        = NF_INET_LOCAL_IN,<br />
+                .priority       = NF_IP_PRI_NAT_SRC,<br />
+        },};</p>
 
-<p>##init<br />
-iptable_nat_init</p>
+<h2 id="onset-3">Onset</h2>
 
-<h2 id="nat-helper">NAT helper</h2>
+<p>iptable_nat_init</p>
 
-<p>Similar to connection tracking helpers, NAT helpers will do a packet inspection<br />
-and substitute original addresses by reply addresses in the payload.</p>
+<h2 id="nuclus-2">Nuclus</h2>
 
-<h2 id="drop-icmp-redict-in-nat">Drop ICMP redict in NAT</h2>
+<p>NAT helper: Similar to connection tracking helpers, NAT helpers will do a packet inspection and substitute original addresses by reply addresses in the payload.</p>
 
-<p><a href="http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html">http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html</a></p>
-
-<h2 id="snat">SNAT</h2>
+<h3 id="snat">SNAT</h3>
 
 <p>nf_nat_ipv4_out -&gt; nf_nat_ipv4_fn -&gt;<br />
 {<br />
-nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info<br />
+    nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_info<br />
     {<br />
         无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.<br />
         但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&gt; new_original找到后再revert,成new_reply在改到ct里面去.<br />
@@ -334,7 +335,6 @@ nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_i
          这个函数的用途可能是担心, orig被人改了, 不能用了.
         except for prior manipulations
     }       
-
     get_unique_tuple
     {
         1. 如果snat, 且前后可以一致就直接new=orig, 合理.
@@ -342,20 +342,17 @@ nf_nat_rule_find -&gt; ipt_do_table -&gt; xt_snat_target_v1 -&gt; nf_nat_setup_i
         3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
         4. nf_nat_used_tuple 保证唯一
     }       
-
     bysoruce 里面存的应该是new_original, hash -&gt; &amp;net-&gt;ct.nat_bysource[srchash]
-
-
 }
+//上面ct改完了该改skb了.
+nf_nat_packet -&gt; nf_nat_ipv4_manip_pkt,
 </code></pre>
 
-<p>//上面ct改完了该改skb了.<br />
-    nf_nat_packet -&gt; nf_nat_ipv4_manip_pkt,<br />
-}</p>
+<p>}</p>
 
 <ul>
-<li><p>SNAT nftables<br />
-nf_nat_prerouting &hellip;-&gt; nft_do_chain</p></li>
+<li>SNAT nftables<br />
+nf_nat_prerouting &hellip;-&gt; nft_do_chain<br /></li>
 
 <li><p>One kind of NAT, just set one flag bit in ct-&gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!</p></li>
 
@@ -389,25 +386,13 @@ if (ct-&gt;status &amp; statusbit) {
 
 <p>}</p>
 
-<p>#ipset<br />
-salist for iptables</p>
+<h1 id="ipset">ipset</h1>
 
-<p>#SYN proxy<br />
-SYNPROXY target makes handling of large SYN floods possible without<br />
-the large performance penalties imposed by the connection tracking in such cases.<br />
-On 3 November 2013, SYN proxy functionality was merged into the Netfilter,<br />
-with the release of version 3.12 of the Linux kernel mainline</p>
+<p>salist for iptables</p>
 
-<p>#nftables</p>
+<h1 id="syn-proxy">SYN proxy</h1>
 
-<p>#FAQ<br />
-* 如何查看某个table 具体在那几个hook点.<br />
-iptables -L -t &ldquo;table 名&rdquo;</p>
-
-<h1 id="reference">Reference</h1>
-
-<p><a href="http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html">Linux netfilter Hacking HOWTO</a><br />
-<a href="http://www.karlrupp.net/en/computer/nat_tutorial">NAT - Network Address Translation</a></p>
+<p>SYNPROXY target makes handling of large SYN floods possible without the large performance penalties imposed by the connection tracking in such cases. On 3 November 2013, SYN proxy functionality was merged into the Netfilter, with the release of version 3.12 of the Linux kernel mainline</p>
 
 		</article>
 	  </div>

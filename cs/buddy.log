@@ -1,0 +1,37 @@
+This article talks about physical memory partitioning - buddy memory system
+
+# Formal causes
+## Memory map, the 'mem_map' array
+[Memory: the flat, the discontiguous, and the sparse](https://lwn.net/Articles/789304/)
+Firo: All these 3 types are [Flat memory model](https://en.wikipedia.org/wiki/Flat_memory_model)
+Firo: I think kernel developers are abusing the terminology 'memory model'. [Physical Memory Model](https://www.kernel.org/doc/html/latest/vm/memory-model.html)
+Firo: the full name should be memory map/layout model.
+[sparsemem memory model](https://lwn.net/Articles/134804/) [PATCH](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d41dee369bff3b9dcb6328d4d822926c28cc2594)
+[DISCONTIGMEM, !NUMA, and SLUB](https://lwn.net/Articles/439472/)
+8170e6bed465b4b0c7687f93e9948aca4358a33b x86, 64bit: Use a PF handler to materialize early mappings on demand
+zone_mem_map => node_mem_map
+commit a0140c1d85637ee5f4ea7c78f066e3611a6a79dc
+Author: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Date:   Mon Mar 27 01:15:55 2006 -0800
+    [PATCH] remove zone_mem_map
+
+### page pfn 
+pfn_to_page
+
+## keeping track of all free page frames
+free_area
+
+# Material
+## Onset
+setup_arch->x86_init.paging.pagetable_init = native_pagetable_init = paging_init -> 
+	sparse_init ...-> vmemmap_populate	# vmemmap
+	zone_sizes_init->free_area_init_nodes -> free_area_init_node-> free_area_init_core
+		zone_pcp_init # init percpu pageset with boot_pageset
+		init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list
+		memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page->flags; set_page_links
+
+start_kernel->mm_init
+        mem_init-> memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */
+## Free
+page_is_buddy
+PageBuddy(buddy) && page_order(buddy)

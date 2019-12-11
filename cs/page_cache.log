@@ -1,0 +1,124 @@
+# Reference
+filesystems/vfs.txt
+
+# LQO
+[Linux内核文件Cache 机制](http://www.ilinuxkernel.com/files/Linux.Kernel.Cache.pdf)
+[The future of the page cache](https://lwn.net/Articles/712467/) and [Video](https://www.youtube.com/watch?v=xxWaa-lPR-8)
+[Page-based direct I/O](https://prod3.lwn.net/Articles/348719/)
+
+# History 
+## Buffer cache
+[Beefing Up the Buffer Cache](https://drive.google.com/file/d/11sLlREfK_3EnEK_BlqnOxVGFUFnDbQVs/view?usp=sharing) and [UBC](https://drive.google.com/file/d/1ZY2MaoJCb8R317ZjLfGdvxcKq4Jo_k6i/view?usp=sharing)
+Starting from stable version 2.4.10, the buffer cache does not really exist anymore. In
+fact, for reasons of efficiency, block buffers are no longer allocated individually;
+instead, they are stored in dedicated pages called “buffer pages,” which are kept in
+the page cache.  -- ULK Chapter 15: Storing Blocks in the Page Cache
+Section Storing Blocks in Page Cache is invaluable; 
+
+Block buffers: This descriptor contains all the information needed by the kernel to know how to handle the block;
+thus, before operating on each block, the kernel checks its buffer head.
+
+Buffer pages: attach_page_buffers
+Block device buffer pages
+grow_buffers-> grow_dev_page
+try_to_release_page
+Buffer cache: Inode is stored on the buffer cache; check sync_inode_metadata and __ext2_write_inode
+
+
+## [Linux pagecache history](https://www.kernel.org/doc/ols/2006/ols2006v2-pages-249-262.pdf)
+
+
+# Formal causes
+[Must-read: General description on page cache: A Lockless Pagecache in Linux - Introduction, Progress, Performance](https://www.kernel.org/doc/ols/2006/ols2006v2-pages-249-262.pdf)
+Pages added to page cache or buffer cache.
+grow_dev_page => find_or_create_page => pagecache_get_page => add_to_page_cache_lru
+
+## Lockless pagecache
+tig tags/v2.6.27-rc1~154
+[Must-read Bachelor papper Nick Piggin: detailed version: A lockless pagecache in Linux](https://drive.google.com/file/d/1WIxOJaRTVs2gXfQrWKqpFyd0XyYA9Hqq/view?usp=sharing)
+[A Lockless Pagecache in Linux - Introduction, Progress, Performance](https://www.kernel.org/doc/ols/2006/ols2006v2-pages-249-262.pdf)
+### Page PG_nonewrefs -> page_freeze_refs -> page_ref_freeze
+commit e286781d5f2e9c846e012a39653a166e9d31777d
+Refs: v2.6.26-7311-ge286781d5f2e
+Author:     Nick Piggin <npiggin@suse.de>
+AuthorDate: Fri Jul 25 19:45:30 2008 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Sat Jul 26 12:00:06 2008 -0700
+    mm: speculative page references
+	[...]
+    Thanks to Hugh for pointing out an improvement to the algorithm setting
+    page_count to zero when we have control of all references, in order to
+    hold off speculative getters.
+
+commit fe896d1878949ea92ba547587bc3075cc688fb8f
+Author: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Date:   Thu Mar 17 14:19:26 2016 -0700
+    mm: introduce page reference manipulation functions
+page_freeze_refs -> page_ref_freeze; is it much better name?
+
+## The address space object - address_space
+Documentation/filesystems/vfs.rst
+[Re: struct address_space](http://lkml.iu.edu/hypermail/linux/kernel/9911.0/0273.html)
+
+> > looks like we started using things called struct address_space a couple
+> > of rels back. could someone please explain why the change was made ? there
+> > don't seem to have been any postings on it.
+> Because we have caches that are not associated with any particular inode.
+> (swap, for one). Moreover, we don't actually need to know the inode - just
+> a small subset. Said subset makes perfect sense for any sort of page cache
+> and switching to that allows to avoid fake inodes. Moreover, it lets us
+> use several caches per inode, etc. And makes for cleaner code, IMHO.
+
+[[Q] [VFS] i_mapping vs. i_data ?](https://lkml.org/lkml/2001/5/22/103)
+
+Firo: FIXME: address_space is subpart of as layer in [Virtual Memory Architecture in SunOS](http://kos.enix.org/pub/gingell8.pdf)
+
+[Linux Page Cache in Linux Kernel 2.4 Internals](http://www.tldp.org/LDP/lki/lki.html#toc4)
+
+> While the SVR4 pagecache is only used for filesystem data cache and thus uses the struct vnode and an offset
+> into the file as hash parameters, the Linux page cache is designed to be more generic, and therefore uses a
+> struct address_space (explained below) as first parameter. Because the Linux pagecache is tightly coupled to
+> the notation of address spaces, you will need at least a basic understanding of adress_spaces to understand the
+> way the pagecache works. An address_space is some kind of software MMU that maps all pages of one object
+> (e.g. inode) to an other concurrency (typically physical disk blocks).
+
+PLKA
+To manage the various target objects that can be processed and cached in whole pages, the kernel uses
+an abstraction of the ‘‘address space‘‘that associates the pages in memory with a specific block device (or
+any other system unit or part of a system unit).
+This type of address space must not be confused with the virtual and physical
+address spaces provided by the system or processor. It is a separate abstraction of
+the Linux kernel that unfortunately bears the same name.
+
+## reorder
+[mm/huge_memory.c: reorder operations in __split_huge_page_tail()](https://marc.info/?l=linux-kernel&m=151844440831709&w=2)
+
+## Readahead
+[Linux readahead: less tricks for more](https://www.kernel.org/doc/ols/2007/ols2007v2-pages-273-284.pdf)
+[Adaptive file readahead](https://lwn.net/Articles/155510/)
+[Improving readahead](https://lwn.net/Articles/372384/)
+
+## Operations
+find_get_page, add_to_page_cache, delete_from_page_cache, replace_page_cache_page
+add_to_page_cache_lru
+
+## Search structure
+file page cache : key is page.index( offset in file), item is page.
+* swap cache - a fake cache
+radix tree same as page cache
+add_to_swap 
+* page cache
+Radix tree
+page_cache_tree_insert, add_to_page_cache_lru
+
+## Reclaim algorithm
+
+## Write behavior
+
+## Cache coherence
+
+# Page flags
+PG_private: check definition
+ * The PG_private bitflag is set on pagecache pages if they contain filesystem
+ * specific data (which is normally at page->private). It can be used by
+ * private allocations for its own usage.

@@ -1,0 +1,46 @@
+
+# Reference
+http://nenya.ms.mff.cuni.cz/teaching/crash_dump_analysis/slides/09-crash.pdf
+https://w3.suse.de/~ptesarik/crash-refcard/refcard.pdf
+[lkml-Linus-Al-Viro-oops-debug](http://yarchive.net/comp/linux/oops_decoding.html)
+[kernel oops tracing](https://www.kernel.org/doc/Documentation/oops-tracing.txt)
+[Debugging a kernel crash found by syzkaller](http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1)
+
+# Build
+ncurses-devel-32bit for termcap
+zlib-devel-32bit
+
+# list
+crash> p file_lock_list
+PER-CPU DATA TYPE:
+  struct hlist_head file_lock_list;
+PER-CPU ADDRESSES:
+  [0]: ffff88046fa17d20
+....
+  [16]: ffff880c6fa17d20
+....
+list -o file_lock.fl_link -s file_lock.fl_file -H ffff880c6fa17d20
+
+# Tree
+tree -t rbtree -ls vm_area_struct.vm_start -r mm_struct.mm_rb  0xffff91f2cd94a240  -o vm_area_struct.vm_rb
+0xffff91f2cd94a240 is address of mm_struct
+
+# crash-utility
+[Crash Dump Analysis](https://drive.google.com/file/d/1NhZZo5DLOmE0d_97ZfwAsQ6ae1av3knw/view?usp=sharing)
+[multiple structs with the same name](https://www.redhat.com/archives/crash-utility/2012-June/msg00026.html)
+
+# Crash-python
+[See comment on crash-python pykdump and drgn A kernel debugger in Python: drgn](https://lwn.net/Articles/789641/)
+crash.sh
+target kdumpfile vmcore
+[gdb.Command Commands In Python](https://sourceware.org/gdb/onlinedocs/gdb/Commands-In-Python.html#Commands-In-Python)
+[drn live debugging?](https://github.com/osandov/drgn)
+
+# libkdumpfile and kdumpid
+
+# dugn
+
+# drgn
+
+# Gdb on kdump
+http://ales.jikos.cz/gdb_kdump/

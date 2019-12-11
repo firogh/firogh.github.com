@@ -1,28 +1,57 @@
----
-tags: [ net ] 
-title: Network offload
-date: 
-category: net
----
-# Reference
-[GSO: Generic Segmentation Offload][1]
-[1]: https://lwn.net/Articles/188489/
-## TSO
-搞这么复杂就是为了, 在validate_xmit_skb如果硬件支持tso, 协议栈就偷懒了, 不分片tcp报文, 
-当然skb->len得大于mss_now才有意义.
+# GRO
+commit d565b0a1a9b6ee7dff46e1f68b26b526ac11ae50
+Author: Herbert Xu <herbert@gondor.apana.org.au>
+Date:   Mon Dec 15 23:38:52 2008 -0800
+    net: Add Generic Receive Offload infrastructure
+
+commit 86911732d3996a9da07914b280621450111bb6da
+Author: Herbert Xu <herbert@gondor.apana.org.au>
+Date:   Thu Jan 29 14:19:50 2009 +0000
+    gro: Avoid copying headers of unmerged packets
+
+ struct napi_gro_cb {
++       /* This indicates where we are processing relative to skb->data. */
++       int data_offset;
+
+[JLS2009: Generic receive offload](https://lwn.net/Articles/358910/)
+[GRO: Surviving 10Gbp/s with Cycles to Spare](https://events.static.linuxfound.org/images/stories/slides/jls09/jls09_xu.pdf)
+[Segmentation Offloads in the Linux Networking Stack](https://www.kernel.org/doc/Documentation/networking/segmentation-offloads.txt)
+[GSO: Generic Segmentation Offload](https://lwn.net/Articles/188489/)
+
+## Instance
+__skb_checksum at ffffffff815110ba
+skb_checksum at ffffffff81511272
+__skb_gro_checksum_complete at ffffffff8151fd60
+tcp4_gro_receive at ffffffff81588027
+inet_gro_receive at ffffffff81597da4
+dev_gro_receive at ffffffff815244e6
+napi_gro_receive at ffffffff81524653
+ixgbe_clean_rx_irq at ffffffffa0743764 [ixgbe]
+ixgbe_poll at ffffffffa0744a00 [ixgbe]
+net_rx_action at ffffffff8152407c
+__do_softirq at ffffffff810874e8
+irq_exit at ffffffff810879ba
+
+
+# TSO in tcp_v4_connect
 tcp_set_skb_tso_segs
-
-
-## offload
-* TSO in tcp_v4_connect
 [TSO Explained](https://tejparkash.wordpress.com/2010/03/06/tso-explained/)
-One Liner says: It is a method to reduce cpu workload of packet cutting in 1500byte and asking hardware to perform the same functionality.
-* GSO
-[GSO: Generic Segmentation Offload](http://thread.gmane.org/gmane.linux.network/37287)
-TSO = GSO_TCPV4
-frags = sg I/O
-frag_list
-*GRO
-napi -> dev ->inet->skb
+# Ethernet GRO
+commit 9b174d88c257150562b0101fcc6cb6c3cb74275c
+Author: Jesse Gross <jesse@nicira.com>
+Date:   Tue Dec 30 19:10:15 2014 -0800
+
+    net: Add Transparent Ethernet Bridging GRO support.
++static struct packet_offload eth_packet_offload __read_mostly = {
++       .type = cpu_to_be16(ETH_P_TEB),
++       .callbacks = {
++               .gro_receive = eth_gro_receive,
++               .gro_complete = eth_gro_complete,
++       },
++};
+commit e1a8000228e16212c93b23cfbed4d622e2ec7a6b
+Author: Herbert Xu <herbert@gondor.apana.org.au>
+Date:   Thu Oct 9 12:00:17 2008 -0700
+    gre: Add Transparent Ethernet Bridging
 
 

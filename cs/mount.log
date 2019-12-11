@@ -1,0 +1,19 @@
+# References
+[Shared Subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)
+[LWN: Shared subtrees](https://lwn.net/Articles/159077/)
+[Mount namespaces and shared subtrees](https://lwn.net/Articles/689856/)
+[Mount namespaces, mount propagation, and unbindable mounts](https://lwn.net/Articles/690679/)
+do_new_mount
+	vfs_kern_mount
+		root = mount_fs -> ramfs_mount -> ramfs_fill_super
+			ramfs_get_inode
+			sb->s_root = d_make_root(inode);
+		mnt->mnt.mnt_root = root;
+	do_add_mount
+		lock_mount
+			mnt = lookup_mnt(path);
+			retry until !mnt, then create new mp
+		graft_tree->attach_recursive_mnt
+			get_mountpoint->d_set_mounted
+			mnt_set_mountpoint
+			commit_tree -> child mnt.mnt_hash -> mount_hashtable

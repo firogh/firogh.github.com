@@ -1,146 +1,80 @@
+# Formal causes
+[book_linuxkernel_blockdrv](https://github.com/gurugio/book_linuxkernel_blockdrv)
+[Linux Block Device Architecture](https://yannik520.github.io/blkdevarch.html)
+[Notes on the Generic Block Layer Rewrite in Linux 2.5](https://www.kernel.org/doc/Documentation/block/biodoc.txt)
 
-# Block layer
-## Generic block layer
-FS layer -> submit_bio bio -> generic block layer -> before request_fn/hd_request_fn
-unit of each layer
-buffer -> VFS iovec kiocb__vfs_write generic_file_write_iter -> page cache buffer_head -> submit bio-> request -> IO scheduler
-FS -> block_device -> gendisk
-block_device:
-bd_inode -> FS
-bd_disk -> gendisk
-bd_contains -> block_device of gendisk
-bd_part -> hd_struct
-bd_queue -> request queue which?
+# bdev
+bi_dev is initialized from supber_block
+btrfs: 
+in btrfs_mount -> sget and btrfs_set_super
+__extent_writepage
+__extent_writepage_io 
+em = epd->get_extent = btrfs_get_extent -> em->bdev = root->fs_info->fs_devices->latest_bdev;
+bdev = em->bdev;
+submit_extent_page
 
-### Data structure
-1. request
-bio
-bio_tail
-2. request_queue
-2.0 onset
+bdev_get_queue(bio->bi_bdev)
+
+## bdevfs
+def_blk_fops
+blkdev_open
+inode major minor
+
+
+# gendisk and hd_struct and disk_part_tbl
+bdev_get_queue(bio->bi_bdev)
+[Partition and gendisk](https://groups.google.com/forum/#!msg/zh-kernel/sg6BvXTJSUk/-fnTfL9_VXYJ)
+and
+commit 540eed5637b766bb1e881ef744c42617760b4815
+Author: Tejun Heo <tj@kernel.org>
+Date:   Mon Aug 25 19:56:15 2008 +0900
+    block: make partition array dynamic
+## disk init
+init_sd
+
+# the request layer
+[Block layer introduction part 2: the request layer](https://lwn.net/Articles/738449/)
+ request_queue
 blk_init_queue
-2.1 queue_head: linked list of request
+queue_head: linked list of request
 /sys/block/sda/queue/
 /sys/block/sda/queue/nr_requests
-2.2 request_fn: interfece between block layer and device for read or write
-2.3 make_request_fn: transform bio to request.
-2.4 elevator
-2.5 delay_work??
-3. bio
-3.1 bi_io_vec - bio_vec
-Documentation/block/biovecs.txt
-3.2 bi_iter - bvec_iter 
-block: Abstract out bvec iterator - 4f024f3797c43cb4b73cd2c50cec728842d0e49e
-3.3 bio merged to a request
-all bios in same request is contiguous.
-__make_request elv_merge
-/sys/block/sda/queue/max_sectors_kb 1280??
-Front merge
-Back merge
-Coalesce merge
-3.4 generic_make_request
+request_fn: interfece between block layer and device for read or write
+make_request_fn: transform bio to request.
+generic_make_request
 convert sector from partition to gendisk
-
-
-### Processes
-1. Delay work
-
-
 ## IO scheduler
+/sys/block/sda/queue/scheduler
 
-## Block device driver
-
-# IO optmization
-bio_list -> plug -> Elevator Queue -> gendisk.request_queue
-## Plug/unplug mechanism
-blk_plug like lru_add_pvec, SMP friendly
-The new mechanism [block: initial patch for on-stack per-task plugging](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=73c101011926c58)
+# Plug
+[Explicit block device plugging and comments](https://lwn.net/Articles/438256/)
+[block: initial patch for on-stack per-task plugging](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=73c101011926c58)
 Reduce the lock contection of request_queue lock. 
  * blk_plug permits building a queue of related requests by holding the I/O
  * fragments for a short period. This allows merging of sequential requests
  * into single larger request. As the requests are moved from a per-task list to
  * the device's request_queue in a batch, this results in improved scalability
  * as the lock contention for request_queue lock is reduced.
-blk_start_plug 
-blk_queue_bio
-### Plug
-
-### Unplug
-#### Mechanism
+## Unplug
 1. synchronized method
-blk_run_queue
+__blk_run_queue
 2. asynchronized way
 kblockd_workqueue
 kworker/%u:%d%s (cpu, id, priority)
 [workqueue: drop 'H' from kworker names of unbound worker pools](https://lkml.org/lkml/2013/3/19/661)
 ps aux | grep kblockd
 root         6  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/0:0H-kblockd]
-root        20  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/1:0H-kblockd]
-root        26  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/2:0H-kblockd]
-root        32  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/3:0H-kblockd]
-root        46  0.0  0.0      0     0 ?        I<   08:15   0:00 [kblockd]
-root       340  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/2:1H-kblockd]
 root       435  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/0:1H-kblockd]
-root       452  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/1:1H-kblockd]
-root       467  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/3:1H-kblockd]
-#### Occasions
+root        46  0.0  0.0      0     0 ?        I<   08:15   0:00 [kblockd]
 1. blk_finish_plug
 2. blk_schedule_flush_list
 3. in pluged state: more then BLK_MAX_REQUEST_COUNT
 3.1 ??deadlock avoidance: if memory is low and waiting for IO complete and reclaiming pages.??
 3.2 Short period queuing each bio just for baching. If Sleep, when flush the queued bio?
 3.3 schedule->sched_submit_work
-#####all result in blk_flush_plug_list
+## all result in blk_flush_plug_list
 if schedule:  workqueue
 else synchronize ?? which function?
 
-## submit_bio
-blk_queue_bio
-Case 1. Try Merge 
-1.1 Plug merge
-1.2 Elevator merge; CFS, deadline, noop
-Case 2. Plug 
-2.1 full? blk_flush_plug_list
-2.2 list_add_tail
-
-## blk flush
-case 1 schedule
-kblockd_workqueue -> blk_delay_work
-case 2 
-_blk_run_queue -> q->request_fn scsi_request_fn
-## bio_list
-Recursion avoidance
-queue bio before make_request_fn
-
-## Submit request to driver
-__blk_run_queue -> request_fn scsi_request_fn
-
-## IO scheduler
-/sys/block/sda/queue/scheduler
-
-
-
-# bdev fs
-def_blk_fops
-blkdev_open
-inode major minor
-
-# disk init
-init_sd
-
-# Writeback 
-bdi_wq = alloc_workqueue("writeback", WQ_MEM_RECLAIM | WQ_FREEZABLE
-root        40  0.0  0.0      0     0 ?        I<   10:08   0:00 [writeback]
-bdi_list
-bdi_register_owner(bdi, disk_to_dev(disk));
-# Ref
-[A block layer introduction part 1: the bio layer](https://lwn.net/Articles/736534/?spm=a2c4e.11153940.blogcont609907.5.1c543f4bc9Aaop)
-
 # LQO
-1. [Partition and gendisk](https://groups.google.com/forum/#!msg/zh-kernel/sg6BvXTJSUk/-fnTfL9_VXYJ)
-gendisk代表磁盘，无论其有没有分区。 struct hd_struct才代表分区。
-2. [part0 and disk_part_tbl](https://www.jianshu.com/p/dde0673c0466)
-3. sda vs hda
 4. ext2_mount mount_dev
-5. raw IO vs page cache IO 页缓存IO
-6. request merge?

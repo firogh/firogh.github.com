@@ -1,0 +1,53 @@
+
+
+nic -> 
+{
+	do_IRQ->tg3_interrupt -> napi_schedule
+}
+
+nic or loopback_xmit -> netif_rx
+{
+	equeue sd->input_pkt_queue
+	____napi_schedule sd->backlog for process_backlog
+}
+
+net_rx_action -> napi_poll
+{
+	process_backlog -> __netif_receive_skb
+	tg3_poll_msix -> tg3_tx!! then tg3_rx -> 
+	{
+		skb->protocol = eth_type_trans(skb, tp->dev);
+		napi_gro_receive -> netif_receive_skb_internal -> __netif_receive_skb  //In other NIC driver, napi_gro_receive might be replaced by netif_receive_skb.
+	}
+	or
+	enic_poll_msix_wq
+	then 
+	napi_complete_done
+}
+
+# NAPI for tx?
+[HOWTO use NAPI to reduce TX interrupts](https://lkml.org/lkml/2006/8/18/421)
+[A driver should _never_ account TX work to the NAPI poll budget.](https://lore.kernel.org/patchwork/patch/756226/)
+This is because TX liberation is orders of magnitude cheaper than
+receiving a packet, and such SKB freeing makes more SKBs available
+for RX processing.
+
+Therefore, TX work should never count against the NAPI budget.
+
+Please do not fix something which is not broken.
+...
+> So at least the documentation I read must be fixed (https://wiki.linuxfoundation.org/networking/napi)
+
+We have no control over nor care about what the Linux Foundation writes
+about the Linux networking code.
+
+Complain to them and please do not bother us about it.
+
+Thank you.
+
+# NAPI
+[Reworking NAPI](https://lwn.net/Articles/214457/)
+[Newer, newer NAPI](https://lwn.net/Articles/244640/)
+
+
+

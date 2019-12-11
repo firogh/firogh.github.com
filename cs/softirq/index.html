@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="158">
+<meta itemprop="wordCount" content="527">
 <meta itemprop="datePublished" content="2017-04-03">
 <meta itemprop="url" content="http://firoyang.org/cs/softirq/">
 
@@ -187,41 +187,92 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<p>##softirq<br />
-同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。<br />
+<h1 id="the-old-bottom-half">The old bottom half</h1>
+
+<p>ULK 1st: 4.6.6 Bottom Half<br />
+History: commit ad09492558ffa7c67f2b58d23d04dce9ffb9b9dd (tag: 0.99)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:09:07 2007 -0500<br />
+    [PATCH] Linux-0.99 (December 13, 1992)<br />
+Firo: There isn&rsquo;t to much useful comment. But the code is very simple. Search bh_base.</p>
+
+<h1 id="task-queue">task queue</h1>
+
+<p>history: commit 98606bddf430f0a60d21fba93806f4e3c736b170 (tag: 1.1.13)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:09:30 2007 -0500<br />
+    Import 1.1.13<br />
++ * New proposed &ldquo;bottom half&rdquo; handlers:<br />
++ * &copy; 1994 Kai Petzke, wpp@marie.physik.tu-berlin.de<br />
++ * Advantages:<br />
++ * - Bottom halfs are implemented as a linked list.  You can have as many<br />
++ *   of them, as you want.<br />
++ * - No more scanning of a bit field is required upon call of a bottom half.<br />
++ * - Support for chained bottom half lists.  The run_task_queue() function can be<br />
++ *   used as a bottom half handler.  This is for example usefull for bottom<br />
++ *   halfs, which want to be delayed until the next clock tick.<br />
++ * Problems:<br />
++ * - The queue_task_irq() inline function is only atomic with respect to itself.<br />
++ *   Problems can occur, when queue_task_irq() is called from a normal system<br />
++ *   call, and an interrupt comes in.  No problems occur, when queue_task_irq()<br />
++ *   is called from an interrupt or bottom half, and interrupted, as run_task_queue()<br />
++ *   will not be executed/continued before the last interrupt returns.  If in<br />
++ *   doubt, use queue_task(), not queue_task_irq().<br />
++ * - Bottom halfs are called in the reverse order that they were linked into<br />
++ *   the list.<br />
++struct tq_struct {<br />
+Check ULK2nd 4.7.3.1 Extending a bottom half for task queues, especially tq_context and keventd<br />
+The Old Task Queue Mechanism in LKD3rd. Cition from it below.<br />
+<a href="https://lwn.net/Articles/11351/">The end of task queues</a></p>
+
+<h1 id="softirq">Softirq</h1>
+
+<p><a href="http://www.cs.unca.edu/brock/classes/Spring2013/csci331/notes/paper-1130.pdf">I’ll Do It Later: Softirqs, Tasklets, Bottom Halves, Task Queues, Work Queues and Timers</a><br />
 * not allow execute nest but can recusive lock:local_bh_disable<br />
 current-&gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.<br />
 * hardirq on, can&rsquo;t sleep<br />
 * not percpu</p>
 
-<h2 id="tasklet-and-kernel-timer-is-based-on-softirq">tasklet and kernel timer is based on softirq</h2>
+<h1 id="occassions-of-softirq">Occassions of Softirq</h1>
 
-<p>新增softirq, 是要重新编译内核的, 试试tasklet也不错.<br />
-.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上<br />
-* First of all, it&rsquo;s a conglomerate of mostly unrelated jobs,<br />
- which run in the context of a randomly chosen victim<br />
- w/o the ability to put any control on them. &ndash;Thomas Gleixner</p>
+<p>irq_exit()<br />
+re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.<br />
+ksoftirqd</p>
 
-<p>tasklet different with other softirq is run  signal cpu core<br />
-spinlock_bh wider then spinlock</p>
+<h1 id="tasklet">Tasklet</h1>
 
-<p>###time of softirq<br />
-* follow hardirq, irq_exit()<br />
-* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.<br />
-* ksoftirqd</p>
+<p>History: commit 6cc120a8e71a8d124bf6411fc6e730a884b82701 (tag: 2.3.43pre7)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:30:52 2007 -0500<br />
+    Import 2.3.43pre7<br />
++ Tasklets &mdash; multithreaded analogue of BHs.<br />
++   Main feature differing them of generic softirqs: tasklet<br />
++   is running only on one CPU simultaneously.<br />
++   Main feature differing them of BHs: different tasklets<br />
++   may be run simultaneously on different CPUs.<br />
++   Properties:<br />
++   * If tasklet_schedule() is called, then tasklet is guaranteed<br />
++     to be executed on some cpu at least once after this.<br />
++   * If the tasklet is already scheduled, but its excecution is still not<br />
++     started, it will be executed only once.<br />
++   * If this tasklet is already running on another CPU (or schedule is called<br />
++     from tasklet itself), it is rescheduled for later.<br />
++   * Tasklet is strictly serialized wrt itself, but not<br />
++     wrt another tasklets. If client needs some intertask synchronization,<br />
++     he makes it with spinlocks.</p>
 
-<p>###tasklet<br />
-tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?<br />
-tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了<br />
-只有一个cpu执行同一时刻.</p>
+<h1 id="timer">Timer</h1>
 
-<p>#FAQ<br />
-##When to save irq rather than just disable irq<br />
-local_irq_disable() used in the code path that never disabled interrupts.<br />
-local_irq_save(flags) used in the code path that already disabled interrupts.</p>
+<h2 id="irqsafe-timer">irqsafe timer</h2>
 
-<p>##what about irq nested?<br />
-<a href="http://lwn.net/Articles/380937/">http://lwn.net/Articles/380937/</a></p>
+<p>__run_timers<br />
+irqsafe = timer-&gt;flags &amp; TIMER_IRQSAFE<br />
+check del_timer_sync<br />
+and definition of TIMER_IRQSAFE<br />
+<a href="https://patchwork.kernel.org/patch/10811995/">https://patchwork.kernel.org/patch/10811995/</a><br />
+Is timer pending</p>
+
+<h1 id="lqo">LQO</h1>
 
 <p><a href="http://thread.gmane.org/gmane.linux.kernel/1152658">Deal PF_MEMALLOC in softirq</a></p>
 

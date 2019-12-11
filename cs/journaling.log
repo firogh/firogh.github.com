@@ -1,0 +1,47 @@
+# References
+[Journaling file system](https://en.wikipedia.org/wiki/Journaling_file_system)
+[FS Consistency & Journaling](https://compas.cs.stonybrook.edu/~nhonarmand/courses/fa17/cse306/slides/18-fs_consistency.pdf)
+[Harvard on Journaling fs](http://www.eecs.harvard.edu/~cs161/videos/journaling.pdf)
+[On Journaling File Systems in Linux: An Empirical Study](https://pdfs.semanticscholar.org/e65b/1f9dbfadb75da91b20895e658369e3c58808.pdf)
+
+# History
+[Author's papper: Journaling the Linux ext2fs Filesystem](http://e2fsprogs.sourceforge.net/journal-design.pdf)
+[EXT3, Journaling Filesystem](http://olstrans.sourceforge.net/release/OLS2000-ext3/OLS2000-ext3.html)
+[Analysis and Evolution of Journaling File Systems](https://www.usenix.org/legacy/publications/library/proceedings/usenix05/tech/general/full_papers/prabhakaran/prabhakaran_html/main.html)
+
+
+# Purpose
+Reduce time spent recovring filesystems to a consistent state. From above journal-design.pdf:  Where system availability is important, this may be time which cannot be spared, so a mechanism is required which will avoid the need for an expensive recovery stage every time a machine reboots. 
+[A journaling file system is a fault-tolerant file system in which data integrity is ensured because updates to files' metadata are written to a serial log on disk before the original disk blocks are updated] see On Journaling File Systems in Linux: An Empirical Study
+[Same representation for Goals in slides](https://compas.cs.stonybrook.edu/~nhonarmand/courses/fa17/cse306/slides/18-fs_consistency.pdf)
+1) Ok to do some recovery work after crash, but not to read entire disk
+2) Don’t move file system to just any consistent state, get correct state
+
+# Form
+ULK3: The Ext3 Journaling Filesystem
+## Protecting fs
+1. Store a copy of blocks in the journal.
+2. Write the blocks to filesystem
+## Journaling modes
+[In ordered journaling mode, again only metadata writes are journaled; however, data writes to their fixed location are ordered before the journal writes of the metadata. In contrast to writeback mode, this mode provides more sensible consistency semantics, where both the data and the metadata are guaranteed to be consistent after recovery.](https://www.usenix.org/legacy/publications/library/proceedings/usenix05/tech/general/full_papers/prabhakaran/prabhakaran_html/main.html)
+Protecting journal itself
+Log records, atomic operation handles, transaction
+
+## Replay
+[Revoke records in OSTEP Tricky Case: Block Reuse](http://pages.cs.wisc.edu/~remzi/OSTEP/file-journaling.pdf)
+[Responding to ext4 journal corruption](https://lwn.net/Articles/284037/)
+
+# Material
+https://www.kernel.org/doc/Documentation/filesystems/journalling.rst
+[Journal (jbd2) at ext4 wiki](https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout#Journal_.28jbd2.29)
+[Journaling In Action: ext3](http://www.eecs.harvard.edu/~cs161/notes/journaling.pdf)
+ext4_write_begin
+[High-Performance Transaction Processing in Journaling File Systems](https://www.usenix.org/system/files/conference/fast18/fast18-son.pdf)
+[slides](https://www.usenix.org/sites/default/files/conference/protected-files/fast18_slides_son.pdf)
+
+## Revoke records
+jbd2_journal_write_revoke_records
+[L3: System panic in jbd2_journal_next_log_block() due to J_ASSERT(journal->j_free > 1) ](https://bugzilla.suse.com/show_bug.cgi?id=1144802)
+
+## Circular buffer
+[Improved Doubly-Circular Buffer Structure for EXT4 Journaling File System to Increase Performance on NAND Flash](https://www.academia.edu/23156711/Improved_Doubly-Circular_Buffer_Structure_for_EXT4_Journaling_File_System_to_Increase_Performance_on_NAND_Flash)

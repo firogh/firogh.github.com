@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="30">
+<meta itemprop="wordCount" content="951">
 <meta itemprop="datePublished" content="2017-04-03">
 <meta itemprop="url" content="http://firoyang.org/cs/interrupt_and_exception/">
 
@@ -187,19 +187,244 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<p>#Interrupt</p>
+<h1 id="references">References</h1>
 
-<h2 id="init">init</h2>
+<p><a href="https://people.cs.clemson.edu/~mark/interrupts.html">history of interrupts</a><br />
+<a href="https://virtualirfan.com/history-of-interrupts">Another History of interrupts with video</a><br />
+Interrupts: asynonymous(passively received), external<br />
+Exception: synonymous(actively detected), internal<br />
+Software interrupts: is a trap. int/int3, into, bound.<br />
+<a href="http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/">为什么Linux内核不允许在中断中休眠</a><br />
+<a href="https://www.youtube.com/watch?v=-pehAzaP1eg">IRQs: the Hard, the Soft, the Threaded and the Preemptible</a><br />
+<a href="https://www.youtube.com/watch?v=YE8cRHVIM4E">How Dealing with Modern Interrupt Architectures can Affect Your Sanity</a></p>
 
-<p>native_init_IRQ() -&gt;  set_intr_gate(i, irq_entries_start&hellip;<br />
-irq_entries_start define in arch/x86/kernel/entry_32.S</p>
+<h2 id="mask-exception">Mask exception</h2>
 
-<p>##Interrupt Context terminology<br />
-* interrupt context - in_irq or in_interrupt<br />
-irq_enter<br />
-* bh context - in_softirq<br />
+<p>RF in EFLAGS for masking #DB<br />
+SS &amp; SP</p>
+
+<h1 id="form">Form</h1>
+
+<h2 id="interrupt-context-terminology">Interrupt Context terminology</h2>
+
+<ul>
+<li>interrupt context - in_irq or in_interrupt<br />
+irq_enter<br /></li>
+<li>bh context - in_softirq<br />
 local_bh_disable<br />
-__do_softirq -&gt; __local_bh_disable_ip</p>
+__do_softirq -&gt; __local_bh_disable_ip<br />
+<br /></li>
+</ul>
+
+<h2 id="recusively-disbale-irq">Recusively disbale irq</h2>
+
+<p>local_irq_disable() used in the code path that never disabled interrupts.<br />
+local_irq_save(flags) used in the code path that already disabled interrupts.</p>
+
+<h2 id="irq-nested">irq nested?</h2>
+
+<p><a href="http://lwn.net/Articles/380937/">Prevent nested interrupts when the IRQ stack is near overflowing v2</a><br />
+<a href="http://www.lenky.info/archives/2013/03/2245">对Linux x86-64架构上硬中断的重新认识</a></p>
+
+<h1 id="exceptions">Exceptions</h1>
+
+<h2 id="faults-a-fault-is-an-exception-that-can-generally-be-corrected-and-that-once-corrected-allows-the-program">Faults — A fault is an exception that can generally be corrected and that, once corrected, allows the program</h2>
+
+<p>to be restarted with no loss of continuity. When a fault is reported, the processor restores the machine state to<br />
+the state prior to the beginning of execution of the faulting instruction. The return address (saved contents of<br />
+the CS and EIP registers) for the fault handler points to the faulting instruction, rather than to the instruction<br />
+following the faulting instruction.</p>
+
+<h2 id="traps-a-trap-is-an-exception-that-is-reported-immediately-following-the-execution-of-the-trapping-instruction">Traps — A trap is an exception that is reported immediately following the execution of the trapping instruction.</h2>
+
+<p>Traps allow execution of a program or task to be continued without loss of program continuity. The return<br />
+address for the trap handler points to the instruction to be executed after the trapping instruction.</p>
+
+<h2 id="aborts-an-abort-is-an-exception-that-does-not-always-report-the-precise-location-of-the-instruction-causing">Aborts — An abort is an exception that does not always report the precise location of the instruction causing</h2>
+
+<p>the exception and does not allow a restart of the program or task that caused the exception. Aborts are used to<br />
+report severe errors, such as hardware errors and inconsistent or illegal values in system tables.</p>
+
+<h2 id="kernel-handler">kernel handler</h2>
+
+<p>do_error_trap</p>
+
+<p>#x86 Interrupt<br />
+If interrupt occured in user mode, then cpu will context swith for potential reschedule.<br />
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.<br />
+##Hardware interrupts<br />
+are used by devices to communicate that they require attention from the operating system.<br />
+more details in init_IRQ() or set_irq() in driver.<br />
+##software interrupt<br />
+more details in trap_init().<br />
+* exception or trap<br />
+is caused either by an exceptional condition in the processor itself,<br />
+divide zero painc?<br />
+* special instruction, for example INT 0x80<br />
+or a special instruction in the instruction set which causes an interrupt when it is executed.</p>
+
+<h1 id="x86">x86</h1>
+
+<h2 id="interrupt-vector">Interrupt vector</h2>
+
+<p>arch/x86/include/asm/irq_vectors.h</p>
+
+<h2 id="why-do-timer-interrupt-and-de-share-the-same-vector-0">Why do timer interrupt and #DE share the same vector 0.</h2>
+
+<p>cat /proc/interrupts<br />
+            CPU0       CPU1       CPU2       CPU3<br />
+   0:         21          0          0          0  IR-IO-APIC    2-edge      timer<br />
+v3a Chapter 6<br />
+0, DE, Divide Error, Fault, No DIV and IDIV instructions.<br />
+Check ULK3 Chapter 4 Interrupt vectors and Linux 技术内幕 7.2.1中断号<br />
+the 0 in /proc/interrupts is a IRQ line number<br />
+The 0 for Divide error is a interrupt vector.</p>
+
+<h2 id="an-example-of-threaded-irq">An example of threaded irq</h2>
+
+<p>mei_me_probe<br />
+ps axjf | grep irq | grep mei<br />
+    2   499     0     0 ?           -1 S        0   0:00  _ [irq/126-mei_me]</p>
+
+<h2 id="does-sti-cli-affect-software-interrupt">Does sti/cli affect software interrupt</h2>
+
+<p><a href="https://stackoverflow.com/a/1581729/1025001">https://stackoverflow.com/a/1581729/1025001</a></p>
+
+<h2 id="ipi">IPI</h2>
+
+<p>commit 52aec3308db85f4e9f5c8b9f5dc4fbd0138c6fa4<br />
+Author: Alex Shi <a href="mailto:alex.shi@intel.com">alex.shi@intel.com</a><br />
+Date:   Thu Jun 28 09:02:23 2012 +0800<br />
+    x86/tlb: replace INVALIDATE_TLB_VECTOR by CALL_FUNCTION_VECTOR<br />
+ 73 #define ERROR_APIC_VECTOR               0xfe<br />
+ 74 #define RESCHEDULE_VECTOR               0xfd<br />
+ 75 #define CALL_FUNCTION_VECTOR            0xfc<br />
+ 76 #define CALL_FUNCTION_SINGLE_VECTOR     0xfb<br />
+ 77 #define THERMAL_APIC_VECTOR             0xfa<br />
+ 78 #define THRESHOLD_APIC_VECTOR           0xf9<br />
+ 79 #define REBOOT_VECTOR                   0xf8</p>
+
+<h2 id="practices">Practices</h2>
+
+<ul>
+<li>Triggering a #GP exception<br />
+exception_GP_trigger.S<br />
+<a href="http://wiki.osdev.org/Exceptions">Exceptions</a><br />
+if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).<br />
+But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.<br />
+Privilege instructions in V3a chapter 5 Protection<br /></li>
+<li>Obtain sys_call_table on amd64<br />
+<a href="https://www.exploit-db.com/papers/13146/">https://www.exploit-db.com/papers/13146/</a><br />
+<br /></li>
+</ul>
+
+<h1 id="material">Material</h1>
+
+<h2 id="irq-and-exeception-init">irq and exeception init</h2>
+
+<p>type: gate_desc; desc_struct<br />
+file: arch/x86/kernel/idt.c<br />
+start_kernel<br />
+{<br />
+        setup_arch<br />
+        {<br />
+                idt_setup_early_traps           #===&gt; idt_table: ist=0; DB, BP<br />
+                &hellip;<br />
+                idt_setup_early_pf              #===&gt; idt_table: PF ist=0;<br />
+        }<br />
+        &hellip;<br />
+        trap_init<br />
+        {<br />
+                idt_setup_traps                 #===&gt; idt_table: ist=0; DE, 0x80 &hellip; etc.<br />
+                &hellip;<br />
+                cpu_init<br />
+                {<br />
+                        load_current_idt<br />
+                        &hellip;<br />
+                        ist stacks init - exception_stacks<br />
+                        t-&gt;x86_tss.ist[v] points to top of each stack.<br />
+                }<br />
+                idt_setup_ist_traps             #===&gt; idt_table: ist=1; DB, NMI, BP, DF, MC;<br />
+                x86_init.irqs.trap_init         #===&gt; if !KVM, noop<br />
+                idt_setup_debugidt_traps        #===&gt; debug_idt_table, check debug stack; INTG; #DB debug; #BP int; check arch/x86/entry/entry_64.S<br />
+                                # idtentry debug                  do_debug                has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK<br />
+                                # idtentry int3                 do_int3                 has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK</p>
+
+<pre><code>    }
+    early_irq_init = alloc NR_IRQS_LEGACY irq_desc; - 16    #===&gt; [    0.000000] NR_IRQS: 65792, nr_irqs: 1024, preallocated irqs: 16
+    init_IRQ()-&gt;x86_init.irqs.intr_init=native_init_IRQ     #===&gt; external interrupt init; 
+    {
+            pre_vector_init = init_ISA_irqs #===&gt; 1) legacy_pic-&gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.
+            idt_setup_apic_and_irq_gates    #===&gt; apic normal(from 32) and system interrupts; 
+    }
+    softirq_init
+    local_irq_enable
+</code></pre>
+
+<p>}</p>
+
+<h3 id="interrupt-and-exception-stack">Interrupt and exception stack</h3>
+
+<p><a href="https://www.kernel.org/doc/Documentation/x86/kernel-stacks">https://www.kernel.org/doc/Documentation/x86/kernel-stacks</a><br />
+TSS v3a 6.12<br />
+6.14.4 Stack Switching in IA-32e Mode</p>
+
+<h4 id="exception-page-fault">Exception - page_fault</h4>
+
+<p>Kernel doesn&rsquo;t change the inherit TSS stack</p>
+
+<h4 id="interrupt-irq-entries-start">interrupt irq_entries_start</h4>
+
+<p>Kernel change it irq_stack_union in &ldquo;.macro interrupt&rdquo;<br />
+SWAPGS 要手动切换.<br />
+ENTER_IRQ_STACK old_rsp=%rdi<br />
+movq    %rsp, \old_rsp          #==========&gt; old_rsp should be %rdi, check <a href="https://sourceware.org/binutils/docs/as/Macro.html">https://sourceware.org/binutils/docs/as/Macro.html</a><br />
+movq    \old_rsp, PER_CPU_VAR(irq_stack_union + IRQ_STACK_SIZE - 8)<br />
+movq    PER_CPU_VAR(irq_stack_ptr), %rsp</p>
+
+<h4 id="ist-exception">IST exception</h4>
+
+<p>6.14.5 Interrupt Stack Table<br />
+Documentation/x86/kernel-stacks<br />
+Why Debug stack is double page? Spare IST pointer.</p>
+
+<h3 id="link-to-process-stack-from-irq-stack">Link to process stack from irq stack</h3>
+
+<p>commit a2bbe75089d5eb9a3a46d50dd5c215e213790288<br />
+x86: Don&rsquo;t use frame pointer to save old stack on irq entry<br />
+       /* Save previous stack value <em>/<br />
+       movq %rsp, %rsi<br />
+&hellip;<br />
+2:     /</em> Store previous stack value */<br />
+       pushq %rsi<br />
+<a href="https://lore.kernel.org/patchwork/patch/736894/">Firo: end of EOI; x86/dumpstack: make stack name tags more comprehensible</a></p>
+
+<h2 id="lqo">LQO</h2>
+
+<h3 id="do-nmi-do-int3-debug-stack-usage-inc-debug-idt-descr-debug-idt-table">do_nmi do_int3 debug_stack_usage_inc, debug_idt_descr, debug_idt_table,</h3>
+
+<p>load_debug_idt<br />
+commit 42181186ad4db986fcaa40ca95c6e407e9e79372<br />
+Author: Steven Rostedt <a href="mailto:srostedt@redhat.com">srostedt@redhat.com</a><br />
+Date:   Fri Dec 16 11:43:02 2011 -0500</p>
+
+<pre><code>x86: Add counter when debug stack is used with interrupts enabled
+</code></pre>
+
+<h3 id="clear-the-flags-for-pf-through-interrupt-gate">clear the flags for PF through interrupt gate</h3>
+
+<p>v3a: 6.12.1 Exception- or Interrupt-Handler Procedures<br />
+6.12.1.2 Flag Usage By Exception- or Interrupt-Handler Procedure</p>
+
+<h3 id="rbx-in-page-fault">rbx in page_fault?</h3>
+
+<h3 id="x86-64-kernel-don-t-use-trap-gate">x86_64 kernel don&rsquo;t use trap gate?</h3>
+
+<p>Yes</p>
+
+<h3 id="paranoid">Paranoid?</h3>
+
+<p>Documentation/x86/entry_64.txt</p>
 
 		</article>
 	  </div>

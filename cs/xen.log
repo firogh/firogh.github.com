@@ -1,0 +1,207 @@
+# Xen
+https://wiki.xenproject.org/wiki/Xen_Project_Software_Overview
+https://wiki.xenproject.org/wiki/XenParavirtOps
+
+# Xen tools
+ rpm -ql xen-libs | grep ctrl
+/usr/lib64/libxenctrl.so.4.10
+/usr/lib64/libxenctrl.so.4.10.0
+
+# kdump Xen 
+## PV domains
+According to [Kexec and Kdump for Xen](http://xenbits.xenproject.org/docs/4.3-testing/misc/kexec_and_kdump.txt), kdump only works on hypervisor and dom0 kernel. So there is nothig realtead to PV domU. But I
+find a [kdump support for PV domU kexec/kdump implementation for Xen PV domU](https://lkml.org/lkml/2013/7/29/469); it seems not merged to upstream(FIXME). The commit from Petr Tesarik also states that PV domains didn't works with kdump since reserving a crashkernel memory region is not possible due to this commit.
+commit 3db3eb285259ac129f7aec6b814b3e9f6c1b372b
+Author: Petr Tesarik <ptesarik@suse.cz>
+Date:   Wed Apr 25 12:08:35 2018 +0200
+    x86/setup: Do not reserve a crash kernel region if booted on Xen PV
+    Xen PV domains cannot shut down and start a crash kernel. Instead,
+    the crashing kernel makes a SCHEDOP_shutdown hypercall with the
+    reason code SHUTDOWN_crash, cf. xen_crash_shutdown() machine op in
+    arch/x86/xen/enlighten_pv.c.
+    A crash kernel reservation is merely a waste of RAM in this case. It
+    may also confuse users of kexec_load(2) and/or kexec_file_load(2).
+    When flags include KEXEC_ON_CRASH or KEXEC_FILE_ON_CRASH,
+    respectively, these syscalls return success, which is technically
+    correct, but the crash kexec image will never be actually used.
+Generating crash dump for PV dom0: [Enter the xen console; then 'Select C for "trigger a crashdump"'](http://xenbits.xenproject.org/docs/4.3-testing/misc/kexec_and_kdump.txt)
+Generating crash dump for PV domU: [xm dump-core <vm name>](https://support.microfocus.com/kb/doc.php?id=7001384)
+
+## Will PV guest crash lead dom0 crash too?
+[I don't think so: My Xen PV guest kernel crashes, how can I debug it and get a stack/call trace?](https://wiki.xenproject.org/wiki/Xen_Common_Problems#My_Xen_PV_guest_kernel_crashes.2C_how_can_I_debug_it_and_get_a_stack.2Fcall_trace.3F)
+│21:12:06       firo | Hi jgross , if a Xen PV guest is crashed, will the host and other PV guest be affected? I mean stop working.                                                   │ jroedel
+│21:13:50     jgross | firo: no                                                                                                                                                       │ jvanz
+│21:14:09     jgross | firo: otherwise it would be a bug                                                                                                                              │ jwiesner
+│21:15:46       firo | jgross: OK. Do you mean if a PV guest calls xen_crash_shutdown, it will only shut down itself, right?                                                          │ LDewey_office
+│21:17:48     jgross | firo: mostly right. Dom0 calling that will crash the host. 
+
+# Crash
+[xen dump-core format](https://xenbits.xenproject.org/docs/unstable/misc/dump-core-format.txt)
+[Dom0 and hypervisor coredump](http://xen.1045712.n5.nabble.com/xm-dump-core-and-analyzing-td2498845.html)
+Note that with Magnus Damm's latest hypervisor/xen0 kexec/kdump "combination" 
+vmcore format -- which has the additional XEN_ELFNOTE_CRASH_INFO ELF 
+note containing the dom0 pfn_to_mfn_frame_list_list value-- I can run a crash 
+session on the vmcore from the xen0 kernel perspective, as in: 
+
+ $ crash xen0-vmlinux vmcore 
+
+Additionally, Itsuro Oda from VAlinux has also provided a patch so that a crash 
+session can be run on the xen-syms binary as well, as in: 
+
+ $ crash xen-syms vmcore 
+
+When that occurs, the crash utility veers off and offers up a different 
+set of commands appropriate to the hypervisor, i.e., instead of commands 
+relevant to the vmlinux kernel. 
+
+## Debug Xen HV
+l3mule: /suse/fyang/s/1150597/SR101256835093
+crash xen-syms-4.7.6_05-43.42.1.16518.2.PTF vmcore
+
+
+# Is it Dom0 or DomU? 
+[How do I tell if I'm running in a dom0 or a domU?](https://wiki.xenproject.org/wiki/Xen_FAQ_Dom0)
+/proc/xen/capabilities; xen_initial_domain(); 
+In crash, xen_domain_type == XEN_PV_DOMAIN, xen_start_info && xen_start_info->flags & SIF_INITDOMAIN
+[Is OS running in XEN xen_sysfs_uuid_init](https://stackoverflow.com/questions/3490995/is-there-an-os-command-i-can-run-to-determine-if-running-inside-a-xen-based-virt)
+## Guest vs Host by cpuid
+setup_arch->init_hypervisor_platform->detect_hypervisor_vendor->h->detect->xen_platform->
+static inline uint32_t xen_cpuid_base(void)
+{
+        return hypervisor_cpuid_base("XenVMMXenVMM", 2);
+}
+kvm 
+kvm_detect -> __kvm_cpuid_base
+hypervisor_cpuid_base("KVMKVMKVM\0\0\0", 0);
+## Is Dom0 HVM?
+[Is Dom0 HVM? Firo: No, Dom0 is PV](https://stackoverflow.com/questions/19147398/is-xen-dom0-a-guest-or-a-host)
+# Terminology
+https://wiki.xenproject.org/wiki/XenTerminology
+[Use bfn (Bus Frame Number) rather than dfn to match the](https://lists.xen.org/archives/html/xen-devel/2015-08/msg00270.html)
+[Question on p2m table](http://old-list-archives.xenproject.org/archives/html/xen-devel/2011-05/msg02051.html)
+
+# Swiotlb
+arch/x86/xen/pci-swiotlb-xen.c
+drivers/xen/swiotlb-xen.c
+crash-vliaskovitis> p dma_ops
+dma_ops = $14 = (struct dma_map_ops *) 0xffffffff81e1cdc0 <xen_swiotlb_dma_ops>
+crash-vliaskovitis> p no_iommu
+no_iommu = $15 = 0x1
+crash-vliaskovitis> log | grep iommu
+crash-vliaskovitis> p xen_swiotlb
+xen_swiotlb = $16 = 0x1
+crash-vliaskovitis> p swiotlb
+swiotlb = $17 = 0x0
+crash-vliaskovitis> p swiotlb_force
+swiotlb_force = $19 = SWIOTLB_NORMAL
+crash-vliaskovitis> p max_pfn
+max_pfn = $18 = 0x490000
+crash-vliaskovitis> sys config | grep CONFIG_XEN_PCIDEV_FRONTEND
+CONFIG_XEN_PCIDEV_FRONTEND=m
+crash-vliaskovitis> lsmod | grep -i xen
+ffffffffa00e0080  xen_privcmd           16384  ./modules.debug/kernel/drivers/xen/xen-privcmd.ko.debug 
+ffffffffa00ff1c0  xenfs                 16384  ./modules.debug/kernel/drivers/xen/xenfs/xenfs.ko.debug 
+ffffffffa02a8080  xen_evtchn            16384  ./modules.debug/kernel/drivers/xen/xen-evtchn.ko.debug 
+ffffffffa02ae340  xen_gntdev            20480  ./modules.debug/kernel/drivers/xen/xen-gntdev.ko.debug 
+ffffffffa02b71c0  xen_gntalloc          16384  ./modules.debug/kernel/drivers/xen/xen-gntalloc.ko.debug 
+ffffffffa0377700  xen_blkback           45056  ./modules.debug/kernel/drivers/block/xen-blkback/xen-blkback.ko.debug 
+ffffffffa03a8380  xen_netback           53248  ./modules.debug/kernel/drivers/net/xen-netback/xen-netback.ko.debug 
+ffffffffa0408c80  xen_pciback           69632  ./modules.debug/kernel/drivers/xen/xen-pciback/xen-pciback.ko.debug 
+crash-vliaskovitis> ^Z
+[1]+  Stopped                 ./c.sh
+fyang@l3slave:~/s/1133140/SR101230129466/2019-06-18/mcafee-on-offload-off/hec99p00029_190617/var/crash/2019-06-17-10:44> find ./modules/ | grep xen-pcifront
+./modules/kernel/drivers/pci/xen-pcifront.ko
+IOMMU_INIT_FINISH(pci_xen_swiotlb_detect,
+                  NULL,
+                  pci_xen_swiotlb_init,
+                  NULL);
+crash-vliaskovitis> p pci_acs_enable
+pci_acs_enable = $20 = 0x1
+## Onset initialiazation
+io_tlb_nslabs = $23 = 0x8000
+xen_io_tlb_nslabs = $21 = 0x8000
+xen_io_tlb_start = $22 = 0xffff880480e00000
+xen_io_tlb_end = $24 = 0xffff880484e00000 
+crash-vliaskovitis> p io_tlb_overflow_buffer
+io_tlb_overflow_buffer = $26 = 0x7b7f8000
+CONFIG_NO_BOOTMEM=y
+p start_dma_addr
+start_dma_addr = $27 = 0x1c0000
+p xen_max_p2m_pfn
+xen_max_p2m_pfn = $28 = 0x8000000
+
+start_kernel->mm_init->mem_init->
+{
+	# memblock allocation 
+	pci_iommu_alloc -> pci_xen_swiotlb_detect and pci_xen_swiotlb_init -> xen_swiotlb_init
+	# PG_reserved
+	free_all_bootmem ->free_low_memory_core_early->reserve_bootmem_region->SetPageReserved
+}
+
+## Nuclus
+__dev_open->ndo_open is ixgbe_open->
+{
+	ixgbe_setup_all_rx_resources->ixgbe_setup_rx_resources->dma_alloc_coherent->dma_alloc_attrs->xen_swiotlb_alloc_coherent->get_free_pages
+	ixgbe_configure->ixgbe_configure_rx->ixgbe_configure_rx_ring->ixgbe_alloc_rx_buffers->ixgbe_alloc_mapped_page
+	{
+		dev_alloc_pages(1): compund page
+		dma_map_page_attrs->xen_swiotlb_map_page
+		dma is (mfn of page) << 12; or dma is swiotlb from orig addr check swiotlb_tbl_map_single
+	}
+}
+ixgbe_clean_rx_irq ->ixgbe_alloc_rx_buffers->dma_sync_single_range_for_device -> xen_swiotlb_sync_single_for_device
+## Core function
+xen_swiotlb_init->
+{
+	start_dma_addr = xen_virt_to_bus(xen_io_tlb_start);
+}
+xen_swiotlb_map_page->swiotlb_tbl_map_single
+xen_swiotlb_sync_single->
+{
+	is_xen_swiotlb_buffer and 
+	swiotlb_tbl_sync_single		# orig addr
+}
+## Core tables
+xen_p2m_addr
+io_tlb_list
+io_tlb_nslabs
+io_tlb_orig_addr
+x/(io_tlb_nslabs)gx io_tlb_orig_addr | grep victim-page-pfn
+virt of swiotlb: xen_io_tlb_start
+phys of swiotlb: io_tlb_start, io_tlb_end
+mfn of swiotlb : start_dma_addr >> 12
+### pfn => mfn
+io_tlb_start = $8 = 0x480e00000
+eval 0x480e00 * 8
+hexadecimal: 2407000  (36892KB)
+xen_p2m_addr = $9 = (unsigned long *) 0xffffc90000000000
+x/gx 0xffffc90000000000 + 0x2407000
+0xffffc90002407000:     0x00000000000001c0
+start_dma_addr = $10 = 0x1c0000
+
+## ops
+crash-vliaskovitis> p xen_swiotlb_dma_ops | grep xen
+xen_swiotlb_dma_ops = $5 = {
+  alloc = 0xffffffff81414240 <xen_swiotlb_alloc_coherent>, 
+  free = 0xffffffff81414db0 <xen_swiotlb_free_coherent>, 
+  map_page = 0xffffffff814145a0 <xen_swiotlb_map_page>, 
+  unmap_page = 0xffffffff814141d0 <xen_swiotlb_unmap_page>, 
+  map_sg = 0xffffffff81414980 <xen_swiotlb_map_sg_attrs>, 
+  unmap_sg = 0xffffffff814141e0 <xen_swiotlb_unmap_sg_attrs>, 
+  sync_single_for_cpu = 0xffffffff814152c0 <xen_swiotlb_sync_single_for_cpu>, 
+  sync_single_for_device = 0xffffffff814152d0 <xen_swiotlb_sync_single_for_device>, 
+  sync_sg_for_cpu = 0xffffffff81415340 <xen_swiotlb_sync_sg_for_cpu>, 
+  sync_sg_for_device = 0xffffffff814152e0 <xen_swiotlb_sync_sg_for_device>, 
+  mapping_error = 0xffffffff81413d30 <xen_swiotlb_dma_mapping_error>, 
+  dma_supported = 0xffffffff81413d50 <xen_swiotlb_dma_supported>
+
+
+# P2M table
+xen_p2m_addr
+
+# MM layout?
+#define __HYPERVISOR_VIRT_START 0xFFFF800000000000
+#define __HYPERVISOR_VIRT_END   0xFFFF880000000000
+#define __MACH2PHYS_VIRT_START  0xFFFF800000000000
+#define __MACH2PHYS_VIRT_END    0xFFFF804000000000
+#define __MACH2PHYS_SHIFT       3

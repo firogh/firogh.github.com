@@ -63,7 +63,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -173,7 +173,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="894">
+<meta itemprop="wordCount" content="893">
 <meta itemprop="datePublished" content="2014-12-28">
 <meta itemprop="url" content="http://firoyang.org/net/tunnel/">
 
@@ -308,9 +308,11 @@ l2tp_xmit_core<br />
 <br /></li>
 </ul>
 
-<p>#PPTP<br />
-##Route ip-list to pptp-vpn<br />
-11: pptp-vpn: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3<br />
+<p>#PPTP</p>
+
+<h2 id="route-ip-list-to-pptp-vpn">Route ip-list to pptp-vpn</h2>
+
+<p>11: pptp-vpn: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3<br />
     link/ppp<br />
     inet 192.168.1.60 peer 192.168.1.<sup>1</sup>&frasl;<sub>32</sub> scope global pptp-vpn<br />
 root@Hiwifi:~# route -n<br />
@@ -322,17 +324,20 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface<br
 192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2<br />
 192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan</p>
 
-<p>##pptp header<br />
-IP | GRE | pptp_gre_header | PPP | IP</p>
+<h2 id="pptp-header">pptp header</h2>
 
-<p>##input<br />
-ip -&gt; gre -&gt; ppp -&gt; ip<br />
+<p>IP | GRE | pptp_gre_header | PPP | IP</p>
+
+<h2 id="input">input</h2>
+
+<p>ip -&gt; gre -&gt; ppp -&gt; ip<br />
 ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&gt;inet_protos.gre_rcv -&gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&gt; sk_receive_skb -&gt;sk_backlog_rcv -&gt; pptp_rcv_core -&gt; ppp_input -&gt; ppp_do_recv<br />
 -&gt; ppp_receive_frame -&gt; ppp_receive_nonmp_frame -&gt; netif_rx -&gt; netif_rx_internal -&gt; enqueue_to_backlog -&gt; ____napi_schedule(sd, &amp;sd-&gt;backlog);<br />
 -&gt; netif_receive_skb&hellip;</p>
 
-<p>##output<br />
-ip_output &hellip;-&gt; ppp_start_xmit -&gt; ppp_xmit_process -&gt; ppp_send_frame -&gt; add ppp header -&gt; ppp_push<br />
+<h2 id="output">output</h2>
+
+<p>ip_output &hellip;-&gt; ppp_start_xmit -&gt; ppp_xmit_process -&gt; ppp_send_frame -&gt; add ppp header -&gt; ppp_push<br />
 -&gt;pch-&gt;chan-&gt;ops-&gt;start_xmit=pptp_xmit -&gt; add gre and ip header. -&gt; ip_local_out -&gt;<br />
 +another send skb functions is ip_build_and_send_pkt()<br />
 { this functions hook is init in pptp_connect() -&gt; ppp_register_channel(&amp;po-&gt;chan) }<br />
@@ -342,21 +347,26 @@ when invoke pptp_create? socket()!</p>
 
 <p>if layer 4 protocol is gre then pass.</p>
 
-<p>##PPTP &amp; NAT<br />
-* Forward package<br />
+<h2 id="pptp-nat">PPTP &amp; NAT</h2>
+
+<ul>
+<li>Forward package<br />
 br-lan(PREROUTING orginal packet NAT old)<br />
 (route -&gt; pptp-vpn) = ip_forward()-&gt;NF_INET_FORWARD-&gt;ip_forward_finish()-&gt;dst_output()<br />
 pptp-vpn -&gt; ndo_start_xmit -&gt; add some headers -&gt; local_out NAT new -&gt; tc dequeue_qdisc(this is maybe eth2.2&rsquo;s routing result! see top)<br />
-so we need to do is just find original skb in PPTP packet header!</p>
+so we need to do is just find original skb in PPTP packet header!<br />
+<br /></li>
+</ul>
 
-<p>##PPTP &amp; GRE &amp; Conntrack</p>
+<h2 id="pptp-gre-conntrack">PPTP &amp; GRE &amp; Conntrack</h2>
 
 <h1 id="as-a-pure-ip-protocol-gre-uses-only-ip-addresses-but-no-port-numbers-giving-the-router-s-nat-a-tough-time-to-track-such-a-connection-in-its-base-configuration-openwrt-backfire-is-able-to-nat-a-single-pptp-connections-but-not-multiple-such-connections-concurrently-it-is-also-unreliable-when-trying-to-establish-consecutive-single-pptp-connections-from-different-lan-clients-in-rapid-succession">As a pure IP protocol GRE uses only IP addresses but no port numbers giving the router&rsquo;s NAT a tough time to track such a connection. In its base configuration OpenWrt Backfire is able to NAT a single PPTP connections but not multiple such connections concurrently. It is also unreliable when trying to establish consecutive single PPTP connections from different LAN clients in rapid succession.</h1>
 
 <p>kernel vpn just one session.</p>
 
-<p>##ppp-&gt; pptp code.<br />
-ppp_send_frame()<br />
+<h2 id="ppp-pptp-code">ppp-&gt; pptp code.</h2>
+
+<p>ppp_send_frame()<br />
 {</p>
 
 <pre><code>//below is ok 132 is output!

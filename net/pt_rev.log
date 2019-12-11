@@ -1,0 +1,52 @@
+http://lkml.iu.edu/hypermail/linux/net/0103.2/0054.html
+
+pt_prev in net_rx_action()
+From: samudrala@us.ibm.com
+Date: Thu Mar 22 2001 - 18:56:46 EST
+Next message: David S. Miller: "Re: pt_prev in net_rx_action()"
+Previous message: Bernd Eckenfels: "Re: router stresstesting"
+Next in thread: David S. Miller: "Re: pt_prev in net_rx_action()"
+Reply: David S. Miller: "Re: pt_prev in net_rx_action()"
+Messages sorted by: [ date ] [ thread ] [ subject ] [ author ]
+I am trying to understand the following piece of code in net_rx_action() 
+          struct packet_type *ptype, *pt_prev; 
+            unsigned short type = skb->protocol; 
+            pt_prev = NULL; 
+            for (ptype = ptype_all; ptype; ptype = ptype->next) { 
+                if (!ptype->dev || ptype->dev == skb->dev) { 
+                    if (pt_prev) { 
+                        if (!pt_prev->data) { 
+                            deliver_to_old_ones(pt_prev, skb, 0); 
+                        } else { 
+                            atomic_inc(&skb->users); 
+                            pt_prev->func(skb, 
+                                      skb->dev, 
+                                      pt_prev); 
+                        } 
+                    } 
+                    pt_prev = ptype; 
+                } 
+            } 
+Is there any reason why pt_prev is used instead of directly calling 
+ptype->func()? This causes the packet handler to be called during the next 
+iteration after it was found. 
+Thanks 
+Sridhar 
+
+Re: pt_prev in net_rx_action()
+From: David S. Miller (davem@redhat.com)
+Date: Thu Mar 22 2001 - 19:13:05 EST
+Next message: Federico David Sacerdoti: "A TCP monitoring /proc/net file"
+Previous message: samudrala@us.ibm.com: "pt_prev in net_rx_action()"
+In reply to: samudrala@us.ibm.com: "pt_prev in net_rx_action()"
+Messages sorted by: [ date ] [ thread ] [ subject ] [ author ]
+samudrala@us.ibm.com writes: 
+> Is there any reason why pt_prev is used instead of directly calling 
+> ptype->func()? This causes the packet handler to be called during the next 
+> iteration after it was found. 
+If there is only one handler, we need not copy/clone the SKB and 
+we can just give the original SKB directly to the protocol handler, 
+otherwise we have to deal with the SKB sharing issues. 
+Later, 
+David S. Miller 
+davem@redhat.com 

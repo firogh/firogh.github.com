@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="kernel, ">
+
+ 
+<meta property="og:type" content="article"/>
+<meta property="og:description" content=""/>
+<meta property="og:title" content="memory mapping : firoyang.org"/>
+<meta property="og:site_name" content="Firo Website"/>
+<meta property="og:image" content="" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="" />
+<meta property="og:image:height" content="" />
+<meta property="og:url" content="http://firoyang.org/cs/mmap/">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-08-22"/>
+<meta property="article:modified_time" content="2018-08-22"/>
+
+
+<meta property="article:tag" content="kernel">
+
+
+
+
+
+    <base href="http://firoyang.org/">
+    <title> memory mapping</title>
+    <link rel="canonical" href="http://firoyang.org/cs/mmap/">
+
+    
+<link rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+     
+</head>
+
+<body style="background-color:#FFFFF0;" lang="en" itemscope itemtype="http://schema.org/Article">
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<link rel="stylesheet" href="static/css/font-awesome.min.css">
+	<nav id="nav">
+	<div id="title"><a href="/" style="color:#B22222;">ƒ(x)</a></div>
+
+
+	
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+            <a href="/review/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-thumbs-o-up"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+            <li>
+            <a href="/life/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
+                <span> life </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-institution"></i></span>
+                <span> history </span>
+            </a>
+	    <li>
+                <a href="/linguistics/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-language"></i></span>
+                <span> linguistics </span>
+            </a>
+            </li>
+            </li>
+            <li>
+                <a href="/howto/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-gamepad"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/cs/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-linux"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-globe"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="icon-leaf"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+
+            
+            
+
+            <li>
+            <a href="/" style="color:#B22222" >
+                <span class="icon" > <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-rocket"></i></span>
+                
+            </a>
+            </li>
+
+        </ul>
+
+	</nav>
+	<nav id="nav">
+               <ul id="social">
+
+            <li id="follow">
+                
+                
+                <div class="dropdown follow">
+                    <ul class="social">
+                        <li> <a href="http://www.twitter.com/firoyang" target="_blank" class="twitter"><span class="icon icon-twitter"></span>Twitter</a> </li>
+                        <li> <a href="mailto:firogm@gmail.com" style="color:#B22222;"  class="gmail"><span style="color:#B22222;" class="icon icon-mail"></span>Gmail</a> </li-->
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </ul>
+                    
+                </div>
+            </li>
+            
+
+        </ul>
+
+	</nav>
+</header>
+
+
+
+ <link rel="stylesheet" href="highlight.js/styles/monokai-sublime.css">
+    <script src="highlight.js/highlight.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	<section id="main">
+
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >memory mapping</h1>
+	  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Wed Aug 22, 2018 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
+          
+        </ul>
+
+    </div>
+
+
+</aside>
+
+<meta itemprop="wordCount" content="560">
+<meta itemprop="datePublished" content="2018-08-22">
+<meta itemprop="url" content="http://firoyang.org/cs/mmap/">
+
+
+	  <div>
+		<article itemprop="articleBody" id="content">
+		   
+
+<p>This article is talking about user space Memory mmapping; it&rsquo;s not limitted to mmap(2) system call.<br />
+<a href="https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.genprogc/understanding_mem_mapping.htm">Understanding memory mapping</a><br />
+TLPI:chapter 49 and LSP: Chapter 8</p>
+
+<h1 id="history">History</h1>
+
+<p>BSD 4.2<br />
+1990 SunOS 4.1<br />
+<a href="http://bitsavers.trailing-edge.com/pdf/sun/sunos/4.1/800-3846-10A_System_Services_Overview_199003.pdf">A Must-read: The applications programmer gains access to the facilities of the VM system through several sets of system calls.</a></p>
+
+<h1 id="formal-causes">Formal causes</h1>
+
+<p><a href="https://landley.net/writing/memory-faq.txt">What are memory mappings? - Landley</a></p>
+
+<blockquote>
+<p>A memory mapping is a set of page table entries describing the properties<br />
+of a consecutive virtual address range.  Each memory mapping has a<br />
+start address and length, permissions (such as whether the program can<br />
+read, write, or execute from that memory), and associated resources (such<br />
+as physical pages, swap pages, file contents, and so on).<br />
+Firo:  mmap, page fault, PFRA.</p>
+
+<h2 id="vas">VAS</h2>
+
+<p>vma, mm_rb, mmap,<br />
+if file, i_mmap</p>
+</blockquote>
+
+<h2 id="file">File</h2>
+
+<h3 id="pas">PAS</h3>
+
+<p>Protection, Shared, Private.<br />
+vm_page_prot, vm_flags<br />
+remove_mapping</p>
+
+<h3 id="backing-dev">Backing dev</h3>
+
+<p>vm_file, vm_pgoff</p>
+
+<h2 id="private-anonymouse-mappings">Private anonymouse mappings</h2>
+
+<p>Heap - malloc mmap</p>
+
+<h2 id="file-private-mappings">File private mappings</h2>
+
+<p>Program: execve text,data,bss<br />
+Libraries<br />
+* onset - mmap<br />
+do_mmap -&gt; mmap_region<br />
+ext2: generic_file_mmap -&gt; vma-&gt;vm_ops = generic_file_vm_ops<br />
+ext4: ext4_file_mmap -&gt; vma-&gt;vm_ops = ext4_file_vm_ops<br />
+both: filemap_fault<br />
+* nuclus<br />
+Write - do_cow_page<br />
+Read - do_read_page<br />
+Read &amp; write - do_wp_page</p>
+
+<h2 id="shared-anonymouse-mappings">Shared anonymouse mappings</h2>
+
+<p><a href="https://lore.kernel.org/patchwork/patch/174306/">vmscan: limit VM_EXEC protection to file pages</a><br />
+If someone may take advange of reclaimation code by mmap(&hellip;, VM_EXEC, SHRED|ANON), OOM may occur since the old code protect it from reclaiming by add it back to the active list. Great patch. However, program running in tmpfs will also penalized.<br />
+page_is_file_cache &lt; !PageAnon<br />
+<a href="https://lwn.net/Articles/452035/">ashmem</a><br />
+* onset - mmap<br />
+do_mmap -&gt; mmap_region -&gt; vma_link -&gt; (__shmem_file_setup) &amp;&amp; __vma_link_file: into i_mmap interval_tree.<br />
+* nuclus - share fault<br />
+Read: do_read_fault<br />
+Write: do_shared_fault -&gt; shmem_getpage_gfp shmem_add_to_page_cache<br />
+WP: do_wp_page -&gt; wp_page_shared or wp_page_reuse<br />
+b)IPC using a shared file mapping</p>
+
+<h2 id="file-shared-mappings-a-memory-mapped-i-o">File shared mappings - a) Memory-mapped I/O</h2>
+
+<h1 id="mmap">mmap</h1>
+
+<h2 id="map-sync">MAP_SYNC</h2>
+
+<p><a href="https://lwn.net/Articles/731706/">Two more approaches to persistent-memory writes</a><br />
+dax_iomap_pte_fault</p>
+
+<h1 id="madvise">madvise</h1>
+
+<h2 id="madv-sequential-and-reclaim">MADV_SEQUENTIAL and reclaim</h2>
+
+<p>mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c</p>
+
+<h2 id="madv-free">MADV_FREE</h2>
+
+<p><a href="https://lwn.net/Articles/590991/">Volatile ranges and MADV_FREE</a><br />
+<a href="https://bugs.python.org/issue26601">Use new madvise()&rsquo;s MADV_FREE on the private heap</a><br />
+commit 854e9ed09dedf0c19ac8640e91bcc74bc3f9e5c9<br />
+Author: Minchan Kim <a href="mailto:minchan@kernel.org">minchan@kernel.org</a><br />
+Date:   Fri Jan 15 16:54:53 2016 -0800<br />
+    mm: support madvise(MADV_FREE)<br />
+commit 10853a039208c4afaa322a7d802456c8dca222f4<br />
+Author: Minchan Kim <a href="mailto:minchan@kernel.org">minchan@kernel.org</a><br />
+Date:   Fri Jan 15 16:55:11 2016 -0800<br />
+    mm: move lazily freed pages to inactive list</p>
+
+<p>commit f7ad2a6cb9f7c4040004bedee84a70a9b985583e<br />
+Author: Shaohua Li <a href="mailto:shli@fb.com">shli@fb.com</a><br />
+Date:   Wed May 3 14:52:29 2017 -0700<br />
+    mm: move MADV_FREE pages into LRU_INACTIVE_FILE list</p>
+
+<h1 id="mprotect">mprotect</h1>
+
+<h2 id="prot-none">PROT_NONE</h2>
+
+<p><a href="http://www.greenend.org.uk/rjk/tech/dataseg.html#summary">&mdash;p PROT_NOME mapping</a><br />
+show_vma_header_prefix<br />
+cat /proc/self/maps<br />
+7ffff7a17000-7ffff7bcc000 r-xp 00000000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&gt; text<br />
+7ffff7bcc000-7ffff7dcc000 &mdash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&gt; PROT_NONE<br />
+7ffff7dcc000-7ffff7dd0000 r&ndash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&gt; read only data<br />
+7ffff7dd0000-7ffff7dd2000 rw-p 001b9000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&gt; initialized<br />
+7ffff7dd2000-7ffff7dd6000 rw-p 00000000 00:00 0<br />
+strace -e mmap,mprotect cat /dev/null<br />
+mmap(NULL, 3926752, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7a17000       ===&gt; text<br />
+mprotect(0x7ffff7bcc000, 2097152, PROT_NONE) = 0                                ======================&gt; PROT_NONE<br />
+mmap(0x7ffff7dcc000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b5000) = 0x7ffff7dcc000<br />
+mmap(0x7ffff7dd2000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7dd2000<br />
+mprotect(0x7ffff7dcc000, 16384, PROT_READ) = 0                                          ========&gt; read only data<br />
+/* If _PAGE_BIT_PRESENT is clear, we use these: <em>/<br />
+/</em> - if the user mapped it with PROT_NONE; pte_present gives true */<br />
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand006.html">A MUST READ: Mel on PAGE_PROTNONE</a><br />
+<a href="https://volatility-labs.blogspot.com/2015/05/using-mprotect-protnone-on-linux.html">Using mprotect(.., .., PROT_NONE) on Linux</a><br />
+<a href="https://lkml.org/lkml/1998/9/21/55">Linus on _PAGE_PROTNONE</a><br />
+ define _PAGE_BIT_PROTNONE      _PAGE_BIT_GLOBAL<br />
+tglx: commit 06d9f6ff137579551a2ee18661847915fe2bb812 (tag: 0.97.5)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:09:05 2007 -0500<br />
+    [PATCH] Linux-0.97.5 (September 12, 1992)<br />
+There isn&rsquo;t too much useful information.<br />
+<a href="https://www.spinics.net/lists/newbies/msg08579.html">https://www.spinics.net/lists/newbies/msg08579.html</a><br />
+man mprotect, PROT_NONE<br />
+userspace addr is associated with non-GLOBAL pte, so the 8th G is reused by PROT_NONE.</p>
+
+		</article>
+	  </div>
+	</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/mmap\/';
+    var disqus_title = 'memory mapping';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/mmap\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2014 ~ 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang </span></span><a href="http://creativecommons.org/licenses/by/4.0/">Some rights reserved</a>. 
+	Powered by <a href="http://gohugo.io">Hugo</a> and <a href="https://fortawesome.github.io/Font-Awesome/">Font Awesome</a>.
+        Theme by <a href="http://spf13.com">Steve Francia <a href="http://firoyang.org">Firo Yang</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+
+
+
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

@@ -1,74 +1,51 @@
 
+# Reverse mapping
+unmapping at once all page table entries of a shared pages
+## page.index
+1. file memory mapped page: index is offset in a file
+2. Anonymous page: linear_page_index in __page_set_anon_rmap()__
+## Anonymous Pages
+Page + VMA => ptes
+### Stack/heap/private anonymous mapping
+page.index is VFN.
+do_anonymous_page -> page_add_new_anon_rmap
+add vma to anon_vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don't use vma. 2.2 exec)
+in do_mmap, for anonymous mapping, MAP_PRIVATE: pgoff = addr >> PAGE_SHIFT; addr will be vm_start in mmap_region
+vm_pgoff is pgoff, vm_start >> PAGE_SHIFT, in mmap_region
+## Mapped pages 
+### File mapped pages
+Page and file are fixed. VMA is dynamic.
+Page + VMA = Page + VMA.vm_start = Page's offset in VMA + VMA.vm_start = Virtual Address => ptes
+Page's offset in VMA = Page's offset in file - VMA's offset in file = page.index - vma.vm_pgoff
+### Mapped pages of tmpfs - anonymous shared mapping.
+shmem_add_to_page_cache
+pgoff is 0; ignored; in do_mmap MAP_SHARED;
+page.index is vmf->pgoff in shmem_fault; vmf->pgoff is linear_page_index(vma, address)in handle_mm_fault; pgoff is offset in vma;
+## vm_pgoff vs index
+anonymous private mapping: vm_start >> PAGE_SHIFT vs VFN
+anonymous shared mapping: 0,ignored vs page's offset in vma
+file mapping: vma's offset in file vs page's offset of file
+不知道理解的是否相同:
+对于anonymous mapping page:
+Private: page.index 是page 在所属进程地址空间的虚拟地址>> PAGE_SHIT.
+Shared: page.index 是page 在所属的VMA内的offset: (page's addr - vm_start)>>PAGE_SHIT.
+## anon page: 
+rbtree-based Interval tree
+[逆向映射的演进](http://www.wowotech.net/memory_management/reverse_mapping.html)
+exec : exec -> do_execveat_common-> bprm_mm_init setup_arg_pages
+do_anonymous_page -> anon_vma_prepare & page_add_new_anon_rmap
+fork workflow:attach to parent; alloc anon_vma for ownself.
+anon_vma_fork() -> anon_vma_chain_link: node: avc, key: avmc.vma->start/last_pgoff page.mapping=anon_vma.rb_root
+rmap: add exclusively owned pages to the newest anon_vma - e8a03feb54ca7f1768bbdc2b491f9ef654e6d01d
+nuclus:
+rmap_walk_anon()
+## file page:
+rbtree-based interval tree - INTERVAL_TREE_DEFINE in mm/interval_tree.c
+__vma_adjust -> __vma_link_file: node: vma.shared.rb, key: vma.start_pgoff and vma.last_pgoff  address_space->i_mmap
+address_space is premise
+rmap_walk_file(page.mapping=address_space.i_mmap
 
-# Ref
-[The case of the overly anonymous anon_vma][1]
-[mm: change anon_vma linking to fix multi-process server scalability issue][2]
-5beb49305251e5669852ed541e8e2f2f7696c53e
-[1]: https://lwn.net/Articles/383162/
-[2]: https://lwn.net/Articles/370145/
-
-# Anonymous pages
-Anonymous pages: mmap(ANONYMOUS | PRIVATE)/heap and stack
-Anonymous page is different to anonymous mapping; mmap(MAP_ANONYMOUS | MAP_SHARED) is anonymous mapping and filed-based page.
-
-As stated in [LWN][1]: 
-Anonymous pages are not normally shared between processes, but every call to fork() will cause all such pages to be shared between the parent and the new child; that sharing will only be broken when one of the processes writes to the page, causing a copy-on-write (COW) operation to take place. Many pages are never written, so the kernel must be able to locate multiple VMAs which reference a given anonymous page. Otherwise, it would not be able to unmap the page, meaning that the page could not be swapped out.
-
-
-# Anonymous reverse mappinng
-## Prime anon rmap in 2.6.12
-In dup_mmap(), we can find Child's VMAs use Parent's anon_vma by:
-*tmp = *mpnt;
-For COWed page, in do_wp_page(), anon_vma_prepare() won't change the inherited anon_vma.
-Even COWed page will reuse parent's anon_vma. I don't think it's good idea. It will increase the cost will scan the anon_vma list.
-That's why Rik van Riel said the following, in [a patch][2]
-
-The old anon_vma code can lead to scalability issues with heavily
-forking workloads.  Specifically, each anon_vma will be shared
-between the parent process and all its child processes.
-In a workload with 1000 child processes and a VMA with 1000 anonymous
-pages per process that get COWed, this leads to a system with a million
-anonymous pages in the same anon_vma, each of which is mapped in just
-one of the 1000 processes.  However, the current rmap code needs to
-walk them all, leading to O(N) scanning complexity for each page.
-
-What a about a execed Child's anon_vma? Will it reuse parent's anon_vma?
-After searching 'exec' in [Rik's patch][2] and looking the code setup_arg_pages() do_exec().
-I think execed Child won't reuse parent's anon_vma. It might be because execed Child will use different address space to parent's.
-
-As stated in ULK3 Page 682:
-When the kernel assigns the first page frame to an anonymous region, it creates a
-new anon_vma data structure...
-So Child could have his own anon_vma.
-
-COWed anon page, non-COWed anon page, new anon page
-In do_anonymous_page(), we know a new anon page in a anonymous VMA inherited parents's anon_vma will resuse the anon_vma.
-page = alloc_zeroed_user_highpage(vma, addr); // a new anon page
-...
-page_add_anon_rmap(page, vma, addr);
-So we know if the new Child make many recursive fork() then the anonymous could collcet many non-COWed page.
-
-Let's give anon_vma in 2.6.2 a defination.
-anon_vma is just a collcetion basket for pages(COWed and non-COWed and new anon page) in the inherited VMA and the new anon page in non-inherited VMA to find their VMAs.
-So we have two type anon_vma.
-Inherited-form-parnet's anon_vma can be used by COWed and non-COWed and new page.
-Non-Inherited-Child-own-created anon_vma can be used by new page if the Child won't fork its own Child process.
-Refined defination:
-anon_vma is one-one correspondence to the inherited anon VMAs started at same address.
-
-There is a problem:
-If Child maps a new non-COWed page, we need to reclaim it. 
-If there are many VMAs in the anon_vma, it will costly to find the VMA which non-COWed page belongs to.
-
-One more question: if some VMAs in anon_vma don't use the page which we would reclaim, how do you ditinguish this kind of VMAs?
-In try_to_unmap_one(), I find this funny function pte = page_check_address(page, mm, address);, it use pte_pfn and page_to_pfn to resolve this issue.
-# AVC rmap
-How does new rmap solve distinguish COWed page which has same index during reclaim non-COWed page?
-In try_to_unmap_one(), I found it was done by page_vma_mapped_walk(); For more details, check the check_pte in page_vma_mapped_walk().
-
-A refined defination:
-rmap is a relation.
-Objramp is instance of space and time, not pure space.
-In terms of space, rmap is a loose relation between PA and VAs. 
-
-
+# ETC
+rmap: anonymous page: async: page fault
+rmap: file page: syn vma_link_file
+PageAnon ? anon, file

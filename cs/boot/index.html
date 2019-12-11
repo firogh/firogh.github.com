@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="751">
+<meta itemprop="wordCount" content="309">
 <meta itemprop="datePublished" content="2015-11-12">
 <meta itemprop="url" content="http://firoyang.org/cs/boot/">
 
@@ -187,96 +187,72 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="reference">Reference</h1>
-
-<p>Documentation/x86/boot.txt<br />
-<a href="http://linuxdevices.linuxgizmos.com/introducing-initramfs-a-new-model-for-initial-ram-disks-a/">Introducing initramfs, a new model for initial RAM disks</a></p>
-
-<p><a href="http://duartes.org/gustavo/blog/post/kernel-boot-process/">The Kernel Boot Process</a></p>
-
 <h1 id="kernel-boot-process">kernel boot process</h1>
 
-<p>arch/x86/boot/header.S::start_of_setup<br />
+<p>Documentation/x86/boot.txt<br />
+<a href="https://manybutfinite.com/post/kernel-boot-process/">The Kernel Boot Process</a><br />
+arch/x86/boot/header.S::start_of_setup<br />
 arch/x86/boot/main.c::main()<br />
     arch/x86/boot/memory.c::detect_memory()<br />
     arch/x86/boot/memory.c::detect_memory_e820() = boot_params.e820_entries<br />
-    &hellip;<br />
     arch/x86/boot/pm.c::go_to_protected_mode()<br />
 arch/x86/boot/pmjump.S::protected_mode_jump<br />
 arch/x86/kernel/compressed/head_64.S::startup_32<br />
 arch/x86/kernel/compressed/head_64.S::startup_64<br />
 arch/x86/kernel/head_64.S::startup_64<br />
-kernel/main.c::start_kernel()<br />
-    &hellip;<br />
-    arch/x86/kernel/setup_64.c::setup_arch()<br />
-        &hellip;<br />
-        arch/x86/kernel/setup_64.c::memory_setup()<br />
-        arch/x86/kernel/e820_64.c::machine_specific_memory_setup()<br />
-        arch/x86/kernel/e820_64.c::sanitize_e820_map(boot_params.e820_map, &amp;boot_params.e820_entries)<br />
-        &hellip;<br />
-        arch/x86/kernel/e820_64.c::finish_e820_parsing()<br />
-        &hellip;<br />
-        arch/x86/kernel/e820_64.c::e820_register_active_regions()<br />
-        &hellip;<br />
-        arch/x86/kernel/acpi/boot.c::acpi_boot_table_init()<br />
-        arch/x86/kernel/pci-dma.c::dma32_reserve_bootmem()<br />
-        arch/x86/kernel/acpi/sleep.c::acpi_reserve_bootmem()<br />
-        arch/x86/kernel/efi_64.c::efi_reserve_bootmem()<br />
-        &hellip;<br />
-        arch/x86/kernel/acpi/boot.c::acpi_boot_init()<br />
-        &hellip;<br />
-        arch/x86/kernel/e820_64.c::e820_reserve_resources()<br />
-        arch/x86/kernel/e820_64.c::e820_mark_nosave_regions()<br />
-        arch/x86/kernel/e820_64.c::e820_setup_gap()<br />
-        &hellip;<br />
-    }<br />
-    drivers/acpi/bus.c::acpi_early_init()<br />
-    kernel/main.c::rest_init()<br />
-        arch/x86/kernel/process_32.c::kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);<br />
-}<br />
-kernel/main.c::kernel_init()<br />
- &hellip;<br />
- do_basic_setup()<br />
-  &hellip;<br />
-  drivers/base/init.c::driver_init()<br />
-  &hellip;<br />
-  init/main.c::do_initcalls()<br />
- }<br />
- &hellip;<br />
- init/main.c::init_post()<br />
-}</p>
+kernel/main.c::start_kernel()</p>
 
-<h1 id="reloctaion-for-decompress">Reloctaion for decompress</h1>
+<h2 id="reloctaion-for-decompress">Reloctaion for decompress</h2>
 
 <p>974f221c84b05b1dc2f5ea50dc16d2a9d1e95eda<br />
 x86/boot: Move compressed kernel to the end of the decompression buffer</p>
 
-<h1 id="realmode">Realmode</h1>
-
-<p>The first 640KB RAM<br />
-cat /proc/iomem<br />
-00000000-00000fff : reserved<br />
-00001000-000913ff : System RAM<br />
-00091400-0009ffff : reserved<br />
-000a0000-000bffff : PCI Bus 0000:00<br />
-000c0000-000cfdff : Video ROM<br />
-000d0000-000d99ff : Adapter ROM<br />
-000da000-000dafff : Adapter ROM<br />
-000e0000-000fffff : reserved<br />
-  000f0000-000fffff : System ROM<br />
-00100000-bcb01fff : System RAM   # 1MB; Bootloader uses real_to_prot and prot_to_real to load the kernel image to this place.<br />
-  01000000-0183d36c : Kernel code # That&rsquo;s why the kernel was called big kernel.<br />
-  0183d36d-01f42d3f : Kernel data<br />
-  020c1000-02209fff : Kernel bss</p>
-
-<h1 id="horrable-commit-description-on-phys-base">Horrable commit description on phys_base</h1>
+<h2 id="horrable-commit-description-on-phys-base">Horrable commit description on phys_base</h2>
 
 <p>commit 1ab60e0f72f71ec54831e525a3e1154f1c092408<br />
 Author: Vivek Goyal <a href="mailto:vgoyal@in.ibm.com">vgoyal@in.ibm.com</a><br />
-Date:   Wed May 2 19:27:07 2007 +0200</p>
+Date:   Wed May 2 19:27:07 2007 +0200<br />
+    [PATCH] x86-64: Relocatable Kernel Support</p>
 
-<pre><code>[PATCH] x86-64: Relocatable Kernel Support
-</code></pre>
+<h1 id="smp-boot">SMP boot</h1>
+
+<p>Check SDM v3 BSP and AP Processors<br />
+BSP - boot strap processor； AP - application processor</p>
+
+<h2 id="core-commit">Core commit</h2>
+
+<p>setup_real_mode-&gt; trampoline_header-&gt;start = (u64) secondary_startup_64;<br />
+commit f37240f16bec91f15ce564515f70a6ca9715ce96<br />
+Author: Jarkko Sakkinen <a href="mailto:jarkko.sakkinen@intel.com">jarkko.sakkinen@intel.com</a><br />
+Date:   Tue May 8 21:22:43 2012 +0300<br />
+    x86, realmode: header for trampoline code</p>
+
+<h2 id="bsp">BSP</h2>
+
+<h3 id="build-time-for-real-mode-header-in-arch-x86-realmode-rm-header-s">Build time for real_mode_header in arch/x86/realmode/rm/header.S</h3>
+
+<p>In pasyms.h, git gud!<br />
+pa_trampoline_header = trampoline_header;<br />
+pa_trampoline_start = trampoline_start;<br />
+pa_startup_32 = startup_32;<br />
+pa_startup_64 = startup_64;</p>
+
+<h3 id="early-init">Early init</h3>
+
+<p>setup_real_mode-&gt; trampoline_header-&gt;start = (u64) secondary_startup_64;  # tr_start</p>
+
+<h3 id="start-kernel">start_kernel</h3>
+
+<p>kernel_init-&gt;smp_init-&gt;cpu_up-&gt;do_cpu_up-&gt;_cpu_up-&gt;<br />
+ap hp threadfn -&gt; bringup_cpu -&gt; __cpu_up -&gt; smp_ops.cpu_up(cpu, tidle) is native_cpu_up<br />
+        do_boot_cpu is the core function. It set up the code for APs to run and check cpu_callin_mask.<br />
+        start_eip = real_mode_header-&gt;trampoline_start;<br />
+        initial_code = (unsigned long)start_secondary                   # initial_code</p>
+
+<h2 id="ap">AP</h2>
+
+<p>trampoline_start -&gt; &hellip; -&gt; startup_64 -&gt; tr_start(%rip) is secondary_startup_64 -&gt; initial_code(%rip) is start_secondary<br />
+-&gt; cpu_init</p>
 
 <h1 id="normalize-cs">Normalize %cs</h1>
 
@@ -296,105 +272,6 @@ Date:   Wed May 2 19:27:07 2007 +0200</p>
 
 <p>[Why enable A20 line in Protected Mode?][<a href="https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode">https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode</a>]<br />
 This gate, (the A20 gate), is controlled by a GPIO pin on the keyboard controller IC. Thus, you need to enable it before going into protected mode. If you didn&rsquo;t, (and say you flat-mapped all 4GB of physical memory), then as Micheal Petch indicated, &ldquo;every odd numbered megabyte region will be inaccessible. So 1mb-2mb will actually reference 0-1mb, 3mb-4mb will reference 2mb-3mb etc.&rdquo; See also:</p>
-
-<h1 id="contents">Contents</h1>
-
-<p>What basic initializations should be perfomed when power on?<br />
-How do we load the kernel to memory?<br />
-What does kernel do when kernel boot.<br />
-MBR vs BIOS?<br />
-PC vs embedded<br />
-Kernel init<br />
-before start_kernel<br />
-start_kernel<br />
-reset_init &amp; kernel_init</p>
-
-<h1 id="boot-and-init">Boot and init</h1>
-
-<p>Power button -&gt; cpu reset -&gt; BIOS -&gt; hard drive -&gt; Grub boot.S/MBR aa5a -&gt; Grub diskboot.S -&gt; &hellip; -&gt; The kernel real-mode setup code. _start of arch/x86/boot/header.S<br />
-Aligh register, Stack and BSS for C function to run. -&gt; main-&gt;startup_32-&gt;startup_64-&gt; __START_KERNEL_map-&gt;&hellip; start_kernel<br />
-<a href="https://github.com/torvalds/linux/blob/master/Documentation/x86/boot.txt#L130">Kernel legacy boot sector</a> start form 4d5a of arch/x86/boot/header.S<br />
-is only used by something link &lsquo;qemu-system-x86_64 vmlinuz-3.18-generic&rsquo;. It&rsquo;s obsoleted that is what legacy means.</p>
-
-<h1 id="p4080-board">p4080 Board</h1>
-
-<p>PBL<br />
-1. initialize I2C, SPI, eLBC, eSDHC.<br />
-2. Load RCW and boot init commands from above.<br />
-3. write date to conf register and memory</p>
-
-<h1 id="config">config</h1>
-
-<p>CCSRBAR -&gt; CCSR<br />
-default is 0x0_FE00_0000<br />
-CCSRBAR is in CCSR memory. odd. stored in 0(CCSRBAR).<br />
-CCSRBAR always points to itself.<br />
-holdoff</p>
-
-<h1 id="u-boot">u-boot</h1>
-
-<p>ft_fixup_cpu -&gt; determine_mp_bootpg(NULL) &amp; fdt_add_mem_rsv</p>
-
-<p>main_loop-&gt; &hellip;-&gt;./common/bootm_os.c:410:&hellip; do_bootm_states-&gt;<br />
-{<br />
-bootm_find_other-&gt;bootm_find_ramdisk_fdt-&gt;bootm_find_fdt-&gt;boot_get_fdt&amp;set_working_fdt_addr(0x0200000)-&gt;IMAGE_FORMAT_FIT-&gt;<br />
-&amp;<br />
-boot_fn = bootm_os_get_boot_func(images-&gt;os.os)=[IH_OS_LINUX] =<br />
-&amp;<br />
-boot_selected_os-&gt;boot_fn=do_bootm_linux-&gt;boot_body_linux-&gt;image_setup_linux-&gt;image_setup_libfdt-&gt;<br />
-board/freescale/corenet_ds/corenet_ds.c ft_board_setup-&gt; ft_cpu_setup-&gt;<br />
-}</p>
-
-<h1 id="ppc-multicore-booting">PPC multicore booting</h1>
-
-<ul>
-<li>There are two possibilites to make secondary cores booting failed.<br /></li>
-<li>There is a bug in the code executed by Secondary cores<br /></li>
-<li>The spin table address, passed to croe0, is not correct, so we did not really kick the secondary cores.<br />
-<br /></li>
-</ul>
-
-<p>CCSRBAR<br />
-MPC86xx_MCM_OFFSET<br />
-srio_boot_master_release_slave</p>
-
-<p>uboot-&gt;<br />
-set the cpu-release-addr at funciton ft_fixup_cpu(), I am not sure.</p>
-
-<p>core0 run, 2nd cores holdoff<br />
-core0 set BPTR and kick(BRR) 2nd cores, 2nd cores spintable loop in uboot function setup_mp<br />
-core0 -&gt; arch/powerpc/cpu/mpc85xx/start.S-&gt;_start_e500<br />
-board_init_r-&gt;cpu_init_r-&gt; setup_mp-&gt; {<br />
-<strong>bootpg_addr = (u32)virt_to_phys(&amp;</strong>second_half_boot_page); //Assembly code for put core to spin tablea. Used by __secondary_start_page<br />
-__spin_table_addr = (u32)get_spin_phys_addr();// used by __second_half_boot_page<br />
-bootpg = BPTR = __secondary_start_page<br />
-plat_mp_up-&gt;kick BRR &amp; Boot Space Translation<br />
-}<br />
-2nd cores holdoff -&gt; <strong>secondary_start_page<br />
-kernel-&gt;<br />
-core0 boot kernel, core0 kickoff 2nd cores spintable, triger 2nd core&rsquo;s spin table by writing  the spin table field with the desired address<br />
-2nd cores ePAPR-&gt;spintable-&gt;addr_l=</strong>early_start-&gt;__secondary_start-&gt;smp_ops-&gt;setup_cpu-&gt;cpu_idle<br />
-arch/powerpc/kernel/head_fsl_booke.S<br />
-U-boot logs:<br />
-Reserving MP boot page to 7ffff000^M^M - &ndash;   -   MP spin table<br />
-address.<br />
-SPAG : fdt_fixup_fman_firmware, 567^M^M<br />
-^M^M<br />
-..r.^M^M<br />
-VDBG : ft_cpu_setup, 737, comment fdt_fixup_memory ^M^M<br />
-VDBG: Secondary cores are not held in reset.^M^M<br />
-Kernel Logs:<br />
-smp_85xx_kick_cpu: timeout waiting for core 1 to ack^M^M<br />
-smp: failed starting cpu 1 (rc -2)^M^M<br />
-smp_85xx_kick_cpu: timeout waiting for core 2 to ack^M^M<br />
-smp: failed starting cpu 2 (rc -2)^M^M<br />
-smp_85xx_kick_cpu: timeout waiting for core 3 to ack^M^M<br />
-smp: failed starting cpu 3 (rc -2)^M^M<br />
-Brought up 1 CPUs^M^M<br />
-devtmpfs: initialized^M^M</p>
-
-<p>Note that u-boot can&rsquo;t detect  memory above 2G and we need to check<br />
-if kernel is accessing at high mem of 2G or 4G.</p>
 
 		</article>
 	  </div>

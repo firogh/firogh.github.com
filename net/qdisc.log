@@ -1,0 +1,53 @@
+
+
+# Sending packet
+ip_finish_output2 -> dev_queue_xmit -> 
+{
+	# if qdisc enabled 	
+	__dev_xmit_skb
+	{
+		sch_direct_xmit -> dev_hard_start_xmit -> xmit_one
+		or
+		queue to soft_data for net_tx_qction
+	}
+	# else
+		dev_hard_start_xmit
+}
+net_tx_action -> qdisc_* -> sch_direct_xmit
+
+# TC Qdisc
+http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html
+https://lartc.org/
+## Common concepts
+Shaping: Shapers delay packets to meet a desired rate.
+Scheduling: Schedulers arrange and/or rearrange packets for output.
+Classifying: Classifiers sort or separate traffic into queues.
+Policing: Policers measure and limit traffic in a particular queue.
+Dropping: Dropping discards an entire packet, flow or classification.
+Marking: Marking is a mechanism by which the packet is altered.
+
+# Add new qdisc
+RTM_NEWQDISC -> tc_modify_qdisc
+
+# Add u32 Classifier
+## Netlink part
+The configuring of TC qdisc is based on netlink. See RTM_NEWTFILTER in tc_filter_init.
+## user space 
+tc qidsc add 
+u32_parse_opt 
+{
+        -> parse_selector ->...-> parse_ip
+        struct nlmsghdr *n
+        rta = NLMSG_TAIL(n)
+        rta->type = TCA_U32_SEL
+}
+## kernel space
+Register u32 classifier: netlink_sendmsg -> tcf_exts_validate ??
+Running: tcf_action_exec 
+
+# Tc qdisc del
+## Synchronization between tc qidsc del with softnet_data->softnet_data
+ [PATCH] pkt_sched: Destroy gen estimators under rtnl_lock().
+After synchronize_rcu() in dev_deactivate() we are sure any qdisc_run(),
+from dev_queue_xmit() or net_tx_action() can only see and lock noop_qdisc.
+This was happened in dev_deactivate_many()

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+      <title>Dark_ages on f(x) </title>
+      <generator uri="https://gohugo.io">Hugo</generator>
+    <link>http://firoyang.org/dark_ages/</link>
+    <language>en-us</language>
+    <author>Firo Yang</author>
+    
+    <updated>Mon, 03 Apr 2017 13:09:05 CST</updated>
+    
+    <item>
+      <title>Softirq of Linux Kernel</title>
+      <link>http://firoyang.org/dark_ages/softirq/</link>
+      <pubDate>Mon, 03 Apr 2017 13:09:05 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/dark_ages/softirq/</guid>
+      <description>
+
+&lt;p&gt;##softirq&lt;br /&gt;
+同一个softirq可以在不同的CPU上同时运行，softirq必须是可重入的。&lt;br /&gt;
+* not allow execute nest but can recusive lock:local_bh_disable&lt;br /&gt;
+current-&amp;gt;preemt_count + SOFIRQ_OFFSET also disable preempt current process.&lt;br /&gt;
+* hardirq on, can&amp;rsquo;t sleep&lt;br /&gt;
+* not percpu&lt;/p&gt;
+
+&lt;h2 id=&#34;tasklet-and-kernel-timer-is-based-on-softirq&#34;&gt;tasklet and kernel timer is based on softirq&lt;/h2&gt;
+
+&lt;p&gt;新增softirq, 是要重新编译内核的, 试试tasklet也不错.&lt;br /&gt;
+.不允许两个两个相同类型的tasklet同时执行，即使在不同的处理器上&lt;br /&gt;
+* First of all, it&amp;rsquo;s a conglomerate of mostly unrelated jobs,&lt;br /&gt;
+ which run in the context of a randomly chosen victim&lt;br /&gt;
+ w/o the ability to put any control on them. &amp;ndash;Thomas Gleixner&lt;/p&gt;
+
+&lt;p&gt;tasklet different with other softirq is run  signal cpu core&lt;br /&gt;
+spinlock_bh wider then spinlock&lt;/p&gt;
+
+&lt;p&gt;###time of softirq&lt;br /&gt;
+* follow hardirq, irq_exit()&lt;br /&gt;
+* re-enables softirq, local_bh_enable/spin_unlock_bh(); explicity checks executes, netstack/blockIO.&lt;br /&gt;
+* ksoftirqd&lt;/p&gt;
+
+&lt;p&gt;###tasklet&lt;br /&gt;
+tasklet like a workqueue, sofirq like kthread. that is wonderful, does it?&lt;br /&gt;
+tasklet 被__tasklet_schedule到某个cpu的percu 变量tasklet_vec.tail上保证了&lt;br /&gt;
+只有一个cpu执行同一时刻.&lt;/p&gt;
+
+&lt;p&gt;#FAQ&lt;br /&gt;
+##When to save irq rather than just disable irq&lt;br /&gt;
+local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
+&lt;p&gt;##what about irq nested?&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;http://lwn.net/Articles/380937/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,66 @@
+# Gdb
+[How debuggers work](http://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
+signle step instruction
+## Debug glibc
+directory ~/ws/glibc-2.23/libio
+set solib-search-path /usr/lib/debug/lib/x86_64-linux-gnu/
+
+# Core dump
+echo /tmp/core-%e-%p-%s-%c-%P > /proc/sys/kernel/core_pattern
+
+# info
+Host OS name and version number.
+I40e driver version number.
+Host OS Linux Kernel log. 
+VF driver version number.
+NIC hardware model and PBA number. 
+NIC Firmware NVM version number.
+
+# From assembly to C
+addr2line -f -C -a 0xxxx -e ooo.bin
+addr2line -e vmlinux -i ffffffff81f04b7a ffffffff81508daa
+
+# From ELF to C
+pahole -C 'block_device' vmlinux
+
+# Get observations
+## The nulified timer function issue
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use
+after free的问题是够了, 以后用到这类问题基本可以妙解了.
+
+# Library
+Load software: LD_TRACE_LOADED_OBJECTS=1 git
+ldd /usr/bin/git
+
+# software imediately stop
+Use atexit() register a stackdump or a wrapped print
+
+# Print
+define witcher(fmt, args...) do{FILE * fdebug=fopen("/tmp/d.log", "a+"); \
+fprintf(fdebug,"%s,%s,%d:"fmt, __TIME__, __FUNCTION__, __LINE__, ##args);fclose(fdebug);} while(0)
+* make specific
+-s, -n, -p, --warn-undefined-variables
+$(warning ...)
+
+# Hardware debug watchpoints
+https://www.kernel.org/doc/ols/2009/ols2009-pages-149-158.pdf
+https://lwn.net/Articles/353050/
+https://stackoverflow.com/questions/19725900/watch-a-variable-memory-address-change-in-linux-kernel-and-print-stack-trace
+
+# Backtrace
+The Linux x86 ORC Stack Unwinder](http://www.codeblueprint.co.uk/2017/07/31/the-orc-unwinder.html)
+[The ORCs are coming](https://lwn.net/Articles/728339/)
+[16890783.380940] Call Trace:
+[16890783.383440] Inexact backtrace:
+[16890783.384011]  [<ffffffff81336fee>] ? copy_user_handle_tail+0x5e/0x70
+[16890783.384341]  [<ffffffff8133d250>] ? iov_iter_copy_from_user_atomic+0x90/0x2b0
+

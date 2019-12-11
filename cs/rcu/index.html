@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="401">
+<meta itemprop="wordCount" content="1638">
 <meta itemprop="datePublished" content="2015-05-24">
 <meta itemprop="url" content="http://firoyang.org/cs/rcu/">
 
@@ -187,22 +187,126 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="rcu">RCU</h1>
+<h1 id="network-rx-path">Network RX  path</h1>
 
-<h2 id="causality">Causality</h2>
+<p>commit 2d331915a04144dad738e725769d8fac06ef6155<br />
+Author: Eric Dumazet <a href="mailto:edumazet@google.com">edumazet@google.com</a><br />
+Date:   Fri Apr 1 08:52:15 2016 -0700<br />
+    tcp/dccp: use rcu locking in inet_diag_find_one_icsk()<br />
+    RX packet processing holds rcu_read_lock(), so we can remove<br />
+    pairs of rcu_read_lock()/rcu_read_unlock() in lookup functions<br />
+    if inet_diag also holds rcu before calling them.<br />
+    This is needed anyway as __inet_lookup_listener() and<br />
+    inet6_lookup_listener() will soon no longer increment<br />
+    refcount on the found listener.<br />
+    Signed-off-by: Eric Dumazet <a href="mailto:edumazet@google.com">edumazet@google.com</a><br />
+    Signed-off-by: David S. Miller <a href="mailto:davem@davemloft.net">davem@davemloft.net</a></p>
 
-<p>Read Copy Update HOWTO</p>
+<p>5142 static int process_backlog(struct napi_struct *napi, int quota)<br />
+&hellip;<br />
+5160                 while ((skb = __skb_dequeue(&amp;sd-&gt;process_queue))) {<br />
+5161                         rcu_read_lock();<br />
+5162                         __netif_receive_skb(skb);<br />
+5163                         rcu_read_unlock();<br />
+Refs: v4.1-12249-g2c17d27c36dc<br />
+Author:     Julian Anastasov <a href="mailto:ja@ssi.bg">ja@ssi.bg</a><br />
+AuthorDate: Thu Jul 9 09:59:10 2015 +0300<br />
+Commit:     David S. Miller <a href="mailto:davem@davemloft.net">davem@davemloft.net</a><br />
+CommitDate: Fri Jul 10 18:16:36 2015 -0700</p>
 
-<h2 id="structure">Structure</h2>
+<pre><code>net: call rcu_read_lock early in process_backlog
 
-<p><a href="http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html">What is RCU?</a><br />
-<a href="https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt">What is RCU?  &ndash;  &ldquo;Read, Copy, Update&rdquo;</a><br />
-<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html">A Tour Through RCU&rsquo;s Requirements</a></p>
+Incoming packet should be either in backlog queue or
+in RCU read-side section. Otherwise, the final sequence of
+flush_backlog() and synchronize_net() may miss packets
+that can run without device reference:
 
-<h2 id="history">History</h2>
+CPU 1                  CPU 2
+                       skb-&gt;dev: no reference
+                       process_backlog:__skb_dequeue
+                       process_backlog:local_irq_enable
+
+on_each_cpu for
+flush_backlog =&gt;       IPI(hardirq): flush_backlog
+                       - packet not found in backlog
+
+                       CPU delayed ...
+synchronize_net
+- no ongoing RCU
+read-side sections
+
+netdev_run_todo,
+rcu_barrier: no
+ongoing callbacks
+                       __netif_receive_skb_core:rcu_read_lock
+                       - too late
+free dev
+                       process packet for freed dev
+
+Fixes: 6e583ce5242f (&quot;net: eliminate refcounting in backlog queue&quot;)
+Cc: Eric W. Biederman &lt;ebiederm@xmission.com&gt;
+Cc: Stephen Hemminger &lt;stephen@networkplumber.org&gt;
+Signed-off-by: Julian Anastasov &lt;ja@ssi.bg&gt;
+Signed-off-by: David S. Miller &lt;davem@davemloft.net&gt;
+</code></pre>
+
+<h1 id="history">History</h1>
+
+<h2 id="2001-read-copy-update-on-ols-https-www-kernel-org-doc-ols-2001-read-copy-pdf">2001 <a href="https://www.kernel.org/doc/ols/2001/read-copy.pdf">Read-Copy Update on ols</a></h2>
 
 <p><a href="https://lwn.net/Articles/541037/">As of March 2013: Simplifying RCU</a><br />
 <a href="http://www2.rdrop.com/users/paulmck/RCU/RCUdissertation.2004.07.14e1.pdf">RCU dissertation.2004.07</a></p>
+
+<h2 id="2008">2008</h2>
+
+<p><a href="https://lwn.net/Articles/264090/">RCU part 3: the RCU API, 2008 edition</a></p>
+
+<h2 id="2010">2010</h2>
+
+<p><a href="https://lwn.net/Articles/418853/">The RCU API, 2010 Edition</a></p>
+
+<h2 id="2014">2014</h2>
+
+<p><a href="https://lwn.net/Articles/609904/">The RCU API, 2014 Edition</a></p>
+
+<h2 id="2019">2019</h2>
+
+<p><a href="https://lwn.net/Articles/777036/">The RCU API, 2019 edition</a></p>
+
+<h1 id="formal-cause">Formal cause</h1>
+
+<p><a href="https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html">A Tour Through RCU&rsquo;s Requirements</a><br />
+<a href="http://www.rdrop.com/~paulmck/RCU/rcu-exploit.2019.05.01a.pdf">A Critical RCU Safety Property is&hellip; Ease of Use!</a><br />
+<a href="http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html">What is RCU?</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt">What is RCU?  &ndash;  &ldquo;Read, Copy, Update&rdquo;</a><br />
+<a href="https://lwn.net/Articles/652156/">Requirements for RCU part 1: the fundamentals</a><br />
+<a href="http://www.joelfernandes.org/joel/slides/RCU_in_2019_KernelRecipes.pdf">RCU in 2019</a><br />
+<a href="https://www.youtube.com/watch?v=bsyXDAouI6E">Kernel Recipes 2019 - RCU in 2019</a></p>
+
+<h2 id="rcu-and-dynticks">RCU and dynticks</h2>
+
+<p><a href="http://ertl.jp/~shinpei/conf/ospert13/slides/FredericWeisbecker.pdf">Status of Linux dynticks</a><br />
+<a href="https://www.youtube.com/watch?v=G3jHP9kNjwc">Full dynticks status - Frederic Weisbecker, Red Hat</a></p>
+
+<h2 id="grace-period">Grace period</h2>
+
+<p>Documentation/RCU/rcu.txt<br />
+<a href="https://lwn.net/Articles/573424/">URCU: any period of time during which each reader thread resides in at least one quiescent state is called a grace period.</a><br />
+<a href="https://lwn.net/Articles/305782/#Start%20a%20new%20grace%20period.">Start a New Grace Period</a><br />
+<a href="https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation">&hellip; after each CPU has passed through at least one quiescent state, the RCU grace period ends.</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Must-read: Expedited Grace Period Design</a></p>
+
+<h2 id="quiescent-state">Quiescent state</h2>
+
+<p><a href="http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html">&hellip; after all the CPUs in the system have gone through at least one &ldquo;quiescent&rdquo; state (such as context switch, idle loop, or user code)</a><br />
+<a href="https://lwn.net/Articles/573424/">URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state</a><br />
+<a href="https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.">The rcu and rcu_bh flavors of RCU have different sets of quiescent states.</a><br />
+<a href="https://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/">Using Quiescent States to Reclaim Memory</a></p>
+
+<h2 id="granularity-of-waiting">granularity of waiting</h2>
+
+<p><a href="https://lwn.net/Articles/262464/#Wait%20For%20Pre-Existing%20RCU%20Readers%20to%20Complete">The great advantage of RCU &hellip; without having to explicitly track each and every one of them</a><br />
+In RCU&rsquo;s case, the things waited on are called &ldquo;RCU read-side critical sections&rdquo;. ditto.</p>
 
 <h1 id="classic-rcu">Classic RCU</h1>
 
@@ -210,31 +314,79 @@
 Author: Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
 Date:   Tue Jun 23 17:12:47 2009 -0700<br />
     rcu: Remove Classic RCU<br />
+    Remove Classic RCU, given that the combination of Tree RCU and<br />
+    the proposed Bloatwatch RCU do everything that Classic RCU can<br />
+    with fewer bugs.<br />
+tags/v2.6.32-rc1~724^2~29<br />
 <a href="https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation">Brief Overview of Classic RCU Implementation</a><br />
 <a href="http://www.wowotech.net/kernel_synchronization/linux2-6-11-RCU.html">Linux2.6.11版本：classic RCU的实现</a></p>
 
-<h1 id="grace-period">Grace period</h1>
+<h1 id="rcu-sched">RCU sched</h1>
 
-<p>Documentation/RCU/rcu.txt<br />
-<a href="https://lwn.net/Articles/573424/">URCU: any period of time during which each reader thread resides in at least one quiescent state is called a grace period.</a><br />
-<a href="https://lwn.net/Articles/305782/#Start%20a%20new%20grace%20period.">Start a New Grace Period</a><br />
-<a href="https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation">&hellip; after each CPU has passed through at least one quiescent state, the RCU grace period ends.</a></p>
+<p>commit 9b06e818985d139fd9e82c28297f7744e1b484e1<br />
+Refs: v2.6.12-rc3-362-g9b06e818985d<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@us.ibm.com">paulmck@us.ibm.com</a><br />
+AuthorDate: Sun May 1 08:59:04 2005 -0700<br />
+Commit:     Linus Torvalds <a href="mailto:torvalds@ppc970.osdl.org">torvalds@ppc970.osdl.org</a><br />
+CommitDate: Sun May 1 08:59:04 2005 -0700<br />
+    [PATCH] Deprecate synchronize_kernel, GPL replacement<br />
+    The synchronize_kernel() primitive is used for quite a few different purposes:<br />
+    waiting for RCU readers, waiting for NMIs, waiting for interrupts, and so on.<br />
+    This makes RCU code harder to read, since synchronize_kernel() might or might<br />
+    not have matching rcu_read_lock()s.  This patch creates a new<br />
+    synchronize_rcu() that is to be used for RCU readers and a new<br />
+    synchronize_sched() that is used for the rest.  These two new primitives<br />
+    currently have the same implementation, but this is might well change with<br />
+    additional real-time support.<br />
++ * synchronize_sched - block until all CPUs have exited any non-preemptive<br />
++ * kernel code sequences.<br />
++ * This means that all preempt_disable code sequences, including NMI and<br />
++ * hardware-interrupt handlers, in progress on entry will have completed<br />
++ * before this primitive returns.  However, this does not guarantee that<br />
++ * softirq handlers will have completed, since in some kernels<br />
++ * This primitive provides the guarantees made by the (deprecated)<br />
++ * synchronize_kernel() API.  In contrast, synchronize_rcu() only<br />
++ * guarantees that rcu_read_lock() sections will have completed.</p>
 
-<h1 id="quiescent-state">Quiescent state</h1>
+<h2 id="rcu-is-mapped-to-either-rcu-sched-or-rcu-preempt-depending-on-configuration">RCU is mapped to either RCU-sched or RCU-preempt depending on configuration.</h2>
 
-<p><a href="http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html">&hellip; after all the CPUs in the system have gone through at least one &ldquo;quiescent&rdquo; state (such as context switch, idle loop, or user code)</a><br />
-<a href="https://lwn.net/Articles/573424/">URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state</a><br />
-<a href="https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.">The rcu and rcu_bh flavors of RCU have different sets of quiescent states.</a><br />
-<a href="https://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/">Using Quiescent States to Reclaim Memory</a></p>
+<p><a href="https://lore.kernel.org/patchwork/cover/164913/">[RFC,-tip,0/4] RCU cleanups and simplified preemptable RCU</a><br />
+o   Rename variables and functions so that RCU-sched is an<br />
+    underlying definition, along with RCU-bh and (when so<br />
+    configured) RCU-preempt.  RCU then maps to either RCU-sched<br />
+    or RCU-preempt, depending on configuration.<br />
+commit d6714c22b43fbcbead7e7b706ff270e15f04a791<br />
+Refs: v2.6.31-rc6-15-gd6714c22b43f<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+AuthorDate: Sat Aug 22 13:56:46 2009 -0700<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Sun Aug 23 10:32:37 2009 +0200<br />
+    rcu: Renamings to increase RCU clarity<br />
+    Make RCU-sched, RCU-bh, and RCU-preempt be underlying<br />
+    implementations, with &ldquo;RCU&rdquo; defined in terms of one of the<br />
+    three.  Update the outdated rcu_qsctr_inc() names, as these<br />
+    functions no longer increment anything.</p>
 
-<h1 id="granularity-of-waiting">granularity of waiting</h1>
+<h2 id="quiescent-states-for-rcu-sched">Quiescent states for RCU-sched</h2>
 
-<p><a href="https://lwn.net/Articles/262464/#Wait%20For%20Pre-Existing%20RCU%20Readers%20to%20Complete">The great advantage of RCU &hellip; without having to explicitly track each and every one of them</a><br />
-In RCU&rsquo;s case, the things waited on are called &ldquo;RCU read-side critical sections&rdquo;. ditto.</p>
+<p><a href="http://www.kroening.com/papers/date2018-rcu.pdf">Verification of Tree-Based Hierarchical Read-Copy Update in the Linux Kernel</a><br />
+The non-preemptible RCU-sched flavor’s quiescent states<br />
+apply to CPUs, and are user-space execution, context switch,<br />
+idle, and offline state. Therefore, RCU-sched only needs to<br />
+track tasks and interrupt handlers that are actually running<br />
+because blocked and preempted tasks are always in quiescent states. Thus, RCU-sched needs only track CPU states.</p>
 
-<h1 id="preemptiable-rcu">Preemptiable RCU</h1>
+<h2 id="rcu-stalls">RCU stalls</h2>
 
-<p><a href="https://lwn.net/Articles/201195/">The 1st: Read-copy-update for realtime</a> <a href="http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf">Papper</a><br />
+<p><a href="https://www.youtube.com/watch?v=23_GOr8Sz-E">Decoding Those Inscrutable RCU CPU Stall Warnings</a><br />
+update_process_times-&gt;rcu_check_callbacks-&gt;rcu_pending-&gt;__rcu_pending-&gt;check_cpu_stall-&gt;print_other_cpu_stall<br />
+Documentation/RCU/stallwarn.txt</p>
+
+<h1 id="rcu-preempt-preemptiable-rcu">RCU-preempt Preemptiable RCU</h1>
+
+<p><a href="http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">Must-read: RCU-preempt: What happens on a context switch</a><br />
+<a href="http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf">Towards Hard Realtime Response from the Linux Kernel on SMP Hardware</a><br />
+<a href="https://lwn.net/Articles/201195/">The 1st: Read-copy-update for realtime</a> <a href="http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf">Papper</a><br />
 <a href="https://lwn.net/Articles/253651/">The design of preemptible read-copy-update</a><br />
 The RCU implementation for the -rt patchset is unusual in that it permits read-side critical sections to be preempted and to be blocked waiting for locks. However, it does not handle general blocking (for example, via the wait_event() primitive): if you need that, you should instead use SRCU.<br />
 <a href="http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf">Realtime RCU</a><br />
@@ -246,6 +398,35 @@ The RCU implementation for the -rt patchset is unusual in that it permits read-s
 f41d911f8c49a5d65c86504c19e8204bb605c4fd<br />
 need_qs<br />
 1d082fd061884a587c490c4fc8a2056ce1e47624</p>
+
+<h2 id="rcu-preempt-and-sleeping">RCU-preempt and sleeping</h2>
+
+<p><a href="http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">A recent discussion on LKML clarified to me that “preempted to run something else” not only covers involuntary preemption but also voluntarily sleeping.</a><br />
+<a href="joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">The exception is -rt &ldquo;spinlock&rdquo; acquisition.  If the &ldquo;spinlock&rdquo; is held,</a><br />
+the task acquiring it will block, which is legal within an RCU-preempt<br />
+read-side critical section.<br />
+This exception is why I define bad things in terms of lack of<br />
+susceptibility to priority boosting instead of sleeping.</p>
+
+<h2 id="priority-boosting-rcu">Priority-Boosting RCU</h2>
+
+<p><a href="https://lwn.net/Articles/220677/">Priority-Boosting RCU Read-Side Critical Sections</a><br />
+CONFIG_RCU_BOOST</p>
+
+<h2 id="the-motivation-for-that-cpu-reports-qs">The motivation for that CPU reports QS</h2>
+
+<p>@冯博群 你好，请教一个问题，对于rcu-preempt， CPU report QS的意义是什么？ 我理解只有task QS 才不block GP。<br />
+冯博群: qs都是CPU的，每个task都要report qs的话，那记录的结构得多复杂; rcu preempt是搞了一个list用来记录block当前qs的task; 当前gp; 过gp的条件就是list为空，且所有的CPU都report过qs;你说得概念上没啥问题，但是实现中不是这样作的.</p>
+
+<h1 id="rcu-bh">RCU bh</h1>
+
+<p><a href="https://lwn.net/ml/linux-kernel/CAJWu+oqCun1Ae6GqPxnS+eCDi3jadGPp+MO8TjOWgs+AiAh79A@mail.gmail.com/">Questions on rcu-bh design</a></p>
+
+<h2 id="motivation-for-rcu-bh-and-vs-rcu-preempt-https-www-mail-archive-com-linux-kernel-vger-kernel-org-msg1682346-html"><a href="https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html">Motivation for RCU-bh and vs RCU-preempt</a></h2>
+
+<p><a href="https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html#Bottom-Half%20Flavor">From kernel doc rcu design</a><br />
+The softirq-disable (AKA “bottom-half”, hence the “_bh” abbreviations) flavor of RCU, or RCU-bh, was developed by Dipankar Sarma to provide a flavor of RCU that could withstand the network-based denial-of-service attacks researched by Robert Olsson. These attacks placed so much networking load on the system that some of the CPUs never exited softirq execution, which in turn prevented those CPUs from ever executing a context switch, which, in the RCU implementation of that time, prevented grace periods from ever ending. The result was an out-of-memory condition and a system hang.<br />
+The solution was the creation of RCU-bh, which does local_bh_disable() across its read-side critical sections, and which uses <em>the transition from one type of softirq processing to another as a quiescent state in addition to context switch, idle, user mode, and offline</em>. This means that RCU-bh grace periods can complete even when some of the CPUs execute in softirq indefinitely, thus allowing algorithms based on RCU-bh to withstand network-based denial-of-service attacks.</p>
 
 <h1 id="srcu">SRCU</h1>
 
@@ -263,33 +444,66 @@ need_qs<br />
 
 <h1 id="tree-rcu-hierarchical-rcu">Tree RCU / Hierarchical RCU</h1>
 
-<p><a href="https://lwn.net/Articles/305782">Hierarchical RCU</a><br />
+<p><a href="http://www.kroening.com/papers/date2018-rcu.pdf">Verification of Tree-Based Hierarchical Read-Copy Update in the Linux Kernel</a><br />
+<a href="https://lwn.net/Articles/305782">Hierarchical RCU</a><br />
 <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html">Tree RCU Grace Period Memory Ordering Components </a><br />
 <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html">A Tour Through TREE_RCU&rsquo;s Data Structures</a><br />
 <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">A Tour Through TREE_RCU&rsquo;s Expedited Grace Periods</a><br />
 <a href="https://lwn.net/Articles/453002/">Tree preempt RCU: 3.0 and RCU: what went wrong</a></p>
 
-<h1 id="rcu-bh">RCU bh</h1>
+<h1 id="list-and-rcu">list and rcu</h1>
 
-<p><a href="https://lwn.net/ml/linux-kernel/CAJWu+oqCun1Ae6GqPxnS+eCDi3jadGPp+MO8TjOWgs+AiAh79A@mail.gmail.com/">Questions on rcu-bh design</a></p>
+<p><a href="https://www.kernel.org/doc/Documentation/RCU/listRCU.rst">Using RCU to Protect Read-Mostly Linked Lists</a></p>
 
-<h1 id="priority-boosting-rcu">Priority-Boosting RCU</h1>
+<h2 id="hlist-nulls">hlist-nulls</h2>
 
-<p><a href="https://lwn.net/Articles/220677/">Priority-Boosting RCU Read-Side Critical Sections</a><br />
-CONFIG_RCU_BOOST</p>
+<p>commit bbaffaca4810de1a25e32ecaf836eeaacc7a3d11<br />
+Refs: v2.6.28-rc4-513-gbbaffaca4810<br />
+Author:     Eric Dumazet <a href="mailto:dada1@cosmosbay.com">dada1@cosmosbay.com</a><br />
+AuthorDate: Sun Nov 16 19:37:55 2008 -0800<br />
+Commit:     David S. Miller <a href="mailto:davem@davemloft.net">davem@davemloft.net</a><br />
+CommitDate: Sun Nov 16 19:37:55 2008 -0800<br />
+    rcu: Introduce hlist_nulls variant of hlist<br />
+    hlist uses NULL value to finish a chain.<br />
+    hlist_nulls variant use the low order bit set to 1 to signal an end-of-list marker.<br />
+    This allows to store many different end markers, so that some RCU lockless<br />
+    algos (used in TCP/UDP stack for example) can save some memory barriers in<br />
+    fast paths.<br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/rculist_nulls.txt">Usage of hilsit-nulls in kernel doc</a></p>
 
-<h1 id="rcu-api">RCU API</h1>
+<h1 id="slab-and-rcu">slab and rcu</h1>
 
-<p><a href="https://lwn.net/Articles/264090/">RCU part 3: the RCU API, 2008 edition</a><br />
-<a href="https://lwn.net/Articles/418853/">The RCU API, 2010 Edition</a><br />
-<a href="https://lwn.net/Articles/609904/">The RCU API, 2014 Edition</a><br />
-<a href="https://lwn.net/Articles/777036/">The RCU API, 2019 edition</a></p>
+<p>tglx: commit 77631565ae40a44f23eac2e9c440cbceed8962a7<br />
+Author:     Hugh Dickins <a href="mailto:hugh@veritas.com">hugh@veritas.com</a><br />
+AuthorDate: Mon Aug 23 21:24:22 2004 -0700<br />
+Commit:     Linus Torvalds <a href="mailto:torvalds@ppc970.osdl.org">torvalds@ppc970.osdl.org</a><br />
+CommitDate: Mon Aug 23 21:24:22 2004 -0700<br />
+    [PATCH] rmaplock: SLAB_DESTROY_BY_RCU</p>
 
-<h1 id="rcu-stalls">RCU stalls</h1>
+<p>commit d7de4c1dc3a2faca0bf05d9e342f885cb2696766<br />
+Refs: v2.6.28-rc4-307-gd7de4c1dc3a2<br />
+Author:     Peter Zijlstra <a href="mailto:a.p.zijlstra@chello.nl">a.p.zijlstra@chello.nl</a><br />
+AuthorDate: Thu Nov 13 20:40:12 2008 +0200<br />
+Commit:     Pekka Enberg <a href="mailto:penberg@cs.helsinki.fi">penberg@cs.helsinki.fi</a><br />
+CommitDate: Thu Nov 13 20:49:02 2008 +0200<br />
+    slab: document SLAB_DESTROY_BY_RCU<br />
+    Explain this SLAB_DESTROY_BY_RCU thing..</p>
 
-<p><a href="https://www.youtube.com/watch?v=23_GOr8Sz-E">Decoding Those Inscrutable RCU CPU Stall Warnings</a><br />
-update_process_times-&gt;rcu_check_callbacks-&gt;rcu_pending-&gt;__rcu_pending-&gt;check_cpu_stall-&gt;print_other_cpu_stall<br />
-Documentation/RCU/stallwarn.txt</p>
+<h2 id="slab-typesafe-by-rcu">SLAB_TYPESAFE_BY_RCU</h2>
+
+<p>commit 5f0d5a3ae7cff0d7fa943c199c3a2e44f23e1fac<br />
+Refs: v4.11-rc2-1-g5f0d5a3ae7cf<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+AuthorDate: Wed Jan 18 02:53:44 2017 -0800<br />
+Commit:     Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+CommitDate: Tue Apr 18 11:42:36 2017 -0700<br />
+    mm: Rename SLAB_DESTROY_BY_RCU to SLAB_TYPESAFE_BY_RCU<br />
+    A group of Linux kernel hackers reported chasing a bug that resulted<br />
+    from their assumption that SLAB_DESTROY_BY_RCU provided an existence<br />
+    guarantee, that is, that no block from such a slab would be reallocated<br />
+    during an RCU read-side critical section.  Of course, that is not the<br />
+    case.  Instead, SLAB_DESTROY_BY_RCU only prevents freeing of an entire<br />
+    slab of blocks.</p>
 
 		</article>
 	  </div>

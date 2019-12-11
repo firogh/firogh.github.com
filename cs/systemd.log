@@ -1,0 +1,40 @@
+# sudo systemd-analyze  blame
+      2min 732ms systemd-udev-settle.service
+           732ms dracut-initqueue.service
+           541ms abrtd.service
+systemctl mask systemd-udev-settle
+Created symlink /etc/systemd/system/systemd-udev-settle.service → /dev/null.
+
+# Cgroup
+## Mount
+firo@linux-6qg8:~/repo/systemd> mount | grep cgroup
+tmpfs on /sys/fs/cgroup type tmpfs (ro,nosuid,nodev,noexec,mode=755)
+cgroup on /sys/fs/cgroup/unified type cgroup2 (rw,nosuid,nodev,noexec,relatime)
+cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,xattr,name=systemd)
+
+## sudo strace -o /tmp/s.log -p 1 and systemctl start udisks2.service
+firo@linux-6qg8:~/repo/systemd> grep mkdir /tmp/s.log  | grep udisk
+mkdir("/sys/fs/cgroup/unified/system.slice/udisks2.service", 0755) = 0
+mkdir("/sys/fs/cgroup/systemd/system.slice/udisks2.service", 0755) = 0
+mkdir("/sys/fs/cgroup/devices/system.slice/udisks2.service", 0755) = 0
+mkdir("/sys/fs/cgroup/pids/system.slice/udisks2.service", 0755) = 0
+and
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7fec1708cc10) = 4693
+newfstatat(AT_FDCWD, "/sys/fs/cgroup/unified", {st_mode=S_IFDIR|0555, st_size=0, ...}, AT_SYMLINK_NOFOLLOW) = 0
+openat(AT_FDCWD, "/sys/fs/cgroup/unified/system.slice/udisks2.service/cgroup.procs", O_WRONLY|O_NOCTTY|O_CLOEXEC) = 115
+fcntl(115, F_GETFL)                     = 0x8001 (flags O_WRONLY|O_LARGEFILE)
+fstat(115, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+write(115, "4693\n", 5)                 = 5
+close(115)                              = 0
+newfstatat(AT_FDCWD, "/sys/fs/cgroup/systemd", {st_mode=S_IFDIR|0555, st_size=0, ...}, AT_SYMLINK_NOFOLLOW) = 0
+openat(AT_FDCWD, "/sys/fs/cgroup/systemd/system.slice/udisks2.service/cgroup.procs", O_WRONLY|O_NOCTTY|O_CLOEXEC) = 115
+fcntl(115, F_GETFL)                     = 0x8001 (flags O_WRONLY|O_LARGEFILE)
+fstat(115, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+write(115, "4693\n", 5)                 = 5
+firo@linux-6qg8:~/repo/systemd> ps -T -p 4693
+  PID  SPID TTY          TIME CMD
+ 4693  4693 ?        00:00:00 udisksd
+ 4693  4694 ?        00:00:00 gmain
+ 4693  4696 ?        00:00:00 gdbus
+ 4693  4697 ?        00:00:00 probing-thread
+ 4693  4698 ?        00:00:00 cleanup

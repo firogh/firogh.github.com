@@ -1,16 +1,45 @@
-# BPF
-[Kernel internals](https://www.kernel.org/doc/Documentation/networking/filter.txt)
-[Series for BPF on LWN.net](https://lwn.net/Articles/740157/)
+# eBPF
+[A thorough introduction to eBPF](https://lwn.net/Articles/740157/)
+[Extending extended BPF](https://lwn.net/Articles/603983/)
+[Why is the kernel community replacing iptables with BPF?](https://cilium.io/blog/2018/04/17/why-is-the-kernel-community-replacing-iptables/)
+[eBPF 简史](https://www.ibm.com/developerworks/cn/linux/l-lo-eBPF-history/index.html)
+[BPF - the forgotten bytecode](https://blog.cloudflare.com/bpf-the-forgotten-bytecode/)
+
+* Causality - Performace
+1. This copying can be minimized by deploying a kernel agent called a packet filter, which discards unwanted packets as early as possible
+2. The original Unix packetfilter was designed around a stack-based filter evaluator that performs sub-optimally on current RISC CPUs.
+3. BPF also uses a straightforward buffering strategy that makes its overall performance up to 100 times faster than Sun’s NIT running on the same hardware
+
+
+# From xdp
+XDP eBPF tutorial presentation given at LLC2017
+http://people.netfilter.org/hawk/presentations/LLC2017/
+[BPF design paper][1]
+[eBPF - extended Berkeley Packet Filter described in XDP][0]
+[eBPF tracing filters with BPF never crash][2]
+[0]: prototype-kernel.readthedocs.io/en/latest/bpf/
+[1]: http://www.vodun.org/papers/net-papers/van_jacobson_the_bpf_packet_filter.pdf
+[2]: https://lwn.net/Articles/575444/
 
 # seccomp
 [seccomp Wikipedia](https://en.wikipedia.org/wiki/Seccomp)
 [Official site seccompsandbox](https://code.google.com/archive/p/seccompsandbox/wikis/overview.wiki)
 Limit a process to a specific set of system calls.
-
-## Implementation
 [Implementation seccomp: secure computing support](https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git/commit/?id=d949d0ec9c601f2b148bed3cdb5f87c052968554)
 For current implementation, check do_syscall_64 -> syscall_trace_enter
 [dynamic seccomp policies (using BPF filters)](https://groups.google.com/forum/#!topic/linux.kernel/TvZ2EzBtwmA%5B1-25%5D)
+
+# Implementation
+[tracing: accelerate tracing filters with BPF](https://lwn.net/Articles/598545/)
+[tracing: attach eBPF programs to tracepoints/syscalls/kprobe](https://groups.google.com/forum/#!msg/fa.linux.kernel/5IVrvIlkKeI/O_Eh8epAjkAJ)
+bpf_prog_load
+echo > /sys event
+PERF_EVENT_IOC_SET_BPF
+BPF_PROG_RUN trace_call_bpf
+[Stack based vs Register based Virtual Machine Architecture, and the Dalvik VM](https://markfaction.wordpress.com/2012/07/15/stack-based-vs-register-based-virtual-machine-architecture-and-the-dalvik-vm/)
+# perf and kprobe
+perf, bpf: allow bpf programs attach to tracepoints - 98b5c2c65c2951772a8fc661f50d675e450e8bce
+[tracing: attach eBPF programs to tracepoints and syscalls](https://groups.google.com/d/msg/fa.linux.kernel/5IVrvIlkKeI/iAO9gb4dvA4J)
 
 ## User case
 Chrome adobe flash player
@@ -23,15 +52,8 @@ Chrome adobe flash player
 
 # Verifier
 ~/kernel/tools/testing/selftests/bpf/test_verifier.c
+[BPF Verifier Overview](https://www.spinics.net/lists/xdp-newbies/msg00185.html)
 
-# BPF for tracing
+# Use cases
+[Cilium: Network and Application Security with BPF and XDP connect and lsm at 22:00](https://www.youtube.com/watch?v=ilKlmTDdFgk)
 
-
-## Implementation
-[tracing: accelerate tracing filters with BPF](https://lwn.net/Articles/598545/)
-[tracing: attach eBPF programs to tracepoints/syscalls/kprobe](https://groups.google.com/forum/#!msg/fa.linux.kernel/5IVrvIlkKeI/O_Eh8epAjkAJ)
-
-# BPF for tracepoints
-## Implementation
-perf, bpf: allow bpf programs attach to tracepoints - 98b5c2c65c2951772a8fc661f50d675e450e8bce
-[tracing: attach eBPF programs to tracepoints and syscalls](https://groups.google.com/d/msg/fa.linux.kernel/5IVrvIlkKeI/iAO9gb4dvA4J)

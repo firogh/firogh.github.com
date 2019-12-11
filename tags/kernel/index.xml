@@ -7,7 +7,297 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Wed, 26 Apr 2017 21:39:41 CST</updated>
+    <updated>Sat, 08 Jun 2019 00:00:00 UTC</updated>
+    
+    <item>
+      <title>Linux kernel page allocation</title>
+      <link>http://firoyang.org/cs/page_alloc/</link>
+      <pubDate>Sat, 08 Jun 2019 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/page_alloc/</guid>
+      <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
+
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+
+&lt;h2 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://patchwork.kernel.org/patch/10013971/&#34;&gt;mm, Remove cold parameter from free_hot_cold_page*&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;gfp-flags&#34;&gt;GFP flags&lt;/h1&gt;
+
+&lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d - Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
+__GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
+
+&lt;h1 id=&#34;free-page-state&#34;&gt;Free page state&lt;/h1&gt;
+
+&lt;p&gt;page_expected_state and check_new_page&lt;/p&gt;
+
+&lt;h1 id=&#34;do-anonymous-page-zero-page&#34;&gt;Do anonymous page, zero page&lt;/h1&gt;
+
+&lt;p&gt;tglx: commit 382a7dec462a90ad6ae01227f1e8758ae721f6ed&lt;br /&gt;
+Author: Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Feb 1 16:34:17 2005 -0800&lt;br /&gt;
+    [PATCH] alloc_zeroed_user_highpage() to fix the clear_user_highpage issue&lt;br /&gt;
+Lost tracks&lt;br /&gt;
+commit 6fbaac38b85e4bd3936b882392e3a9b45e8acb46&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@athlon.transmeta.com&#34;&gt;torvalds@athlon.transmeta.com&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Feb 4 19:14:54 2002 -0800&lt;br /&gt;
+    v2.4.7 -&amp;gt; v2.4.7.1&lt;/p&gt;
+
+&lt;h1 id=&#34;obselete-feature-fair-zone-allocation&#34;&gt;Obselete feature - Fair-zone allocation&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/691300/&#34;&gt;mm, page_alloc: Remove fair zone allocation policy&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/576778/&#34;&gt;Configurable fair allocation zone policy&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;watermarks&#34;&gt;Watermarks&lt;/h1&gt;
+
+&lt;p&gt;totalreserve_pages is wmark high; check calculate_totalreserve_pages and Documentation/sysctl/vm.txt&lt;/p&gt;
+
+&lt;p&gt;Check Documentation/sysctl/vm.txt for min_free_kbytes&lt;br /&gt;
+min_free_kbytes_sysctl_handler or watermark_scale_factor_sysctl_handler or&lt;br /&gt;
+core_initcall(init_per_zone_wmark_min) -&amp;gt;&lt;br /&gt;
+        setup_per_zone_wmarks-&amp;gt; __setup_per_zone_wmarks&lt;br /&gt;
+{&lt;br /&gt;
+        firo@linux-6qg8:~&amp;gt; grep managed /proc/zoneinfo&lt;br /&gt;
+                managed  3973&lt;br /&gt;
+                managed  464142&lt;br /&gt;
+                managed  7726451&lt;br /&gt;
+        &amp;gt;&amp;gt;&amp;gt; 3973 + 464142 + 7726451&lt;br /&gt;
+        8194566&lt;br /&gt;
+        firo@linux-6qg8:~&amp;gt; cat /proc/sys/vm/min_free_kbytes&lt;br /&gt;
+        67584&lt;br /&gt;
+        &amp;gt;&amp;gt;&amp;gt; 67584 / 4 * 3973 / 8194566&lt;br /&gt;
+        8&lt;br /&gt;
+        # Unit of watermark is Page.&lt;br /&gt;
+        WMARK_MIN = page_no(min_free_kbytes) * (zone.managed_pages / \Sum of zone.managed_pages)&lt;br /&gt;
+        WMARK_LOW = 1.25 * min or min + &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;1000&lt;/sub&gt; * zone.managed_pages&lt;br /&gt;
+        WMARK_HIGH = 1.5 * min or min + &lt;sup&gt;2&lt;/sup&gt;&amp;frasl;&lt;sub&gt;1000&lt;/sub&gt; * zone.managed_pages&lt;br /&gt;
+}&lt;br /&gt;
+if min_free_kbytes &amp;gt; &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;250&lt;/sub&gt;*total mamanged_pages, we use 1.25 min or 1.5 min&lt;/p&gt;
+
+&lt;h1 id=&#34;zone&#34;&gt;Zone&lt;/h1&gt;
+
+&lt;h2 id=&#34;low-memory-reserved&#34;&gt;Low memory reserved&lt;/h2&gt;
+
+&lt;p&gt;Check Documentation/sysctl/vm.txt for lowmem_reserve_ratio&lt;br /&gt;
+lowmem_reserve_ratio_sysctl_handler or core_initcall(init_per_zone_wmark_min) -&amp;gt;&lt;br /&gt;
+        setup_per_zone_lowmem_reserve&lt;br /&gt;
+firo@linux-6qg8:~&amp;gt; cat /proc/zoneinfo | grep protection&lt;br /&gt;
+        protection: (0, 1813, 31994, 31994, 31994)&lt;br /&gt;
+        protection: (0, 0, 30181, 30181, 30181)&lt;br /&gt;
+        protection: (0, 0, 0, 0, 0)&lt;br /&gt;
+        protection: (0, 0, 0, 0, 0)&lt;br /&gt;
+        protection: (0, 0, 0, 0, 0)&lt;br /&gt;
+Check __alloc_pages_nodemask(), lowmem_reserve is used for checking if there is enough pages in current zone to which allcation fallbacks from a prefered zone.&lt;br /&gt;
+lowmem_reserv is used for fallback allcations from a perfered zone in the zonelist.&lt;br /&gt;
+The index of lowmme_reserv is the prefered zoneref.zone_idx&lt;/p&gt;
+
+&lt;h2 id=&#34;zone-lists&#34;&gt;Zone lists&lt;/h2&gt;
+
+&lt;p&gt;struct zonelist node_zonelists[MAX_ZONELISTS];&lt;br /&gt;
+ * [0]  : Zonelist with fallback&lt;br /&gt;
+ * [1]  : No fallback (__GFP_THISNODE)&lt;br /&gt;
+start_kernel-&amp;gt;&lt;br /&gt;
+        build_all_zonelists&lt;br /&gt;
+or hotpulg or /proc/sys/vm/numa_zonelist_order: numa_zonelist_order_handler&lt;br /&gt;
+  node_zonelists = {{&lt;br /&gt;
+      _zonerefs = {{&lt;br /&gt;
+          zone = 0xffff88107ffd5d80, # node 0&lt;br /&gt;
+          zone_idx = 2&lt;br /&gt;
+          zone = 0xffff88107ffd56c0, # node 0&lt;br /&gt;
+          zone_idx = 1&lt;br /&gt;
+          zone = 0xffff88107ffd5000, # node 0&lt;br /&gt;
+          zone_idx = 0&lt;br /&gt;
+          zone = 0xffff88207ffd2d80, # Node 1; fallback.&lt;br /&gt;
+          zone_idx = 2&lt;br /&gt;
+          zone = 0x0,&lt;br /&gt;
+          zone_idx = 0&lt;/p&gt;
+
+&lt;h1 id=&#34;oom&#34;&gt;OOM&lt;/h1&gt;
+
+&lt;p&gt;dump_header(), show_mem(), dump_tasks&lt;/p&gt;
+
+&lt;h1 id=&#34;fsm&#34;&gt;FSM&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;                            |===============================================================================|
+                            v                                                                               |
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Physical memory ===(free)=&amp;gt; buddy pages ==(page allocator)===&amp;gt; slab objects                                     |&lt;br /&gt;
+                        |                                                                                       |&lt;br /&gt;
+                        |===(page fault)======== PAS =========&amp;gt; Private page ====|      |===(OOM Kill)===&amp;gt;|     |&lt;br /&gt;
+                                                |                                |      |                 |     |&lt;br /&gt;
+                                                |                                | ===&amp;gt; |===(PFRA) ======&amp;gt;|     |&lt;br /&gt;
+                                                |===============&amp;gt; Shared page====|      |                 | ====|&lt;br /&gt;
+                                                                                        |===(do_unmap) ==&amp;gt;|&lt;br /&gt;
+                                                                                        |                 |&lt;br /&gt;
+                                                                                        |===(exit_mmap) =&amp;gt;|&lt;/p&gt;
+
+&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
+
+&lt;h2 id=&#34;refcount&#34;&gt;_refcount&lt;/h2&gt;
+
+&lt;p&gt;after __alloc_pages_nodemask _refcount=0,&lt;br /&gt;
+post_alloc_hook: init should be 0.&lt;br /&gt;
+but set_page_refcounted -&amp;gt; set_page_count(page, 1);&lt;br /&gt;
+and Check put_page&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>memory mapping</title>
+      <link>http://firoyang.org/cs/mmap/</link>
+      <pubDate>Wed, 22 Aug 2018 21:39:41 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/mmap/</guid>
+      <description>
+
+&lt;p&gt;This article is talking about user space Memory mmapping; it&amp;rsquo;s not limitted to mmap(2) system call.&lt;br /&gt;
+&lt;a href=&#34;https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.genprogc/understanding_mem_mapping.htm&#34;&gt;Understanding memory mapping&lt;/a&gt;&lt;br /&gt;
+TLPI:chapter 49 and LSP: Chapter 8&lt;/p&gt;
+
+&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
+
+&lt;p&gt;BSD 4.2&lt;br /&gt;
+1990 SunOS 4.1&lt;br /&gt;
+&lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/4.1/800-3846-10A_System_Services_Overview_199003.pdf&#34;&gt;A Must-read: The applications programmer gains access to the facilities of the VM system through several sets of system calls.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://landley.net/writing/memory-faq.txt&#34;&gt;What are memory mappings? - Landley&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;A memory mapping is a set of page table entries describing the properties&lt;br /&gt;
+of a consecutive virtual address range.  Each memory mapping has a&lt;br /&gt;
+start address and length, permissions (such as whether the program can&lt;br /&gt;
+read, write, or execute from that memory), and associated resources (such&lt;br /&gt;
+as physical pages, swap pages, file contents, and so on).&lt;br /&gt;
+Firo:  mmap, page fault, PFRA.&lt;/p&gt;
+
+&lt;h2 id=&#34;vas&#34;&gt;VAS&lt;/h2&gt;
+
+&lt;p&gt;vma, mm_rb, mmap,&lt;br /&gt;
+if file, i_mmap&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&#34;file&#34;&gt;File&lt;/h2&gt;
+
+&lt;h3 id=&#34;pas&#34;&gt;PAS&lt;/h3&gt;
+
+&lt;p&gt;Protection, Shared, Private.&lt;br /&gt;
+vm_page_prot, vm_flags&lt;br /&gt;
+remove_mapping&lt;/p&gt;
+
+&lt;h3 id=&#34;backing-dev&#34;&gt;Backing dev&lt;/h3&gt;
+
+&lt;p&gt;vm_file, vm_pgoff&lt;/p&gt;
+
+&lt;h2 id=&#34;private-anonymouse-mappings&#34;&gt;Private anonymouse mappings&lt;/h2&gt;
+
+&lt;p&gt;Heap - malloc mmap&lt;/p&gt;
+
+&lt;h2 id=&#34;file-private-mappings&#34;&gt;File private mappings&lt;/h2&gt;
+
+&lt;p&gt;Program: execve text,data,bss&lt;br /&gt;
+Libraries&lt;br /&gt;
+* onset - mmap&lt;br /&gt;
+do_mmap -&amp;gt; mmap_region&lt;br /&gt;
+ext2: generic_file_mmap -&amp;gt; vma-&amp;gt;vm_ops = generic_file_vm_ops&lt;br /&gt;
+ext4: ext4_file_mmap -&amp;gt; vma-&amp;gt;vm_ops = ext4_file_vm_ops&lt;br /&gt;
+both: filemap_fault&lt;br /&gt;
+* nuclus&lt;br /&gt;
+Write - do_cow_page&lt;br /&gt;
+Read - do_read_page&lt;br /&gt;
+Read &amp;amp; write - do_wp_page&lt;/p&gt;
+
+&lt;h2 id=&#34;shared-anonymouse-mappings&#34;&gt;Shared anonymouse mappings&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/174306/&#34;&gt;vmscan: limit VM_EXEC protection to file pages&lt;/a&gt;&lt;br /&gt;
+If someone may take advange of reclaimation code by mmap(&amp;hellip;, VM_EXEC, SHRED|ANON), OOM may occur since the old code protect it from reclaiming by add it back to the active list. Great patch. However, program running in tmpfs will also penalized.&lt;br /&gt;
+page_is_file_cache &amp;lt; !PageAnon&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/452035/&#34;&gt;ashmem&lt;/a&gt;&lt;br /&gt;
+* onset - mmap&lt;br /&gt;
+do_mmap -&amp;gt; mmap_region -&amp;gt; vma_link -&amp;gt; (__shmem_file_setup) &amp;amp;&amp;amp; __vma_link_file: into i_mmap interval_tree.&lt;br /&gt;
+* nuclus - share fault&lt;br /&gt;
+Read: do_read_fault&lt;br /&gt;
+Write: do_shared_fault -&amp;gt; shmem_getpage_gfp shmem_add_to_page_cache&lt;br /&gt;
+WP: do_wp_page -&amp;gt; wp_page_shared or wp_page_reuse&lt;br /&gt;
+b)IPC using a shared file mapping&lt;/p&gt;
+
+&lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o&#34;&gt;File shared mappings - a) Memory-mapped I/O&lt;/h2&gt;
+
+&lt;h1 id=&#34;mmap&#34;&gt;mmap&lt;/h1&gt;
+
+&lt;h2 id=&#34;map-sync&#34;&gt;MAP_SYNC&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/731706/&#34;&gt;Two more approaches to persistent-memory writes&lt;/a&gt;&lt;br /&gt;
+dax_iomap_pte_fault&lt;/p&gt;
+
+&lt;h1 id=&#34;madvise&#34;&gt;madvise&lt;/h1&gt;
+
+&lt;h2 id=&#34;madv-sequential-and-reclaim&#34;&gt;MADV_SEQUENTIAL and reclaim&lt;/h2&gt;
+
+&lt;p&gt;mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c&lt;/p&gt;
+
+&lt;h2 id=&#34;madv-free&#34;&gt;MADV_FREE&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/590991/&#34;&gt;Volatile ranges and MADV_FREE&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://bugs.python.org/issue26601&#34;&gt;Use new madvise()&amp;rsquo;s MADV_FREE on the private heap&lt;/a&gt;&lt;br /&gt;
+commit 854e9ed09dedf0c19ac8640e91bcc74bc3f9e5c9&lt;br /&gt;
+Author: Minchan Kim &lt;a href=&#34;mailto:minchan@kernel.org&#34;&gt;minchan@kernel.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Jan 15 16:54:53 2016 -0800&lt;br /&gt;
+    mm: support madvise(MADV_FREE)&lt;br /&gt;
+commit 10853a039208c4afaa322a7d802456c8dca222f4&lt;br /&gt;
+Author: Minchan Kim &lt;a href=&#34;mailto:minchan@kernel.org&#34;&gt;minchan@kernel.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Jan 15 16:55:11 2016 -0800&lt;br /&gt;
+    mm: move lazily freed pages to inactive list&lt;/p&gt;
+
+&lt;p&gt;commit f7ad2a6cb9f7c4040004bedee84a70a9b985583e&lt;br /&gt;
+Author: Shaohua Li &lt;a href=&#34;mailto:shli@fb.com&#34;&gt;shli@fb.com&lt;/a&gt;&lt;br /&gt;
+Date:   Wed May 3 14:52:29 2017 -0700&lt;br /&gt;
+    mm: move MADV_FREE pages into LRU_INACTIVE_FILE list&lt;/p&gt;
+
+&lt;h1 id=&#34;mprotect&#34;&gt;mprotect&lt;/h1&gt;
+
+&lt;h2 id=&#34;prot-none&#34;&gt;PROT_NONE&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.greenend.org.uk/rjk/tech/dataseg.html#summary&#34;&gt;&amp;mdash;p PROT_NOME mapping&lt;/a&gt;&lt;br /&gt;
+show_vma_header_prefix&lt;br /&gt;
+cat /proc/self/maps&lt;br /&gt;
+7ffff7a17000-7ffff7bcc000 r-xp 00000000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; text&lt;br /&gt;
+7ffff7bcc000-7ffff7dcc000 &amp;mdash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; PROT_NONE&lt;br /&gt;
+7ffff7dcc000-7ffff7dd0000 r&amp;ndash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; read only data&lt;br /&gt;
+7ffff7dd0000-7ffff7dd2000 rw-p 001b9000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; initialized&lt;br /&gt;
+7ffff7dd2000-7ffff7dd6000 rw-p 00000000 00:00 0&lt;br /&gt;
+strace -e mmap,mprotect cat /dev/null&lt;br /&gt;
+mmap(NULL, 3926752, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7a17000       ===&amp;gt; text&lt;br /&gt;
+mprotect(0x7ffff7bcc000, 2097152, PROT_NONE) = 0                                ======================&amp;gt; PROT_NONE&lt;br /&gt;
+mmap(0x7ffff7dcc000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b5000) = 0x7ffff7dcc000&lt;br /&gt;
+mmap(0x7ffff7dd2000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7dd2000&lt;br /&gt;
+mprotect(0x7ffff7dcc000, 16384, PROT_READ) = 0                                          ========&amp;gt; read only data&lt;br /&gt;
+/* If _PAGE_BIT_PRESENT is clear, we use these: &lt;em&gt;/&lt;br /&gt;
+/&lt;/em&gt; - if the user mapped it with PROT_NONE; pte_present gives true */&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand006.html&#34;&gt;A MUST READ: Mel on PAGE_PROTNONE&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://volatility-labs.blogspot.com/2015/05/using-mprotect-protnone-on-linux.html&#34;&gt;Using mprotect(.., .., PROT_NONE) on Linux&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/1998/9/21/55&#34;&gt;Linus on _PAGE_PROTNONE&lt;/a&gt;&lt;br /&gt;
+ define _PAGE_BIT_PROTNONE      _PAGE_BIT_GLOBAL&lt;br /&gt;
+tglx: commit 06d9f6ff137579551a2ee18661847915fe2bb812 (tag: 0.97.5)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:09:05 2007 -0500&lt;br /&gt;
+    [PATCH] Linux-0.97.5 (September 12, 1992)&lt;br /&gt;
+There isn&amp;rsquo;t too much useful information.&lt;br /&gt;
+&lt;a href=&#34;https://www.spinics.net/lists/newbies/msg08579.html&#34;&gt;https://www.spinics.net/lists/newbies/msg08579.html&lt;/a&gt;&lt;br /&gt;
+man mprotect, PROT_NONE&lt;br /&gt;
+userspace addr is associated with non-GLOBAL pte, so the 8th G is reused by PROT_NONE.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>The definitive guide to Linux x86 entry.S</title>
@@ -54,6 +344,64 @@ For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Int
 glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
 just for vDSO syscalls&lt;br /&gt;
 glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
+
+&lt;h1 id=&#34;system-calls&#34;&gt;system calls&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead&#34;&gt;Measurements of system call performance and overhead&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://reverseengineering.stackexchange.com/a/16511/16996&#34;&gt;AMD vs Intel and syscall vs sysenter&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm&#34;&gt;System Call Optimization with the SYSENTER Instruction&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;kernel documentation&lt;/a&gt;&lt;br /&gt;
+Meltdown and Spectre&lt;/p&gt;
+
+&lt;h3 id=&#34;syscall&#34;&gt;syscall&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;save: pc + 1, old rsp, registers&lt;br /&gt;
+pc + 1-&amp;gt; RCX&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;entry: pc&lt;br /&gt;
+IA32_LSTAR -&amp;gt; pc&lt;/p&gt;
+
+&lt;h3 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h3&gt;
+
+&lt;p&gt;64-bit long mode: syscall; check syscall_init&lt;br /&gt;
+64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts&lt;br /&gt;
+??32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
+
+&lt;h3 id=&#34;vdso-and-vsyscall&#34;&gt;vDSO and vsyscall&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;64-bit without COMPAT&lt;em&gt;32&lt;/em&gt;/compatible kernel&lt;br /&gt;
+./int80&lt;br /&gt;
+[  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]&lt;br /&gt;
+Segmentation fault (core dumped)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;64-bit syscall&lt;br /&gt;
+syscall.S&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;rcx-and-r10&#34;&gt;rcx and r10&lt;/h2&gt;
+
+&lt;p&gt;Check x86_64 ABI: Linux conventions and&lt;br /&gt;
+According to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
+According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack.&lt;br /&gt;
+So r10 is right 4th args passed from userspace.&lt;br /&gt;
+According to do_syscall_64,&lt;br /&gt;
+                regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
+
+&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86 32 asmlinkage&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://qr.ae/Ti5MJJ&#34;&gt;By default gcc passes parameters on the stack for x86-32 arch, so what is it needed for? It&amp;rsquo;s because linux kernel uses -mregparm=3 option which overrides the default behaviour&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/67175/&#34;&gt;enbaled -mregparm=3 Shrinking the kernel with gcc&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
+However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
 </description>
     </item>
     
@@ -65,252 +413,131 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
       <guid>http://firoyang.org/cs/page_fault/</guid>
       <description>
 
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+
+&lt;p&gt;page frame&lt;br /&gt;
+read from backing store&lt;br /&gt;
+PTE&lt;/p&gt;
+
 &lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;page-fault exceptions error code&lt;br /&gt;
+&lt;li&gt;page-fault exceptions error code&lt;br /&gt;
 v3a: 4.7 - Figure 4-12. Page-Fault Error Code&lt;br /&gt;
 P, W/R, U/S, I/D, RSVD&lt;br /&gt;
-user/kernel mode, kerne space/userspace addr, good/bad area&lt;/p&gt;
+user/kernel mode, kerne space/userspace address, good/bad area&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;h2 id=&#34;kernel-mode&#34;&gt;kernel mode&lt;/h2&gt;
+&lt;h1 id=&#34;kernel-address&#34;&gt;Kernel address&lt;/h1&gt;
 
-&lt;h3 id=&#34;userspace-address&#34;&gt;Userspace address&lt;/h3&gt;
+&lt;p&gt;vmalloc,spurious_fault, kprobes_fault&lt;/p&gt;
 
-&lt;p&gt;Ondemanding page&lt;br /&gt;
-COW - do_wp_page&lt;/p&gt;
+&lt;h2 id=&#34;bad-area&#34;&gt;Bad area&lt;/h2&gt;
 
-&lt;h3 id=&#34;kernel-address&#34;&gt;kernel address&lt;/h3&gt;
-
-&lt;p&gt;vmalloc&lt;/p&gt;
-
-&lt;h3 id=&#34;an-invalide-address-nocontext&#34;&gt;An invalide address - nocontext&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fixup_exception&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;fixup_exception&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.linuxjournal.com/article/2135&#34;&gt;Kernel-Level Exception Handling&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&lt;/a&gt;&lt;br /&gt;
-ex_handler&lt;br /&gt;
-SIGSEGV the task since it passed the invalid address to kernel&lt;/p&gt;&lt;/li&gt;
+SIGSEGV&lt;br /&gt;
+kernel oops&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;kernel oops&lt;br /&gt;
-the address wasn&amp;rsquo;t from user space. It should be a kernel bug.&lt;br /&gt;
-kproxy module error&lt;/p&gt;
+&lt;h1 id=&#34;userspace-address&#34;&gt;Userspace address&lt;/h1&gt;
 
-&lt;h2 id=&#34;user-mode&#34;&gt;User mode&lt;/h2&gt;
-
-&lt;h3 id=&#34;bad-area&#34;&gt;Bad area&lt;/h3&gt;
+&lt;h2 id=&#34;bad-area-1&#34;&gt;Bad area&lt;/h2&gt;
 
 &lt;p&gt;PF_USER ? SIGSEGV&lt;/p&gt;
 
-&lt;h2 id=&#34;do-page-fault-nuclus&#34;&gt;do_page_fault() - nuclus&lt;/h2&gt;
-
-&lt;h3 id=&#34;kernel-address-1&#34;&gt;kernel address:&lt;/h3&gt;
-
-&lt;p&gt;vmalloc,spurious_fault, kprobes_fault, PF_USER ? bad_are_nosemaphore SIGSEGV, no_context&lt;/p&gt;
-
-&lt;h3 id=&#34;user-space-address&#34;&gt;user space address:&lt;/h3&gt;
-
-&lt;h4 id=&#34;bad-area-1&#34;&gt;Bad area&lt;/h4&gt;
-
-&lt;p&gt;1) !find_vma&lt;br /&gt;
-2) !Permission&lt;/p&gt;
-
-&lt;h4 id=&#34;stack&#34;&gt;stack&lt;/h4&gt;
+&lt;h2 id=&#34;stack&#34;&gt;Stack&lt;/h2&gt;
 
 &lt;p&gt;premise: grows down: address &amp;gt; 65536 + 32 * sizeof(unsigned long) + rsp&lt;br /&gt;
 expand_stack(): expand vma of stack; + good area workflow.&lt;/p&gt;
 
-&lt;h4 id=&#34;good-area&#34;&gt;good area&lt;/h4&gt;
+&lt;h2 id=&#34;private-anonymous-page&#34;&gt;Private anonymous page&lt;/h2&gt;
 
-&lt;p&gt;handle_mm_fault &amp;amp;&amp;amp; error_handle&lt;/p&gt;
+&lt;p&gt;Check &amp;lsquo;man madvise&amp;rsquo; for private anonymous page.&lt;br /&gt;
+Stack and Heap - mmap, brk: do_anonymous_page&lt;br /&gt;
+Library Private read &amp;amp; write: do_wp_page,&lt;br /&gt;
+Library Private write: cow page, do_cow_page&lt;/p&gt;
 
-&lt;h2 id=&#34;handle-mm-fault-good-area&#34;&gt;handle_mm_fault - good area&lt;/h2&gt;
+&lt;h3 id=&#34;do-cow-page&#34;&gt;do_cow_page&lt;/h3&gt;
 
-&lt;p&gt;FAULT_FLAG_WRITE        0x01    /* Fault was a write access &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_MKWRITE      0x02    /&lt;/em&gt; Fault was mkwrite of existing pte &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_ALLOW_RETRY  0x04    /&lt;/em&gt; Retry fault if blocking &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_RETRY_NOWAIT 0x08    /&lt;/em&gt; Don&amp;rsquo;t drop mmap_sem and wait when retrying &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_KILLABLE     0x10    /&lt;/em&gt; The fault task is in SIGKILL killable region &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_TRIED        0x20    /&lt;/em&gt; Second try &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_USER         0x40    /&lt;/em&gt; The fault originated in userspace &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_REMOTE       0x80    /&lt;/em&gt; faulting for non current tsk/mm &lt;em&gt;/&lt;br /&gt;
-FAULT_FLAG_INSTRUCTION  0x100   /&lt;/em&gt; The fault was during an instruction fetch */&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;get page and cow:  __do_fault-&amp;gt; vma-&amp;gt;vm_ops-&amp;gt;fault = filemap_fault -&amp;gt; page cache ? page_cache_read add to lru&lt;br /&gt;&lt;/li&gt;
 
-&lt;h3 id=&#34;do-anonymous-page&#34;&gt;do_anonymous_page&lt;/h3&gt;
+&lt;li&gt;&lt;p&gt;add page to anon lru list: finish_fault-&amp;gt;alloc_set_pte-&amp;gt; page_add_new_anon_rmap -&amp;gt; __SetPageSwapBacked&lt;/p&gt;
+
+&lt;h3 id=&#34;page-rmap-pte&#34;&gt;Page, rmap, pte&lt;/h3&gt;
 
 &lt;p&gt;page: alloc_zeroed_user_highpage_movable&lt;br /&gt;
 page_add_new_anon_rmap&lt;br /&gt;
 set_pte_at&lt;/p&gt;
 
-&lt;h3 id=&#34;do-fault&#34;&gt;do_fault&lt;/h3&gt;&lt;/li&gt;
+&lt;h2 id=&#34;private-file-page&#34;&gt;Private file page&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;normal read - do_read_fault&lt;/p&gt;&lt;/li&gt;
+&lt;p&gt;Libray Private  read: do_read_page, pte prot is PAGE_COPY check protection_map.&lt;br /&gt;
+map_region         vma-&amp;gt;vm_page_prot = vm_get_page_prot(vm_flags);&lt;br /&gt;
+do_set_pte(vma, address, fault_page, pte, false, false); vm_page_prot&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;file private mappings - do_cow_fault&lt;/p&gt;&lt;/li&gt;
+&lt;h2 id=&#34;shared-file-page&#34;&gt;Shared file page&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;shared(file or anonymous mappings) - do_shared_fault&lt;/p&gt;
+&lt;p&gt;do_shared_page&lt;/p&gt;
 
-&lt;h3 id=&#34;do-swap-page&#34;&gt;do_swap_page&lt;/h3&gt;
+&lt;h2 id=&#34;shared-anonymous-page&#34;&gt;Shared anonymous page&lt;/h2&gt;
 
-&lt;h3 id=&#34;do-wp-page&#34;&gt;do_wp_page&lt;/h3&gt;
+&lt;p&gt;do_shared_page&lt;/p&gt;
 
-&lt;p&gt;true cow&lt;/p&gt;
+&lt;h2 id=&#34;swap-page&#34;&gt;Swap page&lt;/h2&gt;
 
-&lt;h2 id=&#34;dbg-kernel-oops&#34;&gt;DBG: Kernel oops&lt;/h2&gt;
+&lt;p&gt;do_swap_page&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/oops-tracing.txt&#34;&gt;kernel oops tracing&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://vegardno.blogspot.com/2016/08/sync-debug.html?m=1&#34;&gt;Debugging a kernel crash found by syzkaller&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h1 id=&#34;read-and-write-pages-copy-on-write-technique&#34;&gt;Read and write pages - Copy-on-write technique.&lt;/h1&gt;
 
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+&lt;h2 id=&#34;do-read-page&#34;&gt;do_read_page&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;why down_read in page_fault&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/588802/&#34;&gt;map_pages&lt;/a&gt;&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;enable IRQ in page fault&lt;br /&gt;
-for user mode&lt;br /&gt;
-commit 891cffbd6bcba26409869c19c07ecd4bfc0c2460&lt;br /&gt;
-Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-Date:   Sun Oct 12 13:16:12 2008 -0700&lt;/p&gt;
+&lt;h1 id=&#34;synchronization&#34;&gt;Synchronization&lt;/h1&gt;
 
-&lt;p&gt;x86/mm: do not trigger a kernel warning if user-space disables interrupts and generates a page fault&lt;br /&gt;
-for kernel mode&lt;br /&gt;
-简直精髓&lt;/p&gt;&lt;/li&gt;
+&lt;h2 id=&#34;down-read-mm-mmap-sem&#34;&gt;down_read(&amp;amp;mm-&amp;gt;mmap_sem)?&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;What about down_read(&amp;amp;mm-&amp;gt;mmap_sem)?&lt;br /&gt;
-linux-tglx&lt;br /&gt;
+&lt;p&gt;linux-tglx&lt;br /&gt;
 commit b50661029222940e24d2fba7c982ac0774a38c78&lt;br /&gt;
 Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Thu Sep 16 22:00:12 2004 -0700&lt;/p&gt;
-
-&lt;p&gt;[PATCH] x86-64: avoid deadlock in page fault handler&lt;/p&gt;
-
-&lt;p&gt;Avoid deadlock when kernel fault happens inside mmap sem.&lt;br /&gt;
+Date:   Thu Sep 16 22:00:12 2004 -0700&lt;br /&gt;
+    [PATCH] x86-64: avoid deadlock in page fault handler&lt;br /&gt;
+    Avoid deadlock when kernel fault happens inside mmap sem.&lt;br /&gt;
 Check ULKv3 Page 380.&lt;br /&gt;
 &lt;a href=&#34;https://lkml.org/lkml/2004/5/19/108&#34;&gt;https://lkml.org/lkml/2004/5/19/108&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/5/13/418&#34;&gt;https://lkml.org/lkml/2013/5/13/418&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2013/5/13/418&#34;&gt;https://lkml.org/lkml/2013/5/13/418&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;memory-mappings&#34;&gt;memory mappings&lt;/h1&gt;
+&lt;h2 id=&#34;irq&#34;&gt;IRQ&lt;/h2&gt;
 
-&lt;p&gt;TLPI:chapter 49&lt;br /&gt;
-LSP: Chapter 8&lt;br /&gt;
-rmap: anonymous page: asyn: page fault&lt;br /&gt;
-rmap: file page: syn vma_link_file&lt;/p&gt;
+&lt;p&gt;commit 891cffbd6bcba26409869c19c07ecd4bfc0c2460&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Sun Oct 12 13:16:12 2008 -0700&lt;br /&gt;
+    x86/mm: do not trigger a kernel warning if user-space disables interrupts and generates a page fault&lt;/p&gt;
 
-&lt;h2 id=&#34;anonymouse-private-mappings&#34;&gt;Anonymouse private mappings&lt;/h2&gt;
+&lt;h1 id=&#34;propection&#34;&gt;Propection&lt;/h1&gt;
 
-&lt;p&gt;anonymous page&lt;br /&gt;
-* onset&lt;br /&gt;
-malloc exploit it to alloc memory&lt;br /&gt;
-* nuclus&lt;br /&gt;
-do_anonymous_page&lt;/p&gt;
-
-&lt;h2 id=&#34;file-private-mappings-text-and-iniliazed-data&#34;&gt;File private mappings -text and iniliazed data.&lt;/h2&gt;
-
-&lt;p&gt;双空, anonymous page&lt;br /&gt;
-* onset - mmap&lt;br /&gt;
-do_mmap -&amp;gt; mmap_region -&amp;gt; call_mmap-&amp;gt;generic_file_mmap-&amp;gt;vma-&amp;gt;vm_ops = &amp;amp; generic_file_vm_ops&lt;br /&gt;
-* nuclus -&amp;gt; page fault -&amp;gt; do_cow_page&lt;br /&gt;
-1. get page and cow:  __do_fault-&amp;gt; vma-&amp;gt;vm_ops-&amp;gt;fault = filemap_fault -&amp;gt; page cache ? page_cache_read add to lru&lt;br /&gt;
-2. add page to anon lru list: finish_fault-&amp;gt;alloc_set_pte-&amp;gt; page_add_new_anon_rmap -&amp;gt; __SetPageSwapBacked&lt;/p&gt;
-
-&lt;h3 id=&#34;example-text-and-initalized-data&#34;&gt;Example text and initalized data&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.greenend.org.uk/rjk/tech/dataseg.html#summary&#34;&gt;??&amp;mdash;p PROT_NOME mapping&lt;/a&gt;&lt;br /&gt;
-show_vma_header_prefix&lt;br /&gt;
-cat /proc/self/maps&lt;br /&gt;
-7ffff7a17000-7ffff7bcc000 r-xp 00000000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; text&lt;br /&gt;
-7ffff7bcc000-7ffff7dcc000 &amp;mdash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; PROT_NONE&lt;br /&gt;
-7ffff7dcc000-7ffff7dd0000 r&amp;ndash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; read only data&lt;br /&gt;
-7ffff7dd0000-7ffff7dd2000 rw-p 001b9000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; initialized&lt;br /&gt;
-7ffff7dd2000-7ffff7dd6000 rw-p 00000000 00:00 0&lt;br /&gt;
-strace -e mmap,mprotect cat /dev/null&lt;br /&gt;
-mmap(NULL, 3926752, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7a17000       ===&amp;gt; text&lt;br /&gt;
-mprotect(0x7ffff7bcc000, 2097152, PROT_NONE) = 0                                ======================&amp;gt; PROT_NONE&lt;br /&gt;
-mmap(0x7ffff7dcc000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b5000) = 0x7ffff7dcc000&lt;br /&gt;
-mmap(0x7ffff7dd2000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7dd2000&lt;br /&gt;
-mprotect(0x7ffff7dcc000, 16384, PROT_READ) = 0                                          ========&amp;gt; read only data&lt;/p&gt;
-
-&lt;h2 id=&#34;anonymouse-shared-mappings-parent-and-child-share-memory&#34;&gt;Anonymouse shared mappings - Parent and child share memory&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/174306/&#34;&gt;vmscan: limit VM_EXEC protection to file pages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/452035/&#34;&gt;ashmem&lt;/a&gt;&lt;br /&gt;
-file page: i_mmap&lt;br /&gt;
-* onset - mmap&lt;br /&gt;
-do_mmap -&amp;gt; mmap_region -&amp;gt; vma_link -&amp;gt; (__shmem_file_setup) &amp;amp;&amp;amp; __vma_link_file: into i_mmap interval_tree.&lt;br /&gt;
-* nuclus - share fault&lt;br /&gt;
-do_shared_fault&lt;br /&gt;
-shmem_getpage_gfp&lt;br /&gt;
-mapping = inode-&amp;gt;i_mapping&lt;br /&gt;
-shmem_add_to_page_cache&lt;br /&gt;
-* dirty a shared page since it&amp;rsquo;s write fault&lt;br /&gt;
-do_shared_fault-&amp;gt;fault_dirty_shared_page&lt;br /&gt;
-* what about read fault?&lt;br /&gt;
-seems read won&amp;rsquo;t dirty the shared page.&lt;br /&gt;
-* Swaping out a anonymouse shared page&lt;br /&gt;
-pageout-&amp;gt;shmem_writepage - Move the page from the page cache to the swap cache; and swp_to_radix_entry&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/588802/&#34;&gt;map_pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;write-protect-for-shared-page&#34;&gt;Write protect for shared page&lt;/h3&gt;
-
-&lt;p&gt;do_wp_page -&amp;gt; wp_page_reuse&lt;br /&gt;
-[PATCH] mm: tracking shared dirty pages - d08b3851da41d0ee60851f2c75b118e1f7a5fc89&lt;/p&gt;
-
-&lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o-b-ipc-using-a-shared-file-mapping&#34;&gt;File shared mappings - a) Memory-mapped I/O, b)IPC using a shared file mapping&lt;/h2&gt;
-
-&lt;p&gt;file page: i_mmap&lt;/p&gt;
-
-&lt;h1 id=&#34;summary&#34;&gt;Summary&lt;/h1&gt;
-
-&lt;p&gt;mapping:  anon &amp;amp; private, anon&lt;br /&gt;
-from: anonymous page, file-backing&lt;br /&gt;
-to: swap area, file on the disk&lt;br /&gt;
-rmap:&lt;br /&gt;
-lru:&lt;br /&gt;
-cache: swap cache, page cache&lt;br /&gt;
-read:&lt;br /&gt;
-write:&lt;br /&gt;
-backend: swap area, disk&lt;br /&gt;
-PageAnon:       f&amp;amp;p, a&amp;amp;p&lt;br /&gt;
-!page_is_file_cache:    f&amp;amp;p, a&amp;amp;p, a&amp;amp;s&lt;/p&gt;
-
-&lt;h2 id=&#34;swap&#34;&gt;swap&lt;/h2&gt;
-
-&lt;p&gt;systemd-&amp;gt;swapon-&amp;gt;sys_swapon&lt;br /&gt;
-&amp;amp;def_blk_fops&lt;/p&gt;
-
-&lt;p&gt;do_shared_fault&lt;br /&gt;
-shmem_fault&lt;br /&gt;
-shmem_alloc_and_acct_page&lt;/p&gt;
-
-&lt;p&gt;swap in&lt;br /&gt;
-swapin_readahead&lt;br /&gt;
-swap_readpage&lt;br /&gt;
-swap_page_sector&lt;/p&gt;
-
-&lt;h2 id=&#34;process-of-swap&#34;&gt;process of swap&lt;/h2&gt;
-
-&lt;h3 id=&#34;swapping-out-pages&#34;&gt;Swapping out pages&lt;/h3&gt;
-
-&lt;p&gt;lru -&amp;gt; swap cache -&amp;gt; updating pte with try to unmap -&amp;gt; write page into swap area -&amp;gt; delete_from_swap_cache()&lt;br /&gt;
-shrink_page_list&lt;br /&gt;
-key commit:&lt;br /&gt;
-mm: cma: discard clean pages during contiguous allocation instead of migration - 02c6de8d757cb32c0829a45d81c3dfcbcafd998b&lt;br /&gt;
-mm: reclaim MADV_FREE pages - 802a3a92ad7ac0b9be9df229dee530a1f0a8039b check mark_page_lazyfree&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/590693/&#34;&gt;mm: support madvise(MADV_FREE)&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;swapping-in-pages&#34;&gt;Swapping in pages&lt;/h3&gt;
-
-&lt;h2 id=&#34;fork&#34;&gt;fork&lt;/h2&gt;
-
-&lt;h2 id=&#34;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&#34;&gt;dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&lt;/h2&gt;
-
-&lt;h1 id=&#34;map-sync&#34;&gt;MAP_SYNC&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/731706/&#34;&gt;https://lwn.net/Articles/731706/&lt;/a&gt;&lt;br /&gt;
-dax_iomap_pte_fault&lt;/p&gt;
+&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
+Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+    [PATCH] x86_64 merge: arch + asm&lt;br /&gt;
+    This adds the x86_64 arch and asm directories and a Documentation/x86_64.&lt;br /&gt;
++/*&lt;br /&gt;
++ * The i386 can&amp;rsquo;t do page protection for execute, and considers that&lt;br /&gt;
++ * the same are read. Also, write permissions imply read permissions.&lt;br /&gt;
++ * This is the closest we can get..&lt;br /&gt;
++ */&lt;br /&gt;
++#define __P000 PAGE_NONE&lt;br /&gt;
++#define __P001 PAGE_READONLY&lt;br /&gt;
++#define __P010 PAGE_COPY&lt;br /&gt;
++#define __P011 PAGE_COPY&lt;br /&gt;
++#define __P100 PAGE_READONLY&lt;br /&gt;
++#define __P101 PAGE_READONLY&lt;br /&gt;
++#define __P110 PAGE_COPY&lt;br /&gt;
++#define __P111 PAGE_COPY&lt;br /&gt;
++#define __S000 PAGE_NONE&lt;/p&gt;
 </description>
     </item>
     
@@ -322,26 +549,12 @@ dax_iomap_pte_fault&lt;/p&gt;
       <guid>http://firoyang.org/cs/time/</guid>
       <description>
 
-&lt;p&gt;我写作的主要目的是理清基本概念与原理, 而非实现,细节这一类.&lt;/p&gt;
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
 
-&lt;p&gt;时间是人类发明出来的概念, Kant也认为时间是心智概念.&lt;br /&gt;
-一百年前的世界和现在有什么不同呢?这个提问揭示生活中时间最重要的用途,&lt;br /&gt;
-*标记*某中状态下的世界. 所谓的过去世界不过是世界的一个个连续状态&lt;br /&gt;
-那么时空穿越, 就变成了保住项少龙这个肉身不变, 世界的其他部分完全&lt;br /&gt;
-转变到过去的某一个状态. 而所谓现在世界就被抹杀了.&lt;/p&gt;
+&lt;h1 id=&#34;tsc&#34;&gt;TSC&lt;/h1&gt;
 
-&lt;pre&gt;&lt;code&gt;The future is already here – it&#39;s just not evenly distributed.
-                        — William Gibson
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;人想回到&amp;rdquo;过去&amp;rdquo;多半源于情感因素, 而想去&amp;rdquo;未来&amp;rdquo;则是因为&amp;rdquo;物质&amp;rdquo;的缘故.&lt;br /&gt;
-想象下中国的未来50年, 很可能是现在美国or西欧现在的样子.虽然中西虽然处在&lt;br /&gt;
-时间概念上相同的现在, 而物质世界确实&amp;rdquo;过去&amp;rdquo;和&amp;rdquo;未来&amp;rdquo;之差.&lt;/p&gt;
-
-&lt;p&gt;比如我们下周而要开会, 那么此时下周二就是有意识的规划未来, 时间依然是标记.&lt;br /&gt;
-UTC/GMT&lt;br /&gt;
-Based on caesium microwave atomic clock&lt;br /&gt;
-Leap second&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://oliveryang.net/2015/09/pitfalls-of-TSC-usage/&#34;&gt;Pitfalls of TSC usage&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/388188/&#34;&gt;The trouble with the TSC&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;genus-differentia-definition&#34;&gt;Genus-differentia definition&lt;/h2&gt;
 
@@ -430,22 +643,126 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
       <guid>http://firoyang.org/cs/rcu/</guid>
       <description>
 
-&lt;h1 id=&#34;rcu&#34;&gt;RCU&lt;/h1&gt;
+&lt;h1 id=&#34;network-rx-path&#34;&gt;Network RX  path&lt;/h1&gt;
 
-&lt;h2 id=&#34;causality&#34;&gt;Causality&lt;/h2&gt;
+&lt;p&gt;commit 2d331915a04144dad738e725769d8fac06ef6155&lt;br /&gt;
+Author: Eric Dumazet &lt;a href=&#34;mailto:edumazet@google.com&#34;&gt;edumazet@google.com&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Apr 1 08:52:15 2016 -0700&lt;br /&gt;
+    tcp/dccp: use rcu locking in inet_diag_find_one_icsk()&lt;br /&gt;
+    RX packet processing holds rcu_read_lock(), so we can remove&lt;br /&gt;
+    pairs of rcu_read_lock()/rcu_read_unlock() in lookup functions&lt;br /&gt;
+    if inet_diag also holds rcu before calling them.&lt;br /&gt;
+    This is needed anyway as __inet_lookup_listener() and&lt;br /&gt;
+    inet6_lookup_listener() will soon no longer increment&lt;br /&gt;
+    refcount on the found listener.&lt;br /&gt;
+    Signed-off-by: Eric Dumazet &lt;a href=&#34;mailto:edumazet@google.com&#34;&gt;edumazet@google.com&lt;/a&gt;&lt;br /&gt;
+    Signed-off-by: David S. Miller &lt;a href=&#34;mailto:davem@davemloft.net&#34;&gt;davem@davemloft.net&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;Read Copy Update HOWTO&lt;/p&gt;
+&lt;p&gt;5142 static int process_backlog(struct napi_struct *napi, int quota)&lt;br /&gt;
+&amp;hellip;&lt;br /&gt;
+5160                 while ((skb = __skb_dequeue(&amp;amp;sd-&amp;gt;process_queue))) {&lt;br /&gt;
+5161                         rcu_read_lock();&lt;br /&gt;
+5162                         __netif_receive_skb(skb);&lt;br /&gt;
+5163                         rcu_read_unlock();&lt;br /&gt;
+Refs: v4.1-12249-g2c17d27c36dc&lt;br /&gt;
+Author:     Julian Anastasov &lt;a href=&#34;mailto:ja@ssi.bg&#34;&gt;ja@ssi.bg&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Thu Jul 9 09:59:10 2015 +0300&lt;br /&gt;
+Commit:     David S. Miller &lt;a href=&#34;mailto:davem@davemloft.net&#34;&gt;davem@davemloft.net&lt;/a&gt;&lt;br /&gt;
+CommitDate: Fri Jul 10 18:16:36 2015 -0700&lt;/p&gt;
 
-&lt;h2 id=&#34;structure&#34;&gt;Structure&lt;/h2&gt;
+&lt;pre&gt;&lt;code&gt;net: call rcu_read_lock early in process_backlog
 
-&lt;p&gt;&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt&#34;&gt;What is RCU?  &amp;ndash;  &amp;ldquo;Read, Copy, Update&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html&#34;&gt;A Tour Through RCU&amp;rsquo;s Requirements&lt;/a&gt;&lt;/p&gt;
+Incoming packet should be either in backlog queue or
+in RCU read-side section. Otherwise, the final sequence of
+flush_backlog() and synchronize_net() may miss packets
+that can run without device reference:
 
-&lt;h2 id=&#34;history&#34;&gt;History&lt;/h2&gt;
+CPU 1                  CPU 2
+                       skb-&amp;gt;dev: no reference
+                       process_backlog:__skb_dequeue
+                       process_backlog:local_irq_enable
+
+on_each_cpu for
+flush_backlog =&amp;gt;       IPI(hardirq): flush_backlog
+                       - packet not found in backlog
+
+                       CPU delayed ...
+synchronize_net
+- no ongoing RCU
+read-side sections
+
+netdev_run_todo,
+rcu_barrier: no
+ongoing callbacks
+                       __netif_receive_skb_core:rcu_read_lock
+                       - too late
+free dev
+                       process packet for freed dev
+
+Fixes: 6e583ce5242f (&amp;quot;net: eliminate refcounting in backlog queue&amp;quot;)
+Cc: Eric W. Biederman &amp;lt;ebiederm@xmission.com&amp;gt;
+Cc: Stephen Hemminger &amp;lt;stephen@networkplumber.org&amp;gt;
+Signed-off-by: Julian Anastasov &amp;lt;ja@ssi.bg&amp;gt;
+Signed-off-by: David S. Miller &amp;lt;davem@davemloft.net&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
+
+&lt;h2 id=&#34;2001-read-copy-update-on-ols-https-www-kernel-org-doc-ols-2001-read-copy-pdf&#34;&gt;2001 &lt;a href=&#34;https://www.kernel.org/doc/ols/2001/read-copy.pdf&#34;&gt;Read-Copy Update on ols&lt;/a&gt;&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/541037/&#34;&gt;As of March 2013: Simplifying RCU&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www2.rdrop.com/users/paulmck/RCU/RCUdissertation.2004.07.14e1.pdf&#34;&gt;RCU dissertation.2004.07&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;2008&#34;&gt;2008&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API, 2008 edition&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;2010&#34;&gt;2010&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/418853/&#34;&gt;The RCU API, 2010 Edition&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;2014&#34;&gt;2014&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/609904/&#34;&gt;The RCU API, 2014 Edition&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;2019&#34;&gt;2019&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/777036/&#34;&gt;The RCU API, 2019 edition&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;formal-cause&#34;&gt;Formal cause&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html&#34;&gt;A Tour Through RCU&amp;rsquo;s Requirements&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.rdrop.com/~paulmck/RCU/rcu-exploit.2019.05.01a.pdf&#34;&gt;A Critical RCU Safety Property is&amp;hellip; Ease of Use!&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html&#34;&gt;What is RCU?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt&#34;&gt;What is RCU?  &amp;ndash;  &amp;ldquo;Read, Copy, Update&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/652156/&#34;&gt;Requirements for RCU part 1: the fundamentals&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.joelfernandes.org/joel/slides/RCU_in_2019_KernelRecipes.pdf&#34;&gt;RCU in 2019&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=bsyXDAouI6E&#34;&gt;Kernel Recipes 2019 - RCU in 2019&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;rcu-and-dynticks&#34;&gt;RCU and dynticks&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://ertl.jp/~shinpei/conf/ospert13/slides/FredericWeisbecker.pdf&#34;&gt;Status of Linux dynticks&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=G3jHP9kNjwc&#34;&gt;Full dynticks status - Frederic Weisbecker, Red Hat&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;grace-period&#34;&gt;Grace period&lt;/h2&gt;
+
+&lt;p&gt;Documentation/RCU/rcu.txt&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: any period of time during which each reader thread resides in at least one quiescent state is called a grace period.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Start%20a%20new%20grace%20period.&#34;&gt;Start a New Grace Period&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation&#34;&gt;&amp;hellip; after each CPU has passed through at least one quiescent state, the RCU grace period ends.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html&#34;&gt;Must-read: Expedited Grace Period Design&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;quiescent-state&#34;&gt;Quiescent state&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html&#34;&gt;&amp;hellip; after all the CPUs in the system have gone through at least one &amp;ldquo;quiescent&amp;rdquo; state (such as context switch, idle loop, or user code)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.&#34;&gt;The rcu and rcu_bh flavors of RCU have different sets of quiescent states.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/&#34;&gt;Using Quiescent States to Reclaim Memory&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;granularity-of-waiting&#34;&gt;granularity of waiting&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/262464/#Wait%20For%20Pre-Existing%20RCU%20Readers%20to%20Complete&#34;&gt;The great advantage of RCU &amp;hellip; without having to explicitly track each and every one of them&lt;/a&gt;&lt;br /&gt;
+In RCU&amp;rsquo;s case, the things waited on are called &amp;ldquo;RCU read-side critical sections&amp;rdquo;. ditto.&lt;/p&gt;
 
 &lt;h1 id=&#34;classic-rcu&#34;&gt;Classic RCU&lt;/h1&gt;
 
@@ -453,31 +770,79 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
 Author: Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
 Date:   Tue Jun 23 17:12:47 2009 -0700&lt;br /&gt;
     rcu: Remove Classic RCU&lt;br /&gt;
+    Remove Classic RCU, given that the combination of Tree RCU and&lt;br /&gt;
+    the proposed Bloatwatch RCU do everything that Classic RCU can&lt;br /&gt;
+    with fewer bugs.&lt;br /&gt;
+tags/v2.6.32-rc1~724^2~29&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation&#34;&gt;Brief Overview of Classic RCU Implementation&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.wowotech.net/kernel_synchronization/linux2-6-11-RCU.html&#34;&gt;Linux2.6.11版本：classic RCU的实现&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;grace-period&#34;&gt;Grace period&lt;/h1&gt;
+&lt;h1 id=&#34;rcu-sched&#34;&gt;RCU sched&lt;/h1&gt;
 
-&lt;p&gt;Documentation/RCU/rcu.txt&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: any period of time during which each reader thread resides in at least one quiescent state is called a grace period.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/305782/#Start%20a%20new%20grace%20period.&#34;&gt;Start a New Grace Period&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation&#34;&gt;&amp;hellip; after each CPU has passed through at least one quiescent state, the RCU grace period ends.&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;commit 9b06e818985d139fd9e82c28297f7744e1b484e1&lt;br /&gt;
+Refs: v2.6.12-rc3-362-g9b06e818985d&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@us.ibm.com&#34;&gt;paulmck@us.ibm.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Sun May 1 08:59:04 2005 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@ppc970.osdl.org&#34;&gt;torvalds@ppc970.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Sun May 1 08:59:04 2005 -0700&lt;br /&gt;
+    [PATCH] Deprecate synchronize_kernel, GPL replacement&lt;br /&gt;
+    The synchronize_kernel() primitive is used for quite a few different purposes:&lt;br /&gt;
+    waiting for RCU readers, waiting for NMIs, waiting for interrupts, and so on.&lt;br /&gt;
+    This makes RCU code harder to read, since synchronize_kernel() might or might&lt;br /&gt;
+    not have matching rcu_read_lock()s.  This patch creates a new&lt;br /&gt;
+    synchronize_rcu() that is to be used for RCU readers and a new&lt;br /&gt;
+    synchronize_sched() that is used for the rest.  These two new primitives&lt;br /&gt;
+    currently have the same implementation, but this is might well change with&lt;br /&gt;
+    additional real-time support.&lt;br /&gt;
++ * synchronize_sched - block until all CPUs have exited any non-preemptive&lt;br /&gt;
++ * kernel code sequences.&lt;br /&gt;
++ * This means that all preempt_disable code sequences, including NMI and&lt;br /&gt;
++ * hardware-interrupt handlers, in progress on entry will have completed&lt;br /&gt;
++ * before this primitive returns.  However, this does not guarantee that&lt;br /&gt;
++ * softirq handlers will have completed, since in some kernels&lt;br /&gt;
++ * This primitive provides the guarantees made by the (deprecated)&lt;br /&gt;
++ * synchronize_kernel() API.  In contrast, synchronize_rcu() only&lt;br /&gt;
++ * guarantees that rcu_read_lock() sections will have completed.&lt;/p&gt;
 
-&lt;h1 id=&#34;quiescent-state&#34;&gt;Quiescent state&lt;/h1&gt;
+&lt;h2 id=&#34;rcu-is-mapped-to-either-rcu-sched-or-rcu-preempt-depending-on-configuration&#34;&gt;RCU is mapped to either RCU-sched or RCU-preempt depending on configuration.&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html&#34;&gt;&amp;hellip; after all the CPUs in the system have gone through at least one &amp;ldquo;quiescent&amp;rdquo; state (such as context switch, idle loop, or user code)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.&#34;&gt;The rcu and rcu_bh flavors of RCU have different sets of quiescent states.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/&#34;&gt;Using Quiescent States to Reclaim Memory&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/cover/164913/&#34;&gt;[RFC,-tip,0/4] RCU cleanups and simplified preemptable RCU&lt;/a&gt;&lt;br /&gt;
+o   Rename variables and functions so that RCU-sched is an&lt;br /&gt;
+    underlying definition, along with RCU-bh and (when so&lt;br /&gt;
+    configured) RCU-preempt.  RCU then maps to either RCU-sched&lt;br /&gt;
+    or RCU-preempt, depending on configuration.&lt;br /&gt;
+commit d6714c22b43fbcbead7e7b706ff270e15f04a791&lt;br /&gt;
+Refs: v2.6.31-rc6-15-gd6714c22b43f&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Sat Aug 22 13:56:46 2009 -0700&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
+CommitDate: Sun Aug 23 10:32:37 2009 +0200&lt;br /&gt;
+    rcu: Renamings to increase RCU clarity&lt;br /&gt;
+    Make RCU-sched, RCU-bh, and RCU-preempt be underlying&lt;br /&gt;
+    implementations, with &amp;ldquo;RCU&amp;rdquo; defined in terms of one of the&lt;br /&gt;
+    three.  Update the outdated rcu_qsctr_inc() names, as these&lt;br /&gt;
+    functions no longer increment anything.&lt;/p&gt;
 
-&lt;h1 id=&#34;granularity-of-waiting&#34;&gt;granularity of waiting&lt;/h1&gt;
+&lt;h2 id=&#34;quiescent-states-for-rcu-sched&#34;&gt;Quiescent states for RCU-sched&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/262464/#Wait%20For%20Pre-Existing%20RCU%20Readers%20to%20Complete&#34;&gt;The great advantage of RCU &amp;hellip; without having to explicitly track each and every one of them&lt;/a&gt;&lt;br /&gt;
-In RCU&amp;rsquo;s case, the things waited on are called &amp;ldquo;RCU read-side critical sections&amp;rdquo;. ditto.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.kroening.com/papers/date2018-rcu.pdf&#34;&gt;Verification of Tree-Based Hierarchical Read-Copy Update in the Linux Kernel&lt;/a&gt;&lt;br /&gt;
+The non-preemptible RCU-sched flavor’s quiescent states&lt;br /&gt;
+apply to CPUs, and are user-space execution, context switch,&lt;br /&gt;
+idle, and offline state. Therefore, RCU-sched only needs to&lt;br /&gt;
+track tasks and interrupt handlers that are actually running&lt;br /&gt;
+because blocked and preempted tasks are always in quiescent states. Thus, RCU-sched needs only track CPU states.&lt;/p&gt;
 
-&lt;h1 id=&#34;preemptiable-rcu&#34;&gt;Preemptiable RCU&lt;/h1&gt;
+&lt;h2 id=&#34;rcu-stalls&#34;&gt;RCU stalls&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/201195/&#34;&gt;The 1st: Read-copy-update for realtime&lt;/a&gt; &lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf&#34;&gt;Papper&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=23_GOr8Sz-E&#34;&gt;Decoding Those Inscrutable RCU CPU Stall Warnings&lt;/a&gt;&lt;br /&gt;
+update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;br /&gt;
+Documentation/RCU/stallwarn.txt&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-preempt-preemptiable-rcu&#34;&gt;RCU-preempt Preemptiable RCU&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html&#34;&gt;Must-read: RCU-preempt: What happens on a context switch&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf&#34;&gt;Towards Hard Realtime Response from the Linux Kernel on SMP Hardware&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/201195/&#34;&gt;The 1st: Read-copy-update for realtime&lt;/a&gt; &lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf&#34;&gt;Papper&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/253651/&#34;&gt;The design of preemptible read-copy-update&lt;/a&gt;&lt;br /&gt;
 The RCU implementation for the -rt patchset is unusual in that it permits read-side critical sections to be preempted and to be blocked waiting for locks. However, it does not handle general blocking (for example, via the wait_event() primitive): if you need that, you should instead use SRCU.&lt;br /&gt;
 &lt;a href=&#34;http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf&#34;&gt;Realtime RCU&lt;/a&gt;&lt;br /&gt;
@@ -489,6 +854,35 @@ The RCU implementation for the -rt patchset is unusual in that it permits read-s
 f41d911f8c49a5d65c86504c19e8204bb605c4fd&lt;br /&gt;
 need_qs&lt;br /&gt;
 1d082fd061884a587c490c4fc8a2056ce1e47624&lt;/p&gt;
+
+&lt;h2 id=&#34;rcu-preempt-and-sleeping&#34;&gt;RCU-preempt and sleeping&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html&#34;&gt;A recent discussion on LKML clarified to me that “preempted to run something else” not only covers involuntary preemption but also voluntarily sleeping.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html&#34;&gt;The exception is -rt &amp;ldquo;spinlock&amp;rdquo; acquisition.  If the &amp;ldquo;spinlock&amp;rdquo; is held,&lt;/a&gt;&lt;br /&gt;
+the task acquiring it will block, which is legal within an RCU-preempt&lt;br /&gt;
+read-side critical section.&lt;br /&gt;
+This exception is why I define bad things in terms of lack of&lt;br /&gt;
+susceptibility to priority boosting instead of sleeping.&lt;/p&gt;
+
+&lt;h2 id=&#34;priority-boosting-rcu&#34;&gt;Priority-Boosting RCU&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/220677/&#34;&gt;Priority-Boosting RCU Read-Side Critical Sections&lt;/a&gt;&lt;br /&gt;
+CONFIG_RCU_BOOST&lt;/p&gt;
+
+&lt;h2 id=&#34;the-motivation-for-that-cpu-reports-qs&#34;&gt;The motivation for that CPU reports QS&lt;/h2&gt;
+
+&lt;p&gt;@冯博群 你好，请教一个问题，对于rcu-preempt， CPU report QS的意义是什么？ 我理解只有task QS 才不block GP。&lt;br /&gt;
+冯博群: qs都是CPU的，每个task都要report qs的话，那记录的结构得多复杂; rcu preempt是搞了一个list用来记录block当前qs的task; 当前gp; 过gp的条件就是list为空，且所有的CPU都report过qs;你说得概念上没啥问题，但是实现中不是这样作的.&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-bh&#34;&gt;RCU bh&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/ml/linux-kernel/CAJWu+oqCun1Ae6GqPxnS+eCDi3jadGPp+MO8TjOWgs+AiAh79A@mail.gmail.com/&#34;&gt;Questions on rcu-bh design&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;motivation-for-rcu-bh-and-vs-rcu-preempt-https-www-mail-archive-com-linux-kernel-vger-kernel-org-msg1682346-html&#34;&gt;&lt;a href=&#34;https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html&#34;&gt;Motivation for RCU-bh and vs RCU-preempt&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html#Bottom-Half%20Flavor&#34;&gt;From kernel doc rcu design&lt;/a&gt;&lt;br /&gt;
+The softirq-disable (AKA “bottom-half”, hence the “_bh” abbreviations) flavor of RCU, or RCU-bh, was developed by Dipankar Sarma to provide a flavor of RCU that could withstand the network-based denial-of-service attacks researched by Robert Olsson. These attacks placed so much networking load on the system that some of the CPUs never exited softirq execution, which in turn prevented those CPUs from ever executing a context switch, which, in the RCU implementation of that time, prevented grace periods from ever ending. The result was an out-of-memory condition and a system hang.&lt;br /&gt;
+The solution was the creation of RCU-bh, which does local_bh_disable() across its read-side critical sections, and which uses &lt;em&gt;the transition from one type of softirq processing to another as a quiescent state in addition to context switch, idle, user mode, and offline&lt;/em&gt;. This means that RCU-bh grace periods can complete even when some of the CPUs execute in softirq indefinitely, thus allowing algorithms based on RCU-bh to withstand network-based denial-of-service attacks.&lt;/p&gt;
 
 &lt;h1 id=&#34;srcu&#34;&gt;SRCU&lt;/h1&gt;
 
@@ -506,496 +900,66 @@ need_qs&lt;br /&gt;
 
 &lt;h1 id=&#34;tree-rcu-hierarchical-rcu&#34;&gt;Tree RCU / Hierarchical RCU&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/305782&#34;&gt;Hierarchical RCU&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.kroening.com/papers/date2018-rcu.pdf&#34;&gt;Verification of Tree-Based Hierarchical Read-Copy Update in the Linux Kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/305782&#34;&gt;Hierarchical RCU&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html&#34;&gt;Tree RCU Grace Period Memory Ordering Components &lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html&#34;&gt;A Tour Through TREE_RCU&amp;rsquo;s Data Structures&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html&#34;&gt;A Tour Through TREE_RCU&amp;rsquo;s Expedited Grace Periods&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/453002/&#34;&gt;Tree preempt RCU: 3.0 and RCU: what went wrong&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;rcu-bh&#34;&gt;RCU bh&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/ml/linux-kernel/CAJWu+oqCun1Ae6GqPxnS+eCDi3jadGPp+MO8TjOWgs+AiAh79A@mail.gmail.com/&#34;&gt;Questions on rcu-bh design&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;priority-boosting-rcu&#34;&gt;Priority-Boosting RCU&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/220677/&#34;&gt;Priority-Boosting RCU Read-Side Critical Sections&lt;/a&gt;&lt;br /&gt;
-CONFIG_RCU_BOOST&lt;/p&gt;
-
-&lt;h1 id=&#34;rcu-api&#34;&gt;RCU API&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/264090/&#34;&gt;RCU part 3: the RCU API, 2008 edition&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/418853/&#34;&gt;The RCU API, 2010 Edition&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/609904/&#34;&gt;The RCU API, 2014 Edition&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/777036/&#34;&gt;The RCU API, 2019 edition&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;rcu-stalls&#34;&gt;RCU stalls&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=23_GOr8Sz-E&#34;&gt;Decoding Those Inscrutable RCU CPU Stall Warnings&lt;/a&gt;&lt;br /&gt;
-update_process_times-&amp;gt;rcu_check_callbacks-&amp;gt;rcu_pending-&amp;gt;__rcu_pending-&amp;gt;check_cpu_stall-&amp;gt;print_other_cpu_stall&lt;br /&gt;
-Documentation/RCU/stallwarn.txt&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Yet another guide on the way to linux kernel hacking</title>
-      <link>http://firoyang.org/cs/hacking/</link>
-      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/hacking/</guid>
-      <description>
-
-&lt;h1 id=&#34;build-minimal-bootable-rootfs&#34;&gt;Build minimal bootable rootfs&lt;/h1&gt;
-
-&lt;p&gt;./etc/yum.repos.d/&lt;br /&gt;
-./etc/yum.repos.d/fedora-updates-testing.repo&lt;br /&gt;
-./etc/yum.repos.d/fedora.repo&lt;br /&gt;
-./etc/yum.repos.d/fedora-updates.repo&lt;br /&gt;
-./etc/yum.repos.d/fedora-cisco-openh264.repo&lt;br /&gt;
-can be gotten by supermin &amp;ndash;prepare bash -o /tmp/supermin.d&lt;br /&gt;
-or just copy from you host to some place like /home/firo/kernel/k/testfs/&lt;br /&gt;
-sudo dnf &amp;ndash;releasever=27 &amp;ndash;installroot=/home/firo/kernel/k/testfs/ &amp;ndash;setopt=reposdir=/home/firo/kernel/k/testfs/etc/yum.repos.d install dnf udev passwd&lt;/p&gt;
-
-&lt;h1 id=&#34;boot-the-kernel-using-this-directroy-as-rootfs-through-qemu&#34;&gt;Boot the kernel using this directroy as rootfs through qemu&lt;/h1&gt;
-
-&lt;h1 id=&#34;resources&#34;&gt;Resources&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;Writing an OS in Rust&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;subscribe-linux-kenrel-maillist&#34;&gt;Subscribe linux kenrel maillist&lt;/h1&gt;
-
-&lt;h1 id=&#34;linux-next-source-code&#34;&gt;linux next source code&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;&lt;br /&gt;
-要add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git不是https.&lt;br /&gt;
-我之前改了好多bug基于linus的分支, 提交后被告知别人已改. 后来Julia告诉我要基于linux-next开发.&lt;br /&gt;
-我的linux next remote 就叫next, 基于其创建开发分支.&lt;/p&gt;
-
-&lt;h1 id=&#34;source-code-navigation&#34;&gt;Source code navigation&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;&amp;lsquo;Source code reading&amp;rsquo; related sites&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;applying-patches&#34;&gt;Applying patches&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=6zUVS4kJtrA&#34;&gt;100 Linux Tutorials: How to Apply a Patch to the Linux Kernel Stable Tree&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;setup-kvm-test-machine&#34;&gt;Setup kvm test machine&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://kernelnewbies.org/KernelProjects&#34;&gt;Building a KVM host machine.&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;how-to-build-a-minimal-kernel-for-testing&#34;&gt;How to build a minimal kernel for testing?&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://tiny.wiki.kernel.org/&#34;&gt;tiny config @ kernel.org&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;3 attempts to reduce the configurations&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;7&#34;&gt;Fedora equivalent of debootstrap&lt;/a&gt;&lt;br /&gt;
-Then enable following config option&lt;br /&gt;
-CONFIG_CHR_DEV_SG&lt;br /&gt;
-Some ftrace stuff&lt;br /&gt;
-CONFIG_SLUB&lt;br /&gt;
-CONFIG_KASAN&lt;/p&gt;
-
-&lt;h1 id=&#34;for-nfs&#34;&gt;For nfs&lt;/h1&gt;
-
-&lt;p&gt;dnf install nfs-utils&lt;br /&gt;
-cat /etc/exports # For more details, man exports&lt;br /&gt;
-/home/firo/kernel/k/testfs 127.0.0.1(rw,sync,fsid=0,no_root_squash)&lt;br /&gt;
-systemctl start nfs-server.service&lt;br /&gt;
-systemctl status nfs-server.service&lt;br /&gt;
-● nfs-server.service - NFS server and services&lt;br /&gt;
-   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; disabled; vendor preset: disabled)&lt;br /&gt;
-   Active: active (exited) since Sat 2018-03-17 17:52:29 CST; 4s ago&lt;/p&gt;
-
-&lt;h2 id=&#34;test-the-nfs&#34;&gt;Test the nfs&lt;/h2&gt;
-
-&lt;p&gt;sudo mount -t nfs localhost://home/firo/kernel/k/testfs /mnt&lt;br /&gt;
-ls /mnt/&lt;br /&gt;
-bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var&lt;br /&gt;
-if touch prermission denied&lt;br /&gt;
-add no_all_squash to/etc/exports&lt;/p&gt;
-
-&lt;h2 id=&#34;nfs-vers&#34;&gt;NFS vers&lt;/h2&gt;
-
-&lt;p&gt;rpcinfo -t localhost nfs&lt;br /&gt;
-program 100003 version 3 ready and waiting&lt;br /&gt;
-program 100003 version 4 ready and waiting&lt;/p&gt;
-
-&lt;p&gt;rpcinfo -p | grep nfs&lt;br /&gt;
-    100003    3   tcp   2049  nfs&lt;br /&gt;
-    100003    4   tcp   2049  nfs&lt;br /&gt;
-    100227    3   tcp   2049  nfs_acl&lt;/p&gt;
-
-&lt;h2 id=&#34;nfs-errors&#34;&gt;NFS errors&lt;/h2&gt;
-
-&lt;p&gt;[   54.600121] NFS: sending MNT request for 10.0.2.2:/buildarea1/firo/ima/export/dist&lt;br /&gt;
-[   54.600121] NFS: failed to create MNT RPC client, status=-101&lt;br /&gt;
-[   54.600121] NFS: unable to mount server 10.0.2.2, error -101&lt;br /&gt;
-CONFIG_E100 CONFIG_E1000 &amp;hellip;and IP_PNP and DHCP BOOTP RARP&lt;/p&gt;
-
-&lt;h1 id=&#34;qemu-boot-systemd&#34;&gt;Qemu boot systemd&lt;/h1&gt;
-
-&lt;p&gt;qemu-system-x86_64 -nographic -enable-kvm  -kernel ./bzImag  -append &amp;lsquo; console=ttyS0 ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw nfsrootdebug debug  raid=noautodetect selinux=0 enforcing=0 &amp;lsquo;&lt;/p&gt;
-
-&lt;p&gt;nfsvers=3,tcp and 192.168.0.104 or 10.0.2.2 are mandatory!&lt;/p&gt;
-
-&lt;h2 id=&#34;dev-ttys0-device&#34;&gt;dev-ttyS0.device&lt;/h2&gt;
-
-&lt;p&gt;[**    ] A start job is running for dev-ttyS0.device (7s / 1min 30s)&lt;br /&gt;
-[ TIME ] Timed out waiting for device dev-ttyS0.device.&lt;br /&gt;
-[DEPEND] Dependency failed for Serial Getty on ttyS0.&lt;/p&gt;
-
-&lt;p&gt;CONFIG_FHANDLE=y&lt;br /&gt;
-&lt;a href=&#34;https://github.com/systemd/systemd/issues/3446&#34;&gt;https://github.com/systemd/systemd/issues/3446&lt;/a&gt;&lt;br /&gt;
-And install systemd-udev&lt;/p&gt;
-
-&lt;h1 id=&#34;input-comand-overwrite-itself&#34;&gt;input comand overwrite itself?&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://shallowsky.com/blog/tags/embedded/&#34;&gt;http://shallowsky.com/blog/tags/embedded/&lt;/a&gt;&lt;br /&gt;
-resize&lt;br /&gt;
-xterm-resize-330-3.fc27.x86_64&lt;br /&gt;
-/etc/profile&lt;br /&gt;
-PS1=&amp;rsquo;[[\033[0;32m]\u@\h:[\033[36m]\W[\033[0m]]\$ &amp;lsquo;&lt;/p&gt;
-
-&lt;h1 id=&#34;qemu&#34;&gt;qemu&lt;/h1&gt;
-
-&lt;p&gt;access denied by acl file&lt;br /&gt;
-qemu-system-x86_64: -netdev bridge,id=inet: bridge helper failed&lt;br /&gt;
-&lt;a href=&#34;https://blog.christophersmart.com/2016/08/31/configuring-qemu-bridge-helper-after-access-denied-by-acl-file-error/&#34;&gt;https://blog.christophersmart.com/2016/08/31/configuring-qemu-bridge-helper-after-access-denied-by-acl-file-error/&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;sudo ip link set enp0s31f6 master br0&lt;/p&gt;
-
-&lt;h1 id=&#34;systemd&#34;&gt;systemd&lt;/h1&gt;
-
-&lt;p&gt;autologin&lt;br /&gt;
-Change /usr/lib/systemd/system/serial-getty@.service to&lt;/p&gt;
-
-&lt;h1 id=&#34;execstart-sbin-agetty-o-p-u-keep-baud-115200-38400-9600-i-term&#34;&gt;ExecStart=-/sbin/agetty -o &amp;lsquo;-p &amp;ndash; \u&amp;rsquo; &amp;ndash;keep-baud 115200,38400,9600 %I $TERM&lt;/h1&gt;
-
-&lt;p&gt;ExecStart=-/sbin/agetty -a root &amp;ndash;keep-baud 115200,38400,9600 %I $TERM&lt;/p&gt;
-
-&lt;h2 id=&#34;unuseful-unfsd-obselete&#34;&gt;Unuseful unfsd obselete&lt;/h2&gt;
-
-&lt;p&gt;exports0&lt;br /&gt;
- cat var/exports0&lt;br /&gt;
-/buildarea1/firo/x564 (rw,no_root_squash,no_all_squash,insecure)&lt;/p&gt;
-
-&lt;p&gt;/buildarea1/firo/x564/host-cross/usr/bin/pseudo /buildarea1/firo/x564/host-cross/usr/sbin/unfsd -p -N -i /buildarea1/firo/x564/var/nfs0.pid -e /buildarea1/firo/x564/var/exports0 -x 11111 -n 3049 -y 21111 -m 3048&lt;br /&gt;
- /buildarea1/firo/x564/host-cross/usr/bin/qemu-system-x86_64 -nographic -k en-us -kernel /buildarea1/firo/x564/bitbake_build/tmp/deploy/images/bzImage-qemux86-64.bin -redir udp:20485::17185 -redir tcp:7747::1534 -redir udp:7747::1534 -redir tcp:7748::80 -redir udp:7745::6443 -redir tcp:7741::23 -redir tcp:7740::22 -redir tcp:8998::5698 -redir tcp:8978::5678 -redir tcp:6633::3333 -net user,hostname=qemu33 -net nic,macaddr=52:54:0:12:34:77,model=i82557b -show-cursor -usb -usbdevice wacom-tablet -vga vmware -gdb tcp::4534 -append console=ttyS0,115200 ip=dhcp root=/dev/nfs nfsroot=10.0.2.2:/buildarea1/firo/x564/export/dist,nfsvers=3,port=6349,mountprog=24411,nfsprog=14411,udp,mountport=6348 rw clocksource=pit oprofile.timer=1 UMA=1 -pidfile /buildarea1/firo/x564/host-cross/var/qemu33.pid&lt;/p&gt;
-
-&lt;h2 id=&#34;for-sda&#34;&gt;For sda&lt;/h2&gt;
-
-&lt;p&gt;./kernel/configs/kvm_guest.config&lt;br /&gt;
-VFS: Cannot open root device &amp;ldquo;sda&amp;rdquo; or unknown-block(0,0): error -6&lt;br /&gt;
-Please append a correct &amp;ldquo;root=&amp;rdquo; boot option; here are the available partitions:&lt;br /&gt;
-Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)&lt;br /&gt;
-Kernel Offset: disabled&lt;br /&gt;
-CONFIG_BLK_DEV_SD&lt;br /&gt;
-CONFIG_SATA_AHCI XX&lt;br /&gt;
-CONFIG_ATA XX&lt;br /&gt;
-CONFIG_ATA_PIIX ok&lt;br /&gt;
-process 1 (init) attempted a POSIX timer syscall while CONFIG_POSIX_TIMERS is not set&lt;/p&gt;
-
-&lt;p&gt;CONFIG_POSIX_TIMERS&lt;br /&gt;
-FILE_LOCK if udev&lt;br /&gt;
-PACKET if udev&lt;br /&gt;
-UNIX if udev&lt;br /&gt;
-DEVTMPFS if udev&lt;br /&gt;
-CONFIG_INOTIFY_USER if udev&lt;br /&gt;
-CONFIG_TMPFS if udev&lt;br /&gt;
-CONFIG_DEBUG_INFO_REDUCED if CONFIG_DEBUG_INFO&lt;/p&gt;
-
-&lt;p&gt;CONFIG_NETFILTER&lt;br /&gt;
-smp&lt;br /&gt;
-ext4&lt;br /&gt;
-CONFIG_SERIAL_NONSTANDARD=y&lt;/p&gt;
-
-&lt;p&gt;udev requires hotplug support, not started &amp;hellip; failed!&lt;br /&gt;
-not cpu hotplug&lt;br /&gt;
-CONFIG_HOTPLUG=y&lt;br /&gt;
-CONFIG_UEVENT_HELPER_PATH=‚Äù&amp;rdquo;&lt;br /&gt;
-CONFIG_NET=y&lt;br /&gt;
-CONFIG_UNIX=y&lt;br /&gt;
-CONFIG_SYSFS=y&lt;br /&gt;
-CONFIG_SYSFS_DEPRECATED*=n&lt;br /&gt;
-CONFIG_PROC_FS=y&lt;br /&gt;
-CONFIG_TMPFS=y&lt;br /&gt;
-CONFIG_TMPFS_POSIX_ACL=y¬†&lt;br /&gt;
-CONFIG_INOTIFY=y&lt;br /&gt;
-CONFIG_SIGNALFD=y&lt;/p&gt;
-
-&lt;h1 id=&#34;hacker&#34;&gt;Hacker&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/286244/&#34;&gt;Peter Zijlstra: From DOS to kernel hacking&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;what-to-fix&#34;&gt;What to fix?&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://kernelnewbies.org/KernelProjects&#34;&gt;KernelProjects&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/283982/&#34;&gt;linux-wanking@vger.kernel.org&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.linux.com/publications/how-participate-linux-community&#34;&gt;2.7 GETTING STARTED WITH KERNEL DEVELOPMENT&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.brokenthorn.com/Resources/OSDevIndex.html&#34;&gt;BrokenThorn Entertainment Operating System Development Series&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.linux.org/threads/linux-kernel-reading-guide.5384/&#34;&gt;Linux Kernel Reading Guide&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://phrack.org/index.html&#34;&gt;Phrack&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://sourceforge.net/p/predef/wiki/Architectures/&#34;&gt;Pre-defined Compiler Macros&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-hacking&#34;&gt;kernel hacking&lt;/h1&gt;
-
-&lt;p&gt;The cxgb3_*_send() functions return NET&lt;em&gt;XMIT&lt;/em&gt; values, which are&lt;br /&gt;
-positive integers values. So don&amp;rsquo;t treat positive return values&lt;br /&gt;
-as an error.&lt;br /&gt;
-67f1aee6f45059fd6b0f5b0ecb2c97ad0451f6b3&lt;/p&gt;
-
-&lt;h1 id=&#34;old-questions&#34;&gt;old questions&lt;/h1&gt;
-
-&lt;p&gt;What is platform driver?&lt;br /&gt;
-find source code of config&lt;br /&gt;
-How to print backtrace by kernel oops, and why it&amp;rsquo;s not exact?&lt;br /&gt;
-What is abi&lt;br /&gt;
-why get_unaligned_be16?&lt;br /&gt;
- _THIS&lt;em&gt;IP&lt;/em&gt; vs &lt;strong&gt;FUNCTIONS&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-data-type&#34;&gt;kernel data type&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://yarchive.net/comp/linux/kernel_headers.html&#34;&gt;__u32&lt;/a&gt; and &lt;a href=&#34;http://www.linuxjournal.com/article/5783&#34;&gt;this&lt;/a&gt; and dd3e chapter 10.&lt;/p&gt;
-
-&lt;h1 id=&#34;the-principle-of-kernel-driver-backport&#34;&gt;The principle of kernel &amp;amp; driver backport&lt;/h1&gt;
-
-&lt;p&gt;将高本版kernel的feature移植到低版本的kernel的过程就是backport.&lt;br /&gt;
-1. 尽量保持与mainline的代码一致&lt;br /&gt;
-2. 做好取舍不要引入太多patch.&lt;/p&gt;
-
-&lt;h2 id=&#34;开发流程&#34;&gt;开发流程&lt;/h2&gt;
-
-&lt;p&gt;理清所引入feature的代码. 主要数据结构以及功能流程.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://wangcong.org/2007/03/09/-e8-b5-b0-e8-bf-91linux-e5-86-85-e6-a0-b8/&#34;&gt;走近Linux内核&amp;ndash; 王聪&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;kernel-hacker之路&#34;&gt;kernel hacker之路&lt;/h1&gt;
-
-&lt;p&gt;我实在太想聊这个话题 &amp;ndash; 内核hacker的成长之路!&lt;br /&gt;
-不是教你写第一个kernel module, 就灭火了. 而是持续的一步步成长为&lt;br /&gt;
-内核的中坚力量, 甚至是maintainer.&lt;br /&gt;
-作为一个内核爱好者, 从接触到现在已经3年半了. 然而, 我对自己是非常失望的.&lt;br /&gt;
-因为我看了3年多的书, 从今年(15)5月才开始, 给社区提补丁.&lt;br /&gt;
-起始我在12年的11月份曾经给社区, 提过几次补丁. 后来有那么两三次, 想帮着修复&lt;br /&gt;
-kernel panic 和oops的问题, 基本上个人感觉难度非常太大就无极而终了.&lt;br /&gt;
-5月份这次, 我是因为实在不想在看书籍了, 市面上稍微有点名的书籍, 我都看过.&lt;br /&gt;
-实在太厌烦再看书了, 我把自己和另外一个内核hacker 王聪做了对比, 得出结论:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;赶快滚去给社区提patch! 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;我挨个看了王聪给社区提的前50个patch. 都是很简单的修改.&lt;br /&gt;
-我几次挫败都是, 因为没能找到合适内核事情去做, 最终没有下文了.&lt;br /&gt;
-今天, 我在给社区提了20个左右的patch 10几个被接收了. 我现在找到了一条成长路.&lt;/p&gt;
-
-&lt;h2 id=&#34;内核我现在认为可以给新人做得事&#34;&gt;内核我现在认为可以给新人做得事&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/284099/&#34;&gt;https://lwn.net/Articles/284099/&lt;/a&gt;  这个帖子, 提供了新手可以做得事情, 我觉得非常好.&lt;br /&gt;
-smatch coccinelle的分析结果.&lt;br /&gt;
-源码中标注的FIXME和TODO, 简单的提过去很难被接受, 难的这些开发者自己都没搞定, 新人更难.&lt;br /&gt;
-这也不是一条好路.&lt;br /&gt;
-内核bugzilla kerneloops上问题, 这个很难.&lt;br /&gt;
-找一个和内核相关的工作驱动啊, 网络开发, 虚拟化, 存储都非常赞.&lt;br /&gt;
-自己搞个feature, 感觉更难, 这个需要需求驱动.&lt;br /&gt;
-没有一条轻松的路让你走, 但你却不应该光着脚走在上面!!!&lt;br /&gt;
-内核之外有很多值得珍惜的. 尽力做好, 你能做的, 开始点滴积累.&lt;br /&gt;
-终有一天会聚成沧海, 前提是你等得到那天, 不要亏待自己.&lt;br /&gt;
-内核之路始终时不那么清晰, 但是反思过后, 你便知道, 该去做什么了.&lt;br /&gt;
-这也许是最难受的情况了.&lt;br /&gt;
-Linus 之前说过, 搞得内核你得用起来. uml 是个不错的开端.&lt;br /&gt;
-用起来才是王道!&lt;/p&gt;
-
-&lt;p&gt;#git&lt;br /&gt;
-&lt;a href=&#34;http://git-scm.com/docs/gittutorial&#34;&gt;gittutorial - A tutorial introduction to Git&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;你提patch-社区的困惑是什么&#34;&gt;你提patch, 社区的困惑是什么?&lt;/h1&gt;
-
-&lt;p&gt;每个kernel newbie 都应该完整看完这个mail list&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&#34;&gt;http://thread.gmane.org/gmane.linux.kernel/683798/focus=684297&lt;/a&gt;&lt;br /&gt;
-你能看到鹰派的Al还有温和派Andrew Morton.&lt;br /&gt;
-为什么&lt;a href=&#34;http://kernelnewbies.org/这么重要网站&#34;&gt;http://kernelnewbies.org/这么重要网站&lt;/a&gt;, 不做的好一点, 至少界面友好点.&lt;br /&gt;
-应该找个机会, 整一下.&lt;/p&gt;
-
-&lt;h1 id=&#34;fix-kernel-mistakes&#34;&gt;Fix kernel mistakes&lt;/h1&gt;
-
-&lt;p&gt;内核至今如此优秀就是因为, 成千上万前赴后继的开发者笔耕不缀的结果.&lt;br /&gt;
-别当豆包不当干粮, 虽然, 你不能设计出很牛的算法, or 什么子系统,&lt;br /&gt;
-但是内核还有很多问题有待解决, 正所谓老虎也要打, 苍蝇也要拍; 千里之堤毁于蚁穴.&lt;br /&gt;
-我提过好些这种patch Dan Carpenter都告诉我Linus已经改了.&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel-newbie上有个list&#34;&gt;kernel newbie上有个list&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;KernelJanitors/Todo&lt;/a&gt;&lt;br /&gt;
-* Style fix&lt;br /&gt;
-如:&lt;br /&gt;
-remove_wait_queue(entry-&amp;gt;wait_address,&amp;amp;entry-&amp;gt;wait);&lt;br /&gt;
-remove_wait_queue(entry-&amp;gt;wait_address, &amp;amp;entry-&amp;gt;wait);&lt;/p&gt;
-
-&lt;h2 id=&#34;smatch&#34;&gt;Smatch&lt;/h2&gt;
-
-&lt;p&gt;smatch这个工具是Dan写的主要就是为了找到内核的小问题, 基本用法:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    make CHECK=&amp;quot;~/path/to/smatch/smatch -p=kernel&amp;quot; C=1 \
-            bzImage modules | tee warns.txt
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;smatch 会产生好多可疑的问题, 细心寻找吧.&lt;br /&gt;
-你找到了, 那么就是修改了.&lt;br /&gt;
-记住在smatch之前一点要git pull next master:now一下, 保证checkout到了now的分支.&lt;/p&gt;
-
-&lt;h2 id=&#34;coccinelle&#34;&gt;Coccinelle&lt;/h2&gt;
-
-&lt;p&gt;Coccinelle是 Julia Lawall 写的静态检测工具.very nice.&lt;br /&gt;
-自己研究吧&lt;br /&gt;
-Documentation/coccinelle.txt&lt;br /&gt;
-&lt;a href=&#34;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&#34;&gt;http://pagesperso-systeme.lip6.fr/Julia.Lawall/tutorial.pdf&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;生成patch&#34;&gt;生成patch&lt;/h2&gt;
-
-&lt;p&gt;先修改.&lt;br /&gt;
-之后git add&lt;br /&gt;
-在commit 之前你要 git log &amp;ndash;online path/to/modification/file&lt;br /&gt;
-看下提交的titile:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git log  --oneline drivers/base/firmware_class.c
-5455c8c firmware: Fix memory leak in error path
-e0fd9b1 firmware: use const for remaining firmware names
-f9692b2 firmware: fix possible use after free on name on a
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;主义冒号:后一定要有一个空格!&lt;br /&gt;
-你会还是看下Document下的submitting的文档.&lt;br /&gt;
-之后commit:&lt;br /&gt;
-先是类似上面的一行oneline 简要说明&lt;br /&gt;
-空一行.&lt;br /&gt;
-之后具体描述下.&lt;br /&gt;
-commit后, 生成patch&lt;br /&gt;
-如果你只提交了一次:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git format-patch HEAD^..HEAD
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;这个命令就ok了.&lt;br /&gt;
-如果commit多次, 自己斟酌两次diff的commit id了, HEAD^ 和HEAD都是commit id.&lt;br /&gt;
-这样就生成了patch, 一般叫做0001-xxx-ooo.patch之类的&lt;br /&gt;
-如我这个, 已被接收:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;0001-firmware-Fix-memory-leak-in-error-path.patch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;commit id 是5455c8c3284a63e2673d1be7f040fb245cbf9be9&lt;/p&gt;
-
-&lt;h2 id=&#34;测试patch&#34;&gt;测试patch&lt;/h2&gt;
-
-&lt;p&gt;复杂的patch要编译内核, 安装的机器上跑一下.&lt;/p&gt;
-
-&lt;h2 id=&#34;发送patch&#34;&gt;发送patch&lt;/h2&gt;
-
-&lt;p&gt;天朝用户自己打梯子吧proxychains shadowsocks.&lt;br /&gt;
-基本步骤是&lt;br /&gt;
-先编译一下:&lt;br /&gt;
-make path/to/modification/file.o&lt;br /&gt;
-之后&lt;br /&gt;
-./scripts/checkpatch.pl&lt;br /&gt;
-之后 get maintainer&lt;br /&gt;
-./scripts/get_maintainer.pl&lt;/p&gt;
-
-&lt;p&gt;发送的时候, 发给维护者 &amp;ndash;cc其他人, 还有cc 一个mailist, 如果没有合适的list的话,&lt;br /&gt;
-就cc到linux-kernel@vger.kernel.org, 这是个开放的list, 有合适的list了, 就不要cc它了.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;proxychains git send-email --to ming.lei@canonical.com --cc gregkh@linuxfoundation.org --cc kernel-janitors@vger.kernel.org 0001-firmware-Fix-memory-leak-in-error-path.patch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;免不了你要返工重新修改.这时候, 新生成的patch这样:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git format-patch --subject-prefix=&amp;quot;PATCH v2&amp;quot; HEAD^..HEAD
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;改几次就v几.&lt;br /&gt;
-和社区交流的时候, 要注意礼貌, 而且要感谢别人对你的patch做出的建议,&lt;br /&gt;
-没有人的时间是被猪拱来的.&lt;/p&gt;
-
-&lt;p&gt;这些都是比较简单(代码量上)的patch, 要想提交深度的还需要对某方面的深度.&lt;br /&gt;
-基本上这就完了, 你的真正的patch就给社区了.&lt;/p&gt;
-
-&lt;h1 id=&#34;进阶decent&#34;&gt;进阶decent&lt;/h1&gt;
-
-&lt;p&gt;这个是昨天晚上改drivers代码时候, 看到TODO的注释猛然想到的.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;grep -nr &#39;FIXME&#39; --include=&amp;quot;*.c&amp;quot;  ./ | tee fixmek.log
-grep -nr &#39;TODO&#39; --include=&amp;quot;*.c&amp;quot; ./ | tee todok.log
-wc -l fixmek.log 
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;有6000多个.&lt;/p&gt;
-
-&lt;h1 id=&#34;deeply-involved&#34;&gt;Deeply involved&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://vger.kernel.org/~davem/net_todo.html&#34;&gt;http://vger.kernel.org/~davem/net_todo.html&lt;/a&gt;&lt;br /&gt;
-这个列表上的基本都过期了&amp;hellip;.哎&lt;br /&gt;
-往深了走不是难事, 主要是意识到内核, 不是什么神秘的东西, 选好一个方向&lt;br /&gt;
-简单看看概念见我的&amp;lt;如何学习&amp;gt; 就可以实践.&lt;br /&gt;
-必须要意识到, 动手比看再多概念管用, 我就是之前看了太多, 还发展出一个哲学&lt;br /&gt;
-体系出来:-) 确实随着现代信息科学给社会带来的巨大变化, 哲学也必须要更新.&lt;br /&gt;
-才能更好的服务于人.&lt;br /&gt;
-这几天就在, 找内核哪里还不完善, 自己能补上, 今天6号了.&lt;/p&gt;
-
-&lt;h1 id=&#34;patch-formate-advices&#34;&gt;patch formate advices&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Julia Lawall Sorry to be picky,&lt;br /&gt;
-but normally people put a space after the colon.  Also,&lt;br /&gt;
-the subject line could be shorter: Remove unneeded cast.&lt;br /&gt;
-The description part of the subject doesnt have to be unique,&lt;br /&gt;
-just the whole thing, asfter the [PATCH] part.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Dan Carpenter&lt;br /&gt;
-Otherwise your patch was fine, btw.  Other improvements.&lt;br /&gt;
-Don&amp;rsquo;t put &amp;ldquo;Drivers:&amp;rdquo; in the subject.&lt;br /&gt;
-On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:&lt;br /&gt;
-&amp;gt; From: Firo Yang &lt;a href=&#34;mailto:firogm@gmail.com&#34;&gt;firogm@gmail.com&lt;/a&gt;&lt;br /&gt;
-Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Include everyone from the ./scripts/get_maintainer.pl output except&lt;br /&gt;
-don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing&lt;br /&gt;
-list there already.&lt;br /&gt;
-* To find  patch prefix&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;git log --oneline  path/to/file.c
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;更新patch 要加v几&lt;/p&gt;
-
-&lt;p&gt;git format-patch &amp;ndash;subject-prefix=&amp;ldquo;PATCH v2&amp;rdquo; xxx..ooo&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;提交多个patch 要手动生成一个[PATCH 0/N], 这个0就是要写简要描述的.&lt;/p&gt;
-
-&lt;p&gt;proxychains git send-email &amp;ndash;subject &amp;ldquo;[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values&amp;rdquo; &amp;ndash;thread &amp;ndash;compose &amp;ndash;confirm=compose &amp;ndash;to firogm@gmail.com *.patch&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Dave Miller偏好&lt;br /&gt;
-@@ -325,13 +325,15 @@ static inline void empty_child_dec(struct key_vector *n)&lt;br /&gt;
-static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)&lt;br /&gt;
-{&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct tnode *kv = kmem_cache_alloc(trie_leaf_kmem, GFP_KERNEL);&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct key_vector *l = kv-&amp;gt;kv;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct tnode *kv;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;struct key_vector *l;&lt;br /&gt;
-Dave Miller usually prefers it if variables are ordered from longest to shortest.&lt;br /&gt;
-So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;faq&#34;&gt;FAQ&lt;/h1&gt;
-
-&lt;p&gt;kernel module name: scripts/Makefile.lib $(subst -,_,$1)&lt;/p&gt;
+&lt;h1 id=&#34;list-and-rcu&#34;&gt;list and rcu&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/listRCU.rst&#34;&gt;Using RCU to Protect Read-Mostly Linked Lists&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;hlist-nulls&#34;&gt;hlist-nulls&lt;/h2&gt;
+
+&lt;p&gt;commit bbaffaca4810de1a25e32ecaf836eeaacc7a3d11&lt;br /&gt;
+Refs: v2.6.28-rc4-513-gbbaffaca4810&lt;br /&gt;
+Author:     Eric Dumazet &lt;a href=&#34;mailto:dada1@cosmosbay.com&#34;&gt;dada1@cosmosbay.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Sun Nov 16 19:37:55 2008 -0800&lt;br /&gt;
+Commit:     David S. Miller &lt;a href=&#34;mailto:davem@davemloft.net&#34;&gt;davem@davemloft.net&lt;/a&gt;&lt;br /&gt;
+CommitDate: Sun Nov 16 19:37:55 2008 -0800&lt;br /&gt;
+    rcu: Introduce hlist_nulls variant of hlist&lt;br /&gt;
+    hlist uses NULL value to finish a chain.&lt;br /&gt;
+    hlist_nulls variant use the low order bit set to 1 to signal an end-of-list marker.&lt;br /&gt;
+    This allows to store many different end markers, so that some RCU lockless&lt;br /&gt;
+    algos (used in TCP/UDP stack for example) can save some memory barriers in&lt;br /&gt;
+    fast paths.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/rculist_nulls.txt&#34;&gt;Usage of hilsit-nulls in kernel doc&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;slab-and-rcu&#34;&gt;slab and rcu&lt;/h1&gt;
+
+&lt;p&gt;tglx: commit 77631565ae40a44f23eac2e9c440cbceed8962a7&lt;br /&gt;
+Author:     Hugh Dickins &lt;a href=&#34;mailto:hugh@veritas.com&#34;&gt;hugh@veritas.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Aug 23 21:24:22 2004 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@ppc970.osdl.org&#34;&gt;torvalds@ppc970.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Mon Aug 23 21:24:22 2004 -0700&lt;br /&gt;
+    [PATCH] rmaplock: SLAB_DESTROY_BY_RCU&lt;/p&gt;
+
+&lt;p&gt;commit d7de4c1dc3a2faca0bf05d9e342f885cb2696766&lt;br /&gt;
+Refs: v2.6.28-rc4-307-gd7de4c1dc3a2&lt;br /&gt;
+Author:     Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Thu Nov 13 20:40:12 2008 +0200&lt;br /&gt;
+Commit:     Pekka Enberg &lt;a href=&#34;mailto:penberg@cs.helsinki.fi&#34;&gt;penberg@cs.helsinki.fi&lt;/a&gt;&lt;br /&gt;
+CommitDate: Thu Nov 13 20:49:02 2008 +0200&lt;br /&gt;
+    slab: document SLAB_DESTROY_BY_RCU&lt;br /&gt;
+    Explain this SLAB_DESTROY_BY_RCU thing..&lt;/p&gt;
+
+&lt;h2 id=&#34;slab-typesafe-by-rcu&#34;&gt;SLAB_TYPESAFE_BY_RCU&lt;/h2&gt;
+
+&lt;p&gt;commit 5f0d5a3ae7cff0d7fa943c199c3a2e44f23e1fac&lt;br /&gt;
+Refs: v4.11-rc2-1-g5f0d5a3ae7cf&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Jan 18 02:53:44 2017 -0800&lt;br /&gt;
+Commit:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue Apr 18 11:42:36 2017 -0700&lt;br /&gt;
+    mm: Rename SLAB_DESTROY_BY_RCU to SLAB_TYPESAFE_BY_RCU&lt;br /&gt;
+    A group of Linux kernel hackers reported chasing a bug that resulted&lt;br /&gt;
+    from their assumption that SLAB_DESTROY_BY_RCU provided an existence&lt;br /&gt;
+    guarantee, that is, that no block from such a slab would be reallocated&lt;br /&gt;
+    during an RCU read-side critical section.  Of course, that is not the&lt;br /&gt;
+    case.  Instead, SLAB_DESTROY_BY_RCU only prevents freeing of an entire&lt;br /&gt;
+    slab of blocks.&lt;/p&gt;
 </description>
     </item>
     
@@ -1011,12 +975,17 @@ So you should probably have l defined first, and then kv.&lt;/p&gt;&lt;/li&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.samba.org/samba/samba/ftp/cifs-cvs/ols2006-fs-tutorial-smf.pdf&#34;&gt;Linux Filesystems in 21 days 45 minutes&lt;/a&gt;&lt;br /&gt;
 Documentation/filesystems/vfs.txt&lt;br /&gt;
-&lt;a href=&#34;https://unix.stackexchange.com/a/265680/16335&#34;&gt;Why does open before read/write?&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://unix.stackexchange.com/a/265680/16335&#34;&gt;Why does open before read/write?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.tldp.org/LDP/lki/lki-3.html&#34;&gt;Linux 2.4: 3. Virtual Filesystem (VFS)&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;init-rootfs&#34;&gt;Init rootfs&lt;/h1&gt;
 
 &lt;p&gt;init_mount_tree&lt;br /&gt;
 and sys_chroot&lt;/p&gt;
+
+&lt;h1 id=&#34;fsck&#34;&gt;fsck&lt;/h1&gt;
+
+&lt;p&gt;man systemd-fsck-root.service&lt;/p&gt;
 
 &lt;h1 id=&#34;mkfs-ext2&#34;&gt;?? mkfs.ext2&lt;/h1&gt;
 
@@ -1073,32 +1042,6 @@ Remove an inode&lt;br /&gt;
 Read the content of an inode&lt;br /&gt;
 Write contents of an inode&lt;/p&gt;
 
-&lt;h2 id=&#34;principles-1&#34;&gt;Principles&lt;/h2&gt;
-
-&lt;p&gt;Layering&lt;br /&gt;
-Performance: page cache&lt;/p&gt;
-
-&lt;h2 id=&#34;thinking-over&#34;&gt;Thinking over&lt;/h2&gt;
-
-&lt;p&gt;Backdev info&lt;br /&gt;
-FS format&lt;br /&gt;
-inode content space index&lt;/p&gt;
-
-&lt;h2 id=&#34;fs-1&#34;&gt;FS&lt;/h2&gt;
-
-&lt;p&gt;Read the first block&lt;br /&gt;
-buffer head:hard drive locations and sizes; memory addr&lt;br /&gt;
-alloc an inode: linked to parent and mark parent dirty in memory, then write to disk&lt;br /&gt;
-alloc spare space: record the locations of the spare space in inode&lt;br /&gt;
-write the dirty space: user the buffer head record the locations&lt;br /&gt;
-* page cache&lt;br /&gt;
-address_space a_ops&lt;br /&gt;
-page size vs block size&lt;br /&gt;
-VMA: process map a whole page and use vma to descirbe it.&lt;br /&gt;
-but if write overflow? the adjacent  buffer head will corrupt.&lt;br /&gt;
-* block io&lt;br /&gt;
-buffer head: unite 512&lt;/p&gt;
-
 &lt;h3 id=&#34;fs-block-size&#34;&gt;FS block size&lt;/h3&gt;
 
 &lt;p&gt;blockdev &amp;ndash;getbsz /dev/sda1&lt;br /&gt;
@@ -1110,18 +1053,6 @@ sudo tune2fs -l /dev/sda1 | grep size&lt;/p&gt;
 &lt;p&gt;Parameters: locations and size&lt;br /&gt;
 Read content from disk&lt;br /&gt;
 Write content form disk&lt;/p&gt;
-
-&lt;h1 id=&#34;buffer-head&#34;&gt;buffer head&lt;/h1&gt;
-
-&lt;p&gt;__getblk_slow&lt;br /&gt;
-grow_buffers&lt;br /&gt;
-grow_dev_page&lt;br /&gt;
-alloc_page_buffers&lt;/p&gt;
-
-&lt;h1 id=&#34;fs-format&#34;&gt;FS format&lt;/h1&gt;
-
-&lt;p&gt;fs-sb; fs-inode space; Spare space&lt;br /&gt;
-The hierarchy of inode is mantained linked lists.&lt;/p&gt;
 
 &lt;h1 id=&#34;inode-hashtable&#34;&gt;inode_hashtable&lt;/h1&gt;
 
@@ -1156,39 +1087,13 @@ To get the full path call dentry_path_raw(filp-&amp;gt;f_path.dentry,buf,buflen)
 &lt;p&gt;get the meaning of this struct by looking d_path().It includes the two endpoints of a path which are mnt and dentry.&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/206758/&#34;&gt;Upcoming API change: struct path&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;mount&#34;&gt;mount&lt;/h1&gt;
+&lt;h1 id=&#34;mount&#34;&gt;Mount&lt;/h1&gt;
 
-&lt;p&gt;do_new_mount&lt;br /&gt;
-{&lt;br /&gt;
-    vfs_kern_mount&lt;br /&gt;
-    {&lt;br /&gt;
-        root = mount_fs -&amp;gt; ramfs_mount -&amp;gt; ramfs_fill_super&lt;br /&gt;
-        {&lt;br /&gt;
-            ramfs_get_inode&lt;br /&gt;
-            sb-&amp;gt;s_root = d_make_root(inode);&lt;br /&gt;
-        }&lt;br /&gt;
-        mnt-&amp;gt;mnt.mnt_root = root;&lt;br /&gt;
-    }&lt;br /&gt;
-    do_add_mount&lt;br /&gt;
-    {&lt;br /&gt;
-        lock_mount&lt;br /&gt;
-        {&lt;br /&gt;
-            mnt = lookup_mnt(path);&lt;br /&gt;
-            retry until !mnt, then create new mp&lt;br /&gt;
-        }&lt;br /&gt;
-        graft_tree-&amp;gt;attach_recursive_mnt&lt;br /&gt;
-        {&lt;br /&gt;
-            get_mountpoint-&amp;gt;d_set_mounted&lt;br /&gt;
-            mnt_set_mountpoint&lt;br /&gt;
-            commit_tree -&amp;gt; child mnt.mnt_hash -&amp;gt; mount_hashtable&lt;br /&gt;
-        }&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
+&lt;p&gt;Check mount.log&lt;/p&gt;
 
 &lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;p&gt;mount-&amp;gt;mnt_mountpoint  和 mount -&amp;gt;mnt_mp-&amp;gt;m_dentry;&lt;/p&gt;
 
 &lt;p&gt;Check follow_managed&lt;br /&gt;
 * for DCACHE_MOUNTED in get_mountpoint&lt;br /&gt;
@@ -1199,9 +1104,10 @@ get rid of full-hash scan on detaching vfsmounts - 84d17192d2afd52aeba88c71ae495
     The mounted state of a dentry is only used to speculatively take a look in the&lt;br /&gt;
     mount hash table if it is set &amp;ndash; before following the mount, vfsmount lock is&lt;br /&gt;
     taken and mount re-checked without races.&lt;br /&gt;
-fs: dcache remove d_mounted - 5f57cbcc02cf18f6b22ef4066bb10afeb8f930ff&lt;/p&gt;
+fs: dcache remove d_mounted - 5f57cbcc02cf18f6b22ef4066bb10afeb8f930ff&lt;br /&gt;
+如果是很多基本概念没有可以看看，因为就是个中规中矩的教科书，从历史到单机存储方方面面，如果写过store，就没必要了，可以关心rise lab 或者peloton lab他们的项目和publication，我曾经想弄存储，最后觉得最后都是玩电路了，感觉自己玩不下去，就放弃了。整体的工业设计可以找找emc的人写的书&lt;/p&gt;
 
-&lt;h1 id=&#34;open&#34;&gt;open&lt;/h1&gt;
+&lt;h1 id=&#34;open&#34;&gt;Open&lt;/h1&gt;
 
 &lt;p&gt;sys_open -&amp;gt;&lt;br /&gt;
     path_init()&lt;br /&gt;
@@ -1269,16 +1175,27 @@ hard link to file accross partitions, may led confilict with inode number.&lt;/p
     
     <item>
       <title>Linux device driver</title>
-      <link>http://firoyang.org/cs/dd/</link>
+      <link>http://firoyang.org/cs/device/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/dd/</guid>
+      <guid>http://firoyang.org/cs/device/</guid>
       <description>
 
-&lt;p&gt;#Bibilography&lt;br /&gt;
-Driver porting: Device model overview: &lt;a href=&#34;http://lwn.net/Articles/31185/&#34;&gt;http://lwn.net/Articles/31185/&lt;/a&gt;&lt;br /&gt;
-/Documentation/driver-model&lt;br /&gt;
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;Driver porting: Device model overview: &lt;a href=&#34;http://lwn.net/Articles/31185/&#34;&gt;http://lwn.net/Articles/31185/&lt;/a&gt;&lt;br /&gt;
+Documentation/driver-model&lt;br /&gt;
 The Linux Kernel Driver Model&lt;/p&gt;
+
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+
+&lt;h2 id=&#34;dma&#34;&gt;DMA&lt;/h2&gt;
+
+&lt;p&gt;ULK 3rd&lt;/p&gt;
+
+&lt;h2 id=&#34;mapping&#34;&gt;Mapping&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/653585/&#34;&gt;ioremap() and memremap()&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;device-tree&#34;&gt;Device tree&lt;/h1&gt;
 
@@ -1475,15 +1392,15 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
       <guid>http://firoyang.org/cs/synchronization/</guid>
       <description>
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+&lt;h1 id=&#34;scalability&#34;&gt;Scalability&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://yarchive.net/comp/linux/recursive_locks.html&#34;&gt;Linus on recursive lock&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.perfdynamics.com/Manifesto/USLscalability.html&#34;&gt;How to Quantify Scalability&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.perfdynamics.com/Manifesto/USLscalability.html&#34;&gt;How to Quantify Scalability&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://queue.acm.org/detail.cfm?id=2698990&#34;&gt;Scalability Techniques for Practical Synchronization Primitives&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;hp&#34;&gt;HP&lt;/h1&gt;
+&lt;h1 id=&#34;definition&#34;&gt;Definition&lt;/h1&gt;
 
-&lt;p&gt;A program is synchronized if all accesses to shared data are ordered by synchronization operations.&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.etymonline.com/index.php?term=synchronize&#34;&gt;Synchronize&lt;/a&gt;&lt;br /&gt;
+A program is synchronized if all accesses to shared data are ordered by synchronization operations.&lt;br /&gt;
 A data reference is ordered by a synchronization operation if, in every possible&lt;br /&gt;
 execution, a write of a variable by one processor and an access (either a read or a&lt;br /&gt;
 write) of that variable by another processor are separated by a pair of synchroni-&lt;br /&gt;
@@ -1492,40 +1409,15 @@ executed before the access by the second processor???. Cases where variables may
 be updated without ordering by synchronization are called data races because the&lt;br /&gt;
 execution outcome depends on the relative speed of the processors, and, like&lt;br /&gt;
 races in hardware design, the outcome is unpredictable, which leads to another&lt;br /&gt;
-name for synchronized programs: data-race-free.&lt;br /&gt;
-#Reference&lt;br /&gt;
-Perfbook&lt;br /&gt;
-&lt;a href=&#34;http://queue.acm.org/detail.cfm?id=2698990&#34;&gt;Scalability Techniques for Practical Synchronization Primitives&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://web.cecs.pdx.edu/~walpole/class/cse513/slides/3.pdf&#34;&gt;test-and-set&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://people.cs.clemson.edu/~mark/synch.html&#34;&gt;Synchronization Instructions&lt;/a&gt;&lt;/p&gt;
+name for synchronized programs: data-race-free.&lt;/p&gt;
 
-&lt;h1 id=&#34;why-we-need-synchronization&#34;&gt;Why we need synchronization&lt;/h1&gt;
+&lt;h2 id=&#34;why-we-need-synchronization&#34;&gt;Why we need synchronization&lt;/h2&gt;
 
-&lt;p&gt;a critical section is a piece of code that accesses a shared resource&lt;br /&gt;
-(data structure or device) that must not be concurrently accessed by more than one thread of execution.&lt;/p&gt;
-
-&lt;p&gt;This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition.&lt;/p&gt;
-
-&lt;h1 id=&#34;how-to-use-synchronization-mechanism&#34;&gt;How to use synchronization mechanism&lt;/h1&gt;
-
-&lt;p&gt;A must read book&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html&#34;&gt;Unreliable Guide To Locking &amp;ndash; Rusty Russell&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;common-usage&#34;&gt;Common usage&lt;/h2&gt;
-
-&lt;p&gt;Protect from interruption by hardware interrupts:&lt;br /&gt;
-        local_irq_disable(int irq) &amp;amp; local_irq_enable(int irq)&lt;br /&gt;
-Protection from software interrupts:&lt;br /&gt;
-        local_bh_disable(void) &amp;amp; local_bh_enable(void)&lt;br /&gt;
-Protection from other CPUs:&lt;br /&gt;
-        spin_lock(spinlock_t *) &amp;amp; spin_unlock(spinlock_t *)&lt;br /&gt;
-Preemption by other user contexts:&lt;br /&gt;
-        preempt_disable(void) &amp;amp; preempt_enable(void)&lt;/p&gt;
+&lt;p&gt;A critical section is a piece of code that accesses a shared resource&lt;br /&gt;
+(data structure or device) that must not be concurrently accessed by more than one thread of execution.&lt;br /&gt;
+This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition.&lt;/p&gt;
 
 &lt;h1 id=&#34;what-is-synchronization-in-computer-science&#34;&gt;What is synchronization in computer science&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.etymonline.com/index.php?term=synchronize&#34;&gt;Synchronize&lt;/a&gt;&lt;br /&gt;
-synchronization means be of the same time.&lt;br /&gt;
-It means &amp;ldquo;make it synchronous&amp;rdquo;, something like coexistence.&lt;/p&gt;
 
 &lt;p&gt;Process synchronization refers to the idea that multiple processes are&lt;br /&gt;
 to join up or handshake at a certain point, in order to reach an&lt;br /&gt;
@@ -1541,145 +1433,13 @@ Dining philosophers problem&lt;br /&gt;
 * Prioirty inversion&lt;br /&gt;
 * Busy waiting&lt;/p&gt;
 
-&lt;h1 id=&#34;ref-1&#34;&gt;ref&lt;/h1&gt;
-
-&lt;p&gt;0xax&lt;br /&gt;
-Waiman Long: Recent Locking Improvements in the Linux Kernel&lt;/p&gt;
-
 &lt;h1 id=&#34;memory-barier&#34;&gt;Memory barier&lt;/h1&gt;
 
 &lt;h1 id=&#34;per-cpu&#34;&gt;Per-CPU&lt;/h1&gt;
 
-&lt;h1 id=&#34;atomic&#34;&gt;Atomic&lt;/h1&gt;
-
-&lt;h2 id=&#34;x86-locked-atomic-operations&#34;&gt;x86 locked atomic operations:&lt;/h2&gt;
-
-&lt;p&gt;v3a chapter 8&lt;br /&gt;
-* Guaranteed atomic operations&lt;br /&gt;
-* Bus locking, using the LOCK# signal and the LOCK instruction prefix&lt;br /&gt;
-* ??Cache coherency protocols that ensure that atomic operations can be carried out on cached data structures(cache lock); this mechanism is present in the Pentium 4, Intel Xeon, and P6 family processors&lt;/p&gt;
-
-&lt;h2 id=&#34;uniprocessor&#34;&gt;Uniprocessor&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://wiki.osdev.org/Atomic_operation#Single_processor-single_core_systems&#34;&gt;all signle instructions is atomic, including cmpxchg&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/a/39358907/1025001&#34;&gt;Anything is atomic if you do it with interrupts disabled on a UP system&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;smp&#34;&gt;SMP&lt;/h2&gt;
-
-&lt;p&gt;cmpxchg isn&amp;rsquo;t atomic; it needs LOCK prefix.&lt;/p&gt;
-
-&lt;h1 id=&#34;examples&#34;&gt;Examples&lt;/h1&gt;
-
-&lt;p&gt;x86 inc isn&amp;rsquo;t atomic; check atomic_inc.c&lt;/p&gt;
-
-&lt;h2 id=&#34;rmw&#34;&gt;RMW&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://preshing.com/20130618/atomic-vs-non-atomic-operations/&#34;&gt;Atomic vs. Non-Atomic Operations&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;misalgined-access&#34;&gt;misalgined access&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://support.amd.com/TechDocs/24593.pdf#page=224&#34;&gt;AMD 7.3.2 Access Atomicity&lt;/a&gt;&lt;br /&gt;
-Also check Intel 8.1.1&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/questions/36624881/why-is-integer-assignment-on-a-naturally-aligned-variable-atomic-on-x86/36685056#36685056&#34;&gt;naturally-aligned  vs atomic vs cache&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;why-cas&#34;&gt;Why CAS?&lt;/h2&gt;
-
-&lt;h2 id=&#34;cache-locking&#34;&gt;Cache locking&lt;/h2&gt;
-
-&lt;p&gt;v3a: 8.1.4&lt;br /&gt;
-Effects of a LOCK Operation on Internal Processor Caches&lt;/p&gt;
-
-&lt;h2 id=&#34;cmpxchg-vs-xchg-on-lock-prefix-implicit&#34;&gt;cmpxchg vs xchg on LOCK prefix implicit&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/a/44273130/1025001&#34;&gt;Check Linux SMP alternatives&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;interrupt-exception-vs-non-atomic-operation&#34;&gt;interrupt/exception vs non-atomic operation&lt;/h2&gt;
-
-&lt;p&gt;v3a 6.6&lt;br /&gt;
-To allow the restarting of program or task following the handling of an exception or an interrupt, all exceptions&lt;br /&gt;
-(except aborts) are guaranteed to report exceptions on an instruction boundary. All interrupts are guaranteed to be&lt;br /&gt;
-taken on an instruction boundary.&lt;/p&gt;
-
-&lt;h2 id=&#34;two-processor-writing-to-the-same-address&#34;&gt;Two processor writing to the same address&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.quora.com/What-happens-when-two-CPU-cores-require-write-access-to-the-same-memory-address-at-the-same-exact-moment&#34;&gt;What happens when two CPU cores require write access to the same memory address at the same exact moment?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.quora.com/When-an-interrupt-occurs-what-happens-to-the-process-that-is-currently-getting-executed&#34;&gt;When an interrupt occurs, what happens to the process that is currently getting executed?&lt;/a&gt;&lt;/p&gt;
-
 &lt;h1 id=&#34;local-interrupt-disabling&#34;&gt;Local Interrupt Disabling&lt;/h1&gt;
 
-&lt;h1 id=&#34;disabling-and-enabling-deferrable-functions&#34;&gt;Disabling and Enabling Deferrable Functions&lt;/h1&gt;
-
-&lt;h1 id=&#34;spinlock-unsleepable-mutex&#34;&gt;Spinlock - unsleepable mutex&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/590243/&#34;&gt;MCS locks and qspinlocks&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.quora.com/How-does-an-MCS-lock-work&#34;&gt;MCS locks on quora&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;bit-spinlock&#34;&gt;Bit spinlock&lt;/h2&gt;
-
-&lt;p&gt;include/linux/bit_spinlock.h&lt;/p&gt;
-
-&lt;h1 id=&#34;optimistic-spin-queue&#34;&gt;Optimistic spin queue&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/604130/&#34;&gt;Cancellable MCS spinlock rework&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events17.linuxfoundation.org/sites/events/files/slides/linuxcon-2014-locking-final.pdf&#34;&gt;An Overview of Kernel Lock Improvements&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;mutex&#34;&gt;Mutex&lt;/h1&gt;
-
-&lt;p&gt;Monitor lock before sleep.&lt;br /&gt;
-Faireness: queue, rt mutex&lt;/p&gt;
-
-&lt;h1 id=&#34;rw-lock&#34;&gt;RW Lock&lt;/h1&gt;
-
-&lt;h2 id=&#34;rwlock&#34;&gt;rwlock&lt;/h2&gt;
-
-&lt;p&gt;include/linux/rwlock.h&lt;br /&gt;
-_QW_WMASK&lt;br /&gt;
-_QW_WAITING&lt;br /&gt;
-queued_read_trylock&lt;br /&gt;
-queued_read_lock&lt;/p&gt;
-
-&lt;h1 id=&#34;semaphore&#34;&gt;Semaphore&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://yarchive.net/comp/linux/semaphores.html&#34;&gt;Linus on semaphore&lt;/a&gt;&lt;br /&gt;
- 150    213  kernel/printk/printk.c &amp;lt;&lt;down_console_sem&gt;&amp;gt;&lt;br /&gt;
-             down(&amp;amp;console_sem);&lt;br /&gt;
- 151    231  net/core/netpoll.c &amp;lt;&lt;netpoll_poll_disable&gt;&amp;gt;&lt;br /&gt;
-             down(&amp;amp;ni-&amp;gt;dev_lock);&lt;br /&gt;
-it was implement based on spinlock.&lt;br /&gt;
-it can have more than one holder at any time (the number decided at initialization time),&lt;br /&gt;
-although it is most commonly used as a single-holder lock (a mutex).&lt;br /&gt;
-if you can not get a semaphore, your task will put itself on the wait queue, and be woken&lt;br /&gt;
-up the semaphore is released.&lt;br /&gt;
-sleepable&lt;br /&gt;
-preemptable&lt;br /&gt;
-* xadd vs spinlock&lt;/p&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;%k1 %w1 in kernel up_write&lt;br /&gt;
-&lt;a href=&#34;https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#x86Operandmodifiers&#34;&gt;https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html#x86Operandmodifiers&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/questions/34459803/in-gnu-c-inline-asm-whatre-the-modifiers-for-xmm-ymm-zmm-for-a-single-operand?rq=1&#34;&gt;https://stackoverflow.com/questions/34459803/in-gnu-c-inline-asm-whatre-the-modifiers-for-xmm-ymm-zmm-for-a-single-operand?rq=1&lt;/a&gt;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;rw-semaphore&#34;&gt;RW semaphore&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/598577/&#34;&gt;rwsem: Support optimistic spinning&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;rcu-lockless&#34;&gt;RCU &amp;ndash; lockless&lt;/h1&gt;
-
-&lt;p&gt;Check The Journey to RCU for more details&lt;/p&gt;
-
-&lt;h1 id=&#34;examples-1&#34;&gt;examples&lt;/h1&gt;
-
-&lt;p&gt;list_add_tail_rcu(&amp;amp;p-&amp;gt;tasks, &amp;amp;init_task.tasks); in copy_process&lt;br /&gt;
-no rcu read block and unlock&lt;/p&gt;
-
-&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;p&gt;##When to save irq rather than just disable irq, recusive?&lt;br /&gt;
-local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+&lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
 local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 </description>
     </item>
@@ -1692,228 +1452,372 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
       <guid>http://firoyang.org/cs/mm/</guid>
       <description>
 
-&lt;h1 id=&#34;ref&#34;&gt;Ref&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.usenix.org/system/files/conference/atc16/atc16_paper-huang.pdf&#34;&gt;An Evolutionary Study of Linux Memory Management for Fun and Profit&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-organization&#34;&gt;memory organization&lt;/h1&gt;
-
-&lt;h2 id=&#34;memory-mode&#34;&gt;Memory mode&lt;/h2&gt;
-
-&lt;p&gt;flat mem -&amp;gt; uma&lt;br /&gt;
-discontig -&amp;gt; NUMA&lt;br /&gt;
-sparse -&amp;gt; Hotplug + NUMA&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-initialization-onset&#34;&gt;Memory initialization onset:&lt;/h2&gt;
-
-&lt;p&gt;bios -&amp;gt; detect_memory save in boot_params.e820_map&lt;br /&gt;
-real -&amp;gt; protected -&amp;gt; long mode; &lt;a href=&#34;http://www.delorie.com/djgpp/doc/ug/basics/protected.html&#34;&gt;What does protected mode mean&lt;/a&gt;&lt;br /&gt;
-setup_arch&lt;br /&gt;
-setup_memory_map -&amp;gt; default_machine_specific_memory_setup // Save into struct e820map e820; from boot_params.e820_map. That&amp;rsquo;s all.&lt;br /&gt;
-max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with &amp;lt;.&lt;br /&gt;
-mtrr update max_pfn, see &lt;a href=&#34;https://en.wikipedia.org/wiki/Processor_supplementary_capability&#34;&gt;Processor supplementary capability&lt;/a&gt;&lt;br /&gt;
-trim_low_memory_range // reserve 64k&lt;br /&gt;
-max_low_pfn = e820_end_of_low_ram_pfn(); //4GB以下的end of block&lt;br /&gt;
-memblock_x86_fill// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET&lt;br /&gt;
-early_trap_pf_init //  X86_TRAP_PF, page_fault) =&amp;gt; do_page_fault&lt;br /&gt;
-init_mem_mapping //set page table and cr3.&lt;br /&gt;
-initmem_init ; NUMA init&lt;br /&gt;
-x86_init.paging.pagetable_init();= paging_init //x86_64 -&amp;gt;zone_sizes_init-&amp;gt;&amp;hellip;free_area_init_core&lt;br /&gt;
-a little history e820_register_active_region &lt;a href=&#34;https://lkml.org/lkml/2010/7/13/68&#34;&gt;replaced by lmb &lt;/a&gt; memblock&lt;br /&gt;
-reserve_initrd ; // RAMDISK&lt;br /&gt;
-1. e820 get memory region.&lt;br /&gt;
-2. set PF trap do_page_fault.&lt;br /&gt;
-3. set page table and cr3.&lt;/p&gt;
-
-&lt;h3 id=&#34;arch-specific-x86-64&#34;&gt;Arch specific x86_64&lt;/h3&gt;
-
-&lt;p&gt;setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;memblock&#34;&gt;Memblock&lt;/h2&gt;
-
-&lt;p&gt;memblock the &lt;a href=&#34;https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html&#34;&gt;implementations&lt;/a&gt; of memblock is quite simple. static initialization with variable memblock.&lt;br /&gt;
-bootmem is discarded by &lt;a href=&#34;https://lkml.org/lkml/2015/12/21/333&#34;&gt;ARM&lt;/a&gt; and x86&lt;/p&gt;
-
-&lt;h2 id=&#34;zones-and-free-area-free-list&#34;&gt;Zones and free_area.free_list&lt;/h2&gt;
-
-&lt;p&gt;crash&amp;gt; enum zone_type&lt;br /&gt;
-enum zone_type {&lt;br /&gt;
-  ZONE_DMA = 0&lt;br /&gt;
-  ZONE_DMA32 = 1&lt;br /&gt;
-  ZONE_NORMAL = 2&lt;br /&gt;
-  ZONE_MOVABLE = 3&lt;br /&gt;
-  ZONE_DEVICE = 4&lt;br /&gt;
-  __MAX_NR_ZONES = 5&lt;br /&gt;
-};&lt;br /&gt;
-  node_zonelists = {{&lt;br /&gt;
-      _zonerefs = {{&lt;br /&gt;
-          zone = 0xffff88107ffd5d80, # node 0&lt;br /&gt;
-          zone_idx = 2&lt;br /&gt;
-        }, {&lt;br /&gt;
-          zone = 0xffff88107ffd56c0, # node 0&lt;br /&gt;
-          zone_idx = 1&lt;br /&gt;
-        }, {&lt;br /&gt;
-          zone = 0xffff88107ffd5000, # node 0&lt;br /&gt;
-          zone_idx = 0&lt;br /&gt;
-        }, {&lt;br /&gt;
-          zone = 0xffff88207ffd2d80,  # belongs to Node 1&lt;br /&gt;
-          zone_idx = 2&lt;br /&gt;
-        }, {&lt;br /&gt;
-          zone = 0x0,&lt;br /&gt;
-          zone_idx = 0&lt;/p&gt;
-
-&lt;p&gt;paging_init-&amp;gt;zone_sizes_init.&lt;br /&gt;
-{&lt;br /&gt;
-    free_area_init_node-&amp;gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;prsent-pages&#34;&gt;prsent_pages&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;    calculate_node_totalpages
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h3 id=&#34;mem-map-page-array&#34;&gt;mem_map/page array:&lt;/h3&gt;
-
-&lt;pre&gt;&lt;code&gt;    // mem_map for FLAT, but not for us because we use sparsemem
-    alloc_node_mem_map
-    free_area_init_core
-    {
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h3 id=&#34;managed-pages&#34;&gt;managed_pages&lt;/h3&gt;
-
-&lt;pre&gt;&lt;code&gt;        zone-&amp;gt;managed_pages = zone-&amp;gt;present_pages - memmap_pages - DMA?dma_reserve:0
-        // init percpu pageset with boot_pageset
-        zone_pcp_init 
-        // free_area.free_list
-        init_currently_empty_zone(zone, zone_start_pfn, size);
-        // Set all page to reserved. MIGRATE_MOVABLE?
-        // Set node, zone to page-&amp;gt;flags; set_page_links
-        memmap_init_zone 
-
-    }
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-initialization-from-memblock-to-buddy-system&#34;&gt;Memory initialization from memblock to buddy system&lt;/h2&gt;
-
-&lt;h3 id=&#34;memblock-constantly-y-for-x86&#34;&gt;memblock (constantly Y for x86)&lt;/h3&gt;
-
-&lt;p&gt;memblock_free_late-&amp;gt;&lt;strong&gt;memblock_free_late-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
-
-&lt;h3 id=&#34;bootmem-discarded-by-x86&#34;&gt;bootmem (discarded by x86)&lt;/h3&gt;
-
-&lt;p&gt;memblock_free_late-&amp;gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
-free_all_bootmem-&amp;gt;free_all_bootmem_core-&amp;gt;&lt;/strong&gt;free_pages_bootmem&lt;/p&gt;
-
-&lt;h3 id=&#34;nobootmem&#34;&gt;nobootmem&lt;/h3&gt;
-
-&lt;p&gt;free_bootmem_late-&amp;gt;&lt;strong&gt;free_pages_bootmem&lt;br /&gt;
-free_all_bootmem-&amp;gt;free_low_memory_core_early-&amp;gt;&lt;/strong&gt;free_memory_core-&amp;gt;&lt;em&gt;__free_pages_memory&lt;/em&gt;-&amp;gt;&lt;strong&gt;free_pages_bootmem-&amp;gt;&lt;/strong&gt;free_pages_boot_core&lt;/p&gt;
-
-&lt;h3 id=&#34;free-bootmem-core-earyly&#34;&gt;free bootmem core/earyly&lt;/h3&gt;
-
-&lt;p&gt;mm_init-&amp;gt;mem_init-&amp;gt;free_all_bootmem&lt;/p&gt;
-
-&lt;h3 id=&#34;free-bootmem-late&#34;&gt;free bootmem late&lt;/h3&gt;
-
-&lt;p&gt;start_kernel-&amp;gt;efi_free_boot_services-&amp;gt;free_bootmem_late-&amp;gt;__free_pages_bootmem&lt;/p&gt;
-
-&lt;h1 id=&#34;sparse&#34;&gt;Sparse&lt;/h1&gt;
-
-&lt;p&gt;paging_init-&amp;gt;sparse_init&lt;/p&gt;
-
-&lt;h2 id=&#34;hotplug&#34;&gt;hotplug&lt;/h2&gt;
-
-&lt;p&gt;add_memory&lt;br /&gt;
-|-add_memory_resource&lt;br /&gt;
- |-add_memory_resource&lt;br /&gt;
-  |-arch_add_memory&lt;br /&gt;
-   |-&lt;strong&gt;add_pages&lt;br /&gt;
-    |-&lt;/strong&gt;add_section&lt;br /&gt;
-     |-sparse_add_one_section&lt;br /&gt;
-      |-kmalloc_section_memmap&lt;br /&gt;
-       |-sparse_mem_map_populate&lt;br /&gt;
-        |-vmemmap_populate&lt;/p&gt;
-
-&lt;h2 id=&#34;vmemmap-pages&#34;&gt;vmemmap pages&lt;/h2&gt;
-
-&lt;p&gt;vmemmap_populate&lt;/p&gt;
-
-&lt;h2 id=&#34;sparse-init&#34;&gt;sparse_init&lt;/h2&gt;
-
-&lt;p&gt;|-sparse_early_mem_map_alloc if !CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER&lt;br /&gt;
-|-sparse_early_mem_maps_alloc_node if CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER&lt;/p&gt;
-
-&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;An introduction to compound pages&lt;/a&gt;&lt;br /&gt;
-Compound pages&lt;br /&gt;
-18fa11efc279c20af5eefff2bbe814ca067&lt;br /&gt;
-&lt;a href=&#34;https://www.spinics.net/lists/newbies/msg41159.html&#34;&gt;https://www.spinics.net/lists/newbies/msg41159.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/619514/&#34;&gt;https://lwn.net/Articles/619514/&lt;/a&gt;&lt;br /&gt;
-Watermark&lt;br /&gt;
-MIGRATE_HIGHATOMIC&lt;br /&gt;
-Fair-zone allocation: obesete in 4.x+ kernel&lt;br /&gt;
-What about other cpu when panic&lt;br /&gt;
-kmmio probe in do_page_fault&lt;br /&gt;
-userfd &lt;a href=&#34;https://www.youtube.com/watch?v=xhOBc5L_Hkk&#34;&gt;https://www.youtube.com/watch?v=xhOBc5L_Hkk&lt;/a&gt;&lt;br /&gt;
-* Special sections in Linux binaries&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/531148/&#34;&gt;https://lwn.net/Articles/531148/&lt;/a&gt;&lt;br /&gt;
-* COW: for malloc page&lt;br /&gt;
-are the ptes set during fork for child process?&lt;br /&gt;
-check copy_one_pte is_cow_mapping in copy_page_range in dup_mmap&lt;br /&gt;
-VM_WIPEONFORK&lt;br /&gt;
-MADV_WIPEONFORK&lt;br /&gt;
-* DAX&lt;br /&gt;
-* __shmem_file_setup dev/zero&lt;br /&gt;
-* &lt;a href=&#34;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&#34;&gt;http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;bug&#34;&gt;BUG&lt;/h2&gt;
-
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/&#34;&gt;Memory – Part 2: Understanding Process memory&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://landley.net/writing/memory-faq.txt&#34;&gt;A must-read: memory FAQ by Landley&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.usenix.org/system/files/conference/atc16/atc16_paper-huang.pdf&#34;&gt;An Evolutionary Study of Linux Memory Management for Fun and Profit&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/html/v4.18/vm/index.html&#34;&gt;Kernel developers MM documentation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/html/latest/admin-guide/mm/index.html&#34;&gt;kernel.org Memory Management&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://linux-mm.org/&#34;&gt;https://linux-mm.org/&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;vm&#34;&gt;VM&lt;/h1&gt;
+&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/90311/&#34;&gt;flexible-mmap-2.6.7-D5&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/91829/&#34;&gt;Reorganizing the address space&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/&#34;&gt;Anatomy of a Program in Memory&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;Dragon book 9th chapter 8 main memory&lt;/p&gt;
+
+&lt;h2 id=&#34;1964-fixed-sized-partitioning&#34;&gt;1964 fixed-sized partitioning&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_management_(operating_systems)#Partitioned_allocation&#34;&gt;Partitioned allocation&lt;/a&gt;&lt;br /&gt;
+Dragon OS book 8.3.2 Memory Allocation&lt;br /&gt;
+OSIDP: 7.2 MEMORY PARTITIONING&lt;br /&gt;
+fixed-sized partitions.&lt;br /&gt;
+variable-partition scheme or Segmentation&lt;/p&gt;
+
+&lt;h2 id=&#34;1959-paging&#34;&gt;1959 paging&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Paging&#34;&gt;Paging&lt;/a&gt; according to &lt;a href=&#34;https://en.wikipedia.org/wiki/Virtual_memory&#34;&gt;History of VM&lt;/a&gt; is developed at 1959.&lt;/p&gt;
+
+&lt;h2 id=&#34;1961-segmentation&#34;&gt;1961 segmentation&lt;/h2&gt;
+
+&lt;p&gt;Fist appears in Burroughs B5500&lt;/p&gt;
+
+&lt;h2 id=&#34;1963-1965-buddy-system&#34;&gt;1963 ~ 1965  buddy system&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;1956-1962-vm&#34;&gt;1956 ~ 1962 VM&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;hardware-memory&#34;&gt;Hardware memory&lt;/h1&gt;
+&lt;h1 id=&#34;purposes&#34;&gt;Purposes&lt;/h1&gt;
 
-&lt;p&gt;Logic gates: SRAM, DRAM&lt;br /&gt;
-What is data/contrl/address bus?&lt;/p&gt;
+&lt;h2 id=&#34;keeping-track-of-physical-memory&#34;&gt;keeping track of physical memory,&lt;/h2&gt;
 
-&lt;h1 id=&#34;interface&#34;&gt;Interface&lt;/h1&gt;
+&lt;p&gt;Buddy system, why?&lt;/p&gt;
 
-&lt;h2 id=&#34;madv-sequential-and-reclaim&#34;&gt;MADV_SEQUENTIAL and reclaim&lt;/h2&gt;
+&lt;h2 id=&#34;obtain-alloc-and-return-free-memory&#34;&gt;obtain/alloc and return/free memory&lt;/h2&gt;
 
-&lt;p&gt;mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c&lt;/p&gt;
+&lt;p&gt;page allocator&lt;br /&gt;
+page reclamation, memory compaction&lt;/p&gt;
+
+&lt;h2 id=&#34;lift-the-burden-of-loading-program-from-application&#34;&gt;Lift the burden of loading program from application&lt;/h2&gt;
+
+&lt;p&gt;paging&lt;/p&gt;
+
+&lt;h2 id=&#34;user-space-application&#34;&gt;user space application&lt;/h2&gt;
+
+&lt;p&gt;VM, memory mapping.&lt;/p&gt;
+
+&lt;h2 id=&#34;mitigating-fragmenatations&#34;&gt;mitigating fragmenatations&lt;/h2&gt;
+
+&lt;p&gt;buddy system, memory compaction&lt;/p&gt;
+
+&lt;h1 id=&#34;formal-cause&#34;&gt;Formal cause&lt;/h1&gt;
+
+&lt;p&gt;[Dynamic Storage Allocation: A Survey and Critical Review]&lt;/p&gt;
+
+&lt;h2 id=&#34;memory-partitioning&#34;&gt;Memory partitioning&lt;/h2&gt;
+
+&lt;p&gt;Check OSIDP 7.2&lt;/p&gt;
+
+&lt;h3 id=&#34;page-vs-variable-sized-memory-allocations&#34;&gt;Page vs variable-sized memory allocations&lt;/h3&gt;
+
+&lt;p&gt;By variable-sized, we are not taking historical segementation.&lt;br /&gt;
+Placement algorithm: Best-fit, first-fit. Within variable-szied memory allocations, it&amp;rsquo;s very difficult to track free memories compared with page-sized.&lt;/p&gt;
+
+&lt;h3 id=&#34;segmentation&#34;&gt;Segmentation&lt;/h3&gt;
+
+&lt;p&gt;OSIDP&lt;br /&gt;
+The difference, compared to dynamic partitioning, is that with seg-&lt;br /&gt;
+mentation a program may occupy more than one partition, and these partitions&lt;br /&gt;
+need not be contiguous. Segmentation eliminates internal fragmentation but, like&lt;br /&gt;
+dynamic partitioning, it suffers from external fragmentation. However, because a&lt;br /&gt;
+process is broken up into a number of smaller pieces, the external fragmentation&lt;br /&gt;
+should be less.&lt;/p&gt;
+
+&lt;h3 id=&#34;buddy-system-1965-a-fast-storage-allocator-http-sci-hub-tw-https-dl-acm-org-citation-cfm-doid-365628-365655-buddy-memory-allocation-https-en-wikipedia-org-wiki-buddy-memory-allocation&#34;&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt; &lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
+The following cited from above 1965 paper.&lt;br /&gt;
+The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
+storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
+situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
+mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+
+&lt;p&gt;OSIDP&lt;br /&gt;
+Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
+scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
+a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
+ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
+interesting compromise is the buddy system&lt;/p&gt;
+
+&lt;h2 id=&#34;fragmentations&#34;&gt;Fragmentations&lt;/h2&gt;
+
+&lt;h2 id=&#34;zones&#34;&gt;Zones&lt;/h2&gt;
+
+&lt;p&gt;ULK 2: 7.1.2 Memory Zones&lt;br /&gt;
+LDD: Memory zones&lt;br /&gt;
+LKD3: Zones&lt;br /&gt;
+UVM: Chapter 2  Describing Physical Memory&lt;br /&gt;
+history: commit 4d1ceac2980133513fec009b18514f026ff58afa (tag: 2.3.23pre5)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:27:55 2007 -0500&lt;br /&gt;
+    Import 2.3.23pre5&lt;br /&gt;
++#define MEM_TYPE_DMA           0&lt;br /&gt;
++#define MEM_TYPE_NORMAL                1&lt;br /&gt;
++#define MEM_TYPE_HIGH          2&lt;/p&gt;
+
+&lt;p&gt;history: commit cb75bc5a9d9a433f6b5c8015a0f43c1b4d0fad79 (tag: 2.3.27pre6)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:28:33 2007 -0500&lt;br /&gt;
+    Import 2.3.27pre6&lt;br /&gt;
++ *  Reshaped it to be a zoned allocator, Ingo Molnar, Red Hat, 1999&lt;br /&gt;
+-#define MEM_TYPE_DMA           0&lt;br /&gt;
+-#define MEM_TYPE_NORMAL                1&lt;br /&gt;
++#define ZONE_DMA               0&lt;br /&gt;
++#define ZONE_NORMAL            1&lt;br /&gt;
+-static struct free_area_struct free_area[NR_MEM_TYPES][NR_MEM_LISTS];&lt;br /&gt;
++typedef struct zone_struct {&lt;/p&gt;
+
+&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/753269/&#34;&gt;Zone-lock and mmap_sem scalability&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
     <item>
       <title>Page frame reclaimation</title>
-      <link>http://firoyang.org/cs/page_reclaim/</link>
+      <link>http://firoyang.org/cs/pfra/</link>
       <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_reclaim/</guid>
+      <guid>http://firoyang.org/cs/pfra/</guid>
       <description>
 
-&lt;h1 id=&#34;move-lru-page-reclaim-from-zones-to-node&#34;&gt;Move LRU page reclaim from zones to node&lt;/h1&gt;
+&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2015/6/8/298&#34;&gt;1st RFC&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;Chapter 10  Page Frame Reclamation&lt;/a&gt;&lt;br /&gt;
+Exceptional condition&lt;br /&gt;
+2nd chance&lt;/p&gt;
 
-&lt;h1 id=&#34;lumpy-reclaim&#34;&gt;Lumpy reclaim&lt;/h1&gt;
+&lt;h2 id=&#34;reverse-process-of-page-fault-of-a-memory-mapping&#34;&gt;reverse process of page fault of a memory  mapping&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2012/3/28/325&#34;&gt;mm: vmscan: Remove lumpy reclaim&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/262301/&#34;&gt;mm: vmscan: Remove dead code related to lumpy reclaim waiting on pages under writeback&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;PTEs: try_to_unmap:&lt;br /&gt;
+Dirty? Buffer_head?&lt;/p&gt;
 
-&lt;h1 id=&#34;recalimable-pages&#34;&gt;Recalimable pages&lt;/h1&gt;
+&lt;h3 id=&#34;remove-mapping-file-swap-in-pas&#34;&gt;remove_mapping: file/swap in PAS&lt;/h3&gt;
+
+&lt;p&gt;commit 49d2e9cc4544369635cd6f4ef6d5bb0f757079a7&lt;br /&gt;
+Refs: v2.6.15-1461-g49d2e9cc4544&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Sun Jan 8 01:00:48 2006 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Sun Jan 8 20:12:41 2006 -0800&lt;br /&gt;
+    [PATCH] Swap Migration V5: migrate_pages() function&lt;/p&gt;
+
+&lt;h2 id=&#34;workingset&#34;&gt;workingset&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/495543/&#34;&gt;Better active/inactive list balancing&lt;/a&gt;&lt;br /&gt;
+commit a528910e12ec7ee203095eb1711468a66b9b60b0&lt;br /&gt;
+Refs: v3.14-7406-ga528910e12ec&lt;br /&gt;
+Author:     Johannes Weiner &lt;a href=&#34;mailto:hannes@cmpxchg.org&#34;&gt;hannes@cmpxchg.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Thu Apr 3 14:47:51 2014 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Thu Apr 3 16:21:01 2014 -0700&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;mm: thrash detection-based file cache sizing
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;gfp-flags&#34;&gt;GFP flags&lt;/h1&gt;
+
+&lt;p&gt;__GFP_IO: allow disk IO&lt;br /&gt;
+__GFP_FS: allow fs operations, depend on io.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/594725/&#34;&gt;Avoiding memory-allocation deadlocks&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;etc-for-general-idea-of-page-reclaimation-from-brown&#34;&gt;ETC for general idea of page reclaimation from Brown&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/596618/&#34;&gt;Understanding __GFP_FS&lt;/a&gt;&lt;br /&gt;
+__GFP_DIRECT_RECLAIM&lt;br /&gt;
+__GFP_MEMALLOC allows access to all memory. This should only be used when&lt;br /&gt;
+the caller guarantees the allocation will allow more memory to be freed&lt;br /&gt;
+very shortly e.g. process exiting or swapping. Users either should&lt;br /&gt;
+be the MM or co-ordinating closely with the VM (e.g. swap over NFS).&lt;br /&gt;
+Check sk_set_memalloc&lt;br /&gt;
+&lt;strong&gt;GFP_KSWAPD_RECLAIM indicates that the caller wants to wake kswapd when&lt;br /&gt;
+ * the low watermark is reached and have it reclaim pages until the high&lt;br /&gt;
+ * watermark is reached. A caller may wish to clear this flag when fallback&lt;br /&gt;
+ * options are available and the reclaim is likely to disrupt the system. The&lt;br /&gt;
+ * canonical example is THP allocation where a fallback is cheap but&lt;br /&gt;
+ * reclaim/compaction may cause indirect stalls.&lt;br /&gt;
+GFP_ATOMIC  (&lt;/strong&gt;GFP_HIGH|&lt;strong&gt;GFP_ATOMIC|&lt;/strong&gt;GFP_KSWAPD_RECLAIM)&lt;br /&gt;
+GFP_KERNEL  (__GFP_RECLAIM | __GFP_IO | &lt;strong&gt;GFP_FS)&lt;br /&gt;
+GFP_NOWAIT  (&lt;/strong&gt;GFP_KSWAPD_RECLAIM)&lt;br /&gt;
+GFP_NOIO    (&lt;strong&gt;GFP_RECLAIM)&lt;br /&gt;
+GFP_NOFS    (&lt;/strong&gt;GFP_RECLAIM | __GFP_IO)&lt;/p&gt;
+
+&lt;h2 id=&#34;for-interrupt-handler-and-atomic-context&#34;&gt;For interrupt handler and atomic context&lt;/h2&gt;
+
+&lt;p&gt;commit 0aaa29a56e4fb0fc9e24edb649e2733a672ca099&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@techsingularity.net&#34;&gt;mgorman@techsingularity.net&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 6 16:28:37 2015 -0800&lt;br /&gt;
+    mm, page_alloc: reserve pageblocks for high-order atomic allocations on demand&lt;br /&gt;
+gfp_to_alloc_flags&lt;br /&gt;
+/*&lt;br /&gt;
+ * The caller may dip into page reserves a bit more if the caller&lt;br /&gt;
+ * cannot run direct reclaim, or if the caller has realtime scheduling&lt;br /&gt;
+ * policy or is asking for &lt;strong&gt;GFP_HIGH memory.  GFP_ATOMIC requests will&lt;br /&gt;
+ * set both ALLOC_HARDER (&lt;/strong&gt;GFP_ATOMIC) and ALLOC_HIGH (__GFP_HIGH).&lt;br /&gt;
+ */&lt;/p&gt;
+
+&lt;h3 id=&#34;alloc-high&#34;&gt;ALLOC_HIGH:&lt;/h3&gt;
+
+&lt;p&gt;__zone_watermark_ok()&lt;br /&gt;
+        if (alloc_flags &amp;amp; ALLOC_HIGH)&lt;br /&gt;
+                min -= min / 2;&lt;/p&gt;
+
+&lt;h3 id=&#34;alloc-harder&#34;&gt;ALLOC_HARDER&lt;/h3&gt;
+
+&lt;p&gt;rmqueue()&lt;br /&gt;
+if (alloc_flags &amp;amp; ALLOC_HARDER) {&lt;br /&gt;
+                        page = __rmqueue_smallest(zone, order, MIGRATE_HIGHATOMIC);&lt;/p&gt;
+
+&lt;h1 id=&#34;page-flags&#34;&gt;Page flags&lt;/h1&gt;
+
+&lt;p&gt;PG_reclaim:&lt;br /&gt;
+commit 3b0db538ef6782a1e2a549c68f1605ca8d35dd7e&lt;br /&gt;
+Author: Andrew Morton &lt;a href=&#34;mailto:akpm@digeo.com&#34;&gt;akpm@digeo.com&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Dec 2 21:31:09 2002 -0800&lt;br /&gt;
+    [PATCH] Move reclaimable pages to the tail ofthe inactive list on&lt;br /&gt;
+PG_swapcace means page is in the swap cache.&lt;br /&gt;
+PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem, it means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.&lt;br /&gt;
+PG_active: active page&lt;br /&gt;
+PG_referenced: accessed recently&lt;br /&gt;
+PG_lru: page is on the lru linked list&lt;br /&gt;
+PG_mlocked: mlock()&lt;br /&gt;
+PG_locked in generic_file_buffered_read add_to_page_cache_lru and __SetPageLocked&lt;br /&gt;
+check mark_buffer_async_read&lt;br /&gt;
+tglx tree&lt;br /&gt;
+commit d58e41eec6859e9590f8f70ccdc1d58f4f6a1b84&lt;br /&gt;
+Author: Andrew Morton &lt;a href=&#34;mailto:akpm@zip.com.au&#34;&gt;akpm@zip.com.au&lt;/a&gt;&lt;br /&gt;
+Date:   Sun May 5 01:10:37 2002 -0700&lt;br /&gt;
+    [PATCH] Fix concurrent writepage and readpage&lt;/p&gt;
+
+&lt;h1 id=&#34;page-reference-results&#34;&gt;Page reference results&lt;/h1&gt;
+
+&lt;p&gt;enum page_references {&lt;br /&gt;
+        PAGEREF_RECLAIM,    # Try reclaim this page.&lt;br /&gt;
+        PAGEREF_RECLAIM_CLEAN,  # Try relcaim this page, if clean.&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/189879/&#34;&gt;But you were thinking right, it is exactly what it means!  If the state is PAGEREF_RECLAIM_CLEAN, reclaim the page if it is clean:&lt;/a&gt;&lt;br /&gt;
+        PAGEREF_KEEP,       # Keep this page on inactive list.&lt;br /&gt;
+        PAGEREF_ACTIVATE,   # Move this page to active list or inevicatble.&lt;br /&gt;
+};&lt;/p&gt;
+
+&lt;h1 id=&#34;process-flags&#34;&gt;Process flags&lt;/h1&gt;
+
+&lt;h2 id=&#34;pf-memalloc&#34;&gt;PF_MEMALLOC&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand009.html&#34;&gt;UVM&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/cover/178099/&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/a/40899585/1025001&#34;&gt;without being forced to write out dirty pages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4078724-1-1.html&#34;&gt;并不是所有进程都有的。kswapd，direct reclaim的process等在回收的时候会设置这个标志&lt;/a&gt;&lt;br /&gt;
+check __perform_reclaim&lt;br /&gt;
+memalloc_noreclaim_save&lt;br /&gt;
+kswapd-&amp;gt; PF_MEMALLOC-&amp;gt; try to pageout some pages -&amp;gt;  allocates some page using alloc_page for pageout -&amp;gt; no memory in lowreserve -&amp;gt; goto slowpath&lt;br /&gt;
+        /* Avoid recursion of direct reclaim */&lt;br /&gt;
+        if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)&lt;br /&gt;
+                goto nopage;&lt;br /&gt;
+otherwise&lt;br /&gt;
+    &lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;Set PF_MEMALLOC.&lt;/p&gt;
+
+&lt;h2 id=&#34;gfp-pfmemalloc-flags&#34;&gt;__gfp_pfmemalloc_flags&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;            if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)
+                    return ALLOC_NO_WATERMARKS;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;get-page-from-freelist&#34;&gt;get_page_from_freelist&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;                    if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)
+                            goto try_this_zone;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;pfmemalloc&#34;&gt;PFMEMALLOC&lt;/h1&gt;
+
+&lt;h2 id=&#34;prep-new-page&#34;&gt;prep_new_page&lt;/h2&gt;
+
+&lt;p&gt;page_is_pfmemalloc&lt;br /&gt;
+Example: get_page_from_freelist and __ac_get_obj&lt;br /&gt;
+               /*&lt;br /&gt;
+                 * page is set pfmemalloc is when ALLOC_NO_WATERMARKS was&lt;br /&gt;
+                 * necessary to allocate the page. The expectation is&lt;br /&gt;
+                 * that the caller is taking steps that will free more&lt;br /&gt;
+                 * memory. The caller should avoid the page being used&lt;br /&gt;
+                 * for !PFMEMALLOC purposes.&lt;br /&gt;
+                 */&lt;br /&gt;
+                if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)&lt;br /&gt;
+                        set_page_pfmemalloc(page);&lt;br /&gt;
+commit c93bdd0e03e848555d144eb44a1f275b871a8dd5&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@suse.de&#34;&gt;mgorman@suse.de&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Jul 31 16:44:19 2012 -0700&lt;br /&gt;
+    netvm: allow skb allocation to use PFMEMALLOC reserves&lt;/p&gt;
+
+&lt;h1 id=&#34;kswapd&#34;&gt;Kswapd&lt;/h1&gt;
+
+&lt;p&gt;pgdat-&amp;gt;kswapd_wait&lt;br /&gt;
+It&amp;rsquo;s not peoridic. Check kswapd_try_to_sleep: premature sleep and full sleep.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html#toc71&#34;&gt;Historically, kswapd used to wake up every 10 seconds but now it is only woken by the physical page allocator when the pages_low number of free pages in a zone is reached&lt;/a&gt;&lt;br /&gt;
+se.sum_exec_runtime                          :             0.036973&lt;br /&gt;
+se.avg.last_update_time                      :           1884199936&lt;/p&gt;
+
+&lt;h2 id=&#34;fastpath-boosted-watermark&#34;&gt;Fastpath boosted  watermark&lt;/h2&gt;
+
+&lt;p&gt;ZONE_BOOSTED_WATERMARK&lt;br /&gt;
+get_page_from_freelist-&amp;gt;rmqueue-&amp;gt;wakeup_kswapd&lt;br /&gt;
+kswapd-&amp;gt;balance_pgdat-&amp;gt;kswapd_shrink_node-&amp;gt;shrink_node&lt;br /&gt;
+{&lt;br /&gt;
+    shrink_node_memcg-&amp;gt; shrink_list&lt;br /&gt;
+    or maybe&lt;br /&gt;
+    shrink_slab&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h2 id=&#34;slowpath-gfp-kswapd-reclaim&#34;&gt;Slowpath: __GFP_KSWAPD_RECLAIM&lt;/h2&gt;
+
+&lt;p&gt;wake_all_kswapds(order, gfp_mask, ac)&lt;/p&gt;
+
+&lt;h2 id=&#34;slowpath-direct-reclaim-synchronous-page-reclaim-throttle-direct-reclaim&#34;&gt;Slowpath: direct reclaim synchronous page reclaim  throttle_direct_reclaim&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;try_to_free_pages-&amp;gt;allow_direct_reclaim-&amp;gt;wake_up_interruptible(&amp;amp;pgdat-&amp;gt;kswapd_wait)&lt;/p&gt;
+
+&lt;h1 id=&#34;fastpath-watermake-low-node-reclaim-or-zone-reclaim&#34;&gt;Fastpath watermake low, node reclaim or zone reclaim&lt;/h1&gt;
+
+&lt;p&gt;Documentation/sysctl/vm.txt&lt;br /&gt;
+/proc/sys/vm/zone_reclaim_mode&lt;br /&gt;
+get_page_from_freelist-&amp;gt;node_reclaim-&amp;gt;__node_reclaim-&amp;gt;shrink_node&lt;/p&gt;
+
+&lt;h1 id=&#34;slow-path&#34;&gt;Slow path&lt;/h1&gt;
+
+&lt;h2 id=&#34;direct-compact-allocation&#34;&gt;Direct compact allocation&lt;/h2&gt;
+
+&lt;p&gt;__alloc_pages_direct_compact&lt;/p&gt;
+
+&lt;h2 id=&#34;direct-reclaim-allocation&#34;&gt;Direct reclaim allocation&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;try_to_free_pages&lt;br /&gt;
+{&lt;br /&gt;
+    throttle_direct_reclaim&lt;br /&gt;
+    do_try_to_free_pages-&amp;gt; shrink_zones-&amp;gt;mem_cgroup_soft_limit_reclaim -&amp;gt;mem_cgroup_soft_reclaim -&amp;gt;mem_cgroup_shrink_node-&amp;gt;shrink_node&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h2 id=&#34;direct-compact-allocation-1&#34;&gt;Direct compact allocation&lt;/h2&gt;
+
+&lt;h1 id=&#34;hibernate&#34;&gt;Hibernate&lt;/h1&gt;
+
+&lt;p&gt;hibernate_preallocate_memory-&amp;gt;shrink_all_memory&lt;/p&gt;
+
+&lt;h1 id=&#34;writepage-and-end-page-writeback&#34;&gt;writepage and end_page_writeback&lt;/h1&gt;
+
+&lt;p&gt;Check Locking&lt;/p&gt;
+
+&lt;h1 id=&#34;reclaimable-pages&#34;&gt;Reclaimable pages&lt;/h1&gt;
 
 &lt;p&gt;all pages of a User Mode process are reclaimable except locked.&lt;br /&gt;
 Lokced userspace pages:&lt;br /&gt;
@@ -1933,30 +1837,25 @@ Lokced userspace pages:&lt;br /&gt;
 
 &lt;h2 id=&#34;filebacked-pages&#34;&gt;Filebacked pages&lt;/h2&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Private&lt;br /&gt;
-1.1 Clean file private mapping - text segment&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Private: Clean file private mapping - text segment&lt;/p&gt;&lt;/li&gt;
 
-&lt;li&gt;&lt;p&gt;Shared&lt;br /&gt;
-2.1 Shared file mapping memory.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Shared: Shared file mapping memory.&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;h1 id=&#34;pfra&#34;&gt;PFRA&lt;/h1&gt;
+&lt;h1 id=&#34;lru-2q&#34;&gt;LRU-2Q&lt;/h1&gt;
 
-&lt;h2 id=&#34;leave-questions-open&#34;&gt;Leave questions open&lt;/h2&gt;
+&lt;p&gt;page.lru and struct lruvec&lt;br /&gt;
+New page is inserted to head, PG_reclaim page is rotated to the tail.&lt;/p&gt;
 
-&lt;ul&gt;
-&lt;li&gt;I saw we always shrink active list from the head, what about the tail entries, if the nr_to_scan isn&amp;rsquo;t enough to reach the end of active list?&lt;br /&gt;
-Seems this problem is apporached by isolate_lru_pages with for-loop and list_add insert and move_active_pages_to_lru ( lru - LRU_ACTIVE).&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;activate writeback pages&lt;br /&gt;
-mm: vmscan: move dirty pages out of the way until they&amp;rsquo;re flushed - c55e8d035b28b2867e68b0e2d0eee2c0f1016b43&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h2 id=&#34;move-lru-page-reclaim-from-zones-to-node&#34;&gt;Move LRU page reclaim from zones to node&lt;/h2&gt;
 
-&lt;h2 id=&#34;organization&#34;&gt;Organization&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2015/6/8/298&#34;&gt;1st RFC&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;LRU-2Q&lt;/p&gt;
+&lt;h2 id=&#34;shrink-active-list&#34;&gt;shrink_active_list&lt;/h2&gt;
 
-&lt;h3 id=&#34;active-list-and-inactive-list&#34;&gt;active list and inactive list&lt;/h3&gt;
+&lt;p&gt;lru_to_page(head) (list_entry((head)-&amp;gt;prev, struct page, lru))&lt;/p&gt;
+
+&lt;h2 id=&#34;active-list-and-inactive-list&#34;&gt;active list and inactive list&lt;/h2&gt;
 
 &lt;p&gt;active list: working set; Am of LRU 2Q; how often&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/495543/&#34;&gt;Better active/inactive list balancing&lt;/a&gt;&lt;br /&gt;
@@ -1965,25 +1864,16 @@ active -&amp;gt; inactive head - list_add(&amp;amp;page-&amp;gt;lru, &amp;amp;l_
 inactive -&amp;gt; active head - __activate_page &amp;lt;- mark_page_accessed &amp;lt;- pagecache_get_page or generic_file_buffered_read&lt;br /&gt;
 inactive -&amp;gt; inactive tail - rotate_reclaimable_page&lt;/p&gt;
 
-&lt;h2 id=&#34;occasions&#34;&gt;Occasions&lt;/h2&gt;
+&lt;h1 id=&#34;second-chance&#34;&gt;Second chance&lt;/h1&gt;
 
-&lt;ul&gt;
-&lt;li&gt;Periodically Keep a halthy avaliable free pages.&lt;br /&gt;
-kswapd_shrink_node&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;No enough memory for a large memory alloc.&lt;br /&gt;
-get_page_from_freelist-&amp;gt;node_claim&lt;br /&gt;
-try_to_free_mem_cgroup_pages&lt;br /&gt;
-try_to_free_pages&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Manually initiate, ondemand&lt;br /&gt;
-hibernate_preallocate_memory-&amp;gt;shrink_all_memory&lt;br /&gt;
-drop_caches&lt;/p&gt;
-
-&lt;h2 id=&#34;policy&#34;&gt;Policy&lt;/h2&gt;
-
-&lt;p&gt;OOM&lt;/p&gt;
-
-&lt;h3 id=&#34;second-chance&#34;&gt;Second chance&lt;/h3&gt;
+&lt;p&gt;commit dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&lt;br /&gt;
+Author: Johannes Weiner &lt;a href=&#34;mailto:hannes@cmpxchg.org&#34;&gt;hannes@cmpxchg.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Mar 5 13:42:19 2010 -0800&lt;br /&gt;
+    vmscan: factor out page reference checks&lt;br /&gt;
+commit 645747462435d84c6c6a64269ed49cc3015f753d&lt;br /&gt;
+Author: Johannes Weiner &lt;a href=&#34;mailto:hannes@cmpxchg.org&#34;&gt;hannes@cmpxchg.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Mar 5 13:42:22 2010 -0800&lt;br /&gt;
+    vmscan: detect mapped file pages used only once&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=eHK749r5RGs&#34;&gt;Second Chance Page Replacement Algorithm&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.youtube.com/watch?v=DFmsm0J8joY&#34;&gt;Second Chance Page Replacement Algorithms and Clock Page Replacement Algorithms&lt;/a&gt;&lt;br /&gt;
@@ -1992,18 +1882,18 @@ shrink_active_list for VM_EXEC page.&lt;br /&gt;
 core: page_referenced in shrink_active_list&lt;br /&gt;
 mark_page_accessed&lt;br /&gt;
 {&lt;br /&gt;
-    inactive,referenced          -&amp;gt;      active,unreferenced&lt;br /&gt;
-    {&lt;br /&gt;
-            if !PageLRU - on the pagevec&lt;br /&gt;
-                    mm: activate !PageLRU pages on mark_page_accessed if page is on local pagevec - 059285a25f30c13ed4f5d91cecd6094b9b20bb7b&lt;br /&gt;
-                    SetPageActive&lt;br /&gt;
-            else&lt;br /&gt;
-                    activate_page&lt;br /&gt;
-    }&lt;br /&gt;
-    {in,}active,unreferenced        -&amp;gt;      {in,}active,referenced&lt;br /&gt;
-    {&lt;br /&gt;
-            SetPageReferenced&lt;br /&gt;
-    }&lt;br /&gt;
+        inactive,referenced          -&amp;gt;      active,unreferenced&lt;br /&gt;
+        {&lt;br /&gt;
+                if !PageLRU - on the pagevec&lt;br /&gt;
+                        mm: activate !PageLRU pages on mark_page_accessed if page is on local pagevec - 059285a25f30c13ed4f5d91cecd6094b9b20bb7b&lt;br /&gt;
+                        SetPageActive&lt;br /&gt;
+                else&lt;br /&gt;
+                        activate_page&lt;br /&gt;
+        }&lt;br /&gt;
+        {in,}active,unreferenced        -&amp;gt;      {in,}active,referenced&lt;br /&gt;
+        {&lt;br /&gt;
+                SetPageReferenced&lt;br /&gt;
+        }&lt;br /&gt;
 }&lt;/p&gt;
 
 &lt;h4 id=&#34;active-list&#34;&gt;active list -&amp;gt;&lt;/h4&gt;
@@ -2016,36 +1906,35 @@ de-activate it to inactive list head&lt;/p&gt;
 
 &lt;p&gt;page from tail page_check_references&lt;br /&gt;
 {&lt;br /&gt;
-    3 passes:&lt;br /&gt;
-    1. hardware pte; use and clear pte; might get reference; second chance.&lt;br /&gt;
-    2. software flag: -&amp;gt; RECLAIM Clean page and clear, since dirty page is a good signal that the page was used recently because the flusher threads&lt;br /&gt;
-                            clean pages periodically.&lt;br /&gt;
-    3. reclaim&lt;br /&gt;
-    hardware accessed - if accessed, won&amp;rsquo;t reclaim&lt;br /&gt;
-    {&lt;br /&gt;
-            PAGEREF_ACTIVATE: incline to activate swapbacked page&lt;br /&gt;
-                    PageSwapBacked&lt;br /&gt;
-                    referenced_page&lt;br /&gt;
-                    referenced_ptes &amp;gt; 1&lt;br /&gt;
-                    vm_flags &amp;amp; VM_EXEC&lt;br /&gt;
-            PAGEREF_KEEP&lt;br /&gt;
-    }&lt;br /&gt;
-    else if ?? software accessed - &amp;amp;&amp;amp; dirty won&amp;rsquo;t reclaim&lt;br /&gt;
-    {&lt;br /&gt;
-            vmscan: detect mapped file pages used only once - 645747462435d84c6c6a64269ed49cc3015f753d&lt;br /&gt;
-            vmscan,tmpfs: treat used once pages on tmpfs as used once - 2e30244a7cc1ff09013a1238d415b4076406388e&lt;br /&gt;
-            # From above commits: When a page has PG_referenced, shrink_page_list() discards it only if it&lt;br /&gt;
-            # is not dirty. &amp;hellip; PG_dirty is a good signal that the page was used recently because&lt;br /&gt;
-            # the flusher threads clean pages periodically.  In addition, page writeback&lt;br /&gt;
-            # is costlier than simple page discard.&lt;br /&gt;
-            #  Firo: not incline to reclaim dirty page.&lt;br /&gt;
-            #  Firo: PG_referenced -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
-            file-backed -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
-            swapbacked -&amp;gt; PAGEREF_RECLAIM&lt;br /&gt;
-    } else&lt;br /&gt;
-            PAGEREF_RECLAIM&lt;br /&gt;
-}&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+        3 passes:&lt;br /&gt;
+        1. hardware pte; use and clear pte; might get reference; second chance.&lt;br /&gt;
+        2. software flag: -&amp;gt; RECLAIM Clean page and clear, since dirty page is a good signal that the page was used recently because the flusher threads&lt;br /&gt;
+                                clean pages periodically.&lt;br /&gt;
+        3. reclaim&lt;br /&gt;
+        hardware accessed - if accessed, won&amp;rsquo;t reclaim&lt;br /&gt;
+        {&lt;br /&gt;
+                PAGEREF_ACTIVATE: incline to activate swapbacked page&lt;br /&gt;
+                        PageSwapBacked&lt;br /&gt;
+                        referenced_page&lt;br /&gt;
+                        referenced_ptes &amp;gt; 1&lt;br /&gt;
+                        vm_flags &amp;amp; VM_EXEC&lt;br /&gt;
+                PAGEREF_KEEP&lt;br /&gt;
+        }&lt;br /&gt;
+        else if ?? software accessed - &amp;amp;&amp;amp; dirty won&amp;rsquo;t reclaim&lt;br /&gt;
+        {&lt;br /&gt;
+                vmscan: detect mapped file pages used only once - 645747462435d84c6c6a64269ed49cc3015f753d&lt;br /&gt;
+                vmscan,tmpfs: treat used once pages on tmpfs as used once - 2e30244a7cc1ff09013a1238d415b4076406388e&lt;br /&gt;
+                # From above commits: When a page has PG_referenced, shrink_page_list() discards it only if it&lt;br /&gt;
+                # is not dirty. &amp;hellip; PG_dirty is a good signal that the page was used recently because&lt;br /&gt;
+                # the flusher threads clean pages periodically.  In addition, page writeback&lt;br /&gt;
+                # is costlier than simple page discard.&lt;br /&gt;
+                #  Firo: not incline to reclaim dirty page.&lt;br /&gt;
+                #  Firo: PG_referenced -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
+                file-backed -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
+                swapbacked -&amp;gt; PAGEREF_RECLAIM&lt;br /&gt;
+        } else&lt;br /&gt;
+                PAGEREF_RECLAIM&lt;br /&gt;
+}&lt;/p&gt;
 
 &lt;h3 id=&#34;working-set&#34;&gt;Working set&lt;/h3&gt;
 
@@ -2064,117 +1953,59 @@ workingset_eviction() and workingset_refault()&lt;br /&gt;
 
 &lt;h3 id=&#34;other-notes-on-replacement-polices&#34;&gt;Other notes on Replacement polices&lt;/h3&gt;
 
-&lt;p&gt;replacement policies:&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;https://www.kernel.org/doc/gorman/html/understand/understand013.html&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;https://www.kernel.org/doc/gorman/html/understand/understand013.html&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;https://linux-mm.org/PageReplacementDesign&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;https://www.kernel.org/doc/gorman/html/understand/understand013.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;PageReplacementDesign&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cnblogs.com/tolimit/p/5447448.html&#34;&gt;https://www.cnblogs.com/tolimit/p/5447448.html&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;PageReplacementDesign&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;steps-of-reclaim&#34;&gt;Steps of reclaim&lt;/h1&gt;
+&lt;h1 id=&#34;lumpy-reclaim&#34;&gt;Lumpy reclaim&lt;/h1&gt;
 
-&lt;h2 id=&#34;writeback&#34;&gt;WriteBack&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2012/3/28/325&#34;&gt;mm: vmscan: Remove lumpy reclaim&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/262301/&#34;&gt;mm: vmscan: Remove dead code related to lumpy reclaim waiting on pages under writeback&lt;/a&gt;&lt;/p&gt;
 
-&lt;ol&gt;
-&lt;li&gt;if page is alreday marked reclaim, skip it this time.&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;if not makred reclaim, normal writeback, and IO isn&amp;rsquo;t permitted, then mark it as reclaim and will be pended at tail of LRU after writeback complete.&lt;br /&gt;&lt;/li&gt;
+&lt;h1 id=&#34;etc-leave-questions-open&#34;&gt;ETC Leave questions open&lt;/h1&gt;
 
-&lt;li&gt;&lt;p&gt;Cgroup cases. Just wait for the complte of writeback.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;activate writeback pages&lt;br /&gt;
+mm: vmscan: move dirty pages out of the way until they&amp;rsquo;re flushed - c55e8d035b28b2867e68b0e2d0eee2c0f1016b43&lt;br /&gt;
+Fixing writeback from direct reclaim &lt;a href=&#34;https://lwn.net/Articles/396561/&#34;&gt;https://lwn.net/Articles/396561/&lt;/a&gt;&lt;br /&gt;
+&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;h2 id=&#34;add-to-swap-cache&#34;&gt;Add to swap cache&lt;/h2&gt;
+&lt;h1 id=&#34;shrink-slab-caches&#34;&gt;Shrink slab caches&lt;/h1&gt;
 
-&lt;h2 id=&#34;unmap-pte&#34;&gt;Unmap pte.&lt;/h2&gt;
+&lt;h2 id=&#34;double-slab-pressure&#34;&gt;double slab pressure&lt;/h2&gt;
 
-&lt;h2 id=&#34;dirty-page&#34;&gt;Dirty page&lt;/h2&gt;
+&lt;p&gt;tglx tree&lt;br /&gt;
+commit b65bbded3935b896d55cb6b3e420a085d3089368&lt;br /&gt;
+Author: Andrew Morton &lt;a href=&#34;mailto:akpm@digeo.com&#34;&gt;akpm@digeo.com&lt;/a&gt;&lt;br /&gt;
+Date:   Wed Sep 25 07:20:18 2002 -0700&lt;br /&gt;
+    [PATCH] slab reclaim balancing&lt;/p&gt;
 
-&lt;p&gt;Leave kswapd to deal with IO, mark it reclaim and skip it.&lt;/p&gt;
+&lt;h1 id=&#34;oom&#34;&gt;OOM&lt;/h1&gt;
 
-&lt;h2 id=&#34;pageout&#34;&gt;pageout&lt;/h2&gt;
+&lt;p&gt;oom_score_adj in Documentation/filesystems/proc.txt&lt;br /&gt;
+fs/proc/base.c&lt;br /&gt;
+ONE(&amp;ldquo;oom_score&amp;rdquo;,  S_IRUGO, proc_oom_score),&lt;br /&gt;
+REG(&amp;ldquo;oom_adj&amp;rdquo;,    S_IRUGO|S_IWUSR, proc_oom_adj_operations),&lt;br /&gt;
+REG(&amp;ldquo;oom_score_adj&amp;rdquo;, S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),&lt;br /&gt;
+oom_badness&lt;/p&gt;
 
-&lt;p&gt;including shared memory&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
+&lt;h1 id=&#34;suse-page-cache-limit&#34;&gt;SUSE page cache limit&lt;/h1&gt;
 
-&lt;h1 id=&#34;reverse-mapping&#34;&gt;Reverse mapping&lt;/h1&gt;
+&lt;p&gt;Check box/pagecache-limit&lt;/p&gt;
 
-&lt;p&gt;unmapping at once all page table entries of a shared pages&lt;/p&gt;
+&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
 
-&lt;h2 id=&#34;page-index&#34;&gt;page.index&lt;/h2&gt;
+&lt;h2 id=&#34;mapping-is-null&#34;&gt;mapping is NULL?&lt;/h2&gt;
 
-&lt;ol&gt;
-&lt;li&gt;file memory mapped page: index is offset in a file&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Anonymous page: linear_page_index in &lt;strong&gt;page_set_anon_rmap()&lt;/strong&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;anonymous-pages&#34;&gt;Anonymous Pages&lt;/h2&gt;
-
-&lt;p&gt;Page + VMA =&amp;gt; ptes&lt;/p&gt;
-
-&lt;h3 id=&#34;stack-heap-private-anonymous-mapping&#34;&gt;Stack/heap/private anonymous mapping&lt;/h3&gt;
-
-&lt;p&gt;page.index is VFN.&lt;br /&gt;
-do_anonymous_page -&amp;gt; page_add_new_anon_rmap&lt;br /&gt;
-add vma to anon_vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don&amp;rsquo;t use vma. 2.2 exec)&lt;br /&gt;
-in do_mmap, for anonymous mapping, MAP_PRIVATE: pgoff = addr &amp;gt;&amp;gt; PAGE_SHIFT; addr will be vm_start in mmap_region&lt;br /&gt;
-vm_pgoff is pgoff, vm_start &amp;gt;&amp;gt; PAGE_SHIFT, in mmap_region&lt;/p&gt;
-
-&lt;h2 id=&#34;mapped-pages&#34;&gt;Mapped pages&lt;/h2&gt;
-
-&lt;h3 id=&#34;file-mapped-pages&#34;&gt;File mapped pages&lt;/h3&gt;
-
-&lt;p&gt;Page and file are fixed. VMA is dynamic.&lt;br /&gt;
-Page + VMA = Page + VMA.vm_start = Page&amp;rsquo;s offset in VMA + VMA.vm_start = Virtual Address =&amp;gt; ptes&lt;br /&gt;
-Page&amp;rsquo;s offset in VMA = Page&amp;rsquo;s offset in file - VMA&amp;rsquo;s offset in file = page.index - vma.vm_pgoff&lt;/p&gt;
-
-&lt;h3 id=&#34;mapped-pages-of-tmpfs-anonymous-shared-mapping&#34;&gt;Mapped pages of tmpfs - anonymous shared mapping.&lt;/h3&gt;
-
-&lt;p&gt;shmem_add_to_page_cache&lt;br /&gt;
-pgoff is 0; ignored; in do_mmap MAP_SHARED;&lt;br /&gt;
-page.index is vmf-&amp;gt;pgoff in shmem_fault; vmf-&amp;gt;pgoff is linear_page_index(vma, address)in handle_mm_fault; pgoff is offset in vma;&lt;/p&gt;
-
-&lt;h2 id=&#34;vm-pgoff-vs-index&#34;&gt;vm_pgoff vs index&lt;/h2&gt;
-
-&lt;p&gt;anonymous private mapping: vm_start &amp;gt;&amp;gt; PAGE_SHIFT vs VFN&lt;br /&gt;
-anonymous shared mapping: 0,ignored vs page&amp;rsquo;s offset in vma&lt;br /&gt;
-file mapping: vma&amp;rsquo;s offset in file vs page&amp;rsquo;s offset of file&lt;br /&gt;
-不知道理解的是否相同:&lt;br /&gt;
-对于anonymous mapping page:&lt;br /&gt;
-Private: page.index 是page 在所属进程地址空间的虚拟地址&amp;gt;&amp;gt; PAGE_SHIT.&lt;br /&gt;
-Shared: page.index 是page 在所属的VMA内的offset: (page&amp;rsquo;s addr - vm_start)&amp;gt;&amp;gt;PAGE_SHIT.&lt;/p&gt;
-
-&lt;h2 id=&#34;anon-page&#34;&gt;anon page:&lt;/h2&gt;
-
-&lt;p&gt;rbtree-based Interval tree&lt;br /&gt;
-&lt;a href=&#34;http://www.wowotech.net/memory_management/reverse_mapping.html&#34;&gt;逆向映射的演进&lt;/a&gt;&lt;br /&gt;
-exec : exec -&amp;gt; do_execveat_common-&amp;gt; bprm_mm_init setup_arg_pages&lt;br /&gt;
-do_anonymous_page -&amp;gt; anon_vma_prepare &amp;amp; page_add_new_anon_rmap&lt;br /&gt;
-fork workflow:attach to parent; alloc anon_vma for ownself.&lt;br /&gt;
-anon_vma_fork() -&amp;gt; anon_vma_chain_link: node: avc, key: avmc.vma-&amp;gt;start/last_pgoff page.mapping=anon_vma.rb_root&lt;br /&gt;
-rmap: add exclusively owned pages to the newest anon_vma - e8a03feb54ca7f1768bbdc2b491f9ef654e6d01d&lt;br /&gt;
-nuclus:&lt;br /&gt;
-rmap_walk_anon()&lt;/p&gt;
-
-&lt;h2 id=&#34;file-page&#34;&gt;file page:&lt;/h2&gt;
-
-&lt;p&gt;rbtree-based interval tree - INTERVAL_TREE_DEFINE in mm/interval_tree.c&lt;br /&gt;
-__vma_adjust -&amp;gt; __vma_link_file: node: vma.shared.rb, key: vma.start_pgoff and vma.last_pgoff  address_space-&amp;gt;i_mmap&lt;br /&gt;
-address_space is premise&lt;br /&gt;
-rmap_walk_file(page.mapping=address_space.i_mmap&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;page-flags&#34;&gt;Page flags&lt;/h1&gt;
-
-&lt;p&gt;PG_swapcace means page is in the swap cache.&lt;br /&gt;
-PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem, it means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.&lt;br /&gt;
-PG_active: active page&lt;br /&gt;
-PG_referenced: accessed recently&lt;br /&gt;
-PG_lru: page is on the lru linked list&lt;br /&gt;
-PG_mlocked: mlock()&lt;/p&gt;
-
-&lt;h1 id=&#34;struct-page&#34;&gt;struct page&lt;/h1&gt;
-
-&lt;h2 id=&#34;page-lru&#34;&gt;page.lru&lt;/h2&gt;
-
-&lt;p&gt;lruvec, buddy system, slab, isolate list&lt;/p&gt;
+&lt;p&gt;e2be15f6c3eecedfbe1550cca8d72c5057abbbd2&lt;br /&gt;
++               /* Treat this page as congested if underlying BDI is */&lt;br /&gt;
++               mapping = page_mapping(page);&lt;br /&gt;
++               if (mapping &amp;amp;&amp;amp; bdi_write_congested(mapping-&amp;gt;backing_dev_info))&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/384093/&#34;&gt;When writeback goes wrong&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/405076/&#34;&gt;Dynamic writeback throttling&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/396561/&#34;&gt;Fixing writeback from direct reclaim&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     

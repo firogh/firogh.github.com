@@ -11,12 +11,26 @@ git diff --cached or --staged: index..HEAD
 git diff HEAD:working tree..HEAD
 
 # Config
-
 [apply]
 	whitespace = nowarn
 	ignorewhitespace = change
 [core]
 	whitespace = trailing-space,space-before-tab,indent-with-non-tab
+
+# Find version
+[Finding a patch's kernel version with git]https://lwn.net/Articles/392293/)
+
+# Revisions
+man gitrevisions
+https://devhints.io/git-revisions
+
+# Refname
+fyang@l3mule:~/s/kernel> git log 1134097
+warning: refname '1134097' is ambiguous.
+fyang@l3mule:~/s/kernel> git show-ref 1134097
+c67a386867f01ef87eac9885d11145f26a95cb1b refs/heads/1134097
+f624f8550c03337514c5a6c13c3daa0d516a90fd refs/remotes/fkcr/users/fyang/SLE12-SP4/1134097
+git check-ref-format
 
 # Usage
 [git format-patch a merge commit](http://stackoverflow.com/questions/2285699/git-how-to-create-patches-for-a-merge)
@@ -39,21 +53,35 @@ git blame sha1^ -- path/to/file
 git log  --oneline  --ancestry-path   c146066ab^^..HEAD  net/ipv4/ip_output.c
 * find when line was deleted
 git log -c -S'missingtext' /path/to/file
-## git pull
+
+# git diff
+git -c core.whitespace=tab-in-indent diff --check
+
+# git format-patch
+form a list
+NUM=0;awk '{print $1}' g.log  | while read line; do f=$(git format-patch -n1 $line); f1=$f;f=${f#"0001"};NUM=$(( NUM + 1 )); N="$(printf "%04u" "$NUM")";mv -f $f1 $N$f;done
+
+# git pull
 git pull {repo} {remotebranchname}:{localbranchname}
 git pull origin xyz:xyz
 git pull next master:now
-## git sendmail
+
+# git rebase
+fyang@l3mule:~/s/kernel> git checkout  -b 1143300-15 firo/SLE15
+Branch '1143300-15' set up to track remote branch 'SLE15' from 'firo'.
+Switched to a new branch '1143300-15'
+fyang@l3mule:~/s/kernel> git status
+On branch 1143300-12-4
+nothing to commit, working tree clean
+fyang@l3mule:~/s/kernel> git rebase --onto  1143300-15 firo/SLE12-SP4
+
+# git sendmail
 shadowsocks
 /etc/proxychains.conf
 /home/firo/.gitconfig
 proxychains git send-email --to dbaryshkov@gmail.com --cc rmk+kernel@arm.linux.org.uk --cc linux-pcmcia@lists.infradead.org  0001-Drivers-pcmcia-Fix-memroy-leak-in-sa11xx_drv_pcmcia_.patch
 git send-email --smtp-encryption=tls --smtp-server=smtp.gmail.com --smtp-user=firogm@gmail.com --smtp-server-port=587 --to "kernel-janitors@vger.kernel.org" 0001-x86-Remove-unnecessary-void-pointer-casts.patch
-##git diff
-git -c core.whitespace=tab-in-indent diff --check
 
-## git patches form a list
-NUM=0;awk '{print $1}' g.log  | while read line; do f=$(git format-patch -n1 $line); f1=$f;f=${f#"0001"};NUM=$(( NUM + 1 )); N="$(printf "%04u" "$NUM")";mv -f $f1 $N$f;done
-
+# git show-ref
 # git archive
 git archive --format zip --output /tmp/zipfile.zip 29435bc

@@ -1,6 +1,44 @@
+# Primary kernel
+## Kexec-tools
+main -> do_kexec_file_load->
+{
+	maybe check file_type -> bzImage64_load->do_bzImage64_load
+	load_crashdump_segments in kexec/arch/i386/crashdump-x86.c
+	{
+		crash_create_elf64_headers = FUNC() in ./kexec/crashdump-elf.c
+		elfcorehdr = add_buffer(info, tmp, bufsz, memsz, align, min_base,
+		cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
+	}
+	setup_linux_system_parameters
+
+	kexec_file_load
+}
+kernel space
+arch_kexec_kernel_image_load
+kexec_image_load_default -> bzImage64_load ->
+        /* Allocate and load backup region */
+        if (image->type == KEXEC_TYPE_CRASH) {
+                ret = crash_load_segments(image); prepare_elf_headers -> crash_prepare_elf64_headers # vmcoreinfo phdr
+
+	setup_cmdline
+		if (image->type == KEXEC_TYPE_CRASH) {
+			len = sprintf(cmdline_ptr,
+				"elfcorehdr=0x%lx ", image->arch.elf_load_addr);
+Boom! Panic!
+
+# Capture kernel
+## Start up
+early_param("elfcorehdr", setup_elfcorehdr); -> elfcorehdr_addr
+## makedumpfile
+fs/proc/vmcore.c
+vmcore_init-> ... ->
+static int __init parse_crash_elf64_headers(void)
+        addr = elfcorehdr_addr;
+
+# crash-utility and libkdumpfile
+
+# LQO
 commit 99db44350672c8a5ee9a7b0a6f4cd6ff10136065
 Author: David Howells <dhowells@redhat.com>
 Date:   Wed Aug 5 15:22:27 2015 +0100
-
     PKCS#7: Appropriately restrict authenticated attributes and content type
-

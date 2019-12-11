@@ -1,0 +1,49 @@
+
+
+# fsync(2), sync,  fdatasync(2)
+fs/sync.c
+history: fdatasync 31d65e93a998
+filemap_fdatasync: Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:41:06 2007 -0500
+
+    Ok, there's a test13-pre6 out there now, which does a partial sync with
+    Alan, in addition to hopefully fixing the innd shared mapping writeback
+    problem for good.  Thanks to Marcelo Tosatti and others..
+
+syncfs
+sync_inodes_sb
+writeback_inodes_sb(sb, WB_REASON_SYNC)
+sys_sync-> ksys_sync
+vfs_fsync_range -> ext2_fsync->generic_file_fsync
+{
+        file_write_and_wait_range->write_pages/write_page->block_write_full_page->submit_bh_wbc->submit_bio
+        or
+        blkdev_issue_flush -> submit_bio_wait
+}
+ => __block_write_full_page
+ => __writepage
+ => write_cache_pages
+ => generic_writepages
+ => do_writepages
+ => __filemap_fdatawrite_range
+ => iterate_bdevs
+ => ksys_sync
+
+# fysnc
+[Asynchronous fsync()](https://lwn.net/Articles/789024/)
+sync_mapping_buffers
+commit 43152186ec28f3d4adf2a79ff8becacdfca9c82d
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Sun May 19 02:20:58 2002 -0700
+Commit:     Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+CommitDate: Sun May 19 02:20:58 2002 -0700
+    [PATCH] i_dirty_buffers locking fix
++ * fs/buffer.c contains helper functions for buffer-backed address space's
++ * fsync functions.  A common requirement for buffer-based filesystems is
++ * that certain data from the backing blockdev needs to be written out for
++ * a successful fsync().  For example, ext2 indirect blocks need to be
++ * written back and waited upon before fsync() returns.
+
+[Everything You Always Wanted to Know About Fsync()](http://blog.httrack.com/blog/2013/11/15/everything-you-always-wanted-to-know-about-fsync/)
+
+# writeback_single_inode

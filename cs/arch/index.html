@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="570">
+<meta itemprop="wordCount" content="435">
 <meta itemprop="datePublished" content="2015-10-13">
 <meta itemprop="url" content="http://firoyang.org/cs/arch/">
 
@@ -187,18 +187,8 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="ref">ref</h1>
-
-<p><a href="https://people.cs.clemson.edu/~mark/architects.html">https://people.cs.clemson.edu/~mark/architects.html</a></p>
-
-<h1 id="asm">ASM</h1>
-
-<p>Reference asm global label in C<br />
-char _text[];           x86_64_64;<br />
-unsigned long _text;    x86_64_PC32<br />
-They are different in amrithmatic operstion.</p>
-
 <p>##Reference<br />
+<a href="https://people.cs.clemson.edu/~mark/architects.html">https://people.cs.clemson.edu/~mark/architects.html</a><br />
 <a href="http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html">Latency Numbers Every Programmer Should Know</a><br />
 <a href="https://youtu.be/cNN_tTXABUA">How a CPU Works</a><br />
 A Symbolic Analysis of Relay and Switching Circuits<br />
@@ -215,6 +205,11 @@ See MIPS run<br />
 Intel 64 and IA-32 architectures software developers manual combined volumes 3A, 3B, and 3C: System programming guide<br />
 Microelectronics</p>
 
+<h1 id="definition">Definition</h1>
+
+<p><a href="https://en.wikipedia.org/wiki/Architectural_state">Architectural state</a><br />
+microarchitectural state, such as information stored in TLBs and caches</p>
+
 <h2 id="isa">ISA</h2>
 
 <p>model: 1570s, &ldquo;likeness made to scale; architect&rsquo;s set of designs,&rdquo; from Middle French modelle<br />
@@ -222,22 +217,7 @@ Semantics in computer science: In programming language theory, semantics is the 
 with the rigorous mathematical study of the meaning of programming languages.<br />
 Language primitive<br />
 ISA: memory model, registers, data types, instructions, word size(?).<br />
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&rsquo;s semantics.<br />
-#x86 Interrupt<br />
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.<br />
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.<br />
-##Hardware interrupts<br />
-are used by devices to communicate that they require attention from the operating system.<br />
-asynchronus<br />
-more details in init_IRQ() or set_irq() in driver.<br />
-##software interrupt<br />
-synchronus<br />
-more details in trap_init().<br />
-* exception or trap<br />
-is caused either by an exceptional condition in the processor itself,<br />
-divide zero painc?<br />
-* special instruction, for example INT 0x80<br />
-or a special instruction in the instruction set which causes an interrupt when it is executed.</p>
+Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&rsquo;s semantics.</p>
 
 <h1 id="i-o-ic">I/O IC</h1>
 
@@ -246,7 +226,8 @@ parallel communication: SCSI, ISA, ATA, PCI, FSB</p>
 
 <h1 id="data-struct-aligment">Data struct aligment</h1>
 
-<p><a href="http://www.catb.org/esr/structure-packing/">The Lost Art of C Structure Packing</a><br />
+<p><a href="http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html">A bug story: data alignment on x86</a><br />
+<a href="http://www.catb.org/esr/structure-packing/">The Lost Art of C Structure Packing</a><br />
 <a href="http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86">Typical alignment of C structs on x86</a></p>
 
 <h2 id="为什么需要结构体对齐">为什么需要结构体对齐?</h2>
@@ -302,34 +283,20 @@ which increases the system&rsquo;s performance due to the way the CPU handles me
 填上所有空.</p></li>
 </ol>
 
-<h1 id="endianess">Endianess</h1>
+<h1 id="endianess-and-bitfield">Endianess and bitfield</h1>
 
-<p><a href="http://www.yolinux.com/TUTORIALS/Endian-Byte-Order.html">Endianness: Big and Little Endian Byte Order</a><br />
-应该说bit endianess 实际存储只有MSB &hellip; LSB这一种二进制表达形式! 在上面的文章的representtion, 辅证这一点.<br />
-这篇文章<a href="http://tonybai.com/2013/05/21/talk-about-bitfield-in-c-again/">再谈C语言位域</a>,<br />
-之所以输出逆序, 是因为错误里理解了, bit 序. bit 序是cpu 读取的方式, 不是存储的方式!</p>
+<p><a href="https://gcc.gnu.org/onlinedocs/gcc/Structures-unions-enumerations-and-bit-fields-implementation.html">The order of allocation of bit-fields within a unit</a><br />
+It&rsquo;s Determined by ABI not Gcc. Check comments on <a href="https://stackoverflow.com/questions/47600584/bitfield-endianness-in-gcc">Bitfield endianness in gcc</a></p>
 
-<h2 id="bit-endianness-https-en-wikipedia-org-wiki-bit-numbering"><a href="https://en.wikipedia.org/wiki/Bit_numbering">bit endianness</a></h2>
+<h2 id="how-endianness-effects-bitfield-packing-http-mjfrazer-org-mjfrazer-bitfields"><a href="http://mjfrazer.org/mjfrazer/bitfields/">How Endianness Effects Bitfield Packing</a></h2>
 
-<p>这样就可以更好的理解iphdr:<br />
-#if defined(__LITTLE_ENDIAN_BITFIELD)<br />
-    <strong>u8    ihl:4,<br />
-        version:4;<br />
-#elif defined (</strong>BIG_ENDIAN_BITFIELD)<br />
-    __u8    version:4,<br />
-        ihl:4;<br />
-#else<br />
-#error  &ldquo;Please fix <asm/byteorder.h>&ldquo;<br />
-#endif<br />
-ipv4 header的拓扑<br />
-version ihl<br />
-0100 0101<br />
-因为le的cpu是 lsb first, 也就是从最左面的1开始读, 所以第一个是ihl<br />
-而be的cpu是 msb first, 从最右开始所以version开头.<br />
-而使用unsigned char ver_ihl<br />
-(ver_ihl &amp; 0xf0)&gt;&gt; 4 = version<br />
-ver_ihl &amp; 0x0f = ihl<br />
-是无关cpu读取顺序的.</p>
+<p>if defined(__LITTLE_ENDIAN_BITFIELD)<br />
+    __u8    ihl:4,<br />
+        version:4;  # MSB, check wikipeida ipv4 header</p>
+
+<h2 id="gcc-bug-on-bitfield">GCC bug on bitfield</h2>
+
+<p><a href="https://lwn.net/Articles/478657/">Betrayed by a bitfield</a></p>
 
 		</article>
 	  </div>

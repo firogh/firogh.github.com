@@ -1,0 +1,41 @@
+# PELT
+commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9
+Author: Paul Turner <pjt@google.com>
+Date:   Thu Oct 4 13:18:32 2012 +0200
+
+    sched: Make __update_entity_runnable_avg() fast
+
+commit a481db34b9beb7a9647c23f2320dd38a2b1d681f
+Refs: v4.11-rc2-229-ga481db34b9be
+Author:     Yuyang Du <yuyang.du@intel.com>
+AuthorDate: Mon Feb 13 05:44:23 2017 +0800
+Commit:     Ingo Molnar <mingo@kernel.org>
+CommitDate: Thu Mar 30 09:43:41 2017 +0200
+    sched/fair: Optimize ___update_sched_avg()
++       /*
++        * Now we know we crossed measurement unit boundaries. The *_avg
++        * accrues by two steps:
++        *
++        * Step 1: accumulate *_sum since last_update_time. If we haven't
++        * crossed period boundaries, finish.
++        */
++       if (!accumulate_sum(delta, cpu, sa, weight, running, cfs_rq))
++               return 0;
+
+-       if (decayed) {
+-               sa->load_avg = div_u64(sa->load_sum, LOAD_AVG_MAX);
+-               if (cfs_rq) {
+-                       cfs_rq->runnable_load_avg =
+-                               div_u64(cfs_rq->runnable_load_sum, LOAD_AVG_MAX);
+-               }
+-               sa->util_avg = sa->util_sum / LOAD_AVG_MAX;
++       /*
++        * Step 2: update *_avg.
++        */
++       sa->load_avg = div_u64(sa->load_sum, LOAD_AVG_MAX);
++       if (cfs_rq) {
++               cfs_rq->runnable_load_avg =
++                       div_u64(cfs_rq->runnable_load_sum, LOAD_AVG_MAX);
+        }
++       sa->util_avg = sa->util_sum / LOAD_AVG_MAX;
+

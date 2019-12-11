@@ -1,0 +1,71 @@
+# History
+[LDD2: How does buffer_head work with request struct: The request structure and the buffer cache of LDD 2nd](https://www.xml.com/ldd/chapter/book/ch12.html#t4)
+[Jens Axobe's papper: Linux Block IO—present and future](https://www.landley.net/kdocs/ols/2004/ols2004v1-pages-51-62.pdf)
+[Jens Axobe: Notes on the Generic Block Layer Rewrite in Linux 2.5](https://www.kernel.org/doc/Documentation/block/biodoc.txt)
+[Lwn: Driver porting: the BIO structure](https://lwn.net/Articles/26404/)
+[LKD3: The Old Versus the New: Answer to Why does 'the underlying buffer head structure forces each I/O request to be split into 512-byte chunks.'](https://stackoverflow.com/a/57407020/1025001)
+[A block layer introduction part 1: the bio layer](https://lwn.net/Articles/736534/?spm=a2c4e.11153940.blogcont609907.5.1c543f4bc9Aaop)
+tglx: commit e1e2cfc3fb42dbe54dd94fe97ba17a62cd7a265b
+Author: Linus Torvalds <torvalds@athlon.transmeta.com>
+Date:   Mon Feb 4 23:58:06 2002 -0800
+    v2.5.0.1 -> v2.5.0.2
+    - Jens Axboe: start of new block IO layer
+
+# bio
+bi_io_vec - bio_vec
+Documentation/block/biovecs.txt
+bi_iter - bvec_iter 
+block: Abstract out bvec iterator - 4f024f3797c43cb4b73cd2c50cec728842d0e49e
+## bi_sector
+submit_bio -> generic_make_request -> generic_make_request_checks -> blk_partition_remap
+tglx: commit e1e2cfc3fb42dbe54dd94fe97ba17a62cd7a265b
+Author: Linus Torvalds <torvalds@athlon.transmeta.com>
+Date:   Mon Feb 4 23:58:06 2002 -0800
+    v2.5.0.1 -> v2.5.0.2
+    - Jens Axboe: start of new block IO layer
+- * generic_make_request and the drivers it calls may use b_reqnext,
+- * and may change b_rdev and b_rsector.  So the values of these fields
++ * generic_make_request and the drivers it calls may use bi_next if this
++ * bio happens to be merged with someone else, and may change bi_dev and
++ * bi_rsector for remaps as it sees fit.  So the values of these fields
+  * should NOT be depended on after the call to generic_make_request.
+- * Because of this, the caller should record the device address
+- * information in b_dev and b_blocknr.
+  *
+- * Apart from those fields mentioned above, no other fields, and in
+- * particular, no other flags, are changed by generic_make_request or
+- * any lower level drivers.
+  * */
+-void generic_make_request (int rw, struct buffer_head * bh)
+## merge bio
+all bios in same request is contiguous.
+__make_request elv_merge
+/sys/block/sda/queue/max_sectors_kb 1280??
+Front merge
+Back merge
+Coalesce merge
+
+## End bio callback
+__bread_slow: b_end_io = end_buffer_read_sync
+__bread_slow->submit_bh -> submit_bh_wbc: bio->bi_end_io = end_bio_bh_io_sync
+callback: bio_endio end_bio_bh_io_sync
+
+## submit_bio
+blk_queue_bio
+Case 1. Try Merge 
+1.1 Plug merge
+1.2 Elevator merge; CFS, deadline, noop
+Case 2. Plug 
+2.1 full? blk_flush_plug_list
+2.2 list_add_tail
+
+## blk flush
+case 1 schedule
+kblockd_workqueue -> blk_delay_work
+case 2 
+_blk_run_queue -> q->request_fn scsi_request_fn
+## bio_list
+Recursion avoidance
+queue bio before make_request_fn
+## Submit request to driver
+__blk_run_queue -> request_fn scsi_request_fn

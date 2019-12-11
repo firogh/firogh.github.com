@@ -1,0 +1,35 @@
+# Preemption
+## User preemption - Linux kernel user mode is always User preemption.
+* When returning to user-space from a system call.
+syscall_return_slowpath
+* When returning to user-space from an interrupt hander.
+retint_user->prepare_exit_to_usermode
+## Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.
+bloked (which results in a call to schedule())
+If a task in the kernel explicitly calls schedule() it's involuntary!!!
+## Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.
+* When an interrupt handler exits, before returning to kernel-space.
+retint_kernel->preempt_schedule_irq->cond_resched
+* __local_bh_enable_ip -> preempt_check_resched
+## The following also t relates to preemption; it's PREEMPT_VOLUNTARY.
+For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.
+config PREEMPT_VOLUNTARY
+        bool "Voluntary Kernel Preemption (Desktop)"
+        help
+          This option reduces the latency of the kernel by adding more
+          "explicit preemption points" to the kernel code. These new
+          preemption points have been selected to reduce the maximum
+          latency of rescheduling, providing faster application reactions,
+          at the cost of slightly lower throughput.
+* need_resched - When kernel code becomes preemptible again.
+1. set_tsk_need_resched() in resched_curr
+tick: check_preempt_tick or entity_tick
+fork: wake_up_new_task->check_preempt_curr->check_preempt_wakeup
+wakeup: check_preempt_wakeup
+...
+2. if (need_resched()) cond_resched();
+
+## LQO
+* if (!preempt && prev->state)in __schedule; why prev->state?
+if preempt is true; it should mean PREEMPT_VOLUNTARY.
+prev->state means deactivate.

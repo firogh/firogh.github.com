@@ -1,0 +1,49 @@
+# Reference
+[Memory – Part 2: Understanding Process memory](https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/)
+
+# History
+[2. Memory management](http://bitsavers.trailing-edge.com/pdf/sun/sunos/1.1/800-1108-01E_System_Interface_Manual_for_the_Sun_Workstation_Jan84.pdf)
+
+# Formal causes
+## vma
+vma's unit is PAGE_SIZE; (vm_end - vm_start) % 0x1000 == 0 is True.
+### split_vma
+new_below
+commit 5846fc6c31162234e88bdfd91548b1cf0d2cebbd
+Author: Andrew Morton <akpm@digeo.com>
+Date:   Tue Sep 17 06:35:47 2002 -0700
+    [PATCH] consolidate the VMA splitting code
+new_below means the place where the old vma go to! Bad naming!
+0 means the old will save the head part. 1 means tail part.
+
+# Synchronization
+arg_lock and mmap_sem: [mm: get_cmdline use arg_lock instead of mmap_sem](https://lore.kernel.org/lkml/20190417120347.15397-1-mkoutny@suse.com/)
+
+# Address space
+[flexible-mmap-2.6.7-D5](https://lwn.net/Articles/90311/)
+[Reorganizing the address space](https://lwn.net/Articles/91829/)
+[Anatomy of a Program in Memory](http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/)
+
+# Stack
+
+# Library
+openat(AT_FDCWD, "/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+mmap(NULL, 1857568, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f27cbb02000
+
+# Heap
+brk
+mmap - Anonymous Memory Mappings, LSP chapter 9.
+
+# Shared memory
+man shm_overview
+Anonymous shared memory mappings
+man shmget
+
+# Memory-mapped file I/O
+Check LSP chapter 4: Mapping Files into Memory
+
+# Execve: text,bss,data
+do_execveat_common and elf_mmap
+cat /proc/self/maps and man 5 proc
+read: file rmap, file backed.
+write: anon ramp, swapbacked. check wp_page_copy and page_add_new_anon_rmap

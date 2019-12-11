@@ -7,7 +7,74 @@
     <language>en-us</language>
     <author>Firo Yang</author>
     
-    <updated>Sat, 25 Apr 2015 00:00:00 UTC</updated>
+    <updated>Wed, 02 Jan 2019 00:00:00 UTC</updated>
+    
+    <item>
+      <title>Kernel memory bug - SLAB&#39;s 3 lists are corrupted.</title>
+      <link>http://firoyang.org/howto/bug_mm_1/</link>
+      <pubDate>Wed, 02 Jan 2019 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/howto/bug_mm_1/</guid>
+      <description>
+
+&lt;p&gt;Recently, I was working on a kernel memory bug.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://apibugzilla.suse.com/show_bug.cgi?id=1118875&#34;&gt;https://apibugzilla.suse.com/show_bug.cgi?id=1118875&lt;/a&gt;&lt;br /&gt;
+L3: kernel BUG at ../mm/slab.c:2804! bad LRU list and active values in page structs in possible use-after-free&lt;/p&gt;
+
+&lt;p&gt;After digging the binary vmcore file of kdump, I got the following findings.&lt;/p&gt;
+
+&lt;h1 id=&#34;node-0&#34;&gt;Node 0&lt;/h1&gt;
+
+&lt;h2 id=&#34;partial&#34;&gt;Partial&lt;/h2&gt;
+
+&lt;p&gt;list page.lru  -H 0xffff8801a7c01348 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n0p.log&lt;br /&gt;
+n0p -&amp;gt; n0f=0xffff8801a7c01358&lt;/p&gt;
+
+&lt;h2 id=&#34;full&#34;&gt;Full&lt;/h2&gt;
+
+&lt;p&gt;list page.lru  -H 0xffff8801a7c01358 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n0f.log&lt;br /&gt;
+n0f -&amp;gt;&lt;br /&gt;
+ffffea0006902380&lt;br /&gt;
+    lru = {&lt;br /&gt;
+      next = 0xffffea0080ed53e0,&lt;br /&gt;
+      prev = 0xffffea00405f8ae0&lt;br /&gt;
+    }&lt;br /&gt;
+    s_mem = 0xffff8801a408e000&lt;br /&gt;
+      active = 16&lt;br /&gt;
+    slab_cache = 0xffff8801a7c00400&lt;br /&gt;
+  flags = 6755398367314048&lt;br /&gt;
+ffffea0080ed53c0&lt;br /&gt;
+    lru = {&lt;br /&gt;
+      next = 0xffffea00422a34e0,&lt;br /&gt;
+      prev = 0xffffea00069023a0&lt;br /&gt;
+    }&lt;br /&gt;
+    s_mem = 0xffff88203b54f000&lt;br /&gt;
+      active = 7&lt;br /&gt;
+    slab_cache = 0xffff8801a7c00400&lt;br /&gt;
+  flags = 24769796876796032&lt;br /&gt;
+&amp;hellip; -&amp;gt; n1f = 0xffff881107c00358&lt;/p&gt;
+
+&lt;h1 id=&#34;node-1&#34;&gt;Node 1&lt;/h1&gt;
+
+&lt;h2 id=&#34;partial-1&#34;&gt;Partial&lt;/h2&gt;
+
+&lt;p&gt;crash&amp;gt; list page.lru  -H 0xffff881107c00348 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n1p.log&lt;br /&gt;
+nip-&amp;gt; SLAB ffffea0043ab74e0 -&amp;gt; 0xffff881107c00348 = n1p&lt;br /&gt;
+SLAB ffffea0043ab74e0&amp;rsquo;s prev pointing to 0xffff881107c00358&lt;/p&gt;
+
+&lt;h2 id=&#34;full-1&#34;&gt;Full&lt;/h2&gt;
+
+&lt;p&gt;crash&amp;gt; list page.lru  -H 0xffff881107c00358 -s page.lru,s_mem,active,slab_cache,flags &amp;gt;n1f.log&lt;br /&gt;
+n1f-&amp;gt; SLAB ffffea0043ab74e0  -&amp;gt; &amp;hellip; -&amp;gt; 0xffff881107c00348 = n1p&lt;/p&gt;
+
+&lt;p&gt;This issue occured on a NUMA system with 2 memory nodes.&lt;br /&gt;
+Both node 0 and node 1&amp;rsquo;s SLAB&amp;rsquo;s partial and full lists were corrupted. After looking into this issue a few days, I talked to Vlastimil Babka.&lt;br /&gt;
+He provided a fix for this issue. That is 7810e6781e0fcbca78b91cf65053f895bf59e85f - mm, page_alloc: do not break __ GFP_THISNODE by zonelist reset.&lt;/p&gt;
+
+&lt;p&gt;Now, I have a question: why did I cannot solve this issue?&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>使用mutt收发邮件</title>
@@ -17,10 +84,16 @@
       <guid>http://firoyang.org/howto/mutt/</guid>
       <description>
 
-&lt;p&gt;&lt;a href=&#34;http://deferred.io/2011/09/23/sane-gmail-filters-for-high-volume-mailing-lists.html&#34;&gt;sane Gmail filters for high-volume mailing lists&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://handsomecheung.github.io/mutt-manual-cn/mutt-manual-1.5.19-cn.html&#34;&gt;Mutt中文手册&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://deferred.io/2011/09/23/sane-gmail-filters-for-high-volume-mailing-lists.html&#34;&gt;sane Gmail filters for high-volume mailing lists&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg&#34; alt=&#34;Trigun&#34; /&gt;&lt;br /&gt;
-###Reference&lt;br /&gt;
+&lt;p&gt;&lt;img src=&#34;http://upload.wikimedia.org/wikipedia/en/5/5f/Trigun_manga.jpg&#34; alt=&#34;Trigun&#34; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;sidebar-message-stats&#34;&gt;Sidebar message stats&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=850604&#34;&gt;https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=850604&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;###Reference&lt;br /&gt;
 昨天用web Gmail给社区的maillist回信, 被退信了. 提示Gmail发送的邮件包含html.&lt;br /&gt;
 这才想起来社区的mailist只接收:&lt;/p&gt;
 
@@ -86,6 +159,10 @@ to tls_trust_file /etc/ssl/certs/ca-certificates.crt&lt;/p&gt;
 
 &lt;p&gt;Error sending message, child exited 68 (Host unknown.).&lt;br /&gt;
 echo &amp;ldquo;test&amp;rdquo; |proxychains mutt -s &amp;ldquo; first_test&amp;rdquo; firogm@gmail.com&lt;/p&gt;
+
+&lt;h1 id=&#34;outlook-office-365&#34;&gt;Outlook office 365&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://support.office.com/en-us/article/pop-and-imap-email-settings-for-outlook-8361e398-8af4-4e97-b147-6c6c4ac95353&#34;&gt;https://support.office.com/en-us/article/pop-and-imap-email-settings-for-outlook-8361e398-8af4-4e97-b147-6c6c4ac95353&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     

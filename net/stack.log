@@ -1,0 +1,148 @@
+
+# References
+[Linux Network Receive Stack Monitoring and Tuning Deep Dive](https://people.redhat.com/pladd/MHVLUG_2017-04_Network_Receive_Stack.pdf)
+[Monitoring and Tuning the Linux Networking Stack: Receiving Data](https://blog.packagecloud.io/eng/2016/06/22/monitoring-tuning-linux-networking-stack-receiving-data/)
+[Monitoring and Tuning the Linux Networking Stack: Sending Data](https://blog.packagecloud.io/eng/2017/02/06/monitoring-tuning-linux-networking-stack-sending-data/)
+[Illustrated Guide to Monitoring and Tuning the Linux Networking Stack: Receiving Data](https://blog.packagecloud.io/eng/2016/10/11/monitoring-tuning-linux-networking-stack-receiving-data-illustrated/)
+[Understanding TCP/IP Network Stack & Writing Network Apps](https://www.cubrid.org/blog/understanding-tcp-ip-network-stack)
+
+# Socket layer
+[What's Wrong With Sockets Performance And How to Fix It][1]
+[1]: http://natsys-lab.blogspot.com/2013/03/whats-wrong-with-sockets-performance.html
+
+## Topdown swith: socket -> (datagram, raw, stream) proto_ops -> protocol proto and proto specific
+BSD socket api ->proto_ops(sock type base)api ->proto (udp/tcp_prot)
+abstraction <-> specific
+Swith proto family in __sock_create(); net_families[family];
+Swith proto_ops in inet_create() and sock->ops = inet_protosw.ops , inetsw_array
+switch table: static struct inet_protosw inetsw_array
+const struct proto_ops inet_stream_ops is very like the following fops in ext4 fs.
+                inode->i_op = &ext4_file_inode_operations;
+                inode->i_fop = &ext4_file_operations;
+struct proto tcp_prot
+and
+init proto specific function in inet_create() too
+sk->sk_prot->init(sk) = tcp_v4_init_sock()
+icsk->icsk_af_ops = &ipv4_specific; this is just a set of fuctions releate to TCP.
+## bind
+sys_bind -> inet_stream_ops ->inet_bind ->sk_prot->bind(likely, is NULL)
+## Write
+write->inet_stream_ops->sendmsg->tcp_sendmsg
+* inet_connection_sock_af_ops
+icsk->icsk_af_ops
+
+# TCP send packet
+## message 
+tcp_sendmsg: tcp_transmit_skb -> icsk->icsk_af_ops->queue_xmit = ip_queue_xmit -> ip_local_out ->ip_output -> ip_finish_output
+## synack
+tcp_v4_send_synack:ip_build_and_send_pkt -> ip_local_out
+## ack and reset
+tcp_v4_send_reset or tcp_v4_send_ack: ip_send_unicast_reply -> ip_push_pending_frames
+## syn
+tcp_v4_connect -> tcp_connect ->  tp->fastopen_req ? tcp_send_syn_data(sk, buff) : tcp_transmit_skb(sk, buff, 1, sk->sk_allocation) ...->ip_queue_xmit
+tcp_send_syn_data -> tcp_transmit_skb ...-> ip_queue_xmit
+
+## tcp reset instance and ip_send_unicast_reply
+ => __ip_make_skb
+ => ip_push_pending_frames
+ => ip_send_unicast_reply
+ => tcp_v4_send_reset
+ => tcp_v4_rcv
+ => ip_local_deliver_finish
+ => ip_local_deliver
+ => ip_rcv
+ => __netif_receive_skb_core
+ => netif_receive_skb_internal
+ => napi_gro_receive
+ => r8152_poll
+ => net_rx_action
+ => __do_softirq
+ => irq_exit
+ => do_IRQ
+ => ret_from_intr
+ => cpuidle_enter_state
+ => do_idle
+ => cpu_startup_entry
+ => start_secondary
+ => secondary_startup_64
+
+# TCP receive packet
+## steps of tcp_rcvmsg
+https://www.spinics.net/lists/newbies/msg14465.html
+[Best explnations of set_task_state to running in tcp_rcv_established, see explorer](http://bbs.chinaunix.net/forum.php?mod=viewthread&action=printable&tid=4114007)
+Even through you know above , I think you should also know if a task was scheduled with task state == RUNNING, the schedule will use put_prev_task_fair-> put_prev_entity->__enqueue_entity as prev->on_rq inpick_next_task_fair()
+## Queues
+tcp_add_backlog and sk_backlog_rcv=tcp_v4_do_rcv
+tcp_prequeue:ucopy.prequeue
+tcp_copy_to_iovec:ucopy.msg,
+tcp_queue_rcv:sk->sk_receive_queue
+tcp_data_queue: ooo?
+### What about the skbs in sk_receive_queue?
+sk→receive_queue contains processed TCP segments, which means that all the pro-
+tocol headers are stripped and data are ready to be copied to the user application.
+### prequeue
+tcp: remove prequeue support - e7942d0633c47c791ece6afa038be9cf977226de
+
+# Raw send packet, ping likewise
+raw_sendmsg -> raw_send_hdrinc 
+raw_sendmsg -> ip_push_pending_frames
+
+# Raw receive packet, ping likewise
+ip_local_deliver_finish -> raw_local_deliver
+
+# IP send packet
+ip_local_out
+ip_queue_xmit -> ip_local_out
+ip_append_data and ip_push_pending_frames -> ip_local_out
+
+# IP receive packet
+## IPv6
+ip6_input or ip6_output
+## L3 -> L4 Bottomup switch
+ip_rcv_finish_core
+int protocol = iph->protocol;
+struct net_protocol __rcu *inet_protos[MAX_INET_PROTOS];
+inet_add_protocol(&tcp_protocol, IPPROTO_TCP) 
+tcp_v4_protocol
+### IP raw socket
+ip_local_deliver_finish -> raw_local_deliver -> raw_rcv -> raw_rcv_skb -> sock_queue_rcv_skb
+
+## L3
+static struct packet_type ip_packet_type __read_mostly = {
+        .type = cpu_to_be16(ETH_P_IP),
+        .func = ip_rcv,
+
+# L2 receiving packet
+Ether type
+ETH_P_LOOP      0x0060          /* Ethernet Loopback packet     */
+ETH_P_IP        0x0800          /* Internet Protocol packet     */
+ETH_P_ARP       0x0806          /* Address Resolution packet    */
+ETH_P_802_3     0x0001          /* Dummy type for 802.3 frames  */
+ETH_P_ALL       0x0003          /* Every packet (be careful!!!) */
+ETH_P_802_2     0x0004          /* 802.2 frames                 */
+ETH_P_SNAP      0x0005          /* Internal only
+ptype_all or dev->ptye_all: it's for nit - packet capturing; check packet_create() and ETH_P_ALL; it's a socket based packet receiver.
+ptype_base: except ETH_P_ALL;
+netif_receive_skb-> 
+{
+	arp_rcv 
+	packet_rcv # packet capture
+	ip_rcv
+}
+## pt_rev
+pt_prev: skb->users, deliver_skb, skb_shared_check, skb_clone, kfree_skb
+It's a optimization for only-one hanlder case.
+it's for the following. it's not the deliver_skb(), so no increasing skb->users, no skb_clone.  
+	if (pt_prev) {
+                ret = pt_prev->func(skb, skb->dev, pt_prev, orig_dev);
+        } 
+
+# L2 sending packet
+n->output ...-> dev_queue_xmit ...->
+{
+	dev_queue_xmit_nit->packet_rcv # packet capture
+	netdev_start_xmit
+}
+
+## /* ieee80211_deliver_skb [mac80211] */
+    2   619     0     0 ?           -1 S        0   2:06  \_ [irq/127-iwlwifi]

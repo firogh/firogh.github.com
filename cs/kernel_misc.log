@@ -1,0 +1,25 @@
+
+
+# parsing boot cmdline parameters
+1st parsing
+start_kernel->steup_arch()->parse_early_param->parse_early_options
+2nd parsing
+start_kernel->
+        pr_notice("Kernel command line: %s\n", boot_command_line);
+        parse_early_param(); // Do nothing just return as done by above calling for x86.
+        parse_args("Booting kernel", static_command_line, __start___param,
+                   __stop___param - __start___param,
+                   -1, -1, &unknown_bootoption);
+## normal param
+include/linux/init.h
+__setup_param(str, unique_id, fn, early)			\
+		__used __section(.init.setup)				\
+include/asm-generic/vmlinux.lds.h
+		KEEP(*(.init.setup))					\
+
+## kernel module param
+include/asm-generic/vmlinux.lds.h
+		KEEP(*(__param))					\
+__module_param_call
+__attribute__ ((unused,__section__ ("__param"),aligned(sizeof(void *)))) \
+

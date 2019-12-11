@@ -1,44 +1,48 @@
----
-tags: [ kernel ] 
-layout: post
-date: 2014-12-28
-title: Linux memory management
-category: cs
----
 
-All processes's page table(task_strcut pgd) was derived form init_mm's swapper_pg_dir which inited in native_pagetable_init(). #FIXME.
+# Formal cause
+[Memory part 3: Virtual Memory](https:// https://stackoverflow.com/questions/6803762/dump-the-contents-of-tlb-buffer-of-x86-cpu)
+[Chapter 3  Page Table Management](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
+## Page tbale
+### PTE
+v3a chapter 4.5 4-level paging, p132, Figure 4-11. Formats of CR3 and Paging-Structure Entries with 4-Level Paging
+| G | PAT | D | A | PCD | PWT | U/S | R/W | Present
+Check _PAGE_BIT_ACCESSED
+commit 97e3c602ccbdd7db54e92fe05675c664c052a466
+Author: Dave Hansen <dave.hansen@linux.intel.com>
+Date:   Thu Jul 7 17:19:12 2016 -0700
+    x86/mm: Ignore A/D bits in pte/pmd/pud_none()
+Firo: _PAGE_KNL_ERRATUM_MASK
 
-##Page table
-mk_pte(page, pgprot)    pfn_pte(page_to_pfn(page), (pgprot))
-原来低12位里面存了flag啊!
-__pte(((phys_addr_t)page_nr << PAGE_SHIFT) | massage_pgprot(pgprot));
-For vmalloc(), chechk here vmap_page_range_noflush()
-For kmap(), check kmap_init()
-[How to emulate the process of translate va to pa?](http://edsionte.com/techblog/archives/1966)
+## Page directory
+### PDE
 
+## Copy ptes
+### fork's wp page and COW - copy_page_range ... copy_pte_range
+is_cow_mapping(vm_flags_t flags) => return (flags & (VM_SHARED | VM_MAYWRITE)) == VM_MAYWRITE;
+What about Shared & Write? Check the following commit:
+commit d08b3851da41d0ee60851f2c75b118e1f7a5fc89
+Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Date:   Mon Sep 25 23:30:57 2006 -0700
+    [PATCH] mm: tracking shared dirty pages
+For good understanding, check do_wp_page().
 
-## flush tlb after page table modification.
+## Zap ptes - zap_page_range
+exit
+munmap
 
-## Direct mapping area
-high_memory (-128UL << 20)
-__get_free_pages()
-kmalloc()
-kmem_cache_alloc()/slab
+## Unmap ptes
+PFRA, migation
 
-## Vmalloc
-map_vm_area 页表映射
-the page in ZONE_NORMAL will not use directly mapping pfn address! It use VMALLOC address! 
+## MMU notifier
+[Memory management notifiers](https://lwn.net/Articles/266320/)
+commit cddb8a5c14aa89810b40495d94d3d2a0faee6619
+Author: Andrea Arcangeli <andrea@qumranet.com>
+Date:   Mon Jul 28 15:46:29 2008 -0700
+    mmu-notifiers: core
 
-### Vmalloc coherence with vfree() after vmalloc_sync_one
-在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，当重新vmalloc()时，仍旧使用原来的页表。 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
-deatils in vmalloc_sync_one() and vunmap_pte_range()
-只释放pte
+# Material
+## Walk page tables
+ptdump_walk_pgd_level_core
+[Mannully va to pa](http://edsionte.com/techblog/archives/1966)
 
-## Persistent Kernel Mappings
-kmap(struct page *)
-How kmap works? 
-	Check kmap_init(), later!
-
-## Temporay Mappings(Fixmaps)
-kmap_atomic()
 

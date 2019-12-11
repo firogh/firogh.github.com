@@ -17,135 +17,136 @@
       <guid>http://firoyang.org/net/netfilter/</guid>
       <description>
 
-&lt;h1 id=&#34;filter&#34;&gt;Filter&lt;/h1&gt;
+&lt;h1 id=&#34;netfilter&#34;&gt;Netfilter&lt;/h1&gt;
 
-&lt;p&gt;conditions and actions&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://drive.google.com/open?id=1F-qJiqahUPgknv8EHnnYGUf6n6mQfPe-&#34;&gt; Netfilter traversal&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;packet-filter&#34;&gt;Packet filter&lt;/h1&gt;
+&lt;h2 id=&#34;hooks&#34;&gt;Hooks&lt;/h2&gt;
 
-&lt;p&gt;type: filter&lt;/p&gt;
+&lt;p&gt;NF_INET_PRE_ROUTING: ip_rcv&lt;br /&gt;
+NF_INET_LOCAL_IN: ip_local_deliver&lt;br /&gt;
+NF_INET_FORWARD: ip_forward&lt;br /&gt;
+NF_INET_LOCAL_OUT: __ip_local_out&lt;br /&gt;
+NF_INET_POST_ROUTING: ip_output&lt;/p&gt;
 
-&lt;h2 id=&#34;what-packets-and-where-to-filter&#34;&gt;What packets and where to filter&lt;/h2&gt;
+&lt;h2 id=&#34;priority&#34;&gt;Priority&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;Filter rules&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Condition&lt;br /&gt;
-IP addr&lt;br /&gt;
-Port&lt;br /&gt;
-Level 4 protocol type&lt;br /&gt;&lt;/li&gt;
+&lt;p&gt;enum nf_ip_hook_priorities {&lt;br /&gt;
+        NF_IP_PRI_FIRST = INT_MIN,&lt;br /&gt;
+        NF_IP_PRI_RAW_BEFORE_DEFRAG = -450,&lt;br /&gt;
+        NF_IP_PRI_CONNTRACK_DEFRAG = -400,&lt;br /&gt;
+        NF_IP_PRI_RAW = -300,&lt;br /&gt;
+        NF_IP_PRI_SELINUX_FIRST = -225,&lt;br /&gt;
+        NF_IP_PRI_CONNTRACK = -200,&lt;br /&gt;
+        NF_IP_PRI_MANGLE = -150,&lt;br /&gt;
+        NF_IP_PRI_NAT_DST = -100,&lt;br /&gt;
+        NF_IP_PRI_FILTER = 0,&lt;br /&gt;
+        NF_IP_PRI_SECURITY = 50,&lt;br /&gt;
+        NF_IP_PRI_NAT_SRC = 100,&lt;br /&gt;
+        NF_IP_PRI_SELINUX_LAST = 225,&lt;br /&gt;
+        NF_IP_PRI_CONNTRACK_HELPER = 300,&lt;br /&gt;
+        NF_IP_PRI_CONNTRACK_CONFIRM = INT_MAX,&lt;br /&gt;
+        NF_IP_PRI_LAST = INT_MAX,};&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;Action&lt;br /&gt;
-accept&lt;br /&gt;
-drop&lt;/p&gt;&lt;/li&gt;
+&lt;h2 id=&#34;xtables&#34;&gt;xtables&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;Filter checkpoints&lt;br /&gt;
-Ingress&lt;br /&gt;
-Outgress&lt;br /&gt;
-Route&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;br /&gt;
+xt_table: ipt_register_table&lt;br /&gt;
+struct xt_table         *iptable_filter;&lt;br /&gt;
+struct xt_table         *iptable_mangle;&lt;br /&gt;
+struct xt_table         *iptable_raw;&lt;br /&gt;
+struct xt_table         *arptable_filter;&lt;br /&gt;
+struct xt_table         *iptable_security;&lt;br /&gt;
+struct xt_table         *nat_table;&lt;br /&gt;
+xt_target: xt_register_target&lt;br /&gt;
+xt_match: xt_register_match&lt;/p&gt;
 
-&lt;h1 id=&#34;hooking&#34;&gt;Hooking&lt;/h1&gt;
+&lt;h2 id=&#34;nftables&#34;&gt;nftables&lt;/h2&gt;
 
-&lt;p&gt;Interceptor pattern&lt;/p&gt;
+&lt;h2 id=&#34;onset&#34;&gt;Onset&lt;/h2&gt;
+
+&lt;p&gt;netfilter_init(), mark_mt_init&lt;/p&gt;
+
+&lt;h2 id=&#34;nuclus&#34;&gt;Nuclus&lt;/h2&gt;
+
+&lt;p&gt;nf_hooks -&amp;gt; iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;br /&gt;
+ipt_do_table() nat, filter, mangle.&lt;/p&gt;
 
 &lt;h1 id=&#34;connection-tracking&#34;&gt;Connection tracking&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://people.netfilter.org/pablo/docs/login.pdf&#34;&gt;Netfilter’s connection tracking system&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.netdevconf.org/2.1/session.html?westphal&#34;&gt;netfilters connection tracking subsystem&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.linuxjournal.com/article/4234&#34;&gt;Network Probes Explained: Understanding Port Scans and Ping Sweeps&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://www.linuxjournal.com/article/4234&#34;&gt;Network Probes Explained: Understanding Port Scans and Ping Sweeps&lt;/a&gt;&lt;br /&gt;
+Each Netfilter connection is uniquely identified by a 5-arry (layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple&lt;br /&gt;
+Connection tracking helper: connection tracking can be given knowledge of application-layer protocols&lt;br /&gt;
+nf_conntrack: support conntrack templates&lt;/p&gt;
 
-&lt;h1 id=&#34;netfilter&#34;&gt;Netfilter&lt;/h1&gt;
+&lt;h2 id=&#34;onset-1&#34;&gt;Onset&lt;/h2&gt;
 
-&lt;p&gt;a set of hooks: Local_in local_out forward pre_routing post_routing&lt;br /&gt;
-packet filter&lt;br /&gt;
-Connection tracking:&lt;br /&gt;
-NAT&lt;/p&gt;
+&lt;p&gt;nf_conntrack_standalone_init, nf_conntrack_l3proto_ipv4_init&lt;/p&gt;
 
-&lt;h1 id=&#34;software-implementation&#34;&gt;Software implementation&lt;/h1&gt;
+&lt;h2 id=&#34;nuclus-1&#34;&gt;Nuclus&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Iptables#Overview&#34;&gt;Overview of xtables in wikipedia&lt;/a&gt;&lt;br /&gt;
-* Init&lt;br /&gt;
-net/netfilter/core.c&lt;br /&gt;
-netfilter_init()&lt;br /&gt;
-如mangle表的初始化见iptable_mangle_init&lt;br /&gt;
-xt_table: ipt_register_table&lt;br /&gt;
-        struct xt_table         *iptable_filter;&lt;br /&gt;
-        struct xt_table         *iptable_mangle;&lt;br /&gt;
-        struct xt_table         *iptable_raw;&lt;br /&gt;
-        struct xt_table         *arptable_filter;&lt;br /&gt;
-        struct xt_table         *iptable_security;&lt;br /&gt;
-        struct xt_table         *nat_table;&lt;br /&gt;
-如mark match的初始化 mark_mt_init&lt;br /&gt;
-xt_match: xt_register_match&lt;/p&gt;
+&lt;p&gt;conntrack &amp;ndash; user-land tools&lt;br /&gt;
+obsolete /proc/net/nf_conntrack&lt;/p&gt;
 
-&lt;p&gt;如MARK target 的初始化 也在 mark_mt_init&lt;br /&gt;
-xt_target: xt_register_target&lt;/p&gt;
+&lt;h3 id=&#34;details&#34;&gt;Details&lt;/h3&gt;
 
-&lt;ul&gt;
-&lt;li&gt;Nuclus&lt;br /&gt;
-netfilter hook -&amp;gt;  iptable_mangle_hook -&amp;gt; ipt_do_table -&amp;gt;&amp;hellip;&lt;br /&gt;
-ipt_do_table() 就是内核处理nat, filter, mangle的公用函数.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;基本思路是：一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。&lt;br /&gt;
+这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。 徐琛,也这么说!&lt;/p&gt;
 
-&lt;h1 id=&#34;connection-tracking-1&#34;&gt;Connection tracking&lt;/h1&gt;
+&lt;h1 id=&#34;mangle&#34;&gt;Mangle&lt;/h1&gt;
 
-&lt;p&gt;Conntrack 的实现不依赖iptables, 很独立.&lt;/p&gt;
+&lt;h2 id=&#34;onset-2&#34;&gt;Onset&lt;/h2&gt;
 
-&lt;h2 id=&#34;init&#34;&gt;init&lt;/h2&gt;
-
-&lt;p&gt;nf_conntrack_standalone_init()&lt;br /&gt;
-nf_conntrack_l3proto_ipv4_init()&lt;/p&gt;
-
-&lt;h2 id=&#34;conntrack-user-land-tools&#34;&gt;conntrack &amp;ndash; user-land tools&lt;/h2&gt;
-
-&lt;p&gt;obsolete /proc/net/nf_conntrack&lt;/p&gt;
-
-&lt;h2 id=&#34;tuple-link-a-socket-5-arry-tuple&#34;&gt;tuple &amp;ndash; link a socket 5-arry tuple&lt;/h2&gt;
-
-&lt;p&gt;Each Netfilter connection is uniquely identified by a&lt;br /&gt;
-(layer-3 protocol, source address, destination address, layer-4 protocol, layer-4 key) tuple&lt;br /&gt;
-nf_conntrack_tuple nf_conn&lt;/p&gt;
-
-&lt;h2 id=&#34;connection-tracking-helper&#34;&gt;Connection tracking helper&lt;/h2&gt;
-
-&lt;p&gt;connection tracking can be given knowledge of application-layer protocols&lt;br /&gt;
-ALG&lt;/p&gt;
-
-&lt;h2 id=&#34;template&#34;&gt;template&lt;/h2&gt;
-
-&lt;p&gt;netfilter: nf_conntrack: support conntrack templates&lt;/p&gt;
-
-&lt;h2 id=&#34;details&#34;&gt;Details&lt;/h2&gt;
-
-&lt;p&gt;以上的工作事实上都很简单，基本思路是：&lt;br /&gt;
-一个包来了，转换其tuple，看其在连接跟踪表中没有，有的话，更新其状态，以其做一些与协议相关的工作，如果没有，则分配一个新的连接表项，并与skb_buff关连，但是问题是，这个表项，还没有被加入连接表当中来。其实这样做的理由很简单，因为这个时候，这个包是否有机会活命还是个未知数，例如被其它模块给Drop了……所以，要等到一切安全了，再来将这个表项插入至连接跟踪表。&lt;br /&gt;
-这个“一切安全”当然是Netfilter所有的模块处理完了，最完全了。&lt;br /&gt;
-徐琛,也这么说!&lt;/p&gt;
+&lt;p&gt;iptable_mangle_init&lt;/p&gt;
 
 &lt;h1 id=&#34;nat&#34;&gt;NAT&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.ietf.org/rfc/rfc3489.txt&#34;&gt;https://www.ietf.org/rfc/rfc3489.txt&lt;/a&gt;&lt;br /&gt;
 symmetric nat, 端口不复用, 访问同一个服务器.&lt;br /&gt;
-linux 内核的NAT是基于iptables 和 conntrack实现的.&lt;/p&gt;
+Drop ICMP redict in NAT:&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&#34;&gt;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&lt;/a&gt;&lt;br /&gt;
+static const struct nf_hook_ops nf_nat_ipv4_ops[] = {&lt;br /&gt;
+        {&lt;br /&gt;
+                .hook           = iptable_nat_do_chain,&lt;br /&gt;
+                .pf             = NFPROTO_IPV4,&lt;br /&gt;
+                .hooknum        = NF_INET_PRE_ROUTING,&lt;br /&gt;
+                .priority       = NF_IP_PRI_NAT_DST,&lt;br /&gt;
+        },&lt;br /&gt;
+        {&lt;br /&gt;
+                .hook           = iptable_nat_do_chain,&lt;br /&gt;
+                .pf             = NFPROTO_IPV4,&lt;br /&gt;
+                .hooknum        = NF_INET_POST_ROUTING,&lt;br /&gt;
+                .priority       = NF_IP_PRI_NAT_SRC,&lt;br /&gt;
+        },&lt;br /&gt;
+        {&lt;br /&gt;
+                .hook           = iptable_nat_do_chain,&lt;br /&gt;
+                .pf             = NFPROTO_IPV4,&lt;br /&gt;
+                .hooknum        = NF_INET_LOCAL_OUT,&lt;br /&gt;
+                .priority       = NF_IP_PRI_NAT_DST,&lt;br /&gt;
+        },&lt;br /&gt;
+        {&lt;br /&gt;
+                .hook           = iptable_nat_do_chain,&lt;br /&gt;
+                .pf             = NFPROTO_IPV4,&lt;br /&gt;
+                .hooknum        = NF_INET_LOCAL_IN,&lt;br /&gt;
+                .priority       = NF_IP_PRI_NAT_SRC,&lt;br /&gt;
+        },};&lt;/p&gt;
 
-&lt;p&gt;##init&lt;br /&gt;
-iptable_nat_init&lt;/p&gt;
+&lt;h2 id=&#34;onset-3&#34;&gt;Onset&lt;/h2&gt;
 
-&lt;h2 id=&#34;nat-helper&#34;&gt;NAT helper&lt;/h2&gt;
+&lt;p&gt;iptable_nat_init&lt;/p&gt;
 
-&lt;p&gt;Similar to connection tracking helpers, NAT helpers will do a packet inspection&lt;br /&gt;
-and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
+&lt;h2 id=&#34;nuclus-2&#34;&gt;Nuclus&lt;/h2&gt;
 
-&lt;h2 id=&#34;drop-icmp-redict-in-nat&#34;&gt;Drop ICMP redict in NAT&lt;/h2&gt;
+&lt;p&gt;NAT helper: Similar to connection tracking helpers, NAT helpers will do a packet inspection and substitute original addresses by reply addresses in the payload.&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&#34;&gt;http://www.netfilter.org/documentation/HOWTO/NAT-HOWTO-10.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;snat&#34;&gt;SNAT&lt;/h2&gt;
+&lt;h3 id=&#34;snat&#34;&gt;SNAT&lt;/h3&gt;
 
 &lt;p&gt;nf_nat_ipv4_out -&amp;gt; nf_nat_ipv4_fn -&amp;gt;&lt;br /&gt;
 {&lt;br /&gt;
-nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info&lt;br /&gt;
+    nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf_nat_setup_info&lt;br /&gt;
     {&lt;br /&gt;
         无论是SNAT, 还是DNAT,改的都是ct的reply. 所以这里先把 orig_rely的对应的orig_original形式弄出来.&lt;br /&gt;
         但是,必须要保证改skb的真实值要保证source 唯一, orig_original -&amp;gt; new_original找到后再revert,成new_reply在改到ct里面去.&lt;br /&gt;
@@ -164,7 +165,6 @@ nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf
          这个函数的用途可能是担心, orig被人改了, 不能用了.
         except for prior manipulations
     }       
-
     get_unique_tuple
     {
         1. 如果snat, 且前后可以一致就直接new=orig, 合理.
@@ -172,20 +172,17 @@ nf_nat_rule_find -&amp;gt; ipt_do_table -&amp;gt; xt_snat_target_v1 -&amp;gt; nf
         3. find_best_ips_proto, 找一个 the least-used IP/proto combination in the given range
         4. nf_nat_used_tuple 保证唯一
     }       
-
     bysoruce 里面存的应该是new_original, hash -&amp;gt; &amp;amp;net-&amp;gt;ct.nat_bysource[srchash]
-
-
 }
+//上面ct改完了该改skb了.
+nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//上面ct改完了该改skb了.&lt;br /&gt;
-    nf_nat_packet -&amp;gt; nf_nat_ipv4_manip_pkt,&lt;br /&gt;
-}&lt;/p&gt;
+&lt;p&gt;}&lt;/p&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;SNAT nftables&lt;br /&gt;
-nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;SNAT nftables&lt;br /&gt;
+nf_nat_prerouting &amp;hellip;-&amp;gt; nft_do_chain&lt;br /&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;One kind of NAT, just set one flag bit in ct-&amp;gt;status (SRC_NAT or DST_NAT), but set both SRC/DST_DONE!&lt;/p&gt;&lt;/li&gt;
 
@@ -219,25 +216,13 @@ if (ct-&amp;gt;status &amp;amp; statusbit) {
 
 &lt;p&gt;}&lt;/p&gt;
 
-&lt;p&gt;#ipset&lt;br /&gt;
-salist for iptables&lt;/p&gt;
+&lt;h1 id=&#34;ipset&#34;&gt;ipset&lt;/h1&gt;
 
-&lt;p&gt;#SYN proxy&lt;br /&gt;
-SYNPROXY target makes handling of large SYN floods possible without&lt;br /&gt;
-the large performance penalties imposed by the connection tracking in such cases.&lt;br /&gt;
-On 3 November 2013, SYN proxy functionality was merged into the Netfilter,&lt;br /&gt;
-with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
+&lt;p&gt;salist for iptables&lt;/p&gt;
 
-&lt;p&gt;#nftables&lt;/p&gt;
+&lt;h1 id=&#34;syn-proxy&#34;&gt;SYN proxy&lt;/h1&gt;
 
-&lt;p&gt;#FAQ&lt;br /&gt;
-* 如何查看某个table 具体在那几个hook点.&lt;br /&gt;
-iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.netfilter.org/documentation/HOWTO//netfilter-hacking-HOWTO.html&#34;&gt;Linux netfilter Hacking HOWTO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.karlrupp.net/en/computer/nat_tutorial&#34;&gt;NAT - Network Address Translation&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;SYNPROXY target makes handling of large SYN floods possible without the large performance penalties imposed by the connection tracking in such cases. On 3 November 2013, SYN proxy functionality was merged into the Netfilter, with the release of version 3.12 of the Linux kernel mainline&lt;/p&gt;
 </description>
     </item>
     
@@ -251,304 +236,69 @@ iptables -L -t &amp;ldquo;table 名&amp;rdquo;&lt;/p&gt;
 
 &lt;h1 id=&#34;multi-queue&#34;&gt;Multi-queue&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://greenhost.nl/2013/04/10/multi-queue-network-interfaces-with-smp-on-linux/&#34;&gt;Multi-queue network interfaces with SMP on Linux&lt;/a&gt;&lt;br /&gt;
-##Common concepts&lt;br /&gt;
-* The link layer&lt;br /&gt;
-is the group of methods and communications protocols that only operate on the link that a host is physically connected to.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://greenhost.nl/2013/04/10/multi-queue-network-interfaces-with-smp-on-linux/&#34;&gt;Multi-queue network interfaces with SMP on Linux&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;common-concepts&#34;&gt;Common concepts&lt;/h1&gt;
+
+&lt;p&gt;The link layer is the group of methods and communications protocols that only operate on the link that a host is physically connected to.&lt;br /&gt;
+The link is the physical and logical network component used to interconnect hosts or nodes in the network&lt;br /&gt;
+A link protocol is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment or a wide area network connection.&lt;/p&gt;
+
+&lt;h1 id=&#34;frame&#34;&gt;Frame&lt;/h1&gt;
+
+&lt;p&gt;ULNI page 283: Figure 13-8. Differences between Ethernet and 802.3 frames&lt;/p&gt;
+
+&lt;h1 id=&#34;l2-header&#34;&gt;L2 header&lt;/h1&gt;
+
+&lt;p&gt;dst_neigh_output-&amp;gt;dev_hard_header -&amp;gt;  eth_header&lt;/p&gt;
+
+&lt;h1 id=&#34;neighbor&#34;&gt;Neighbor&lt;/h1&gt;
 
 &lt;ul&gt;
-&lt;li&gt;&lt;p&gt;The link&lt;br /&gt;
-is the physical and logical network component used to interconnect hosts or nodes in the network&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;a link protocol&lt;br /&gt;
-is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment&lt;br /&gt;
-or a wide area network connection.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;MTU&lt;br /&gt;
-This limits the number of bytes of data to 1500(Ethernet II) and 1492(IEEE 802), respectively.&lt;br /&gt;
-This characteristic of the link layer is called the MTU, its maximum transmission unit.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;PMTU&lt;br /&gt;
-/proc/sys/net/ipv4/ip_no_pmtu_disc&lt;br /&gt;
-0 enable, 1 disable&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;cat /proc/sys/net/core/warnings&lt;/p&gt;
-
-&lt;p&gt;/proc/sys/net/ipv4/tcp_mtu_probing&lt;br /&gt;
-!0 enable tcp_mtu_probing()&lt;br /&gt;
-If you are using Jumbo Frames, we recommend setting tcp_mtu_probing = 1 to&lt;br /&gt;
-help avoid the problem of MTU black holes. Setting it to 2 sometimes causes performance problems.&lt;/p&gt;
-
-&lt;p&gt;net/ipv4/icmp.c&lt;br /&gt;
-icmp_unreach(&lt;br /&gt;
-type 3, code 4&lt;br /&gt;
-icmph-&amp;gt;type == ICMP_DEST_UNREACH //3&lt;br /&gt;
-case ICMP_FRAG_NEEDED //4&lt;br /&gt;
-icmp_err,&lt;/p&gt;
-
-&lt;h2 id=&#34;frame&#34;&gt;Frame&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.infocellar.com/networks/ethernet/frame.htm&#34;&gt;Ethernet Frame&lt;/a&gt;&lt;br /&gt;
-+ 一种不太确定的非严格的真实划分&lt;br /&gt;
-TCP/IP -&amp;gt; Ethenet II frame&lt;br /&gt;
-IPX/APPLETALK -&amp;gt; 802.3/LLC(802.2), SNAP, mac 发来的包走这条路.&lt;br /&gt;
-* jumbo frame?&lt;/p&gt;
-
-&lt;p&gt;#net_device&lt;br /&gt;
-link -&amp;gt; net&lt;em&gt;device -&amp;gt; if&lt;br /&gt;
-driver -&amp;gt; manipulate dev-&amp;gt;state through netif&lt;/em&gt;*_on/off -&amp;gt; dev-&amp;gt;flags&lt;br /&gt;
-+rfc2863&lt;br /&gt;
-+ &lt;a href=&#34;https://www.kernel.org/doc/Documentation/networking/operstates.txt&#34;&gt;operational state&lt;/a&gt;&lt;br /&gt;
-+ &lt;a href=&#34;https://support.cumulusnetworks.com/hc/en-us/articles/202693826-Monitoring-Interface-Administrative-State-and-Physical-State-on-Cumulus-Linux&#34;&gt;Monitoring Interface Administrative State and Physical State on Cumulus Linux&lt;/a&gt;&lt;br /&gt;
-* dev-&amp;gt;operstate&lt;br /&gt;
-admin state is if flag&lt;br /&gt;
-operate state is link_state&lt;br /&gt;
-Administrative state is the result of &amp;ldquo;ip link set dev&lt;br /&gt;
-&lt;dev&gt; up or down&amp;rdquo; and reflects whether the administrator wants to use&lt;br /&gt;
-the device for traffic.&lt;br /&gt;
-enp9s0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000&lt;br /&gt;
-operate is DOWN, amdin is UP&amp;gt;&lt;br /&gt;
- Operational state&lt;br /&gt;
-shows the ability of an interface to transmit this user data.&lt;br /&gt;
-    &amp;ldquo;UNKNOWN&amp;rdquo;, &amp;ldquo;NOTPRESENT&amp;rdquo;, &amp;ldquo;DOWN&amp;rdquo;, &amp;ldquo;LOWERLAYERDOWN&amp;rdquo;,&lt;br /&gt;
-    &amp;ldquo;TESTING&amp;rdquo;, &amp;ldquo;DORMANT&amp;rdquo;,    &amp;ldquo;UP&amp;rdquo;&lt;br /&gt;
-IF_OPER_UNKNOWN,&lt;br /&gt;
-see rfc2863&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;dev-&amp;gt;link_mode&lt;br /&gt;
-IF_LINK_MODE_DORMANT wifi&lt;br /&gt;
-IF_LINK_MODE_DEFAULT wire&lt;br /&gt;
-对应dev-&amp;gt;operstate in 转化方法rfc2863_policy()&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;dev-&amp;gt;state&lt;br /&gt;
-&lt;strong&gt;LINK_STATE_START,     这是内核自身的标记位&lt;/strong&gt;dev_open init_dummy_netdev __dev_close_many&lt;br /&gt;
-__LINK_STATE_PRESENT,         也是内核自己的, 用的比 START早&lt;br /&gt;
-__LINK_STATE_NOCARRIER,&lt;br /&gt;
-__LINK_STATE_LINKWATCH_PENDING, 也是辅助状态不明, nocarrier和dormant都可接收的&lt;br /&gt;
-__LINK_STATE_DORMANT&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;dev-&amp;gt;flags dev_get_flags()&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;if flags form man netdevice or or kernel src codes&lt;br /&gt;
-/sys/class/net/&lt;dev&gt;/flags&lt;br /&gt;
-          IFF_UP            Interface is running.&lt;br /&gt;
-          IFF_BROADCAST     Valid broadcast address set.&lt;br /&gt;
-          IFF_DEBUG         Internal debugging flag.&lt;br /&gt;
-          IFF_LOOPBACK      Interface is a loopback interface.&lt;br /&gt;
-          IFF_POINTOPOINT   Interface is a point-to-point link.&lt;br /&gt;
-          IFF_RUNNING       Resources allocated.&lt;br /&gt;
-          IFF_NOARP         No arp protocol, L2 destination address not set.&lt;br /&gt;
-          IFF_PROMISC       Interface is in promiscuous mode.&lt;br /&gt;
-          IFF_NOTRAILERS    Avoid use of trailers.&lt;br /&gt;
-          IFF_ALLMULTI      Receive all multicast packets.&lt;br /&gt;
-          IFF_MASTER        Master of a load balancing bundle.&lt;br /&gt;
-          IFF_SLAVE         Slave of a load balancing bundle.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;      IFF_MULTICAST     Supports multicast
-      IFF_PORTSEL       Is able to select media type via ifmap.
-      IFF_AUTOMEDIA     Auto media selection active.
-      IFF_DYNAMIC       The addresses are lost when the interface goes
-                        down.
-      IFF_LOWER_UP      Driver signals L1 up (since Linux 2.6.17)
-      IFF_DORMANT       Driver signals dormant (since Linux 2.6.17)
-      IFF_ECHO          Echo sent packets (since Linux 2.6.25)
-&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;netdev_queue-&amp;gt;state&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/709444/focus=714632&#34;&gt;Understand __QUEUE_STATE_FROZEN&lt;/a&gt;&lt;br /&gt;
-__QUEUE_STATE_DRV_XOFF,     netif_tx_stop_queue&lt;br /&gt;
-__QUEUE_STATE_STACK_XOFF,&lt;br /&gt;
-__QUEUE_STATE_FROZEN,&lt;br /&gt;
-可以确定这个frozen这个标志位就是为了dev_watchdog服务, 从所有内核态代码调用的位置得出的.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;dev_watchdog,&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#Neighbor&lt;br /&gt;
-* ip_output_finish2 -&amp;gt; __neigh_create -&amp;gt; tbl-&amp;gt;constructor -&amp;gt; arp_constructor{&lt;br /&gt;
+&lt;li&gt;ip_output_finish2 -&amp;gt; __neigh_create -&amp;gt; tbl-&amp;gt;constructor -&amp;gt; arp_constructor{&lt;br /&gt;
 if !dev-&amp;gt;header_ops   //slip is the case, see sl_setup&lt;br /&gt;
-    neigh-&amp;gt;ops = &amp;amp;arp_direct_ops&lt;br /&gt;
-    neigh-&amp;gt;output = neigh_direct_output&lt;br /&gt;
+neigh-&amp;gt;ops = &amp;amp;arp_direct_ops&lt;br /&gt;
+neigh-&amp;gt;output = neigh_direct_output&lt;br /&gt;
 else if ARPHRD_ROSE/AX25/NETROM&lt;br /&gt;
-    arp_broken_ops&lt;br /&gt;
-    neigh-&amp;gt;ops-&amp;gt;output&lt;br /&gt;
+arp_broken_ops&lt;br /&gt;
+neigh-&amp;gt;ops-&amp;gt;output&lt;br /&gt;
 else if dev-&amp;gt;header_ops-&amp;gt;cache&lt;br /&gt;
-    neigh-&amp;gt;ops = &amp;amp;arp_hh_ops&lt;br /&gt;
+neigh-&amp;gt;ops = &amp;amp;arp_hh_ops&lt;br /&gt;
 else&lt;br /&gt;
-    arp_generic_ops&lt;/p&gt;
+arp_generic_ops&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
 &lt;p&gt;if (neigh-&amp;gt;nud_state &amp;amp; NUD_VALID)&lt;br /&gt;
     neigh-&amp;gt;output = neigh-&amp;gt;ops-&amp;gt;connected_output;&lt;br /&gt;
 else&lt;br /&gt;
     neigh-&amp;gt;output = neigh-&amp;gt;ops-&amp;gt;output;&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;ip_output_finish2 -&amp;gt; dst_neigh_output -&amp;gt; neigh_resolve_output&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;ipv4 Neighbor output instance of ethernet&lt;br /&gt;
+}&lt;br /&gt;
+* ip_output_finish2 -&amp;gt; dst_neigh_output -&amp;gt; neigh_resolve_output&lt;br /&gt;
+*  ipv4 Neighbor output instance of ethernet&lt;br /&gt;
 see alloc_etherdev_mqs-&amp;gt; ether_setup{&lt;br /&gt;
 dev-&amp;gt;header_ops = &amp;amp;eth_header_ops;&lt;br /&gt;
 dev-&amp;gt;type       = ARPHRD_ETHER;&lt;br /&gt;
 eth_header_ops.cache = eth_header_cache&lt;br /&gt;
 }&lt;br /&gt;
-so neigh-&amp;gt;ops = &amp;amp;arp_hh_ops; neigh-&amp;gt;output = neigh_resolve_output in arp_hh_ops&lt;/p&gt;
+so neigh-&amp;gt;ops = &amp;amp;arp_hh_ops; neigh-&amp;gt;output = neigh_resolve_output in arp_hh_ops&lt;br /&gt;
+    //tg3_init_one&lt;br /&gt;
+    dev-&amp;gt;netdev_ops = &amp;amp;tg3_netdev_ops;&lt;br /&gt;
+    dev-&amp;gt;ethtool_ops = &amp;amp;tg3_ethtool_ops;&lt;br /&gt;
+    dev-&amp;gt;watchdog_timeo = TG3_TX_TIMEOUT;&lt;/p&gt;
 
-&lt;p&gt;//tg3_init_one&lt;br /&gt;
-dev-&amp;gt;netdev_ops = &amp;amp;tg3_netdev_ops;&lt;br /&gt;
-dev-&amp;gt;ethtool_ops = &amp;amp;tg3_ethtool_ops;&lt;br /&gt;
-dev-&amp;gt;watchdog_timeo = TG3_TX_TIMEOUT;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;//In ppp
+&lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;//In ppp&lt;br /&gt;
-static void ppp_setup(struct nethernetet_device *dev)&lt;br /&gt;
+&lt;p&gt;static void ppp_setup(struct nethernetet_device *dev)&lt;br /&gt;
 {&lt;br /&gt;
-dev-&amp;gt;netdev_ops = &amp;amp;ppp_netdev_ops;&lt;br /&gt;
-dev-&amp;gt;hard_header_len = PPP_HDRLEN;&lt;br /&gt;
-dev-&amp;gt;mtu = PPP_MRU;&lt;br /&gt;
-dev-&amp;gt;addr_len = 0;&lt;br /&gt;
-dev-&amp;gt;tx_queue_len = 3&lt;br /&gt;
-dev-&amp;gt;type = ARPHRD_PPP&lt;br /&gt;
-}&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;#PPP SLIP&lt;/p&gt;
-
-&lt;p&gt;#Data Framing&lt;br /&gt;
-dst_neigh_output-&amp;gt;dev_hard_header -&amp;gt;  eth_header&lt;/p&gt;
-
-&lt;p&gt;#TC Qdisc&lt;br /&gt;
-##Bibliography&lt;br /&gt;
-&lt;a href=&#34;http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html&#34;&gt;http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html&lt;/a&gt;&lt;br /&gt;
-lartc.rog&lt;br /&gt;
-&lt;a href=&#34;http://ace-host.stuart.id.au/russell/files/tc/&#34;&gt;http://ace-host.stuart.id.au/russell/files/tc/&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;##Common concepts&lt;br /&gt;
-Shaping: Shapers delay packets to meet a desired rate.&lt;br /&gt;
-Scheduling: Schedulers arrange and/or rearrange packets for output.&lt;br /&gt;
-Classifying: Classifiers sort or separate traffic into queues.&lt;br /&gt;
-Policing: Policers measure and limit traffic in a particular queue.&lt;br /&gt;
-Dropping: Dropping discards an entire packet, flow or classification.&lt;br /&gt;
-Marking: Marking is a mechanism by which the packet is altered.&lt;/p&gt;
-
-&lt;p&gt;##Add new qdisc&lt;br /&gt;
-RTM_NEWQDISC -&amp;gt; tc_modify_qdisc&lt;/p&gt;
-
-&lt;p&gt;##The execution of u32 tc rule&lt;/p&gt;
-
-&lt;h3 id=&#34;user-space-tc-qidsc-add&#34;&gt;user space tc qidsc add&lt;/h3&gt;
-
-&lt;p&gt;u32_parse_opt&lt;br /&gt;
-{&lt;br /&gt;
-    -&amp;gt; parse_selector -&amp;gt;&amp;hellip;-&amp;gt; parse_ip&lt;br /&gt;
-    struct nlmsghdr *n&lt;br /&gt;
-    rta = NLMSG_TAIL(n)&lt;br /&gt;
-    rta-&amp;gt;type = TCA_U32_SEL&lt;/p&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h3 id=&#34;kernel-space&#34;&gt;kernel space&lt;/h3&gt;
-
-&lt;p&gt;NETLINK_ROUTE -&amp;gt; RTM_NEWTFILTER: see tc_filter_init -&amp;gt; tc_ctl_tfilter-&amp;gt;(tp-&amp;gt;ops-&amp;gt;change = u32_change in net/sched/cls_u32.c)&lt;br /&gt;
-tcf_exts_validate: init police and action of this shel tc command,&lt;br /&gt;
-put sel in tc_u_knode;&lt;br /&gt;
-tc_u_knode insert in tc_u_hnode&lt;br /&gt;
-root is tcf_proto 入殓 by prior.&lt;br /&gt;
-tcf_proto -&amp;gt; tc_u_hnode -&amp;gt; tc_u_knode -&amp;gt; sel&lt;br /&gt;
-也就是用户太的selector没变存到内核中了.&lt;br /&gt;
-enqueue -&amp;gt; filter_list -&amp;gt;u32-&amp;gt;classify() this classify is implement by u32!&lt;br /&gt;
-tcf_proto_ops-&amp;gt;.kind = &amp;ldquo;u32&amp;rdquo;, .classify   =   u32_classify,&lt;br /&gt;
-police and action invoke in tcf_action_exec , act register by tcf_register_action.&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;TCA_U32_CLASSID in u32_set_parms&lt;br /&gt;
-filter classid and flowid is the same meaning in russell tc doc&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;TCA_KIND in filter is u32&amp;hellip;register_tcf_proto_ops&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;##FAQ&lt;br /&gt;
-* conflict tc qidsc del with softnet_data-&amp;gt;softnet_data&lt;br /&gt;
- [PATCH] pkt_sched: Destroy gen estimators under rtnl_lock().&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/102444/focus=102592&#34;&gt;http://thread.gmane.org/gmane.linux.network/102444/focus=102592&lt;/a&gt;&lt;br /&gt;
-After synchronize_rcu() in dev_deactivate() we are sure any qdisc_run(),&lt;br /&gt;
-from dev_queue_xmit() or net_tx_action() can only see and lock noop_qdisc.&lt;br /&gt;
-This was happened in dev_deactivate_many()&lt;br /&gt;
-* difference between synchronize_net and  synchronize_rcu?&lt;br /&gt;
-&lt;a href=&#34;http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle&#34;&gt;http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle&lt;/a&gt;&lt;br /&gt;
-In this patch, we replace synchronize_rcu with synchronize_net().&lt;/p&gt;
-
-&lt;p&gt;#LLC (TCP/IP rarely use this sub layer)&lt;br /&gt;
-* ptype MAC layer 之上, 可能是data link(llc) or network layer(ip)&lt;br /&gt;
-定义了所有从驱动上来的packet接收函数, 这里有ip_rcv 还有pppoe_rcv,llc_rcv, NO snap_rcv&lt;br /&gt;
-dev_add_pack&lt;br /&gt;
-llc_rcv{snap_rcv}&lt;br /&gt;
-netif_receive_skb -&amp;gt;ip/llc_rcv&lt;/p&gt;
-
-&lt;h1 id=&#34;netpoll&#34;&gt;Netpoll&lt;/h1&gt;
-
-&lt;p&gt;可以说是linker层的netfilter 更raw&lt;br /&gt;
-netconsole就是基于他, 屌炸天.&lt;br /&gt;
-不走协议栈, 中断完蛋了, 也能用, 纯poll.&lt;/p&gt;
-
-&lt;h1 id=&#34;napi&#34;&gt;NAPI&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://blog.chinaunix.net/uid-24148050-id-464587.html&#34;&gt;网络数据包收发流程(一)：从驱动到协议栈&lt;/a&gt;&lt;br /&gt;
-New API (NAPI) is an interface to use interrupt mitigation techniques for networking devices in the Linux kernel.&lt;br /&gt;
-Such an approach is intended to reduce the overhead of packet receiving.&lt;br /&gt;
-类似机制, Add &lt;a href=&#34;https://lwn.net/Articles/346187/&#34;&gt;blk-iopoll&lt;/a&gt;, a NAPI like approach for block devices&lt;br /&gt;
-1. dirver: device-&amp;gt;DMA-&amp;gt;ring&lt;br /&gt;
-2. IRQ: disable irq, napi schedule&lt;br /&gt;
-do_IRQ-&amp;gt;handler = gfar_receive{&lt;br /&gt;
-    disable irq&lt;br /&gt;
-    __netif_rx_schedule&lt;br /&gt;
+    dev-&amp;gt;netdev_ops = &amp;amp;ppp_netdev_ops;&lt;br /&gt;
+    dev-&amp;gt;hard_header_len = PPP_HDRLEN;&lt;br /&gt;
+    dev-&amp;gt;mtu = PPP_MRU;&lt;br /&gt;
+    dev-&amp;gt;addr_len = 0;&lt;br /&gt;
+    dev-&amp;gt;tx_queue_len = 3&lt;br /&gt;
+    dev-&amp;gt;type = ARPHRD_PPP&lt;br /&gt;
 }&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;softirq:driver function, clean ring buffer, netif_receive_skb&lt;br /&gt;
--&amp;gt;net_rx_action {&lt;br /&gt;
-n-&amp;gt;poll = gfar_poll&lt;br /&gt;
-{&lt;br /&gt;
-gfar_clean_rx_ring-&amp;gt;gfar_process_frame&lt;br /&gt;
-{&lt;br /&gt;
-    skb-&amp;gt;protocol = eth_type_trans(skb, dev);&lt;br /&gt;
-    netif_receive_skb&lt;br /&gt;
-}&lt;br /&gt;
-enable irq&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;rps&#34;&gt;RPS&lt;/h1&gt;
-
-&lt;h1 id=&#34;driver&#34;&gt;Driver&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;skb-&amp;gt;protocol&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;assignment in ip_output by = htons(ETH_P_IP)&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;assignment in driver by = eth_type_trans()&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;mac&#34;&gt;MAC&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Addressing,LAN switching&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;relations-of-concept&#34;&gt;relations of concept&lt;/h1&gt;
-
-&lt;p&gt;Qdisc &amp;ndash; NET_XMIT_SUCCESS&lt;br /&gt;
-dev &amp;ndash; NETDEV_TX_OK&lt;/p&gt;
-
-&lt;h1 id=&#34;from-pci-id-to-device&#34;&gt;from pci id to device&lt;/h1&gt;
-
-&lt;p&gt;/sys/bus/pci/devices/0000:00:19.0/net/eno1/&lt;/p&gt;
-
-&lt;h1 id=&#34;admin-queue&#34;&gt;Admin queue&lt;/h1&gt;
-
-&lt;p&gt;Intel® Ethernet Controller 710 Series Datasheet Chapter 7.10&lt;/p&gt;
 </description>
     </item>
     
@@ -820,137 +570,42 @@ switch with vlan: layer 3, 因为vlan之间的报文转发需要路由, 所以�
       <guid>http://firoyang.org/net/ip/</guid>
       <description>
 
+&lt;h1 id=&#34;fragmentation&#34;&gt;Fragmentation&lt;/h1&gt;
+
+&lt;p&gt;ip_defrag -&amp;gt; ip_frag_queue -&amp;gt; ip_frag_reasm&lt;br /&gt;
+ip_fragment&lt;br /&gt;
+iphdr-&amp;gt;id, iphdr-&amp;gt;frag_off&lt;/p&gt;
+
 &lt;h1 id=&#34;route&#34;&gt;Route&lt;/h1&gt;
 
-&lt;h2 id=&#34;route-1&#34;&gt;Route&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux&#34;&gt;IPv4 route lookup on Linux&lt;/a&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;state structure&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux&#34;&gt;IPv4 route lookup on Linux&lt;/a&gt;&lt;br /&gt;
+* state structure&lt;br /&gt;
 fib_info:route info&lt;br /&gt;
-fib_config:&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;add new rule&lt;br /&gt;
-iproute2 &amp;hellip;-&amp;gt;inet_rtm_newroute()-&amp;gt;fib_new_table()-&amp;gt;fib_hash_table()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Multi-time line&lt;br /&gt;
-fib_create_info(): create a fib_info&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+fib_config:&lt;br /&gt;
+* add new rule&lt;br /&gt;
+iproute2 &amp;hellip;-&amp;gt;inet_rtm_newroute()-&amp;gt;fib_new_table()-&amp;gt;fib_hash_table()&lt;br /&gt;
+* Multi-time line&lt;br /&gt;
+fib_create_info(): create a fib_info&lt;/p&gt;
 
-&lt;p&gt;#Network layer&lt;br /&gt;
-* Error detection, unreliable&lt;br /&gt;
-Best effort service,IP has a simple error handling algorithm:&lt;br /&gt;
-throw away the datagram and try to send an ICMP message back to the source&lt;br /&gt;
-* Host addressing&lt;/p&gt;
+&lt;h1 id=&#34;dst&#34;&gt;dst&lt;/h1&gt;
 
-&lt;h1 id=&#34;ipv6-wrl6&#34;&gt;IPv6 wrl6&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/netdev/20170617174244.132862-1-tracywwnj@gmail.com/&#34;&gt;remove dst garbage collector logic&lt;/a&gt;&lt;br /&gt;
+commit 222d7dbd258dad4cd5241c43ef818141fad5a87a&lt;br /&gt;
+Author: Eric Dumazet &lt;a href=&#34;mailto:edumazet@google.com&#34;&gt;edumazet@google.com&lt;/a&gt;&lt;br /&gt;
+Date:   Thu Sep 21 09:15:46 2017 -0700&lt;br /&gt;
+    net: prevent dst uses after free&lt;br /&gt;
+    In linux-4.13, Wei worked hard to convert dst to a traditional&lt;br /&gt;
+    refcounted model, removing GC.&lt;br /&gt;
+commit 9e1437937807b0122e8da1ca8765be2adca9aee6&lt;br /&gt;
+Author: Steffen Klassert &lt;a href=&#34;mailto:steffen.klassert@secunet.com&#34;&gt;steffen.klassert@secunet.com&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Sep 11 10:31:15 2018 +0200&lt;br /&gt;
+    xfrm: Fix NULL pointer dereference when skb_dst_force clears the dst_entry.&lt;/p&gt;
 
-&lt;p&gt;__ipv6_addr_type&lt;br /&gt;
-ip6_input or ip6_output&lt;br /&gt;
-F1: OK&lt;br /&gt;
-F2: OK&lt;/p&gt;
+&lt;h1 id=&#34;ip-header&#34;&gt;IP header&lt;/h1&gt;
 
-&lt;h1 id=&#34;4-3-ip-address&#34;&gt;4.3 IP address&lt;/h1&gt;
-
-&lt;p&gt;IPv6 wrl6&lt;br /&gt;
-__ipv6_addr_type&lt;br /&gt;
-ip6addrlbl_init_table&lt;br /&gt;
-ip6_input or ip6_output&lt;br /&gt;
-ipv6_addr_v4mapped&lt;br /&gt;
-* 0:&lt;br /&gt;
-1 ok IPV6_ADDR_LOOPBACK ::&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;128&lt;/sub&gt;&lt;br /&gt;
-2 ok IPV6_ADDR_ANY ::/128&lt;br /&gt;
-3 ok IPV6_ADDR_MAPPED ::ffff:0:0/96&lt;br /&gt;
-4 ? IPV6_ADDR_COMPATv4  0000::/96 ipgre_tunnel_xmit ddr_type &amp;amp; IPV6_ADDR_COMPATv4) == 0 ; goto tx_error_icmp;&lt;br /&gt;
-5 G?&lt;br /&gt;
-* 0100::/64, NG, Used by CISCO&lt;br /&gt;
-A Discard Prefix for IPv6&lt;br /&gt;
-Discard-Only Address Block&lt;br /&gt;
-&lt;a href=&#34;https://tools.ietf.org/html/rfc6666&#34;&gt;https://tools.ietf.org/html/rfc6666&lt;/a&gt;&lt;br /&gt;
- Remote Triggered Black Hole (RTBH)&lt;br /&gt;
-&lt;a href=&#34;https://tools.ietf.org/html/rfc5635&#34;&gt;https://tools.ietf.org/html/rfc5635&lt;/a&gt;&lt;br /&gt;
-* 0200::/7,  NG, Deprecated&lt;br /&gt;
-OSI NSAPs and IPv6&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc1888&#34;&gt;http://tools.ietf.org/html/rfc1888&lt;/a&gt;&lt;br /&gt;
-Internet Code Point (ICP) Assignments for NSAP Addresses&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc4548&#34;&gt;http://tools.ietf.org/html/rfc4548&lt;/a&gt;&lt;br /&gt;
-Interfaces between protocol layers&lt;br /&gt;
-&lt;a href=&#34;http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html&#34;&gt;http://www.erg.abdn.ac.uk/users/gorry/course/intro-pages/sap.html&lt;/a&gt;&lt;br /&gt;
-Network Service Access Point (NSAP): v4,v6?&lt;br /&gt;
-&lt;a href=&#34;http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point&#34;&gt;http://searchnetworking.techtarget.com/definition/Network-Service-Access-Point&lt;/a&gt;&lt;br /&gt;
-* 0400::/6, NG, No information, maybe used as Global address see __ipv6_addr_type&lt;br /&gt;
-* 0800::/5, NG, ditto&lt;br /&gt;
-* (000, 111)x::/3, OK, unicasts. For more details please reference __ipv6_addr_type&lt;br /&gt;
-1000::/4, OK, ditto&lt;br /&gt;
-2000::/3, OK, Global Unicast,&lt;br /&gt;
-2002::/16, OK, SIT, 6in4&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc3056&#34;&gt;http://tools.ietf.org/html/rfc3056&lt;/a&gt;&lt;br /&gt;
-2001::/32, OK, used in Default policy table for routing&lt;br /&gt;
-2001:10::/28, OK, Ditto&lt;br /&gt;
-* e000::/4, NG?, No information in google; but used as GU in and kernel by default.&lt;br /&gt;
-* fc00::/7, OK,&lt;br /&gt;
-IPV6_ADDR_UNICAST&lt;br /&gt;
-* fe80::/10, OK,&lt;br /&gt;
-IPV6_ADDR_LINKLOCAL&lt;br /&gt;
-* fec0::/10, OK, But deprecated by RFC3879, used in kernel?&lt;br /&gt;
-IPV6_ADDR_SITELOCAL&lt;br /&gt;
-Deprecating Site Local Addresses&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc3879&#34;&gt;http://tools.ietf.org/html/rfc3879&lt;/a&gt;&lt;br /&gt;
-* ff00::/8, OK&lt;br /&gt;
-IPV6_ADDR_MULTICAST&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc4291&#34;&gt;http://tools.ietf.org/html/rfc4291&lt;/a&gt;&lt;br /&gt;
-* addr not described in __ipv6_addr_type working as global unicast&lt;/p&gt;
-
-&lt;p&gt;#IP&lt;br /&gt;
-* IP Packet Fragmentation/Defragmentation&lt;br /&gt;
-* MSS tcp_sock-&amp;gt;mss_cache in tcp_sync_mss not minus SACK option&lt;br /&gt;
-    in &lt;em&gt;tcp_current_mss&lt;/em&gt; minus SACK option&lt;br /&gt;
-rfc1122&lt;br /&gt;
-+ IP option is  fixed in a session icsk-&amp;gt;icsk_ext_hdr_len;&lt;br /&gt;
-+ is network header icsk-&amp;gt;icsk_af_ops-&amp;gt;net_header_len&lt;br /&gt;
-+ tcp_sock-&amp;gt;tcp_header_len all except SACK option (Not sure)&lt;br /&gt;
-##Reference&lt;br /&gt;
-&lt;a href=&#34;http://www.tecmint.com/ipv4-and-ipv6-comparison/&#34;&gt;What’s wrong with IPv4 and Why we are moving to IPv6&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;classless-inter-domain-routing&#34;&gt;Classless Inter-Domain Routing&lt;/h2&gt;
-
-&lt;p&gt;CIDR is a method for allocating IP addresses and routing Internet Protocol packets.&lt;br /&gt;
-IETF introduced CIDR in 1993 to replace the classful network.&lt;br /&gt;
-* prefix/length&lt;br /&gt;
-* Prefix aggregation&lt;/p&gt;
-
-&lt;p&gt;##Supernetwork&lt;br /&gt;
-prefix/route aggregation&lt;br /&gt;
-decrease the memroy and the time of search route table.&lt;/p&gt;
-
-&lt;h2 id=&#34;private-network&#34;&gt;Private network&lt;/h2&gt;
-
-&lt;p&gt;In the Internet addressing architecture, a private network is a network that uses private IP address space.&lt;/p&gt;
-
-&lt;h2 id=&#34;fragmention-defragmention&#34;&gt;Fragmention/defragmention&lt;/h2&gt;
-
-&lt;p&gt;iphdr-&amp;gt;id, iphdr-&amp;gt;frag_off&lt;br /&gt;
-skb_shared_info-&amp;gt;frag_list&lt;br /&gt;
-ip_fragment/ip_defrag&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc6864&#34;&gt;Updated Specification of the IPv4 ID Field&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;sg-io&#34;&gt;SG IO&lt;/h2&gt;
-
-&lt;p&gt;如果device support NETIF_F_SG 直接copy_form user msghdr to frgs[] zero copy!&lt;br /&gt;
-p_append_data&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/153666&#34;&gt;NETIF_F_FRAGLIST and NETIF_F_SG difference&lt;/a&gt;&lt;br /&gt;
-validate_xmit_skb()-&amp;gt;__skb_linearize()&lt;br /&gt;
-ip fragment 不是为了fraglist而是把skb变小. 所以这里可能有问题linearize后skb过大.&lt;br /&gt;
-如果经过ip_fragment应该,不会出现, 自己倒腾的就可能.&lt;/p&gt;
-
-&lt;h1 id=&#34;send&#34;&gt;send&lt;/h1&gt;
-
-&lt;p&gt;ip_append_data 和ip_push_pending_frames弄frag_list&lt;br /&gt;
-ip_push_pending_frames -&amp;gt; __ip_make_skb &amp;amp; ip_send_skb -&amp;gt;ip_local_out&lt;br /&gt;
-把&amp;amp;sk-&amp;gt;sk_write_queue上的数据最后编程skb链表变成了, 还skb pull掉了潜在的ip 头部&lt;br /&gt;
-第一个skb-&amp;gt;frag_list的成员. 用的不太多啊.&lt;br /&gt;
-ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&lt;br /&gt;
-否则就生成一串skb挂到&amp;amp;sk-&amp;gt;sk_write_queue上,&lt;/p&gt;
+&lt;p&gt;rfc1122&lt;br /&gt;
+IP option is fixed in a session icsk-&amp;gt;icsk_ext_hdr_len;&lt;br /&gt;
+is network header icsk-&amp;gt;icsk_af_ops-&amp;gt;net_header_len&lt;/p&gt;
 </description>
     </item>
     
@@ -962,163 +617,60 @@ ip_append_data中间出了以为如果可以ufo 那么就到frags的碗里去!&l
       <guid>http://firoyang.org/net/tcp/</guid>
       <description>
 
-&lt;h1 id=&#34;key-commits&#34;&gt;Key commits&lt;/h1&gt;
+&lt;h1 id=&#34;references&#34;&gt;References&lt;/h1&gt;
 
-&lt;p&gt;tcp: remove prequeue support - e7942d0633c47c791ece6afa038be9cf977226de&lt;br /&gt;
-tcp: remove tcp_tw_recycle - 4396e46187ca5070219b81773c4e65088dac50cc&lt;/p&gt;
-
-&lt;h1 id=&#34;rfc&#34;&gt;RFC&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://tools.ietf.org/html/rfc7414&#34;&gt;A Roadmap for Transmission Control Protocol (TCP) Specification Documents&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;man tcp&lt;br /&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc7414&#34;&gt;A Roadmap for Transmission Control Protocol (TCP) Specification Documents&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://tools.ietf.org/html/rfc1122&#34;&gt;Requirements for Internet Hosts &amp;ndash; Communication Layers&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://tools.ietf.org/html/rfc793&#34;&gt;TRANSMISSION CONTROL PROTOCOL 1981&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.rfc-editor.org/errata_search.php?rfc=1122&amp;amp;rec_status=15&amp;amp;presentation=records&#34;&gt;RFC Errata 一切都有改口的余地&lt;/a&gt;&lt;br /&gt;
-793的errata建议阅读1122.&lt;/p&gt;
+&lt;a href=&#34;http://tools.ietf.org/html/rfc793&#34;&gt;TRANSMISSION CONTROL PROTOCOL 1981&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;latency&#34;&gt;Latency&lt;/h1&gt;
+&lt;h1 id=&#34;send-tcp-message&#34;&gt;Send tcp message&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://blog.cloudflare.com/the-story-of-one-latency-spike/&#34;&gt;The story of one latency spike&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;reset&#34;&gt;Reset&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://blogs.technet.microsoft.com/networking/2009/08/12/where-do-resets-come-from-no-the-stork-does-not-bring-them/&#34;&gt;Where do resets come from? (No, the stork does not bring them.)&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;server:&lt;br /&gt;
+nc -l -p 2046&lt;br /&gt;
+nc  127.0.0.1 2046&lt;/p&gt;
 
 &lt;h1 id=&#34;syn-queue-and-listen-queue&#34;&gt;Syn queue and listen queue&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://veithen.github.io/2014/01/01/how-tcp-backlog-works-in-linux.html&#34;&gt;How TCP backlog works in Linux&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;
+&lt;h1 id=&#34;syn-flood&#34;&gt;Syn flood&lt;/h1&gt;
 
-&lt;p&gt;本文主要关注tcp这一类的可靠的传输层协议.&lt;br /&gt;
-在之前的推理过程中, 我们已经能够明白, tcp的核心性质, 远没有想象&lt;br /&gt;
-中那么复杂:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://githubengineering.com/syn-flood-mitigation-with-synsanity/&#34;&gt;SYN Flood Mitigation with synsanity&lt;/a&gt;&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;multiplex, 这是传输层的本质, 标志用户地址, 也就是端口
-面向连接的, 收到的数据有序, 且存在session也就是握手挥手.
-可靠性, 报文一个都不能少.
-congestion control, 拥塞控制, 保证网络整体的性能.
-flow control, 流控, 保证对端可以良好稳定接收到报文.免得想双11的快递公司被爆仓.
-数据校验, 防止传输过程导致数据出错. 我常会想起水浒传中, 戴总送信那段.
-&lt;/code&gt;&lt;/pre&gt;
+&lt;h1 id=&#34;ucopy&#34;&gt;ucopy&lt;/h1&gt;
 
-&lt;p&gt;对tcp就是围绕这6个核心的性质开始设计, 实现的.&lt;br /&gt;
-无论你是看tcp的头部啊, 还是协议栈的代码基本上都逃不出这六点.&lt;br /&gt;
-我不建议直接去看内核的tcp实现, 我是吃过苦头的.&lt;br /&gt;
-1. 很容易让人掉进去代码里面, 而忘了初衷.&lt;br /&gt;
-2. 内核的实现有很多工程性的问题, 这和tcp本身是无关的.比如tcp seq回绕的问题.&lt;/p&gt;
-
-&lt;h1 id=&#34;大话tcp-头部&#34;&gt;大话TCP 头部&lt;/h1&gt;
-
-&lt;p&gt;从上往下, 这也标志了重要性.&lt;br /&gt;
-先是, 源目的端口, 属于multiplex.&lt;br /&gt;
-接着sequence number, 这是面向连接, 数据有序&lt;br /&gt;
-接着是ack, 这是可靠性&lt;br /&gt;
-再往下是, offset 处于数据管理需要和tcp无关,&lt;br /&gt;
-tcp flags涉及到了多个性质,主要是握手和拥塞&lt;br /&gt;
-之后window size, 这是流控.&lt;br /&gt;
-之后是checksum, 保证传输过程中不会修改数据.&lt;br /&gt;
-你看tcp真的不复杂, 我们只是没有遇到一个好的解读角度, tcp是有鼻子有眼&lt;br /&gt;
-很生动的.&lt;/p&gt;
+&lt;p&gt;ucopy.task was temporarily enabled in tcp_recvmsg in order to read more data after processing receive queue.&lt;br /&gt;
+It will be disabled in the same fuction. So go back to tcp_prequeue, we know if user need more data, then we queue new skb in ucopy.preueue otherwise not.&lt;br /&gt;
+In tcp_rcv_established(), the tp-&amp;gt;ucopy.task == current indicats we are in process context.&lt;/p&gt;
 
 &lt;h1 id=&#34;multiplexing&#34;&gt;Multiplexing&lt;/h1&gt;
 
 &lt;p&gt;Ports can provide multiple endpoints on a single node.&lt;br /&gt;
-inet_hash_connect()&lt;/p&gt;
+inet_hash_connect()&lt;br /&gt;
+inet_sock: dport, sport&lt;/p&gt;
 
-&lt;h1 id=&#34;flow-control&#34;&gt;Flow control&lt;/h1&gt;
+&lt;h1 id=&#34;mss&#34;&gt;MSS&lt;/h1&gt;
 
-&lt;h2 id=&#34;receive-windowsize&#34;&gt;receive windowsize&lt;/h2&gt;
+&lt;p&gt;MSS tcp_sock-&amp;gt;mss_cache in tcp_sync_mss not minus SACK option&lt;br /&gt;
+        in &lt;em&gt;tcp_current_mss&lt;/em&gt; minus SACK option&lt;br /&gt;
+sudo tcpdump -s0 -p -ni enp0s31f6 &amp;lsquo;(ip and ip[20+13] &amp;amp; tcp-syn != 0)&amp;rsquo;&lt;br /&gt;
+send: tcp_advertise_mss&lt;br /&gt;
+tcp_current_mss&lt;br /&gt;
+&lt;a href=&#34;https://medium.com/fcamels-notes/%E7%94%A8-systemtap-%E6%89%BE%E5%87%BA-tcp-%E5%A6%82%E4%BD%95%E6%B1%BA%E5%AE%9A-mss-%E7%9A%84%E5%80%BC-4b6b7a969d04&#34;&gt;用 SystemTap 找出 TCP 如何決定 MSS 的值&lt;/a&gt;&lt;br /&gt;
+mss derives from MTU; see rfc6691&lt;br /&gt;
+When TCP is used in a situation where either the IP or TCP headers are not minimum, the sender must reduce the amount of TCP data in any given packet by the number of octets used by the IP and TCP options.&lt;/p&gt;
 
-&lt;p&gt;暗含tcp的最大64KB.&lt;/p&gt;
+&lt;h1 id=&#34;sack&#34;&gt;Sack&lt;/h1&gt;
 
-&lt;h2 id=&#34;sliding-window-protocol-滑动窗口协议&#34;&gt;Sliding window protocol 滑动窗口协议&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.tecyle.com/2019/06/22/sack-%E5%88%86%E6%9E%90/&#34;&gt;SACK 分析&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;首先滑动窗口本身就是一个协议&lt;/p&gt;
+&lt;h1 id=&#34;time-wait&#34;&gt;Time-wait&lt;/h1&gt;
 
-&lt;p&gt;Sliding window protocols are used where reliable in-order delivery of packets is required.&lt;br /&gt;
-For every ack packet received, the window slides by one packet (logically) to transmit one new packet.&lt;br /&gt;
-发送方的发送窗口, 由发送了但没ack和 可用的发送空间,这个通常有对端的receive windowsize指定.&lt;br /&gt;
-如果发送了一个可用的发送空间 = receive windowsize - 那个报文大小, 新来报文更新串口.&lt;br /&gt;
-接收端的窗口就是最后收到连续到不连续的位置.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://vincent.bernat.ch/en/blog/2014-tcp-time-wait-state-linux&#34;&gt;Coping with the TCP TIME-WAIT state on busy Linux servers&lt;/a&gt;&lt;br /&gt;
+tcp: remove tcp_tw_recycle - 4396e46187ca5070219b81773c4e65088dac50cc&lt;/p&gt;
 
-&lt;h1 id=&#34;detection-of-transmission-errors&#34;&gt;Detection of transmission errors&lt;/h1&gt;
-
-&lt;p&gt;Error &amp;ndash;  checksum, the transport protocol may check that the data is not corrupted&lt;/p&gt;
-
-&lt;h1 id=&#34;connection-oriented-communications&#34;&gt;Connection-oriented communications&lt;/h1&gt;
-
-&lt;p&gt;到底什么是面向连接的网上只有wikipedia给的解释最合理, 其他的扯到了别的性质.&lt;br /&gt;
-两点: session and in order.&lt;br /&gt;
-* Session&lt;br /&gt;
-In computer science, in particular networking, a session is a semi-permanent&lt;br /&gt;
-interactive information interchange.&lt;br /&gt;
-&lt;a href=&#34;http://www.scottklement.com/rpg/socktut/overview.html&#34;&gt;Instance of tcp session in BSD socket&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.dummies.com/how-to/content/network-basics-tcp-session-establishment-handshaki.html&#34;&gt;TCP Session - Handshaking in protocol&lt;/a&gt;&lt;br /&gt;
-这个对应tcp的三次握手, 4次挥手,&lt;br /&gt;
-* in order&lt;br /&gt;
-涉及到的另外一个概念Virtul circuit&lt;br /&gt;
-A virtual circuit (VC) is a means of transporting data over a packet switched&lt;br /&gt;
- computer network in such a way that it appears as though there is a dedicated&lt;br /&gt;
-physical layer link between the source and destination end systems of this data.&lt;br /&gt;
-对应tcp 的接收队列, seq number&lt;/p&gt;
-
-&lt;h2 id=&#34;handshak&#34;&gt;Handshak&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;kproxy reorder&lt;br /&gt;
-chome -&amp;gt; syn(kproxy reocrd syn) -&amp;gt; firoyang.org&lt;br /&gt;
-firoyang.org -&amp;gt; sync ack -&amp;gt; chrome&lt;br /&gt;
-chrome -&amp;gt; ack -&amp;gt; firoyang.org&lt;br /&gt;
-chrome -&amp;gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&amp;gt; nginx&lt;br /&gt;
-nginx -&amp;gt; tcp send fake syn ack-&amp;gt; chrome&lt;br /&gt;
-chrome -&amp;gt; ack -&amp;gt; nginx(then -&amp;gt; firoyang.org)&lt;br /&gt;
-tcp_v4_do_rcv{&lt;br /&gt;
-sk-&amp;gt;sk_state == TCP_ESTABLISHED&lt;br /&gt;
-tcp_rcv_established{&lt;br /&gt;
-len &amp;lt;= tcp_header_len =&amp;gt;&lt;br /&gt;
-tcp_ack -&amp;gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&amp;gt; nginx&lt;br /&gt;
-}&lt;br /&gt;
-}&lt;br /&gt;
-nginx-&amp;gt; GET -&amp;gt; firoyang.org&lt;br /&gt;
-firoyang.org-&amp;gt; nginx-&amp;gt; chrome&lt;/p&gt;
-
-&lt;h2 id=&#34;syn-flood&#34;&gt;syn flood&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://githubengineering.com/syn-flood-mitigation-with-synsanity/&#34;&gt;SYN Flood Mitigation with synsanity&lt;/a&gt;&lt;br /&gt;
-首先syn 也有超时5次指数1 2 4 8 16 32(第五次超时), 如果client发了一个syn就没了,&lt;br /&gt;
-会被黑客利用. 解决办法是tcp_syncookies, 在syn队列满了的时候, 构造一个特别isn,&lt;br /&gt;
-丢掉syn entry, 等待ack,校验合法直接accpet.好像incomplete队列无限大一般.&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;深入理解seq-和ack&#34;&gt;深入理解seq 和ack&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://serverfault.com/questions/593037/tcp-sequence-acknowledgment-numbers&#34;&gt;TCP Sequence &amp;amp; Acknowledgment numbers&lt;/a&gt;&lt;br /&gt;
-这种问题就是咬住定义就完了.&lt;br /&gt;
-The sequence number of the first data octet in this segment (except&lt;br /&gt;
-    when SYN is present). If SYN is present the sequence number is the&lt;br /&gt;
-    initial sequence number (ISN) and the first data octet is ISN+1.&lt;br /&gt;
-If the ACK control bit is set this field contains the value of the&lt;br /&gt;
-    next sequence number the sender of the segment is expecting to&lt;br /&gt;
-    receive.  Once a connection is established this is always sent.&lt;br /&gt;
-ACK最简单了, 整个tcp session只有一个segement没有ack number就是第一个syn.&lt;br /&gt;
-其他情况, ack都是对面发来的seq + len + 1. (排除reorder包问题)&lt;br /&gt;
-这里的问题是第三次握手的时候, 单独一个ack, 没有数据, 这时候segement的seq&lt;br /&gt;
-应该是多少呢?RFC给出的是ISN + 1.但这个ack segment是个空数据.&lt;br /&gt;
-也就出现了下面发一个GET的时seq 和ack number和这个ack segement一致.&lt;br /&gt;
-那么如果交互过程中出现了空的ack呢?原理和这里是一样的. 空的ack 的seq也是&lt;br /&gt;
-标志下一个segement的byte序号, 但是如果no data, 下一个segment的seq还是这个.&lt;br /&gt;
-知道有数据了.&lt;br /&gt;
-这里想说的是, seq确实是标注segment的data, 知识偶尔因为空ack导致了假象, 会&lt;br /&gt;
-被后面的有数据的segement还原真相.&lt;br /&gt;
-总结:&lt;br /&gt;
-    syn 和 ack, 还有fin这种都不是数据, 不计算在seq里面.&lt;br /&gt;
-    seq的计算只和实际的数据有关.&lt;br /&gt;
-    小心处理no data这种情况, 就OK了.&lt;/p&gt;
-
-&lt;h2 id=&#34;time-wait&#34;&gt;Time wait&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://blog.csdn.net/dog250/article/details/13760985&#34;&gt;TCP的TIME_WAIT快速回收与重用&lt;/a&gt;&lt;br /&gt;
-双工, 被动关闭收到ack就%100圆满了.而clinet就不能确认被动关闭是否收到ack,&lt;br /&gt;
+&lt;p&gt;双工, 1. 被动关闭收到ack就%100圆满了.而clinet就不能确认被动关闭是否收到ack,&lt;br /&gt;
 显然被动关闭方不能在ack了, 如果下去, 还有个完, 所以两害相权, 取其轻.clinet来吧.&lt;/p&gt;
 
 &lt;ol&gt;
@@ -1149,8 +701,6 @@ inet_twsk_schedule设置等的时间.&lt;/p&gt;
 
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;tcp_tw_reuse&lt;br /&gt;
-貌似很激进.&lt;br /&gt;
-FIXME&lt;br /&gt;
 server 端玩蛋去, 本身像80, 自带重用技能&amp;hellip;&lt;br /&gt;
 用在clinet段inet_hash_connect检查是否可以重用TIME_WAIT状态的套接字的端口.&lt;/p&gt;&lt;/li&gt;
 
@@ -1168,9 +718,41 @@ tcp_time_wait&lt;br /&gt;
                     if (state == TCP_TIME_WAIT)&lt;br /&gt;
                             timeo = TCP_TIMEWAIT_LEN;&lt;br /&gt;
             }&lt;br /&gt;
-如果启用recycle 就是rto, 这个rto是const int rto = (icsk-&amp;gt;icsk_rto &amp;lt;&amp;lt; 2) - (icsk-&amp;gt;icsk_rto &amp;gt;&amp;gt; 1);&lt;br /&gt;
-3.5倍的icsk_rto&lt;br /&gt;
-在FIN_WAIT_2状态下没有接收到FIN包就进入TIME_WAIT的情况下，如果tcp_fin_timeout的值设置的太小，可能会导致TIME_WAIT套接字（子状态为FIN_WAIT_2）过早地被释放，这样对端发送的FIN（短暂地延迟或者本来就是正常的时间到达）到达时就没有办法处理，导致连接不正常关闭，所以tcp_fin_timeout参数的值并不是越小越好，通常设置为30S比较合适。&lt;/p&gt;
+如果启用recycle 就是rto, 这个rto是const int rto = (icsk-&amp;gt;icsk_rto &amp;lt;&amp;lt; 2) - (icsk-&amp;gt;icsk_rto &amp;gt;&amp;gt; 1); 3.5倍的icsk_rto&lt;br /&gt;
+在FIN_WAIT_2状态下没有接收到FIN包就进入TIME_WAIT的情况下，如果tcp_fin_timeout的值设置的太小，可能会导致TIME_WAIT套接字（子状态为FIN_WAIT_2）过早地被释放，这样对端发送的FIN（短暂地延迟或者本来就是正常的时间到达）到达时就没有办法处理，导致连接不正常关闭，所以tcp_fin_timeout参数的值并不是越小越好，通常设置为30S比较合适。&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;tcp-receive&#34;&gt;TCP receive&lt;/h1&gt;
+
+&lt;h1 id=&#34;established-socket-receive-window&#34;&gt;Established socket receive window&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://tools.ietf.org/html/rfc793&#34;&gt;https://tools.ietf.org/html/rfc793&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://tools.ietf.org/html/rfc1122&#34;&gt;https://tools.ietf.org/html/rfc1122&lt;/a&gt;&lt;br /&gt;
+tcp_transmit_skb&lt;br /&gt;
+th-&amp;gt;ack_seq     = htonl(tp-&amp;gt;rcv_nxt);&lt;br /&gt;
+tcp_data_queue&lt;/p&gt;
+
+&lt;h2 id=&#34;tp-rcv-nxt-tcp-skb-cb-skb-end-seq&#34;&gt;tp-&amp;gt;rcv_nxt = TCP_SKB_CB(skb)-&amp;gt;end_seq;&lt;/h2&gt;
+
+&lt;h1 id=&#34;connection-oriented-communications&#34;&gt;Connection-oriented communications&lt;/h1&gt;
+
+&lt;h2 id=&#34;handshak-of-kproxy&#34;&gt;Handshak of kproxy&lt;/h2&gt;
+
+&lt;p&gt;chome -&amp;gt; syn(kproxy reocrd syn) -&amp;gt; firoyang.org&lt;br /&gt;
+firoyang.org -&amp;gt; sync ack -&amp;gt; chrome&lt;br /&gt;
+chrome -&amp;gt; ack -&amp;gt; firoyang.org&lt;br /&gt;
+chrome -&amp;gt; GET(firoyang.org) kproxy match then send record syn then setup natinfo -&amp;gt; nginx&lt;br /&gt;
+nginx -&amp;gt; tcp send fake syn ack-&amp;gt; chrome&lt;br /&gt;
+chrome -&amp;gt; ack -&amp;gt; nginx(then -&amp;gt; firoyang.org)&lt;br /&gt;
+tcp_v4_do_rcv{&lt;br /&gt;
+    sk-&amp;gt;sk_state == TCP_ESTABLISHED&lt;br /&gt;
+    tcp_rcv_established{&lt;br /&gt;
+    len &amp;lt;= tcp_header_len =&amp;gt;&lt;br /&gt;
+    tcp_ack -&amp;gt; tcp_fastretrans_alert{retrans ack and GET(firoyang) -&amp;gt; nginx&lt;br /&gt;
+    }&lt;br /&gt;
+}&lt;br /&gt;
+nginx-&amp;gt; GET -&amp;gt; firoyang.org&lt;br /&gt;
+firoyang.org-&amp;gt; nginx-&amp;gt; chrome&lt;/p&gt;
 
 &lt;h1 id=&#34;reliability&#34;&gt;Reliability&lt;/h1&gt;
 
@@ -1183,56 +765,24 @@ tcp_rtt_estimator()&lt;/p&gt;
 
 &lt;p&gt;ack and timeout&lt;br /&gt;
 Sliding window protocol is based on automatic repeat request/ARQ&lt;br /&gt;
-My conclusion: in practice TCP is a mixture between both GBN and SR.&lt;/p&gt;&lt;/li&gt;
+My conclusion: in practice TCP is a mixture between both GBN and SR.&lt;br /&gt;
+* Go-Back-N&lt;br /&gt;
+* Selective repeat&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;Go-Back-N&lt;/p&gt;&lt;/li&gt;
+&lt;h2 id=&#34;timer-expiring-retransmiter&#34;&gt;Timer expiring retransmiter&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;Selective repeat&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;tcp_retransmiter_timer()&amp;hellip;-&amp;gt;tcp_transmit_skb()&lt;/p&gt;
 
-&lt;p&gt;#FAQ&lt;br /&gt;
-* What about TCP sequence number warp around&lt;br /&gt;
-PAWS use timestamp and RTT to solve this problem.&lt;br /&gt;
-##Timer&lt;br /&gt;
-*sk_timer&lt;br /&gt;
+&lt;h2 id=&#34;reponse-for-receiving-an-ack&#34;&gt;reponse for receiving an ACK&lt;/h2&gt;
+
+&lt;p&gt;tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;/p&gt;
+
+&lt;h2 id=&#34;timer&#34;&gt;Timer&lt;/h2&gt;
+
+&lt;p&gt;sk_timer&lt;br /&gt;
 listen: synack&lt;br /&gt;
 estblished: keepalive&lt;br /&gt;
 timewait:&lt;/p&gt;
-
-&lt;h1 id=&#34;optimization&#34;&gt;optimization&lt;/h1&gt;
-
-&lt;h2 id=&#34;nagle&#34;&gt;Nagle&lt;/h2&gt;
-
-&lt;p&gt;Nagle算法并没有阻止发送小包，它只是阻止了发送大量的小包！&lt;br /&gt;
-Nagle算法的初衷：避免发送大量的小包，防止小包泛滥于网络，理想情况下，&lt;br /&gt;
-对于一个TCP连接而言，网络上每次只能一个小包存在。它更多的是端到端意义上的优化。&lt;br /&gt;
-正是交互式应用引入了大量的小包，Nagle算法所作用的正是交互式应用！&lt;/p&gt;
-
-&lt;h2 id=&#34;cork&#34;&gt;Cork&lt;/h2&gt;
-
-&lt;p&gt;CORK算法的初衷：提高网络利用率，理想情况下，完全避免发送小包，仅仅发送满包以及不得不发的小包。&lt;br /&gt;
-CORK的真正初衷是提高载荷率，提高网络利用率&lt;/p&gt;
-
-&lt;h2 id=&#34;fixme&#34;&gt;FIXME&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Create TCP options&lt;br /&gt;
-tcp_syn_build_options()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Receive ack&lt;br /&gt;
-tcp_ack()&lt;br /&gt;
-记录ack的数据大小mss or tcp abc&lt;br /&gt;
-update snd_wl1 and snd_una&lt;br /&gt;
-slow path update mtu mss tcp_skb_cb.sacked&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Active send data&lt;br /&gt;
-tcp_sendpage()/tcp_sendmsg()-&amp;gt;tcp_write_xmit()/tcp_push_one()-&amp;gt;tcp_transmit_skb&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Timer expiring retransmiter&lt;br /&gt;
-tcp_retransmiter_timer()&amp;hellip;-&amp;gt;tcp_transmit_skb()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;reponse for receiving an ACK&lt;br /&gt;
-tcp_data_snd_check()-&amp;gt;tcp_write_xmit()&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;tcp_v4_rcv&lt;br /&gt;
-&lt;a href=&#34;http://thread.gmane.org/gmane.linux.network/85613/focus=85614&#34;&gt;skb-&amp;gt;dev = NULL;&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;tcp的核心发包函数tcp_write_xmit and tcp_transmit_skb&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
@@ -1370,9 +920,11 @@ l2tp_xmit_core&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;#PPTP&lt;br /&gt;
-##Route ip-list to pptp-vpn&lt;br /&gt;
-11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3&lt;br /&gt;
+&lt;p&gt;#PPTP&lt;/p&gt;
+
+&lt;h2 id=&#34;route-ip-list-to-pptp-vpn&#34;&gt;Route ip-list to pptp-vpn&lt;/h2&gt;
+
+&lt;p&gt;11: pptp-vpn: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1482 qdisc pfifo_fast state UNKNOWN qlen 3&lt;br /&gt;
     link/ppp&lt;br /&gt;
     inet 192.168.1.60 peer 192.168.1.&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;32&lt;/sub&gt; scope global pptp-vpn&lt;br /&gt;
 root@Hiwifi:~# route -n&lt;br /&gt;
@@ -1384,17 +936,20 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface&lt
 192.168.10.0    0.0.0.0         255.255.255.0   U     0      0        0 eth2.2&lt;br /&gt;
 192.168.199.0   0.0.0.0         255.255.255.0   U     0      0        0 br-lan&lt;/p&gt;
 
-&lt;p&gt;##pptp header&lt;br /&gt;
-IP | GRE | pptp_gre_header | PPP | IP&lt;/p&gt;
+&lt;h2 id=&#34;pptp-header&#34;&gt;pptp header&lt;/h2&gt;
 
-&lt;p&gt;##input&lt;br /&gt;
-ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip&lt;br /&gt;
+&lt;p&gt;IP | GRE | pptp_gre_header | PPP | IP&lt;/p&gt;
+
+&lt;h2 id=&#34;input&#34;&gt;input&lt;/h2&gt;
+
+&lt;p&gt;ip -&amp;gt; gre -&amp;gt; ppp -&amp;gt; ip&lt;br /&gt;
 ip_local_deliver_finish()(netfilter NF LOCAL IN smartqos local in) -&amp;gt;inet_protos.gre_rcv -&amp;gt; gre_proto[GREPROTO_PPTP]=pptp_rcv{pptp_gre_header} -&amp;gt; sk_receive_skb -&amp;gt;sk_backlog_rcv -&amp;gt; pptp_rcv_core -&amp;gt; ppp_input -&amp;gt; ppp_do_recv&lt;br /&gt;
 -&amp;gt; ppp_receive_frame -&amp;gt; ppp_receive_nonmp_frame -&amp;gt; netif_rx -&amp;gt; netif_rx_internal -&amp;gt; enqueue_to_backlog -&amp;gt; ____napi_schedule(sd, &amp;amp;sd-&amp;gt;backlog);&lt;br /&gt;
 -&amp;gt; netif_receive_skb&amp;hellip;&lt;/p&gt;
 
-&lt;p&gt;##output&lt;br /&gt;
-ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push&lt;br /&gt;
+&lt;h2 id=&#34;output&#34;&gt;output&lt;/h2&gt;
+
+&lt;p&gt;ip_output &amp;hellip;-&amp;gt; ppp_start_xmit -&amp;gt; ppp_xmit_process -&amp;gt; ppp_send_frame -&amp;gt; add ppp header -&amp;gt; ppp_push&lt;br /&gt;
 -&amp;gt;pch-&amp;gt;chan-&amp;gt;ops-&amp;gt;start_xmit=pptp_xmit -&amp;gt; add gre and ip header. -&amp;gt; ip_local_out -&amp;gt;&lt;br /&gt;
 +another send skb functions is ip_build_and_send_pkt()&lt;br /&gt;
 { this functions hook is init in pptp_connect() -&amp;gt; ppp_register_channel(&amp;amp;po-&amp;gt;chan) }&lt;br /&gt;
@@ -1404,21 +959,26 @@ when invoke pptp_create? socket()!&lt;/p&gt;
 
 &lt;p&gt;if layer 4 protocol is gre then pass.&lt;/p&gt;
 
-&lt;p&gt;##PPTP &amp;amp; NAT&lt;br /&gt;
-* Forward package&lt;br /&gt;
+&lt;h2 id=&#34;pptp-nat&#34;&gt;PPTP &amp;amp; NAT&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Forward package&lt;br /&gt;
 br-lan(PREROUTING orginal packet NAT old)&lt;br /&gt;
 (route -&amp;gt; pptp-vpn) = ip_forward()-&amp;gt;NF_INET_FORWARD-&amp;gt;ip_forward_finish()-&amp;gt;dst_output()&lt;br /&gt;
 pptp-vpn -&amp;gt; ndo_start_xmit -&amp;gt; add some headers -&amp;gt; local_out NAT new -&amp;gt; tc dequeue_qdisc(this is maybe eth2.2&amp;rsquo;s routing result! see top)&lt;br /&gt;
-so we need to do is just find original skb in PPTP packet header!&lt;/p&gt;
+so we need to do is just find original skb in PPTP packet header!&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;p&gt;##PPTP &amp;amp; GRE &amp;amp; Conntrack&lt;/p&gt;
+&lt;h2 id=&#34;pptp-gre-conntrack&#34;&gt;PPTP &amp;amp; GRE &amp;amp; Conntrack&lt;/h2&gt;
 
 &lt;h1 id=&#34;as-a-pure-ip-protocol-gre-uses-only-ip-addresses-but-no-port-numbers-giving-the-router-s-nat-a-tough-time-to-track-such-a-connection-in-its-base-configuration-openwrt-backfire-is-able-to-nat-a-single-pptp-connections-but-not-multiple-such-connections-concurrently-it-is-also-unreliable-when-trying-to-establish-consecutive-single-pptp-connections-from-different-lan-clients-in-rapid-succession&#34;&gt;As a pure IP protocol GRE uses only IP addresses but no port numbers giving the router&amp;rsquo;s NAT a tough time to track such a connection. In its base configuration OpenWrt Backfire is able to NAT a single PPTP connections but not multiple such connections concurrently. It is also unreliable when trying to establish consecutive single PPTP connections from different LAN clients in rapid succession.&lt;/h1&gt;
 
 &lt;p&gt;kernel vpn just one session.&lt;/p&gt;
 
-&lt;p&gt;##ppp-&amp;gt; pptp code.&lt;br /&gt;
-ppp_send_frame()&lt;br /&gt;
+&lt;h2 id=&#34;ppp-pptp-code&#34;&gt;ppp-&amp;gt; pptp code.&lt;/h2&gt;
+
+&lt;p&gt;ppp_send_frame()&lt;br /&gt;
 {&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;//below is ok 132 is output!

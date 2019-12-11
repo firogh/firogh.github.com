@@ -39,24 +39,6 @@ Date:   Wed Apr 6 16:13:34 2016 +0100
     
     Signed-off-by: David Howells <dhowells@redhat.com>
 
-
-
-# SELinux
-[SELinux Explained with Examples in Easy Language]
-[SELinux/Tutorials/What is this unconfined thingie and tell me about attributes](https://wiki.gentoo.org/wiki/SELinux/Tutorials/What_is_this_unconfined_thingie_and_tell_me_about_attributes)
-security/selinux/selinuxfs.c: sysfs_create_mount_point: create /sys/fs/selinux mount point. then mount the selinuxfs on selinux_null???
-upstart will mount selinuxfs at /sys/fs/selinux
-bash-4.3# mount
-/dev/sda2 on / type ext3 (ro,relatime,errors=continue,user_xattr,acl,barrier=1,data=ordered)
-proc on /proc type proc (rw,relatime)
-sysfs on /sys type sysfs (rw,relatime)
-bash-4.3# cat /proc/cmdline 
-BOOT_IMAGE=vmlinuz rootwait max_loop=255 ro clock=pit console=ttyS0,115200 root=LABEL=wr_usb_boot initrd=initrd init=/bin/bash selinux=1 
-bash-4.3# ls /sys/fs/selinux/
-bash-4.3# cat /proc/filesystems  | grep selinux
-nodev	selinuxfs
-bash-4.3# mount -t selinuxfs selinuxfs /sys/fs/selinux/
-
 # IMA
 __fput ->ima_file_free ->ima_check_last_writer
 ## Digital signature
@@ -120,6 +102,20 @@ CommitDate: Thu Jul 17 09:35:15 2014 -0400
 
 EVM: Use crypto_memneq() for digest comparisons
 613317bd212c585c20796c10afe5daaa95d4b0a1
+# Cryptograhy practice
+## Generate cert and key
+openssl req -x509 -nodes -newkey rsa:1024 -keyout keyfile.key -out certificate.cer
+## Sign a file for detached signature
+openssl cms -sign -signer ./certificate.cer -inkey keyfile.key -binary -in ./bar -outform DER -out bar.der.sig
+## Show the signature
+openssl pkcs7 -inform der -in bar.der.sig -noout -print
+## Verify the signature
+openssl cms -verify -binary -content bar -CAfile certificate.cer -inform der -in bar.der.sig  >/dev/null
+## ASN1 parse signature
+openssl asn1parse -inform DER -in bar.der.sig
+  985:d=7  hl=2 l=   9 prim: OBJECT            :messageDigest
+  996:d=7  hl=2 l=  34 cons: SET
+  998:d=8  hl=2 l=  32 prim: OCTET STRING      [HEX DUMP]:C833131C0EC89014C71F5F7F7F85AE5E6211061FC7C1F3182BEAA7AD442FC065
 
 # network security
 * spoofing attack

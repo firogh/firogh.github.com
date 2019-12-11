@@ -1,18 +1,145 @@
+# History
+commit ddbcc7e8e50aefe467c01cac3dec71f118cd8ac2
+Author: Paul Menage <menage@google.com>
+Date:   Thu Oct 18 23:39:30 2007 -0700
+    Task Control Groups: basic task cgroup framework
++Control Groups provide a mechanism for aggregating/partitioning sets of
++tasks, and all their future children, into hierarchical groups with
++specialized behaviour.
++Definitions:
++A *cgroup* associates a set of tasks with a set of parameters for one
++or more subsystems.
++A *subsystem* is a module that makes use of the task grouping
++facilities provided by cgroups to treat groups of tasks in
++particular ways. A subsystem is typically a "resource controller" that
++schedules a resource or applies per-cgroup limits, but it may be
++anything that wants to act on a group of processes, e.g. a
++virtualization subsystem.
++
++A *hierarchy* is a set of cgroups arranged in a tree, such that
++every task in the system is in exactly one of the cgroups in the
++hierarchy, and a set of subsystems; each subsystem has system-specific
++state attached to each cgroup in the hierarchy.  Each hierarchy has
++an instance of the cgroup virtual filesystem associated with it.
++At any one time there may be multiple active hierachies of task
++cgroups. Each hierarchy is a [partition](https://en.wikipedia.org/wiki/Partition_of_a_set) of all tasks in the system.
 
+# Purposes
+## Why Multiple hierarchy?
+https://www.kernel.org/doc/Documentation/admin-guide/cgroup-v1/cgroups.rst
++Multiple hierarchy support is provided to allow for situations where
++the division of tasks into cgroups is distinctly different for
++different subsystems - having parallel hierarchies allows each
++hierarchy to be a natural division of tasks, without having to handle
++complex combinations of tasks that would be present if several
++unrelated subsystems needed to be forced into the same tree of
++cgroups.
 
+## Why mutiple hierarchy failed?
+[[RFD] cgroup: about multiple hierarchies](https://lkml.org/lkml/2012/2/21/379)
+
+# V1
 [Control groups series by Neil Brown](https://lwn.net/Articles/604609/)
+[Documentation/cgroups/cgroups.txt](https://lwn.net/Articles/524935/) or Documentation/cgroup-v1/cgroups.txt
+man 7 cgroups
 
+# Hierarchy
+[Thus it is possible to have 12 different hierarchies, one for each subsystem, or a single hierarchy with all 12 subsystems attached, or any other combination in between.](https://lwn.net/Articles/606699/)
+## Dummy hierarchy
+rootnode.subsys_list
+check cgroup_init_subsys for dummytop group inilialization
+cgroup_init_early and cgroup_init
+static struct cgroupfs_root rootnode;
 
-include/linux/cgroup_subsys.h
-#if IS_ENABLED(CONFIG_CGROUP_CPUACCT)             
-SUBSYS(cpuacct)
-#endif 
+## Active hierarchy
+struct cgroupfs_root stands for a hierarchy; all hierarchies are liked in the roots as shown in proc_cgroup_show. They are called active root or hierarchy.
+Check cgroup_mount
+/sys/fs/cgroup> wc -l blkio/tasks perf_event/tasks cpu,cpuacct/tasks  | xargs -n6
+888 blkio/tasks 888 perf_event/tasks 888 cpu,cpuacct/tasks
+### Top group
+dummytop's parent is null check rootnode definition and cgroup_init_early
+        /* cannot set to root cgroup */ in mem_cgroup_oom_control_write 
+        if (!cgrp->parent) return -EINVAL;
+and in sched_group_set_shares
+        /*
+         * We can't change the weight of the root cgroup.
+         */
+        if (!tg->se[0])
+                return -EINVAL;
+In rebind_subsystems(), we learned that the top group of active hierarchy are bound to Dummy hierarchy and in above to write handler we learned that all writes are not permitted to the top group.
 
-kernel/cgroup.c
-#define SUBSYS(_x) [_x ## _cgrp_id] = &_x ## _cgrp_subsys,
-static struct cgroup_subsys *cgroup_subsys[] = {
-#include <linux/cgroup_subsys.h>
-};
-#undef SUBSYS
+# Cgroup
+d_fsdata = cgroup and cgroup.dentry
+struct cgroup
 
-cgroup_init
+# Cgroup subsys 
+crash> p subsys
+ {0xffffffff81a2af20 <cpuset_subsys>, 0xffffffff81a21540 <cpu_cgroup_subsys>, 0xffffffff81a21640 <cpuacct_subsys>, 0xffffffff81bdb4c0 <mem_cgroup_subsys>, 0xffffffff81a4f9e0 <devices_subsys>, 0xffffffff81a2ad60 
+<freezer_subsys>, 0xffffffff81a7ab60 <net_cls_subsys>, 0xffffffff81a5c380 <blkio_subsys>, 0xffffffff81a36a20 <perf_subsys>, 0x0,
+## Cgroup subsys - ss
+struct cgroup_subsys
+## Cgroup subsys state - CSS
+struct cgroup_subsys_state
+css_create
+css->flags: CSS_ROOT, CSS_REMOVED,
+
+# Linkage: struct cgrp_cset_link
+From task to cgroup in a specic hierarchy: task->css_set->cset_links -> cgrp_cset_link.cgrp; check proc_cgroup_show
+From cgroump to task: cgroup->css_sets-> cgrp_cset_link.cset = css_set.hacks.
+## Older version check struct cg_cgroup_link
+
+# Task
+System bootup: Init task's init CSS set, Check cgroup_init_early or cgroup_init for init_css_set
+Running: Move a task to a cgroup: attach_task_by_pid -> cgroup_attach_task -> ...-> find_existing_css_set
+
+# Cgroup fs
+## cgroup_mount: 
+sb->s_root->d_fsdata = root_cgrp;
+We can mount a mouted hierarchy to other directoryes.
+mount | grep cgroup | grep memory
+cgroup on /sys/fs/cgroup/memory type cgroup (rw,relatime,memory)
+cgroup on /tmp/x type cgroup (rw,relatime,memory)
+cgroup on /tmp/b type cgroup (rw,relatime,memory)
+mount | grep cgroup2
+cgroup on /sys/fs/cgroup/unified type cgroup2 (rw,nosuid,nodev,noexec,relatime)
+cgroup on /tmp/a type cgroup2 (rw,relatime)
+rebind to top group
+## cgroup_mkdir
+
+## cgroup_file_write
+
+# Procfs cgroup data
+/proc/cgroups: proc_cgroupstats_show
+/proc/self/cgroup: proc_cgroup_show and for_each_active_root
+
+# CPU cgroup
+## System booting up
+crash> p cpu_cgroup_subsys.early_init
+$5 = 0x1
+Check cgroup_init_early; 
+## Mount
+## mkdir
+cgroup_mkdir 
+cgroup_create
+cpu_cgroup_create
+sched_create_group
+
+## Move a task to cpu_cgroup
+cgroup_tasks_write -> cgroup_attach_task->
+	cgroup_task_migrate
+	cpu_cgroup_attach_task
+		task_subsys_state_check(tsk, cpu_cgroup_subsys_id: 
+		enum cgroup_subsys_id = 1
+			task->cgroups->subsys[subsys_id]
+		struct task_group *sched_task_group; // task_struct
+		task_move_group_fair -> set_task_rq
+
+# Task counter and pid subsystem
+[add nproc cgroup subsystem](https://lkml.org/lkml/2015/2/22/204)
+[The dark fate of cgroups: Task counter subsystem v8](https://lkml.org/lkml/2013/4/1/508)
+
+# Cgroup v2
+Utility controller
+[[RFD] cgroup: about multiple hierarchies](https://lkml.org/lkml/2012/2/21/379)
+[Control groups, part 7: To unity and beyond](https://lwn.net/Articles/608425/)
+cooperate

@@ -1,0 +1,98 @@
+
+# KALLSYMS
+## Firo: Protype of KALLSYMS; initailly it was used for module only.
+history: commit d4598417b45e6c291b55eb41110b292ac7d25c64 (tag: 2.4.0-test11pre1)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:39:48 2007 -0500
+        - Keith Owens: clean up module information passing, remove
+          "get_module_symbol()".
+I don't know how it works.
+
+## First version of True KALLSYMS
+tglx: commit 218af2f340009e624603253ca8a35c884f31ab5a
+Author: Ingo Molnar <mingo@elte.hu>
+Date:   Thu Sep 26 03:31:07 2002 -0700
+    [PATCH] kksymoops-2.5.38-C9
+    Make the kernel print out symbolic bactraces if symbol table information
+    is available (CONFIG_KALLSYMS)
++KALLSYMS       = /sbin/kallsyms
++++ b/kernel/kallsyms.c
++ * kksymoops.c: in-kernel printing of symbolic oopses and stack traces.
+and
++  __start___kallsyms = .;     /* All kernel symbols */
++  __kallsyms : { *(__kallsyms) } /* Firo: should be gernerated by /sbin/kallsyms */
++  __stop___kallsyms = .;
+
+## scripts/kallsyms
+tglx: commit a5508ddcd000a435baa37f61ef1bdfb490fcf3c0
+Author: Rusty Russell <rusty@rustcorp.com.au>
+Date:   Mon Nov 18 02:48:17 2002 -0800
+    [PATCH] kallsyms for new modules
+    Since I believe kallsyms is important, this reimplements it sanely,
+    using the current module infrastructure, and not using an external
+    kallsyms script.
+-KALLSYMS       = /sbin/kallsyms
++KALLSYMS       = scripts/kallsyms
++# FIXME: Use System.map as input, and regenerate each time in Makefile.
++$NM $1 | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aUw] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)' | sort > kallsyms.map
++encode_symbols kallsyms.map > kallsyms.c
++$CC $CFLAGS -c -o $2 kallsyms.c
+
+## scripts/kallsyms.c
+tglx: commit 6802d702761dfdd910e37da40ba95fa71fd06dd7
+Author: Kai Germaschewski <kai@tp1.ruhr-uni-bochum.de>
+Date:   Wed Dec 4 01:17:02 2002 -0600
+    kbuild: Speed up kallsyms generation
+-cmd_kallsyms = sh $(KALLSYMS) $< $@
++cmd_kallsyms = $(NM) -n $< | scripts/kallsyms > $@
+
+# KALLSYMS_ALL
+tglx: commit 83804118c3e7927a7a0b5d29100f6e3aaeb0d69c
+Author: Andrew Morton <akpm@osdl.org>
+Date:   Thu May 20 23:20:14 2004 -0700
+    [PATCH] Debugging option to put data symbols in kallsyms
++config KALLSYMS_ALL
++       bool "Include all symbols in kallsyms"
++       depends on DEBUG_KERNEL && KALLSYMS
++       help
++          Normally kallsyms only contains the symbols of functions, for nicer
++          OOPS messages.  Some debuggers can use kallsyms for other
++          symbols too: say Y here to include all symbols, and you
++          don't care about adding 300k to the size of your kernel.
+
+# Current implemention on linkage
+commit 1f2bfbd00e466ff3489b2ca5cc75b1cccd14c123
+Author: Sam Ravnborg <sam@ravnborg.org>
+Date:   Sat May 5 10:18:41 2012 +0200
+    kbuild: link of vmlinux moved to a script
+
+# Lookup symbols for addresses
+kallsyms_lookup
+module_address_lookup
+extern const unsigned long kallsyms_addresses[] __weak;
+extern const int kallsyms_offsets[] __weak;
+extern const u8 kallsyms_names[] __weak;
+
+# Speedup and reduction
+tglx: commit fccef669d1d489d675fd6a8ae5fb87cac72a54d6
+Author: Andi Kleen <ak@muc.de>
+Date:   Wed Dec 25 09:46:32 2002 -0600
+
+    kbuild: Stem compression for kallsyms
+
+tglx: commit e10392112d315c45f054c22c862e3a7ae27d17d4
+Author: Paulo Marques <pmarques@grupopie.com>
+Date:   Mon Oct 18 17:59:03 2004 -0700
+    [PATCH] kallsyms data size reduction / lookup speedup
++ * ChangeLog:
++ * (25/Aug/2004) Paulo Marques <pmarques@grupopie.com>
++ *      Changed the compression method from stem compression to "table lookup"
++ *      compression
++ *      Table compression uses all the unused char codes on the symbols and
++ *  maps these to the most used substrings (tokens). For instance, it might
++ *  map char code 0xF7 to represent "write_" and then in every symbol where
++ *  "write_" appears it can be replaced by 0xF7, saving 5 bytes.
++ *      The used codes themselves are also placed in the table so that the
++ *  decompresion can work without "special cases".
++ *      Applied to kernel symbols, this usually produces a compression ratio
++ *  of about 50%.

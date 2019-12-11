@@ -66,7 +66,7 @@
             </a>
             </li>
             <li>
-            <a href="/firo/" >
+            <a href="/life/" >
                 <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
                 <span> life </span>
             </a>
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="980">
+<meta itemprop="wordCount" content="217">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/net/link/">
 
@@ -189,304 +189,69 @@
 
 <h1 id="multi-queue">Multi-queue</h1>
 
-<p><a href="https://greenhost.nl/2013/04/10/multi-queue-network-interfaces-with-smp-on-linux/">Multi-queue network interfaces with SMP on Linux</a><br />
-##Common concepts<br />
-* The link layer<br />
-is the group of methods and communications protocols that only operate on the link that a host is physically connected to.</p>
+<p><a href="https://greenhost.nl/2013/04/10/multi-queue-network-interfaces-with-smp-on-linux/">Multi-queue network interfaces with SMP on Linux</a></p>
+
+<h1 id="common-concepts">Common concepts</h1>
+
+<p>The link layer is the group of methods and communications protocols that only operate on the link that a host is physically connected to.<br />
+The link is the physical and logical network component used to interconnect hosts or nodes in the network<br />
+A link protocol is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment or a wide area network connection.</p>
+
+<h1 id="frame">Frame</h1>
+
+<p>ULNI page 283: Figure 13-8. Differences between Ethernet and 802.3 frames</p>
+
+<h1 id="l2-header">L2 header</h1>
+
+<p>dst_neigh_output-&gt;dev_hard_header -&gt;  eth_header</p>
+
+<h1 id="neighbor">Neighbor</h1>
 
 <ul>
-<li><p>The link<br />
-is the physical and logical network component used to interconnect hosts or nodes in the network</p></li>
-
-<li><p>a link protocol<br />
-is a suite of methods and standards that operate only between adjacent network nodes of a local area network segment<br />
-or a wide area network connection.</p></li>
-
-<li><p>MTU<br />
-This limits the number of bytes of data to 1500(Ethernet II) and 1492(IEEE 802), respectively.<br />
-This characteristic of the link layer is called the MTU, its maximum transmission unit.</p></li>
-
-<li><p>PMTU<br />
-/proc/sys/net/ipv4/ip_no_pmtu_disc<br />
-0 enable, 1 disable</p></li>
-</ul>
-
-<p>cat /proc/sys/net/core/warnings</p>
-
-<p>/proc/sys/net/ipv4/tcp_mtu_probing<br />
-!0 enable tcp_mtu_probing()<br />
-If you are using Jumbo Frames, we recommend setting tcp_mtu_probing = 1 to<br />
-help avoid the problem of MTU black holes. Setting it to 2 sometimes causes performance problems.</p>
-
-<p>net/ipv4/icmp.c<br />
-icmp_unreach(<br />
-type 3, code 4<br />
-icmph-&gt;type == ICMP_DEST_UNREACH //3<br />
-case ICMP_FRAG_NEEDED //4<br />
-icmp_err,</p>
-
-<h2 id="frame">Frame</h2>
-
-<p><a href="http://www.infocellar.com/networks/ethernet/frame.htm">Ethernet Frame</a><br />
-+ 一种不太确定的非严格的真实划分<br />
-TCP/IP -&gt; Ethenet II frame<br />
-IPX/APPLETALK -&gt; 802.3/LLC(802.2), SNAP, mac 发来的包走这条路.<br />
-* jumbo frame?</p>
-
-<p>#net_device<br />
-link -&gt; net<em>device -&gt; if<br />
-driver -&gt; manipulate dev-&gt;state through netif</em>*_on/off -&gt; dev-&gt;flags<br />
-+rfc2863<br />
-+ <a href="https://www.kernel.org/doc/Documentation/networking/operstates.txt">operational state</a><br />
-+ <a href="https://support.cumulusnetworks.com/hc/en-us/articles/202693826-Monitoring-Interface-Administrative-State-and-Physical-State-on-Cumulus-Linux">Monitoring Interface Administrative State and Physical State on Cumulus Linux</a><br />
-* dev-&gt;operstate<br />
-admin state is if flag<br />
-operate state is link_state<br />
-Administrative state is the result of &ldquo;ip link set dev<br />
-<dev> up or down&rdquo; and reflects whether the administrator wants to use<br />
-the device for traffic.<br />
-enp9s0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000<br />
-operate is DOWN, amdin is UP&gt;<br />
- Operational state<br />
-shows the ability of an interface to transmit this user data.<br />
-    &ldquo;UNKNOWN&rdquo;, &ldquo;NOTPRESENT&rdquo;, &ldquo;DOWN&rdquo;, &ldquo;LOWERLAYERDOWN&rdquo;,<br />
-    &ldquo;TESTING&rdquo;, &ldquo;DORMANT&rdquo;,    &ldquo;UP&rdquo;<br />
-IF_OPER_UNKNOWN,<br />
-see rfc2863</p>
-
-<ul>
-<li><p>dev-&gt;link_mode<br />
-IF_LINK_MODE_DORMANT wifi<br />
-IF_LINK_MODE_DEFAULT wire<br />
-对应dev-&gt;operstate in 转化方法rfc2863_policy()</p></li>
-
-<li><p>dev-&gt;state<br />
-<strong>LINK_STATE_START,     这是内核自身的标记位</strong>dev_open init_dummy_netdev __dev_close_many<br />
-__LINK_STATE_PRESENT,         也是内核自己的, 用的比 START早<br />
-__LINK_STATE_NOCARRIER,<br />
-__LINK_STATE_LINKWATCH_PENDING, 也是辅助状态不明, nocarrier和dormant都可接收的<br />
-__LINK_STATE_DORMANT</p></li>
-
-<li><p>dev-&gt;flags dev_get_flags()</p></li>
-
-<li><p>if flags form man netdevice or or kernel src codes<br />
-/sys/class/net/<dev>/flags<br />
-          IFF_UP            Interface is running.<br />
-          IFF_BROADCAST     Valid broadcast address set.<br />
-          IFF_DEBUG         Internal debugging flag.<br />
-          IFF_LOOPBACK      Interface is a loopback interface.<br />
-          IFF_POINTOPOINT   Interface is a point-to-point link.<br />
-          IFF_RUNNING       Resources allocated.<br />
-          IFF_NOARP         No arp protocol, L2 destination address not set.<br />
-          IFF_PROMISC       Interface is in promiscuous mode.<br />
-          IFF_NOTRAILERS    Avoid use of trailers.<br />
-          IFF_ALLMULTI      Receive all multicast packets.<br />
-          IFF_MASTER        Master of a load balancing bundle.<br />
-          IFF_SLAVE         Slave of a load balancing bundle.</p>
-
-<pre><code>      IFF_MULTICAST     Supports multicast
-      IFF_PORTSEL       Is able to select media type via ifmap.
-      IFF_AUTOMEDIA     Auto media selection active.
-      IFF_DYNAMIC       The addresses are lost when the interface goes
-                        down.
-      IFF_LOWER_UP      Driver signals L1 up (since Linux 2.6.17)
-      IFF_DORMANT       Driver signals dormant (since Linux 2.6.17)
-      IFF_ECHO          Echo sent packets (since Linux 2.6.25)
-</code></pre></li>
-
-<li><p>netdev_queue-&gt;state<br />
-<a href="http://thread.gmane.org/gmane.linux.kernel/709444/focus=714632">Understand __QUEUE_STATE_FROZEN</a><br />
-__QUEUE_STATE_DRV_XOFF,     netif_tx_stop_queue<br />
-__QUEUE_STATE_STACK_XOFF,<br />
-__QUEUE_STATE_FROZEN,<br />
-可以确定这个frozen这个标志位就是为了dev_watchdog服务, 从所有内核态代码调用的位置得出的.</p></li>
-
-<li><p>dev_watchdog,</p></li>
-</ul>
-
-<p>#Neighbor<br />
-* ip_output_finish2 -&gt; __neigh_create -&gt; tbl-&gt;constructor -&gt; arp_constructor{<br />
+<li>ip_output_finish2 -&gt; __neigh_create -&gt; tbl-&gt;constructor -&gt; arp_constructor{<br />
 if !dev-&gt;header_ops   //slip is the case, see sl_setup<br />
-    neigh-&gt;ops = &amp;arp_direct_ops<br />
-    neigh-&gt;output = neigh_direct_output<br />
+neigh-&gt;ops = &amp;arp_direct_ops<br />
+neigh-&gt;output = neigh_direct_output<br />
 else if ARPHRD_ROSE/AX25/NETROM<br />
-    arp_broken_ops<br />
-    neigh-&gt;ops-&gt;output<br />
+arp_broken_ops<br />
+neigh-&gt;ops-&gt;output<br />
 else if dev-&gt;header_ops-&gt;cache<br />
-    neigh-&gt;ops = &amp;arp_hh_ops<br />
+neigh-&gt;ops = &amp;arp_hh_ops<br />
 else<br />
-    arp_generic_ops</p>
+arp_generic_ops<br />
+<br /></li>
+</ul>
 
 <p>if (neigh-&gt;nud_state &amp; NUD_VALID)<br />
     neigh-&gt;output = neigh-&gt;ops-&gt;connected_output;<br />
 else<br />
     neigh-&gt;output = neigh-&gt;ops-&gt;output;<br />
-}</p>
-
-<ul>
-<li><p>ip_output_finish2 -&gt; dst_neigh_output -&gt; neigh_resolve_output</p></li>
-
-<li><p>ipv4 Neighbor output instance of ethernet<br />
+}<br />
+* ip_output_finish2 -&gt; dst_neigh_output -&gt; neigh_resolve_output<br />
+*  ipv4 Neighbor output instance of ethernet<br />
 see alloc_etherdev_mqs-&gt; ether_setup{<br />
 dev-&gt;header_ops = &amp;eth_header_ops;<br />
 dev-&gt;type       = ARPHRD_ETHER;<br />
 eth_header_ops.cache = eth_header_cache<br />
 }<br />
-so neigh-&gt;ops = &amp;arp_hh_ops; neigh-&gt;output = neigh_resolve_output in arp_hh_ops</p>
+so neigh-&gt;ops = &amp;arp_hh_ops; neigh-&gt;output = neigh_resolve_output in arp_hh_ops<br />
+    //tg3_init_one<br />
+    dev-&gt;netdev_ops = &amp;tg3_netdev_ops;<br />
+    dev-&gt;ethtool_ops = &amp;tg3_ethtool_ops;<br />
+    dev-&gt;watchdog_timeo = TG3_TX_TIMEOUT;</p>
 
-<p>//tg3_init_one<br />
-dev-&gt;netdev_ops = &amp;tg3_netdev_ops;<br />
-dev-&gt;ethtool_ops = &amp;tg3_ethtool_ops;<br />
-dev-&gt;watchdog_timeo = TG3_TX_TIMEOUT;</p>
+<pre><code>//In ppp
+</code></pre>
 
-<p>//In ppp<br />
-static void ppp_setup(struct nethernetet_device *dev)<br />
+<p>static void ppp_setup(struct nethernetet_device *dev)<br />
 {<br />
-dev-&gt;netdev_ops = &amp;ppp_netdev_ops;<br />
-dev-&gt;hard_header_len = PPP_HDRLEN;<br />
-dev-&gt;mtu = PPP_MRU;<br />
-dev-&gt;addr_len = 0;<br />
-dev-&gt;tx_queue_len = 3<br />
-dev-&gt;type = ARPHRD_PPP<br />
-}</p></li>
-</ul>
-
-<p>#PPP SLIP</p>
-
-<p>#Data Framing<br />
-dst_neigh_output-&gt;dev_hard_header -&gt;  eth_header</p>
-
-<p>#TC Qdisc<br />
-##Bibliography<br />
-<a href="http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html">http://tldp.org/HOWTO/Traffic-Control-HOWTO/intro.html</a><br />
-lartc.rog<br />
-<a href="http://ace-host.stuart.id.au/russell/files/tc/">http://ace-host.stuart.id.au/russell/files/tc/</a></p>
-
-<p>##Common concepts<br />
-Shaping: Shapers delay packets to meet a desired rate.<br />
-Scheduling: Schedulers arrange and/or rearrange packets for output.<br />
-Classifying: Classifiers sort or separate traffic into queues.<br />
-Policing: Policers measure and limit traffic in a particular queue.<br />
-Dropping: Dropping discards an entire packet, flow or classification.<br />
-Marking: Marking is a mechanism by which the packet is altered.</p>
-
-<p>##Add new qdisc<br />
-RTM_NEWQDISC -&gt; tc_modify_qdisc</p>
-
-<p>##The execution of u32 tc rule</p>
-
-<h3 id="user-space-tc-qidsc-add">user space tc qidsc add</h3>
-
-<p>u32_parse_opt<br />
-{<br />
-    -&gt; parse_selector -&gt;&hellip;-&gt; parse_ip<br />
-    struct nlmsghdr *n<br />
-    rta = NLMSG_TAIL(n)<br />
-    rta-&gt;type = TCA_U32_SEL</p>
-
-<p>}</p>
-
-<h3 id="kernel-space">kernel space</h3>
-
-<p>NETLINK_ROUTE -&gt; RTM_NEWTFILTER: see tc_filter_init -&gt; tc_ctl_tfilter-&gt;(tp-&gt;ops-&gt;change = u32_change in net/sched/cls_u32.c)<br />
-tcf_exts_validate: init police and action of this shel tc command,<br />
-put sel in tc_u_knode;<br />
-tc_u_knode insert in tc_u_hnode<br />
-root is tcf_proto 入殓 by prior.<br />
-tcf_proto -&gt; tc_u_hnode -&gt; tc_u_knode -&gt; sel<br />
-也就是用户太的selector没变存到内核中了.<br />
-enqueue -&gt; filter_list -&gt;u32-&gt;classify() this classify is implement by u32!<br />
-tcf_proto_ops-&gt;.kind = &ldquo;u32&rdquo;, .classify   =   u32_classify,<br />
-police and action invoke in tcf_action_exec , act register by tcf_register_action.</p>
-
-<ul>
-<li>TCA_U32_CLASSID in u32_set_parms<br />
-filter classid and flowid is the same meaning in russell tc doc<br /></li>
-<li>TCA_KIND in filter is u32&hellip;register_tcf_proto_ops<br />
-<br /></li>
-</ul>
-
-<p>##FAQ<br />
-* conflict tc qidsc del with softnet_data-&gt;softnet_data<br />
- [PATCH] pkt_sched: Destroy gen estimators under rtnl_lock().<br />
-<a href="http://thread.gmane.org/gmane.linux.network/102444/focus=102592">http://thread.gmane.org/gmane.linux.network/102444/focus=102592</a><br />
-After synchronize_rcu() in dev_deactivate() we are sure any qdisc_run(),<br />
-from dev_queue_xmit() or net_tx_action() can only see and lock noop_qdisc.<br />
-This was happened in dev_deactivate_many()<br />
-* difference between synchronize_net and  synchronize_rcu?<br />
-<a href="http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle">http://article.gmane.org/gmane.linux.network/196309/match=net_device+dismantle</a><br />
-In this patch, we replace synchronize_rcu with synchronize_net().</p>
-
-<p>#LLC (TCP/IP rarely use this sub layer)<br />
-* ptype MAC layer 之上, 可能是data link(llc) or network layer(ip)<br />
-定义了所有从驱动上来的packet接收函数, 这里有ip_rcv 还有pppoe_rcv,llc_rcv, NO snap_rcv<br />
-dev_add_pack<br />
-llc_rcv{snap_rcv}<br />
-netif_receive_skb -&gt;ip/llc_rcv</p>
-
-<h1 id="netpoll">Netpoll</h1>
-
-<p>可以说是linker层的netfilter 更raw<br />
-netconsole就是基于他, 屌炸天.<br />
-不走协议栈, 中断完蛋了, 也能用, 纯poll.</p>
-
-<h1 id="napi">NAPI</h1>
-
-<p><a href="http://blog.chinaunix.net/uid-24148050-id-464587.html">网络数据包收发流程(一)：从驱动到协议栈</a><br />
-New API (NAPI) is an interface to use interrupt mitigation techniques for networking devices in the Linux kernel.<br />
-Such an approach is intended to reduce the overhead of packet receiving.<br />
-类似机制, Add <a href="https://lwn.net/Articles/346187/">blk-iopoll</a>, a NAPI like approach for block devices<br />
-1. dirver: device-&gt;DMA-&gt;ring<br />
-2. IRQ: disable irq, napi schedule<br />
-do_IRQ-&gt;handler = gfar_receive{<br />
-    disable irq<br />
-    __netif_rx_schedule<br />
+    dev-&gt;netdev_ops = &amp;ppp_netdev_ops;<br />
+    dev-&gt;hard_header_len = PPP_HDRLEN;<br />
+    dev-&gt;mtu = PPP_MRU;<br />
+    dev-&gt;addr_len = 0;<br />
+    dev-&gt;tx_queue_len = 3<br />
+    dev-&gt;type = ARPHRD_PPP<br />
 }</p>
-
-<ol>
-<li>softirq:driver function, clean ring buffer, netif_receive_skb<br />
--&gt;net_rx_action {<br />
-n-&gt;poll = gfar_poll<br />
-{<br />
-gfar_clean_rx_ring-&gt;gfar_process_frame<br />
-{<br />
-    skb-&gt;protocol = eth_type_trans(skb, dev);<br />
-    netif_receive_skb<br />
-}<br />
-enable irq<br />
-<br /></li>
-</ol>
-
-<h1 id="rps">RPS</h1>
-
-<h1 id="driver">Driver</h1>
-
-<ul>
-<li>skb-&gt;protocol<br /></li>
-<li>assignment in ip_output by = htons(ETH_P_IP)<br /></li>
-<li>assignment in driver by = eth_type_trans()<br />
-<br /></li>
-</ul>
-
-<h1 id="mac">MAC</h1>
-
-<ul>
-<li>Addressing,LAN switching<br />
-<br /></li>
-</ul>
-
-<h1 id="relations-of-concept">relations of concept</h1>
-
-<p>Qdisc &ndash; NET_XMIT_SUCCESS<br />
-dev &ndash; NETDEV_TX_OK</p>
-
-<h1 id="from-pci-id-to-device">from pci id to device</h1>
-
-<p>/sys/bus/pci/devices/0000:00:19.0/net/eno1/</p>
-
-<h1 id="admin-queue">Admin queue</h1>
-
-<p>Intel® Ethernet Controller 710 Series Datasheet Chapter 7.10</p>
 
 		</article>
 	  </div>

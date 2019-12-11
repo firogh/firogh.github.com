@@ -1,0 +1,46 @@
+# RW semaphore
+[rwsem: Support optimistic spinning](https://lwn.net/Articles/598577/)
+mmap_sem
+__RWSEM_INIT_COUNT(name)        .count = ATOMIC_LONG_INIT(RWSEM_UNLOCKED_VALUE)
+#define RWSEM_UNLOCKED_VALUE            0x00000000L
+up_read -> dec
+down_read_trylock
+if add < 0;
+        writer is holding the semaphore
+else
+        get lock
+
+down_read -> inc
+if add < 0 # in memory
+        call_rwsem_down_read_failed and wait sem->wait_list
+else jns
+        get lock
+
+down_write_trylock
+if eax = 0;
+        get lock by add RWSEM_ACTIVE_WRITE_BIAS
+else
+        other holds lock
+
+down_write
+        add RWSEM_ACTIVE_WRITE_BIAS  # in memory!
+Lock:
+= 0 is unlocked.
+> 0 : Reader holds lock
+< 0 : Writer holds lock
+
+# rwsem-xadd
+commit 3cf2f34e1a3d4d5ff209d087925cf950e52f4805
+Author: Tim Chen <tim.c.chen@linux.intel.com>
+Date:   Fri May 2 12:53:57 2014 -0700
+    rwsem: Add comments to explain the meaning of the rwsem's count field
+kernel/locking/rwsem-xadd.c
+
+# rwsem-spinlock
+tglx: commit ed6eefe4382ab3a72d70922d401b7c8003513f13
+Author: Linus Torvalds <torvalds@athlon.transmeta.com>
+Date:   Mon Feb 4 18:13:52 2002 -0800
+    v2.4.3.6 -> v2.4.3.7
+      - David Howells: more rw-sem stuff
+No clear reason for adding rwsem-spinlock. Maybe for generic purpose.
+[locking/rwsem: Remove rwsem-spinlock.c & use rwsem-xadd.c for all archs](https://lkml.org/lkml/2019/2/13/1278)

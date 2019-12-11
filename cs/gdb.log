@@ -7,4 +7,42 @@ Cannot access memory at address 0x5
 
 print_frame
 
+# [Extending GDB using Python](https://sourceware.org/gdb/onlinedocs/gdb/Python.html#Python)
+gdb.selected_inferior().read_memory(0xffff8800b1488680, 64).tobytes().hex()
 
+## global symbol to type to offset
+sym = gdb.lookup_symbol('kmem_cache', None, gdb.SYMBOL_STRUCT_DOMAIN)[0]
+This doesn't work :  sym = gdb.lookup_global_symbol("kmem_cache")
+sym.type.fields()[1].bitpos>>3
+But  the following work.
+>>> gdb.lookup_global_symbol("slab_caches").type.name
+'list_head'
+gdb.lookup_global_symbol("slab_caches").type.fields()[0].bitpos
+
+## Get global
+>>> gb = gdb.lookup_global_symbol("start_kernel").symtab.global_block()
+>>> gdb.lookup_symbol('kmem_cache', gb, gdb.SYMBOL_STRUCT_DOMAIN)[0].name
+'kmem_cache'
+>>> gdb.lookup_symbol('kmem_cache', gb, gdb.SYMBOL_STRUCT_DOMAIN)[0].type.name
+'kmem_cache'
+
+kc = gdb.lookup_symbol('kmem_cache', gb, gdb.SYMBOL_STRUCT_DOMAIN)[0]
+>>> kc.type.fields()[0].type.target().name
+'array_cache'
+
+>>> gdb.lookup_global_symbol("start_kernel").is_function
+True
+>>> gdb.lookup_global_symbol("start_kernel").type.target().name
+'void'
+
+## crash-python
+ 70             sym = lookup_symbol('kmem_cache', None, SYMBOL_STRUCT_DOMAIN)[0]
+ 71             if sym is not None:
+ 72                 offset = offsetof(sym.type, 'flags', True)
+ 73             if offset is not None:
+ 74                 print("offset of flags in kmem_cache is %d\n"%offset)
+ 75             else:
+ 76                 print("Boom!")
+
+## Scripting gdb
+http://tromey.com/blog/?p=548
