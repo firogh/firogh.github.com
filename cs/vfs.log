@@ -1,6 +1,8 @@
-
+# Reference
 Documentation/filesystems/porting
 Documentation/filesystems/vfs.rst
+[Linux 2.4: 3. Virtual Filesystem (VFS)](http://www.tldp.org/LDP/lki/lki-3.html)
+[Linux Filesystems in 21 days 45 minutes](https://www.samba.org/samba/samba/ftp/cifs-cvs/ols2006-fs-tutorial-smf.pdf)
 
 # LQO
 s_inode_lru
@@ -43,3 +45,21 @@ CommitDate: Fri Jan 7 17:50:26 2011 +1100
 ## Free
 drop_pagecache_sb
 iput_final
+
+# inode
+inode_hashtable and iget_locked
+
+# dentry
+To get the full path call dentry_path_raw(filp->f_path.dentry,buf,buflen).
+
+# path
+[Upcoming API change: struct path](https://lwn.net/Articles/206758/)
+
+# Open
+sys_open ->
+    path_init()
+    1. get start point current->fs{root, pwd}
+    2. link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)
+    do_last()
+    1. dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb->s_dentry_op
+    2. file, if not open, file->f_op = inode->i_fop

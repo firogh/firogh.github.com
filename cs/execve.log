@@ -1,0 +1,31 @@
+# References
+[How programs get run](https://lwn.net/Articles/630727/)
+[How programs get run: ELF binaries](https://lwn.net/Articles/631631/)
+
+# Temporary stack
+__bprm_mm_init
+
+# Finialize stack
+setup_arg_pages
+
+# DYN BASE
+ssc 'echo 0 > /proc/sys/kernel/randomize_va_space'
+firo@linux-6qg8:~/ws> cat /proc/self/maps | head
+555555554000-55555555c000 r-xp 00000000 00:2d 31819                      /usr/bin/cat
+/*
+ * This is the base location for PIE (ET_DYN with INTERP) loads. On
+ * 64-bit, this is above 4GB to leave the entire 32-bit address
+ * space open for things that want to use the area for 32-bit pointers.
+ */
+#define ELF_ET_DYN_BASE         (mmap_is_ia32() ? 0x000400000UL : \
+                                                  (DEFAULT_MAP_WINDOW / 3 * 2))
+# Map every PT_LOAD
+elf_map
+[elf_map: why offset of vma need to subtract eppnt->p_vaddr ?](https://lists.kernelnewbies.org/pipermail/kernelnewbies/2013-March/007851.html)
+It's because 
+1. mmap maps file in page unit and 
+2. the target vaddr (1st argument of mmap)  will be Maksed by PAGE_MASK.
+3. PAGE_MASK & p_vaddr and PAGE_MASK & p_offset always are equal
+
+# AUX vector
+create_elf_tables

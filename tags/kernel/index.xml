@@ -971,14 +971,7 @@ CommitDate: Tue Apr 18 11:42:36 2017 -0700&lt;br /&gt;
       <guid>http://firoyang.org/cs/fs/</guid>
       <description>
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.samba.org/samba/samba/ftp/cifs-cvs/ols2006-fs-tutorial-smf.pdf&#34;&gt;Linux Filesystems in 21 days 45 minutes&lt;/a&gt;&lt;br /&gt;
-Documentation/filesystems/vfs.txt&lt;br /&gt;
-&lt;a href=&#34;https://unix.stackexchange.com/a/265680/16335&#34;&gt;Why does open before read/write?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.tldp.org/LDP/lki/lki-3.html&#34;&gt;Linux 2.4: 3. Virtual Filesystem (VFS)&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;init-rootfs&#34;&gt;Init rootfs&lt;/h1&gt;
+&lt;h1 id=&#34;rootfs&#34;&gt;rootfs&lt;/h1&gt;
 
 &lt;p&gt;init_mount_tree&lt;br /&gt;
 and sys_chroot&lt;/p&gt;
@@ -987,145 +980,21 @@ and sys_chroot&lt;/p&gt;
 
 &lt;p&gt;man systemd-fsck-root.service&lt;/p&gt;
 
-&lt;h1 id=&#34;mkfs-ext2&#34;&gt;?? mkfs.ext2&lt;/h1&gt;
+&lt;h1 id=&#34;mkfs&#34;&gt;mkfs&lt;/h1&gt;
 
 &lt;p&gt;e2fsprog&lt;/p&gt;
 
-&lt;h1 id=&#34;vfs-and-ops&#34;&gt;VFS and Ops&lt;/h1&gt;
-
-&lt;h2 id=&#34;principles&#34;&gt;Principles&lt;/h2&gt;
-
-&lt;p&gt;Layering&lt;br /&gt;
-Abstraction&lt;br /&gt;
-Object-oriented programming&lt;br /&gt;
-Performance: translation cache: decache&lt;br /&gt;
-Onset/nuclus/coda: KISS&lt;/p&gt;
-
-&lt;h2 id=&#34;tasks&#34;&gt;tasks&lt;/h2&gt;
-
-&lt;p&gt;mount&lt;br /&gt;
-content operations: i_fop&lt;br /&gt;
-dirent operations: i_op lookup, create, remove&lt;/p&gt;
-
-&lt;h2 id=&#34;app&#34;&gt;app&lt;/h2&gt;
-
-&lt;p&gt;file descriptor&lt;br /&gt;
-1. cache the translation from full path to inode&lt;br /&gt;
-2. onset-operation cache;&lt;/p&gt;
-
-&lt;h2 id=&#34;vfs&#34;&gt;vfs&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;lookup interpreatation&lt;br /&gt;
-decach layer dentry name interpretation cache&lt;br /&gt;
-inode-&amp;gt; lookup&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;create&lt;br /&gt;
-func: lookup_open&lt;br /&gt;
-lookup -&amp;gt; inode-&amp;gt; create&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;remove&lt;br /&gt;
-unlink&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;content operations - read/write&lt;br /&gt;
-file: operation cache&lt;/p&gt;
-
-&lt;h2 id=&#34;fs&#34;&gt;fs&lt;/h2&gt;
-
-&lt;p&gt;inode layer&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;fs-and-ops&#34;&gt;FS and Ops&lt;/h1&gt;
-
-&lt;h2 id=&#34;tasks-1&#34;&gt;Tasks&lt;/h2&gt;
-
-&lt;p&gt;Alloc an inode&lt;br /&gt;
-Remove an inode&lt;br /&gt;
-Read the content of an inode&lt;br /&gt;
-Write contents of an inode&lt;/p&gt;
-
-&lt;h3 id=&#34;fs-block-size&#34;&gt;FS block size&lt;/h3&gt;
+&lt;h1 id=&#34;block-size&#34;&gt;block size&lt;/h1&gt;
 
 &lt;p&gt;blockdev &amp;ndash;getbsz /dev/sda1&lt;br /&gt;
 4096&lt;br /&gt;
 sudo tune2fs -l /dev/sda1 | grep size&lt;/p&gt;
 
-&lt;h2 id=&#34;hard-drive-driver&#34;&gt;Hard drive driver&lt;/h2&gt;
+&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
 
-&lt;p&gt;Parameters: locations and size&lt;br /&gt;
-Read content from disk&lt;br /&gt;
-Write content form disk&lt;/p&gt;
+&lt;p&gt;如果是很多基本概念没有可以看看，因为就是个中规中矩的教科书，从历史到单机存储方方面面，如果写过store，就没必要了，可以关心rise lab 或者peloton lab他们的项目和publication，我曾经想弄存储，最后觉得最后都是玩电路了，感觉自己玩不下去，就放弃了。整体的工业设计可以找找emc的人写的书&lt;/p&gt;
 
-&lt;h1 id=&#34;inode-hashtable&#34;&gt;inode_hashtable&lt;/h1&gt;
-
-&lt;p&gt;ext2_iget&lt;br /&gt;
-{&lt;br /&gt;
-    inode = iget_locked(sb, ino);&lt;br /&gt;
-    {&lt;br /&gt;
-        head = inode_hashtable + hash(sb, ino)&lt;br /&gt;
-        if !inode &amp;amp;&amp;amp; alloc_inode(sb)&lt;br /&gt;
-        then&lt;br /&gt;
-            hlist_add_head(&amp;amp;inode-&amp;gt;i_hash, head);&lt;br /&gt;
-        fi&lt;br /&gt;
-    }&lt;/p&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;no-hashtable&#34;&gt;no hashtable&lt;/h1&gt;
-
-&lt;p&gt;ramfs_get_inode&lt;br /&gt;
-{&lt;br /&gt;
-    new_inode-&amp;gt;new_inode_pseudo-&amp;gt; alloc_inode&lt;br /&gt;
-    still inode_sb_list_add&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;dentry&#34;&gt;dentry&lt;/h1&gt;
-
-&lt;p&gt;d_alloc()&lt;br /&gt;
-To get the full path call dentry_path_raw(filp-&amp;gt;f_path.dentry,buf,buflen).&lt;/p&gt;
-
-&lt;h1 id=&#34;struct-path&#34;&gt;struct path&lt;/h1&gt;
-
-&lt;p&gt;get the meaning of this struct by looking d_path().It includes the two endpoints of a path which are mnt and dentry.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/206758/&#34;&gt;Upcoming API change: struct path&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;mount&#34;&gt;Mount&lt;/h1&gt;
-
-&lt;p&gt;Check mount.log&lt;/p&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;p&gt;mount-&amp;gt;mnt_mountpoint  和 mount -&amp;gt;mnt_mp-&amp;gt;m_dentry;&lt;/p&gt;
-
-&lt;p&gt;Check follow_managed&lt;br /&gt;
-* for DCACHE_MOUNTED in get_mountpoint&lt;br /&gt;
-Amnt: Protect the mountpoint hashtable with mount_lock - 3895dbf8985f656675b5bde610723a29cbce3fa7&lt;br /&gt;
-* monutpoint&lt;br /&gt;
-get rid of full-hash scan on detaching vfsmounts - 84d17192d2afd52aeba88c71ae4959a015f56a38&lt;br /&gt;
-* d_mounted -&amp;gt; DCACHE_MOUNTED&lt;br /&gt;
-    The mounted state of a dentry is only used to speculatively take a look in the&lt;br /&gt;
-    mount hash table if it is set &amp;ndash; before following the mount, vfsmount lock is&lt;br /&gt;
-    taken and mount re-checked without races.&lt;br /&gt;
-fs: dcache remove d_mounted - 5f57cbcc02cf18f6b22ef4066bb10afeb8f930ff&lt;br /&gt;
-如果是很多基本概念没有可以看看，因为就是个中规中矩的教科书，从历史到单机存储方方面面，如果写过store，就没必要了，可以关心rise lab 或者peloton lab他们的项目和publication，我曾经想弄存储，最后觉得最后都是玩电路了，感觉自己玩不下去，就放弃了。整体的工业设计可以找找emc的人写的书&lt;/p&gt;
-
-&lt;h1 id=&#34;open&#34;&gt;Open&lt;/h1&gt;
-
-&lt;p&gt;sys_open -&amp;gt;&lt;br /&gt;
-    path_init()&lt;br /&gt;
-    1. get start point current-&amp;gt;fs{root, pwd}&lt;br /&gt;
-    2. link_path_walk() to the parent dentry of last entry vim in /sbin/vim. deal with diff mounted fs(ext2 and windows ntfs)&lt;br /&gt;
-    do_last()&lt;br /&gt;
-    1. dentry,look_dcache(), if not in dcache, d_alloc(); d_op = sb-&amp;gt;s_dentry_op&lt;br /&gt;
-    2. file, if not open, file-&amp;gt;f_op = inode-&amp;gt;i_fop&lt;/p&gt;
-
-&lt;h2 id=&#34;open-flags&#34;&gt;open flags&lt;/h2&gt;
-
-&lt;p&gt;Check open_flags.c&lt;/p&gt;
-
-&lt;h1 id=&#34;write&#34;&gt;write&lt;/h1&gt;
-
-&lt;p&gt;sys_write -&amp;gt; file-&amp;gt;f_op-&amp;gt;write()&amp;hellip;&lt;/p&gt;
-
-&lt;h1 id=&#34;file-mode-bits&#34;&gt;file mode bits&lt;/h1&gt;
+&lt;h1 id=&#34;acl&#34;&gt;ACL&lt;/h1&gt;
 
 &lt;p&gt;man chmod&lt;/p&gt;
 
@@ -1139,18 +1008,7 @@ chmod +t /tmp/firo; ls -l /tmp/firo&lt;br /&gt;
 chmod +x /tmp/firo; ls -l /tmp/firo&lt;br /&gt;
 -rwxrwxr-t 1 firo firo 0 Sep 24 21:20 /tmp/firo&lt;/p&gt;
 
-&lt;h2 id=&#34;x&#34;&gt;?? X&lt;/h2&gt;
-
-&lt;h1 id=&#34;design-a-filesystem&#34;&gt;Design a filesystem&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/questions/5376116/design-a-file-system&#34;&gt;Design a file system&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://unix.stackexchange.com/questions/93960/why-is-linuxs-filesystem-designed-as-a-single-directory-tree/&#34;&gt;Why is Linux&amp;rsquo;s filesystem designed as a single directory tree?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;set-vs-directory&#34;&gt;Set vs directory&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://math.stackexchange.com/a/854656/38596&#34;&gt;What is the meaning/purpose of finding the “foundations of mathematics”?&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;linus-on-atime&#34;&gt;Linus on atime&lt;/h2&gt;
+&lt;h1 id=&#34;linus-on-atime&#34;&gt;Linus on atime&lt;/h1&gt;
 
 &lt;p&gt;perhaps the most stupid Unix design idea of all times,&amp;rdquo; adding: &amp;ldquo;Think about this a bit: &amp;lsquo;For every file that is read from the disk, lets do a &amp;hellip; write to the disk! And, for every file that is already cached and which we read from the cache &amp;hellip; do a write to the disk!&amp;rsquo;&amp;rdquo; He further emphasized the performance impact thus:&lt;br /&gt;
 &lt;a href=&#34;http://web.archive.org/web/20110427023154/http:/kerneltrap.org/node/14148&#34;&gt;Linux: Replacing atime With relatime&lt;/a&gt;&lt;/p&gt;
@@ -1167,9 +1025,154 @@ tools to operate on different things. - &lt;a href=&#34;http://yarchive.net/comp
 &lt;p&gt;hard link to directory, recursive&lt;br /&gt;
 hard link to file accross partitions, may led confilict with inode number.&lt;/p&gt;
 
-&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;
+&lt;h1 id=&#34;sysfs&#34;&gt;Sysfs&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://unix.stackexchange.com/questions/265620/on-unix-systems-why-do-we-have-to-explicitly-open-and-close-files-to-be/265621&#34;&gt;On Unix systems, why do we have to explicitly &lt;code&gt;open()&lt;/code&gt; and &lt;code&gt;close()&lt;/code&gt; files to be able to &lt;code&gt;read()&lt;/code&gt; or &lt;code&gt;write()&lt;/code&gt; them?&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/604413/&#34;&gt;hierarchy of sysfs&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;4-10&#34;&gt;4.10 +&lt;/h2&gt;
+
+&lt;p&gt;kernfs_drain&lt;/p&gt;
+
+&lt;h2 id=&#34;3-14&#34;&gt;3.14&lt;/h2&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
+&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
+cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
+echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
+sleep 1&lt;br /&gt;
+echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+#Why DDM?&lt;br /&gt;
+The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
+&lt;dd&gt;I/o Architecture&lt;br /&gt;
+1 Expansion hardware.&lt;br /&gt;
+Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
+2 Communication with peripherals&lt;br /&gt;
+I/O ports&lt;br /&gt;
+I/O memory mapping&lt;br /&gt;
+Interrupts&lt;br /&gt;
+hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
+&lt;br /&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
+&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
+cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
+echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
+sleep 1&lt;br /&gt;
+echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+#Why DDM?&lt;br /&gt;
+The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
+&lt;dd&gt;I/o Architecture&lt;br /&gt;
+1 Expansion hardware.&lt;br /&gt;
+Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
+2 Communication with peripherals&lt;br /&gt;
+I/O ports&lt;br /&gt;
+I/O memory mapping&lt;br /&gt;
+Interrupts&lt;br /&gt;
+hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
+&lt;br /&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
+&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
+cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
+echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
+sleep 1&lt;br /&gt;
+echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+#Why DDM?&lt;br /&gt;
+The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
+&lt;dd&gt;I/o Architecture&lt;br /&gt;
+1 Expansion hardware.&lt;br /&gt;
+Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
+2 Communication with peripherals&lt;br /&gt;
+I/O ports&lt;br /&gt;
+I/O memory mapping&lt;br /&gt;
+Interrupts&lt;br /&gt;
+hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
+&lt;br /&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
+&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
+cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
+echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
+sleep 1&lt;br /&gt;
+echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+#Why DDM?&lt;br /&gt;
+The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
+&lt;dd&gt;I/o Architecture&lt;br /&gt;
+1 Expansion hardware.&lt;br /&gt;
+Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
+2 Communication with peripherals&lt;br /&gt;
+I/O ports&lt;br /&gt;
+I/O memory mapping&lt;br /&gt;
+Interrupts&lt;br /&gt;
+hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
+&lt;br /&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;dl&gt;
+&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
+&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
+cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
+echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
+sleep 1&lt;br /&gt;
+echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
+#Why DDM?&lt;br /&gt;
+The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
+&lt;dd&gt;I/o Architecture&lt;br /&gt;
+1 Expansion hardware.&lt;br /&gt;
+Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
+2 Communication with peripherals&lt;br /&gt;
+I/O ports&lt;br /&gt;
+I/O memory mapping&lt;br /&gt;
+Interrupts&lt;br /&gt;
+hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
+&lt;br /&gt;&lt;/dd&gt;
+&lt;/dl&gt;
+
+&lt;p&gt;entation of the host system&amp;rsquo;s hardware structure.&lt;/p&gt;
+
+&lt;h1 id=&#34;sys-文件系统&#34;&gt;Sys 文件系统&lt;/h1&gt;
+
+&lt;p&gt;bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。&lt;br /&gt;
+class, 类树按功能分类设备。&lt;br /&gt;
+device，干货，其他的目录都指向这里。&lt;/p&gt;
+
+&lt;h1 id=&#34;kobject&#34;&gt;Kobject&lt;/h1&gt;
+
+&lt;p&gt;清0，init，set name，get，put&lt;br /&gt;
+在sys中是dir，attr 是文件&lt;/p&gt;
+
+&lt;h1 id=&#34;kobj-type&#34;&gt;kobj_type&lt;/h1&gt;
+
+&lt;p&gt;release(),&lt;/p&gt;
+
+&lt;h1 id=&#34;kset&#34;&gt;Kset&lt;/h1&gt;
+
+&lt;p&gt;添加kobject到kset（指针，add）&lt;/p&gt;
+
+&lt;h1 id=&#34;bus-device-driver&#34;&gt;Bus, device, driver.&lt;/h1&gt;
+
+&lt;h1 id=&#34;procfs&#34;&gt;Procfs&lt;/h1&gt;
+
+&lt;p&gt;##How many parts does procfs has?&lt;br /&gt;
+* process-specific read only /proc/&lt;pid&gt;/&lt;br /&gt;
+* process tuneable interface. /proc/&lt;pid&gt;/&lt;br /&gt;
+* kernel sysctl, importanta kernel tuneable files. /proc/sys/kernel net vm fs&amp;hellip;&lt;br /&gt;
+* Read only kernel infomation. /proc&lt;br /&gt;
+##I think, important directory need to know.&lt;br /&gt;
+/proc/sys/kernel&lt;/p&gt;
 </description>
     </item>
     

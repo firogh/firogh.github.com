@@ -17,3 +17,16 @@ do_new_mount
 			get_mountpoint->d_set_mounted
 			mnt_set_mountpoint
 			commit_tree -> child mnt.mnt_hash -> mount_hashtable
+
+# LQO
+mount->mnt_mountpoint  和 mount ->mnt_mp->m_dentry;
+Check follow_managed
+* for DCACHE_MOUNTED in get_mountpoint
+Amnt: Protect the mountpoint hashtable with mount_lock - 3895dbf8985f656675b5bde610723a29cbce3fa7
+* monutpoint
+get rid of full-hash scan on detaching vfsmounts - 84d17192d2afd52aeba88c71ae4959a015f56a38
+* d_mounted -> DCACHE_MOUNTED 
+    The mounted state of a dentry is only used to speculatively take a look in the 
+    mount hash table if it is set -- before following the mount, vfsmount lock is
+    taken and mount re-checked without races.
+fs: dcache remove d_mounted - 5f57cbcc02cf18f6b22ef4066bb10afeb8f930ff
