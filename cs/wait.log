@@ -1,13 +1,53 @@
+# History
+[Driver porting: sleeping and waking up](https://lwn.net/Articles/22913/)
+[Porting drivers to the 2.5 kerne sleeping and waking up](https://www.kernel.org/doc/ols/2003/ols2003-pages-134-149.pdf)
+Some history on wait_event() and prepare_to_wait()
 
-# Wait example
- #6 [ffff883f15637c90] proc_evict_inode at ffffffff812696fd
- #7 [ffff883f15637ca0] evict at ffffffff8121cded
- #8 [ffff883f15637cc0] __dentry_kill at ffffffff812194b6
- #9 [ffff883f15637ce0] shrink_dentry_list at ffffffff8121a0c0
-#10 [ffff883f15637d10] d_invalidate at ffffffff8121a8c8
-#11 [ffff883f15637d50] proc_flush_task at ffffffff8126e609
-#12 [ffff883f15637dc0] release_task at ffffffff81081230
-			# wait_task_zombie
-#13 [ffff883f15637e18] wait_consider_task at ffffffff81081c19
-#14 [ffff883f15637e80] do_wait at ffffffff8108226d
+# Think for your self
+# Sleep and wakeup problem: Sleep forever
+1. Wake up or not (insert into the wakeup linked list. Test if there will be a wakeup in near furture)?
+2. Wake up too early before sleep(set uninterupptable before test)?
+Example: put_and_wait_on_page_locked()
 
+# kernel wait queues
+[Simple wait queues](https://lwn.net/Articles/577370/)
+[The return of simple wait queues](https://lwn.net/Articles/661424/)
+[TASK_KILLABLE](https://lwn.net/Articles/288056/)
+
+
+# Formal cause
+commit 2887e41b910bb14fd847cf01ab7a5993db989d88
+Author: Anchal Agarwal <anchalag@amazon.com>
+Date:   Tue Aug 7 14:40:49 2018 -0600
+    blk-wbt: Avoid lock contention and thundering herd issue in wbt_wait
+
+# waitqueue list
+waitqueue_active
+
+# DEFINE_WAIT(name) and autoremove_wake_function
+and wake_up_all()
+commit 3da08d6c052734e186e835dc05ff9a33746c21e4
+Author: Andrew Morton <akpm@digeo.com>
+Date:   Wed Sep 25 07:20:08 2002 -0700
+    [PATCH] prepare_to_wait/finish_wait sleep/wakeup API
+[Use prepare_to_wait_exclusive() instead prepare_to_wait](https://lore.kernel.org/patchwork/patch/182029/)
+## wbt bug caused by auto removing
+commit 2887e41b910bb14fd847cf01ab7a5993db989d88
+Author: Anchal Agarwal <anchalag@amazon.com>
+Date:   Tue Aug 7 14:40:49 2018 -0600
+    blk-wbt: Avoid lock contention and thundering herd issue in wbt_wait
+
+# DECLARE_WAITQUEUE and waitqueue_lock
+history: commit f17051d751d0843be1d683fbf2790b17cbd26134 (tag: 2.3.1pre1)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:24:59 2007 -0500
+    Import 2.3.1pre1
+
+# Lost wake-up problem
+[Kernel Korner - Sleeping in the Kernel](https://www.linuxjournal.com/article/8144)
+kernel solution: wait_event
+history: commit f3d40e81c946bb81bb602abaf9e7bf7688145999 (tag: 2.2.3pre2)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:18:18 2007 -0500
+    Import 2.2.3pre2
+There isn't any comment at all in this commit.

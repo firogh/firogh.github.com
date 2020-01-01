@@ -1,0 +1,69 @@
+
+# Contents
+ How to initialize ULPI?
+
+# Concepts
+Programmable logic device: PLA, PAL, FPGA, Macrocell 
+ASCI: Macrocell
+ULPI: wrapper of UTMI
+
+# eUSB
+subsys_initcall->mv_usb_init->platform_device_register(mv_usb_dev_ptr)
+module_init->ehci_hcd_init->platform_driver_register(ehci_marvell_driver)-> probe
+{
+	usb_create_hcd
+	usb_hcd{driver = ehci_marvell_hc_driver;dev = mv_usb_dev_ptr->dev);
+	usb_add_hcd
+	{
+		usb_register_bus
+		hcd->driver->start(hcd);
+		register_root_hub
+	}
+
+}
+
+# asrl
+get_unmapped_area -> mm->get_unmapped_area = arch_get_unmapped_area_topdown;
+
+arch_randomize_brk
+# old log ulpi etc
+USB stick -> USB OTG PHY/Transceiver->ULPI->SOC usb controller
+Transceivers are called Medium Attachment Units (MAUs) in IEEE 802.3 documents 
+[What is a USB transceiver?](http://electronics.stackexchange.com/questions/39381/what-is-a-usb-transceiver)
+transceiver最主要的作用是将数字信号转换为模拟信号。一般的transceiver只需要正确上电就可以了，不用配置。
+http://bbs.csdn.net/topics/360017200
+## Components
+OTG device init in MACHINE_START->init_machine   = ams_delta_init ->omap1_usb_init -> otg_device_init
+OTG driver init module_platform_driver(fsl_otg_driver);->fsl_otg_probe-> conf & start->request_irq(fsl_otg_isr){ suspend & resume}
+USB dr device init dr_controller_setup drivers/usb/gadget/udc/fsl_udc_core.c
+USB dr driver init module_platform_driver_probe(udc_driver, fsl_udc_probe);
+USB host device init
+USB host driver init ehci_hcd_init-> platform_driver_register(&PLATFORM_DRIVER)-> ehci_fsl_driver
+USB的协议实现在usb.c,主机控制器在drivers/usb/host/文件夹实现
+整个usb部分由抽象层（usb.c)，规格定义(ehci-hcd.c)和具体实现(ehci-fsl.c)来分工实现
+## NB
+fsl_otg_conf 类似于 otg_ulpi_create
+# Usb
+vbus
+## DrvVbusExternal in phy in function otg_set_vbus for ehci-mxc
+The external supply is controlled by the DrvVbus and the optional DrvVbusExternal bits in the OTG
+Control register.
+        /* Initialize the transceiver */
+        if (pdata->otg) {
+                pdata->otg->io_priv = hcd->regs + ULPI_VIEWPORT_OFFSET;
+                ret = usb_phy_init(pdata->otg);
+                if (ret) {
+                        dev_err(dev, "unable to init transceiver, probably missing\n");
+                        ret = -ENODEV;
+                        goto err_add;
+                }
+                ret = otg_set_vbus(pdata->otg->otg, 1); 
+                if (ret) {
+                        dev_err(dev, "unable to enable vbus on transceiver\n");
+                        goto err_add;
+                }
+        }
+## PASSTHRU in ulpi_init
+##　Device init
+arch/powerpc/platforms/512x/mpc512x_generic.c mpc512x_init?
+dts: fsl,mpc5121-usb2-dr

@@ -402,8 +402,7 @@ all previous acquire accesses must be performed, and&lt;br /&gt;
 respect to any other processor, all previous ordinary&lt;br /&gt;
 load and store accesses must be performed, and&lt;br /&gt;
 &amp;copy; special accesses are processor consistent with respect to one another.&lt;br /&gt;
-&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;/p&gt;
 
 &lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
 
@@ -464,40 +463,55 @@ CommitDate: Mon Dec 4 10:52:52 2017 -0800&lt;br /&gt;
  145         wmb();&lt;br /&gt;
  146         *killer = 1;&lt;br /&gt;
  147 }&lt;/p&gt;
+
+&lt;h1 id=&#34;memory-barrier&#34;&gt;Memory barrier&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://yarchive.net/comp/linux/compiler_barriers.html&#34;&gt;http://yarchive.net/comp/linux/compiler_barriers.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/&#34;&gt;Memory Barriers Are Like Source Control Operations&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html&#34;&gt;Are All Linux Kernel Memory Barriers Transitive?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf&#34;&gt;Memory Barriers in the Linux Kernel Semantics and Practices&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;
+Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
+
+&lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different-levels&#34;&gt;The Linux kernel has a variety of different barriers that act at different levels:&lt;/h2&gt;
+
+&lt;p&gt;(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
+  (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
+  (*) MMIO write barrier.&lt;/p&gt;
+
+&lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Does it work cast a variable to volatile?&lt;br /&gt;
+No, there is no efects on cast a variable to volatile.&lt;br /&gt;
+Because, access variable is before volatile cast! That means you&lt;br /&gt;
+still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
+Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
+&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </description>
     </item>
     
     <item>
-      <title>The definitive guide to Linux x86 entry.S</title>
+      <title>The definitive guide to Linux x86 entries</title>
       <link>http://firoyang.org/cs/entry/</link>
       <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/entry/</guid>
       <description>
 
-&lt;p&gt;Definitive? Actually, it&amp;rsquo;s not and going to die.&lt;/p&gt;
+&lt;h1 id=&#34;all-entries&#34;&gt;All entries&lt;/h1&gt;
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;Documentation/x86/entry_64.txt&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;entry-irq&#34;&gt;Entry irq&lt;/h1&gt;
 
-&lt;p&gt;Documentation/x86/entry_64.txt&lt;br /&gt;
-&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.groad.net/bbs/thread-3276-1-1.html&#34;&gt;选择内存屏障指令|alternative&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;fs and gs register&lt;br /&gt;
-For using in TLS, please check &lt;a href=&#34;http://wiki.osdev.org/Thread_Local_Storage#ABI&#34;&gt;OSDEV TLS&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#ifdef CONFIG_X86_64&lt;br /&gt;
-#define __percpu_seg            gs&lt;br /&gt;
-#define __percpu_mov_op         movq&lt;br /&gt;
-#else&lt;br /&gt;
-#define __percpu_seg            fs&lt;br /&gt;
-#define __percpu_mov_op         movl&lt;br /&gt;
-#endif&lt;/p&gt;
-
-&lt;p&gt;Steps to handle intterrupt&lt;/p&gt;
+&lt;h2 id=&#34;steps-to-handle-intterrupt&#34;&gt;Steps to handle intterrupt&lt;/h2&gt;
 
 &lt;p&gt;For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.&lt;br /&gt;
 For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.&lt;br /&gt;
@@ -506,70 +520,73 @@ For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures&
 For TSS and TR, check 3a 7.2&lt;br /&gt;
 For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions&lt;/p&gt;
 
-&lt;h1 id=&#34;for-syscall&#34;&gt;For syscall&lt;/h1&gt;
+&lt;h1 id=&#34;entry-exception&#34;&gt;Entry exception&lt;/h1&gt;
 
-&lt;p&gt;Common path for syscalls&lt;br /&gt;
-glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
-just for vDSO syscalls&lt;br /&gt;
-glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
+&lt;h2 id=&#34;paranoid-entry&#34;&gt;paranoid_entry&lt;/h2&gt;
 
-&lt;h1 id=&#34;system-calls&#34;&gt;system calls&lt;/h1&gt;
+&lt;p&gt;Check Documentation/x86/entry_64.txt&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
+&lt;h2 id=&#34;error-entry&#34;&gt;error_entry&lt;/h2&gt;
+
+&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
+Author:     Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@home.transmeta.com&#34;&gt;torvalds@home.transmeta.com&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+    [PATCH] x86_64 merge: arch + asm&lt;/p&gt;
+
+&lt;h1 id=&#34;entry-system-calls&#34;&gt;Entry system calls&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;sysenter-vs-syscall&#34;&gt;sysenter vs syscall&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead&#34;&gt;Measurements of system call performance and overhead&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://reverseengineering.stackexchange.com/a/16511/16996&#34;&gt;AMD vs Intel and syscall vs sysenter&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm&#34;&gt;System Call Optimization with the SYSENTER Instruction&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;kernel documentation&lt;/a&gt;&lt;br /&gt;
-Meltdown and Spectre&lt;/p&gt;
+&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;syscall&#34;&gt;syscall&lt;/h3&gt;
+&lt;h2 id=&#34;system-call-restart-mechanism-and-orig-eax&#34;&gt;system call restart mechanism and ORIG_EAX&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;save: pc + 1, old rsp, registers&lt;br /&gt;
-pc + 1-&amp;gt; RCX&lt;br /&gt;&lt;/li&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/17744/&#34;&gt;A new system call restart mechanism&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2006/8/29/350&#34;&gt;Why set ORIG_EAX(%esp) to -1 in arch/i386/kernel/entry.S:error_code?&lt;/a&gt;&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;entry: pc&lt;br /&gt;
-IA32_LSTAR -&amp;gt; pc&lt;/p&gt;
+&lt;h2 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h2&gt;
 
-&lt;h3 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h3&gt;
-
-&lt;p&gt;64-bit long mode: syscall; check syscall_init&lt;br /&gt;
+&lt;p&gt;arch/x86/include/asm/proto.h&lt;br /&gt;
+64-bit long mode: syscall; check syscall_init&lt;br /&gt;
 64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts&lt;br /&gt;
-??32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
+32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
 
-&lt;h3 id=&#34;vdso-and-vsyscall&#34;&gt;vDSO and vsyscall&lt;/h3&gt;
+&lt;h3 id=&#34;64-bit-without-compat-32-compatible-kernel-support&#34;&gt;64-bit without COMPAT_32/compatible kernel support&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;64-bit without COMPAT&lt;em&gt;32&lt;/em&gt;/compatible kernel&lt;br /&gt;
-./int80&lt;br /&gt;
+&lt;p&gt;./int80&lt;br /&gt;
 [  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]&lt;br /&gt;
-Segmentation fault (core dumped)&lt;/p&gt;&lt;/li&gt;
+Segmentation fault (core dumped)&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;64-bit syscall&lt;br /&gt;
-syscall.S&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h2 id=&#34;x86-64-rcx-and-r10&#34;&gt;x86_64 rcx and r10&lt;/h2&gt;
 
-&lt;h2 id=&#34;rcx-and-r10&#34;&gt;rcx and r10&lt;/h2&gt;
+&lt;p&gt;Check x86_64 ABI: Linux conventions and  according to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
+According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack. So r10 is right 4th args passed from userspace.&lt;br /&gt;
+According to do_syscall_64, regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
 
-&lt;p&gt;Check x86_64 ABI: Linux conventions and&lt;br /&gt;
-According to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
-According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack.&lt;br /&gt;
-So r10 is right 4th args passed from userspace.&lt;br /&gt;
-According to do_syscall_64,&lt;br /&gt;
-                regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
-
-&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86 32 asmlinkage&lt;/h2&gt;
+&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86_32 asmlinkage&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://qr.ae/Ti5MJJ&#34;&gt;By default gcc passes parameters on the stack for x86-32 arch, so what is it needed for? It&amp;rsquo;s because linux kernel uses -mregparm=3 option which overrides the default behaviour&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/67175/&#34;&gt;enbaled -mregparm=3 Shrinking the kernel with gcc&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
 However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
+
+&lt;h2 id=&#34;vdso&#34;&gt;vDSO&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0&#34;&gt;Creating a vDSO: the Colonel&amp;rsquo;s Other Chicken&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.trilithium.com/johan/2005/08/linux-gate/&#34;&gt;What is linux-gate.so.1&lt;/a&gt;&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
+just for vDSO syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1092,6 +1109,59 @@ CommitDate: Wed Jan 14 18:09:00 2009 +0100&lt;br /&gt;
     assumes preemption is already disabled.&lt;br /&gt;
 Firo: spin_unlock_mutex&lt;/p&gt;
 
+&lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
+syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
+retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
+
+&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
+If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
+
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
+
+&lt;h2 id=&#34;the-following-also-t-relates-to-preemption-it-s-preempt-voluntary&#34;&gt;The following also t relates to preemption; it&amp;rsquo;s PREEMPT_VOLUNTARY.&lt;/h2&gt;
+
+&lt;p&gt;For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.&lt;br /&gt;
+config PREEMPT_VOLUNTARY&lt;br /&gt;
+    bool &amp;ldquo;Voluntary Kernel Preemption (Desktop)&amp;rdquo;&lt;br /&gt;
+    help&lt;br /&gt;
+      This option reduces the latency of the kernel by adding more&lt;br /&gt;
+      &amp;ldquo;explicit preemption points&amp;rdquo; to the kernel code. These new&lt;br /&gt;
+      preemption points have been selected to reduce the maximum&lt;br /&gt;
+      latency of rescheduling, providing faster application reactions,&lt;br /&gt;
+      at the cost of slightly lower throughput.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
+tick: check_preempt_tick or entity_tick&lt;br /&gt;
+fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
+wakeup: check_preempt_wakeup&lt;br /&gt;
+&amp;hellip;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
+if preempt is true; it should mean PREEMPT_VOLUNTARY.&lt;br /&gt;
+prev-&amp;gt;state means deactivate.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
@@ -1363,7 +1433,7 @@ fs/proc/array.c&lt;br /&gt;
 
 &lt;li&gt;&lt;p&gt;if running process &amp;gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity&lt;/p&gt;
 
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??&lt;/p&gt;&lt;/li&gt;
 
@@ -1395,7 +1465,7 @@ Check External links&lt;br /&gt;
 calc_load_fold_active&lt;br /&gt;
 Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+&lt;h1 id=&#34;lqo-2&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;
@@ -1596,577 +1666,6 @@ Date:   Thu Jul 21 09:43:33 2011 -0700&lt;br /&gt;
     Now that consumption is tracked (via update_curr()) we add support to throttle&lt;br /&gt;
     group entities (and their corresponding cfs_rqs) in the case where this is no&lt;br /&gt;
     run-time remaining.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Console and TTY</title>
-      <link>http://firoyang.org/cs/console/</link>
-      <pubDate>Sat, 05 Dec 2015 14:06:29 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/console/</guid>
-      <description>
-
-&lt;p&gt;343 line&lt;br /&gt;
-1. /dev/console 指向正在运行的tty 和tty0 一样ttyN not pts, console 佬变.&lt;br /&gt;
-2. /dev/tty 一直指向所在的那个不变.&lt;/p&gt;
-
-&lt;h1 id=&#34;about-the-design&#34;&gt;About the design&lt;/h1&gt;
-
-&lt;p&gt;Why dose we use /dev/xxx to represent the &amp;ldquo;tty&amp;rdquo; device?&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&lt;br /&gt;
-have nothing to do with each other), but the fact that you can use common tools to operate on different things. &amp;ndash; Linus&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;So we got the key point!&lt;br /&gt;
-In order to use the common tools, file ops and vfs layer, the tty device is &amp;ldquo;abstructed&amp;rdquo; to&lt;br /&gt;
-files by us. Addnationaly, we must assurance that is the files is &lt;em&gt;different&lt;/em&gt;. What does&lt;br /&gt;
-the word &amp;ldquo;dirrerent&amp;rdquo; means is not that you have some random different filename, but the&lt;br /&gt;
-fact that you can access the real device through the different.&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;Wikipedia:&lt;br /&gt;
-In mathematics, injections, surjections and bijections are classes of functions distinguished by the manner in which arguments (input expression&amp;gt; s from the domain) and images (output expressions from the codomain) are related or mapped to each other.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;I got an insight that abstruction is a non-injective, right?&lt;br /&gt;
-But non-injective may not be a anstruction.&lt;br /&gt;
-An asbstruction should come from manipulating different objects.&lt;br /&gt;
-Non-injective, 多对一; Multiplex, 一对多.&lt;br /&gt;
-So we can use mathematical language to describe the linux subsystem.&lt;br /&gt;
-From real life device to a filesystem file.&lt;br /&gt;
-* Abstruction: Non-injective, Multiplex(not partial function).&lt;br /&gt;
-* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!&lt;br /&gt;
-Abstruction -&amp;gt; Control abstruction and data abstruction -&amp;gt; Abstruction layer&lt;/p&gt;
-
-&lt;p&gt;软件设计的两个主要目的.&lt;br /&gt;
-1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.&lt;br /&gt;
-2. Separation of concerns, modular(abstruciton in layer), 笛卡尔划分的思想&lt;/p&gt;
-
-&lt;h1 id=&#34;tty-struct-disc-data&#34;&gt;tty_struct-&amp;gt;disc_data&lt;/h1&gt;
-
-&lt;p&gt;tty_init_dev-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    initialize_tty_struct-&amp;gt;tty_ldisc_init&lt;br /&gt;
-    tty_ldisc_setup-&amp;gt;tty_ldisc_open-&amp;gt;n_tty_open-&amp;gt; tty-&amp;gt;disc_data = ldata;&lt;br /&gt;
-}&lt;br /&gt;
-sys_vhangup-&amp;gt;tty_vhangup_self-&amp;gt;__tty_hangup-&amp;gt;tty_ldisc_hangup-&amp;gt;tty_ldisc_reinit&lt;br /&gt;
-vfs_write-&amp;gt;redirected_tty_write-&amp;gt;tty_write-&amp;gt;n_tty_write-&amp;gt;process_output&lt;/p&gt;
-
-&lt;h1 id=&#34;early-con&#34;&gt;early_con&lt;/h1&gt;
-
-&lt;p&gt;EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);&lt;br /&gt;
-setup_earlycon-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    parse_options-&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        parse earlycon_device-&amp;gt;port-&amp;gt;uartclk and&lt;br /&gt;
-        earlycon_device-&amp;gt;baud&lt;br /&gt;
-    }&lt;br /&gt;
-    setup = early_serial8250_setup-&amp;gt; init_port(device);&lt;br /&gt;
-    register_console(early_console_dev.con)&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;earlyprintk&#34;&gt;earlyprintk&lt;/h1&gt;
-
-&lt;p&gt;early_param(&amp;ldquo;earlyprintk&amp;rdquo;, setup_early_printk)-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    early_serial_init-&amp;gt;&lt;br /&gt;
-    {&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;}
-early_console_register(&amp;amp;early_serial_console, keep);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;cpu-hotplug&#34;&gt;cpu hotplug&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;onset&lt;br /&gt;
-static struct smp_hotplug_thread softirq_threads {&lt;br /&gt;
-.thread_fn              = run_ksoftirqd&lt;br /&gt;
-};&lt;br /&gt;
-early_initcall(spawn_ksoftirqd)-&amp;gt;mpboot_register_percpu_thread(&amp;amp;softirq_threads)&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;nucles onset&lt;br /&gt;
-suspend_enter-&amp;gt;enable_nonboot_cpus-&amp;gt;_cpu_up-&amp;gt;smpboot_create_threads-&amp;gt;&lt;strong&gt;smpboot_create_thread(&amp;amp;hotplug_threads)-&amp;gt;&lt;br /&gt;
-kthread_create_on_cpu(smpboot_thread_fn-&amp;gt; ht-&amp;gt;thread_fn(td-&amp;gt;cpu)= run_ksoftirqd-&amp;gt;&lt;/strong&gt;do_softirq-&amp;gt;h-&amp;gt;action(h) = run_timer_softirq-&amp;gt;&lt;br /&gt;
-__run_timers-&amp;gt;call_timer_fn)&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;vt 就是个tty也有tty_driver 叫console_driver.&lt;/p&gt;
-
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
-
-&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal&#34;&gt;What is the difference between shell, console, and terminal?&lt;/a&gt;&lt;br /&gt;
-What does console do in kernel or u-boot?&lt;br /&gt;
-Linux console?&lt;br /&gt;
-Computer terminal: keyboard + dispaly&lt;br /&gt;
-Terminal emulator:&lt;/p&gt;
-
-&lt;h1 id=&#34;get-a-glance-on-u-boot&#34;&gt;get a glance on u-boot&lt;/h1&gt;
-
-&lt;p&gt;start.S:board_init_r&lt;br /&gt;
-init_sequence_f: -&amp;gt;init_baud_rate; serial_init; console_init_f&lt;br /&gt;
-serial_init -&amp;gt;&amp;amp;eserial1_device-&amp;gt;start=eserial##port##_init-&amp;gt;NS16550_init: UART divisor init.&lt;br /&gt;
-Firstly, the struct of serial define some input and output funtion.&lt;br /&gt;
-It&amp;rsquo;s basic function of serial, put or get!&lt;br /&gt;
-console_init_f: just gd-&amp;gt;have_console = 1;&lt;br /&gt;
-init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,&lt;br /&gt;
-initr_serial: just register &amp;amp;eserial1_device to serial_devices&lt;br /&gt;
-stdio_add_devices: drv_system_init, serial_stdio_init&lt;br /&gt;
-drv_system_init: register default serial dev to devs.list.&lt;br /&gt;
-serial_stdio_init: register &amp;amp;eserial1_device to devs.list. Duplicate, but serial dev &amp;ldquo;eserial0&amp;rdquo;  and system &amp;ldquo;serial&amp;rdquo;.&lt;br /&gt;
-console_init_r: console_doenv -&amp;gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &amp;ldquo;serial&amp;rdquo;, but they may be KBD!&lt;br /&gt;
-看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?&lt;br /&gt;
-main_loop:cli_loop: getc!&lt;/p&gt;
-
-&lt;h1 id=&#34;what-is-platform-device-or-driver&#34;&gt;what is platform device or driver?&lt;/h1&gt;
-
-&lt;h1 id=&#34;a-reallife-serial8250&#34;&gt;A reallife serial8250&lt;/h1&gt;
-
-&lt;p&gt;drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port&lt;br /&gt;
-module_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    serial8250_init-&amp;gt;serial8250_isa_init_ports-&amp;gt;serial8250_ports[i].port.ops = &amp;amp;serial8250_pops; //insidious&lt;br /&gt;
-    boca_init-&amp;gt;platform_device_register(&amp;amp;boca_device); //register platform device and data.&lt;br /&gt;
-}&lt;br /&gt;
-* uart_port-&amp;gt;tty_port&lt;/p&gt;
-
-&lt;p&gt;serial8250_probe(plat_serial8250_port)-&amp;gt;serial8250_register_8250_port(uart_8250_port)-&amp;gt;&lt;br /&gt;
-uart_add_one_port(&amp;amp;serial8250_reg, &amp;amp;uart-&amp;gt;port=uart_port)-&amp;gt;&lt;br /&gt;
-{&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;uart_configure_port-&amp;gt;
-{
-    port-&amp;gt;ops-&amp;gt;config_port(port, flags)=serial8250_config_port
-    if post is console and not registered; register!
-    we know that uport-&amp;gt;cons = drv-&amp;gt;cons; what is the relation to registering about up-&amp;gt;cons.
-    why we register it? where does drv-&amp;gt;cons come from?
-    //这个uart_driver drv就是serial8250_reg, 我们也就知道了
-    // console是设备的一种天生能力. 能否使用, 只关乎你是否想用, 就是配置相关的config SERIAL8250_CONSOLE
-    // con_driver is the backends, vga, dummy/serial?, fb. 
-}
-tty_port_register_device_attr-&amp;gt;
-{
-    //tty_driver  tty_port
-    tty_port_link_device
-    tty_register_device_attr
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;simple-conceptions&#34;&gt;Simple conceptions&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.linusakesson.net/programming/tty/&#34;&gt;You must read this -&amp;gt; The TTY demystified&lt;/a&gt;&lt;br /&gt;
-System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.&lt;br /&gt;
-        UART&lt;br /&gt;
-        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)&lt;br /&gt;
-* System console&lt;br /&gt;
-Virtual termial, Terminal emulator/telnet/ssh -&amp;gt; pts ,Physical terminal&lt;br /&gt;
-You need at least one virtual terminal device in order to make use of your keyboard and monitor.&lt;br /&gt;
-VT combine keyboard and display see con_init&lt;br /&gt;
-con_init init a virtual terminal like gnome-terminal but in kernel.&lt;br /&gt;
-con_init mainly init display.&lt;br /&gt;
-vty_init mainly init kbd&lt;br /&gt;
-They all can be system console.(Exception pts??), if you enable it.&lt;br /&gt;
-Console is the entry of linux system.&lt;br /&gt;
-* Console driver &amp;ndash; banckends of  console&lt;br /&gt;
-struct console 指定了console的结构.&lt;br /&gt;
-* Console config&lt;br /&gt;
-If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.&lt;br /&gt;
-If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.&lt;br /&gt;
-How to explain this phenomena?&lt;br /&gt;
-From show_cons_active, we know /dev/console should come from console_drivers.&lt;br /&gt;
-/dev/console is really the pointer.&lt;br /&gt;
-Now, let&amp;rsquo;s inspect open /dev/console.&lt;br /&gt;
-* Open /dev/console&lt;br /&gt;
-Fisrt, it&amp;rsquo;s the very last place of booting kernel.&lt;br /&gt;
-start_kernel-&amp;gt;rest_init-&amp;gt;kernel_init-&amp;gt;kernel_init_freeable-&amp;gt;sys_open((const char __user *) &amp;ldquo;/dev/console&amp;rdquo;, O_RDWR, 0)-&amp;gt;&amp;hellip;-&amp;gt;&lt;br /&gt;
-console_fops-&amp;gt;tty_open-&amp;gt;&lt;br /&gt;
-{&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;// Sitiuations: disbale VT CONSOLE byt enable SERIAL8250_CONSOLE.
-// This function work only for /dev/tty
-// ls -l /dev/tty
-// crw-rw-rw- 1 root tty 5, 0 Dec 10 10:24 /dev/tty
-tty_open_current_tty-&amp;gt;
-{
-    /dev/console is 5:1, just return NULL
-}
-//This index should be Ctrl + Alt + Fn??
-// tty_struct is corresponding virtual console, or just console??
-// lookup tty_driver. It looks like lookup a inode, right?
-tty_lookup_driver-&amp;gt;
-{
-    // Find a tty_driver by device() in console_drivers.
-    // So we know, got a console, then got a tty_driver, right?
-    // Where do the components of console_drivers come form?
-    // At present, we should have only serial8250_console because 
-    // console vt_console_driver is disabled by us! But tty_driver console_driver
-    // still do exist!So console and tty is really separated!
-    // When we init vt, we get the tty_driver console_driver with con_ops type of tty_operations.
-    // tty_drivers have the same major with /dev/tty0!
-    // char_dev -&amp;gt; tty_driver int vty_init, not disable.
-    // vt console---^
-    console_device-&amp;gt;c-&amp;gt;device(c, index)
-    // What about serial8250_console?
-    // Where is the tty_driver of serial8250_console?
-    // console-&amp;gt;data = uart_driver-&amp;gt;tty_driver.
-    // We got another scene : uart-&amp;gt;tty
-    // serial8250 console-&amp;gt;data-^
-    // serial&#39;s tty_driver alloced in serial8250_init with uart_ops.
-    // vt&#39;s tty_driver alloced in vty_init.
-    // We summarize these:
-    // uart_driver serial8250_reg &amp;lt;-&amp;gt;  vc dev or /dev/tty*
-    // serial tty driver &amp;lt;-&amp;gt; vt tty driver 
-    // fs:vty_init &amp;lt;-&amp;gt; module:serial8250_init
-    // tty driver ops con_ops &amp;lt;-&amp;gt; uart_ops
-    // vt use major to connect tty and  vc dev
-    // serial use major and -&amp;gt; to connect tty and uart_driver
-    // It seems that uart and tty has a strong relationship, yet vt.
-    // Ok... we got tty driver.
-    // If we disable vt console, then here is the serial8250 tty_driver.
-}
-// Lookup for tty_struct
-tty_driver_lookup_tty -&amp;gt;
-{
-    //tty_struct is alloced in init function alloc_tty_driver.
-    // ttys, termios, ports, cdevs.
-    // ttys was used by tty_standard_install then tty_driver_install_tty 
-    // then tty_init_dev then ok we return to tty open. So this is the start place.
-
-    So we know tty_driver-&amp;gt;ttys[*] must be NULL.
-}
-tty_init_dev-&amp;gt;
-{
-    // tty_driver likes a process, ttys like the files, tty_struct like a file!
-    // So we know a tty_struct is a tty file.
-    // tty_driver much like a inode
-    //So tty_struct-&amp;gt;ops = tty_driver-&amp;gt;ops = &amp;amp; uart_ops
-    alloc_tty_struct-&amp;gt;tty-&amp;gt;ops = driver-&amp;gt;ops;
-    tty_driver_install_tty(driver, tty_struct)-&amp;gt; tty_standard_install-&amp;gt;driver-&amp;gt;ttys[tty-&amp;gt;index] = tty;
-}
-// Ok... We got a tty_struct.
-// Add /dev/console to tty_struct-&amp;gt;tty_files
-tty_add_file
-// At present, what have we done?
-// open(/dev/console)-&amp;gt;console_drivers-&amp;gt;console-&amp;gt;tty_driver-&amp;gt;tty_struct, right?
-
-tty-&amp;gt;ops-&amp;gt;open(tty, filp)-&amp;gt;//ops = &amp;amp;uart_ops
-{
-    uart_ops-&amp;gt;open = uart_open-&amp;gt;
-    {
-        uart-&amp;gt; tty struct
-        struct uart_driver *drv = (struct uart_driver *)tty-&amp;gt;driver-&amp;gt;driver_state;
-        struct uart_state *state = drv-&amp;gt;state + line; //uart_state
-        tty-&amp;gt;driver_data = state;
-    }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;br /&gt;
-// At present, we understand the flow of open /dev/console to serial console&lt;/p&gt;
-
-&lt;h1 id=&#34;what-about-opening-dev-console-to-vt-console&#34;&gt;What about opening /dev/console to vt console&lt;/h1&gt;
-
-&lt;p&gt;sys_open(/dev/console)-&amp;gt; &amp;hellip; tty_open -&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    tty_lookup_driver-&amp;gt; get tty_driver=console_driver,&lt;br /&gt;
-    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!&lt;br /&gt;
-    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.&lt;br /&gt;
-    // system console就有了, printk也就有了归处. In other words, you registered, you got printed&lt;br /&gt;
-    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.&lt;br /&gt;
-    // 那么在kernel_init中sys_open又是什么鬼呢?&lt;br /&gt;
-    // dev/tty 是专门真对进程的, 就是进程之前打开了一个tty就存在singnal里, 这个dev/tty就是取出来的.&lt;/p&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;总结下-打开-dev-console-会从console-drivers-最终到达tty-driver&#34;&gt;总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.&lt;/h1&gt;
-
-&lt;h1 id=&#34;这和-dev-tty-dev-ttys-从tty-drivers-差不多&#34;&gt;这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.&lt;/h1&gt;
-
-&lt;p&gt;// 这么输出为什么不会打窜了?&lt;br /&gt;
-// How ctrl alt Fn work?&lt;br /&gt;
-// echo xxx /dev/tty in serial tty_lookup_driver&lt;br /&gt;
-// 另一个问题, serial 的terminal?&lt;/p&gt;
-
-&lt;h1 id=&#34;the-perspective&#34;&gt;The perspective&lt;/h1&gt;
-
-&lt;p&gt;/dev/*&lt;br /&gt;
-vfs&lt;br /&gt;
-chrdev&lt;br /&gt;
-tty_fops&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;gt;tty core&lt;br /&gt;
-    ld_ops &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty line discipline(for read, write)&lt;br /&gt;
-tty_driver con_ops/uart_ops&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty driver and tty_operations&lt;br /&gt;
-HW&lt;br /&gt;
-There are three different types of tty drivers: console, serial port, and pty.&lt;br /&gt;
-serial8250_default_handle_irq&lt;br /&gt;
-UART console&lt;br /&gt;
-              |&amp;mdash;- Virtual terminal &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash; VT console&lt;br /&gt;
-              |                 | &amp;ndash; VT console&lt;br /&gt;
-              |&amp;mdash;-&lt;br /&gt;
-        Terminal&amp;ndash;|&lt;br /&gt;
-              |&amp;mdash;-&lt;/p&gt;
-
-&lt;h1 id=&#34;what-about-console&#34;&gt;What about console?&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;early_con&lt;br /&gt;
-start_kernel or setup_arch(arm)-&amp;gt;parse_early_param-&amp;gt;do_early_param-&amp;gt;p-&amp;gt;setup_func()= setup_early_printk-&amp;gt;register_console&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;vga_con&lt;br /&gt;
-start_kerenl-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-// All about vga console&lt;br /&gt;
-set_arch-&amp;gt; conswitchp = &amp;amp;vga_con; or conswitchp = &amp;amp;dummy_con;&lt;br /&gt;
-console_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-        tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
-    console_initcall(con_init);&lt;br /&gt;
-console_initcall(serial8250_console_init)&lt;br /&gt;
-    con_init-&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        // vc-&amp;gt;vc_sw-&amp;gt;con_putcs is DUMMY&lt;br /&gt;
-        //内存映射64KB or 32KB的VGA区域. 启动VGA&lt;br /&gt;
-        conswitchp-&amp;gt;con_startup = vgacon_startup -&amp;gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);&lt;br /&gt;
-        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间&lt;br /&gt;
-        // 核心内容!&lt;br /&gt;
-        for (currcons = 0; currcons &amp;lt; MIN_NR_CONSOLES; currcons++) {&lt;br /&gt;
-            // 给vc_cons[currcons].d分配内存&lt;br /&gt;
-            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);&lt;br /&gt;
-            INIT_WORK(&amp;amp;vc_cons[currcons].SAK_work, vc_SAK);&lt;br /&gt;
-            //初始化vc_cons[currcons].d&lt;br /&gt;
-            tty_port_init(&amp;amp;vc-&amp;gt;port);&lt;br /&gt;
-            // 继续初始化, 主要是确定screenbuf size&lt;br /&gt;
-            visual_init(vc, currcons, 1);&lt;br /&gt;
-            // 给vc_screenbuf分配内存&lt;br /&gt;
-            vc-&amp;gt;vc_screenbuf = kzalloc(vc-&amp;gt;vc_screenbuf_size, GFP_NOWAIT);&lt;br /&gt;
-            vc_init(vc, vc-&amp;gt;vc_rows, vc-&amp;gt;vc_cols,&lt;br /&gt;
-                currcons || !vc-&amp;gt;vc_sw-&amp;gt;con_save_screen);&lt;br /&gt;
-        }&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    [    0.000000] Console: colour VGA+ 80x25
-    register_console(&amp;amp;vt_console_driver);//vt_console can use vgacon writing.
-}
-serial8250_console_init-&amp;gt;register_console(&amp;amp;serial8250_console) to console_drivers; exclusive_console.
-[    0.000000] console [tty0] enabled
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;br /&gt;
-module_init(serial8250_init);??&lt;br /&gt;
-}&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;fbcon&lt;br /&gt;
-register_framebuffer-&amp;gt; do_take_over_console -&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-do_register_con_driver-&amp;gt;csw-&amp;gt;con_startup();registered_con_driver&lt;br /&gt;
-do_bind_con_driver -&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    [    3.882220] Console: switching to colour dummy device 80x25&lt;br /&gt;
-    [    4.720732] Console: switching to colour frame buffer device 170x48&lt;br /&gt;
-}&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h2 id=&#34;vga-text-console-printk-write&#34;&gt;VGA text console printk &amp;amp; write&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;kernel space&lt;br /&gt;
-printk-&amp;gt; &amp;hellip;-&amp;gt;log_buf&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;userspace for ttyN&lt;br /&gt;
-tty_fops-&amp;gt;write=tty_write-&amp;gt; tty_ldisc_N_TTY-&amp;gt;write=n_tty_write-&amp;gt; tty_driver-&amp;gt;ops=con_ops-&amp;gt;write=con_write-&amp;gt;do_con_write&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;agent&lt;br /&gt;
-console_drivers-&amp;gt;vt_console_driver-&amp;gt;serial8250_console-&amp;gt;NULL&lt;br /&gt;
-console_unlock-&amp;gt;..-&amp;gt;__call_console_drivers-&amp;gt; console_drivers-&amp;gt;write = vt_console_print&lt;br /&gt;
-{&lt;br /&gt;
-//保存到screen buf, vga_con也什么不做啊.&lt;br /&gt;
-scr_writew((vc-&amp;gt;vc_attr &amp;lt;&amp;lt; 8) + c, (unsigned short *)vc-&amp;gt;vc_pos);&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h1 id=&#34;what-about-tty&#34;&gt;What about tty&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;onset&lt;br /&gt;
-console_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
-console_initcall(con_init);&lt;br /&gt;
-console_initcall(serial8250_console_init)&lt;br /&gt;
-}&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;&lt;br /&gt;
-fs_initcall:chr_dev_init-&amp;gt;drivers/tty/tty_io.c: tty_init-&amp;gt;&lt;br /&gt;
-{&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;/* /dev/tty0 = /dev/console console_ops */
-/* /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */
-
-//&amp;quot;/dev/tty&amp;quot;,
-cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);
-&amp;quot;/dev/console&amp;quot;
-cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);
-vty_init-&amp;gt;
-{
-    //&amp;quot;dev/tty0&amp;quot;    
-    cdev_init(&amp;amp;vc0_cdev, console_fops); 
-    //&amp;quot;/dev/ttyN&amp;quot;
-    tty_register_driver-&amp;gt;
-    {
-        // What does tty_register_driver do ?
-        // Alloc and register chr dev region.
-        // Add cdev with tty_ops and above region.
-        // Register tty device
-        // Why do we register tty devices?
-        // These devices must be used in some place.
-        // After registering itself, the driver registers the devices it controls through the tty_register_device function. 
-        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.
-        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
-        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
-        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)
-        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct
-        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.
-        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
-    }
-    kbd_init
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;br /&gt;
-device_init:serial8250_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    // In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;&lt;br /&gt;
-    // dmesg |grep Serial&lt;br /&gt;
-    // [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled&lt;br /&gt;
-    // serial8250.c -&amp;gt; tty_io.c&lt;br /&gt;
-    serial8250_reg.nr = UART_NR;&lt;br /&gt;
-    ret = uart_register_driver(&amp;amp;serial8250_reg);&lt;br /&gt;
-    tty_driver set to uart_driver by uart_register_driver -&amp;gt;&lt;br /&gt;
-    {&lt;br /&gt;
-        drv-&amp;gt;state = kzalloc        //uart_state&lt;br /&gt;
-        normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg&lt;br /&gt;
-        tty_set_operations(normal, &amp;amp;uart_ops);&lt;br /&gt;
-        struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port&lt;br /&gt;
-        tty_port_init(port);&lt;br /&gt;
-        port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port&lt;br /&gt;
-        // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.&lt;br /&gt;
-        static struct uart_driver serial8250_reg = {&lt;br /&gt;
-            .owner                  = THIS_MODULE,&lt;br /&gt;
-            .driver_name            = &amp;ldquo;serial&amp;rdquo;,&lt;br /&gt;
-            .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,&lt;br /&gt;
-            .major                  = TTY_MAJOR,&lt;br /&gt;
-            .minor                  = 64,&lt;br /&gt;
-            .cons                   = SERIAL8250_CONSOLE,&lt;br /&gt;
-        };&lt;br /&gt;
-        retval = tty_register_driver(normal); -&amp;gt; register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name) //32, ttyS?*? should be tty_ops&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;}
-serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;br /&gt;
-* nucleus&lt;br /&gt;
-tty_write-&amp;gt;ld-&amp;gt;ops-&amp;gt;write=n_tty_write-&amp;gt;(tty_struct tty-&amp;gt;ops-&amp;gt;write)=uart_write-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    struct uart_state *state = tty-&amp;gt;driver_data;&lt;br /&gt;
-    port = state-&amp;gt;uart_port;&lt;br /&gt;
-    circ = &amp;amp;state-&amp;gt;xmit;&lt;br /&gt;
-    memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);&lt;br /&gt;
-    uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h1 id=&#34;what-about-pseudoterminal&#34;&gt;What about Pseudoterminal&lt;/h1&gt;
-
-&lt;p&gt;/dev/ptmx is the &amp;ldquo;pseudo-terminal master multiplexer&amp;rdquo;. from wikipedia&lt;br /&gt;
-static struct tty_driver *ptm_driver;&lt;br /&gt;
-static struct tty_driver *pts_driver;&lt;br /&gt;
-module_init(pty_init)-&amp;gt;unix98_pty_init-&amp;gt;&lt;br /&gt;
-{&lt;br /&gt;
-    tty_set_operations(ptm_driver, &amp;amp;ptm_unix98_ops);&lt;br /&gt;
-    tty_register_driver(ptm_driver)&lt;br /&gt;
-    tty_set_operations(pts_driver, &amp;amp;pty_unix98_ops);&lt;br /&gt;
-    tty_register_driver(pts_driver)&lt;br /&gt;
-    ptmx_fops = tty_fops;&lt;br /&gt;
-    ptmx_fops.open = ptmx_open;&lt;br /&gt;
-    cdev_init(&amp;amp;ptmx_cdev, &amp;amp;ptmx_fops);&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;How to use ptmx?&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;tty-drivers&#34;&gt;tty drivers&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;cat /proc/tty/drivers&lt;br /&gt;
-/dev/tty             /dev/tty        5       0 system:/dev/tty&lt;br /&gt;
-/dev/console         /dev/console    5       1 system:console&lt;br /&gt;
-/dev/ptmx            /dev/ptmx       5       2 system&lt;br /&gt;
-/dev/vc/0            /dev/vc/0       4       0 system:vtmaster&lt;br /&gt;
-usbserial            /dev/ttyUSB   188 0-511 serial&lt;br /&gt;
-serial               /dev/ttyS       4 64-95 serial&lt;br /&gt;
-pty_slave            /dev/pts      136 0-1048575 pty:slave&lt;br /&gt;
-pty_master           /dev/ptm      128 0-1048575 pty:master&lt;br /&gt;
-unknown              /dev/tty        4 1-63 console&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;question&#34;&gt;Question?&lt;/h1&gt;
-
-&lt;p&gt;what is /dev/vcs?&lt;/p&gt;
-
-&lt;h1 id=&#34;backup&#34;&gt;Backup&lt;/h1&gt;
-
-&lt;p&gt;./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &amp;ldquo;/dev/vc/0&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
-./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &amp;ldquo;vcs&amp;rdquo;, &amp;amp;vcs_fops))&lt;br /&gt;
-./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name);&lt;br /&gt;
-./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&amp;gt;num);&lt;br /&gt;
-./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&amp;gt;major, driver-&amp;gt;minor_start),&lt;br /&gt;
-./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
-./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
-./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
-
-&lt;h1 id=&#34;hugh-in-n-tty-write&#34;&gt;hugh in n_tty_write&lt;/h1&gt;
-
-&lt;p&gt;uart_flush_buffer-&amp;gt; tty_wakeup&lt;br /&gt;
-serial8250_handle_port-&amp;gt; transmit_chars&lt;br /&gt;
-n_tty_read/poll-&amp;gt;input_available_p-&amp;gt;flush_to_ldisc-&amp;gt;n_tty_receive_buf-&amp;gt;uart_flush_chars&lt;br /&gt;
-n_tty_write-&amp;gt;uart_flush_chars-&amp;gt;uart_start&lt;br /&gt;
-n_tty_write-&amp;gt;uart_write-&amp;gt; uart_start-&amp;gt;start_tx -&amp;gt; serial8250_start_tx -&amp;gt; transmit_chars-&amp;gt;uart_write_wakeup -&amp;gt;uart_tasklet_action-&amp;gt;tty_wakeup&lt;/p&gt;
-
-&lt;h1 id=&#34;echo-char&#34;&gt;Echo char&lt;/h1&gt;
-
-&lt;p&gt;===serial chipset&lt;br /&gt;
-serial8250_interrupt&lt;br /&gt;
-seirial8250_handle_port&lt;br /&gt;
-receive_chars&lt;/p&gt;
-
-&lt;p&gt;===serial abstruction&lt;br /&gt;
-uart_insert_char&lt;/p&gt;
-
-&lt;p&gt;===terminal device&lt;br /&gt;
-tty_insert_flip_char&lt;/p&gt;
-
-&lt;p&gt;receive_chars-&amp;gt;tty_flip_buffer_push -&amp;gt;flush_to_ldisc-&amp;gt;&lt;br /&gt;
-=== Line discipline&lt;br /&gt;
-disc-&amp;gt;receive_buf=n_tty_receive_buf-&amp;gt;n_tty_receive_char-&amp;gt;echo_char&lt;/p&gt;
-
-&lt;h1 id=&#34;uart-port&#34;&gt;uart_port&lt;/h1&gt;
-
-&lt;p&gt;serial8250_register_ports&lt;br /&gt;
-struct uart_8250_port *up = &amp;amp;serial8250_ports[i];&lt;br /&gt;
-uart_add_one_port(drv, &amp;amp;up-&amp;gt;port);&lt;/p&gt;
 </description>
     </item>
     
@@ -2495,9 +1994,18 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
 Algorithms: Design Techniques and Analysis&lt;br /&gt;
 The Algorithm Design Manual 2nd Edition&lt;/p&gt;
 
-&lt;h1 id=&#34;bitmap&#34;&gt;Bitmap&lt;/h1&gt;
+&lt;h1 id=&#34;leetcode&#34;&gt;Leetcode&lt;/h1&gt;
 
-&lt;p&gt;Long array&lt;/p&gt;
+&lt;h2 id=&#34;1p3c&#34;&gt;1p3c&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.1point3acres.com/bbs/thread-270312-1-1.html&#34;&gt;http://www.1point3acres.com/bbs/thread-270312-1-1.html&lt;/a&gt;&lt;br /&gt;
+最终我觉得像word search12， word break12，word ladder12，LIS，sort color，LRU，insert &amp;amp; delete in O1，rob house123，234sum这种题要达到闭眼秒杀的程度，min/max heap，bucket sort，topological sort，binary pre/in/post/level 遍历，combination/permutation这种东西要做梦都梦到&lt;br /&gt;
+最后祝lz好运，加油~&lt;/p&gt;
+
+&lt;h2 id=&#34;why-do-we-have-to-solve-leetcode-problems&#34;&gt;Why do we have to solve leetcode problems?&lt;/h2&gt;
+
+&lt;p&gt;尤其是在北美，Google，Facebook，Microsoft，Amazon 等等大公司，无一不考刷题，以算法面试为主。而无论是北美留学生，还是工作几年的上班族，想进大公司，唯一的出路就是刷题。&lt;br /&gt;
+&lt;a href=&#34;https://cspiration.com/leetcodeClassification&#34;&gt;Leetcode 分类顺序表第二版&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;computational-complexity-theory&#34;&gt;Computational complexity theory&lt;/h1&gt;
 
@@ -2653,11 +2161,21 @@ dcache&lt;/p&gt;
 &lt;p&gt;Page reclaim algorithm&lt;br /&gt;
 type: Reclaim&lt;/p&gt;
 
-&lt;h1 id=&#34;lock&#34;&gt;Lock&lt;/h1&gt;
-
-&lt;p&gt;MCS lock&lt;/p&gt;
-
 &lt;h1 id=&#34;ring-buffer-or-circular-buffer&#34;&gt;Ring buffer or Circular buffer&lt;/h1&gt;
+
+&lt;h1 id=&#34;redblack-tree&#34;&gt;Redblack tree&lt;/h1&gt;
+
+&lt;p&gt;gap between linar node can be optimized by argument rb tree. O(n) -&amp;gt; O(log n)&lt;br /&gt;
+mm: augment vma rbtree with rb_subtree_gap d37371870ceb1d2165397dc36114725b6dca946c&lt;br /&gt;
+&lt;a href=&#34;http://sidsen.azurewebsites.net//papers/rb-trees-talg.pdf&#34;&gt;Rank-Balanced Trees&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&#34;&gt;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://yuex.in/post/2017/08/red-black-tree-in-action.html&#34;&gt;http://yuex.in/post/2017/08/red-black-tree-in-action.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.princeton.edu/~rs/talks/LLRB/08Dagstuhl/RedBlack.pdf&#34;&gt;Left-Leaning Red-Black Trees&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;history&#34;&gt;History&lt;/h2&gt;
+
+&lt;p&gt;AVL tree, B-tree, symmetric binary B-tree or 2–3–4 tree, red–black tree&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.purdue.edu/homes/ayg/CS251/slides/chap13b.pdf&#34;&gt;2-3-4 Trees and RedBlack Trees&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -2668,6 +2186,10 @@ type: Reclaim&lt;/p&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/rcu/</guid>
       <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.cnhalo.net/2016/06/13/linux-rcu/&#34;&gt;http://www.cnhalo.net/2016/06/13/linux-rcu/&lt;/a&gt; linux 4.9内核rcu实现&lt;/p&gt;
 
 &lt;h1 id=&#34;network-rx-path&#34;&gt;Network RX  path&lt;/h1&gt;
 
@@ -2990,12 +2512,267 @@ CommitDate: Tue Apr 18 11:42:36 2017 -0700&lt;br /&gt;
     </item>
     
     <item>
+      <title>Yet another guide on the way to linux kernel hacking</title>
+      <link>http://firoyang.org/cs/kernel_hacking/</link>
+      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/kernel_hacking/</guid>
+      <description>
+
+&lt;h1 id=&#34;hacking-goals&#34;&gt;Hacking goals&lt;/h1&gt;
+
+&lt;h2 id=&#34;trade-time-for-space&#34;&gt;Trade time for space&lt;/h2&gt;
+
+&lt;p&gt;search_exception_tables&lt;/p&gt;
+
+&lt;h1 id=&#34;define-asm-extable-handle-from-to-handler&#34;&gt;define _ASM_EXTABLE_HANDLE(from, to, handler)                 &lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;    .pushsection &amp;quot;__ex_table&amp;quot;,&amp;quot;a&amp;quot; ;                         \
+    .balign 4 ;                                             \
+    .long (from) - . ;                                      \
+    .long (to) - . ;                                        \
+    .long (handler) - . ;                                   \
+    .popsection
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;hacking-area&#34;&gt;Hacking area&lt;/h1&gt;
+
+&lt;p&gt;mm&lt;br /&gt;
+&lt;a href=&#34;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&#34;&gt;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/749064/&#34;&gt;Variable-length arrays and the max() mess&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=wlqjQe3vDx8&amp;amp;list=PLbzoR-pLrL6rOT6m50HdJFYUHyvA9lurI&amp;amp;index=11&amp;amp;t=0s&#34;&gt;Sub-system Update: Kernel Self-Protection Project - Kees Cook, Google&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-refactoring&#34;&gt;Kernel refactoring&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://linuxtv.org/wiki/index.php/Development:_Hints_for_Refactoring_Existing_Drivers&#34;&gt;https://linuxtv.org/wiki/index.php/Development:_Hints_for_Refactoring_Existing_Drivers&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=mxxicJZ8cis&#34;&gt;Kernel Recipes 2017 - Refactoring the Linux Kernel - Thomas Gleixner&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;feature&#34;&gt;Feature&lt;/h2&gt;
+
+&lt;p&gt;some results or progress information for PFRA&lt;/p&gt;
+
+&lt;h2 id=&#34;write-your-own-kernel&#34;&gt;Write your own kernel&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://os.phil-opp.com/&#34;&gt;Writing an OS in Rust&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.brokenthorn.com/Resources/OSDevIndex.html&#34;&gt;BrokenThorn Entertainment Operating System Development Series&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;build&#34;&gt;Build&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;if no .config, every config tools make a .config from scrach!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make localmodconfig will reduce many unused kernel config.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make bzImage  #kmods will not build that configured with M!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;br /&gt;
+##build signle kernel module&lt;br /&gt;
+make menuconfig&lt;br /&gt;
+make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
+make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
+make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;git-repos&#34;&gt;Git repos&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/572068/&#34;&gt;Git tree maintenance&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;next-tree-2-6-1x-latest-tree-please-rebase-your-patch-against-this-tree-before-send-it-to-upstream&#34;&gt;next tree - 2.6.1x ~ latest tree; please rebase your patch against this tree before send it to upstream&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;&lt;br /&gt;
+git add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git&lt;/p&gt;
+
+&lt;h2 id=&#34;tglx-tree-2-4-2-6-1x&#34;&gt;tglx tree - 2.4 - 2.6.1x&lt;/h2&gt;
+
+&lt;p&gt;origin  git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git (fetch)&lt;br /&gt;
+origin  git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git (push)&lt;/p&gt;
+
+&lt;h2 id=&#34;history-tree-0-2-4&#34;&gt;history tree - 0 - 2.4&lt;/h2&gt;
+
+&lt;p&gt;origin  &lt;a href=&#34;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&#34;&gt;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&lt;/a&gt; (fetch)&lt;br /&gt;
+origin  &lt;a href=&#34;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&#34;&gt;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&lt;/a&gt; (push)&lt;br /&gt;
+git checkout -b 240p 2.4.0-prerelease&lt;/p&gt;
+
+&lt;h1 id=&#34;blogs&#34;&gt;Blogs&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/&#34;&gt;http://www.joelfernandes.org/linuxinternals/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://paulmck.livejournal.com/&#34;&gt;https://paulmck.livejournal.com/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;traning&#34;&gt;Traning&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/htmldocs/kernel-hacking/index.html&#34;&gt;Unreliable Guide To Hacking The Linux Kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://linux-kernel-labs.github.io/master/index.html&#34;&gt;Bootlin linux kernel labs&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;mailing-list-archives&#34;&gt;Mailing list archives&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/lore.html&#34;&gt;The Linux Kernel Archives&lt;/a&gt;&lt;br /&gt;
+Online: &lt;a href=&#34;https://lore.kernel.org/lists.html&#34;&gt;https://lore.kernel.org/lists.html&lt;/a&gt;&lt;br /&gt;
+Git: &lt;a href=&#34;https://git.kernel.org/pub/scm/public-inbox/&#34;&gt;https://git.kernel.org/pub/scm/public-inbox/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/758034/&#34;&gt;LKML archives on lore.kernel.org&lt;/a&gt;&lt;br /&gt;
+and marc.info&lt;/p&gt;
+
+&lt;h1 id=&#34;source-code-navigator&#34;&gt;Source code navigator&lt;/h1&gt;
+
+&lt;p&gt;Just make tags; make cscope&lt;br /&gt;
+&lt;a href=&#34;https://www.gnu.org/software/global/links.html&#34;&gt;&amp;lsquo;Source code reading&amp;rsquo; related sites&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kvm&#34;&gt;KVM&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blacks3pt3mb3r.wordpress.com/linux-stuffz/264-2/&#34;&gt;Building a KVM host machine.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;How to Build A Custom Linux Kernel For Qemu&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;build-minimal-bootable-rootfs-fedora&#34;&gt;Build minimal bootable rootfs - fedora&lt;/h2&gt;
+
+&lt;p&gt;./etc/yum.repos.d/&lt;br /&gt;
+./etc/yum.repos.d/fedora-updates-testing.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora-updates.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora-cisco-openh264.repo&lt;br /&gt;
+can be gotten by supermin &amp;ndash;prepare bash -o /tmp/supermin.d&lt;br /&gt;
+or just copy from you host to some place like /home/firo/kernel/k/testfs/&lt;br /&gt;
+sudo dnf &amp;ndash;releasever=27 &amp;ndash;installroot=/home/firo/kernel/k/testfs/ &amp;ndash;setopt=reposdir=/home/firo/kernel/k/testfs/etc/yum.repos.d install dnf udev passwd&lt;/p&gt;
+
+&lt;h2 id=&#34;how-to-build-a-minimal-kernel-for-testing&#34;&gt;How to build a minimal kernel for testing?&lt;/h2&gt;
+
+&lt;p&gt;[tiny config @ kernel.org][5]&lt;br /&gt;
+[3 attempts to reduce the configurations][6]&lt;br /&gt;
+&lt;a href=&#34;7&#34;&gt;Fedora equivalent of debootstrap&lt;/a&gt;&lt;br /&gt;
+Then enable following config option&lt;br /&gt;
+CONFIG_CHR_DEV_SG&lt;br /&gt;
+Some ftrace stuff&lt;br /&gt;
+CONFIG_SLUB&lt;br /&gt;
+CONFIG_KASAN&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-org-build-a-tiny-kernel-https-tiny-wiki-kernel-org&#34;&gt;&lt;a href=&#34;https://tiny.wiki.kernel.org/&#34;&gt;Kernel.org: Build a tiny kernel&lt;/a&gt;&lt;/h2&gt;
+
+&lt;h2 id=&#34;kvm-and-nfs&#34;&gt;KVM and NFS&lt;/h2&gt;
+
+&lt;p&gt;qemu-system-x86_64 -nographic -enable-kvm  -kernel ./bzImag  -append &amp;lsquo; console=ttyS0 ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw nfsrootdebug debug  raid=noautodetect selinux=0 enforcing=0 &amp;lsquo;&lt;br /&gt;
+dnf install nfs-utils&lt;br /&gt;
+cat /etc/exports # For more details, man exports&lt;br /&gt;
+/home/firo/kernel/k/testfs 127.0.0.1(rw,sync,fsid=0,no_root_squash)&lt;br /&gt;
+systemctl start nfs-server.service&lt;br /&gt;
+systemctl status nfs-server.service&lt;br /&gt;
+● nfs-server.service - NFS server and services&lt;br /&gt;
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; disabled; vendor preset: disabled)&lt;br /&gt;
+   Active: active (exited) since Sat 2018-03-17 17:52:29 CST; 4s ago&lt;/p&gt;
+
+&lt;h3 id=&#34;test-the-nfs&#34;&gt;Test the nfs&lt;/h3&gt;
+
+&lt;p&gt;sudo mount -t nfs localhost://home/firo/kernel/k/testfs /mnt&lt;br /&gt;
+if touch prermission denied, add no_all_squash to/etc/exports&lt;/p&gt;
+
+&lt;h2 id=&#34;nfs-errors&#34;&gt;NFS errors&lt;/h2&gt;
+
+&lt;p&gt;[   54.600121] NFS: sending MNT request for 10.0.2.2:/buildarea1/firo/ima/export/dist&lt;br /&gt;
+[   54.600121] NFS: failed to create MNT RPC client, status=-101&lt;br /&gt;
+[   54.600121] NFS: unable to mount server 10.0.2.2, error -101&lt;br /&gt;
+CONFIG_E100 CONFIG_E1000 &amp;hellip;and IP_PNP and DHCP BOOTP RARP&lt;br /&gt;
+try: nfsvers=3,tcp and 192.168.0.104 or 10.0.2.2 are mandatory!&lt;/p&gt;
+
+&lt;h2 id=&#34;nfs-vers&#34;&gt;NFS vers&lt;/h2&gt;
+
+&lt;p&gt;rpcinfo -t localhost nfs&lt;br /&gt;
+program 100003 version 3 ready and waiting&lt;br /&gt;
+program 100003 version 4 ready and waiting&lt;br /&gt;
+rpcinfo -p | grep nfs&lt;br /&gt;
+    100003    3   tcp   2049  nfs&lt;br /&gt;
+    100003    4   tcp   2049  nfs&lt;br /&gt;
+    100227    3   tcp   2049  nfs_acl&lt;/p&gt;
+
+&lt;h1 id=&#34;submitting-patch&#34;&gt;Submitting patch&lt;/h1&gt;
+
+&lt;h2 id=&#34;patch-prefix&#34;&gt;Patch prefix&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;git log --oneline  path/to/file.c
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;resending-the-patch&#34;&gt;Resending the patch&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://meta.stackexchange.com/questions/314212/why-is-it-called-initial-revision-if-its-not-a-revision&#34;&gt;First revision, version, second revision&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/Outreachyfirstpatch&#34;&gt;Versioning one patch revision&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchTipsAndTricks&#34;&gt;For example, if you&amp;rsquo;re sending the second revision of a patch, you should use [PATCH v2]&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchPhilosophy&#34;&gt;use PATCHv2 (or PATCHv3 and so on) in the subject lines instead of PATCH &amp;hellip; To update the subject lines, add the -v 2 (or -v 3, etc) options to git format-patch&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchPhilosophy&#34;&gt;Finally, to send your new patch series as a reply to the previous one, first look up the Message-Id of the cover letter (or the one-and-only patch) in your previous patch series, and then pass that to the &amp;ndash;in-reply-to= option of either git format-patch or git send-email.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchTipsAndTricks&#34;&gt;Patch v2, v3, &amp;hellip; Changes, tags&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;patch-in-series-with-a-cover&#34;&gt;Patch in series with a cover&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;proxychains git send-email --subject &amp;quot;[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values&amp;quot; --thread --compose --confirm=compose --to firogm@gmail.com *.patch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;dave-s-miller-s-perferences&#34;&gt;Dave S Miller&amp;rsquo;s perferences&lt;/h2&gt;
+
+&lt;p&gt;@@ -325,13 +325,15 @@ static inline void empty_child_dec(struct key_vector *n)&lt;br /&gt;
+  static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)&lt;br /&gt;
+  {&lt;br /&gt;
+-       struct tnode *kv = kmem_cache_alloc(trie_leaf_kmem, GFP_KERNEL);&lt;br /&gt;
+-       struct key_vector *l = kv-&amp;gt;kv;&lt;br /&gt;
++       struct tnode *kv;&lt;br /&gt;
++       struct key_vector *l;&lt;br /&gt;
+Dave Miller usually prefers it if variables are ordered from longest to shortest.  So you should probably have l defined first, and then kv.&lt;/p&gt;
+
+&lt;h2 id=&#34;julia-lawall-sorry-to-be-picky&#34;&gt;Julia Lawall Sorry to be picky,&lt;/h2&gt;
+
+&lt;p&gt;but normally people put a space after the colon.  Also,&lt;br /&gt;
+the subject line could be shorter: Remove unneeded cast.&lt;br /&gt;
+The description part of the subject doesnt have to be unique,&lt;br /&gt;
+just the whole thing, asfter the [PATCH] part.&lt;/p&gt;
+
+&lt;h2 id=&#34;dan-carpenter&#34;&gt;Dan Carpenter&lt;/h2&gt;
+
+&lt;p&gt;Otherwise your patch was fine, btw.  Other improvements.&lt;br /&gt;
+Don&amp;rsquo;t put &amp;ldquo;Drivers:&amp;rdquo; in the subject.&lt;br /&gt;
+On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:&lt;br /&gt;
+&amp;gt; From: Firo Yang &lt;a href=&#34;mailto:firogm@gmail.com&#34;&gt;firogm@gmail.com&lt;/a&gt;&lt;br /&gt;
+Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;br /&gt;
+Include everyone from the ./scripts/get_maintainer.pl output except&lt;br /&gt;
+don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing&lt;br /&gt;
+list there already.&lt;/p&gt;
+
+&lt;h1 id=&#34;git-mutt-patch&#34;&gt;git mutt patch&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=6zUVS4kJtrA&#34;&gt;Greg: How to Apply a Patch to the Linux Kernel Stable Tree&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;newbies-what-to-do&#34;&gt;newbies! what to do?&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/286244/&#34;&gt;Peter Zijlstra: From DOS to kernel hacking&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;KernelJanitors/Todo&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/284099/&#34;&gt;linux-wanking@vger.kernel.org&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;smatch&#34;&gt;Smatch&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;    make CHECK=&amp;quot;~/path/to/smatch/smatch -p=kernel&amp;quot; C=1 \
+            bzImage modules | tee warns.txt
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;coccinelle&#34;&gt;Coccinelle&lt;/h2&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Computing Sorcery a sorcerer&#39;s perspective on computer science</title>
       <link>http://firoyang.org/cs/cs/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
+
+&lt;h1 id=&#34;computer-science&#34;&gt;Computer science&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://computersciencewiki.org/index.php/Computational_thinking_%26_problem-solving&#34;&gt;Firo: very good CS website: Computational thinking &amp;amp; problem-solving&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://computersciencewiki.org/index.php/Welcome&#34;&gt;Core topics of computer science&lt;/a&gt;&lt;br /&gt;
+Underlying our approach to this subject is our conviction that “computer science” is not a science and that its significance has little to do with computers. The computer revolution is a revolution in the way we think and in the way we express what we think. The essence of this change is the emergence of what might best be called procedural epistemology —the study of the structure of knowledge from an imperative point of view, as opposed to the more declarative point of view taken by classical mathematical subjects. Mathematics provides a framework for dealing precisely with notions of “what is.” Computation provides a framework for dealing precisely with notions of “how to.”  &amp;ndash; The omnipotent SICP&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://plato.stanford.edu/entries/computer-science/&#34;&gt;The Philosophy of Computer Science&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;specifications-and-books&#34;&gt;Specifications and books&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;os&#34;&gt;OS&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
 
@@ -3018,10 +2795,11 @@ Life with Unix&lt;br /&gt;
 VM&lt;br /&gt;
 IO&lt;br /&gt;
 Memory hierarchy&lt;br /&gt;
+Resource management&lt;br /&gt;
 Latency&lt;br /&gt;
 Scalibity&lt;/p&gt;
 
-&lt;h1 id=&#34;etc&#34;&gt;etc&lt;/h1&gt;
+&lt;h2 id=&#34;etc&#34;&gt;ETC&lt;/h2&gt;
 
 &lt;p&gt;performance/efficiency&lt;br /&gt;
 Easy to use&lt;br /&gt;
@@ -3031,10 +2809,10 @@ Energy-efficiency&lt;/p&gt;
 
 &lt;h1 id=&#34;concurrency&#34;&gt;Concurrency&lt;/h1&gt;
 
-&lt;p&gt;CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Firo: must thinking summary: EW Dijkstra: Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
+CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
 Parallel and Concurrent Programming in Haskell&lt;br /&gt;
 The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
-&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Firo: good introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;/p&gt;
@@ -3043,48 +2821,34 @@ The origin of concurrent programming: from semaphores to remote procedure calls 
 
 &lt;p&gt;Programming vs computing: software vs hardware&lt;br /&gt;
 concurrent programming: multi-thread stress on how to create thread to model the outside world.&lt;br /&gt;
-parallel programming: smp, synchronization, lock, lock-free, atomic&lt;/p&gt;
+parallel programming: smp, synchronization, lock, lock-free, atomic&lt;br /&gt;
+&lt;a href=&#34;http://highscalability.com/blog/2014/12/31/linus-the-whole-parallel-computing-is-the-future-is-a-bunch.html&#34;&gt;Linus: The Whole &amp;ldquo;Parallel Computing Is The Future&amp;rdquo; Is A Bunch Of Crock.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.realworldtech.com/forum/?threadid=146066&amp;amp;curpostid=146227&#34;&gt;Linus: Avoiding ping pong&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;documents&#34;&gt;Documents&lt;/h1&gt;
+&lt;h2 id=&#34;concurrency-problem-1-with-communications&#34;&gt;Concurrency problem 1 with communications&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;IPC check wait.log&lt;/p&gt;
 
-&lt;p&gt;Underlying our approach to this subject is our conviction that “com-&lt;br /&gt;
-puter science” is not a science and that its significance has little to do&lt;br /&gt;
-with computers. The computer revolution is a revolution in the way we&lt;br /&gt;
-think and in the way we express what we think. The essence of this&lt;br /&gt;
-change is the emergence of what might best be called procedural epis-&lt;br /&gt;
-temology —the study of the structure of knowledge from an imperative&lt;br /&gt;
-point of view, as opposed to the more declarative point of view taken&lt;br /&gt;
-by classical mathematical subjects. Mathematics provides a framework&lt;br /&gt;
-for dealing precisely with notions of “what is.” Computation provides a&lt;br /&gt;
-framework for dealing precisely with notions of “how to.”  &amp;ndash; The omnipotent SICP&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.gigamonkeys.com/code-reading/&#34;&gt;Reading code? CODE IS NOT LITERATURE&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://plato.stanford.edu/entries/computer-science/&#34;&gt;The Philosophy of Computer Science&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;prblem-2-with-memory&#34;&gt;Prblem 2 with memory&lt;/h2&gt;
 
-&lt;h1 id=&#34;unrelatted-but-interesting-topic-on-memory-models&#34;&gt;Unrelatted but interesting topic on memory models&lt;/h1&gt;
+&lt;p&gt;consistency model&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://canonical.org/~kragen/memory-models/&#34;&gt;The memory models that underlie programming languages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=3e1ZF1L1VhY&#34;&gt;History of Memory Models&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;resource-management&#34;&gt;Resource management&lt;/h1&gt;
 
-&lt;h2 id=&#34;procedure-or-subroutine&#34;&gt;Procedure or subroutine&lt;/h2&gt;
+&lt;h2 id=&#34;garbage-collection&#34;&gt;Garbage collection&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;https://people.cs.clemson.edu/~mark/subroutines.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;https://en.wikipedia.org/wiki/Subroutine&lt;/a&gt;&lt;br /&gt;
-* 1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;&lt;br /&gt;
-In Chapter 6. Outline of Logical Control.&lt;br /&gt;
-We also wish to be able to arrange for the splitting up of operations into&amp;hellip;&lt;br /&gt;
-When we wish to start on a subsidiary operation we need only make a note&lt;br /&gt;
-of where we left off the major operation&amp;hellip;&lt;br /&gt;
-* 1952 &lt;a href=&#34;http://www.laputan.org/pub/papers/wheeler.pdf&#34;&gt;The use of sub-routines in programmes&lt;/a&gt;&lt;br /&gt;
-The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born     in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out     of sight.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://news.ycombinator.com/item?id=2473932&#34;&gt;Linus Torvalds on Garbage Collection (2002)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://yarchive.net/comp/linux/reference_counting.html&#34;&gt;Linus on refrence counting&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.145.3800&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Paul E. McKenney: Overview of Linux-Kernel Reference Counting&lt;/a&gt;&lt;br /&gt;
+Book: The Garbage Collection Handbook&lt;br /&gt;
+Book: Japanese GC book.&lt;br /&gt;
+&lt;a href=&#34;https://www.linuxidc.com/Linux/2015-01/111565.htm&#34;&gt;https://www.linuxidc.com/Linux/2015-01/111565.htm&lt;/a&gt;&lt;/p&gt;
 
-&lt;h2 id=&#34;linkage&#34;&gt;Linkage&lt;/h2&gt;
+&lt;h3 id=&#34;reference-counting&#34;&gt;Reference counting&lt;/h3&gt;
 
-&lt;p&gt;1960 &lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Link_register&#34;&gt;https://en.wikipedia.org/wiki/Link_register&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/565734/&#34;&gt;Introducing lockrefs&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;memory-hierarchy&#34;&gt;Memory hierarchy&lt;/h1&gt;
 </description>
     </item>
     

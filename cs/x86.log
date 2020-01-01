@@ -1,3 +1,6 @@
+# Reference
+[Agner Fog on x86](https://www.agner.org/optimize/#manuals)
+
 # ref
 http://www.sandpile.org/
 http://www.sandpile.org/x86/except.htm
@@ -131,6 +134,7 @@ Other adresses are always Absolute except register
 [x86: Add documentation for rd/wr fs/gs base](https://lore.kernel.org/patchwork/patch/560242/)
 [x86: Add support for rd/wr fs/gs base](https://lkml.org/lkml/2016/3/21/517)
 http://drops.xmd5.com/static/drops/papers-4860.html
+For using in TLS, please check [OSDEV TLS](http://wiki.osdev.org/Thread_Local_Storage#ABI)
 ## IA32e
 v3a 3.4.4 Segment Loading Instructions in IA-32e Mode
 When FS and GS segment overrides are used in 64-bit mode, their respective base addresses are used in the linear
@@ -212,3 +216,28 @@ apic_timer_interrupt->smp_apic_timer_interrupt->local_apic_timer_interrupt->even
 		scheduler_tick - scheduling stuff
 	}
 }
+
+# cld and DF in kernel error_entry and sync_regs
+[GCC 4.3.0 exposes a kernel bug](https://lwn.net/Articles/272048/) [x86: Clear DF before calling signal handler](https://lwn.net/Articles/272203/)
+crash> dis sync_regs
+0xffffffff8e02ba60 <sync_regs>: mov    %rdi,%rsi
+0xffffffff8e02ba63 <sync_regs+0x3>:     mov    %gs:0x71fd95a1(%rip),%rax        # 0x500c
+0xffffffff8e02ba6b <sync_regs+0xb>:     sub    $0xa8,%rax
+0xffffffff8e02ba71 <sync_regs+0x11>:    cmp    %rdi,%rax
+0xffffffff8e02ba74 <sync_regs+0x14>:    je     0xffffffff8e02ba81 <sync_regs+0x21>
+0xffffffff8e02ba76 <sync_regs+0x16>:    mov    $0x15,%ecx
+0xffffffff8e02ba7b <sync_regs+0x1b>:    mov    %rax,%rdi
+0xffffffff8e02ba7e <sync_regs+0x1e>:    rep movsq %ds:(%rsi),%es:(%rdi)
+0xffffffff8e02ba81 <sync_regs+0x21>:    repz retq 
+0xffffffff8e02ba83 <sync_regs+0x23>:    data32 nopw %cs:0x0(%rax,%rax,1)
+0xffffffff8e02ba8e <sync_regs+0x2e>:    xchg   %ax,%ax
+## GCC doc for -mcld
+This option instructs GCC to emit a cld instruction in the prologue of functions that use string instructions. String instructions depend on the DF flag to select between autoincrement or autodecrement mode. While the ABI specifies the DF flag to be cleared on function entry, some operating systems violate this specification by not clearing the DF flag in their exception dispatchers. The exception handler can be invoked with the DF flag set, which leads to wrong direction mode when string instructions are used. This option can be enabled by default on 32-bit x86 targets by configuring GCC with the --enable-cld configure option. Generation of cld instructions can be suppressed with the -mno-cld compiler option in this case.
+## x86 64 ABI
+The direction flag DF in the %rFLAGS register must be clear (set to “forward” direction) on function entry and return. Other user flags have no specified role in the standard calling sequence and are not preserved across calls.
+## [Direction flag by Agner Fog](https://www.agner.org/optimize/calling_conventions.pdf)
+The rules for the direction flag is the same in all systems. The direction flag is cleared bydefault. If the direction flag is set, then it must be cleared again before any call or return. Some compilers and subroutine libraries rely on the direction flag always being clear (Microsoft, Watcom, Digital Mars) while other systems use the double-safe strategy of always leaving the direction flag cleared, but not relying on receiving it cleared (Borland,Gnu).There is a slight possibility that some programmers may have ignored the rule for the direction flag. Therefore, it may be wise to use the double-safe strategy and clear the direction flag before using it if the code will be linked together with modules from unreliable sources.
+
+# clac and AC
+[x86/entry/compat: In SYSENTER, sink AC clearing below the existing FLAGS test](https://lore.kernel.org/patchwork/patch/652917/)
+

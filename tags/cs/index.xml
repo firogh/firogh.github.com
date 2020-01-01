@@ -179,8 +179,7 @@ all previous acquire accesses must be performed, and&lt;br /&gt;
 respect to any other processor, all previous ordinary&lt;br /&gt;
 load and store accesses must be performed, and&lt;br /&gt;
 &amp;copy; special accesses are processor consistent with respect to one another.&lt;br /&gt;
-&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;/p&gt;
 
 &lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
 
@@ -241,6 +240,35 @@ CommitDate: Mon Dec 4 10:52:52 2017 -0800&lt;br /&gt;
  145         wmb();&lt;br /&gt;
  146         *killer = 1;&lt;br /&gt;
  147 }&lt;/p&gt;
+
+&lt;h1 id=&#34;memory-barrier&#34;&gt;Memory barrier&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://yarchive.net/comp/linux/compiler_barriers.html&#34;&gt;http://yarchive.net/comp/linux/compiler_barriers.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/&#34;&gt;Memory Barriers Are Like Source Control Operations&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html&#34;&gt;Are All Linux Kernel Memory Barriers Transitive?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf&#34;&gt;Memory Barriers in the Linux Kernel Semantics and Practices&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;
+Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
+
+&lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different-levels&#34;&gt;The Linux kernel has a variety of different barriers that act at different levels:&lt;/h2&gt;
+
+&lt;p&gt;(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
+  (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
+  (*) MMIO write barrier.&lt;/p&gt;
+
+&lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Does it work cast a variable to volatile?&lt;br /&gt;
+No, there is no efects on cast a variable to volatile.&lt;br /&gt;
+Because, access variable is before volatile cast! That means you&lt;br /&gt;
+still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
+Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
+&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </description>
     </item>
     
@@ -675,6 +703,59 @@ CommitDate: Wed Jan 14 18:09:00 2009 +0100&lt;br /&gt;
     assumes preemption is already disabled.&lt;br /&gt;
 Firo: spin_unlock_mutex&lt;/p&gt;
 
+&lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
+syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
+retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
+
+&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
+If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
+
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
+
+&lt;h2 id=&#34;the-following-also-t-relates-to-preemption-it-s-preempt-voluntary&#34;&gt;The following also t relates to preemption; it&amp;rsquo;s PREEMPT_VOLUNTARY.&lt;/h2&gt;
+
+&lt;p&gt;For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.&lt;br /&gt;
+config PREEMPT_VOLUNTARY&lt;br /&gt;
+    bool &amp;ldquo;Voluntary Kernel Preemption (Desktop)&amp;rdquo;&lt;br /&gt;
+    help&lt;br /&gt;
+      This option reduces the latency of the kernel by adding more&lt;br /&gt;
+      &amp;ldquo;explicit preemption points&amp;rdquo; to the kernel code. These new&lt;br /&gt;
+      preemption points have been selected to reduce the maximum&lt;br /&gt;
+      latency of rescheduling, providing faster application reactions,&lt;br /&gt;
+      at the cost of slightly lower throughput.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
+tick: check_preempt_tick or entity_tick&lt;br /&gt;
+fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
+wakeup: check_preempt_wakeup&lt;br /&gt;
+&amp;hellip;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
+if preempt is true; it should mean PREEMPT_VOLUNTARY.&lt;br /&gt;
+prev-&amp;gt;state means deactivate.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
@@ -946,7 +1027,7 @@ fs/proc/array.c&lt;br /&gt;
 
 &lt;li&gt;&lt;p&gt;if running process &amp;gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity&lt;/p&gt;
 
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??&lt;/p&gt;&lt;/li&gt;
 
@@ -978,7 +1059,7 @@ Check External links&lt;br /&gt;
 calc_load_fold_active&lt;br /&gt;
 Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+&lt;h1 id=&#34;lqo-2&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;
@@ -1413,9 +1494,18 @@ It&amp;rsquo;s Determined by ABI not Gcc. Check comments on &lt;a href=&#34;http
 Algorithms: Design Techniques and Analysis&lt;br /&gt;
 The Algorithm Design Manual 2nd Edition&lt;/p&gt;
 
-&lt;h1 id=&#34;bitmap&#34;&gt;Bitmap&lt;/h1&gt;
+&lt;h1 id=&#34;leetcode&#34;&gt;Leetcode&lt;/h1&gt;
 
-&lt;p&gt;Long array&lt;/p&gt;
+&lt;h2 id=&#34;1p3c&#34;&gt;1p3c&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.1point3acres.com/bbs/thread-270312-1-1.html&#34;&gt;http://www.1point3acres.com/bbs/thread-270312-1-1.html&lt;/a&gt;&lt;br /&gt;
+最终我觉得像word search12， word break12，word ladder12，LIS，sort color，LRU，insert &amp;amp; delete in O1，rob house123，234sum这种题要达到闭眼秒杀的程度，min/max heap，bucket sort，topological sort，binary pre/in/post/level 遍历，combination/permutation这种东西要做梦都梦到&lt;br /&gt;
+最后祝lz好运，加油~&lt;/p&gt;
+
+&lt;h2 id=&#34;why-do-we-have-to-solve-leetcode-problems&#34;&gt;Why do we have to solve leetcode problems?&lt;/h2&gt;
+
+&lt;p&gt;尤其是在北美，Google，Facebook，Microsoft，Amazon 等等大公司，无一不考刷题，以算法面试为主。而无论是北美留学生，还是工作几年的上班族，想进大公司，唯一的出路就是刷题。&lt;br /&gt;
+&lt;a href=&#34;https://cspiration.com/leetcodeClassification&#34;&gt;Leetcode 分类顺序表第二版&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;computational-complexity-theory&#34;&gt;Computational complexity theory&lt;/h1&gt;
 
@@ -1571,11 +1661,21 @@ dcache&lt;/p&gt;
 &lt;p&gt;Page reclaim algorithm&lt;br /&gt;
 type: Reclaim&lt;/p&gt;
 
-&lt;h1 id=&#34;lock&#34;&gt;Lock&lt;/h1&gt;
-
-&lt;p&gt;MCS lock&lt;/p&gt;
-
 &lt;h1 id=&#34;ring-buffer-or-circular-buffer&#34;&gt;Ring buffer or Circular buffer&lt;/h1&gt;
+
+&lt;h1 id=&#34;redblack-tree&#34;&gt;Redblack tree&lt;/h1&gt;
+
+&lt;p&gt;gap between linar node can be optimized by argument rb tree. O(n) -&amp;gt; O(log n)&lt;br /&gt;
+mm: augment vma rbtree with rb_subtree_gap d37371870ceb1d2165397dc36114725b6dca946c&lt;br /&gt;
+&lt;a href=&#34;http://sidsen.azurewebsites.net//papers/rb-trees-talg.pdf&#34;&gt;Rank-Balanced Trees&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&#34;&gt;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://yuex.in/post/2017/08/red-black-tree-in-action.html&#34;&gt;http://yuex.in/post/2017/08/red-black-tree-in-action.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.princeton.edu/~rs/talks/LLRB/08Dagstuhl/RedBlack.pdf&#34;&gt;Left-Leaning Red-Black Trees&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;history&#34;&gt;History&lt;/h2&gt;
+
+&lt;p&gt;AVL tree, B-tree, symmetric binary B-tree or 2–3–4 tree, red–black tree&lt;br /&gt;
+&lt;a href=&#34;https://www.cs.purdue.edu/homes/ayg/CS251/slides/chap13b.pdf&#34;&gt;2-3-4 Trees and RedBlack Trees&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1586,6 +1686,22 @@ type: Reclaim&lt;/p&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/cs/</guid>
       <description>
+
+&lt;h1 id=&#34;computer-science&#34;&gt;Computer science&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://computersciencewiki.org/index.php/Computational_thinking_%26_problem-solving&#34;&gt;Firo: very good CS website: Computational thinking &amp;amp; problem-solving&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://computersciencewiki.org/index.php/Welcome&#34;&gt;Core topics of computer science&lt;/a&gt;&lt;br /&gt;
+Underlying our approach to this subject is our conviction that “computer science” is not a science and that its significance has little to do with computers. The computer revolution is a revolution in the way we think and in the way we express what we think. The essence of this change is the emergence of what might best be called procedural epistemology —the study of the structure of knowledge from an imperative point of view, as opposed to the more declarative point of view taken by classical mathematical subjects. Mathematics provides a framework for dealing precisely with notions of “what is.” Computation provides a framework for dealing precisely with notions of “how to.”  &amp;ndash; The omnipotent SICP&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://plato.stanford.edu/entries/computer-science/&#34;&gt;The Philosophy of Computer Science&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;specifications-and-books&#34;&gt;Specifications and books&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;os&#34;&gt;OS&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
 
@@ -1608,10 +1724,11 @@ Life with Unix&lt;br /&gt;
 VM&lt;br /&gt;
 IO&lt;br /&gt;
 Memory hierarchy&lt;br /&gt;
+Resource management&lt;br /&gt;
 Latency&lt;br /&gt;
 Scalibity&lt;/p&gt;
 
-&lt;h1 id=&#34;etc&#34;&gt;etc&lt;/h1&gt;
+&lt;h2 id=&#34;etc&#34;&gt;ETC&lt;/h2&gt;
 
 &lt;p&gt;performance/efficiency&lt;br /&gt;
 Easy to use&lt;br /&gt;
@@ -1621,10 +1738,10 @@ Energy-efficiency&lt;/p&gt;
 
 &lt;h1 id=&#34;concurrency&#34;&gt;Concurrency&lt;/h1&gt;
 
-&lt;p&gt;CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Firo: must thinking summary: EW Dijkstra: Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
+CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
 Parallel and Concurrent Programming in Haskell&lt;br /&gt;
 The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
-&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Firo: good introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;/p&gt;
@@ -1633,48 +1750,34 @@ The origin of concurrent programming: from semaphores to remote procedure calls 
 
 &lt;p&gt;Programming vs computing: software vs hardware&lt;br /&gt;
 concurrent programming: multi-thread stress on how to create thread to model the outside world.&lt;br /&gt;
-parallel programming: smp, synchronization, lock, lock-free, atomic&lt;/p&gt;
+parallel programming: smp, synchronization, lock, lock-free, atomic&lt;br /&gt;
+&lt;a href=&#34;http://highscalability.com/blog/2014/12/31/linus-the-whole-parallel-computing-is-the-future-is-a-bunch.html&#34;&gt;Linus: The Whole &amp;ldquo;Parallel Computing Is The Future&amp;rdquo; Is A Bunch Of Crock.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.realworldtech.com/forum/?threadid=146066&amp;amp;curpostid=146227&#34;&gt;Linus: Avoiding ping pong&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;documents&#34;&gt;Documents&lt;/h1&gt;
+&lt;h2 id=&#34;concurrency-problem-1-with-communications&#34;&gt;Concurrency problem 1 with communications&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;IPC check wait.log&lt;/p&gt;
 
-&lt;p&gt;Underlying our approach to this subject is our conviction that “com-&lt;br /&gt;
-puter science” is not a science and that its significance has little to do&lt;br /&gt;
-with computers. The computer revolution is a revolution in the way we&lt;br /&gt;
-think and in the way we express what we think. The essence of this&lt;br /&gt;
-change is the emergence of what might best be called procedural epis-&lt;br /&gt;
-temology —the study of the structure of knowledge from an imperative&lt;br /&gt;
-point of view, as opposed to the more declarative point of view taken&lt;br /&gt;
-by classical mathematical subjects. Mathematics provides a framework&lt;br /&gt;
-for dealing precisely with notions of “what is.” Computation provides a&lt;br /&gt;
-framework for dealing precisely with notions of “how to.”  &amp;ndash; The omnipotent SICP&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.gigamonkeys.com/code-reading/&#34;&gt;Reading code? CODE IS NOT LITERATURE&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://plato.stanford.edu/entries/computer-science/&#34;&gt;The Philosophy of Computer Science&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;prblem-2-with-memory&#34;&gt;Prblem 2 with memory&lt;/h2&gt;
 
-&lt;h1 id=&#34;unrelatted-but-interesting-topic-on-memory-models&#34;&gt;Unrelatted but interesting topic on memory models&lt;/h1&gt;
+&lt;p&gt;consistency model&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://canonical.org/~kragen/memory-models/&#34;&gt;The memory models that underlie programming languages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=3e1ZF1L1VhY&#34;&gt;History of Memory Models&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;resource-management&#34;&gt;Resource management&lt;/h1&gt;
 
-&lt;h2 id=&#34;procedure-or-subroutine&#34;&gt;Procedure or subroutine&lt;/h2&gt;
+&lt;h2 id=&#34;garbage-collection&#34;&gt;Garbage collection&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;https://people.cs.clemson.edu/~mark/subroutines.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;https://en.wikipedia.org/wiki/Subroutine&lt;/a&gt;&lt;br /&gt;
-* 1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;&lt;br /&gt;
-In Chapter 6. Outline of Logical Control.&lt;br /&gt;
-We also wish to be able to arrange for the splitting up of operations into&amp;hellip;&lt;br /&gt;
-When we wish to start on a subsidiary operation we need only make a note&lt;br /&gt;
-of where we left off the major operation&amp;hellip;&lt;br /&gt;
-* 1952 &lt;a href=&#34;http://www.laputan.org/pub/papers/wheeler.pdf&#34;&gt;The use of sub-routines in programmes&lt;/a&gt;&lt;br /&gt;
-The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born     in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out     of sight.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://news.ycombinator.com/item?id=2473932&#34;&gt;Linus Torvalds on Garbage Collection (2002)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://yarchive.net/comp/linux/reference_counting.html&#34;&gt;Linus on refrence counting&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.145.3800&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Paul E. McKenney: Overview of Linux-Kernel Reference Counting&lt;/a&gt;&lt;br /&gt;
+Book: The Garbage Collection Handbook&lt;br /&gt;
+Book: Japanese GC book.&lt;br /&gt;
+&lt;a href=&#34;https://www.linuxidc.com/Linux/2015-01/111565.htm&#34;&gt;https://www.linuxidc.com/Linux/2015-01/111565.htm&lt;/a&gt;&lt;/p&gt;
 
-&lt;h2 id=&#34;linkage&#34;&gt;Linkage&lt;/h2&gt;
+&lt;h3 id=&#34;reference-counting&#34;&gt;Reference counting&lt;/h3&gt;
 
-&lt;p&gt;1960 &lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Link_register&#34;&gt;https://en.wikipedia.org/wiki/Link_register&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/565734/&#34;&gt;Introducing lockrefs&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;memory-hierarchy&#34;&gt;Memory hierarchy&lt;/h1&gt;
 </description>
     </item>
     
@@ -1791,17 +1894,28 @@ High cohesion low coupling&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/336224/&#34;&gt;Linux kernel design patterns&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.cs.fsu.edu/~baker/devices/notes/patterns.html#&#34;&gt;Linux Kernel Programming Patterns&lt;/a&gt;&lt;/p&gt;
 
+&lt;h1 id=&#34;ipc&#34;&gt;IPC&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.cyberiapc.com/os/ipc_whatisit.htm&#34;&gt;Busy waiting vs blocking&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;computer-programming&#34;&gt;Computer programming&lt;/h1&gt;
 
-&lt;p&gt;编程作为我重要的谋生手段, 有必要审慎的加以考察审视. 程序设计应该包含那些最少的, 必备的, 重要的能力呢?&lt;br /&gt;
-&lt;a href=&#34;http://www.cs.princeton.edu/~bwk/tpop.webpage/&#34;&gt;The practice of programming&lt;/a&gt;给出了大概的框架, 但不完整.&lt;br /&gt;
-我认为最重要的就是Abstraction and design.&lt;br /&gt;
-&lt;a href=&#34;http://www.ccs.neu.edu/home/matthias/HtDP2e/&#34;&gt;How to design programs&lt;/a&gt;还有&lt;a href=&#34;http://sarabander.github.io/sicp/&#34;&gt;SICP&lt;/a&gt;以及Elements of programming.&lt;br /&gt;
-其次我们要掌握几门Programming language.&lt;br /&gt;
-养成好的Coding style,&lt;br /&gt;
-Valid and verification&lt;br /&gt;
-Testing&lt;br /&gt;
-Debuging&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.cs.princeton.edu/~bwk/tpop.webpage/&#34;&gt;The practice of programming&lt;/a&gt;, &lt;a href=&#34;http://www.ccs.neu.edu/home/matthias/HtDP2e/&#34;&gt;How to design programs&lt;/a&gt;, &lt;a href=&#34;http://sarabander.github.io/sicp/&#34;&gt;SICP&lt;/a&gt;, and Elements of programming.&lt;/p&gt;
+
+&lt;h2 id=&#34;procedure-and-subroutine&#34;&gt;Procedure and Subroutine&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Link_register&#34;&gt;https://en.wikipedia.org/wiki/Link_register&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;Subroutine and procedure call support&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://people.cs.clemson.edu/~mark/subroutines.html&#34;&gt;https://people.cs.clemson.edu/~mark/subroutines.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;https://en.wikipedia.org/wiki/Subroutine&lt;/a&gt;&lt;br /&gt;
+* 1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;&lt;br /&gt;
+In Chapter 6. Outline of Logical Control.&lt;br /&gt;
+We also wish to be able to arrange for the splitting up of operations into&amp;hellip;&lt;br /&gt;
+When we wish to start on a subsidiary operation we need only make a note&lt;br /&gt;
+of where we left off the major operation&amp;hellip;&lt;br /&gt;
+* 1952 &lt;a href=&#34;http://www.laputan.org/pub/papers/wheeler.pdf&#34;&gt;The use of sub-routines in programmes&lt;/a&gt;&lt;br /&gt;
+The above remarks may be summarized by saying sub-routines are very useful — although not absolutely necessary — and that the prime objectives to be born     in mind when constructing them are simplicity of use, correctness of codes and accuracy of description. All complexities should—if possible—be buried out of sight.&lt;/p&gt;
 
 &lt;h1 id=&#34;files-sytle&#34;&gt;Files sytle&lt;/h1&gt;
 
@@ -1838,10 +1952,6 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
 &lt;h1 id=&#34;lock-free-programming&#34;&gt;Lock-free programming&lt;/h1&gt;
 
 &lt;p&gt;ring buffer, rcu&lt;/p&gt;
-
-&lt;h1 id=&#34;debugging&#34;&gt;Debugging&lt;/h1&gt;
-
-&lt;p&gt;see debugging.md&lt;/p&gt;
 
 &lt;h1 id=&#34;testing&#34;&gt;Testing&lt;/h1&gt;
 
@@ -1892,10 +2002,10 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
     
     <item>
       <title>The computing processes</title>
-      <link>http://firoyang.org/cs/task/</link>
+      <link>http://firoyang.org/cs/task_/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/task/</guid>
+      <guid>http://firoyang.org/cs/task_/</guid>
       <description>
 
 &lt;h1 id=&#34;formal-cause&#34;&gt;Formal cause&lt;/h1&gt;
@@ -1963,6 +2073,30 @@ this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +
 
 &lt;p&gt;forked child not reaped by parent will hooked in process list.&lt;br /&gt;
 if parent was killed and exit &lt;defunct&gt; will repaped.&lt;/p&gt;
+
+&lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html&#34;&gt;Evolution of the x86 context switch in Linux&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h2&gt;
+
+&lt;p&gt;((last) = __switch_to_asm((prev), (next)));                             #=====&amp;gt; call&lt;br /&gt;
+jmp     __switch_to                                                     #=====&amp;gt; jmp + ret&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;wait-example&#34;&gt;Wait example&lt;/h1&gt;
+
+&lt;p&gt;#6 [ffff883f15637c90] proc_evict_inode at ffffffff812696fd&lt;br /&gt;
+ #7 [ffff883f15637ca0] evict at ffffffff8121cded&lt;br /&gt;
+ #8 [ffff883f15637cc0] __dentry_kill at ffffffff812194b6&lt;br /&gt;
+ #9 [ffff883f15637ce0] shrink_dentry_list at ffffffff8121a0c0&lt;br /&gt;
+#10 [ffff883f15637d10] d_invalidate at ffffffff8121a8c8&lt;br /&gt;
+#11 [ffff883f15637d50] proc_flush_task at ffffffff8126e609&lt;br /&gt;
+#12 [ffff883f15637dc0] release_task at ffffffff81081230&lt;br /&gt;
+                        # wait_task_zombie&lt;br /&gt;
+#13 [ffff883f15637e18] wait_consider_task at ffffffff81081c19&lt;br /&gt;
+#14 [ffff883f15637e80] do_wait at ffffffff8108226d&lt;/p&gt;
 </description>
     </item>
     

@@ -1,0 +1,53 @@
+
+
+# Bundle kernel modules into one rpm
+./layers/oe-core/meta/classes/kernel-module-split.bbclass
+split_kernel_module_packages
+
+./layers/oe-core/meta/classes/package.bbclass
+do_split_packages
+
+NB:
+postrm = '#!/bin/sh\n' + postrm + '\n'
+
+layers/oe-core/meta/lib/oe/package_manager.py
+install()
+
+./layers/oe-core/meta/lib/oe/rootfs.py
+create_rootfs()->RpmRootfs(d, manifest_dir).create()->_create(){
+ self.pm.install(pkgs)
+}
+
+./layers/oe-core/meta/classes/image.bbclass
+fakeroot python do_rootfs ()->create_rootfs(d)//from oe.rootfs import create_rootfs
+
+# WRLX rpm
+RPM_NO_CHROOT_FOR_SCRIPTS
+
+# WRL 7.0 RPM
+## NO chroot
+Enable a cross-install scriptlet helper.
+The helper is called from outside of the chroot with the arguments:
+
+<root> <prog> <script> <arg1> [<arg2> ... <argN>]
+
+The helper script is used by oe-core to facilitate shell script actions that
+can not be run from within a chroot on a foreign target system during a
+cross install.
+
+Upstream-Status: Pending
+
+
+# File
+            fname = '/tmp/f.log'
+            fx = open(fname, 'a')
+            fx.write("%s\n" % )
+            fx.close()
+
+# Compile toolchain
+--with-template=feature/build_toolchain
+
+# Do menuconfig error
+ OSError: [Errno 13] Permission denied; ERROR: Function failed: do_menuconfig
+echo 'OE_TERMINAL = "xterm"' >>local.conf
+https://unix.stackexchange.com/questions/297362/yocto-bitbake-does-not-start-menuconfig

@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1815">
+<meta itemprop="wordCount" content="2017">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -213,6 +213,59 @@ CommitDate: Wed Jan 14 18:09:00 2009 +0100<br />
     by explicity disabling preemption and providing a schedule() variant that<br />
     assumes preemption is already disabled.<br />
 Firo: spin_unlock_mutex</p>
+
+<h2 id="user-preemption-linux-kernel-user-mode-is-always-user-preemption">User preemption - Linux kernel user mode is always User preemption.</h2>
+
+<ul>
+<li>When returning to user-space from a system call.<br />
+syscall_return_slowpath<br /></li>
+
+<li><p>When returning to user-space from an interrupt hander.<br />
+retint_user-&gt;prepare_exit_to_usermode</p>
+
+<h2 id="linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set">Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.</h2>
+
+<p>bloked (which results in a call to schedule())<br />
+If a task in the kernel explicitly calls schedule() it&rsquo;s involuntary!!!</p>
+
+<h2 id="linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set">Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.</h2></li>
+
+<li><p>When an interrupt handler exits, before returning to kernel-space.<br />
+retint_kernel-&gt;preempt_schedule_irq-&gt;cond_resched</p></li>
+
+<li><p>__local_bh_enable_ip -&gt; preempt_check_resched</p>
+
+<h2 id="the-following-also-t-relates-to-preemption-it-s-preempt-voluntary">The following also t relates to preemption; it&rsquo;s PREEMPT_VOLUNTARY.</h2>
+
+<p>For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.<br />
+config PREEMPT_VOLUNTARY<br />
+    bool &ldquo;Voluntary Kernel Preemption (Desktop)&rdquo;<br />
+    help<br />
+      This option reduces the latency of the kernel by adding more<br />
+      &ldquo;explicit preemption points&rdquo; to the kernel code. These new<br />
+      preemption points have been selected to reduce the maximum<br />
+      latency of rescheduling, providing faster application reactions,<br />
+      at the cost of slightly lower throughput.</p></li>
+
+<li><p>need_resched - When kernel code becomes preemptible again.</p></li>
+
+<li><p>set_tsk_need_resched() in resched_curr<br />
+tick: check_preempt_tick or entity_tick<br />
+fork: wake_up_new_task-&gt;check_preempt_curr-&gt;check_preempt_wakeup<br />
+wakeup: check_preempt_wakeup<br />
+&hellip;</p></li>
+
+<li><p>if (need_resched()) cond_resched();</p></li>
+</ul>
+
+<h2 id="lqo">LQO</h2>
+
+<ul>
+<li>if (!preempt &amp;&amp; prev-&gt;state)in __schedule; why prev-&gt;state?<br />
+if preempt is true; it should mean PREEMPT_VOLUNTARY.<br />
+prev-&gt;state means deactivate.<br />
+<br /></li>
+</ul>
 
 <h1 id="reference">Reference</h1>
 
@@ -485,7 +538,7 @@ fs/proc/array.c<br />
 
 <li><p>if running process &gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity</p>
 
-<h2 id="lqo">LQO</h2></li>
+<h2 id="lqo-1">LQO</h2></li>
 
 <li><p>is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??</p></li>
 
@@ -517,7 +570,7 @@ Check External links<br />
 calc_load_fold_active<br />
 Etymology of avenrun: <a href="https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c">average nr. of running processes during</a></p>
 
-<h1 id="lqo-1">LQO</h1></li>
+<h1 id="lqo-2">LQO</h1></li>
 
 <li><p>h_nr_running and throttled<br />
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1<br />

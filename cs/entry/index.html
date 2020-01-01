@@ -16,7 +16,7 @@
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="The definitive guide to Linux x86 entry.S : firoyang.org"/>
+<meta property="og:title" content="The definitive guide to Linux x86 entries : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
@@ -35,7 +35,7 @@
 
 
     <base href="http://firoyang.org/">
-    <title> The definitive guide to Linux x86 entry.S</title>
+    <title> The definitive guide to Linux x86 entries</title>
     <link rel="canonical" href="http://firoyang.org/cs/entry/">
 
     
@@ -156,7 +156,7 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >The definitive guide to Linux x86 entry.S</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >The definitive guide to Linux x86 entries</h1>
 	  
 
 <aside id="meta">
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="420">
+<meta itemprop="wordCount" content="416">
 <meta itemprop="datePublished" content="2017-04-26">
 <meta itemprop="url" content="http://firoyang.org/cs/entry/">
 
@@ -187,29 +187,15 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<p>Definitive? Actually, it&rsquo;s not and going to die.</p>
+<h1 id="all-entries">All entries</h1>
 
-<h1 id="ref">ref</h1>
+<p><a href="https://www.kernel.org/doc/Documentation/x86/entry_64.txt">Documentation/x86/entry_64.txt</a></p>
 
-<p><a href="https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D">https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D</a></p>
+<h1 id="entry-irq">Entry irq</h1>
 
-<p>Documentation/x86/entry_64.txt<br />
-<a href="http://www.lenky.info/archives/2013/03/2245">对Linux x86-64架构上硬中断的重新认识</a><br />
-<a href="https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/">The Definitive Guide to Linux System Calls</a><br />
-<a href="http://www.groad.net/bbs/thread-3276-1-1.html">选择内存屏障指令|alternative</a></p>
+<p><a href="http://www.lenky.info/archives/2013/03/2245">对Linux x86-64架构上硬中断的重新认识</a></p>
 
-<p>fs and gs register<br />
-For using in TLS, please check <a href="http://wiki.osdev.org/Thread_Local_Storage#ABI">OSDEV TLS</a></p>
-
-<p>#ifdef CONFIG_X86_64<br />
-#define __percpu_seg            gs<br />
-#define __percpu_mov_op         movq<br />
-#else<br />
-#define __percpu_seg            fs<br />
-#define __percpu_mov_op         movl<br />
-#endif</p>
-
-<p>Steps to handle intterrupt</p>
+<h2 id="steps-to-handle-intterrupt">Steps to handle intterrupt</h2>
 
 <p>For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.<br />
 For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.<br />
@@ -218,70 +204,73 @@ For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures<
 For TSS and TR, check 3a 7.2<br />
 For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions</p>
 
-<h1 id="for-syscall">For syscall</h1>
+<h1 id="entry-exception">Entry exception</h1>
 
-<p>Common path for syscalls<br />
-glibc -&gt; AT_SYSINFO-&gt; __kernel_vsyscall -&gt; sysenter/syscall/in0x80<br />
-just for vDSO syscalls<br />
-glibc -&gt; AT_SYSINFO_EHDR-&gt; vDSO elf</p>
+<h2 id="paranoid-entry">paranoid_entry</h2>
 
-<h1 id="system-calls">system calls</h1>
+<p>Check Documentation/x86/entry_64.txt</p>
 
-<p><a href="https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/">The Definitive Guide to Linux System Calls</a><br />
-<a href="https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D">SYSENTER/SYSEXIT vs.SYSCALL/SYSRET</a><br />
+<h2 id="error-entry">error_entry</h2>
+
+<p>tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d<br />
+Author:     Andi Kleen <a href="mailto:ak@muc.de">ak@muc.de</a><br />
+AuthorDate: Tue Feb 12 20:17:35 2002 -0800<br />
+Commit:     Linus Torvalds <a href="mailto:torvalds@home.transmeta.com">torvalds@home.transmeta.com</a><br />
+CommitDate: Tue Feb 12 20:17:35 2002 -0800<br />
+    [PATCH] x86_64 merge: arch + asm</p>
+
+<h1 id="entry-system-calls">Entry system calls</h1>
+
+<p><a href="https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/">The Definitive Guide to Linux System Calls</a></p>
+
+<h2 id="sysenter-vs-syscall">sysenter vs syscall</h2>
+
+<p><a href="https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D">SYSENTER/SYSEXIT vs.SYSCALL/SYSRET</a><br />
 <a href="http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead">Measurements of system call performance and overhead</a><br />
 <a href="https://reverseengineering.stackexchange.com/a/16511/16996">AMD vs Intel and syscall vs sysenter</a><br />
 <a href="https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm">System Call Optimization with the SYSENTER Instruction</a><br />
-<a href="http://articles.manugarg.com/systemcallinlinux2_6.html">Sysenter Based System Call Mechanism in Linux 2.6</a><br />
-<a href="https://www.kernel.org/doc/Documentation/x86/entry_64.txt">kernel documentation</a><br />
-Meltdown and Spectre</p>
+<a href="http://articles.manugarg.com/systemcallinlinux2_6.html">Sysenter Based System Call Mechanism in Linux 2.6</a></p>
 
-<h3 id="syscall">syscall</h3>
+<h2 id="system-call-restart-mechanism-and-orig-eax">system call restart mechanism and ORIG_EAX</h2>
 
-<ul>
-<li>save: pc + 1, old rsp, registers<br />
-pc + 1-&gt; RCX<br /></li>
+<p><a href="https://lwn.net/Articles/17744/">A new system call restart mechanism</a><br />
+<a href="https://lkml.org/lkml/2006/8/29/350">Why set ORIG_EAX(%esp) to -1 in arch/i386/kernel/entry.S:error_code?</a></p>
 
-<li><p>entry: pc<br />
-IA32_LSTAR -&gt; pc</p>
+<h2 id="kernel-implementations">kernel implementations</h2>
 
-<h3 id="kernel-implementations">kernel implementations</h3>
-
-<p>64-bit long mode: syscall; check syscall_init<br />
+<p>arch/x86/include/asm/proto.h<br />
+64-bit long mode: syscall; check syscall_init<br />
 64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts<br />
-??32-bit kernel: int 0x80, sysenter;</p>
+32-bit kernel: int 0x80, sysenter;</p>
 
-<h3 id="vdso-and-vsyscall">vDSO and vsyscall</h3>
+<h3 id="64-bit-without-compat-32-compatible-kernel-support">64-bit without COMPAT_32/compatible kernel support</h3>
 
-<p><a href="https://lwn.net/Articles/446528/">On vsyscalls and the vDSO</a><br />
-<a href="http://blog.tinola.com/?e=5">linux syscalls on x86 64</a></p>
-
-<h3 id="example">Example</h3></li>
-
-<li><p>64-bit without COMPAT<em>32</em>/compatible kernel<br />
-./int80<br />
+<p>./int80<br />
 [  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]<br />
-Segmentation fault (core dumped)</p></li>
+Segmentation fault (core dumped)</p>
 
-<li><p>64-bit syscall<br />
-syscall.S</p></li>
-</ul>
+<h2 id="x86-64-rcx-and-r10">x86_64 rcx and r10</h2>
 
-<h2 id="rcx-and-r10">rcx and r10</h2>
+<p>Check x86_64 ABI: Linux conventions and  according to <a href="https://www.felixcloutier.com/x86/syscall">x86 syscall instruction</a>, rcx is used to passing next rip.<br />
+According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack. So r10 is right 4th args passed from userspace.<br />
+According to do_syscall_64, regs-&gt;ax = sys_call_table<a href="regs-&gt;di, regs-&gt;si, regs-&gt;dx, regs-&gt;r10, regs-&gt;r8, regs-&gt;r9">nr</a>;</p>
 
-<p>Check x86_64 ABI: Linux conventions and<br />
-According to <a href="https://www.felixcloutier.com/x86/syscall">x86 syscall instruction</a>, rcx is used to passing next rip.<br />
-According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack.<br />
-So r10 is right 4th args passed from userspace.<br />
-According to do_syscall_64,<br />
-                regs-&gt;ax = sys_call_table<a href="regs-&gt;di, regs-&gt;si, regs-&gt;dx, regs-&gt;r10, regs-&gt;r8, regs-&gt;r9">nr</a>;</p>
-
-<h2 id="x86-32-asmlinkage">x86 32 asmlinkage</h2>
+<h2 id="x86-32-asmlinkage">x86_32 asmlinkage</h2>
 
 <p><a href="https://qr.ae/Ti5MJJ">By default gcc passes parameters on the stack for x86-32 arch, so what is it needed for? It&rsquo;s because linux kernel uses -mregparm=3 option which overrides the default behaviour</a><br />
 <a href="https://lwn.net/Articles/67175/">enbaled -mregparm=3 Shrinking the kernel with gcc</a><br />
 <a href="https://kernelnewbies.org/FAQ/asmlinkage">What is asmlinkage?</a><br />
 However, for C functions invoked from assembly code, we should explicitly declare the function&rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler</p>
+
+<h2 id="vdso">vDSO</h2>
+
+<p><a href="http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0">Creating a vDSO: the Colonel&rsquo;s Other Chicken</a><br />
+<a href="http://www.trilithium.com/johan/2005/08/linux-gate/">What is linux-gate.so.1</a><br />
+glibc -&gt; AT_SYSINFO-&gt; __kernel_vsyscall -&gt; sysenter/syscall/in0x80<br />
+just for vDSO syscalls<br />
+glibc -&gt; AT_SYSINFO_EHDR-&gt; vDSO elf<br />
+<a href="https://lwn.net/Articles/446528/">On vsyscalls and the vDSO</a><br />
+<a href="http://blog.tinola.com/?e=5">linux syscalls on x86 64</a></p>
 
 		</article>
 	  </div>
@@ -293,7 +282,7 @@ However, for C functions invoked from assembly code, we should explicitly declar
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
     var disqus_identifier = 'http:\/\/firoyang.org\/cs\/entry\/';
-    var disqus_title = 'The definitive guide to Linux x86 entry.S';
+    var disqus_title = 'The definitive guide to Linux x86 entries';
     var disqus_url = 'http:\/\/firoyang.org\/cs\/entry\/';
 
     (function() {

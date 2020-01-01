@@ -517,8 +517,7 @@ all previous acquire accesses must be performed, and&lt;br /&gt;
 respect to any other processor, all previous ordinary&lt;br /&gt;
 load and store accesses must be performed, and&lt;br /&gt;
 &amp;copy; special accesses are processor consistent with respect to one another.&lt;br /&gt;
-&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;/p&gt;
 
 &lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
 
@@ -579,40 +578,55 @@ CommitDate: Mon Dec 4 10:52:52 2017 -0800&lt;br /&gt;
  145         wmb();&lt;br /&gt;
  146         *killer = 1;&lt;br /&gt;
  147 }&lt;/p&gt;
+
+&lt;h1 id=&#34;memory-barrier&#34;&gt;Memory barrier&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://yarchive.net/comp/linux/compiler_barriers.html&#34;&gt;http://yarchive.net/comp/linux/compiler_barriers.html&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/&#34;&gt;Memory Barriers Are Like Source Control Operations&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html&#34;&gt;Are All Linux Kernel Memory Barriers Transitive?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf&#34;&gt;Memory Barriers in the Linux Kernel Semantics and Practices&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;
+Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
+
+&lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different-levels&#34;&gt;The Linux kernel has a variety of different barriers that act at different levels:&lt;/h2&gt;
+
+&lt;p&gt;(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
+  (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
+  (*) MMIO write barrier.&lt;/p&gt;
+
+&lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Does it work cast a variable to volatile?&lt;br /&gt;
+No, there is no efects on cast a variable to volatile.&lt;br /&gt;
+Because, access variable is before volatile cast! That means you&lt;br /&gt;
+still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
+Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
+&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </description>
     </item>
     
     <item>
-      <title>The definitive guide to Linux x86 entry.S</title>
+      <title>The definitive guide to Linux x86 entries</title>
       <link>http://firoyang.org/cs/entry/</link>
       <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/entry/</guid>
       <description>
 
-&lt;p&gt;Definitive? Actually, it&amp;rsquo;s not and going to die.&lt;/p&gt;
+&lt;h1 id=&#34;all-entries&#34;&gt;All entries&lt;/h1&gt;
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;Documentation/x86/entry_64.txt&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;entry-irq&#34;&gt;Entry irq&lt;/h1&gt;
 
-&lt;p&gt;Documentation/x86/entry_64.txt&lt;br /&gt;
-&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.groad.net/bbs/thread-3276-1-1.html&#34;&gt;选择内存屏障指令|alternative&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;fs and gs register&lt;br /&gt;
-For using in TLS, please check &lt;a href=&#34;http://wiki.osdev.org/Thread_Local_Storage#ABI&#34;&gt;OSDEV TLS&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#ifdef CONFIG_X86_64&lt;br /&gt;
-#define __percpu_seg            gs&lt;br /&gt;
-#define __percpu_mov_op         movq&lt;br /&gt;
-#else&lt;br /&gt;
-#define __percpu_seg            fs&lt;br /&gt;
-#define __percpu_mov_op         movl&lt;br /&gt;
-#endif&lt;/p&gt;
-
-&lt;p&gt;Steps to handle intterrupt&lt;/p&gt;
+&lt;h2 id=&#34;steps-to-handle-intterrupt&#34;&gt;Steps to handle intterrupt&lt;/h2&gt;
 
 &lt;p&gt;For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.&lt;br /&gt;
 For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.&lt;br /&gt;
@@ -621,70 +635,73 @@ For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures&
 For TSS and TR, check 3a 7.2&lt;br /&gt;
 For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions&lt;/p&gt;
 
-&lt;h1 id=&#34;for-syscall&#34;&gt;For syscall&lt;/h1&gt;
+&lt;h1 id=&#34;entry-exception&#34;&gt;Entry exception&lt;/h1&gt;
 
-&lt;p&gt;Common path for syscalls&lt;br /&gt;
-glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
-just for vDSO syscalls&lt;br /&gt;
-glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
+&lt;h2 id=&#34;paranoid-entry&#34;&gt;paranoid_entry&lt;/h2&gt;
 
-&lt;h1 id=&#34;system-calls&#34;&gt;system calls&lt;/h1&gt;
+&lt;p&gt;Check Documentation/x86/entry_64.txt&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
+&lt;h2 id=&#34;error-entry&#34;&gt;error_entry&lt;/h2&gt;
+
+&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
+Author:     Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@home.transmeta.com&#34;&gt;torvalds@home.transmeta.com&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+    [PATCH] x86_64 merge: arch + asm&lt;/p&gt;
+
+&lt;h1 id=&#34;entry-system-calls&#34;&gt;Entry system calls&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;sysenter-vs-syscall&#34;&gt;sysenter vs syscall&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead&#34;&gt;Measurements of system call performance and overhead&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://reverseengineering.stackexchange.com/a/16511/16996&#34;&gt;AMD vs Intel and syscall vs sysenter&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm&#34;&gt;System Call Optimization with the SYSENTER Instruction&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;kernel documentation&lt;/a&gt;&lt;br /&gt;
-Meltdown and Spectre&lt;/p&gt;
+&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;syscall&#34;&gt;syscall&lt;/h3&gt;
+&lt;h2 id=&#34;system-call-restart-mechanism-and-orig-eax&#34;&gt;system call restart mechanism and ORIG_EAX&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;save: pc + 1, old rsp, registers&lt;br /&gt;
-pc + 1-&amp;gt; RCX&lt;br /&gt;&lt;/li&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/17744/&#34;&gt;A new system call restart mechanism&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2006/8/29/350&#34;&gt;Why set ORIG_EAX(%esp) to -1 in arch/i386/kernel/entry.S:error_code?&lt;/a&gt;&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;entry: pc&lt;br /&gt;
-IA32_LSTAR -&amp;gt; pc&lt;/p&gt;
+&lt;h2 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h2&gt;
 
-&lt;h3 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h3&gt;
-
-&lt;p&gt;64-bit long mode: syscall; check syscall_init&lt;br /&gt;
+&lt;p&gt;arch/x86/include/asm/proto.h&lt;br /&gt;
+64-bit long mode: syscall; check syscall_init&lt;br /&gt;
 64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts&lt;br /&gt;
-??32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
+32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
 
-&lt;h3 id=&#34;vdso-and-vsyscall&#34;&gt;vDSO and vsyscall&lt;/h3&gt;
+&lt;h3 id=&#34;64-bit-without-compat-32-compatible-kernel-support&#34;&gt;64-bit without COMPAT_32/compatible kernel support&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;64-bit without COMPAT&lt;em&gt;32&lt;/em&gt;/compatible kernel&lt;br /&gt;
-./int80&lt;br /&gt;
+&lt;p&gt;./int80&lt;br /&gt;
 [  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]&lt;br /&gt;
-Segmentation fault (core dumped)&lt;/p&gt;&lt;/li&gt;
+Segmentation fault (core dumped)&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;64-bit syscall&lt;br /&gt;
-syscall.S&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h2 id=&#34;x86-64-rcx-and-r10&#34;&gt;x86_64 rcx and r10&lt;/h2&gt;
 
-&lt;h2 id=&#34;rcx-and-r10&#34;&gt;rcx and r10&lt;/h2&gt;
+&lt;p&gt;Check x86_64 ABI: Linux conventions and  according to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
+According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack. So r10 is right 4th args passed from userspace.&lt;br /&gt;
+According to do_syscall_64, regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
 
-&lt;p&gt;Check x86_64 ABI: Linux conventions and&lt;br /&gt;
-According to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
-According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack.&lt;br /&gt;
-So r10 is right 4th args passed from userspace.&lt;br /&gt;
-According to do_syscall_64,&lt;br /&gt;
-                regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
-
-&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86 32 asmlinkage&lt;/h2&gt;
+&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86_32 asmlinkage&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://qr.ae/Ti5MJJ&#34;&gt;By default gcc passes parameters on the stack for x86-32 arch, so what is it needed for? It&amp;rsquo;s because linux kernel uses -mregparm=3 option which overrides the default behaviour&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/67175/&#34;&gt;enbaled -mregparm=3 Shrinking the kernel with gcc&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
 However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
+
+&lt;h2 id=&#34;vdso&#34;&gt;vDSO&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0&#34;&gt;Creating a vDSO: the Colonel&amp;rsquo;s Other Chicken&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.trilithium.com/johan/2005/08/linux-gate/&#34;&gt;What is linux-gate.so.1&lt;/a&gt;&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
+just for vDSO syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1255,6 +1272,59 @@ CommitDate: Wed Jan 14 18:09:00 2009 +0100&lt;br /&gt;
     assumes preemption is already disabled.&lt;br /&gt;
 Firo: spin_unlock_mutex&lt;/p&gt;
 
+&lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
+syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
+retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
+
+&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
+If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
+
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
+
+&lt;h2 id=&#34;the-following-also-t-relates-to-preemption-it-s-preempt-voluntary&#34;&gt;The following also t relates to preemption; it&amp;rsquo;s PREEMPT_VOLUNTARY.&lt;/h2&gt;
+
+&lt;p&gt;For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.&lt;br /&gt;
+config PREEMPT_VOLUNTARY&lt;br /&gt;
+    bool &amp;ldquo;Voluntary Kernel Preemption (Desktop)&amp;rdquo;&lt;br /&gt;
+    help&lt;br /&gt;
+      This option reduces the latency of the kernel by adding more&lt;br /&gt;
+      &amp;ldquo;explicit preemption points&amp;rdquo; to the kernel code. These new&lt;br /&gt;
+      preemption points have been selected to reduce the maximum&lt;br /&gt;
+      latency of rescheduling, providing faster application reactions,&lt;br /&gt;
+      at the cost of slightly lower throughput.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
+tick: check_preempt_tick or entity_tick&lt;br /&gt;
+fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
+wakeup: check_preempt_wakeup&lt;br /&gt;
+&amp;hellip;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
+if preempt is true; it should mean PREEMPT_VOLUNTARY.&lt;br /&gt;
+prev-&amp;gt;state means deactivate.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
@@ -1526,7 +1596,7 @@ fs/proc/array.c&lt;br /&gt;
 
 &lt;li&gt;&lt;p&gt;if running process &amp;gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity&lt;/p&gt;
 
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??&lt;/p&gt;&lt;/li&gt;
 
@@ -1558,7 +1628,7 @@ Check External links&lt;br /&gt;
 calc_load_fold_active&lt;br /&gt;
 Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+&lt;h1 id=&#34;lqo-2&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;

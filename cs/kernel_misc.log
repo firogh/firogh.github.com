@@ -23,3 +23,49 @@ include/asm-generic/vmlinux.lds.h
 __module_param_call
 __attribute__ ((unused,__section__ ("__param"),aligned(sizeof(void *)))) \
 
+# list_empty_carefull
+tglx: commit a2c72fae694277071dcbab33dfb7f88af5e54954
+Author: Linus Torvalds <torvalds@home.osdl.org>
+Date:   Thu Dec 11 22:20:08 2003 -0800
+
+    Fix subtle bug in "finish_wait()", which can cause kernel stack
+    corruption on SMP because of another CPU still accessing a waitqueue
+    even after it was de-allocated.
+    
+    Use a careful version of the list emptiness check to make sure we
+    don't de-allocate the stack frame before the waitqueue is all done.
+
+* NOTE: using list_empty_careful() without synchronization
+* can only be safe if the only activity that can happen
+* to the list entry is list_del_init(). Eg. it cannot be used
+* if another CPU could re-list_add() it. 
+[finish_wait with list_empty_careful maybe fragile or buggy??](https://lkml.org/lkml/2018/3/11/143)
+Actually, it's not careful, but it's just specific.
+
+# hlist nulls
+https://patchwork.ozlabs.org/patch/8567/
+commit 88ab1932eac721c6e7336708558fa5ed02c85c80
+Refs: v2.6.28-rc4-514-g88ab1932eac7
+Author:     Eric Dumazet <dada1@cosmosbay.com>
+AuthorDate: Sun Nov 16 19:39:21 2008 -0800
+Commit:     David S. Miller <davem@davemloft.net>
+CommitDate: Sun Nov 16 19:39:21 2008 -0800
+
+    udp: Use hlist_nulls in UDP RCU code
+
+    This is a straightforward patch, using hlist_nulls infrastructure.
+    RCUification already done on UDP two weeks ago.
+    Using hlist_nulls permits us to avoid some memory barriers, both
+    at lookup time and delete time.
+    Patch is large because it adds new macros to include/net/sock.h.
+    These macros will be used by TCP & DCCP in next patch.
+
+# rcu
+[Using RCU for linked lists — a case study](https://lwn.net/Articles/610972/)
+
+# Namespaces
+[Namespaces in operation, part 1: namespaces overview](https://lwn.net/Articles/531114/)
+## PID namespace
+[Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
+[PID, PGID, SID](https://lwn.net/Articles/606925/)
+

@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="716">
+<meta itemprop="wordCount" content="923">
 <meta itemprop="datePublished" content="2017-12-16">
 <meta itemprop="url" content="http://firoyang.org/cs/consistency_model/">
 
@@ -282,8 +282,7 @@ all previous acquire accesses must be performed, and<br />
 respect to any other processor, all previous ordinary<br />
 load and store accesses must be performed, and<br />
 &copy; special accesses are processor consistent with respect to one another.<br />
-<a href="https://preshing.com/20120913/acquire-and-release-semantics/">Acquire and Release Semantics</a><br />
-<a href="https://www.kernel.org/doc/Documentation/memory-barriers.txt">https://www.kernel.org/doc/Documentation/memory-barriers.txt</a></p>
+<a href="https://preshing.com/20120913/acquire-and-release-semantics/">Acquire and Release Semantics</a></p>
 
 <h3 id="examples">Examples</h3>
 
@@ -344,6 +343,35 @@ CommitDate: Mon Dec 4 10:52:52 2017 -0800<br />
  145         wmb();<br />
  146         *killer = 1;<br />
  147 }</p>
+
+<h1 id="memory-barrier">Memory barrier</h1>
+
+<p><a href="https://www.kernel.org/doc/Documentation/memory-barriers.txt">https://www.kernel.org/doc/Documentation/memory-barriers.txt</a><br />
+<a href="http://en.wikipedia.org/wiki/Memory_barrier">http://en.wikipedia.org/wiki/Memory_barrier</a><br />
+<a href="http://yarchive.net/comp/linux/compiler_barriers.html">http://yarchive.net/comp/linux/compiler_barriers.html</a><br />
+<a href="http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/">Memory Barriers Are Like Source Control Operations</a><br />
+<a href="https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html">Are All Linux Kernel Memory Barriers Transitive?</a><br />
+<a href="http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf">Memory Barriers in the Linux Kernel Semantics and Practices</a></p>
+
+<p>When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.<br />
+Compiler and cpu do the same optimization: reorder of instructions</p>
+
+<h2 id="the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different-levels">The Linux kernel has a variety of different barriers that act at different levels:</h2>
+
+<p>(<em>) Compiler barrier.<br />
+  (</em>) CPU memory barriers.<br />
+  (*) MMIO write barrier.</p>
+
+<h2 id="access-once">ACCESS_ONCE</h2>
+
+<ul>
+<li>Does it work cast a variable to volatile?<br />
+No, there is no efects on cast a variable to volatile.<br />
+Because, access variable is before volatile cast! That means you<br />
+still get a register value. What you do is just conversion a temporary variable<br />
+Rationale for International Standard&ndash;Programming Languages&ndash;C<br />
+<a href="http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/">Understanding “volatile” qualifier in C</a><br /></li>
+</ul>
 
 		</article>
 	  </div>

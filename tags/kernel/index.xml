@@ -300,36 +300,22 @@ userspace addr is associated with non-GLOBAL pte, so the 8th G is reused by PROT
     </item>
     
     <item>
-      <title>The definitive guide to Linux x86 entry.S</title>
+      <title>The definitive guide to Linux x86 entries</title>
       <link>http://firoyang.org/cs/entry/</link>
       <pubDate>Wed, 26 Apr 2017 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/entry/</guid>
       <description>
 
-&lt;p&gt;Definitive? Actually, it&amp;rsquo;s not and going to die.&lt;/p&gt;
+&lt;h1 id=&#34;all-entries&#34;&gt;All entries&lt;/h1&gt;
 
-&lt;h1 id=&#34;ref&#34;&gt;ref&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;Documentation/x86/entry_64.txt&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;entry-irq&#34;&gt;Entry irq&lt;/h1&gt;
 
-&lt;p&gt;Documentation/x86/entry_64.txt&lt;br /&gt;
-&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.groad.net/bbs/thread-3276-1-1.html&#34;&gt;选择内存屏障指令|alternative&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;fs and gs register&lt;br /&gt;
-For using in TLS, please check &lt;a href=&#34;http://wiki.osdev.org/Thread_Local_Storage#ABI&#34;&gt;OSDEV TLS&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;#ifdef CONFIG_X86_64&lt;br /&gt;
-#define __percpu_seg            gs&lt;br /&gt;
-#define __percpu_mov_op         movq&lt;br /&gt;
-#else&lt;br /&gt;
-#define __percpu_seg            fs&lt;br /&gt;
-#define __percpu_mov_op         movl&lt;br /&gt;
-#endif&lt;/p&gt;
-
-&lt;p&gt;Steps to handle intterrupt&lt;/p&gt;
+&lt;h2 id=&#34;steps-to-handle-intterrupt&#34;&gt;Steps to handle intterrupt&lt;/h2&gt;
 
 &lt;p&gt;For logical address to linear address, see intel SDM v3a 3.4 LOGICAL AND LINEAR ADDRESSES.&lt;br /&gt;
 For stack switching during escalate the CPL, see SDM v3a 5.8.5 stack switching. The processor will automatically chose the espCPL stack to use during changing in privilege level.&lt;br /&gt;
@@ -338,70 +324,73 @@ For fast system call, check 3a 5.8.7 Performing Fast Calls to System Procedures&
 For TSS and TR, check 3a 7.2&lt;br /&gt;
 For Linux hanld irq processes, check ULK 3rd Chapter 4: Hardware Handling of Interrupts and Exceptions&lt;/p&gt;
 
-&lt;h1 id=&#34;for-syscall&#34;&gt;For syscall&lt;/h1&gt;
+&lt;h1 id=&#34;entry-exception&#34;&gt;Entry exception&lt;/h1&gt;
 
-&lt;p&gt;Common path for syscalls&lt;br /&gt;
-glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
-just for vDSO syscalls&lt;br /&gt;
-glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;/p&gt;
+&lt;h2 id=&#34;paranoid-entry&#34;&gt;paranoid_entry&lt;/h2&gt;
 
-&lt;h1 id=&#34;system-calls&#34;&gt;system calls&lt;/h1&gt;
+&lt;p&gt;Check Documentation/x86/entry_64.txt&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
+&lt;h2 id=&#34;error-entry&#34;&gt;error_entry&lt;/h2&gt;
+
+&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
+Author:     Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@home.transmeta.com&#34;&gt;torvalds@home.transmeta.com&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
+    [PATCH] x86_64 merge: arch + asm&lt;/p&gt;
+
+&lt;h1 id=&#34;entry-system-calls&#34;&gt;Entry system calls&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;sysenter-vs-syscall&#34;&gt;sysenter vs syscall&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://arkanis.de/weblog/2017-01-05-measurements-of-system-call-performance-and-overhead&#34;&gt;Measurements of system call performance and overhead&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://reverseengineering.stackexchange.com/a/16511/16996&#34;&gt;AMD vs Intel and syscall vs sysenter&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.codeguru.com/cpp/misc/misc/system/article.php/c8223/System-Call-Optimization-with-the-SYSENTER-Instruction.htm&#34;&gt;System Call Optimization with the SYSENTER Instruction&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/entry_64.txt&#34;&gt;kernel documentation&lt;/a&gt;&lt;br /&gt;
-Meltdown and Spectre&lt;/p&gt;
+&lt;a href=&#34;http://articles.manugarg.com/systemcallinlinux2_6.html&#34;&gt;Sysenter Based System Call Mechanism in Linux 2.6&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;syscall&#34;&gt;syscall&lt;/h3&gt;
+&lt;h2 id=&#34;system-call-restart-mechanism-and-orig-eax&#34;&gt;system call restart mechanism and ORIG_EAX&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;save: pc + 1, old rsp, registers&lt;br /&gt;
-pc + 1-&amp;gt; RCX&lt;br /&gt;&lt;/li&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/17744/&#34;&gt;A new system call restart mechanism&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lkml.org/lkml/2006/8/29/350&#34;&gt;Why set ORIG_EAX(%esp) to -1 in arch/i386/kernel/entry.S:error_code?&lt;/a&gt;&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;entry: pc&lt;br /&gt;
-IA32_LSTAR -&amp;gt; pc&lt;/p&gt;
+&lt;h2 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h2&gt;
 
-&lt;h3 id=&#34;kernel-implementations&#34;&gt;kernel implementations&lt;/h3&gt;
-
-&lt;p&gt;64-bit long mode: syscall; check syscall_init&lt;br /&gt;
+&lt;p&gt;arch/x86/include/asm/proto.h&lt;br /&gt;
+64-bit long mode: syscall; check syscall_init&lt;br /&gt;
 64-bit compatible kernel: sysenter, syscall, or int 0x80; check __kernel_vsyscall and def_idts&lt;br /&gt;
-??32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
+32-bit kernel: int 0x80, sysenter;&lt;/p&gt;
 
-&lt;h3 id=&#34;vdso-and-vsyscall&#34;&gt;vDSO and vsyscall&lt;/h3&gt;
+&lt;h3 id=&#34;64-bit-without-compat-32-compatible-kernel-support&#34;&gt;64-bit without COMPAT_32/compatible kernel support&lt;/h3&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;64-bit without COMPAT&lt;em&gt;32&lt;/em&gt;/compatible kernel&lt;br /&gt;
-./int80&lt;br /&gt;
+&lt;p&gt;./int80&lt;br /&gt;
 [  730.583700] traps: int80[1697] general protection ip:4000c4 sp:7ffd84b59730 error:402 in int80[400000+1000]&lt;br /&gt;
-Segmentation fault (core dumped)&lt;/p&gt;&lt;/li&gt;
+Segmentation fault (core dumped)&lt;/p&gt;
 
-&lt;li&gt;&lt;p&gt;64-bit syscall&lt;br /&gt;
-syscall.S&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;h2 id=&#34;x86-64-rcx-and-r10&#34;&gt;x86_64 rcx and r10&lt;/h2&gt;
 
-&lt;h2 id=&#34;rcx-and-r10&#34;&gt;rcx and r10&lt;/h2&gt;
+&lt;p&gt;Check x86_64 ABI: Linux conventions and  according to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
+According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack. So r10 is right 4th args passed from userspace.&lt;br /&gt;
+According to do_syscall_64, regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
 
-&lt;p&gt;Check x86_64 ABI: Linux conventions and&lt;br /&gt;
-According to &lt;a href=&#34;https://www.felixcloutier.com/x86/syscall&#34;&gt;x86 syscall instruction&lt;/a&gt;, rcx is used to passing next rip.&lt;br /&gt;
-According to entry_SYSCALL_64, rcx is rip before it is pushed on the kernel stack.&lt;br /&gt;
-So r10 is right 4th args passed from userspace.&lt;br /&gt;
-According to do_syscall_64,&lt;br /&gt;
-                regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs-&amp;gt;di, regs-&amp;gt;si, regs-&amp;gt;dx, regs-&amp;gt;r10, regs-&amp;gt;r8, regs-&amp;gt;r9&#34;&gt;nr&lt;/a&gt;;&lt;/p&gt;
-
-&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86 32 asmlinkage&lt;/h2&gt;
+&lt;h2 id=&#34;x86-32-asmlinkage&#34;&gt;x86_32 asmlinkage&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://qr.ae/Ti5MJJ&#34;&gt;By default gcc passes parameters on the stack for x86-32 arch, so what is it needed for? It&amp;rsquo;s because linux kernel uses -mregparm=3 option which overrides the default behaviour&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/67175/&#34;&gt;enbaled -mregparm=3 Shrinking the kernel with gcc&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
 However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
+
+&lt;h2 id=&#34;vdso&#34;&gt;vDSO&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0&#34;&gt;Creating a vDSO: the Colonel&amp;rsquo;s Other Chicken&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.trilithium.com/johan/2005/08/linux-gate/&#34;&gt;What is linux-gate.so.1&lt;/a&gt;&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO-&amp;gt; __kernel_vsyscall -&amp;gt; sysenter/syscall/in0x80&lt;br /&gt;
+just for vDSO syscalls&lt;br /&gt;
+glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -642,6 +631,10 @@ linux的时间子系统要求硬件timer提供下面两种能力：&lt;br /&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/rcu/</guid>
       <description>
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.cnhalo.net/2016/06/13/linux-rcu/&#34;&gt;http://www.cnhalo.net/2016/06/13/linux-rcu/&lt;/a&gt; linux 4.9内核rcu实现&lt;/p&gt;
 
 &lt;h1 id=&#34;network-rx-path&#34;&gt;Network RX  path&lt;/h1&gt;
 
@@ -964,6 +957,245 @@ CommitDate: Tue Apr 18 11:42:36 2017 -0700&lt;br /&gt;
     </item>
     
     <item>
+      <title>Yet another guide on the way to linux kernel hacking</title>
+      <link>http://firoyang.org/cs/kernel_hacking/</link>
+      <pubDate>Sat, 25 Apr 2015 00:00:00 UTC</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/kernel_hacking/</guid>
+      <description>
+
+&lt;h1 id=&#34;hacking-goals&#34;&gt;Hacking goals&lt;/h1&gt;
+
+&lt;h2 id=&#34;trade-time-for-space&#34;&gt;Trade time for space&lt;/h2&gt;
+
+&lt;p&gt;search_exception_tables&lt;/p&gt;
+
+&lt;h1 id=&#34;define-asm-extable-handle-from-to-handler&#34;&gt;define _ASM_EXTABLE_HANDLE(from, to, handler)                 &lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;    .pushsection &amp;quot;__ex_table&amp;quot;,&amp;quot;a&amp;quot; ;                         \
+    .balign 4 ;                                             \
+    .long (from) - . ;                                      \
+    .long (to) - . ;                                        \
+    .long (handler) - . ;                                   \
+    .popsection
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;hacking-area&#34;&gt;Hacking area&lt;/h1&gt;
+
+&lt;p&gt;mm&lt;br /&gt;
+&lt;a href=&#34;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&#34;&gt;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/749064/&#34;&gt;Variable-length arrays and the max() mess&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=wlqjQe3vDx8&amp;amp;list=PLbzoR-pLrL6rOT6m50HdJFYUHyvA9lurI&amp;amp;index=11&amp;amp;t=0s&#34;&gt;Sub-system Update: Kernel Self-Protection Project - Kees Cook, Google&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-refactoring&#34;&gt;Kernel refactoring&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://linuxtv.org/wiki/index.php/Development:_Hints_for_Refactoring_Existing_Drivers&#34;&gt;https://linuxtv.org/wiki/index.php/Development:_Hints_for_Refactoring_Existing_Drivers&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.youtube.com/watch?v=mxxicJZ8cis&#34;&gt;Kernel Recipes 2017 - Refactoring the Linux Kernel - Thomas Gleixner&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;feature&#34;&gt;Feature&lt;/h2&gt;
+
+&lt;p&gt;some results or progress information for PFRA&lt;/p&gt;
+
+&lt;h2 id=&#34;write-your-own-kernel&#34;&gt;Write your own kernel&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://os.phil-opp.com/&#34;&gt;Writing an OS in Rust&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://www.brokenthorn.com/Resources/OSDevIndex.html&#34;&gt;BrokenThorn Entertainment Operating System Development Series&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;build&#34;&gt;Build&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;if no .config, every config tools make a .config from scrach!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;oldconfig just for new moduels patch merged in trunk. This no any relations to .config.old and /boot/config.x.y.z&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make localmodconfig will reduce many unused kernel config.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make bzImage  #kmods will not build that configured with M!&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;make modules_install INSTALL_MOD_PATH=/home/firo/kmods&lt;br /&gt;
+##build signle kernel module&lt;br /&gt;
+make menuconfig&lt;br /&gt;
+make oldconfig &amp;amp;&amp;amp; make prepare&lt;br /&gt;
+make -C $(pwd) M=/home/firo/linux/fs/ext3 modules V=1&lt;br /&gt;
+make ARCH=arm CROSS_COMPILE=/usr/bin/arm-linux-gnu- drivers/pcmcia/sa11xx_base.o&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;git-repos&#34;&gt;Git repos&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/572068/&#34;&gt;Git tree maintenance&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;next-tree-2-6-1x-latest-tree-please-rebase-your-patch-against-this-tree-before-send-it-to-upstream&#34;&gt;next tree - 2.6.1x ~ latest tree; please rebase your patch against this tree before send it to upstream&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/man-pages/linux-next.html&#34;&gt;Working with linux-next&lt;/a&gt;&lt;br /&gt;
+git add git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git&lt;/p&gt;
+
+&lt;h2 id=&#34;tglx-tree-2-4-2-6-1x&#34;&gt;tglx tree - 2.4 - 2.6.1x&lt;/h2&gt;
+
+&lt;p&gt;origin  git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git (fetch)&lt;br /&gt;
+origin  git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git (push)&lt;/p&gt;
+
+&lt;h2 id=&#34;history-tree-0-2-4&#34;&gt;history tree - 0 - 2.4&lt;/h2&gt;
+
+&lt;p&gt;origin  &lt;a href=&#34;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&#34;&gt;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&lt;/a&gt; (fetch)&lt;br /&gt;
+origin  &lt;a href=&#34;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&#34;&gt;https://git.kernel.org/pub/scm/linux/kernel/git/history/history.git/&lt;/a&gt; (push)&lt;br /&gt;
+git checkout -b 240p 2.4.0-prerelease&lt;/p&gt;
+
+&lt;h1 id=&#34;blogs&#34;&gt;Blogs&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/&#34;&gt;http://www.joelfernandes.org/linuxinternals/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://paulmck.livejournal.com/&#34;&gt;https://paulmck.livejournal.com/&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;traning&#34;&gt;Traning&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/htmldocs/kernel-hacking/index.html&#34;&gt;Unreliable Guide To Hacking The Linux Kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://linux-kernel-labs.github.io/master/index.html&#34;&gt;Bootlin linux kernel labs&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;mailing-list-archives&#34;&gt;Mailing list archives&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/lore.html&#34;&gt;The Linux Kernel Archives&lt;/a&gt;&lt;br /&gt;
+Online: &lt;a href=&#34;https://lore.kernel.org/lists.html&#34;&gt;https://lore.kernel.org/lists.html&lt;/a&gt;&lt;br /&gt;
+Git: &lt;a href=&#34;https://git.kernel.org/pub/scm/public-inbox/&#34;&gt;https://git.kernel.org/pub/scm/public-inbox/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/758034/&#34;&gt;LKML archives on lore.kernel.org&lt;/a&gt;&lt;br /&gt;
+and marc.info&lt;/p&gt;
+
+&lt;h1 id=&#34;source-code-navigator&#34;&gt;Source code navigator&lt;/h1&gt;
+
+&lt;p&gt;Just make tags; make cscope&lt;br /&gt;
+&lt;a href=&#34;https://www.gnu.org/software/global/links.html&#34;&gt;&amp;lsquo;Source code reading&amp;rsquo; related sites&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kvm&#34;&gt;KVM&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://blacks3pt3mb3r.wordpress.com/linux-stuffz/264-2/&#34;&gt;Building a KVM host machine.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;How to Build A Custom Linux Kernel For Qemu&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;build-minimal-bootable-rootfs-fedora&#34;&gt;Build minimal bootable rootfs - fedora&lt;/h2&gt;
+
+&lt;p&gt;./etc/yum.repos.d/&lt;br /&gt;
+./etc/yum.repos.d/fedora-updates-testing.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora-updates.repo&lt;br /&gt;
+./etc/yum.repos.d/fedora-cisco-openh264.repo&lt;br /&gt;
+can be gotten by supermin &amp;ndash;prepare bash -o /tmp/supermin.d&lt;br /&gt;
+or just copy from you host to some place like /home/firo/kernel/k/testfs/&lt;br /&gt;
+sudo dnf &amp;ndash;releasever=27 &amp;ndash;installroot=/home/firo/kernel/k/testfs/ &amp;ndash;setopt=reposdir=/home/firo/kernel/k/testfs/etc/yum.repos.d install dnf udev passwd&lt;/p&gt;
+
+&lt;h2 id=&#34;how-to-build-a-minimal-kernel-for-testing&#34;&gt;How to build a minimal kernel for testing?&lt;/h2&gt;
+
+&lt;p&gt;[tiny config @ kernel.org][5]&lt;br /&gt;
+[3 attempts to reduce the configurations][6]&lt;br /&gt;
+&lt;a href=&#34;7&#34;&gt;Fedora equivalent of debootstrap&lt;/a&gt;&lt;br /&gt;
+Then enable following config option&lt;br /&gt;
+CONFIG_CHR_DEV_SG&lt;br /&gt;
+Some ftrace stuff&lt;br /&gt;
+CONFIG_SLUB&lt;br /&gt;
+CONFIG_KASAN&lt;/p&gt;
+
+&lt;h2 id=&#34;kernel-org-build-a-tiny-kernel-https-tiny-wiki-kernel-org&#34;&gt;&lt;a href=&#34;https://tiny.wiki.kernel.org/&#34;&gt;Kernel.org: Build a tiny kernel&lt;/a&gt;&lt;/h2&gt;
+
+&lt;h2 id=&#34;kvm-and-nfs&#34;&gt;KVM and NFS&lt;/h2&gt;
+
+&lt;p&gt;qemu-system-x86_64 -nographic -enable-kvm  -kernel ./bzImag  -append &amp;lsquo; console=ttyS0 ip=dhcp root=/dev/nfs nfsroot=192.168.0.104:/home/firo/kernel/k/testfs,nfsvers=3,tcp rw nfsrootdebug debug  raid=noautodetect selinux=0 enforcing=0 &amp;lsquo;&lt;br /&gt;
+dnf install nfs-utils&lt;br /&gt;
+cat /etc/exports # For more details, man exports&lt;br /&gt;
+/home/firo/kernel/k/testfs 127.0.0.1(rw,sync,fsid=0,no_root_squash)&lt;br /&gt;
+systemctl start nfs-server.service&lt;br /&gt;
+systemctl status nfs-server.service&lt;br /&gt;
+● nfs-server.service - NFS server and services&lt;br /&gt;
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; disabled; vendor preset: disabled)&lt;br /&gt;
+   Active: active (exited) since Sat 2018-03-17 17:52:29 CST; 4s ago&lt;/p&gt;
+
+&lt;h3 id=&#34;test-the-nfs&#34;&gt;Test the nfs&lt;/h3&gt;
+
+&lt;p&gt;sudo mount -t nfs localhost://home/firo/kernel/k/testfs /mnt&lt;br /&gt;
+if touch prermission denied, add no_all_squash to/etc/exports&lt;/p&gt;
+
+&lt;h2 id=&#34;nfs-errors&#34;&gt;NFS errors&lt;/h2&gt;
+
+&lt;p&gt;[   54.600121] NFS: sending MNT request for 10.0.2.2:/buildarea1/firo/ima/export/dist&lt;br /&gt;
+[   54.600121] NFS: failed to create MNT RPC client, status=-101&lt;br /&gt;
+[   54.600121] NFS: unable to mount server 10.0.2.2, error -101&lt;br /&gt;
+CONFIG_E100 CONFIG_E1000 &amp;hellip;and IP_PNP and DHCP BOOTP RARP&lt;br /&gt;
+try: nfsvers=3,tcp and 192.168.0.104 or 10.0.2.2 are mandatory!&lt;/p&gt;
+
+&lt;h2 id=&#34;nfs-vers&#34;&gt;NFS vers&lt;/h2&gt;
+
+&lt;p&gt;rpcinfo -t localhost nfs&lt;br /&gt;
+program 100003 version 3 ready and waiting&lt;br /&gt;
+program 100003 version 4 ready and waiting&lt;br /&gt;
+rpcinfo -p | grep nfs&lt;br /&gt;
+    100003    3   tcp   2049  nfs&lt;br /&gt;
+    100003    4   tcp   2049  nfs&lt;br /&gt;
+    100227    3   tcp   2049  nfs_acl&lt;/p&gt;
+
+&lt;h1 id=&#34;submitting-patch&#34;&gt;Submitting patch&lt;/h1&gt;
+
+&lt;h2 id=&#34;patch-prefix&#34;&gt;Patch prefix&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;git log --oneline  path/to/file.c
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;resending-the-patch&#34;&gt;Resending the patch&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://meta.stackexchange.com/questions/314212/why-is-it-called-initial-revision-if-its-not-a-revision&#34;&gt;First revision, version, second revision&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/Outreachyfirstpatch&#34;&gt;Versioning one patch revision&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchTipsAndTricks&#34;&gt;For example, if you&amp;rsquo;re sending the second revision of a patch, you should use [PATCH v2]&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchPhilosophy&#34;&gt;use PATCHv2 (or PATCHv3 and so on) in the subject lines instead of PATCH &amp;hellip; To update the subject lines, add the -v 2 (or -v 3, etc) options to git format-patch&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchPhilosophy&#34;&gt;Finally, to send your new patch series as a reply to the previous one, first look up the Message-Id of the cover letter (or the one-and-only patch) in your previous patch series, and then pass that to the &amp;ndash;in-reply-to= option of either git format-patch or git send-email.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/PatchTipsAndTricks&#34;&gt;Patch v2, v3, &amp;hellip; Changes, tags&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;patch-in-series-with-a-cover&#34;&gt;Patch in series with a cover&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;proxychains git send-email --subject &amp;quot;[PATCH v2 0/15] Remove unneeded casts of memory-alloc function return values&amp;quot; --thread --compose --confirm=compose --to firogm@gmail.com *.patch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;dave-s-miller-s-perferences&#34;&gt;Dave S Miller&amp;rsquo;s perferences&lt;/h2&gt;
+
+&lt;p&gt;@@ -325,13 +325,15 @@ static inline void empty_child_dec(struct key_vector *n)&lt;br /&gt;
+  static struct key_vector *leaf_new(t_key key, struct fib_alias *fa)&lt;br /&gt;
+  {&lt;br /&gt;
+-       struct tnode *kv = kmem_cache_alloc(trie_leaf_kmem, GFP_KERNEL);&lt;br /&gt;
+-       struct key_vector *l = kv-&amp;gt;kv;&lt;br /&gt;
++       struct tnode *kv;&lt;br /&gt;
++       struct key_vector *l;&lt;br /&gt;
+Dave Miller usually prefers it if variables are ordered from longest to shortest.  So you should probably have l defined first, and then kv.&lt;/p&gt;
+
+&lt;h2 id=&#34;julia-lawall-sorry-to-be-picky&#34;&gt;Julia Lawall Sorry to be picky,&lt;/h2&gt;
+
+&lt;p&gt;but normally people put a space after the colon.  Also,&lt;br /&gt;
+the subject line could be shorter: Remove unneeded cast.&lt;br /&gt;
+The description part of the subject doesnt have to be unique,&lt;br /&gt;
+just the whole thing, asfter the [PATCH] part.&lt;/p&gt;
+
+&lt;h2 id=&#34;dan-carpenter&#34;&gt;Dan Carpenter&lt;/h2&gt;
+
+&lt;p&gt;Otherwise your patch was fine, btw.  Other improvements.&lt;br /&gt;
+Don&amp;rsquo;t put &amp;ldquo;Drivers:&amp;rdquo; in the subject.&lt;br /&gt;
+On Wed, Apr 22, 2015 at 09:10:50PM +0800, Firo Yang wrote:&lt;br /&gt;
+&amp;gt; From: Firo Yang &lt;a href=&#34;mailto:firogm@gmail.com&#34;&gt;firogm@gmail.com&lt;/a&gt;&lt;br /&gt;
+Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;br /&gt;
+Include everyone from the ./scripts/get_maintainer.pl output except&lt;br /&gt;
+don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing&lt;br /&gt;
+list there already.&lt;/p&gt;
+
+&lt;h1 id=&#34;git-mutt-patch&#34;&gt;git mutt patch&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=6zUVS4kJtrA&#34;&gt;Greg: How to Apply a Patch to the Linux Kernel Stable Tree&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;newbies-what-to-do&#34;&gt;newbies! what to do?&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/286244/&#34;&gt;Peter Zijlstra: From DOS to kernel hacking&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://kernelnewbies.org/KernelJanitors/Todo&#34;&gt;KernelJanitors/Todo&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/284099/&#34;&gt;linux-wanking@vger.kernel.org&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;smatch&#34;&gt;Smatch&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;    make CHECK=&amp;quot;~/path/to/smatch/smatch -p=kernel&amp;quot; C=1 \
+            bzImage modules | tee warns.txt
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;coccinelle&#34;&gt;Coccinelle&lt;/h2&gt;
+</description>
+    </item>
+    
+    <item>
       <title>An introduction to File system in Linux operating system</title>
       <link>http://firoyang.org/cs/fs/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
@@ -1143,27 +1375,6 @@ hrough the maintenance of a representation of the host system&amp;rsquo;s hardwa
 
 &lt;p&gt;entation of the host system&amp;rsquo;s hardware structure.&lt;/p&gt;
 
-&lt;h1 id=&#34;sys-文件系统&#34;&gt;Sys 文件系统&lt;/h1&gt;
-
-&lt;p&gt;bus，总线树跟踪每个总线上的每个设备。实质是保存驱动，设备在device中，用链接指明。&lt;br /&gt;
-class, 类树按功能分类设备。&lt;br /&gt;
-device，干货，其他的目录都指向这里。&lt;/p&gt;
-
-&lt;h1 id=&#34;kobject&#34;&gt;Kobject&lt;/h1&gt;
-
-&lt;p&gt;清0，init，set name，get，put&lt;br /&gt;
-在sys中是dir，attr 是文件&lt;/p&gt;
-
-&lt;h1 id=&#34;kobj-type&#34;&gt;kobj_type&lt;/h1&gt;
-
-&lt;p&gt;release(),&lt;/p&gt;
-
-&lt;h1 id=&#34;kset&#34;&gt;Kset&lt;/h1&gt;
-
-&lt;p&gt;添加kobject到kset（指针，add）&lt;/p&gt;
-
-&lt;h1 id=&#34;bus-device-driver&#34;&gt;Bus, device, driver.&lt;/h1&gt;
-
 &lt;h1 id=&#34;procfs&#34;&gt;Procfs&lt;/h1&gt;
 
 &lt;p&gt;##How many parts does procfs has?&lt;br /&gt;
@@ -1173,6 +1384,30 @@ device，干货，其他的目录都指向这里。&lt;/p&gt;
 * Read only kernel infomation. /proc&lt;br /&gt;
 ##I think, important directory need to know.&lt;br /&gt;
 /proc/sys/kernel&lt;/p&gt;
+
+&lt;h1 id=&#34;btrfs&#34;&gt;btrfs&lt;/h1&gt;
+
+&lt;p&gt;Bdi related&lt;br /&gt;
+mount, super_block&lt;br /&gt;
+ffff8800f4455740 ffff8800f27f2000 btrfs  /dev/xvda2 /&lt;br /&gt;
+ffff880002844200 ffff8800f2798800 autofs systemd-1 /@/proc/sys/fs/binfmt_misc&lt;br /&gt;
+ffff8800f44553c0 ffff8800f3d05800 mqueue mqueue    /@/dev/mqueue&lt;br /&gt;
+ffff8800f4533c80 ffff8800f44d2000 debugfs debugfs  /@/sys/kernel/debug&lt;br /&gt;
+ffff8800f200fc80 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/cache&lt;br /&gt;
+ffff8800f37d9740 ffff8800f27f2000 btrfs  /dev/xvda2 /@/opt&lt;br /&gt;
+ffff8800f4455200 ffff8800f27f2000 btrfs  /dev/xvda2 /@/tmp&lt;br /&gt;
+ffff8800f4455040 ffff8800f27f2000 btrfs  /dev/xvda2 /@/global/local&lt;br /&gt;
+ffff8800f245c900 ffff8800f2eda000 ext3   /dev/xvda1 /@/boot&lt;br /&gt;
+ffff880002844040 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/spool&lt;br /&gt;
+ffff880002840040 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/tmp&lt;br /&gt;
+ffff880002840200 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/opt&lt;br /&gt;
+ffff8800f200f900 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/log&lt;br /&gt;
+ffff8800028403c0 ffff8800f27f2000 btrfs  /dev/xvda2 /@/home&lt;br /&gt;
+ffff8800f245ce40 ffff8800f27f2000 btrfs  /dev/xvda2 /@/.snapshots&lt;br /&gt;
+ffff8800f37d93c0 ffff8800f27f2000 btrfs  /dev/xvda2 /@/lfs&lt;br /&gt;
+btrfs_mount&lt;br /&gt;
+btrfs_fill_super&lt;br /&gt;
+setup_bdi&lt;/p&gt;
 </description>
     </item>
     
@@ -1228,10 +1463,10 @@ see release_nodes() -&amp;gt;kfree(dr);&lt;br /&gt;&lt;/li&gt;
     
     <item>
       <title>Power management</title>
-      <link>http://firoyang.org/cs/pm/</link>
+      <link>http://firoyang.org/dark_ages/pm/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/pm/</guid>
+      <guid>http://firoyang.org/dark_ages/pm/</guid>
       <description>
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
@@ -1310,14 +1545,8 @@ Device PM check wakeup pendings&lt;br /&gt;
 middle part in suspend_enter&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;Platform PM&lt;br /&gt;
-last part in suspend_enter&lt;/p&gt;
-
-&lt;h1 id=&#34;steps-of-resume&#34;&gt;Steps of resume&lt;/h1&gt;&lt;/li&gt;
+last part in suspend_enter&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;h1 id=&#34;knowledge&#34;&gt;Knowledge&lt;/h1&gt;
-
-&lt;p&gt;console switch、process freeze、CPU hotplug、wakeup&lt;/p&gt;
 
 &lt;h1 id=&#34;introdution&#34;&gt;Introdution&lt;/h1&gt;
 
@@ -1384,66 +1613,6 @@ struct cpuidle_device used by ladder or menu&lt;/p&gt;
 
 &lt;p&gt;device_initcall -&amp;gt; armadaxp_init_cpuidle -&amp;gt; cpuidle_register_driver  cpuidle_register_device&lt;br /&gt;
 cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Synchronization</title>
-      <link>http://firoyang.org/cs/synchronization/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/synchronization/</guid>
-      <description>
-
-&lt;h1 id=&#34;scalability&#34;&gt;Scalability&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.perfdynamics.com/Manifesto/USLscalability.html&#34;&gt;How to Quantify Scalability&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://queue.acm.org/detail.cfm?id=2698990&#34;&gt;Scalability Techniques for Practical Synchronization Primitives&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;definition&#34;&gt;Definition&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.etymonline.com/index.php?term=synchronize&#34;&gt;Synchronize&lt;/a&gt;&lt;br /&gt;
-A program is synchronized if all accesses to shared data are ordered by synchronization operations.&lt;br /&gt;
-A data reference is ordered by a synchronization operation if, in every possible&lt;br /&gt;
-execution, a write of a variable by one processor and an access (either a read or a&lt;br /&gt;
-write) of that variable by another processor are separated by a pair of synchroni-&lt;br /&gt;
-zation operations, one executed after the write by the writing processor and one&lt;br /&gt;
-executed before the access by the second processor???. Cases where variables may&lt;br /&gt;
-be updated without ordering by synchronization are called data races because the&lt;br /&gt;
-execution outcome depends on the relative speed of the processors, and, like&lt;br /&gt;
-races in hardware design, the outcome is unpredictable, which leads to another&lt;br /&gt;
-name for synchronized programs: data-race-free.&lt;/p&gt;
-
-&lt;h2 id=&#34;why-we-need-synchronization&#34;&gt;Why we need synchronization&lt;/h2&gt;
-
-&lt;p&gt;A critical section is a piece of code that accesses a shared resource&lt;br /&gt;
-(data structure or device) that must not be concurrently accessed by more than one thread of execution.&lt;br /&gt;
-This overlap, where the result depends on the relative timing of multiple tasks, is called a race condition.&lt;/p&gt;
-
-&lt;h1 id=&#34;what-is-synchronization-in-computer-science&#34;&gt;What is synchronization in computer science&lt;/h1&gt;
-
-&lt;p&gt;Process synchronization refers to the idea that multiple processes are&lt;br /&gt;
-to join up or handshake at a certain point, in order to reach an&lt;br /&gt;
-agreement or commit to a certain sequence of action.&lt;br /&gt;
-* Mutual exclusion &amp;ndash; only one excution routine in  critical section&lt;br /&gt;
-Readers–writers problem&lt;br /&gt;
-The Producer-Consumer Problem&lt;br /&gt;
-* Cooperative&lt;br /&gt;
-TCP Handshake&lt;br /&gt;
-* Deadlock&lt;br /&gt;
-Dining philosophers problem&lt;br /&gt;
-* Starvation&lt;br /&gt;
-* Prioirty inversion&lt;br /&gt;
-* Busy waiting&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-barier&#34;&gt;Memory barier&lt;/h1&gt;
-
-&lt;h1 id=&#34;per-cpu&#34;&gt;Per-CPU&lt;/h1&gt;
-
-&lt;h1 id=&#34;local-interrupt-disabling&#34;&gt;Local Interrupt Disabling&lt;/h1&gt;
-
-&lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
-local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 </description>
     </item>
     

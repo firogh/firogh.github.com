@@ -1,14 +1,26 @@
-
 # Reference
 [Driver porting: per-CPU variables](https://lwn.net/Articles/22911/)
 [Per-cpu patches on top of PDA stuff...   Rusty Russell](https://lists.linuxfoundation.org/pipermail/virtualization/2006-September/thread.html#5010)
-[Using %gs for per-cpu areas on x86 ](https://lists.linuxfoundation.org/pipermail/virtualization/2006-September/thread.html#5042)
 [A graphic explanation](https://www.cnblogs.com/yangjiguang/p/8277720.html)jj
+[x86_64: per-cpu memory for user-space](https://lwn.net/Articles/611946/)
 
 # Crash practise
 p __per_cpu_offset
 p this_cpu_off:all
 __per_cpu_offset is same as irq_stack_union
+irq_stack_union's type is union and it's the first element in Per-CPU area
+
+# gs register
+[Using %gs for per-cpu areas on x86 ](https://lists.linuxfoundation.org/pipermail/virtualization/2006-September/thread.html#5042)
+
+## load_percpu_segment
+load_percpu_segment: load gs with 0 and set gs.base to irq_stack_union.gs_base.
+## SWAPGS
+check SWAPGS in entry.
+## Task's gsbase or gsindex and %gs
+Task has nothing related to %gs in current kernel implemention.
+It means all tasks share the same %gs, so there is no need to save a gsbase/gsindex per task.
+Check load_percpu_segment.
 
 # Per-CPU for boot CPU
 1. strart_kernel->setup_per_cpu_areas
@@ -41,22 +53,5 @@ kernel_init->smp_init-> ... ->native_cpu_up -> common_cpu_up -> initial_gs = per
 secondary_startup_64 -> initial_gs
 cpu_init->load_percpu_segment
 
-# irq_stack_union 
-It is type of union and it's the first element in Per-CPU area
-
-# load_percpu_segment
-load_percpu_segment: load gs with 0 and set gs.base to irq_stack_union.gs_base.
-
-# SWAPGS
-check SWAPGS in ret_from_fork or system calls.
-
-# Per-cpu memory for user-space
-https://lwn.net/Articles/611946/
-
 # Runtime per-cpu 
 pcpu_create_chunk()
-
-# Task's gsbase or gsindex and %gs
-Task has nothing related to %gs in current kernel implemention.
-It means all tasks share the same %gs, so there is no need to save a gsbase/gsindex per task.
-Check load_percpu_segment.

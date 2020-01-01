@@ -1,0 +1,273 @@
+From 6a0f25c9d7e0df4668e6e076796cd4e22320e146 Mon Sep 17 00:00:00 2001
+From: Firo Yang <firo.yang@suse.com>
+Date: Wed, 18 Dec 2019 18:33:05 +0800
+Subject: [PATCH 1/1] x86_64: page fault: Introduce pf_ist.
+
+This feature will help debug page fault caused by
+invalid RIP, i.e. intruction fetch error.
+
+It use IST stack as a trmpoline, if intruction fetch error
+doesn't occur. If instruction fetch occurs, the page fault will
+be handled well on the IST stack.
+
+Signed-off-by: Firo Yang <firo.yang@suse.com>
+---
+ arch/x86/entry/entry_64.S            | 84 ++++++++++++++++++++++++++++++++++++
+ arch/x86/include/asm/desc.h          | 21 +++++++++
+ arch/x86/include/asm/page_64_types.h |  3 +-
+ arch/x86/include/asm/traps.h         |  2 +
+ arch/x86/kernel/dumpstack_64.c       |  5 ++-
+ arch/x86/kernel/traps.c              | 23 +++++++++-
+ 6 files changed, 134 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index a0fe4526916a..fa660d9a1ba2 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -982,15 +982,98 @@ ENTRY(\sym)
+ END(\sym)
+ .endm
+ 
++.macro idtentry_pf_ist sym do_sym
++ENTRY(\sym)
++       UNWIND_HINT_IRET_REGS offset=8
++
++       ASM_CLAC
++
++       testb   $3, CS-ORIG_RAX(%rsp)           /* If coming from userspace, switch stacks */
++       jnz     .Lfrom_usermode_switch_stack_\@
++
++       testb   $16, (%rsp)                     /* If not instruction fetch error, switch stacks */
++       jz      .Lnot_instruction_fetch_switch_stack_\@
++
++       call    error_entry
++       UNWIND_HINT_REGS
++       /* returned flag: ebx=0: need swapgs on exit, ebx=1: don't need it */
++
++       movq    %rsp, %rdi                      /* pt_regs pointer */
++
++       movq    ORIG_RAX(%rsp), %rsi            /* get error code */
++       movq    $-1, ORIG_RAX(%rsp)             /* no syscall to restart */
++
++       call    \do_sym
++
++       jmp     error_exit
++
++       /*
++        * Entry from userspace.  Switch stacks and treat it
++        * as a normal entry.  This means that paranoid handlers
++        * run in real process context if user_mode(regs).
++        */
++.Lnot_instruction_fetch_switch_stack_\@:
++	pushq   %r12
++	pushq   %r13
++
++	movq    (4+2)*8(%rsp), %r12             /* load exception rsp; +2 for above r12 and r13*/
++
++	movq    (5+2)*8(%rsp), %r13
++	movq    %r13, -1*8(%r12)                /* ss */
++
++	movq    (4+2)*8(%rsp), %r13
++	movq    %r13, -2*8(%r12)                /* rsp */
++
++	movq    (3+2)*8(%rsp), %r13
++	movq    %r13, -3*8(%r12)                /* rflags */
++
++	movq    (2+2)*8(%rsp), %r13
++	movq    %r13, -4*8(%r12)                /* cs */
++
++	movq    (1+2)*8(%rsp), %r13
++	movq    %r13, -5*8(%r12)                /* rip */
++
++	movq    (0+2)*8(%rsp), %r13
++	movq    %r13, -6*8(%r12)                /* error code */
++
++	popq    %r13
++	movq	%r13, -7*8(%r12)
++	leaq	-7*8(%r12), %r13
++	popq    %r12
++
++	movq	%r13, %rsp
++	popq	%r13				/* rsp is pointing to error code */
++
++.Lfrom_usermode_switch_stack_\@:
++       call    error_entry
++
++       movq    %rsp, %rdi                      /* pt_regs pointer */
++
++       movq    ORIG_RAX(%rsp), %rsi            /* get error code */
++       movq    $-1, ORIG_RAX(%rsp)             /* no syscall to restart */
++
++       call    \do_sym
++
++       jmp     error_exit
++END(\sym)
++.endm
++
+ #ifdef CONFIG_TRACING
+ .macro trace_idtentry sym do_sym has_error_code:req
+ idtentry trace(\sym) trace(\do_sym) has_error_code=\has_error_code
+ idtentry \sym \do_sym has_error_code=\has_error_code
+ .endm
++.macro trace_idtentry_pf_ist sym do_sym
++idtentry_pf_ist trace(\sym) trace(\do_sym)
++idtentry_pf_ist \sym \do_sym
++.endm
+ #else
+ .macro trace_idtentry sym do_sym has_error_code:req
+ idtentry \sym \do_sym has_error_code=\has_error_code
+ .endm
++.macro trace_idtentry_pf_ist sym do_sym
++idtentry_pf_ist \sym \do_sym
++.endm
+ #endif
+ 
+ idtentry divide_error			do_divide_error			has_error_code=0
+@@ -1157,6 +1240,7 @@ idtentry xenint3		do_int3			has_error_code=0
+ 
+ idtentry general_protection	do_general_protection	has_error_code=1
+ trace_idtentry page_fault	do_page_fault		has_error_code=1
++trace_idtentry_pf_ist page_fault_ist       do_page_fault
+ 
+ #ifdef CONFIG_KVM_GUEST
+ idtentry async_page_fault	do_async_page_fault	has_error_code=1
+diff --git a/arch/x86/include/asm/desc.h b/arch/x86/include/asm/desc.h
+index c39097523fa8..7c9aef362a51 100644
+--- a/arch/x86/include/asm/desc.h
++++ b/arch/x86/include/asm/desc.h
+@@ -478,6 +478,27 @@ static inline void _set_gate(int gate, unsigned type, void *addr,
+ 				0, 0, __KERNEL_CS);			\
+ 	} while (0)
+ 
++/*
++   543 static inline void set_intr_gate_ist(int n, void *addr, unsigned ist)
++544 {
++545         BUG_ON((unsigned)n > 0xFF);
++546         _set_gate(n, GATE_INTERRUPT, addr, 0, ist, __KERNEL_CS);
++547 }
++*/
++#define set_intr_gate_notrace_pf_ist(n, addr, ist)					\
++	do {								\
++		BUG_ON((unsigned)n > 0xFF);				\
++		_set_gate(n, GATE_INTERRUPT, (void *)addr, 0, ist,	\
++			  __KERNEL_CS);					\
++	} while (0)
++
++#define set_intr_gate_pf_ist(n, addr, ist)						\
++	do {								\
++		set_intr_gate_notrace_pf_ist(n, addr, ist);				\
++		_trace_set_gate(n, GATE_INTERRUPT, (void *)trace_##addr,\
++				0, ist, __KERNEL_CS);			\
++	} while (0)
++
+ extern int first_system_vector;
+ /* used_vectors is BITMAP for irq is not managed by percpu vector_irq */
+ extern unsigned long used_vectors[];
+diff --git a/arch/x86/include/asm/page_64_types.h b/arch/x86/include/asm/page_64_types.h
+index 3f5f08b010d0..c2cbc8ab2891 100644
+--- a/arch/x86/include/asm/page_64_types.h
++++ b/arch/x86/include/asm/page_64_types.h
+@@ -28,7 +28,8 @@
+ #define NMI_STACK 2
+ #define DEBUG_STACK 3
+ #define MCE_STACK 4
+-#define N_EXCEPTION_STACKS 4  /* hw limit: 7 */
++#define PAGEFAULT_STACK 5
++#define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
+ 
+ /*
+  * Set __PAGE_OFFSET to the most negative possible address +
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index 6f342cb9fecd..d85e6627f45f 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -26,6 +26,7 @@ asmlinkage void segment_not_present(void);
+ asmlinkage void stack_segment(void);
+ asmlinkage void general_protection(void);
+ asmlinkage void page_fault(void);
++asmlinkage void page_fault_ist(void);
+ asmlinkage void async_page_fault(void);
+ asmlinkage void spurious_interrupt_bug(void);
+ asmlinkage void coprocessor_error(void);
+@@ -37,6 +38,7 @@ asmlinkage void simd_coprocessor_error(void);
+ 
+ #ifdef CONFIG_TRACING
+ asmlinkage void trace_page_fault(void);
++asmlinkage void trace_page_fault_ist(void);
+ #define trace_stack_segment stack_segment
+ #define trace_divide_error divide_error
+ #define trace_bounds bounds
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index fbad1e27daa7..24254b6e6239 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -22,6 +22,7 @@ static char *exception_stack_names[N_EXCEPTION_STACKS] = {
+ 		[ NMI_STACK-1		]	= "NMI",
+ 		[ DEBUG_STACK-1		]	= "#DB",
+ 		[ MCE_STACK-1		]	= "#MC",
++		[ PAGEFAULT_STACK-1     ]       = "#PF",
+ };
+ 
+ static unsigned long exception_stack_sizes[N_EXCEPTION_STACKS] = {
+@@ -31,7 +32,7 @@ static unsigned long exception_stack_sizes[N_EXCEPTION_STACKS] = {
+ 
+ const char *stack_type_name(enum stack_type type)
+ {
+-	BUILD_BUG_ON(N_EXCEPTION_STACKS != 4);
++	BUILD_BUG_ON(N_EXCEPTION_STACKS != 5);
+ 
+ 	if (type == STACK_TYPE_IRQ)
+ 		return "IRQ";
+@@ -57,7 +58,7 @@ static bool in_exception_stack(unsigned long *stack, struct stack_info *info)
+ 	struct pt_regs *regs;
+ 	unsigned k;
+ 
+-	BUILD_BUG_ON(N_EXCEPTION_STACKS != 4);
++	BUILD_BUG_ON(N_EXCEPTION_STACKS != 5);
+ 
+ 	for (k = 0; k < N_EXCEPTION_STACKS; k++) {
+ 		end   = (unsigned long *)raw_cpu_ptr(&orig_ist)->ist[k];
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index 2501816f5d8b..5e8f87689e36 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -641,6 +641,26 @@ asmlinkage __visible notrace struct pt_regs *sync_regs(struct pt_regs *eregs)
+ }
+ NOKPROBE_SYMBOL(sync_regs);
+ 
++/*
++ * Help handler for sync pf_ist stack to thread or irq stack.
++asmlinkage __visible notrace unsigned long * sync_regs_pf_ist(struct pt_regs *eregs)
++{
++       unsigned long sp = eregs->sp;
++       //BUG_ON(user_mode(user_mode(eregs);
++       //BUG_ON((eregs->orig_ax & 16));
++       // BUG_ON(!(sp & (1 << 63)));
++
++       struct pt_regs *regs = (struct pt_regs *)sp - 1;
++
++       //BUG_ON(regs == eregs);
++
++       *regs = *eregs;
++
++       return &regs->orig_ax;
++}
++NOKPROBE_SYMBOL(sync_regs_pf_ist);
++*/
++
+ struct bad_iret_stack {
+ 	void *error_entry_ret;
+ 	struct pt_regs regs;
+@@ -976,7 +996,8 @@ void __init early_trap_init(void)
+ void __init early_trap_pf_init(void)
+ {
+ #ifdef CONFIG_X86_64
+-	set_intr_gate(X86_TRAP_PF, page_fault);
++	//set_intr_gate(X86_TRAP_PF, page_fault);
++	set_intr_gate_pf_ist(X86_TRAP_PF, page_fault_ist, PAGEFAULT_STACK);
+ #endif
+ }
+ 
+-- 
+2.16.4
+

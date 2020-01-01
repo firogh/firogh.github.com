@@ -95,11 +95,8 @@ CommitDate: Thu Jul 17 09:35:15 2014 -0400
 
 # Cryptograhy
 * Side-channel attack Timing attack: 
-
     crypto: crypto_memneq - add equality testing of memory regions w/o timing leaks
-    
     commit 6bf37e5aa90f18baf5acf4874bca505dd667c37f upstream.
-
 EVM: Use crypto_memneq() for digest comparisons
 613317bd212c585c20796c10afe5daaa95d4b0a1
 # Cryptograhy practice
@@ -117,12 +114,25 @@ openssl asn1parse -inform DER -in bar.der.sig
   996:d=7  hl=2 l=  34 cons: SET
   998:d=8  hl=2 l=  32 prim: OCTET STRING      [HEX DUMP]:C833131C0EC89014C71F5F7F7F85AE5E6211061FC7C1F3182BEAA7AD442FC065
 
-# network security
-* spoofing attack
-* Side-channel attack 
+# SELinux
+https://danwalsh.livejournal.com/12333.html
+[SELinux Explained with Examples in Easy Language]
+[SELinux/Tutorials/What is this unconfined thingie and tell me about attributes](https://wiki.gentoo.org/wiki/SELinux/Tutorials/What_is_this_unconfined_thingie_and_tell_me_about_attributes)
+security/selinux/selinuxfs.c: sysfs_create_mount_point: create /sys/fs/selinux mount point. then mount the selinuxfs on selinux_null???
+upstart will mount selinuxfs at /sys/fs/selinux
+bash-4.3# mount
+/dev/sda2 on / type ext3 (ro,relatime,errors=continue,user_xattr,acl,barrier=1,data=ordered)
+proc on /proc type proc (rw,relatime)
+sysfs on /sys type sysfs (rw,relatime)
+bash-4.3# cat /proc/cmdline
+BOOT_IMAGE=vmlinuz rootwait max_loop=255 ro clock=pit console=ttyS0,115200 root=LABEL=wr_usb_boot initrd=initrd init=/bin/bash selinux=1
+bash-4.3# ls /sys/fs/selinux/
+bash-4.3# cat /proc/filesystems  | grep selinux
+nodev   selinuxfs
+bash-4.3# mount -t selinuxfs selinuxfs /sys/fs/selinux/
 
-
-# etc
-Improper Access Control
-netlink: fix possible spoofing from non-root processes
-	20e1db19db5d6b9e4e83021595eab0dc8f107bef
+# Neverallow
+[neverallow statements are allowed in modules, however to detect these the semanage.conf file must have the expand-check=1 entry present.](https://selinuxproject.org/page/AVCRules#neverallow)
+cat brk.cil 
+(allow xdm_t shadow_t(file (read)))
+semodule -i brk.cil
