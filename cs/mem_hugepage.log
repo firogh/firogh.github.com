@@ -1,0 +1,59 @@
+# Reference
+[Transparent hugepages](https://lwn.net/Articles/359158/)
+[Transparent huge pages in 2.6.38](https://lwn.net/Articles/423584/)
+https://www.kernel.org/doc/Documentation/vm/transhuge.txt
+[THP: Hugepage导致进程占用物理内存过多的问题](http://hustcat.github.io/hugepage-problem/
+[Disable Transparent Huge Pages (THP)](https://docs.mongodb.com/manual/tutorial/transparent-huge-pages/)
+[Disable Transparent Hugepages](https://blog.nelhage.com/post/transparent-hugepages/)
+[Transparent Hugepages: measuring the performance impact](https://alexandrnikitin.github.io/blog/transparent-hugepages-measuring-the-performance-impact/)
+
+# History
+git log --graph --oneline 22e5c47ee238
+commit 3f04f62f90d46a82dd73027c5fd7a15daed5c33d
+Author: Andrea Arcangeli <aarcange@redhat.com>
+Date:   Thu Jan 13 15:46:47 2011 -0800
+    thp: split_huge_page paging
+commit 71e3aac0724ffe8918992d76acfe3aad7d8724a5
+Author: Andrea Arcangeli <aarcange@redhat.com>
+Date:   Thu Jan 13 15:46:52 2011 -0800
+    thp: transparent hugepage core
+commit b96375f74a6d4f39fc6cbdc0bce5175115c7f96f
+Author: Matthew Wilcox <willy@linux.intel.com>
+Date:   Tue Sep 8 14:58:48 2015 -0700
+    mm: add a pmd_fault handler
+    Allow non-anonymous VMAs to provide huge pages in response to a page fault.
+commit 0f0746589e4be071a8f890b2035c97c30c7a4e16
+Author: Minchan Kim <minchan@kernel.org>
+Date:   Thu Jul 6 15:37:24 2017 -0700
+    mm, THP, swap: move anonymous THP split logic to vmscan
+
+# Purposes or ends
+Transparent Hugepage Support is an alternative means of
+using huge pages for the backing of virtual memory with huge pages
+that supports the automatic promotion and demotion of page sizes and
+without the shortcomings of hugetlbfs.
+Benefits:
+1. Since we can map 2MB memory for each page fault, it can the enter/exit kernel frequency by a 512 times.
+2. the TLB miss will run faster. Why, [fewer levels of page tables must be traversed to get to the physical address](https://lwn.net/Articles/423584/) and [The page table walk is expensive because it may require multiple memory accesses (they may hit the CPU L1/L2/L3 caches though](https://alexandrnikitin.github.io/blog/transparent-hugepages-measuring-the-performance-impact/)
+3. a single TLB entry will be mapping a much larger amount of virtual memory in turn reducing the number of TLB misses. 
+
+# Form design
+Currently it only works for anonymous memory mappings and tmpfs/shmem and fs which support huge_fault.
+page fault
+
+## Compound pages
+tglx: commit eefb08ee7da81e1548ffd5b664682dc5b229ddc2
+Author: Andrew Morton <akpm@digeo.com>
+Date:   Wed Feb 5 16:57:54 2003 -0800
+    [PATCH] Infrastructure for correct hugepage refcounting
+[An introduction to compound pages](https://lwn.net/Articles/619514/)
+libfc, fcoe: fixes for highmem skb linearize panics:18fa11efc279c20af5eefff2bbe814ca067e51ae
+[what is "compound_page()" all about?](https://www.spinics.net/lists/newbies/msg41159.html)
+[Compound page overhaul](https://lwn.net/Articles/112311/)
+
+# Hugetlb page
+https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+[Huge pages part 1 (Introduction)](https://lwn.net/Articles/374424/)
+[hugepage 分析](https://ggaaooppeenngg.github.io/zh-CN/2017/04/30/hugepage-%E5%88%86%E6%9E%90/)
+## status
+p hstates

@@ -1,0 +1,90 @@
+https://kernel.googlesource.com/pub/scm/linux/kernel/git/tj/misc/+/concurrency-managed-workqueue%5E%21/
+workqueue: implement concurrency managed workqueue
+
+Currently each workqueue has its own dedicated worker pool.  This
+causes the following problems.
+
+* Works which are dependent on each other can cause a deadlock by
+  depending on the same execution resource.  This is bad because this
+  type of dependency is quite difficult to find.
+
+* Works which may sleep and take long time to finish need to have
+  separate workqueues so that it doesn't block other works.  Similarly
+  works which want to be executed in timely manner often need to
+  create it custom workqueue too to avoid being blocked by long
+  running ones.  This leads to large number of workqueues and thus
+  many workers.
+
+* The static one-per-cpu worker isn't good enough for jobs which
+  require higher level of concurrency necessiating other worker pool
+  mechanism.  slow-work and async are good examples and there are also
+  some custom implementations buried in subsystems.
+
+* Combined, the above factors lead to many workqueues with large
+  number of dedicated and mostly unused workers.  This also makes work
+  processing less optimal as the dedicated workers end up switching
+  among themselves costing scheduleing overhead and wasting cache
+  footprint for their stacks and as the system gets busy, these
+  workers end up competing with each other.
+
+To solve the above issues, this patch implements concurrency-managed
+workqueue.
+
+There is single global cpu workqueue (gcwq) for each cpu which serves
+all the workqueues.  gcwq maintains single pool of workers which is
+shared by all cwqs on the cpu.
+
+gcwq keeps the number of concurrent active workers to minimum but no
+less.  As long as there's one or more running workers on the cpu, no
+new worker is scheduled so that works can be processed in batch as
+much as possible but when the last running worker blocks, gcwq
+immediately schedules new worker so that the cpu doesn't sit idle
+while there are works to be processed.
+
+gcwq always keeps at least single idle worker around.  When a new
+worker is necessary and the worker is the last idle one, the worker
+assumes the role of "manager" and manages the worker pool -
+ie. creates another worker.  Forward-progress is guaranteed by having
+dedicated rescue workers for workqueues which may be necessary while
+creating a new worker.  When the manager is having problem creating a
+new worker, mayday timer activates and rescue workers are summoned to
+the cpu and execute works which may be necessary to create new
+workers.
+
+To keep track of which worker is executing which work, gcwq uses a
+hash table.  This is necessary as works may be destroyed once it
+starts executing and flushing should be implemented by tracking
+whether any worker is executing the work.
+
+cpu hotplug implementation is more complex than before because there
+are multiple workers and now workqueue is capable of hosting long
+erunning works.  cpu offlining is implemented by creating a "trustee"
+kthread which runs the gcwq as if the cpu is still online until all
+works are drained.  As soon as the trustee takes over the gcwq, cpu
+hotunplug operation can proceed without waiting for workqueues to be
+drained.  Onlining is the reverse.  If trustee is still trying to
+drain the gcwq from the previous offlining, it puts all workers back
+to the cpu and let the gcwq run as if cpu has been online the whole
+time.
+
+The new implementation has the following benefits.
+
+* Workqueue users no longer have to worry about managing concurrency
+  and, in most cases, deadlocks.  The workqueue will manage it
+  automatically and unless the deadlock chain involves more than 127
+  works, it won't happen.
+
+* There's one single shared pool of workers per cpu and one rescuer
+  for each workqueue which requires it, so there are far fewer number
+  of kthreads.
+
+* More efficient.  Although it adds considerable amount of code, the
+  code added to hot path isn't big and works will be executed on the
+  local cpu and in batch as much as possible using minimal number of
+  kthreads leading to fewer task switches and lower cache
+  footprint. <NEED SOME BACKING NUMBERS>
+
+* As concurrency is no longer a problem, most types of asynchronous
+  jobs can be done using generic workqueue and other async mechanisms
+  can be removed.
+NOT_SIGNED_OFF_YET

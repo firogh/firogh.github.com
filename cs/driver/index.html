@@ -11,32 +11,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="keywords" content="cs, ">
+<meta name="keywords" content="kernel, ">
 
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="Computer architecture : firoyang.org"/>
+<meta property="og:title" content="Linux device driver : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="" />
 <meta property="og:image:height" content="" />
-<meta property="og:url" content="http://firoyang.org/cs/arch/">
+<meta property="og:url" content="http://firoyang.org/cs/driver/">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2015-10-13"/>
-<meta property="article:modified_time" content="2015-10-13"/>
+<meta property="article:published_time" content="2015-02-27"/>
+<meta property="article:modified_time" content="2015-02-27"/>
 
 
-<meta property="article:tag" content="cs">
+<meta property="article:tag" content="kernel">
 
 
 
 
 
     <base href="http://firoyang.org/">
-    <title> Computer architecture</title>
-    <link rel="canonical" href="http://firoyang.org/cs/arch/">
+    <title> Linux device driver</title>
+    <link rel="canonical" href="http://firoyang.org/cs/driver/">
 
     
 <link rel='stylesheet' type='text/css'>
@@ -156,20 +156,20 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >Computer architecture</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >Linux device driver</h1>
 	  
 
 <aside id="meta">
 
     <div>
         <section id="datecount">
-          <h4 id="date"> Tue Oct 13, 2015 </h4>
+          <h4 id="date"> Fri Feb 27, 2015 </h4>
           
         </section>
         
         <ul id="tags">
           
-            <li> <a href="http://firoyang.org//tags/cs">cs</a> </li>
+            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
           
         </ul>
 
@@ -178,102 +178,89 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="334">
-<meta itemprop="datePublished" content="2015-10-13">
-<meta itemprop="url" content="http://firoyang.org/cs/arch/">
+<meta itemprop="wordCount" content="316">
+<meta itemprop="datePublished" content="2015-02-27">
+<meta itemprop="url" content="http://firoyang.org/cs/driver/">
 
 
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="computer-architecture">Computer architecture</h1>
+<h1 id="kernel-module-programming">Kernel module programming</h1>
 
-<p>[Who are the Computer Architects?]<a href="https://people.cs.clemson.edu/~mark/architects.html">https://people.cs.clemson.edu/~mark/architects.html</a><br />
-The Mathematical Theory of Communication<br />
-Given a symbol level, the architecture is the description of the system in  whatever system-description scheme exists next below the symbol level. - Newell, 1990, p. 81<br />
-Digital Design and Computer Architecture 2nd Edition<br />
-Computer Organization and Design 5th Edition<br />
-Structured Computer Organization 6th Edition<br />
-Write Great Code: Volume 1: Understanding the Machine</p>
+<p>sudo depmod -n -a -F /boot/System.map-4.3.5-300.fc23.x86_64  4.3.5-300.fc23.x86_64 &gt; /tmp/m.log<br />
+CFLAGS_jc.o := -O2<br />
+ccflags-y := -O2</p>
 
-<h2 id="subfields">Subfields</h2>
+<h2 id="mapping">Mapping</h2>
 
-<p><a href="https://en.wikipedia.org/wiki/Architectural_state">Architectural state</a><br />
-Microarchitectural state, such as information stored in TLBs and caches</p>
+<p><a href="https://lwn.net/Articles/653585/">ioremap() and memremap()</a></p>
 
-<h1 id="circuits">Circuits</h1>
+<h2 id="kernel-module-param">kernel module param</h2>
 
-<p>A Symbolic Analysis of Relay and Switching Circuits</p>
+<p>include/asm-generic/vmlinux.lds.h<br />
+                KEEP(*(__param))                                        <br />
+__module_param_call<br />
+<strong>attribute</strong> ((unused,<strong>section</strong> (&rdquo;__param&rdquo;),aligned(sizeof(void *)))) </p>
 
-<h1 id="memory-hierarchy">Memory hierarchy</h1>
+<h2 id="lib">Lib</h2>
 
-<p><a href="http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html">Latency Numbers Every Programmer Should Know</a></p>
+<p>devm_kfree and <a href="http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html">devm_kfree does not need for fail case of probe function and for remove function.</a></p>
 
-<h1 id="cpu">CPU</h1>
+<h1 id="device-model">Device model</h1>
 
-<p><a href="https://youtu.be/cNN_tTXABUA">How a CPU Works</a></p>
+<p>The device model was originally intended to make power management tasks easier - LDD?<br />
+Documentation/driver-model<br />
+<a href="http://lwn.net/Articles/31185/">Driver porting: Device model overview</a><br />
+<a href="https://lwn.net/Articles/604413/">Devices in /sys</a></p>
 
-<h2 id="isa">ISA</h2>
+<h1 id="history-of-module-linkage-and-loader">History of module linkage and loader</h1>
 
-<p>ISA: memory model, registers, data types, instructions, word size(?).<br />
-Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&rsquo;s semantics.</p>
+<h2 id="ksyms-removed">ksyms - removed</h2>
 
-<h1 id="i-o">I/O</h1>
+<p>History: commit d80e0e9b2620f8ec6508d43484bd8300401d0383 (tag: 0.99.14d)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:09:16 2007 -0500<br />
+    Import 0.99.14d<br />
++++ b/include/linux/module.h<br />
++ * Dynamic loading of modules into the kernel.<br />
++++ b/kernel/ksyms.S<br />
++ * Herein lies all the functions/variables that are &ldquo;exported&rdquo; for linkage<br />
++ * With dynamically loaded kernel modules. Could do with making this a bit<br />
++ * cleaner!<br />
+History: commit 75bcc1d5a30e1d2045c3564a668c11dbba5cfe3f (tag: 1.1.0)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:09:26 2007 -0500<br />
+    Import 1.1.0<br />
+convert ksyms.S to ksyms.c<br />
+tglx: commit ff08f6fe935ff0854990421e80d04c39c7c2a15a<br />
+Author: Arnaldo Carvalho de Melo <a href="mailto:acme@conectiva.com.br">acme@conectiva.com.br</a><br />
+Date:   Tue Oct 7 17:54:04 2003 -0300<br />
+    o kernel/ksyms.c: move remaining EXPORT_SYMBOLs, remove this file from the tree<br />
+Removing ksyms.c</p>
 
-<p>serial communication: UART(16550) + RS-232<br />
-parallel communication: SCSI, ISA, ATA, PCI, FSB</p>
+<h2 id="export-symbol">EXPORT_SYMBOL</h2>
 
-<h2 id="data-struct-alignment">Data struct alignment</h2>
+<p>History: commit f1bbcc4197c4597636782a34ad138a51c40b1efb (tag: 2.1.18)<br />
+Author: Linus Torvalds <a href="mailto:torvalds@linuxfoundation.org">torvalds@linuxfoundation.org</a><br />
+Date:   Fri Nov 23 15:12:47 2007 -0500<br />
+    Import 2.1.18<br />
++/* Export a symbol either from the kernel or a module.<br />
++   In the kernel, the symbol is added to the kernel&rsquo;s global symbol table.<br />
++   In a module, it controls which variables are exported.  If no<br />
++   variables are explicitly exported, the action is controled by the<br />
++   insmod -[xX] flags.  Otherwise, only the variables listed are exported.<br />
++   This obviates the need for the old register_symtab() function.  */</p>
 
-<p>struct foo { char c; int i;};<br />
-<a href="https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt">UNALIGNED MEMORY ACCESSES</a><br />
-<a href="http://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html">A bug story: data alignment on x86</a><br />
-<a href="http://www.catb.org/esr/structure-packing/">The Lost Art of C Structure Packing</a><br />
-<a href="http://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86">Typical alignment of C structs on x86</a></p>
+<h2 id="in-kernel-module-loader">In-kernel module loader</h2>
 
-<h3 id="reasons-for-not-alignment">Reasons for not alignment</h3>
-
-<ol>
-<li>Casting variables to types of different lengths, e.g. char * to int *<br /></li>
-
-<li><p>Pointer arithmetic followed by access to at least 2 bytes of data , 不太理解.</p>
-
-<h3 id="programming-skills">Programming skills</h3>
-
-<p>Reorder members of struct;<br />
-get/put_unaligned to avoid analigned access.<br />
-attribute aligned</p>
-
-<h3 id="calculate-the-sizeof-of-aligned-c-struct">Calculate the sizeof of aligned c struct</h3>
-
-<p>Data alignment means putting the data at a memory address equal to some multiple of the word size, which increases the system&rsquo;s performance due to the way the CPU handles memory.</p></li>
-
-<li><p>find the widest scalar member and attribute( aligned(x)) to determin alignment.</p></li>
-
-<li><p>fill the member to alignement without wrap</p></li>
-
-<li><p>Pading to alignment</p></li>
-</ol>
-
-<h2 id="endianess-and-bitfield">Endianess and bitfield</h2>
-
-<p><a href="https://gcc.gnu.org/onlinedocs/gcc/Structures-unions-enumerations-and-bit-fields-implementation.html">The order of allocation of bit-fields within a unit</a><br />
-It&rsquo;s Determined by ABI not Gcc. Check comments on <a href="https://stackoverflow.com/questions/47600584/bitfield-endianness-in-gcc">Bitfield endianness in gcc</a></p>
-
-<h3 id="how-endianness-effects-bitfield-packing-http-mjfrazer-org-mjfrazer-bitfields"><a href="http://mjfrazer.org/mjfrazer/bitfields/">How Endianness Effects Bitfield Packing</a></h3>
-
-<p>if defined(__LITTLE_ENDIAN_BITFIELD)<br />
-    __u8    ihl:4,<br />
-        version:4;  # MSB, check wikipeida ipv4 header</p>
-
-<h3 id="gcc-bug-on-bitfield">GCC bug on bitfield</h3>
-
-<p><a href="https://lwn.net/Articles/478657/">Betrayed by a bitfield</a></p>
-
-<h1 id="dma">DMA</h1>
-
-<p>Check books COD, COA and ULK 3rd</p>
+<p>tglx: commit aa65be3f456be1ac4359f7fffeb7b4ae3c149419<br />
+Author: Rusty Russell <a href="mailto:rusty@rustcorp.com.au">rusty@rustcorp.com.au</a><br />
+Date:   Sun Nov 10 17:08:07 2002 -0800<br />
+    [PATCH] In-kernel Module Loader<br />
++/* Allocate and load the module */<br />
++static struct module *load_module(void *umod,</p>
 
 		</article>
 	  </div>
@@ -284,9 +271,9 @@ It&rsquo;s Determined by ABI not Gcc. Check comments on <a href="https://stackov
     <div id="disqus_thread"></div>
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
-    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/arch\/';
-    var disqus_title = 'Computer architecture';
-    var disqus_url = 'http:\/\/firoyang.org\/cs\/arch\/';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/driver\/';
+    var disqus_title = 'Linux device driver';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/driver\/';
 
     (function() {
         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

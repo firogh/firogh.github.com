@@ -1,13 +1,56 @@
-# History
+# Wait
 [Driver porting: sleeping and waking up](https://lwn.net/Articles/22913/)
 [Porting drivers to the 2.5 kerne sleeping and waking up](https://www.kernel.org/doc/ols/2003/ols2003-pages-134-149.pdf)
 Some history on wait_event() and prepare_to_wait()
 
-# Think for your self
-# Sleep and wakeup problem: Sleep forever
+## Sleep and wakeup problem: Sleep forever
 1. Wake up or not (insert into the wakeup linked list. Test if there will be a wakeup in near furture)?
 2. Wake up too early before sleep(set uninterupptable before test)?
 Example: put_and_wait_on_page_locked()
+
+### Lost wake-up problem
+[Kernel Korner - Sleeping in the Kernel](https://www.linuxjournal.com/article/8144)
+kernel solution: wait_event
+history: commit f3d40e81c946bb81bb602abaf9e7bf7688145999 (tag: 2.2.3pre2)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:18:18 2007 -0500
+    Import 2.2.3pre2
+There isn't any comment at all in this commit.
+
+### Reordering issue due to memory reoder
+CPU0:Process A
+while(!done) {
+        schedule();
+        set_current_state = *interruptable;
+}
+CPU1: Process B
+done = true;
+wake_up_process(A);
+Ordering issue: reorder load of done and store of state;
+A: load of done
+B: done = true
+B: wake up
+A: set state
+A: schedule
+commit bcbd94ff481ec1d7b5c824d90df82d0faafabd35
+Author: Mikulas Patocka <mpatocka@redhat.com>
+Date:   Thu Nov 19 07:36:50 2015 -0500
+    dm crypt: fix a possible hang due to race condition on exit
+
+## list_empty_carefull
+tglx: commit a2c72fae694277071dcbab33dfb7f88af5e54954
+Author: Linus Torvalds <torvalds@home.osdl.org>
+Date:   Thu Dec 11 22:20:08 2003 -0800
+    Fix subtle bug in "finish_wait()", which can cause kernel stack
+    corruption on SMP because of another CPU still accessing a waitqueue
+    even after it was de-allocated.
+    Use a careful version of the list emptiness check to make sure we
+    don't de-allocate the stack frame before the waitqueue is all done.
+* NOTE: using list_empty_careful() without synchronization
+* can only be safe if the only activity that can happen
+* to the list entry is list_del_init(). Eg. it cannot be used
+* if another CPU could re-list_add() it. 
+[finish_wait with list_empty_careful maybe fragile or buggy??](https://lkml.org/lkml/2018/3/11/143)
 
 # kernel wait queues
 [Simple wait queues](https://lwn.net/Articles/577370/)
@@ -42,12 +85,3 @@ history: commit f17051d751d0843be1d683fbf2790b17cbd26134 (tag: 2.3.1pre1)
 Author: Linus Torvalds <torvalds@linuxfoundation.org>
 Date:   Fri Nov 23 15:24:59 2007 -0500
     Import 2.3.1pre1
-
-# Lost wake-up problem
-[Kernel Korner - Sleeping in the Kernel](https://www.linuxjournal.com/article/8144)
-kernel solution: wait_event
-history: commit f3d40e81c946bb81bb602abaf9e7bf7688145999 (tag: 2.2.3pre2)
-Author: Linus Torvalds <torvalds@linuxfoundation.org>
-Date:   Fri Nov 23 15:18:18 2007 -0500
-    Import 2.2.3pre2
-There isn't any comment at all in this commit.

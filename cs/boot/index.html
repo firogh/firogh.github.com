@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="309">
+<meta itemprop="wordCount" content="256">
 <meta itemprop="datePublished" content="2015-11-12">
 <meta itemprop="url" content="http://firoyang.org/cs/boot/">
 
@@ -186,33 +186,6 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
-
-<h1 id="kernel-boot-process">kernel boot process</h1>
-
-<p>Documentation/x86/boot.txt<br />
-<a href="https://manybutfinite.com/post/kernel-boot-process/">The Kernel Boot Process</a><br />
-arch/x86/boot/header.S::start_of_setup<br />
-arch/x86/boot/main.c::main()<br />
-    arch/x86/boot/memory.c::detect_memory()<br />
-    arch/x86/boot/memory.c::detect_memory_e820() = boot_params.e820_entries<br />
-    arch/x86/boot/pm.c::go_to_protected_mode()<br />
-arch/x86/boot/pmjump.S::protected_mode_jump<br />
-arch/x86/kernel/compressed/head_64.S::startup_32<br />
-arch/x86/kernel/compressed/head_64.S::startup_64<br />
-arch/x86/kernel/head_64.S::startup_64<br />
-kernel/main.c::start_kernel()</p>
-
-<h2 id="reloctaion-for-decompress">Reloctaion for decompress</h2>
-
-<p>974f221c84b05b1dc2f5ea50dc16d2a9d1e95eda<br />
-x86/boot: Move compressed kernel to the end of the decompression buffer</p>
-
-<h2 id="horrable-commit-description-on-phys-base">Horrable commit description on phys_base</h2>
-
-<p>commit 1ab60e0f72f71ec54831e525a3e1154f1c092408<br />
-Author: Vivek Goyal <a href="mailto:vgoyal@in.ibm.com">vgoyal@in.ibm.com</a><br />
-Date:   Wed May 2 19:27:07 2007 +0200<br />
-    [PATCH] x86-64: Relocatable Kernel Support</p>
 
 <h1 id="smp-boot">SMP boot</h1>
 
@@ -254,24 +227,51 @@ ap hp threadfn -&gt; bringup_cpu -&gt; __cpu_up -&gt; smp_ops.cpu_up(cpu, tidle)
 <p>trampoline_start -&gt; &hellip; -&gt; startup_64 -&gt; tr_start(%rip) is secondary_startup_64 -&gt; initial_code(%rip) is start_secondary<br />
 -&gt; cpu_init</p>
 
-<h1 id="normalize-cs">Normalize %cs</h1>
+<h1 id="initrd">initrd</h1>
 
-<p>程序的起始地址在链接脚本中被设置为 0，如果 setup 被加载到其他地方(起始地<br />
-址不为 0 的地方)，那么指令里面访问的全局符号都会有重定位的问题。由于 Boot Loader<br />
-跳转到上面这段代码的时候，把 DS 设置为 setup 加载的基地址，而第 17 行访问_end 默认<br />
-是用数据段寄存器 DS 的，所以不会有重定位的问题。但是在 38 行转移指令用的 CS 寄存器，<br />
-而符号 main 的地址是在链接期决定的，现在加载的基地址改变了，那肯定会出问题了。所<br />
-以事先在第 24 行把 CS 设置为和 DS 一样，这样就解决了重定位的问题了。代码的最后跳转<br />
-到了 arch/x86/boot/main.c 中的 main 函数中继续执行。</p>
+<p>related code:<br />
+reserve_initrd<br />
+subsys_initcall(genhd_device_init);-&gt;kobj_map_init{bdev_map.probe.get = base_probe}<br />
+subsys_initcall(init_scsi);4-&gt;scsi_sysfs_register{autoprobe = 1;}<br />
+rootfs_initcall(populate_rootfs);-&gt;{unpack_to_rootfs; 解压initramfs到rootfs}<br />
+module_initinit_sd;6-&gt;scsi_register_driver -&gt;driver_register-&gt;bus_add_driver -&gt;driver_attach -&gt;driver_probe_device-&gt; drv-&gt;probe(dev)=sd_probe_async-&gt;add_disk -&gt; register_disk -&gt; get_gendisk -&gt; kobj_lookup { bdev_map.probe.get()=base_probe(){request_module}}</p>
 
-<h1 id="print-with-int-0x10">print with int $0x10</h1>
+<h1 id="vs-initramfs">vs initramfs</h1>
 
-<p><a href="https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu">https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu</a></p>
+<p>initrd is image with specific fs type, like ext2, need driver built-in kernel.<br />
+initramfs is a cpio, like tar only simpler, populated to rootfs in kernel, with fs type rootfs</p>
 
-<h1 id="a20">A20</h1>
+<h1 id="root-device">root device</h1>
 
-<p>[Why enable A20 line in Protected Mode?][<a href="https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode">https://stackoverflow.com/questions/33827474/why-enable-a20-line-in-protected-mode</a>]<br />
-This gate, (the A20 gate), is controlled by a GPIO pin on the keyboard controller IC. Thus, you need to enable it before going into protected mode. If you didn&rsquo;t, (and say you flat-mapped all 4GB of physical memory), then as Micheal Petch indicated, &ldquo;every odd numbered megabyte region will be inaccessible. So 1mb-2mb will actually reference 0-1mb, 3mb-4mb will reference 2mb-3mb etc.&rdquo; See also:</p>
+<p>Related code:<br />
+root= name_to_dev_t, mount_root in prepare_namespace</p>
+
+<h1 id="kernel-boot-process">kernel boot process</h1>
+
+<p>Documentation/x86/boot.txt<br />
+<a href="https://manybutfinite.com/post/kernel-boot-process/">The Kernel Boot Process</a><br />
+arch/x86/boot/header.S::start_of_setup<br />
+arch/x86/boot/main.c::main()<br />
+    arch/x86/boot/memory.c::detect_memory()<br />
+    arch/x86/boot/memory.c::detect_memory_e820() = boot_params.e820_entries<br />
+    arch/x86/boot/pm.c::go_to_protected_mode()<br />
+arch/x86/boot/pmjump.S::protected_mode_jump<br />
+arch/x86/kernel/compressed/head_64.S::startup_32<br />
+arch/x86/kernel/compressed/head_64.S::startup_64<br />
+arch/x86/kernel/head_64.S::startup_64<br />
+kernel/main.c::start_kernel()</p>
+
+<h2 id="reloctaion-for-decompress">Reloctaion for decompress</h2>
+
+<p>974f221c84b05b1dc2f5ea50dc16d2a9d1e95eda<br />
+x86/boot: Move compressed kernel to the end of the decompression buffer</p>
+
+<h2 id="horrable-commit-description-on-phys-base">Horrable commit description on phys_base</h2>
+
+<p>commit 1ab60e0f72f71ec54831e525a3e1154f1c092408<br />
+Author: Vivek Goyal <a href="mailto:vgoyal@in.ibm.com">vgoyal@in.ibm.com</a><br />
+Date:   Wed May 2 19:27:07 2007 +0200<br />
+    [PATCH] x86-64: Relocatable Kernel Support</p>
 
 		</article>
 	  </div>

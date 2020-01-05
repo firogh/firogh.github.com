@@ -1,12 +1,17 @@
-
 # History
 1956 Fritz Rudolf Güntsch’s doctoral dissertation
 Logical Design of a Digital Computer with Multiple Asynchronous Rotating Drums and Automatic High Speed Memory Operation
 [Origin of the virtual memory concept](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1369143)
 
+1959 Atlas prototype
+[Working prototypes of paging had been developed by 1959.](http://160592857366.free.fr/joe/ebooks/ShareData/Before%20Memory%20was%20Virtual%20By%20Peter%20J.%20Denning%20from%20George%20Mason%20University.pdf)
+
 1962 Paged VM on Atlas
 [A Must-read on paging: One-Level Storage System](http://www.dcs.gla.ac.uk/~wpc/grcs/kilburn.pdf)
-[A Must-read on virtual address space: Dynamic Storage Allocation in the Atlas Computer, Including an Automatic Use of a Backing Store](https://users.soe.ucsc.edu/~sbrandt/221/Papers/History/fotheringham-cacm61.pdf)
+[A Must-read on virtual address space decoupling address and memory location: Dynamic Storage Allocation in the Atlas Computer, Including an Automatic Use of a Backing Store](https://users.soe.ucsc.edu/~sbrandt/221/Papers/History/fotheringham-cacm61.pdf)
+
+1978
+[The Manchester Mark I and Atlas: A Historical Perspective](https://dl.acm.org/citation.cfm?id=359331)
 
 1979 Paged VM on Unix. 
 [Design and Implementation of the Berkeley Virtual Memory Extensions to the UNIX Operating System](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.107.9119&rep=rep1&type=pdf)
@@ -15,43 +20,119 @@ Logical Design of a Digital Computer with Multiple Asynchronous Rotating Drums a
 [Virtual Memory Architecture in SunOS](http://kos.enix.org/pub/gingell8.pdf)
 [SunOS Virtual Memory Implementation](http://kos.enix.org/pub/sunos-vi.pdf)
 
-# Purposes
-Efficiency
-Protection
-VM isolates an address space for these two purposes.
-
-# Formal causes
+# VM
 [Virtual Memory Architecture in SunOS](http://kos.enix.org/pub/gingell8.pdf)
 [Virtual memory from Atlas](http://curation.cs.manchester.ac.uk/computer50/www.computer50.org/kgill/atlas/atdef.html):
 [Tiled Virtual Memory for UNIX](https://www.usenix.org/legacy/publications/library/proceedings/sa92/franklin.pdf)
 [SunOS Virtual Memory Implementation](https://pdfs.semanticscholar.org/c035/746e00023aa421b75bb2c8b2137f60bccd65.pdf)
 [Design and Implementation of the Berkeley Virtual Memory Extensions to the UNIX† Operating System‡](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.107.9119&rep=rep1&type=pdf)
+[Memory part 3: Virtual Memory](https://lwn.net/Articles/253361/)
 
 > A system in which a process' workspace is held partly in high speed memory and partly on some slower and cheaper backing store. When the process refers to a memory location the system hardware detects whether or not the required location is physically present in memory and generates an interrupt if it is not, this allows, the system supervisor to transfer the required data area from backing store into memory.
 Firo: seems not accurate, consider the kernel space.
 
-
+## Address space
+LDD 3rd: Address Types
+[Virtual Memory I: the problem](https://lwn.net/Articles/75174/) 
+vma, mm_rb: address space area
 mm_struct
 History: commit b7c2deb6ea38080e7f6254b2d779b0bfce71eecb (tag: 1.1.11)
 Author: Linus Torvalds <torvalds@linuxfoundation.org>
 Date:   Fri Nov 23 15:09:29 2007 -0500
     Import 1.1.11
 Firo: Isolate mm_struct from task_struct; no helpful comment.
-## FSM
-Partitioning-buddy-allocator, mmap, vm based paging, page tables, PFRA.
 
-## Address
-LDD 3rd: Address Types
-## Address space
-[Virtual Memory I: the problem](https://lwn.net/Articles/75174/) 
-vma, mm_rb: address space area
-## page table
-pgd
 
-## Memory mapping
+# Paging
+The following is cited from 'before memory was virtual' by Peter J. Denning at George Mason University
+From their beginnings in the 1940s, electronic computers had two-level storage systems. In the 1950s, main memory was magnetic cores (today it is RAMs); the secondary memory was magnetic drums (today it is disks). The processor (CPU) could address only the main memory. A major part of a programmer’s job was to devise a good way to divide a program into blocks and to schedule their moves between the levels. The blocks were called “segments” or “pages” and the movement operations “overlays” or “swaps”. The designers of the first operating systems in the 1950s dreamt of relieving the programming burden by automating all this storage management.
 
-## Memory allocation
-### overcommit
-https://www.kernel.org/doc/Documentation/vm/overcommit-accounting
-[理解LINUX的MEMORY OVERCOMMIT](http://linuxperf.com/?p=102)
-[Virtual memory settings in Linux - The Problem with Overcommit](http://engineering.pivotal.io/post/virtual_memory_settings_in_linux_-_the_problem_with_overcommit/)
+[Paging from Atlas](http://curation.cs.manchester.ac.uk/computer50/www.computer50.org/kgill/atlas/atdef.html#page):
+
+> Is a technique in which the main store is divided into segments called pages. 
+> Large user programs may cover several pages, possibly too many to fit into the available store. 
+> The operating systems transfers pages between main store and backing store to ensure 
+> the correct page is in main store at any stage during the execution of the programs. 
+
+Also come from 'before memory was virtual'.
+At the heart of their idea was a radical innovation --- a distinction between “address” and “memory location”.
+It led them to three inventions. 
+(1) They built hardware that automatically translated each address generated by the processor to its current memory location.
+(2) They devised demand paging, an interrupt mechanism triggered by the address translator that moved a missing page of data into the main memory.
+(3) They built a replacement algorithm, a procedure to detect and move the least useful pages back to secondary memory.
+## Page fault
+
+# Page table
+[Chapter 3  Page Table Management](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
+[Page Table Isolation](https://www.kernel.org/doc/Documentation/x86/pti.txt)
+Check _PAGE_BIT_ACCESSED
+
+Related code:
+	init_mem_mapping //set page table and cr3.
+So early_level4_pgt(level4, level3, level2) in startup_64() with 
+ENTRY(secondary_startup_64)
+  /* Enable PAE mode and PGE */
+  movl  $(X86_CR4_PAE | X86_CR4_PGE), %ecx
+  movq  %rcx, %cr4
+  /* Setup early boot stage 4 level pagetables. */
+  addq  phys_base(%rip), %rax
+  movq  %rax, %cr3
+## PTE bits
+v3a chapter 4.5 4-level paging
+Check _PAGE_BIT_ACCESSED
+commit 97e3c602ccbdd7db54e92fe05675c664c052a466
+Author: Dave Hansen <dave.hansen@linux.intel.com>
+Date:   Thu Jul 7 17:19:12 2016 -0700
+    x86/mm: Ignore A/D bits in pte/pmd/pud_none()
+Firo: _PAGE_KNL_ERRATUM_MASK
+
+## Copy ptes
+### fork's wp page and COW - copy_page_range ... copy_pte_range
+is_cow_mapping(vm_flags_t flags) => return (flags & (VM_SHARED | VM_MAYWRITE)) == VM_MAYWRITE;
+What about Shared & Write? Check the following commit:
+commit d08b3851da41d0ee60851f2c75b118e1f7a5fc89
+Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Date:   Mon Sep 25 23:30:57 2006 -0700
+    [PATCH] mm: tracking shared dirty pages
+For good understanding, check do_wp_page().
+
+## Zap ptes - zap_page_range
+exit and munmap
+
+## Unmap ptes
+PFRA, migation
+
+## MMU notifier
+[Memory management notifiers](https://lwn.net/Articles/266320/)
+commit cddb8a5c14aa89810b40495d94d3d2a0faee6619
+Author: Andrea Arcangeli <andrea@qumranet.com>
+Date:   Mon Jul 28 15:46:29 2008 -0700
+    mmu-notifiers: core
+## Walk page tables
+ptdump_walk_pgd_level_core
+[Mannully va to pa](http://edsionte.com/techblog/archives/1966)
+
+# Memory mapping
+setup_arch -> init_mem_mapping # set page table and cr3.
+## rmap
+The key part for understanding rmap is the 'file'; They comform with same rule that pages are mapped to a file. Eventhrough the file is virutalized sometimes.
+File page: Disk file backed page: page.index is offset of page in that file; vm_pgoff is offset of VMA in that file
+Shmem page: file is in the shmem fs. page.index is offset of page in that shmem file (not in address space! not same as anonymous private page); vm_pgoff is offset of VMA in that shmem file which is 0.
+Anonymous private page: file is the whole memory. page.index is offset of page in address space; vm_pgoff is offset of VMA in address space.
+
+anon vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don't use vma. 2.2 exec)
+exec : exec -> do_execveat_common-> bprm_mm_init setup_arg_pages
+do_anonymous_page -> anon_vma_prepare & page_add_new_anon_rmap
+fork workflow:attach to parent; alloc anon_vma for ownself. anon_vma_fork() -> anon_vma_chain_link
+
+shmem vma: shmem_add_to_page_cache
+file vma: __vma_adjust -> __vma_link_file
+
+Releated code: do_mmap, mmap_region, linear_page_index, rmap_walk_anon, rmap_walk_file
+History: 
+[Paper: Object-based Reverse Mapping](https://landley.net/kdocs/ols/2004/ols2004v2-pages-71-74.pdf)
+[逆向映射的演进 in Chinese](http://www.wowotech.net/memory_management/reverse_mapping.html)
+[The object-based reverse-mapping VM](https://lwn.net/Articles/23732/)
+[Reverse mapping anonymous pages - again](https://lwn.net/Articles/77106/)
+
+LQO VMA: vma_link_file vs pault hanlder

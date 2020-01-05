@@ -21,8 +21,6 @@
 
 &lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
-
 &lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
 
 &lt;h2 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h2&gt;
@@ -37,7 +35,7 @@ __GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
 
 &lt;h1 id=&#34;free-page-state&#34;&gt;Free page state&lt;/h1&gt;
 
-&lt;p&gt;page_expected_state and check_new_page&lt;/p&gt;
+&lt;p&gt;page_expected_state and check_new_page, page_mapcount_reset&lt;/p&gt;
 
 &lt;h1 id=&#34;do-anonymous-page-zero-page&#34;&gt;Do anonymous page, zero page&lt;/h1&gt;
 
@@ -153,10 +151,10 @@ and Check put_page&lt;/p&gt;
     
     <item>
       <title>memory mapping</title>
-      <link>http://firoyang.org/cs/mmap/</link>
+      <link>http://firoyang.org/cs/mem_map/</link>
       <pubDate>Wed, 22 Aug 2018 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/mmap/</guid>
+      <guid>http://firoyang.org/cs/mem_map/</guid>
       <description>
 
 &lt;p&gt;This article is talking about user space Memory mmapping; it&amp;rsquo;s not limitted to mmap(2) system call.&lt;br /&gt;
@@ -180,12 +178,21 @@ start address and length, permissions (such as whether the program can&lt;br /&g
 read, write, or execute from that memory), and associated resources (such&lt;br /&gt;
 as physical pages, swap pages, file contents, and so on).&lt;br /&gt;
 Firo:  mmap, page fault, PFRA.&lt;/p&gt;
-
-&lt;h2 id=&#34;vas&#34;&gt;VAS&lt;/h2&gt;
-
-&lt;p&gt;vma, mm_rb, mmap,&lt;br /&gt;
-if file, i_mmap&lt;/p&gt;
 &lt;/blockquote&gt;
+
+&lt;h1 id=&#34;vma&#34;&gt;VMA&lt;/h1&gt;
+
+&lt;p&gt;vma&amp;rsquo;s unit is PAGE_SIZE; (vm_end - vm_start) % 0x1000 == 0 is True.&lt;/p&gt;
+
+&lt;h2 id=&#34;split-vma&#34;&gt;split_vma&lt;/h2&gt;
+
+&lt;p&gt;new_below&lt;br /&gt;
+commit 5846fc6c31162234e88bdfd91548b1cf0d2cebbd&lt;br /&gt;
+Author: Andrew Morton &lt;a href=&#34;mailto:akpm@digeo.com&#34;&gt;akpm@digeo.com&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Sep 17 06:35:47 2002 -0700&lt;br /&gt;
+    [PATCH] consolidate the VMA splitting code&lt;br /&gt;
+new_below means the place where the old vma go to! Bad naming!&lt;br /&gt;
+0 means the old will save the head part. 1 means tail part.&lt;/p&gt;
 
 &lt;h2 id=&#34;file&#34;&gt;File&lt;/h2&gt;
 
@@ -201,12 +208,15 @@ remove_mapping&lt;/p&gt;
 
 &lt;h2 id=&#34;private-anonymouse-mappings&#34;&gt;Private anonymouse mappings&lt;/h2&gt;
 
-&lt;p&gt;Heap - malloc mmap&lt;/p&gt;
+&lt;p&gt;Heap - malloc mmap&lt;br /&gt;
+Anonymous Memory Mappings, LSP chapter 9&lt;/p&gt;
 
 &lt;h2 id=&#34;file-private-mappings&#34;&gt;File private mappings&lt;/h2&gt;
 
 &lt;p&gt;Program: execve text,data,bss&lt;br /&gt;
 Libraries&lt;br /&gt;
+openat(AT_FDCWD, &amp;ldquo;/lib64/libc.so.6&amp;rdquo;, O_RDONLY|O_CLOEXEC) = 3&lt;br /&gt;
+mmap(NULL, 1857568, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f27cbb02000&lt;br /&gt;
 * onset - mmap&lt;br /&gt;
 do_mmap -&amp;gt; mmap_region&lt;br /&gt;
 ext2: generic_file_mmap -&amp;gt; vma-&amp;gt;vm_ops = generic_file_vm_ops&lt;br /&gt;
@@ -216,6 +226,17 @@ both: filemap_fault&lt;br /&gt;
 Write - do_cow_page&lt;br /&gt;
 Read - do_read_page&lt;br /&gt;
 Read &amp;amp; write - do_wp_page&lt;/p&gt;
+
+&lt;h1 id=&#34;shared-memory-mapping&#34;&gt;Shared memory mapping&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand015.html&#34;&gt;Chapter 12  Shared Memory Virtual Filesystem:&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;This is a very clean interface that is conceptually easy to understand but it does not help anonymous pages as there is no file backing. To keep this nice interface, Linux creates an artifical file-backing for anonymous pages using a RAM-based filesystem where each VMA is backed by a “file” in this filesystem. Every inode in the filesystem is placed on a linked list called shmem_inodes so that they may always be easily located. This allows the same file-based interface to be used without treating anonymous pages as a special case.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Firo: every time you create a shared memory via mmap(2), you create a inode with same name dev/zero in the hidden shm_mnt fs;&lt;br /&gt;
+The name dev/zero is only a name. It has nothing related to /dev/zero in drivers/char/mem.c. And /dev/shm is only a tmpfs; it has nothing related shmemfs, but POSIX&amp;rsquo;s shm_open uses /dev/shm.&lt;/p&gt;
 
 &lt;h2 id=&#34;shared-anonymouse-mappings&#34;&gt;Shared anonymouse mappings&lt;/h2&gt;
 
@@ -232,6 +253,26 @@ WP: do_wp_page -&amp;gt; wp_page_shared or wp_page_reuse&lt;br /&gt;
 b)IPC using a shared file mapping&lt;/p&gt;
 
 &lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o&#34;&gt;File shared mappings - a) Memory-mapped I/O&lt;/h2&gt;
+
+&lt;h2 id=&#34;history-1&#34;&gt;History&lt;/h2&gt;
+
+&lt;p&gt;late 70s - IPC: see TLPI: Chapter 45 INTRODUCTION TO SYSTEM V IPC&lt;br /&gt;
+they first appear together in Columbus UNIX, a Bell UNIX for database and efficient transaction processing&lt;br /&gt;
+1983 - IPC See TLPI or wikipedia shared mmeory.&lt;br /&gt;
+they land together in System V that made them popular in mainstream UNIX-es, hence the name&lt;/p&gt;
+
+&lt;p&gt;1983 - BSD mmap with shared vs private memory mapping&lt;br /&gt;
+BSD 4.2: The system supports sharing of data between processes by allowing pages to be mapped into memory. These mapped pages may be shared with other processes or private to the process.&lt;/p&gt;
+
+&lt;p&gt;1984 Jan - BSD mmap with file memory mapping support by SunOS&lt;br /&gt;
+The mmap seems firstly implemented by &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/1.1/800-1108-01E_System_Interface_Manual_for_the_Sun_Workstation_Jan84.pdf&#34;&gt;SunOS 1.1&lt;/a&gt;&lt;br /&gt;
+N.B. This call is not completely implemented In 4.2(BSD).&lt;br /&gt;
+More sunos docs: &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&#34;&gt;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;1988&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory-mapped_file#History&#34;&gt;SunOS 4[4] introduced Unix&amp;rsquo;s mmap, which permitted programs &amp;ldquo;to map files into memory.&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+1989&lt;br /&gt;
+One paper found in OSTEP: &lt;a href=&#34;https://courses.cs.washington.edu/courses/cse551/09sp/papers/memory_coherence.pdf&#34;&gt;Memory Coherence in Shared Virtual Memory Systems&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;mmap&#34;&gt;mmap&lt;/h1&gt;
 
@@ -401,12 +442,6 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/page_fault/</guid>
       <description>
-
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
-
-&lt;p&gt;page frame&lt;br /&gt;
-read from backing store&lt;br /&gt;
-PTE&lt;/p&gt;
 
 &lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
 
@@ -902,7 +937,8 @@ The solution was the creation of RCU-bh, which does local_bh_disable() across it
 
 &lt;h1 id=&#34;list-and-rcu&#34;&gt;list and rcu&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/listRCU.rst&#34;&gt;Using RCU to Protect Read-Mostly Linked Lists&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/610972/&#34;&gt;Using RCU for linked lists — a case study&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/listRCU.rst&#34;&gt;Using RCU to Protect Read-Mostly Linked Lists&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;hlist-nulls&#34;&gt;hlist-nulls&lt;/h2&gt;
 
@@ -1203,11 +1239,6 @@ list there already.&lt;/p&gt;
       <guid>http://firoyang.org/cs/fs/</guid>
       <description>
 
-&lt;h1 id=&#34;rootfs&#34;&gt;rootfs&lt;/h1&gt;
-
-&lt;p&gt;init_mount_tree&lt;br /&gt;
-and sys_chroot&lt;/p&gt;
-
 &lt;h1 id=&#34;fsck&#34;&gt;fsck&lt;/h1&gt;
 
 &lt;p&gt;man systemd-fsck-root.service&lt;/p&gt;
@@ -1257,123 +1288,18 @@ tools to operate on different things. - &lt;a href=&#34;http://yarchive.net/comp
 &lt;p&gt;hard link to directory, recursive&lt;br /&gt;
 hard link to file accross partitions, may led confilict with inode number.&lt;/p&gt;
 
+&lt;h1 id=&#34;rootfs&#34;&gt;rootfs&lt;/h1&gt;
+
+&lt;p&gt;init_rootfs&lt;br /&gt;
+init_mount_tree and sys_chroot and rootfs_mount&lt;br /&gt;
+do_basic_setup-&amp;gt;rootfs_initcall(populate_rootfs);&lt;/p&gt;
+
+&lt;h1 id=&#34;tmpfs&#34;&gt;tmpfs&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://wangcong.org/2012/02/17/-e5-85-b3-e4-ba-8e-tmpfs/&#34;&gt;关于 tmpfs&lt;/a&gt;&lt;br /&gt;
+fs/ramfs,  tmpfs mm/shmem.c&lt;/p&gt;
+
 &lt;h1 id=&#34;sysfs&#34;&gt;Sysfs&lt;/h1&gt;
-
-&lt;p&gt;sysfs is strongly depend on driver module, just rmmod tg3 then /sys/class/net/enp9s0 went away!&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/604413/&#34;&gt;hierarchy of sysfs&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;4-10&#34;&gt;4.10 +&lt;/h2&gt;
-
-&lt;p&gt;kernfs_drain&lt;/p&gt;
-
-&lt;h2 id=&#34;3-14&#34;&gt;3.14&lt;/h2&gt;
-
-&lt;dl&gt;
-&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
-&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
-cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
-echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
-sleep 1&lt;br /&gt;
-echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-#Why DDM?&lt;br /&gt;
-The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
-&lt;dd&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
-&lt;br /&gt;&lt;/dd&gt;
-&lt;/dl&gt;
-
-&lt;dl&gt;
-&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
-&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
-cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
-echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
-sleep 1&lt;br /&gt;
-echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-#Why DDM?&lt;br /&gt;
-The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
-&lt;dd&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
-&lt;br /&gt;&lt;/dd&gt;
-&lt;/dl&gt;
-
-&lt;dl&gt;
-&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
-&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
-cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
-echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
-sleep 1&lt;br /&gt;
-echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-#Why DDM?&lt;br /&gt;
-The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
-&lt;dd&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
-&lt;br /&gt;&lt;/dd&gt;
-&lt;/dl&gt;
-
-&lt;dl&gt;
-&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
-&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
-cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
-echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
-sleep 1&lt;br /&gt;
-echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-#Why DDM?&lt;br /&gt;
-The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
-&lt;dd&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
-&lt;br /&gt;&lt;/dd&gt;
-&lt;/dl&gt;
-
-&lt;dl&gt;
-&lt;dt&gt;modprobe uio_dma_proxy&lt;br /&gt;&lt;/dt&gt;
-&lt;dd&gt;&amp;gt; /sys/kernel/debug/tracing/trace&lt;br /&gt;
-cat /sys/class/uio/uio0/name &amp;amp;&lt;br /&gt;
-echo 1 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-modprobe -r uio_dma_proxy &amp;amp;&lt;br /&gt;
-sleep 1&lt;br /&gt;
-echo 0 &amp;gt; /sys/kernel/debug/tracing/tracing_on&lt;br /&gt;
-#Why DDM?&lt;br /&gt;
-The device model was originally intended to make power management tasks easier&lt;br /&gt;&lt;/dd&gt;
-&lt;dd&gt;I/o Architecture&lt;br /&gt;
-1 Expansion hardware.&lt;br /&gt;
-Bus includes internal bus/system bus(PCI,ISA,SBus,I2C) and external bus(ieee1394/firewire,USB) and both(SCSI).&lt;br /&gt;
-2 Communication with peripherals&lt;br /&gt;
-I/O ports&lt;br /&gt;
-I/O memory mapping&lt;br /&gt;
-Interrupts&lt;br /&gt;
-hrough the maintenance of a representation of the host system&amp;rsquo;s hardware structure.&lt;br /&gt;
-&lt;br /&gt;&lt;/dd&gt;
-&lt;/dl&gt;
-
-&lt;p&gt;entation of the host system&amp;rsquo;s hardware structure.&lt;/p&gt;
 
 &lt;h1 id=&#34;procfs&#34;&gt;Procfs&lt;/h1&gt;
 
@@ -1387,25 +1313,7 @@ hrough the maintenance of a representation of the host system&amp;rsquo;s hardwa
 
 &lt;h1 id=&#34;btrfs&#34;&gt;btrfs&lt;/h1&gt;
 
-&lt;p&gt;Bdi related&lt;br /&gt;
-mount, super_block&lt;br /&gt;
-ffff8800f4455740 ffff8800f27f2000 btrfs  /dev/xvda2 /&lt;br /&gt;
-ffff880002844200 ffff8800f2798800 autofs systemd-1 /@/proc/sys/fs/binfmt_misc&lt;br /&gt;
-ffff8800f44553c0 ffff8800f3d05800 mqueue mqueue    /@/dev/mqueue&lt;br /&gt;
-ffff8800f4533c80 ffff8800f44d2000 debugfs debugfs  /@/sys/kernel/debug&lt;br /&gt;
-ffff8800f200fc80 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/cache&lt;br /&gt;
-ffff8800f37d9740 ffff8800f27f2000 btrfs  /dev/xvda2 /@/opt&lt;br /&gt;
-ffff8800f4455200 ffff8800f27f2000 btrfs  /dev/xvda2 /@/tmp&lt;br /&gt;
-ffff8800f4455040 ffff8800f27f2000 btrfs  /dev/xvda2 /@/global/local&lt;br /&gt;
-ffff8800f245c900 ffff8800f2eda000 ext3   /dev/xvda1 /@/boot&lt;br /&gt;
-ffff880002844040 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/spool&lt;br /&gt;
-ffff880002840040 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/tmp&lt;br /&gt;
-ffff880002840200 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/opt&lt;br /&gt;
-ffff8800f200f900 ffff8800f27f2000 btrfs  /dev/xvda2 /@/var/log&lt;br /&gt;
-ffff8800028403c0 ffff8800f27f2000 btrfs  /dev/xvda2 /@/home&lt;br /&gt;
-ffff8800f245ce40 ffff8800f27f2000 btrfs  /dev/xvda2 /@/.snapshots&lt;br /&gt;
-ffff8800f37d93c0 ffff8800f27f2000 btrfs  /dev/xvda2 /@/lfs&lt;br /&gt;
-btrfs_mount&lt;br /&gt;
+&lt;p&gt;btrfs_mount&lt;br /&gt;
 btrfs_fill_super&lt;br /&gt;
 setup_bdi&lt;/p&gt;
 </description>
@@ -1413,51 +1321,86 @@ setup_bdi&lt;/p&gt;
     
     <item>
       <title>Linux device driver</title>
-      <link>http://firoyang.org/cs/device/</link>
+      <link>http://firoyang.org/cs/driver/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/device/</guid>
+      <guid>http://firoyang.org/cs/driver/</guid>
       <description>
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;kernel-module-programming&#34;&gt;Kernel module programming&lt;/h1&gt;
 
-&lt;p&gt;Driver porting: Device model overview: &lt;a href=&#34;http://lwn.net/Articles/31185/&#34;&gt;http://lwn.net/Articles/31185/&lt;/a&gt;&lt;br /&gt;
-Documentation/driver-model&lt;br /&gt;
-The Linux Kernel Driver Model&lt;/p&gt;
-
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
-
-&lt;h2 id=&#34;dma&#34;&gt;DMA&lt;/h2&gt;
-
-&lt;p&gt;ULK 3rd&lt;/p&gt;
+&lt;p&gt;sudo depmod -n -a -F /boot/System.map-4.3.5-300.fc23.x86_64  4.3.5-300.fc23.x86_64 &amp;gt; /tmp/m.log&lt;br /&gt;
+CFLAGS_jc.o := -O2&lt;br /&gt;
+ccflags-y := -O2&lt;/p&gt;
 
 &lt;h2 id=&#34;mapping&#34;&gt;Mapping&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/653585/&#34;&gt;ioremap() and memremap()&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;device-tree&#34;&gt;Device tree&lt;/h1&gt;
+&lt;h2 id=&#34;kernel-module-param&#34;&gt;kernel module param&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;What infomation was included in dtb&lt;br /&gt;
-HW platform识别，runtime parameter传递以及硬件设备描述&lt;br /&gt;
-for platform device init see arch/powerpc/platforms/52xx/media5200.c ppc_init&lt;br /&gt;
-mpc52xx_declare_of_platform_devices&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;How does the device tree subsystem read and parse the dts file?&lt;br /&gt;
-#devres&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;devm_kfree&lt;br /&gt;
-&lt;a href=&#34;http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html&#34;&gt;devm_kfree does not need for fail case of probe function and for remove function.&lt;/a&gt;&lt;br /&gt;
-__device_release_driver&lt;br /&gt;
-really_probe&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;a must use devm_kfree Julia Lawall&lt;br /&gt;
-The function at91_dt_node_to_map is ultimately called by the function&lt;br /&gt;
-&amp;gt; pinctrl_get, which is an exported function.  Since it is possible that this&lt;br /&gt;
-&amp;gt; function is not called from within a probe function, for safety, the kfree&lt;br /&gt;
-&amp;gt; is converted to a devm_kfree, to both free the data and remove it from the&lt;br /&gt;
-&amp;gt; device in a failure situation.&lt;br /&gt;
-*for noop devm_kmalloc_release&lt;br /&gt;
-devm_kmalloc()-&amp;gt;dr = alloc_dr(devm_kmalloc_release, size, gfp);&lt;br /&gt;
-see release_nodes() -&amp;gt;kfree(dr);&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;include/asm-generic/vmlinux.lds.h&lt;br /&gt;
+                KEEP(*(__param))                                        &lt;br /&gt;
+__module_param_call&lt;br /&gt;
+&lt;strong&gt;attribute&lt;/strong&gt; ((unused,&lt;strong&gt;section&lt;/strong&gt; (&amp;rdquo;__param&amp;rdquo;),aligned(sizeof(void *)))) &lt;/p&gt;
+
+&lt;h2 id=&#34;lib&#34;&gt;Lib&lt;/h2&gt;
+
+&lt;p&gt;devm_kfree and &lt;a href=&#34;http://lists.freedesktop.org/archives/dri-devel/2013-May/038943.html&#34;&gt;devm_kfree does not need for fail case of probe function and for remove function.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;device-model&#34;&gt;Device model&lt;/h1&gt;
+
+&lt;p&gt;The device model was originally intended to make power management tasks easier - LDD?&lt;br /&gt;
+Documentation/driver-model&lt;br /&gt;
+&lt;a href=&#34;http://lwn.net/Articles/31185/&#34;&gt;Driver porting: Device model overview&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/604413/&#34;&gt;Devices in /sys&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;history-of-module-linkage-and-loader&#34;&gt;History of module linkage and loader&lt;/h1&gt;
+
+&lt;h2 id=&#34;ksyms-removed&#34;&gt;ksyms - removed&lt;/h2&gt;
+
+&lt;p&gt;History: commit d80e0e9b2620f8ec6508d43484bd8300401d0383 (tag: 0.99.14d)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:09:16 2007 -0500&lt;br /&gt;
+    Import 0.99.14d&lt;br /&gt;
++++ b/include/linux/module.h&lt;br /&gt;
++ * Dynamic loading of modules into the kernel.&lt;br /&gt;
++++ b/kernel/ksyms.S&lt;br /&gt;
++ * Herein lies all the functions/variables that are &amp;ldquo;exported&amp;rdquo; for linkage&lt;br /&gt;
++ * With dynamically loaded kernel modules. Could do with making this a bit&lt;br /&gt;
++ * cleaner!&lt;br /&gt;
+History: commit 75bcc1d5a30e1d2045c3564a668c11dbba5cfe3f (tag: 1.1.0)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:09:26 2007 -0500&lt;br /&gt;
+    Import 1.1.0&lt;br /&gt;
+convert ksyms.S to ksyms.c&lt;br /&gt;
+tglx: commit ff08f6fe935ff0854990421e80d04c39c7c2a15a&lt;br /&gt;
+Author: Arnaldo Carvalho de Melo &lt;a href=&#34;mailto:acme@conectiva.com.br&#34;&gt;acme@conectiva.com.br&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Oct 7 17:54:04 2003 -0300&lt;br /&gt;
+    o kernel/ksyms.c: move remaining EXPORT_SYMBOLs, remove this file from the tree&lt;br /&gt;
+Removing ksyms.c&lt;/p&gt;
+
+&lt;h2 id=&#34;export-symbol&#34;&gt;EXPORT_SYMBOL&lt;/h2&gt;
+
+&lt;p&gt;History: commit f1bbcc4197c4597636782a34ad138a51c40b1efb (tag: 2.1.18)&lt;br /&gt;
+Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 23 15:12:47 2007 -0500&lt;br /&gt;
+    Import 2.1.18&lt;br /&gt;
++/* Export a symbol either from the kernel or a module.&lt;br /&gt;
++   In the kernel, the symbol is added to the kernel&amp;rsquo;s global symbol table.&lt;br /&gt;
++   In a module, it controls which variables are exported.  If no&lt;br /&gt;
++   variables are explicitly exported, the action is controled by the&lt;br /&gt;
++   insmod -[xX] flags.  Otherwise, only the variables listed are exported.&lt;br /&gt;
++   This obviates the need for the old register_symtab() function.  */&lt;/p&gt;
+
+&lt;h2 id=&#34;in-kernel-module-loader&#34;&gt;In-kernel module loader&lt;/h2&gt;
+
+&lt;p&gt;tglx: commit aa65be3f456be1ac4359f7fffeb7b4ae3c149419&lt;br /&gt;
+Author: Rusty Russell &lt;a href=&#34;mailto:rusty@rustcorp.com.au&#34;&gt;rusty@rustcorp.com.au&lt;/a&gt;&lt;br /&gt;
+Date:   Sun Nov 10 17:08:07 2002 -0800&lt;br /&gt;
+    [PATCH] In-kernel Module Loader&lt;br /&gt;
++/* Allocate and load the module */&lt;br /&gt;
++static struct module *load_module(void *umod,&lt;/p&gt;
 </description>
     </item>
     
@@ -1626,23 +1569,15 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://landley.net/writing/memory-faq.txt&#34;&gt;A must-read: memory FAQ by Landley&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;Dragon book 9th chapter 8 main memory&lt;br /&gt;
+&lt;a href=&#34;https://landley.net/writing/memory-faq.txt&#34;&gt;A must-read: memory FAQ by Landley&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.usenix.org/system/files/conference/atc16/atc16_paper-huang.pdf&#34;&gt;An Evolutionary Study of Linux Memory Management for Fun and Profit&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/html/v4.18/vm/index.html&#34;&gt;Kernel developers MM documentation&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.kernel.org/doc/html/latest/admin-guide/mm/index.html&#34;&gt;kernel.org Memory Management&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://linux-mm.org/&#34;&gt;https://linux-mm.org/&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://linux-mm.org/&#34;&gt;https://linux-mm.org/&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/1.1/800-1108-01E_System_Interface_Manual_for_the_Sun_Workstation_Jan84.pdf&#34;&gt;2. Memory management&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
-
-&lt;p&gt;Dragon book 9th chapter 8 main memory&lt;/p&gt;
-
-&lt;h2 id=&#34;1964-fixed-sized-partitioning&#34;&gt;1964 fixed-sized partitioning&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_management_(operating_systems)#Partitioned_allocation&#34;&gt;Partitioned allocation&lt;/a&gt;&lt;br /&gt;
-Dragon OS book 8.3.2 Memory Allocation&lt;br /&gt;
-OSIDP: 7.2 MEMORY PARTITIONING&lt;br /&gt;
-fixed-sized partitions.&lt;br /&gt;
-variable-partition scheme or Segmentation&lt;/p&gt;
 
 &lt;h2 id=&#34;1959-paging&#34;&gt;1959 paging&lt;/h2&gt;
 
@@ -1661,43 +1596,16 @@ variable-partition scheme or Segmentation&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;purposes&#34;&gt;Purposes&lt;/h1&gt;
-
-&lt;h2 id=&#34;keeping-track-of-physical-memory&#34;&gt;keeping track of physical memory,&lt;/h2&gt;
-
-&lt;p&gt;Buddy system, why?&lt;/p&gt;
-
-&lt;h2 id=&#34;obtain-alloc-and-return-free-memory&#34;&gt;obtain/alloc and return/free memory&lt;/h2&gt;
-
-&lt;p&gt;page allocator&lt;br /&gt;
-page reclamation, memory compaction&lt;/p&gt;
-
-&lt;h2 id=&#34;lift-the-burden-of-loading-program-from-application&#34;&gt;Lift the burden of loading program from application&lt;/h2&gt;
-
-&lt;p&gt;paging&lt;/p&gt;
-
-&lt;h2 id=&#34;user-space-application&#34;&gt;user space application&lt;/h2&gt;
-
-&lt;p&gt;VM, memory mapping.&lt;/p&gt;
-
-&lt;h2 id=&#34;mitigating-fragmenatations&#34;&gt;mitigating fragmenatations&lt;/h2&gt;
-
-&lt;p&gt;buddy system, memory compaction&lt;/p&gt;
-
-&lt;h1 id=&#34;formal-cause&#34;&gt;Formal cause&lt;/h1&gt;
-
-&lt;p&gt;[Dynamic Storage Allocation: A Survey and Critical Review]&lt;/p&gt;
-
-&lt;h2 id=&#34;memory-partitioning&#34;&gt;Memory partitioning&lt;/h2&gt;
+&lt;h1 id=&#34;memory-partitioning&#34;&gt;Memory partitioning&lt;/h1&gt;
 
 &lt;p&gt;Check OSIDP 7.2&lt;/p&gt;
 
-&lt;h3 id=&#34;page-vs-variable-sized-memory-allocations&#34;&gt;Page vs variable-sized memory allocations&lt;/h3&gt;
+&lt;h2 id=&#34;page-vs-variable-sized-memory-allocations&#34;&gt;Page vs variable-sized memory allocations&lt;/h2&gt;
 
 &lt;p&gt;By variable-sized, we are not taking historical segementation.&lt;br /&gt;
 Placement algorithm: Best-fit, first-fit. Within variable-szied memory allocations, it&amp;rsquo;s very difficult to track free memories compared with page-sized.&lt;/p&gt;
 
-&lt;h3 id=&#34;segmentation&#34;&gt;Segmentation&lt;/h3&gt;
+&lt;h2 id=&#34;segmentation&#34;&gt;Segmentation&lt;/h2&gt;
 
 &lt;p&gt;OSIDP&lt;br /&gt;
 The difference, compared to dynamic partitioning, is that with seg-&lt;br /&gt;
@@ -1707,30 +1615,34 @@ dynamic partitioning, it suffers from external fragmentation. However, because a
 process is broken up into a number of smaller pieces, the external fragmentation&lt;br /&gt;
 should be less.&lt;/p&gt;
 
-&lt;h3 id=&#34;buddy-system-1965-a-fast-storage-allocator-http-sci-hub-tw-https-dl-acm-org-citation-cfm-doid-365628-365655-buddy-memory-allocation-https-en-wikipedia-org-wiki-buddy-memory-allocation&#34;&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt; &lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;/h3&gt;
+&lt;h2 id=&#34;1964-fixed-sized-partitioning&#34;&gt;1964 fixed-sized partitioning&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
-The following cited from above 1965 paper.&lt;br /&gt;
-The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
-storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
-situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
-mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_management_(operating_systems)#Partitioned_allocation&#34;&gt;Partitioned allocation&lt;/a&gt;&lt;br /&gt;
+Dragon OS book 8.3.2 Memory Allocation&lt;br /&gt;
+OSIDP: 7.2 MEMORY PARTITIONING&lt;br /&gt;
+fixed-sized partitions.&lt;br /&gt;
+variable-partition scheme or Segmentation&lt;/p&gt;
 
-&lt;p&gt;OSIDP&lt;br /&gt;
-Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
-scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
-a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
-ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
-interesting compromise is the buddy system&lt;/p&gt;
+&lt;h3 id=&#34;describing-pages-memory-map-the-mem-map-array&#34;&gt;Describing pages: memory map, the &amp;lsquo;mem_map&amp;rsquo; array&lt;/h3&gt;
 
-&lt;h2 id=&#34;fragmentations&#34;&gt;Fragmentations&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/789304/&#34;&gt;Memory: the flat, the discontiguous, and the sparse&lt;/a&gt;&lt;br /&gt;
+Firo: All these 3 types are &lt;a href=&#34;https://en.wikipedia.org/wiki/Flat_memory_model&#34;&gt;Flat memory model&lt;/a&gt;&lt;br /&gt;
+Firo: I think kernel developers are abusing the terminology &amp;lsquo;memory model&amp;rsquo;. &lt;a href=&#34;https://www.kernel.org/doc/html/latest/vm/memory-model.html&#34;&gt;Physical Memory Model&lt;/a&gt;&lt;br /&gt;
+Firo: the full name should be memory map/layout model.&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/134804/&#34;&gt;sparsemem memory model&lt;/a&gt; &lt;a href=&#34;https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d41dee369bff3b9dcb6328d4d822926c28cc2594&#34;&gt;PATCH&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/439472/&#34;&gt;DISCONTIGMEM, !NUMA, and SLUB&lt;/a&gt;&lt;br /&gt;
+8170e6bed465b4b0c7687f93e9948aca4358a33b x86, 64bit: Use a PF handler to materialize early mappings on demand&lt;br /&gt;
+zone_mem_map =&amp;gt; node_mem_map&lt;br /&gt;
+commit a0140c1d85637ee5f4ea7c78f066e3611a6a79dc&lt;br /&gt;
+Author: KAMEZAWA Hiroyuki &lt;a href=&#34;mailto:kamezawa.hiroyu@jp.fujitsu.com&#34;&gt;kamezawa.hiroyu@jp.fujitsu.com&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Mar 27 01:15:55 2006 -0800&lt;br /&gt;
+    [PATCH] remove zone_mem_map&lt;/p&gt;
 
-&lt;h2 id=&#34;zones&#34;&gt;Zones&lt;/h2&gt;
+&lt;p&gt;Related code: pfn_to_page&lt;/p&gt;
 
-&lt;p&gt;ULK 2: 7.1.2 Memory Zones&lt;br /&gt;
-LDD: Memory zones&lt;br /&gt;
-LKD3: Zones&lt;br /&gt;
-UVM: Chapter 2  Describing Physical Memory&lt;br /&gt;
+&lt;h4 id=&#34;zones&#34;&gt;Zones&lt;/h4&gt;
+
+&lt;p&gt;ULK 2: 7.1.2 Memory Zones; LDD: Memory zones; LKD3: Zones; UVM: Chapter 2  Describing Physical Memory&lt;br /&gt;
 history: commit 4d1ceac2980133513fec009b18514f026ff58afa (tag: 2.3.23pre5)&lt;br /&gt;
 Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
 Date:   Fri Nov 23 15:27:55 2007 -0500&lt;br /&gt;
@@ -1751,433 +1663,115 @@ Date:   Fri Nov 23 15:28:33 2007 -0500&lt;br /&gt;
 -static struct free_area_struct free_area[NR_MEM_TYPES][NR_MEM_LISTS];&lt;br /&gt;
 +typedef struct zone_struct {&lt;/p&gt;
 
-&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
-
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/753269/&#34;&gt;Zone-lock and mmap_sem scalability&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Page frame reclaimation</title>
-      <link>http://firoyang.org/cs/pfra/</link>
-      <pubDate>Sun, 28 Dec 2014 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/pfra/</guid>
-      <description>
-
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;Chapter 10  Page Frame Reclamation&lt;/a&gt;&lt;br /&gt;
-Exceptional condition&lt;br /&gt;
-2nd chance&lt;/p&gt;
-
-&lt;h2 id=&#34;reverse-process-of-page-fault-of-a-memory-mapping&#34;&gt;reverse process of page fault of a memory  mapping&lt;/h2&gt;
-
-&lt;p&gt;PTEs: try_to_unmap:&lt;br /&gt;
-Dirty? Buffer_head?&lt;/p&gt;
-
-&lt;h3 id=&#34;remove-mapping-file-swap-in-pas&#34;&gt;remove_mapping: file/swap in PAS&lt;/h3&gt;
-
-&lt;p&gt;commit 49d2e9cc4544369635cd6f4ef6d5bb0f757079a7&lt;br /&gt;
-Refs: v2.6.15-1461-g49d2e9cc4544&lt;br /&gt;
-Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Sun Jan 8 01:00:48 2006 -0800&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Sun Jan 8 20:12:41 2006 -0800&lt;br /&gt;
-    [PATCH] Swap Migration V5: migrate_pages() function&lt;/p&gt;
-
-&lt;h2 id=&#34;workingset&#34;&gt;workingset&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/495543/&#34;&gt;Better active/inactive list balancing&lt;/a&gt;&lt;br /&gt;
-commit a528910e12ec7ee203095eb1711468a66b9b60b0&lt;br /&gt;
-Refs: v3.14-7406-ga528910e12ec&lt;br /&gt;
-Author:     Johannes Weiner &lt;a href=&#34;mailto:hannes@cmpxchg.org&#34;&gt;hannes@cmpxchg.org&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Thu Apr 3 14:47:51 2014 -0700&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Thu Apr 3 16:21:01 2014 -0700&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;mm: thrash detection-based file cache sizing
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1 id=&#34;gfp-flags&#34;&gt;GFP flags&lt;/h1&gt;
-
-&lt;p&gt;__GFP_IO: allow disk IO&lt;br /&gt;
-__GFP_FS: allow fs operations, depend on io.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/594725/&#34;&gt;Avoiding memory-allocation deadlocks&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;etc-for-general-idea-of-page-reclaimation-from-brown&#34;&gt;ETC for general idea of page reclaimation from Brown&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/596618/&#34;&gt;Understanding __GFP_FS&lt;/a&gt;&lt;br /&gt;
-__GFP_DIRECT_RECLAIM&lt;br /&gt;
-__GFP_MEMALLOC allows access to all memory. This should only be used when&lt;br /&gt;
-the caller guarantees the allocation will allow more memory to be freed&lt;br /&gt;
-very shortly e.g. process exiting or swapping. Users either should&lt;br /&gt;
-be the MM or co-ordinating closely with the VM (e.g. swap over NFS).&lt;br /&gt;
-Check sk_set_memalloc&lt;br /&gt;
-&lt;strong&gt;GFP_KSWAPD_RECLAIM indicates that the caller wants to wake kswapd when&lt;br /&gt;
- * the low watermark is reached and have it reclaim pages until the high&lt;br /&gt;
- * watermark is reached. A caller may wish to clear this flag when fallback&lt;br /&gt;
- * options are available and the reclaim is likely to disrupt the system. The&lt;br /&gt;
- * canonical example is THP allocation where a fallback is cheap but&lt;br /&gt;
- * reclaim/compaction may cause indirect stalls.&lt;br /&gt;
-GFP_ATOMIC  (&lt;/strong&gt;GFP_HIGH|&lt;strong&gt;GFP_ATOMIC|&lt;/strong&gt;GFP_KSWAPD_RECLAIM)&lt;br /&gt;
-GFP_KERNEL  (__GFP_RECLAIM | __GFP_IO | &lt;strong&gt;GFP_FS)&lt;br /&gt;
-GFP_NOWAIT  (&lt;/strong&gt;GFP_KSWAPD_RECLAIM)&lt;br /&gt;
-GFP_NOIO    (&lt;strong&gt;GFP_RECLAIM)&lt;br /&gt;
-GFP_NOFS    (&lt;/strong&gt;GFP_RECLAIM | __GFP_IO)&lt;/p&gt;
-
-&lt;h2 id=&#34;for-interrupt-handler-and-atomic-context&#34;&gt;For interrupt handler and atomic context&lt;/h2&gt;
-
-&lt;p&gt;commit 0aaa29a56e4fb0fc9e24edb649e2733a672ca099&lt;br /&gt;
-Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@techsingularity.net&#34;&gt;mgorman@techsingularity.net&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Nov 6 16:28:37 2015 -0800&lt;br /&gt;
-    mm, page_alloc: reserve pageblocks for high-order atomic allocations on demand&lt;br /&gt;
-gfp_to_alloc_flags&lt;br /&gt;
-/*&lt;br /&gt;
- * The caller may dip into page reserves a bit more if the caller&lt;br /&gt;
- * cannot run direct reclaim, or if the caller has realtime scheduling&lt;br /&gt;
- * policy or is asking for &lt;strong&gt;GFP_HIGH memory.  GFP_ATOMIC requests will&lt;br /&gt;
- * set both ALLOC_HARDER (&lt;/strong&gt;GFP_ATOMIC) and ALLOC_HIGH (__GFP_HIGH).&lt;br /&gt;
- */&lt;/p&gt;
-
-&lt;h3 id=&#34;alloc-high&#34;&gt;ALLOC_HIGH:&lt;/h3&gt;
-
-&lt;p&gt;__zone_watermark_ok()&lt;br /&gt;
-        if (alloc_flags &amp;amp; ALLOC_HIGH)&lt;br /&gt;
-                min -= min / 2;&lt;/p&gt;
-
-&lt;h3 id=&#34;alloc-harder&#34;&gt;ALLOC_HARDER&lt;/h3&gt;
-
-&lt;p&gt;rmqueue()&lt;br /&gt;
-if (alloc_flags &amp;amp; ALLOC_HARDER) {&lt;br /&gt;
-                        page = __rmqueue_smallest(zone, order, MIGRATE_HIGHATOMIC);&lt;/p&gt;
-
-&lt;h1 id=&#34;page-flags&#34;&gt;Page flags&lt;/h1&gt;
-
-&lt;p&gt;PG_reclaim:&lt;br /&gt;
-commit 3b0db538ef6782a1e2a549c68f1605ca8d35dd7e&lt;br /&gt;
-Author: Andrew Morton &lt;a href=&#34;mailto:akpm@digeo.com&#34;&gt;akpm@digeo.com&lt;/a&gt;&lt;br /&gt;
-Date:   Mon Dec 2 21:31:09 2002 -0800&lt;br /&gt;
-    [PATCH] Move reclaimable pages to the tail ofthe inactive list on&lt;br /&gt;
-PG_swapcace means page is in the swap cache.&lt;br /&gt;
-PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem, it means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.&lt;br /&gt;
-PG_active: active page&lt;br /&gt;
-PG_referenced: accessed recently&lt;br /&gt;
-PG_lru: page is on the lru linked list&lt;br /&gt;
-PG_mlocked: mlock()&lt;br /&gt;
-PG_locked in generic_file_buffered_read add_to_page_cache_lru and __SetPageLocked&lt;br /&gt;
-check mark_buffer_async_read&lt;br /&gt;
-tglx tree&lt;br /&gt;
-commit d58e41eec6859e9590f8f70ccdc1d58f4f6a1b84&lt;br /&gt;
-Author: Andrew Morton &lt;a href=&#34;mailto:akpm@zip.com.au&#34;&gt;akpm@zip.com.au&lt;/a&gt;&lt;br /&gt;
-Date:   Sun May 5 01:10:37 2002 -0700&lt;br /&gt;
-    [PATCH] Fix concurrent writepage and readpage&lt;/p&gt;
-
-&lt;h1 id=&#34;page-reference-results&#34;&gt;Page reference results&lt;/h1&gt;
-
-&lt;p&gt;enum page_references {&lt;br /&gt;
-        PAGEREF_RECLAIM,    # Try reclaim this page.&lt;br /&gt;
-        PAGEREF_RECLAIM_CLEAN,  # Try relcaim this page, if clean.&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/189879/&#34;&gt;But you were thinking right, it is exactly what it means!  If the state is PAGEREF_RECLAIM_CLEAN, reclaim the page if it is clean:&lt;/a&gt;&lt;br /&gt;
-        PAGEREF_KEEP,       # Keep this page on inactive list.&lt;br /&gt;
-        PAGEREF_ACTIVATE,   # Move this page to active list or inevicatble.&lt;br /&gt;
-};&lt;/p&gt;
-
-&lt;h1 id=&#34;process-flags&#34;&gt;Process flags&lt;/h1&gt;
-
-&lt;h2 id=&#34;pf-memalloc&#34;&gt;PF_MEMALLOC&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand009.html&#34;&gt;UVM&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/cover/178099/&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/a/40899585/1025001&#34;&gt;without being forced to write out dirty pages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4078724-1-1.html&#34;&gt;并不是所有进程都有的。kswapd，direct reclaim的process等在回收的时候会设置这个标志&lt;/a&gt;&lt;br /&gt;
-check __perform_reclaim&lt;br /&gt;
-memalloc_noreclaim_save&lt;br /&gt;
-kswapd-&amp;gt; PF_MEMALLOC-&amp;gt; try to pageout some pages -&amp;gt;  allocates some page using alloc_page for pageout -&amp;gt; no memory in lowreserve -&amp;gt; goto slowpath&lt;br /&gt;
-        /* Avoid recursion of direct reclaim */&lt;br /&gt;
-        if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)&lt;br /&gt;
-                goto nopage;&lt;br /&gt;
-otherwise&lt;br /&gt;
-    &lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;Set PF_MEMALLOC.&lt;/p&gt;
-
-&lt;h2 id=&#34;gfp-pfmemalloc-flags&#34;&gt;__gfp_pfmemalloc_flags&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;            if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)
-                    return ALLOC_NO_WATERMARKS;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h2 id=&#34;get-page-from-freelist&#34;&gt;get_page_from_freelist&lt;/h2&gt;
-
-&lt;pre&gt;&lt;code&gt;                    if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)
-                            goto try_this_zone;
-&lt;/code&gt;&lt;/pre&gt;
 
-&lt;h1 id=&#34;pfmemalloc&#34;&gt;PFMEMALLOC&lt;/h1&gt;
+&lt;h1 id=&#34;memory-allocation&#34;&gt;Memory allocation&lt;/h1&gt;
 
-&lt;h2 id=&#34;prep-new-page&#34;&gt;prep_new_page&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://compas.cs.stonybrook.edu/~nhonarmand/courses/sp17/cse506/papers/dsa.pdf&#34;&gt;Dynamic Storage Allocation: A Survey and Critical Review&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;page_is_pfmemalloc&lt;br /&gt;
-Example: get_page_from_freelist and __ac_get_obj&lt;br /&gt;
-               /*&lt;br /&gt;
-                 * page is set pfmemalloc is when ALLOC_NO_WATERMARKS was&lt;br /&gt;
-                 * necessary to allocate the page. The expectation is&lt;br /&gt;
-                 * that the caller is taking steps that will free more&lt;br /&gt;
-                 * memory. The caller should avoid the page being used&lt;br /&gt;
-                 * for !PFMEMALLOC purposes.&lt;br /&gt;
-                 */&lt;br /&gt;
-                if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)&lt;br /&gt;
-                        set_page_pfmemalloc(page);&lt;br /&gt;
-commit c93bdd0e03e848555d144eb44a1f275b871a8dd5&lt;br /&gt;
-Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@suse.de&#34;&gt;mgorman@suse.de&lt;/a&gt;&lt;br /&gt;
-Date:   Tue Jul 31 16:44:19 2012 -0700&lt;br /&gt;
-    netvm: allow skb allocation to use PFMEMALLOC reserves&lt;/p&gt;
+&lt;h2 id=&#34;track-buddy-memory-system&#34;&gt;track: buddy memory system&lt;/h2&gt;
 
-&lt;h1 id=&#34;kswapd&#34;&gt;Kswapd&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
+The following cited from above 1965 paper.&lt;br /&gt;
+The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
+storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
+situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
+mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
 
-&lt;p&gt;pgdat-&amp;gt;kswapd_wait&lt;br /&gt;
-It&amp;rsquo;s not peoridic. Check kswapd_try_to_sleep: premature sleep and full sleep.&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html#toc71&#34;&gt;Historically, kswapd used to wake up every 10 seconds but now it is only woken by the physical page allocator when the pages_low number of free pages in a zone is reached&lt;/a&gt;&lt;br /&gt;
-se.sum_exec_runtime                          :             0.036973&lt;br /&gt;
-se.avg.last_update_time                      :           1884199936&lt;/p&gt;
+&lt;p&gt;OSIDP&lt;br /&gt;
+Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
+scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
+a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
+ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
+interesting compromise is the buddy system&lt;/p&gt;
 
-&lt;h2 id=&#34;fastpath-boosted-watermark&#34;&gt;Fastpath boosted  watermark&lt;/h2&gt;
+&lt;h3 id=&#34;related-code&#34;&gt;Related code&lt;/h3&gt;
 
-&lt;p&gt;ZONE_BOOSTED_WATERMARK&lt;br /&gt;
-get_page_from_freelist-&amp;gt;rmqueue-&amp;gt;wakeup_kswapd&lt;br /&gt;
-kswapd-&amp;gt;balance_pgdat-&amp;gt;kswapd_shrink_node-&amp;gt;shrink_node&lt;br /&gt;
-{&lt;br /&gt;
-    shrink_node_memcg-&amp;gt; shrink_list&lt;br /&gt;
-    or maybe&lt;br /&gt;
-    shrink_slab&lt;br /&gt;
-}&lt;/p&gt;
+&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
+setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
+        sparse_init &amp;hellip;-&amp;gt; vmemmap_populate      # vmemmap&lt;br /&gt;
+        zone_sizes_init-&amp;gt;free_area_init_nodes -&amp;gt; free_area_init_node-&amp;gt; free_area_init_core&lt;br /&gt;
+                zone_pcp_init # init percpu pageset with boot_pageset&lt;br /&gt;
+                init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list&lt;br /&gt;
+                memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
 
-&lt;h2 id=&#34;slowpath-gfp-kswapd-reclaim&#34;&gt;Slowpath: __GFP_KSWAPD_RECLAIM&lt;/h2&gt;
+&lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
+        mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
 
-&lt;p&gt;wake_all_kswapds(order, gfp_mask, ac)&lt;/p&gt;
+&lt;h2 id=&#34;obtain-alloc-and-return-free-memory&#34;&gt;obtain/alloc and return/free memory&lt;/h2&gt;
 
-&lt;h2 id=&#34;slowpath-direct-reclaim-synchronous-page-reclaim-throttle-direct-reclaim&#34;&gt;Slowpath: direct reclaim synchronous page reclaim  throttle_direct_reclaim&lt;/h2&gt;
+&lt;p&gt;page allocator, page reclamation, memory compaction&lt;/p&gt;
 
-&lt;p&gt;&lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;try_to_free_pages-&amp;gt;allow_direct_reclaim-&amp;gt;wake_up_interruptible(&amp;amp;pgdat-&amp;gt;kswapd_wait)&lt;/p&gt;
+&lt;h3 id=&#34;memory-allocation-overcommit&#34;&gt;Memory allocation overcommit&lt;/h3&gt;
 
-&lt;h1 id=&#34;fastpath-watermake-low-node-reclaim-or-zone-reclaim&#34;&gt;Fastpath watermake low, node reclaim or zone reclaim&lt;/h1&gt;
-
-&lt;p&gt;Documentation/sysctl/vm.txt&lt;br /&gt;
-/proc/sys/vm/zone_reclaim_mode&lt;br /&gt;
-get_page_from_freelist-&amp;gt;node_reclaim-&amp;gt;__node_reclaim-&amp;gt;shrink_node&lt;/p&gt;
-
-&lt;h1 id=&#34;slow-path&#34;&gt;Slow path&lt;/h1&gt;
-
-&lt;h2 id=&#34;direct-compact-allocation&#34;&gt;Direct compact allocation&lt;/h2&gt;
-
-&lt;p&gt;__alloc_pages_direct_compact&lt;/p&gt;
-
-&lt;h2 id=&#34;direct-reclaim-allocation&#34;&gt;Direct reclaim allocation&lt;/h2&gt;
-
-&lt;p&gt;&lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;try_to_free_pages&lt;br /&gt;
-{&lt;br /&gt;
-    throttle_direct_reclaim&lt;br /&gt;
-    do_try_to_free_pages-&amp;gt; shrink_zones-&amp;gt;mem_cgroup_soft_limit_reclaim -&amp;gt;mem_cgroup_soft_reclaim -&amp;gt;mem_cgroup_shrink_node-&amp;gt;shrink_node&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h2 id=&#34;direct-compact-allocation-1&#34;&gt;Direct compact allocation&lt;/h2&gt;
-
-&lt;h1 id=&#34;hibernate&#34;&gt;Hibernate&lt;/h1&gt;
-
-&lt;p&gt;hibernate_preallocate_memory-&amp;gt;shrink_all_memory&lt;/p&gt;
-
-&lt;h1 id=&#34;writepage-and-end-page-writeback&#34;&gt;writepage and end_page_writeback&lt;/h1&gt;
-
-&lt;p&gt;Check Locking&lt;/p&gt;
-
-&lt;h1 id=&#34;reclaimable-pages&#34;&gt;Reclaimable pages&lt;/h1&gt;
-
-&lt;p&gt;all pages of a User Mode process are reclaimable except locked.&lt;br /&gt;
-Lokced userspace pages:&lt;br /&gt;
-1. Temporarily locked pages: PG_locked,&lt;br /&gt;
-2. Memory locked pages: VM_LOCKED, &lt;a href=&#34;https://eklitzke.org/mlock-and-mlockall&#34;&gt;Misunderstanding mlock&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;swapbacked-pages&#34;&gt;Swapbacked pages&lt;/h2&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Private&lt;br /&gt;
-1.1 malloc memory map&lt;br /&gt;
-1.2 Dirty file private mapping - data, bbs segments&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Shared - tmpfs:&lt;br /&gt;
-2.1 Anonymous shared mapping memory between P&amp;C;&lt;br /&gt;
-2.2 System v IPC shared memory.&lt;/p&gt;
-
-&lt;h2 id=&#34;filebacked-pages&#34;&gt;Filebacked pages&lt;/h2&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Private: Clean file private mapping - text segment&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;Shared: Shared file mapping memory.&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;lru-2q&#34;&gt;LRU-2Q&lt;/h1&gt;
-
-&lt;p&gt;page.lru and struct lruvec&lt;br /&gt;
-New page is inserted to head, PG_reclaim page is rotated to the tail.&lt;/p&gt;
-
-&lt;h2 id=&#34;move-lru-page-reclaim-from-zones-to-node&#34;&gt;Move LRU page reclaim from zones to node&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2015/6/8/298&#34;&gt;1st RFC&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;shrink-active-list&#34;&gt;shrink_active_list&lt;/h2&gt;
-
-&lt;p&gt;lru_to_page(head) (list_entry((head)-&amp;gt;prev, struct page, lru))&lt;/p&gt;
-
-&lt;h2 id=&#34;active-list-and-inactive-list&#34;&gt;active list and inactive list&lt;/h2&gt;
-
-&lt;p&gt;active list: working set; Am of LRU 2Q; how often&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/495543/&#34;&gt;Better active/inactive list balancing&lt;/a&gt;&lt;br /&gt;
-mark_page_accessed and called sub-functions.&lt;br /&gt;
-active -&amp;gt; inactive head - list_add(&amp;amp;page-&amp;gt;lru, &amp;amp;l_inactive); in shrink_active_list&lt;br /&gt;
-inactive -&amp;gt; active head - __activate_page &amp;lt;- mark_page_accessed &amp;lt;- pagecache_get_page or generic_file_buffered_read&lt;br /&gt;
-inactive -&amp;gt; inactive tail - rotate_reclaimable_page&lt;/p&gt;
-
-&lt;h1 id=&#34;second-chance&#34;&gt;Second chance&lt;/h1&gt;
-
-&lt;p&gt;commit dfc8d636cdb95f7b792d5ba8c9f3b295809c125d&lt;br /&gt;
-Author: Johannes Weiner &lt;a href=&#34;mailto:hannes@cmpxchg.org&#34;&gt;hannes@cmpxchg.org&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Mar 5 13:42:19 2010 -0800&lt;br /&gt;
-    vmscan: factor out page reference checks&lt;br /&gt;
-commit 645747462435d84c6c6a64269ed49cc3015f753d&lt;br /&gt;
-Author: Johannes Weiner &lt;a href=&#34;mailto:hannes@cmpxchg.org&#34;&gt;hannes@cmpxchg.org&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Mar 5 13:42:22 2010 -0800&lt;br /&gt;
-    vmscan: detect mapped file pages used only once&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=eHK749r5RGs&#34;&gt;Second Chance Page Replacement Algorithm&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=DFmsm0J8joY&#34;&gt;Second Chance Page Replacement Algorithms and Clock Page Replacement Algorithms&lt;/a&gt;&lt;br /&gt;
-core: page_check_references() in shrink_page_list().&lt;br /&gt;
-shrink_active_list for VM_EXEC page.&lt;br /&gt;
-core: page_referenced in shrink_active_list&lt;br /&gt;
-mark_page_accessed&lt;br /&gt;
-{&lt;br /&gt;
-        inactive,referenced          -&amp;gt;      active,unreferenced&lt;br /&gt;
-        {&lt;br /&gt;
-                if !PageLRU - on the pagevec&lt;br /&gt;
-                        mm: activate !PageLRU pages on mark_page_accessed if page is on local pagevec - 059285a25f30c13ed4f5d91cecd6094b9b20bb7b&lt;br /&gt;
-                        SetPageActive&lt;br /&gt;
-                else&lt;br /&gt;
-                        activate_page&lt;br /&gt;
-        }&lt;br /&gt;
-        {in,}active,unreferenced        -&amp;gt;      {in,}active,referenced&lt;br /&gt;
-        {&lt;br /&gt;
-                SetPageReferenced&lt;br /&gt;
-        }&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h4 id=&#34;active-list&#34;&gt;active list -&amp;gt;&lt;/h4&gt;
-
-&lt;p&gt;if pte with PAGE_ACCESSED - referenced in page_referenced() &amp;amp;&amp;amp; VM_EXEC -&amp;gt; keep it in active list - tail -&amp;gt; head - rotated&lt;br /&gt;
-else&lt;br /&gt;
-de-activate it to inactive list head&lt;/p&gt;
-
-&lt;h4 id=&#34;inactive-list&#34;&gt;inactive list&lt;/h4&gt;
-
-&lt;p&gt;page from tail page_check_references&lt;br /&gt;
-{&lt;br /&gt;
-        3 passes:&lt;br /&gt;
-        1. hardware pte; use and clear pte; might get reference; second chance.&lt;br /&gt;
-        2. software flag: -&amp;gt; RECLAIM Clean page and clear, since dirty page is a good signal that the page was used recently because the flusher threads&lt;br /&gt;
-                                clean pages periodically.&lt;br /&gt;
-        3. reclaim&lt;br /&gt;
-        hardware accessed - if accessed, won&amp;rsquo;t reclaim&lt;br /&gt;
-        {&lt;br /&gt;
-                PAGEREF_ACTIVATE: incline to activate swapbacked page&lt;br /&gt;
-                        PageSwapBacked&lt;br /&gt;
-                        referenced_page&lt;br /&gt;
-                        referenced_ptes &amp;gt; 1&lt;br /&gt;
-                        vm_flags &amp;amp; VM_EXEC&lt;br /&gt;
-                PAGEREF_KEEP&lt;br /&gt;
-        }&lt;br /&gt;
-        else if ?? software accessed - &amp;amp;&amp;amp; dirty won&amp;rsquo;t reclaim&lt;br /&gt;
-        {&lt;br /&gt;
-                vmscan: detect mapped file pages used only once - 645747462435d84c6c6a64269ed49cc3015f753d&lt;br /&gt;
-                vmscan,tmpfs: treat used once pages on tmpfs as used once - 2e30244a7cc1ff09013a1238d415b4076406388e&lt;br /&gt;
-                # From above commits: When a page has PG_referenced, shrink_page_list() discards it only if it&lt;br /&gt;
-                # is not dirty. &amp;hellip; PG_dirty is a good signal that the page was used recently because&lt;br /&gt;
-                # the flusher threads clean pages periodically.  In addition, page writeback&lt;br /&gt;
-                # is costlier than simple page discard.&lt;br /&gt;
-                #  Firo: not incline to reclaim dirty page.&lt;br /&gt;
-                #  Firo: PG_referenced -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
-                file-backed -&amp;gt; PAGEREF_RECLAIM_CLEAN&lt;br /&gt;
-                swapbacked -&amp;gt; PAGEREF_RECLAIM&lt;br /&gt;
-        } else&lt;br /&gt;
-                PAGEREF_RECLAIM&lt;br /&gt;
-}&lt;/p&gt;
-
-&lt;h3 id=&#34;working-set&#34;&gt;Working set&lt;/h3&gt;
-
-&lt;p&gt;mm: thrash detection-based file cache sizing - a528910e12ec7ee203095eb1711468a66b9b60b0&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2012/5/1/51&#34;&gt;Not merged - mm: refault distance-based file cache sizing&lt;/a&gt;&lt;br /&gt;
-workingset_eviction() and workingset_refault()&lt;br /&gt;
-* WSS&lt;br /&gt;
-&lt;a href=&#34;https://github.com/brendangregg/wss&#34;&gt;https://github.com/brendangregg/wss&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.10tiao.com/html/606/201807/2664605543/1.html&#34;&gt;http://www.10tiao.com/html/606/201807/2664605543/1.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;clock&#34;&gt;Clock ??&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://linux-mm.org/ClockProApproximation&#34;&gt;ClockProApproximation&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/147879/&#34;&gt;A CLOCK-Pro page replacement implementation&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.usenix.org/legacy/publications/library/proceedings/usenix05/tech/general/full_papers/jiang/jiang_html/html.html&#34;&gt;CLOCK-Pro: An Effective Improvement of the CLOCK Replacement&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;other-notes-on-replacement-polices&#34;&gt;Other notes on Replacement polices&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand013.html&#34;&gt;https://www.kernel.org/doc/gorman/html/understand/understand013.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;https://linux-mm.org/PageReplacementDesign&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://linux-mm.org/PageReplacementDesign&#34;&gt;PageReplacementDesign&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;lumpy-reclaim&#34;&gt;Lumpy reclaim&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lkml.org/lkml/2012/3/28/325&#34;&gt;mm: vmscan: Remove lumpy reclaim&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/262301/&#34;&gt;mm: vmscan: Remove dead code related to lumpy reclaim waiting on pages under writeback&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;etc-leave-questions-open&#34;&gt;ETC Leave questions open&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;activate writeback pages&lt;br /&gt;
-mm: vmscan: move dirty pages out of the way until they&amp;rsquo;re flushed - c55e8d035b28b2867e68b0e2d0eee2c0f1016b43&lt;br /&gt;
-Fixing writeback from direct reclaim &lt;a href=&#34;https://lwn.net/Articles/396561/&#34;&gt;https://lwn.net/Articles/396561/&lt;/a&gt;&lt;br /&gt;
-&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;shrink-slab-caches&#34;&gt;Shrink slab caches&lt;/h1&gt;
-
-&lt;h2 id=&#34;double-slab-pressure&#34;&gt;double slab pressure&lt;/h2&gt;
-
-&lt;p&gt;tglx tree&lt;br /&gt;
-commit b65bbded3935b896d55cb6b3e420a085d3089368&lt;br /&gt;
-Author: Andrew Morton &lt;a href=&#34;mailto:akpm@digeo.com&#34;&gt;akpm@digeo.com&lt;/a&gt;&lt;br /&gt;
-Date:   Wed Sep 25 07:20:18 2002 -0700&lt;br /&gt;
-    [PATCH] slab reclaim balancing&lt;/p&gt;
-
-&lt;h1 id=&#34;oom&#34;&gt;OOM&lt;/h1&gt;
-
-&lt;p&gt;oom_score_adj in Documentation/filesystems/proc.txt&lt;br /&gt;
-fs/proc/base.c&lt;br /&gt;
-ONE(&amp;ldquo;oom_score&amp;rdquo;,  S_IRUGO, proc_oom_score),&lt;br /&gt;
-REG(&amp;ldquo;oom_adj&amp;rdquo;,    S_IRUGO|S_IWUSR, proc_oom_adj_operations),&lt;br /&gt;
-REG(&amp;ldquo;oom_score_adj&amp;rdquo;, S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),&lt;br /&gt;
-oom_badness&lt;/p&gt;
-
-&lt;h1 id=&#34;suse-page-cache-limit&#34;&gt;SUSE page cache limit&lt;/h1&gt;
-
-&lt;p&gt;Check box/pagecache-limit&lt;/p&gt;
-
-&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;h2 id=&#34;mapping-is-null&#34;&gt;mapping is NULL?&lt;/h2&gt;
-
-&lt;p&gt;e2be15f6c3eecedfbe1550cca8d72c5057abbbd2&lt;br /&gt;
-+               /* Treat this page as congested if underlying BDI is */&lt;br /&gt;
-+               mapping = page_mapping(page);&lt;br /&gt;
-+               if (mapping &amp;amp;&amp;amp; bdi_write_congested(mapping-&amp;gt;backing_dev_info))&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/384093/&#34;&gt;When writeback goes wrong&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/405076/&#34;&gt;Dynamic writeback throttling&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/396561/&#34;&gt;Fixing writeback from direct reclaim&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/vm/overcommit-accounting&#34;&gt;https://www.kernel.org/doc/Documentation/vm/overcommit-accounting&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://linuxperf.com/?p=102&#34;&gt;理解LINUX的MEMORY OVERCOMMIT&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://engineering.pivotal.io/post/virtual_memory_settings_in_linux_-_the_problem_with_overcommit/&#34;&gt;Virtual memory settings in Linux - The Problem with Overcommit&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;garbage-collection&#34;&gt;Garbage collection&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://news.ycombinator.com/item?id=2473932&#34;&gt;Linus Torvalds on Garbage Collection (2002)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://yarchive.net/comp/linux/reference_counting.html&#34;&gt;Linus on refrence counting&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.145.3800&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Paul E. McKenney: Overview of Linux-Kernel Reference Counting&lt;/a&gt;&lt;br /&gt;
+Book: The Garbage Collection Handbook&lt;br /&gt;
+Book: Japanese GC book.&lt;br /&gt;
+&lt;a href=&#34;https://www.linuxidc.com/Linux/2015-01/111565.htm&#34;&gt;https://www.linuxidc.com/Linux/2015-01/111565.htm&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;reference-counting&#34;&gt;Reference counting&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/565734/&#34;&gt;Introducing lockrefs&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lift-the-burden-of-loading-program-from-application&#34;&gt;Lift the burden of loading program from application&lt;/h1&gt;
+
+&lt;p&gt;paging&lt;/p&gt;
+
+&lt;h1 id=&#34;decopule-addresses-and-memory-locations&#34;&gt;Decopule addresses and memory locations&lt;/h1&gt;
+
+&lt;p&gt;VM, memory mapping.&lt;/p&gt;
+
+&lt;h1 id=&#34;fragmentations&#34;&gt;Fragmentations&lt;/h1&gt;
+
+&lt;p&gt;buddy system, memory compaction&lt;/p&gt;
+
+&lt;h2 id=&#34;mobility&#34;&gt;Mobility&lt;/h2&gt;
+
+&lt;p&gt;PLKA - 3.5.2&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/650917/&#34;&gt;Making kernel pages movable&lt;/a&gt;&lt;br /&gt;
+Split the free lists for movable and unmovable allocations - b2a0ac8875a0a3b9f0739b60526f8c5977d2200f&lt;/p&gt;
+
+&lt;p&gt;Related code:&lt;br /&gt;
+set_pageblock_migratetype&lt;/p&gt;
+
+&lt;p&gt;find_suitable_fallback&lt;br /&gt;
+        [MIGRATE_UNMOVABLE]   = { MIGRATE_RECLAIMABLE, MIGRATE_MOVABLE,   MIGRATE_TYPES },&lt;br /&gt;
+        [MIGRATE_RECLAIMABLE] = { MIGRATE_UNMOVABLE,   MIGRATE_MOVABLE,   MIGRATE_TYPES },&lt;br /&gt;
+        [MIGRATE_MOVABLE]     = { MIGRATE_RECLAIMABLE, MIGRATE_UNMOVABLE, MIGRATE_TYPES },&lt;/p&gt;
+
+&lt;p&gt;MIGRATE_RECLAIMABLE?&lt;br /&gt;
+commit e12ba74d8ff3e2f73a583500d7095e406df4d093&lt;br /&gt;
+Refs: v2.6.23-4359-ge12ba74d8ff3&lt;br /&gt;
+Author:     Mel Gorman &lt;a href=&#34;mailto:mel@csn.ul.ie&#34;&gt;mel@csn.ul.ie&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Oct 16 01:25:52 2007 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@woody.linux-foundation.org&#34;&gt;torvalds@woody.linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue Oct 16 09:43:00 2007 -0700&lt;br /&gt;
+    Group short-lived and reclaimable kernel allocations&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/814997/&#34;&gt;treewide: remove GFP_TEMPORARY allocation flag&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;LQO:&lt;br /&gt;
+MIGRATE_HIGHATOMIC&lt;/p&gt;
+
+&lt;h2 id=&#34;memory-compaction&#34;&gt;Memory compaction&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/591998/&#34;&gt;Memory compaction issues&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/368869/&#34;&gt;Memory compaction&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://kernelnewbies.org/Linux_2_6_35#Memory_compaction&#34;&gt;https://kernelnewbies.org/Linux_2_6_35#Memory_compaction&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://linuxplumbersconf.org/event/2/contributions/65/attachments/15/171/slides-expanded.pdf&#34;&gt;firo-must: The hard work behind large physical memory allocations in the kernel&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;anti-fragmentation&#34;&gt;Anti fragmentation&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/ols/2006/ols2006v1-pages-369-384.pdf&#34;&gt;The What, The Why and the Where To of Anti-Fragmentation&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     

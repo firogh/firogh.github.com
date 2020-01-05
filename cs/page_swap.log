@@ -1,0 +1,58 @@
+# History
+1978
+Swapping in [UNIX Implementation K. Thompson](https://users.soe.ucsc.edu/~sbrandt/221/Papers/History/thompson-bstj78.pdf)
+
+# Formal causes
+## PTE Encode and de-code a swap entry
+
+|     ...            | 11| 10|  9|8|7|6|5| 4| 3|2| 1|0| <- bit number
+|     ...            |SW3|SW2|SW1|G|L|D|A|CD|WT|U| W|P| <- bit names
+| OFFSET (14->63) | TYPE (9-13)  |0|0|X|X| X| X|X|SD|0| <- swp entry
+Check SWP_TYPE_FIRST_BIT
+Swap work on only userspace pages.
+_PAGE_SWP_SOFT_DIRTY and Documentation/vm/soft-dirty.txt
+
+
+# Materials
+## page
+* private
+store swap type and offset/slot in private
+Check page_swapcount
+__add_to_swap_cache -> set_page_private
+why?
+* mapping
+NULL
+* flags
+PG_swapcache
+* _refcount
+# Swap
+[In defence of swap: common misconceptions](https://chrisdown.name/2018/01/02/in-defence-of-swap.html)
+# Enable Swap
+systemd->swapon->sys_swapon
+&def_blk_fops
+
+do_shared_fault
+shmem_fault
+shmem_alloc_and_acct_page
+
+swap in
+swapin_readahead
+swap_readpage
+swap_page_sector
+
+# Swapbacked pages
+Private file maps & write page fault 
+
+# Swapping out pages
+lru -> swap cache -> updating pte with try to unmap -> write page into swap area -> delete_from_swap_cache()
+shrink_page_list
+key commit:
+mm: cma: discard clean pages during contiguous allocation instead of migration - 02c6de8d757cb32c0829a45d81c3dfcbcafd998b
+mm: reclaim MADV_FREE pages - 802a3a92ad7ac0b9be9df229dee530a1f0a8039b check mark_page_lazyfree
+[mm: support madvise(MADV_FREE)](https://lwn.net/Articles/590693/)
+
+## Swapping out shared anonymous pages
+pageout->shmem_writepage - Move the page from the page cache to the swap cache; and swp_to_radix_entry
+
+# Swapping in pages
+do_page_fault->

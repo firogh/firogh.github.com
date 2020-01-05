@@ -1,0 +1,69 @@
+# Link
+[3 Linker Scripts](https://sourceware.org/binutils/docs/ld/Scripts.html)
+
+## Find which function belongs to which library
+LD_DEBUG=bindings ./ptem01 2>&1  | grep tcsendbrea
+
+# Resolve
+[Debugging Loadable Modules Using GDB](https://www.freebsd.org/doc/zh_TW/books/developers-handbook/kerneldebug-kld.html)
+[Very smart patch for resolving xen-dependent library in kexec-tools](https://git.kernel.org/pub/scm/utils/kernel/kexec/kexec-tools.git/commit/?h=894bea9335f57b62cbded7b02ab7d58308b647d8)
+
+# Relcation
+[Interpreting readelf -r, in this case R_X86_64_PC32](http://www.mindfruit.co.uk/2012/06/interpreting-readelf-r-in-this-case.html)
+[Relocations, Relocations](http://www.mindfruit.co.uk/2012/06/relocations-relocations.html)
+## global label in C
+char _text[];           x86_64_64;
+unsigned long _text;    x86_64_PC32
+
+# PIE vs PIC and fpic vs fpie 
+[fpie vs fpic](https://gcc.gnu.org/ml/gcc-help/2009-07/msg00351.html)
+[What are the differences comparing PIE, PIC code and executable on x86 64](https://stackoverflow.com/questions/28119365/what-are-the-differences-comparing-pie-pic-code-and-executable-on-64-bit-x86-pl)
+[-fPIE "position-independent executable on stackoverflow](http://stackoverflow.com/questions/2463150/fpie-position-independent-executable-option-gcc-ld) states PIE use PC relative relocation rather than PLT.
+[OpenBSD's Position Independent](http://www.openbsd.org/papers/nycbsdcon08-pie/mgp00001.html)
+
+# Kdump
+Before kernel supported the relocatable, [the kdump users had to compile the capture kernel with different configuration options in order to make it bootable at a different address](https://kernelnewbies.org/Linux_2_6_20#head-3c215483506a27123005168c491eea0f2e5549dd)
+
+# ASLR
+load_elf_binary()
+                        if (elf_interpreter) { /* PIE */
+                                load_bias = ELF_ET_DYN_BASE;
+                                if (current->flags & PF_RANDOMIZE)
+                                        load_bias += arch_mmap_rnd();
+                                elf_flags |= MAP_FIXED;
+
+# KASLR
+x86-64: Relocatable Kernel Support
+1ab60e0f72f71ec54831e525a3e1154f1c092408
+[Relocatable kernel support for x86][5]
+ x86, relocs: Move ELF relocation handling to C
+handle_relocations()
+i386: Relocatable kernel support/968de4f02621db35b8ae5239c8cfc6664fb872d8
+States that ' Resulting in a kernel that is relocatable
+    with no runtime overhead and no need to modify the source code.'
+Quite smart.
+## kernel organize
+o/arch/x86/boot/compressed/.vmlinux.cmd
+o/arch/x86/boot/.setup.bin.cmd 
+o/arch/x86/boot/.bzImage.cmd 
+## emit-relocations
+ld/lexsup.c
+link_info.emitrelocations = TRUE;
+bfd/elf.c
+elf_fake_sections
+bfd/elflink.c
+elf_link_input_bfd
+bfd_elf_final_link
+  emit_relocs = (bfd_link_relocatable (info)      
+                 || info->emitrelocations);
+elf_link_sort_relocs
+## arch/x86/tools/relocs
+16276                                           R_X86_64_PC32
+9528                                            R_X86_64_32 // all but 2 are __crc_*
+4563                                            R_X86_64_64
+1180                                            R_X86_64_32S
+1                                               R_X86_64_NONE
+
+## kernel PIE
+CONFIG_X86_PIE
+x86/modules: Adapt module loading for PIE support

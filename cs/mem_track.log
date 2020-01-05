@@ -1,3 +1,9 @@
+# Process address space
+[flexible-mmap-2.6.7-D5](https://lwn.net/Articles/90311/)
+[Reorganizing the address space](https://lwn.net/Articles/91829/)
+[Anatomy of a Program in Memory](http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/)
+[Memory – Part 2: Understanding Process memory](https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/)
+
 
 # E820 memory map
 Kerenl setup header?: detect_memory() Load BIOS memory map into boot_params.e820_map
@@ -30,7 +36,7 @@ mm_init->mem_init->free_all_bootmem
 ### free bootmem late
 start_kernel->efi_free_boot_services->free_bootmem_late->__free_pages_bootmem
 
-# Memory variables - layout
+# Kernel virtual address space
 extern unsigned long max_low_pfn;
 extern unsigned long min_low_pfn;
 extern unsigned long max_pfn;
@@ -42,22 +48,39 @@ vmalloc_base = $2 = 0xffffb7d2c0000000
 p high_memory
 high_memory = $3 = (void *) 0xffff9c0940000000
 arch/x86/include/asm/pgtable_64_types.h
-#define __START_KERNEL_map      _AC(0xffffffff80000000, UL)
-# if kaslr CONFIG_RANDOMIZE_MEMORY=y
-page_offset_base = $4 = 0xffff908900000000 # kaslr
-# else
-#ifdef CONFIG_X86_5LEVEL
-#define __PAGE_OFFSET_BASE      _AC(0xff10000000000000, UL)
-#else
-#define __PAGE_OFFSET_BASE      _AC(0xffff880000000000, UL)
-#endif
+CONFIG_RANDOMIZE_MEMORY=y: page_offset_base = $4 = 0xffff908900000000 # kaslr
+CONFIG_X86_5LEVEL: __PAGE_OFFSET_BASE      _AC(0xff10000000000000, UL)
+__PAGE_OFFSET_BASE      _AC(0xffff880000000000, UL) # default
 
-__virt_addr_valid
-_pa(kaddr)
+0xffff880000000000 ~ "0xffff880000000000 +max_fpn << PAGE_SHIFT" or variable high_memory : direct map memory
+(0x1000000000000 -0x880000000000) /1024.0 /1024.0/1024.0/1024.0; 120.0 TB
 
-percpu
+0xffffffff80000000 ~ 2G
+call early_make_pgtable??
+x86_64_start_kernel ->
+init_level4_pgt[511] = early_level4_pgt[511];
+
+## kernel image text
+__START_KERNEL_map      _AC(0xffffffff80000000, UL)
+
+## percpu
 p pcpu_base_addr 
 pcpu_base_addr = $4 = (void *) 0xffff88023fc00000
+
+## Modules text address
+cat /sys/module/wmi/sections/.text
+cat /proc/modules | grep wmi 
+int bss_var;
+static int hello_init(void)
+{printk(KERN_ALERT "Text location .text(Code Segment):%p\n",hello_init);
+static int data_var=0;
+printk(KERN_ALERT "Data Location .data(Data Segment):%p\n",&data_var);
+printk(KERN_ALERT "BSS Location: .bss(BSS Segment):%p\n",&bss_var);}
+
+## 32-bit Highmem and mappings
+https://www.kernel.org/doc/Documentation/vm/highmem.txt
+Persistent Kernel Mappings: How kmap works? Check kmap_init()
+Temporay Mappings(Fixmaps): kmap_atomic()
 
 ## page layout
 page_to_nid
@@ -66,7 +89,8 @@ pfn_to_page
 page_zone
 virt_to_page
 page_pgdat
-
+__virt_addr_valid
+_pa(kaddr)
 
 # Process VM stat
 oom_badness
@@ -176,7 +200,6 @@ also check tgid_base_stuff
 /proc/self/stat  proc_tgid_stat the corresponding linux kernel function do_task_stat() and child function get_mm_rss() and struct mm_rss_stat rss_stat;
 /proc/self/status task_mem() file = get_mm_counter(mm, MM_FILEPAGES); unit is 4kB.
 /proc/self/statm  proc_pid_statm
-
 
 ## Free area
 show_free_areas

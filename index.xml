@@ -21,8 +21,6 @@
 
 &lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
-
 &lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
 
 &lt;h2 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h2&gt;
@@ -37,7 +35,7 @@ __GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
 
 &lt;h1 id=&#34;free-page-state&#34;&gt;Free page state&lt;/h1&gt;
 
-&lt;p&gt;page_expected_state and check_new_page&lt;/p&gt;
+&lt;p&gt;page_expected_state and check_new_page, page_mapcount_reset&lt;/p&gt;
 
 &lt;h1 id=&#34;do-anonymous-page-zero-page&#34;&gt;Do anonymous page, zero page&lt;/h1&gt;
 
@@ -220,10 +218,10 @@ He provided a fix for this issue. That is 7810e6781e0fcbca78b91cf65053f895bf59e8
     
     <item>
       <title>memory mapping</title>
-      <link>http://firoyang.org/cs/mmap/</link>
+      <link>http://firoyang.org/cs/mem_map/</link>
       <pubDate>Wed, 22 Aug 2018 21:39:41 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/mmap/</guid>
+      <guid>http://firoyang.org/cs/mem_map/</guid>
       <description>
 
 &lt;p&gt;This article is talking about user space Memory mmapping; it&amp;rsquo;s not limitted to mmap(2) system call.&lt;br /&gt;
@@ -247,12 +245,21 @@ start address and length, permissions (such as whether the program can&lt;br /&g
 read, write, or execute from that memory), and associated resources (such&lt;br /&gt;
 as physical pages, swap pages, file contents, and so on).&lt;br /&gt;
 Firo:  mmap, page fault, PFRA.&lt;/p&gt;
-
-&lt;h2 id=&#34;vas&#34;&gt;VAS&lt;/h2&gt;
-
-&lt;p&gt;vma, mm_rb, mmap,&lt;br /&gt;
-if file, i_mmap&lt;/p&gt;
 &lt;/blockquote&gt;
+
+&lt;h1 id=&#34;vma&#34;&gt;VMA&lt;/h1&gt;
+
+&lt;p&gt;vma&amp;rsquo;s unit is PAGE_SIZE; (vm_end - vm_start) % 0x1000 == 0 is True.&lt;/p&gt;
+
+&lt;h2 id=&#34;split-vma&#34;&gt;split_vma&lt;/h2&gt;
+
+&lt;p&gt;new_below&lt;br /&gt;
+commit 5846fc6c31162234e88bdfd91548b1cf0d2cebbd&lt;br /&gt;
+Author: Andrew Morton &lt;a href=&#34;mailto:akpm@digeo.com&#34;&gt;akpm@digeo.com&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Sep 17 06:35:47 2002 -0700&lt;br /&gt;
+    [PATCH] consolidate the VMA splitting code&lt;br /&gt;
+new_below means the place where the old vma go to! Bad naming!&lt;br /&gt;
+0 means the old will save the head part. 1 means tail part.&lt;/p&gt;
 
 &lt;h2 id=&#34;file&#34;&gt;File&lt;/h2&gt;
 
@@ -268,12 +275,15 @@ remove_mapping&lt;/p&gt;
 
 &lt;h2 id=&#34;private-anonymouse-mappings&#34;&gt;Private anonymouse mappings&lt;/h2&gt;
 
-&lt;p&gt;Heap - malloc mmap&lt;/p&gt;
+&lt;p&gt;Heap - malloc mmap&lt;br /&gt;
+Anonymous Memory Mappings, LSP chapter 9&lt;/p&gt;
 
 &lt;h2 id=&#34;file-private-mappings&#34;&gt;File private mappings&lt;/h2&gt;
 
 &lt;p&gt;Program: execve text,data,bss&lt;br /&gt;
 Libraries&lt;br /&gt;
+openat(AT_FDCWD, &amp;ldquo;/lib64/libc.so.6&amp;rdquo;, O_RDONLY|O_CLOEXEC) = 3&lt;br /&gt;
+mmap(NULL, 1857568, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f27cbb02000&lt;br /&gt;
 * onset - mmap&lt;br /&gt;
 do_mmap -&amp;gt; mmap_region&lt;br /&gt;
 ext2: generic_file_mmap -&amp;gt; vma-&amp;gt;vm_ops = generic_file_vm_ops&lt;br /&gt;
@@ -283,6 +293,17 @@ both: filemap_fault&lt;br /&gt;
 Write - do_cow_page&lt;br /&gt;
 Read - do_read_page&lt;br /&gt;
 Read &amp;amp; write - do_wp_page&lt;/p&gt;
+
+&lt;h1 id=&#34;shared-memory-mapping&#34;&gt;Shared memory mapping&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand015.html&#34;&gt;Chapter 12  Shared Memory Virtual Filesystem:&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;This is a very clean interface that is conceptually easy to understand but it does not help anonymous pages as there is no file backing. To keep this nice interface, Linux creates an artifical file-backing for anonymous pages using a RAM-based filesystem where each VMA is backed by a “file” in this filesystem. Every inode in the filesystem is placed on a linked list called shmem_inodes so that they may always be easily located. This allows the same file-based interface to be used without treating anonymous pages as a special case.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Firo: every time you create a shared memory via mmap(2), you create a inode with same name dev/zero in the hidden shm_mnt fs;&lt;br /&gt;
+The name dev/zero is only a name. It has nothing related to /dev/zero in drivers/char/mem.c. And /dev/shm is only a tmpfs; it has nothing related shmemfs, but POSIX&amp;rsquo;s shm_open uses /dev/shm.&lt;/p&gt;
 
 &lt;h2 id=&#34;shared-anonymouse-mappings&#34;&gt;Shared anonymouse mappings&lt;/h2&gt;
 
@@ -299,6 +320,26 @@ WP: do_wp_page -&amp;gt; wp_page_shared or wp_page_reuse&lt;br /&gt;
 b)IPC using a shared file mapping&lt;/p&gt;
 
 &lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o&#34;&gt;File shared mappings - a) Memory-mapped I/O&lt;/h2&gt;
+
+&lt;h2 id=&#34;history-1&#34;&gt;History&lt;/h2&gt;
+
+&lt;p&gt;late 70s - IPC: see TLPI: Chapter 45 INTRODUCTION TO SYSTEM V IPC&lt;br /&gt;
+they first appear together in Columbus UNIX, a Bell UNIX for database and efficient transaction processing&lt;br /&gt;
+1983 - IPC See TLPI or wikipedia shared mmeory.&lt;br /&gt;
+they land together in System V that made them popular in mainstream UNIX-es, hence the name&lt;/p&gt;
+
+&lt;p&gt;1983 - BSD mmap with shared vs private memory mapping&lt;br /&gt;
+BSD 4.2: The system supports sharing of data between processes by allowing pages to be mapped into memory. These mapped pages may be shared with other processes or private to the process.&lt;/p&gt;
+
+&lt;p&gt;1984 Jan - BSD mmap with file memory mapping support by SunOS&lt;br /&gt;
+The mmap seems firstly implemented by &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/1.1/800-1108-01E_System_Interface_Manual_for_the_Sun_Workstation_Jan84.pdf&#34;&gt;SunOS 1.1&lt;/a&gt;&lt;br /&gt;
+N.B. This call is not completely implemented In 4.2(BSD).&lt;br /&gt;
+More sunos docs: &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&#34;&gt;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;1988&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory-mapped_file#History&#34;&gt;SunOS 4[4] introduced Unix&amp;rsquo;s mmap, which permitted programs &amp;ldquo;to map files into memory.&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+1989&lt;br /&gt;
+One paper found in OSTEP: &lt;a href=&#34;https://courses.cs.washington.edu/courses/cse551/09sp/papers/memory_coherence.pdf&#34;&gt;Memory Coherence in Shared Virtual Memory Systems&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;mmap&#34;&gt;mmap&lt;/h1&gt;
 
@@ -713,12 +754,6 @@ glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
       <guid>http://firoyang.org/cs/page_fault/</guid>
       <description>
 
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
-
-&lt;p&gt;page frame&lt;br /&gt;
-read from backing store&lt;br /&gt;
-PTE&lt;/p&gt;
-
 &lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
 
 &lt;ul&gt;
@@ -990,52 +1025,65 @@ local_irq_save(flags) used in the code path that already disabled interrupts.&lt
     
     <item>
       <title>x86 interrupt and exception</title>
-      <link>http://firoyang.org/cs/interrupt_and_exception/</link>
+      <link>http://firoyang.org/cs/event/</link>
       <pubDate>Mon, 03 Apr 2017 13:02:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/interrupt_and_exception/</guid>
+      <guid>http://firoyang.org/cs/event/</guid>
       <description>
 
-&lt;h1 id=&#34;references&#34;&gt;References&lt;/h1&gt;
+&lt;h1 id=&#34;events&#34;&gt;Events&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/interrupts.html&#34;&gt;history of interrupts&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://virtualirfan.com/history-of-interrupts&#34;&gt;Another History of interrupts with video&lt;/a&gt;&lt;br /&gt;
-Interrupts: asynonymous(passively received), external&lt;br /&gt;
+&lt;p&gt;Interrupts: asynonymous(passively received), external&lt;br /&gt;
 Exception: synonymous(actively detected), internal&lt;br /&gt;
 Software interrupts: is a trap. int/int3, into, bound.&lt;br /&gt;
-&lt;a href=&#34;http://wangcong.org/2012/06/01/-e4-b8-ba-e4-bb-80-e4-b9-88linux-e5-86-85-e6-a0-b8-e4-b8-8d-e5-85-81-e8-ae-b8-e5-9c-a8-e4-b8-ad-e6-96-ad-e4-b8-ad-e4-bc-91-e7-9c-a0-ef-bc-9f/&#34;&gt;为什么Linux内核不允许在中断中休眠&lt;/a&gt;&lt;br /&gt;
+IPI&lt;br /&gt;
 &lt;a href=&#34;https://www.youtube.com/watch?v=-pehAzaP1eg&#34;&gt;IRQs: the Hard, the Soft, the Threaded and the Preemptible&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.youtube.com/watch?v=YE8cRHVIM4E&#34;&gt;How Dealing with Modern Interrupt Architectures can Affect Your Sanity&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;stack-management&#34;&gt;stack management&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/html/latest/x86/kernel-stacks.html&#34;&gt;x86_64 IST Stacks in kernel&lt;/a&gt;&lt;br /&gt;
+6.14.4 Stack Switching in IA-32e Mode&lt;br /&gt;
+irq_stack_union&lt;/p&gt;
+
+&lt;h2 id=&#34;backtrace&#34;&gt;backtrace&lt;/h2&gt;
+
+&lt;p&gt;commit a2bbe75089d5eb9a3a46d50dd5c215e213790288&lt;br /&gt;
+x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt;
+       /* Save previous stack value &lt;em&gt;/&lt;br /&gt;
+       movq %rsp, %rsi&lt;br /&gt;
+&amp;hellip;&lt;br /&gt;
+2:     /&lt;/em&gt; Store previous stack value */&lt;br /&gt;
+       pushq %rsi&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/736894/&#34;&gt;Firo: end of EOI; x86/dumpstack: make stack name tags more comprehensible&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;concurrency-nested&#34;&gt;Concurrency, nested?&lt;/h1&gt;
 
 &lt;h2 id=&#34;mask-exception&#34;&gt;Mask exception&lt;/h2&gt;
 
 &lt;p&gt;RF in EFLAGS for masking #DB&lt;br /&gt;
-SS &amp;amp; SP&lt;/p&gt;
-
-&lt;h1 id=&#34;form&#34;&gt;Form&lt;/h1&gt;
-
-&lt;h2 id=&#34;interrupt-context-terminology&#34;&gt;Interrupt Context terminology&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;interrupt context - in_irq or in_interrupt&lt;br /&gt;
-irq_enter&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;bh context - in_softirq&lt;br /&gt;
-local_bh_disable&lt;br /&gt;
-__do_softirq -&amp;gt; __local_bh_disable_ip&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;recusively-disbale-irq&#34;&gt;Recusively disbale irq&lt;/h2&gt;
-
-&lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
-local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+&lt;a href=&#34;https://stackoverflow.com/a/1581729/1025001&#34;&gt;Does sti/cli affect software interrupt&lt;/a&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;irq-nested&#34;&gt;irq nested?&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://lwn.net/Articles/380937/&#34;&gt;Prevent nested interrupts when the IRQ stack is near overflowing v2&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.lenky.info/archives/2013/03/2245&#34;&gt;对Linux x86-64架构上硬中断的重新认识&lt;/a&gt;&lt;/p&gt;
 
+&lt;h3 id=&#34;firo-clear-the-flags-for-pf-through-interrupt-gate&#34;&gt;Firo: clear the flags for PF through interrupt gate&lt;/h3&gt;
+
+&lt;p&gt;v3a: 6.12.1 Exception- or Interrupt-Handler Procedures&lt;br /&gt;
+6.12.1.2 Flag Usage By Exception- or Interrupt-Handler Procedure&lt;/p&gt;
+
+&lt;h2 id=&#34;synchronization&#34;&gt;synchronization&lt;/h2&gt;
+
+&lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
+local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
+
 &lt;h1 id=&#34;exceptions&#34;&gt;Exceptions&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
+related code:&lt;br /&gt;
+do_nmi do_int3 debug_stack_usage_inc, debug_idt_descr, debug_idt_table,&lt;/p&gt;
 
 &lt;h2 id=&#34;faults-a-fault-is-an-exception-that-can-generally-be-corrected-and-that-once-corrected-allows-the-program&#34;&gt;Faults — A fault is an exception that can generally be corrected and that, once corrected, allows the program&lt;/h2&gt;
 
@@ -1054,186 +1102,73 @@ address for the trap handler points to the instruction to be executed after the 
 &lt;p&gt;the exception and does not allow a restart of the program or task that caused the exception. Aborts are used to&lt;br /&gt;
 report severe errors, such as hardware errors and inconsistent or illegal values in system tables.&lt;/p&gt;
 
-&lt;h2 id=&#34;kernel-handler&#34;&gt;kernel handler&lt;/h2&gt;
+&lt;h2 id=&#34;triggering-a-gp-exception&#34;&gt;Triggering a #GP exception&lt;/h2&gt;
 
-&lt;p&gt;do_error_trap&lt;/p&gt;
+&lt;p&gt;exception_GP_trigger.S&lt;/p&gt;
 
-&lt;p&gt;#x86 Interrupt&lt;br /&gt;
-If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
-The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;br /&gt;
-##Hardware interrupts&lt;br /&gt;
-are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
-more details in init_IRQ() or set_irq() in driver.&lt;br /&gt;
-##software interrupt&lt;br /&gt;
-more details in trap_init().&lt;br /&gt;
+&lt;h2 id=&#34;exeception-init&#34;&gt;Exeception init&lt;/h2&gt;
+
+&lt;p&gt;Rleated code:&lt;br /&gt;
+idt_setup_early_traps           #===&amp;gt; idt_table: ist=0; DB, BP&lt;br /&gt;
+idt_setup_early_pf              #===&amp;gt; idt_table: PF ist=0;&lt;br /&gt;
+trap_init, idt_setup_traps                 #===&amp;gt; idt_table: ist=0; DE, 0x80 &amp;hellip; etc.&lt;br /&gt;
+trap_init-&amp;gt;cpu_init, idt_setup_ist_traps             #===&amp;gt; idt_table: ist=1; DB, NMI, BP, DF, MC;&lt;br /&gt;
+x86_init.irqs.trap_init         #===&amp;gt; if !KVM, noop&lt;br /&gt;
+idt_setup_debugidt_traps        #===&amp;gt; debug_idt_table, check debug stack; INTG; #DB debug; #BP int; check arch/x86/entry/entry_64.S&lt;/p&gt;
+
+&lt;h1 id=&#34;interrupt&#34;&gt;Interrupt&lt;/h1&gt;
+
+&lt;p&gt;If interrupt occured in user mode, then cpu will context swith for potential reschedule.&lt;br /&gt;
+The Interrupt Descriptor Table (IDT) is a data structure used by the x86 architecture to implement an interrupt vector table.&lt;/p&gt;
+
+&lt;h2 id=&#34;hardware-interrupts&#34;&gt;Hardware interrupts&lt;/h2&gt;
+
+&lt;p&gt;are used by devices to communicate that they require attention from the operating system.&lt;br /&gt;
+more details in init_IRQ() or set_irq() in driver.&lt;/p&gt;
+
+&lt;h2 id=&#34;software-interrupt&#34;&gt;software interrupt&lt;/h2&gt;
+
+&lt;p&gt;more details in trap_init().&lt;br /&gt;
 * exception or trap&lt;br /&gt;
 is caused either by an exceptional condition in the processor itself,&lt;br /&gt;
 divide zero painc?&lt;br /&gt;
 * special instruction, for example INT 0x80&lt;br /&gt;
 or a special instruction in the instruction set which causes an interrupt when it is executed.&lt;/p&gt;
 
-&lt;h1 id=&#34;x86&#34;&gt;x86&lt;/h1&gt;
-
-&lt;h2 id=&#34;interrupt-vector&#34;&gt;Interrupt vector&lt;/h2&gt;
-
-&lt;p&gt;arch/x86/include/asm/irq_vectors.h&lt;/p&gt;
-
-&lt;h2 id=&#34;why-do-timer-interrupt-and-de-share-the-same-vector-0&#34;&gt;Why do timer interrupt and #DE share the same vector 0.&lt;/h2&gt;
+&lt;h2 id=&#34;irq-line-number-vs-interrupt-vector&#34;&gt;IRQ line number vs interrupt vector&lt;/h2&gt;
 
 &lt;p&gt;cat /proc/interrupts&lt;br /&gt;
             CPU0       CPU1       CPU2       CPU3&lt;br /&gt;
    0:         21          0          0          0  IR-IO-APIC    2-edge      timer&lt;br /&gt;
-v3a Chapter 6&lt;br /&gt;
-0, DE, Divide Error, Fault, No DIV and IDIV instructions.&lt;br /&gt;
-Check ULK3 Chapter 4 Interrupt vectors and Linux 技术内幕 7.2.1中断号&lt;br /&gt;
+v3a Chapter 6 and Check ULK3 Chapter 4 Interrupt vectors&lt;br /&gt;
 the 0 in /proc/interrupts is a IRQ line number&lt;br /&gt;
 The 0 for Divide error is a interrupt vector.&lt;/p&gt;
 
-&lt;h2 id=&#34;an-example-of-threaded-irq&#34;&gt;An example of threaded irq&lt;/h2&gt;
+&lt;h2 id=&#34;interrupt-init&#34;&gt;Interrupt init&lt;/h2&gt;
 
-&lt;p&gt;mei_me_probe&lt;br /&gt;
-ps axjf | grep irq | grep mei&lt;br /&gt;
-    2   499     0     0 ?           -1 S        0   0:00  _ [irq/126-mei_me]&lt;/p&gt;
+&lt;p&gt;early_irq_init = alloc NR_IRQS_LEGACY irq_desc; - 16    #===&amp;gt; [    0.000000] NR_IRQS: 65792, nr_irqs: 1024, preallocated irqs: 16&lt;br /&gt;
+init_IRQ()-&amp;gt;x86_init.irqs.intr_init=native_init_IRQ     #===&amp;gt; external interrupt init;&lt;br /&gt;
+    pre_vector_init = init_ISA_irqs #===&amp;gt; 1) legacy_pic-&amp;gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.&lt;br /&gt;
+    idt_setup_apic_and_irq_gates    #===&amp;gt; apic normal(from 32) and system interrupts;&lt;/p&gt;
 
-&lt;h2 id=&#34;does-sti-cli-affect-software-interrupt&#34;&gt;Does sti/cli affect software interrupt&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/a/1581729/1025001&#34;&gt;https://stackoverflow.com/a/1581729/1025001&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;ipi&#34;&gt;IPI&lt;/h2&gt;
+&lt;h1 id=&#34;ipi&#34;&gt;IPI&lt;/h1&gt;
 
 &lt;p&gt;commit 52aec3308db85f4e9f5c8b9f5dc4fbd0138c6fa4&lt;br /&gt;
 Author: Alex Shi &lt;a href=&#34;mailto:alex.shi@intel.com&#34;&gt;alex.shi@intel.com&lt;/a&gt;&lt;br /&gt;
 Date:   Thu Jun 28 09:02:23 2012 +0800&lt;br /&gt;
     x86/tlb: replace INVALIDATE_TLB_VECTOR by CALL_FUNCTION_VECTOR&lt;br /&gt;
- 73 #define ERROR_APIC_VECTOR               0xfe&lt;br /&gt;
- 74 #define RESCHEDULE_VECTOR               0xfd&lt;br /&gt;
- 75 #define CALL_FUNCTION_VECTOR            0xfc&lt;br /&gt;
- 76 #define CALL_FUNCTION_SINGLE_VECTOR     0xfb&lt;br /&gt;
- 77 #define THERMAL_APIC_VECTOR             0xfa&lt;br /&gt;
- 78 #define THRESHOLD_APIC_VECTOR           0xf9&lt;br /&gt;
- 79 #define REBOOT_VECTOR                   0xf8&lt;/p&gt;
+ERROR_APIC_VECTOR               0xfe&lt;br /&gt;
+RESCHEDULE_VECTOR               0xfd&lt;br /&gt;
+CALL_FUNCTION_VECTOR            0xfc&lt;br /&gt;
+CALL_FUNCTION_SINGLE_VECTOR     0xfb&lt;br /&gt;
+THERMAL_APIC_VECTOR             0xfa&lt;br /&gt;
+THRESHOLD_APIC_VECTOR           0xf9&lt;br /&gt;
+REBOOT_VECTOR                   0xf8&lt;/p&gt;
 
-&lt;h2 id=&#34;practices&#34;&gt;Practices&lt;/h2&gt;
+&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
 
-&lt;ul&gt;
-&lt;li&gt;Triggering a #GP exception&lt;br /&gt;
-exception_GP_trigger.S&lt;br /&gt;
-&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
-if you do lidt in userspace program, you will receive SIGSEGV with si_code 128(somewhere of kernel).&lt;br /&gt;
-But with the dmesg traps: int0x80[15066] general protection ip:4000c7 sp:7ffc8706cdf0 error:0 in int0x80[400000+1000] form do_general_protection.&lt;br /&gt;
-Privilege instructions in V3a chapter 5 Protection&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;Obtain sys_call_table on amd64&lt;br /&gt;
-&lt;a href=&#34;https://www.exploit-db.com/papers/13146/&#34;&gt;https://www.exploit-db.com/papers/13146/&lt;/a&gt;&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
-
-&lt;h2 id=&#34;irq-and-exeception-init&#34;&gt;irq and exeception init&lt;/h2&gt;
-
-&lt;p&gt;type: gate_desc; desc_struct&lt;br /&gt;
-file: arch/x86/kernel/idt.c&lt;br /&gt;
-start_kernel&lt;br /&gt;
-{&lt;br /&gt;
-        setup_arch&lt;br /&gt;
-        {&lt;br /&gt;
-                idt_setup_early_traps           #===&amp;gt; idt_table: ist=0; DB, BP&lt;br /&gt;
-                &amp;hellip;&lt;br /&gt;
-                idt_setup_early_pf              #===&amp;gt; idt_table: PF ist=0;&lt;br /&gt;
-        }&lt;br /&gt;
-        &amp;hellip;&lt;br /&gt;
-        trap_init&lt;br /&gt;
-        {&lt;br /&gt;
-                idt_setup_traps                 #===&amp;gt; idt_table: ist=0; DE, 0x80 &amp;hellip; etc.&lt;br /&gt;
-                &amp;hellip;&lt;br /&gt;
-                cpu_init&lt;br /&gt;
-                {&lt;br /&gt;
-                        load_current_idt&lt;br /&gt;
-                        &amp;hellip;&lt;br /&gt;
-                        ist stacks init - exception_stacks&lt;br /&gt;
-                        t-&amp;gt;x86_tss.ist[v] points to top of each stack.&lt;br /&gt;
-                }&lt;br /&gt;
-                idt_setup_ist_traps             #===&amp;gt; idt_table: ist=1; DB, NMI, BP, DF, MC;&lt;br /&gt;
-                x86_init.irqs.trap_init         #===&amp;gt; if !KVM, noop&lt;br /&gt;
-                idt_setup_debugidt_traps        #===&amp;gt; debug_idt_table, check debug stack; INTG; #DB debug; #BP int; check arch/x86/entry/entry_64.S&lt;br /&gt;
-                                # idtentry debug                  do_debug                has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK&lt;br /&gt;
-                                # idtentry int3                 do_int3                 has_error_code=0        paranoid=1 shift_ist=DEBUG_STACK&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    }
-    early_irq_init = alloc NR_IRQS_LEGACY irq_desc; - 16    #===&amp;gt; [    0.000000] NR_IRQS: 65792, nr_irqs: 1024, preallocated irqs: 16
-    init_IRQ()-&amp;gt;x86_init.irqs.intr_init=native_init_IRQ     #===&amp;gt; external interrupt init; 
-    {
-            pre_vector_init = init_ISA_irqs #===&amp;gt; 1) legacy_pic-&amp;gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.
-            idt_setup_apic_and_irq_gates    #===&amp;gt; apic normal(from 32) and system interrupts; 
-    }
-    softirq_init
-    local_irq_enable
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;}&lt;/p&gt;
-
-&lt;h3 id=&#34;interrupt-and-exception-stack&#34;&gt;Interrupt and exception stack&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/kernel-stacks&#34;&gt;https://www.kernel.org/doc/Documentation/x86/kernel-stacks&lt;/a&gt;&lt;br /&gt;
-TSS v3a 6.12&lt;br /&gt;
-6.14.4 Stack Switching in IA-32e Mode&lt;/p&gt;
-
-&lt;h4 id=&#34;exception-page-fault&#34;&gt;Exception - page_fault&lt;/h4&gt;
-
-&lt;p&gt;Kernel doesn&amp;rsquo;t change the inherit TSS stack&lt;/p&gt;
-
-&lt;h4 id=&#34;interrupt-irq-entries-start&#34;&gt;interrupt irq_entries_start&lt;/h4&gt;
-
-&lt;p&gt;Kernel change it irq_stack_union in &amp;ldquo;.macro interrupt&amp;rdquo;&lt;br /&gt;
-SWAPGS 要手动切换.&lt;br /&gt;
-ENTER_IRQ_STACK old_rsp=%rdi&lt;br /&gt;
-movq    %rsp, \old_rsp          #==========&amp;gt; old_rsp should be %rdi, check &lt;a href=&#34;https://sourceware.org/binutils/docs/as/Macro.html&#34;&gt;https://sourceware.org/binutils/docs/as/Macro.html&lt;/a&gt;&lt;br /&gt;
-movq    \old_rsp, PER_CPU_VAR(irq_stack_union + IRQ_STACK_SIZE - 8)&lt;br /&gt;
-movq    PER_CPU_VAR(irq_stack_ptr), %rsp&lt;/p&gt;
-
-&lt;h4 id=&#34;ist-exception&#34;&gt;IST exception&lt;/h4&gt;
-
-&lt;p&gt;6.14.5 Interrupt Stack Table&lt;br /&gt;
-Documentation/x86/kernel-stacks&lt;br /&gt;
-Why Debug stack is double page? Spare IST pointer.&lt;/p&gt;
-
-&lt;h3 id=&#34;link-to-process-stack-from-irq-stack&#34;&gt;Link to process stack from irq stack&lt;/h3&gt;
-
-&lt;p&gt;commit a2bbe75089d5eb9a3a46d50dd5c215e213790288&lt;br /&gt;
-x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt;
-       /* Save previous stack value &lt;em&gt;/&lt;br /&gt;
-       movq %rsp, %rsi&lt;br /&gt;
-&amp;hellip;&lt;br /&gt;
-2:     /&lt;/em&gt; Store previous stack value */&lt;br /&gt;
-       pushq %rsi&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/736894/&#34;&gt;Firo: end of EOI; x86/dumpstack: make stack name tags more comprehensible&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;h3 id=&#34;do-nmi-do-int3-debug-stack-usage-inc-debug-idt-descr-debug-idt-table&#34;&gt;do_nmi do_int3 debug_stack_usage_inc, debug_idt_descr, debug_idt_table,&lt;/h3&gt;
-
-&lt;p&gt;load_debug_idt&lt;br /&gt;
-commit 42181186ad4db986fcaa40ca95c6e407e9e79372&lt;br /&gt;
-Author: Steven Rostedt &lt;a href=&#34;mailto:srostedt@redhat.com&#34;&gt;srostedt@redhat.com&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Dec 16 11:43:02 2011 -0500&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;x86: Add counter when debug stack is used with interrupts enabled
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h3 id=&#34;clear-the-flags-for-pf-through-interrupt-gate&#34;&gt;clear the flags for PF through interrupt gate&lt;/h3&gt;
-
-&lt;p&gt;v3a: 6.12.1 Exception- or Interrupt-Handler Procedures&lt;br /&gt;
-6.12.1.2 Flag Usage By Exception- or Interrupt-Handler Procedure&lt;/p&gt;
-
-&lt;h3 id=&#34;rbx-in-page-fault&#34;&gt;rbx in page_fault?&lt;/h3&gt;
-
-&lt;h3 id=&#34;x86-64-kernel-don-t-use-trap-gate&#34;&gt;x86_64 kernel don&amp;rsquo;t use trap gate?&lt;/h3&gt;
-
-&lt;p&gt;Yes&lt;/p&gt;
-
-&lt;h3 id=&#34;paranoid&#34;&gt;Paranoid?&lt;/h3&gt;
-
-&lt;p&gt;Documentation/x86/entry_64.txt&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://people.cs.clemson.edu/~mark/interrupts.html&#34;&gt;history of interrupts&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://virtualirfan.com/history-of-interrupts&#34;&gt;Another History of interrupts with video&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1245,11 +1180,24 @@ Date:   Fri Dec 16 11:43:02 2011 -0500&lt;/p&gt;
       <guid>http://firoyang.org/cs/scheduling/</guid>
       <description>
 
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+&lt;h1 id=&#34;scheduling&#34;&gt;scheduling&lt;/h1&gt;
 
-&lt;h2 id=&#34;preemption&#34;&gt;Preemption&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Scheduling_(computing)&#34;&gt;Scheduling (computing)&lt;/a&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259&#34;&gt;&lt;a href=&#34;https://lwn.net/Articles/137259/&#34;&gt;Voluntary Kernel Preemption, 2.6.12-rc4-mm2&lt;/a&gt;&lt;/h3&gt;
+&lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html&#34;&gt;Evolution of the x86 context switch in Linux&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h2&gt;
+
+&lt;p&gt;((last) = __switch_to_asm((prev), (next)));                             #=====&amp;gt; call&lt;br /&gt;
+jmp     __switch_to                                                     #=====&amp;gt; jmp + ret&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;preemption&#34;&gt;Preemption&lt;/h1&gt;
+
+&lt;h2 id=&#34;voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259&#34;&gt;&lt;a href=&#34;https://lwn.net/Articles/137259/&#34;&gt;Voluntary Kernel Preemption, 2.6.12-rc4-mm2&lt;/a&gt;&lt;/h2&gt;
 
 &lt;p&gt;Voluntary preemption works by adding a cond_resched()&lt;br /&gt;
 (reschedule-if-needed) call to every might_sleep() check. It is lighter&lt;br /&gt;
@@ -1462,35 +1410,6 @@ Date:   Fri Jul 14 00:24:27 2006 -0700&lt;br /&gt;
     [PATCH] lockdep: core, fix rq-lock handling on __ARCH_WANT_UNLOCKED_CTXSW&lt;br /&gt;
 +        * Since the runqueue lock will be released by the next&lt;br /&gt;
 +        * task&lt;/p&gt;
-
-&lt;h1 id=&#34;etc&#34;&gt;ETC&lt;/h1&gt;
-
-&lt;h2 id=&#34;the-wake-up-lost-problem&#34;&gt;the wake-up lost problem&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.linuxjournal.com/article/8144&#34;&gt;Kernel Korner - Sleeping in the Kernel&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;reordering-issue&#34;&gt;Reordering issue&lt;/h2&gt;
-
-&lt;p&gt;CPU0:Process A&lt;br /&gt;
-while(!done) {&lt;br /&gt;
-        schedule();&lt;br /&gt;
-        set_current_state = *interruptable;&lt;br /&gt;
-}&lt;br /&gt;
-CPU1: Process B&lt;br /&gt;
-done = true;&lt;br /&gt;
-wake_up_process(A);&lt;br /&gt;
-Ordering issue: reorder load of done and store of state;&lt;br /&gt;
-A: load of done&lt;br /&gt;
-B: done = true&lt;br /&gt;
-B: wake up&lt;br /&gt;
-A: set state&lt;br /&gt;
-A: schedule&lt;br /&gt;
-Check bcbd94ff481ec1d7b5c824d90df82d0faafabd35&lt;br /&gt;
-dm crypt: fix a possible hang due to race condition on exit&lt;/p&gt;
-
-&lt;h2 id=&#34;pelt&#34;&gt;PELT&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/531853/&#34;&gt;Per-entity load tracking&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;running-time&#34;&gt;Running time&lt;/h1&gt;
 

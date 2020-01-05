@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="2017">
+<meta itemprop="wordCount" content="1986">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -187,11 +187,24 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="formal-causes">Formal causes</h1>
+<h1 id="scheduling">scheduling</h1>
 
-<h2 id="preemption">Preemption</h2>
+<p><a href="https://en.wikipedia.org/wiki/Scheduling_(computing)">Scheduling (computing)</a></p>
 
-<h3 id="voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259"><a href="https://lwn.net/Articles/137259/">Voluntary Kernel Preemption, 2.6.12-rc4-mm2</a></h3>
+<h1 id="context-switch">Context switch</h1>
+
+<p><a href="https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html">Evolution of the x86 context switch in Linux</a><br />
+<a href="https://lwn.net/Articles/520227/">Al Viro&rsquo;s new execve/kernel_thread design</a></p>
+
+<h2 id="call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd">call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd</h2>
+
+<p>((last) = __switch_to_asm((prev), (next)));                             #=====&gt; call<br />
+jmp     __switch_to                                                     #=====&gt; jmp + ret<br />
+<a href="https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312">Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?</a></p>
+
+<h1 id="preemption">Preemption</h1>
+
+<h2 id="voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259"><a href="https://lwn.net/Articles/137259/">Voluntary Kernel Preemption, 2.6.12-rc4-mm2</a></h2>
 
 <p>Voluntary preemption works by adding a cond_resched()<br />
 (reschedule-if-needed) call to every might_sleep() check. It is lighter<br />
@@ -404,35 +417,6 @@ Date:   Fri Jul 14 00:24:27 2006 -0700<br />
     [PATCH] lockdep: core, fix rq-lock handling on __ARCH_WANT_UNLOCKED_CTXSW<br />
 +        * Since the runqueue lock will be released by the next<br />
 +        * task</p>
-
-<h1 id="etc">ETC</h1>
-
-<h2 id="the-wake-up-lost-problem">the wake-up lost problem</h2>
-
-<p><a href="https://www.linuxjournal.com/article/8144">Kernel Korner - Sleeping in the Kernel</a></p>
-
-<h2 id="reordering-issue">Reordering issue</h2>
-
-<p>CPU0:Process A<br />
-while(!done) {<br />
-        schedule();<br />
-        set_current_state = *interruptable;<br />
-}<br />
-CPU1: Process B<br />
-done = true;<br />
-wake_up_process(A);<br />
-Ordering issue: reorder load of done and store of state;<br />
-A: load of done<br />
-B: done = true<br />
-B: wake up<br />
-A: set state<br />
-A: schedule<br />
-Check bcbd94ff481ec1d7b5c824d90df82d0faafabd35<br />
-dm crypt: fix a possible hang due to race condition on exit</p>
-
-<h2 id="pelt">PELT</h2>
-
-<p><a href="https://lwn.net/Articles/531853/">Per-entity load tracking</a></p>
 
 <h1 id="running-time">Running time</h1>
 

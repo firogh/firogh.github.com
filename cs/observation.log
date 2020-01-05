@@ -8,6 +8,20 @@ The Linux x86 ORC Stack Unwinder](http://www.codeblueprint.co.uk/2017/07/31/the-
 ## Crash utility
 Sometimes, the backtrace showd by bt commnad is not correct. You have to take a look at out put of log command.
 
+# Debuginfo
+[How the Compiler Tells Its Secrets to the Debugger](https://events.static.linuxfound.org/images/stories/pdf/lfcs2012_eager.pdf)
+[Introduction to the DWARF Debugging Format](http://www.dwarfstd.org/doc/Debugging%20using%20DWARF-2012.pdf)
+[LLVM Debug Info Tutorial](https://www.youtube.com/watch?time_continue=19&v=8cIToPOJPFs) [Slide](https://llvm.org/devmtg/2014-10/Slides/Christopher-DebugInfoTutorial.pdf)
+[Debugging Debug Information - Francesco Zappa Nardelli](https://www.youtube.com/watch?v=lBJIrGgEP1A)
+[Exploiting the hard-working DWARF](https://www.youtube.com/watch?v=nLH7ytOTYto)
+## CFI
+https://sourceware.org/binutils/docs/as/CFI-directives.html#CFI-directives
+## Dwarf 4
+DWARF4 is now the default when generating DWARF debug information. When -g is used on a platform that uses DWARF debugging information, GCC will now default to -gdwarf-4 -fno-debug-types-section.
+GDB 7.5, Valgrind 3.8.0 and elfutils 0.154 debug information consumers support DWARF4 by default. Before GCC 4.8 the default version used was DWARF2. To make GCC 4.8 generate an older DWARF version use -g  together with -gdwarf-2 or -gdwarf-3. The default for Darwin and VxWorks is still -gdwarf-2 -gstrict-dwarf.
+[1]: https://gcc.gnu.org/gcc-4.8/changes.html
+readelf --debug-dump  fg  | grep -A 4 .debug_
+
 # Gdb
 [How debuggers work](http://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
 signle step instruction
@@ -47,13 +61,6 @@ ldd /usr/bin/git
 # software imediately stop
 Use atexit() register a stackdump or a wrapped print
 
-# Print
-define witcher(fmt, args...) do{FILE * fdebug=fopen("/tmp/d.log", "a+"); \
-fprintf(fdebug,"%s,%s,%d:"fmt, __TIME__, __FUNCTION__, __LINE__, ##args);fclose(fdebug);} while(0)
-* make specific
--s, -n, -p, --warn-undefined-variables
-$(warning ...)
-
 # Hardware debug watchpoints
 https://www.kernel.org/doc/ols/2009/ols2009-pages-149-158.pdf
 https://lwn.net/Articles/353050/
@@ -68,3 +75,64 @@ ltrace, strace, bash -x
 PTRACE_PEEKDATA for showing pointer parameter(e.g. 2nd arg of read)
 # ftrace
 [Linux Tracing Technologies](https://www.kernel.org/doc/html/v4.18/trace/index.html)
+# Top
+https://github.com/iovisor/bcc/blob/master/tools/opensnoop.py
+https://github.com/brendangregg/perf-tools/blob/master/kernel/funcslower
+
+# Debug objects
+make kernel/sched.s V=1
+./scripts/decodecode < Oops.txt
+
+# kernel module
+gdb vmlinux /proc/kcore
+text_addr=/sys/module/char-read-write/sections/.text
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr
+print &((struct kmem_cache *)0)->offset
+
+# Perf
+perf record -a -e kmem:kmalloc --filter "bytes_alloc==64"
+
+# Kprobes 
+
+# Systemtap
+[systemtap脚本分析系统中dentry SLAB占用过高问题](https://yq.aliyun.com/articles/131870)
+https://sourceware.org/systemtap/examples/keyword-index.html
+stap -L 'kernel.statement("__inet_lookup_established@net/ipv4/inet_hashtables.c:*")'
+stap -g -v -e '%{ int foo; %} probe kernel.function("vfs_read"){ %{ foo=1 %}; printf("addr: %x\n", %{ &foo %} );exit()}'
+stap -g -v -e '%{ int foo; %} probe kprobe.function("vfs_read"){ %{ foo=1 %}; printf("addr: %x\n", %{ &foo %} );exit()}'
+sudo stap -g -v -e '%{ int foo; %} probe kprobe.function("vfs_read"){  %{ printk("addr: %p\n",  &foo) %}; exit()}'
+
+# eBPF
+https://lwn.net/Articles/740157/
+[How to turn any syscall into an event: Introducing eBPF Kernel probes](https://blog.yadutaf.fr/2016/03/30/turn-any-syscall-into-event-introducing-ebpf-kernel-probes/)
+
+# Print
+define witcher(fmt, args...) do{FILE * fdebug=fopen("/tmp/d.log", "a+"); \
+fprintf(fdebug,"%s,%s,%d:"fmt, __TIME__, __FUNCTION__, __LINE__, ##args);fclose(fdebug);} while(0)
+* make specific
+-s, -n, -p, --warn-undefined-variables
+$(warning ...)
+
+## Early print
+putstr, early_printk, Linux serial-port driver is interrupt driven, if irq-off console will not work!
+## Dynamic print
+How to use it during kernel booting?
+dyndbg="file drivers/usb/host/ehci-hcd.c +p; file
+drivers/usb/host/ehci-ppc-of.c +p" loglevel=8
+loglevel=8 dyndbg="module ehci_pci +p;
+module ehci_hcd +p; module usbcore +p"
+After booting:
+/sys/kernel/debug/dynamic_debug/control
+## Dev print
+drivers/base/core.c
+define_dev_printk_level
+THese functions are like pr_func
+dev_debug
+
+# Kasan
+setup_arch->kasan_init
+[KernelAddressSanitizer a fast memory error detector for the Linux kernel](http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf)
+[kasan found stack out of bounds](https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506)
+[lwn The kernel address sanitizer](https://lwn.net/Articles/612153/)
+[out of bounds](https://lkml.org/lkml/2014/12/3/128)
+Interceptors of memset/memmove/memcpy 393f203f5fd54421fddb1e2a263f64d3876eeadb
