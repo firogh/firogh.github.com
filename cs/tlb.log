@@ -86,6 +86,28 @@ Date:   Tue Sep 4 10:43:14 2018 +0200
  * translations left to it. Otherwise it might be possible to observe (or
  * worse, change) the page content after it has been reused.
 [The point is: we *never* have the order 1) unhook, 2) TLB invalidate, 3) free. If there is concurrency due to a multi-threaded application we have to do the unhook of the page-table entry and the TLB flush with a single instruction.](https://patchwork.kernel.org/patch/10599105/)
+## TLB shootdown on x86 and per-vma and per-pte
+commit e6d19c6ab5f0f54d15277be9933183050d01ce2c
+Refs: <v2.5.17>
+Author:     Linus Torvalds <torvalds@home.transmeta.com>
+AuthorDate: Mon May 20 07:34:26 2002 -0700
+Commit:     Linus Torvalds <torvalds@penguin.transmeta.com>
+CommitDate: Mon May 20 07:34:26 2002 -0700
+    Make generic TLB shootdown friendlier to non-x86 architectures
+[...]
++/*
++ * x86 doesn't need any special per-pte or
++ * per-vma handling..
++ */
++#define tlb_start_vma(tlb, vma) do { } while (0)
++#define tlb_end_vma(tlb, vma) do { } while (0)
++#define tlb_remove_tlb_entry(tlb, pte, address) do { } while (0)
++/*
++ * .. because we flush the whole mm when it
++ * fills up.
++ */
++#define tlb_flush(tlb) flush_tlb_mm((tlb)->mm)
+Firo: For x86, tlb_flush become much better.
 
 # Material
 v3a Chapter 4.10

@@ -475,6 +475,38 @@ x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt
 &lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
 local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 
+&lt;h2 id=&#34;in-interrupt&#34;&gt;in_interrupt&lt;/h2&gt;
+
+&lt;p&gt;383 static inline void tick_irq_exit(void)&lt;br /&gt;
+384 {&lt;br /&gt;
+385 #ifdef CONFIG_NO_HZ_COMMON&lt;br /&gt;
+386         int cpu = smp_processor_id();&lt;br /&gt;
+387&lt;br /&gt;
+388         /* Make sure that timer wheel updates are propagated &lt;em&gt;/&lt;br /&gt;
+389         if ((idle_cpu(cpu) &amp;amp;&amp;amp; !need_resched()) || tick_nohz_full_cpu(cpu)) {&lt;br /&gt;
+390                 if (!in_interrupt())&lt;br /&gt;
+391                         tick_nohz_irq_exit();&lt;br /&gt;
+392         }&lt;br /&gt;
+393 #endif&lt;br /&gt;
+394 }&lt;br /&gt;
+395&lt;br /&gt;
+396 /&lt;/em&gt;&lt;br /&gt;
+397  * Exit an interrupt context. Process softirqs if needed and possible:&lt;br /&gt;
+398  */&lt;br /&gt;
+399 void irq_exit(void)&lt;br /&gt;
+400 {&lt;br /&gt;
+401 #ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED&lt;br /&gt;
+402         local_irq_disable();&lt;br /&gt;
+403 #else&lt;br /&gt;
+404         lockdep_assert_irqs_disabled();&lt;br /&gt;
+405 #endif&lt;br /&gt;
+406         account_irq_exit_time(current);&lt;br /&gt;
+407         preempt_count_sub(HARDIRQ_OFFSET);&lt;br /&gt;
+408         if (!in_interrupt() &amp;amp;&amp;amp; local_softirq_pending())&lt;br /&gt;
+409                 invoke_softirq();&lt;br /&gt;
+410&lt;br /&gt;
+411         tick_irq_exit();&lt;/p&gt;
+
 &lt;h1 id=&#34;exceptions&#34;&gt;Exceptions&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
@@ -583,12 +615,11 @@ REBOOT_VECTOR                   0xf8&lt;/p&gt;
 &lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html&#34;&gt;Evolution of the x86 context switch in Linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h2&gt;
-
-&lt;p&gt;((last) = __switch_to_asm((prev), (next)));                             #=====&amp;gt; call&lt;br /&gt;
-jmp     __switch_to                                                     #=====&amp;gt; jmp + ret&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;br /&gt;
+commit 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;br /&gt;
+Author: Brian Gerst &lt;a href=&#34;mailto:brgerst@gmail.com&#34;&gt;brgerst@gmail.com&lt;/a&gt;&lt;br /&gt;
+Date:   Sat Aug 13 12:38:19 2016 -0400&lt;br /&gt;
+    sched/x86: Rewrite the switch_to() code&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;preemption&#34;&gt;Preemption&lt;/h1&gt;
@@ -618,22 +649,19 @@ Firo: spin_unlock_mutex&lt;/p&gt;
 
 &lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
-syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
-retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+&lt;p&gt;system call returns mode . syscall_return_slowpath&lt;br /&gt;
+interrupt hander returns user mode .retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
 
 &lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
 
 &lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
 If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
 
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+&lt;ul&gt;
+&lt;li&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;br /&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
 
@@ -664,7 +692,6 @@ wakeup: check_preempt_wakeup&lt;br /&gt;
 
 &lt;ul&gt;
 &lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
-if preempt is true; it should mean PREEMPT_VOLUNTARY.&lt;br /&gt;
 prev-&amp;gt;state means deactivate.&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
@@ -1579,6 +1606,11 @@ Architecture: Memory hierarchy&lt;br /&gt;
 OS: VM(layered smantic), Concurrency&lt;br /&gt;
 Application:&lt;/p&gt;
 
+&lt;h1 id=&#34;tools&#34;&gt;Tools&lt;/h1&gt;
+
+&lt;p&gt;Parallemism and locality&lt;br /&gt;
+Bandwidth and latency&lt;/p&gt;
+
 &lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
 
 &lt;p&gt;Complexity&lt;br /&gt;
@@ -1618,7 +1650,10 @@ Parallel and Concurrent Programming in Haskell&lt;br /&gt;
 The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
 &lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Firo: good introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://talks.golang.org/2012/concurrency.slide#6&#34;&gt;Rob Pike: Concurrency is the composition of independently executing computations.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;asynchrony-computer-programming-https-en-wikipedia-org-wiki-asynchrony-computer-programming&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Asynchrony_(computer_programming)&#34;&gt;Asynchrony (computer programming)&lt;/a&gt;&lt;/h2&gt;
 
 &lt;h2 id=&#34;concurrent-vs-parallel&#34;&gt;concurrent vs parallel&lt;/h2&gt;
 
@@ -1760,7 +1795,8 @@ smatch&lt;br /&gt;&lt;/li&gt;
 
 &lt;h1 id=&#34;assembly-programming&#34;&gt;Assembly programming&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu&#34;&gt;Bootloader with qemu&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;basic-conceptions&#34;&gt;Basic conceptions&lt;/h1&gt;
 

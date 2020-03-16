@@ -11,11 +11,42 @@
     
     <item>
       <title>Linux kernel page allocation</title>
-      <link>http://firoyang.org/cs/page_alloc/</link>
+      <link>http://firoyang.org/cs/page_allocator/</link>
       <pubDate>Sat, 08 Jun 2019 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_alloc/</guid>
+      <guid>http://firoyang.org/cs/page_allocator/</guid>
       <description>
+
+&lt;h1 id=&#34;track-buddy-memory-system-1963-1965&#34;&gt;track: buddy memory system 1963 ~ 1965&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
+The following cited from above 1965 paper.&lt;br /&gt;
+The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
+storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
+situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
+mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+
+&lt;p&gt;OSIDP&lt;br /&gt;
+Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
+scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
+a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
+ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
+interesting compromise is the buddy system&lt;/p&gt;
+
+&lt;h2 id=&#34;related-code&#34;&gt;Related code&lt;/h2&gt;
+
+&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
+setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
+        sparse_init &amp;hellip;-&amp;gt; vmemmap_populate      # vmemmap&lt;br /&gt;
+        zone_sizes_init-&amp;gt;free_area_init_nodes -&amp;gt; free_area_init_node-&amp;gt; free_area_init_core&lt;br /&gt;
+                zone_pcp_init # init percpu pageset with boot_pageset&lt;br /&gt;
+                init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list&lt;br /&gt;
+                memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
+
+&lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
+        mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -33,7 +64,9 @@
 &lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d - Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
 __GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
 
-&lt;h1 id=&#34;free-page-state&#34;&gt;Free page state&lt;/h1&gt;
+&lt;h1 id=&#34;free&#34;&gt;Free&lt;/h1&gt;
+
+&lt;h2 id=&#34;page-state&#34;&gt;page state&lt;/h2&gt;
 
 &lt;p&gt;page_expected_state and check_new_page, page_mapcount_reset&lt;/p&gt;
 
@@ -580,6 +613,13 @@ CommitDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
 
+&lt;h2 id=&#34;fast-path&#34;&gt;Fast path&lt;/h2&gt;
+
+&lt;p&gt;commit 21d375b6b34ff511a507de27bf316b3dde6938d9&lt;br /&gt;
+Author: Andy Lutomirski &lt;a href=&#34;mailto:luto@kernel.org&#34;&gt;luto@kernel.org&lt;/a&gt;&lt;br /&gt;
+Date:   Sun Jan 28 10:38:49 2018 -0800&lt;br /&gt;
+    x86/entry/64: Remove the SYSCALL64 fast path&lt;/p&gt;
+
 &lt;h2 id=&#34;sysenter-vs-syscall&#34;&gt;sysenter vs syscall&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
@@ -619,6 +659,10 @@ According to do_syscall_64, regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs
 &lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
 However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
 
+&lt;h2 id=&#34;hacking&#34;&gt;Hacking&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.exploit-db.com/papers/13146&#34;&gt;Obtain sys_call_table on amd64(x86_64)&lt;/a&gt;&lt;/p&gt;
+
 &lt;h2 id=&#34;vdso&#34;&gt;vDSO&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0&#34;&gt;Creating a vDSO: the Colonel&amp;rsquo;s Other Chicken&lt;/a&gt;&lt;br /&gt;
@@ -628,136 +672,6 @@ just for vDSO syscalls&lt;br /&gt;
 glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Page fault</title>
-      <link>http://firoyang.org/cs/page_fault/</link>
-      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_fault/</guid>
-      <description>
-
-&lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;page-fault exceptions error code&lt;br /&gt;
-v3a: 4.7 - Figure 4-12. Page-Fault Error Code&lt;br /&gt;
-P, W/R, U/S, I/D, RSVD&lt;br /&gt;
-user/kernel mode, kerne space/userspace address, good/bad area&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;kernel-address&#34;&gt;Kernel address&lt;/h1&gt;
-
-&lt;p&gt;vmalloc,spurious_fault, kprobes_fault&lt;/p&gt;
-
-&lt;h2 id=&#34;bad-area&#34;&gt;Bad area&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;fixup_exception&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.linuxjournal.com/article/2135&#34;&gt;Kernel-Level Exception Handling&lt;/a&gt;&lt;br /&gt;
-SIGSEGV&lt;br /&gt;
-kernel oops&lt;/p&gt;
-
-&lt;h1 id=&#34;userspace-address&#34;&gt;Userspace address&lt;/h1&gt;
-
-&lt;h2 id=&#34;bad-area-1&#34;&gt;Bad area&lt;/h2&gt;
-
-&lt;p&gt;PF_USER ? SIGSEGV&lt;/p&gt;
-
-&lt;h2 id=&#34;stack&#34;&gt;Stack&lt;/h2&gt;
-
-&lt;p&gt;premise: grows down: address &amp;gt; 65536 + 32 * sizeof(unsigned long) + rsp&lt;br /&gt;
-expand_stack(): expand vma of stack; + good area workflow.&lt;/p&gt;
-
-&lt;h2 id=&#34;private-anonymous-page&#34;&gt;Private anonymous page&lt;/h2&gt;
-
-&lt;p&gt;Check &amp;lsquo;man madvise&amp;rsquo; for private anonymous page.&lt;br /&gt;
-Stack and Heap - mmap, brk: do_anonymous_page&lt;br /&gt;
-Library Private read &amp;amp; write: do_wp_page,&lt;br /&gt;
-Library Private write: cow page, do_cow_page&lt;/p&gt;
-
-&lt;h3 id=&#34;do-cow-page&#34;&gt;do_cow_page&lt;/h3&gt;
-
-&lt;ol&gt;
-&lt;li&gt;get page and cow:  __do_fault-&amp;gt; vma-&amp;gt;vm_ops-&amp;gt;fault = filemap_fault -&amp;gt; page cache ? page_cache_read add to lru&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;add page to anon lru list: finish_fault-&amp;gt;alloc_set_pte-&amp;gt; page_add_new_anon_rmap -&amp;gt; __SetPageSwapBacked&lt;/p&gt;
-
-&lt;h3 id=&#34;page-rmap-pte&#34;&gt;Page, rmap, pte&lt;/h3&gt;
-
-&lt;p&gt;page: alloc_zeroed_user_highpage_movable&lt;br /&gt;
-page_add_new_anon_rmap&lt;br /&gt;
-set_pte_at&lt;/p&gt;
-
-&lt;h2 id=&#34;private-file-page&#34;&gt;Private file page&lt;/h2&gt;
-
-&lt;p&gt;Libray Private  read: do_read_page, pte prot is PAGE_COPY check protection_map.&lt;br /&gt;
-map_region         vma-&amp;gt;vm_page_prot = vm_get_page_prot(vm_flags);&lt;br /&gt;
-do_set_pte(vma, address, fault_page, pte, false, false); vm_page_prot&lt;/p&gt;
-
-&lt;h2 id=&#34;shared-file-page&#34;&gt;Shared file page&lt;/h2&gt;
-
-&lt;p&gt;do_shared_page&lt;/p&gt;
-
-&lt;h2 id=&#34;shared-anonymous-page&#34;&gt;Shared anonymous page&lt;/h2&gt;
-
-&lt;p&gt;do_shared_page&lt;/p&gt;
-
-&lt;h2 id=&#34;swap-page&#34;&gt;Swap page&lt;/h2&gt;
-
-&lt;p&gt;do_swap_page&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;read-and-write-pages-copy-on-write-technique&#34;&gt;Read and write pages - Copy-on-write technique.&lt;/h1&gt;
-
-&lt;h2 id=&#34;do-read-page&#34;&gt;do_read_page&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/588802/&#34;&gt;map_pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;synchronization&#34;&gt;Synchronization&lt;/h1&gt;
-
-&lt;h2 id=&#34;down-read-mm-mmap-sem&#34;&gt;down_read(&amp;amp;mm-&amp;gt;mmap_sem)?&lt;/h2&gt;
-
-&lt;p&gt;linux-tglx&lt;br /&gt;
-commit b50661029222940e24d2fba7c982ac0774a38c78&lt;br /&gt;
-Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Thu Sep 16 22:00:12 2004 -0700&lt;br /&gt;
-    [PATCH] x86-64: avoid deadlock in page fault handler&lt;br /&gt;
-    Avoid deadlock when kernel fault happens inside mmap sem.&lt;br /&gt;
-Check ULKv3 Page 380.&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2004/5/19/108&#34;&gt;https://lkml.org/lkml/2004/5/19/108&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/5/13/418&#34;&gt;https://lkml.org/lkml/2013/5/13/418&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;irq&#34;&gt;IRQ&lt;/h2&gt;
-
-&lt;p&gt;commit 891cffbd6bcba26409869c19c07ecd4bfc0c2460&lt;br /&gt;
-Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-Date:   Sun Oct 12 13:16:12 2008 -0700&lt;br /&gt;
-    x86/mm: do not trigger a kernel warning if user-space disables interrupts and generates a page fault&lt;/p&gt;
-
-&lt;h1 id=&#34;propection&#34;&gt;Propection&lt;/h1&gt;
-
-&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
-Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
-    [PATCH] x86_64 merge: arch + asm&lt;br /&gt;
-    This adds the x86_64 arch and asm directories and a Documentation/x86_64.&lt;br /&gt;
-+/*&lt;br /&gt;
-+ * The i386 can&amp;rsquo;t do page protection for execute, and considers that&lt;br /&gt;
-+ * the same are read. Also, write permissions imply read permissions.&lt;br /&gt;
-+ * This is the closest we can get..&lt;br /&gt;
-+ */&lt;br /&gt;
-+#define __P000 PAGE_NONE&lt;br /&gt;
-+#define __P001 PAGE_READONLY&lt;br /&gt;
-+#define __P010 PAGE_COPY&lt;br /&gt;
-+#define __P011 PAGE_COPY&lt;br /&gt;
-+#define __P100 PAGE_READONLY&lt;br /&gt;
-+#define __P101 PAGE_READONLY&lt;br /&gt;
-+#define __P110 PAGE_COPY&lt;br /&gt;
-+#define __P111 PAGE_COPY&lt;br /&gt;
-+#define __S000 PAGE_NONE&lt;/p&gt;
 </description>
     </item>
     
@@ -916,6 +830,38 @@ x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt
 &lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
 local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 
+&lt;h2 id=&#34;in-interrupt&#34;&gt;in_interrupt&lt;/h2&gt;
+
+&lt;p&gt;383 static inline void tick_irq_exit(void)&lt;br /&gt;
+384 {&lt;br /&gt;
+385 #ifdef CONFIG_NO_HZ_COMMON&lt;br /&gt;
+386         int cpu = smp_processor_id();&lt;br /&gt;
+387&lt;br /&gt;
+388         /* Make sure that timer wheel updates are propagated &lt;em&gt;/&lt;br /&gt;
+389         if ((idle_cpu(cpu) &amp;amp;&amp;amp; !need_resched()) || tick_nohz_full_cpu(cpu)) {&lt;br /&gt;
+390                 if (!in_interrupt())&lt;br /&gt;
+391                         tick_nohz_irq_exit();&lt;br /&gt;
+392         }&lt;br /&gt;
+393 #endif&lt;br /&gt;
+394 }&lt;br /&gt;
+395&lt;br /&gt;
+396 /&lt;/em&gt;&lt;br /&gt;
+397  * Exit an interrupt context. Process softirqs if needed and possible:&lt;br /&gt;
+398  */&lt;br /&gt;
+399 void irq_exit(void)&lt;br /&gt;
+400 {&lt;br /&gt;
+401 #ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED&lt;br /&gt;
+402         local_irq_disable();&lt;br /&gt;
+403 #else&lt;br /&gt;
+404         lockdep_assert_irqs_disabled();&lt;br /&gt;
+405 #endif&lt;br /&gt;
+406         account_irq_exit_time(current);&lt;br /&gt;
+407         preempt_count_sub(HARDIRQ_OFFSET);&lt;br /&gt;
+408         if (!in_interrupt() &amp;amp;&amp;amp; local_softirq_pending())&lt;br /&gt;
+409                 invoke_softirq();&lt;br /&gt;
+410&lt;br /&gt;
+411         tick_irq_exit();&lt;/p&gt;
+
 &lt;h1 id=&#34;exceptions&#34;&gt;Exceptions&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
@@ -1024,12 +970,11 @@ REBOOT_VECTOR                   0xf8&lt;/p&gt;
 &lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html&#34;&gt;Evolution of the x86 context switch in Linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h2&gt;
-
-&lt;p&gt;((last) = __switch_to_asm((prev), (next)));                             #=====&amp;gt; call&lt;br /&gt;
-jmp     __switch_to                                                     #=====&amp;gt; jmp + ret&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;br /&gt;
+commit 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;br /&gt;
+Author: Brian Gerst &lt;a href=&#34;mailto:brgerst@gmail.com&#34;&gt;brgerst@gmail.com&lt;/a&gt;&lt;br /&gt;
+Date:   Sat Aug 13 12:38:19 2016 -0400&lt;br /&gt;
+    sched/x86: Rewrite the switch_to() code&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;preemption&#34;&gt;Preemption&lt;/h1&gt;
@@ -1059,22 +1004,19 @@ Firo: spin_unlock_mutex&lt;/p&gt;
 
 &lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
-syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
-retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+&lt;p&gt;system call returns mode . syscall_return_slowpath&lt;br /&gt;
+interrupt hander returns user mode .retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
 
 &lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
 
 &lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
 If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
 
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+&lt;ul&gt;
+&lt;li&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;br /&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
 
@@ -1105,7 +1047,6 @@ wakeup: check_preempt_wakeup&lt;br /&gt;
 
 &lt;ul&gt;
 &lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
-if preempt is true; it should mean PREEMPT_VOLUNTARY.&lt;br /&gt;
 prev-&amp;gt;state means deactivate.&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
@@ -2532,7 +2473,14 @@ and marc.info&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://blacks3pt3mb3r.wordpress.com/linux-stuffz/264-2/&#34;&gt;Building a KVM host machine.&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;How to Build A Custom Linux Kernel For Qemu&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;How to Build A Custom Linux Kernel For Qemu&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://morbidrsa.github.io/2017/04/19/rapid-kernel-development-with-dracut-and-qemu.html&#34;&gt;Rapid kernel development with dracut and Qemu&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;suse&#34;&gt;SUSE&lt;/h2&gt;
+
+&lt;p&gt;zypper &amp;ndash;root /home/firo/ws/suse addrepo &lt;a href=&#34;http://download.opensuse.org/distribution/leap/15.0/repo/oss/&#34;&gt;http://download.opensuse.org/distribution/leap/15.0/repo/oss/&lt;/a&gt; foss&lt;br /&gt;
+&lt;a href=&#34;https://en.opensuse.org/Package_repositories&#34;&gt;https://en.opensuse.org/Package_repositories&lt;/a&gt;&lt;br /&gt;
+zypper &amp;ndash;root /home/firo/ws/suse install kernel-default-devel&lt;/p&gt;
 
 &lt;h2 id=&#34;build-minimal-bootable-rootfs-fedora&#34;&gt;Build minimal bootable rootfs - fedora&lt;/h2&gt;
 
@@ -2557,6 +2505,11 @@ CONFIG_SLUB&lt;br /&gt;
 CONFIG_KASAN&lt;/p&gt;
 
 &lt;h2 id=&#34;kernel-org-build-a-tiny-kernel-https-tiny-wiki-kernel-org&#34;&gt;&lt;a href=&#34;https://tiny.wiki.kernel.org/&#34;&gt;Kernel.org: Build a tiny kernel&lt;/a&gt;&lt;/h2&gt;
+
+&lt;h2 id=&#34;make-initrd-for-nfs&#34;&gt;make initrd for NFS&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://migueleonardortiz.com.ar/linux/upgrade-kernel-and-initrd-in-linux/2067&#34;&gt;Upgrade kernel and initrd in Linux&lt;/a&gt;&lt;br /&gt;
+sudo chroot suse mkinitrd -m &amp;lsquo;nfs nfsv3 nfsv4 iwlwifi&amp;rsquo; -A -D wlp4s0&lt;/p&gt;
 
 &lt;h2 id=&#34;kvm-and-nfs&#34;&gt;KVM and NFS&lt;/h2&gt;
 
@@ -2643,6 +2596,14 @@ Include everyone from the ./scripts/get_maintainer.pl output except&lt;br /&gt;
 don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing&lt;br /&gt;
 list there already.&lt;/p&gt;
 
+&lt;h2 id=&#34;kubecek&#34;&gt;Kubecek&lt;/h2&gt;
+
+&lt;p&gt;│17:31:57 mkubecek | For the record, once the commit is in net or net-next tree, there is no chance to tweak its commit message. │ vtsironis_ho&lt;br /&gt;
+│17:32:26   alesak | mkubecek: ok, thanks for the clarification                                                                  │ wpreston&lt;br /&gt;
+│17:33:19 mkubecek | These trees do not rebase and some people (like me) would appreciate if other subsystem trees didn&amp;rsquo;t        │ Zara&lt;br /&gt;
+│                  | either.                                                                                                     │ zuzka&lt;br /&gt;
+│17:34:20 mkubecek | We could avoid spurious git_sort failures and commits like kernel-source 174731527683&lt;/p&gt;
+
 &lt;h1 id=&#34;git-mutt-patch&#34;&gt;git mutt patch&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=6zUVS4kJtrA&#34;&gt;Greg: How to Apply a Patch to the Linux Kernel Stable Tree&lt;/a&gt;&lt;/p&gt;
@@ -2686,6 +2647,11 @@ Architecture: Memory hierarchy&lt;br /&gt;
 OS: VM(layered smantic), Concurrency&lt;br /&gt;
 Application:&lt;/p&gt;
 
+&lt;h1 id=&#34;tools&#34;&gt;Tools&lt;/h1&gt;
+
+&lt;p&gt;Parallemism and locality&lt;br /&gt;
+Bandwidth and latency&lt;/p&gt;
+
 &lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
 
 &lt;p&gt;Complexity&lt;br /&gt;
@@ -2725,7 +2691,10 @@ Parallel and Concurrent Programming in Haskell&lt;br /&gt;
 The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
 &lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Firo: good introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://talks.golang.org/2012/concurrency.slide#6&#34;&gt;Rob Pike: Concurrency is the composition of independently executing computations.&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;asynchrony-computer-programming-https-en-wikipedia-org-wiki-asynchrony-computer-programming&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Asynchrony_(computer_programming)&#34;&gt;Asynchrony (computer programming)&lt;/a&gt;&lt;/h2&gt;
 
 &lt;h2 id=&#34;concurrent-vs-parallel&#34;&gt;concurrent vs parallel&lt;/h2&gt;
 
@@ -2769,6 +2738,91 @@ Life with Unix&lt;br /&gt;
 &lt;h1 id=&#34;specifications&#34;&gt;Specifications&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The art of debugging</title>
+      <link>http://firoyang.org/cs/debugging/</link>
+      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/cs/debugging/</guid>
+      <description>
+
+&lt;h1 id=&#34;quote&#34;&gt;Quote&lt;/h1&gt;
+
+&lt;p&gt;Everyone knows that debugging is twice as hard as writing a program in the first place. So if you&amp;rsquo;re as clever as you can be when you write it, how will you ever debug it?&lt;br /&gt;
+&amp;ldquo;The Elements of Programming Style&amp;rdquo;, 2nd edition, chapter 2. Brian Kernighan&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;Debug hacks: a book on how to debug.&lt;/p&gt;
+
+&lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Software_bug#Types&#34;&gt;Software bug types&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://cwe.mitre.org/data/definitions/1000.html&#34;&gt;CWE VIEW: Research Concepts&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://cwe.mitre.org/data/definitions/1003.html&#34;&gt;CWE VIEW: Simplified Mapping&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://cwe.mitre.org/data/definitions/699.html&#34;&gt;CWE VIEW: Development Concepts&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;hardware-bugs&#34;&gt;Hardware Bugs&lt;/h2&gt;
+
+&lt;p&gt;If this has only happened on a single physical machine, I suggest that machine be considered to be faulty.&lt;/p&gt;
+
+&lt;h2 id=&#34;memory-corruption&#34;&gt;Memory corruption&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://cwe.mitre.org/data/definitions/119.html&#34;&gt;The generic term &amp;ldquo;memory corruption&amp;rdquo;&lt;/a&gt;is often used to describe the consequences of writing to memory outside the bounds of a buffer, when the root cause is something other than a sequential copies of excessive data from a fixed starting location(i.e., classic buffer overflows or CWE-120). This may include issues such as incorrect pointer arithmetic, accessing invalid pointers due to incomplete initialization or memory release, etc.]&lt;br /&gt;
+&lt;a href=&#34;https://bugzilla.suse.com/show_bug.cgi?id=1155930#c12&#34;&gt;An example by Neil Brown: The corrupted list of inodes could be due to one inode being freed and re-used while still on the list - or it could be due to memory corruption of a forward pointer.&lt;/a&gt;&lt;br /&gt;
+Memory corruption is one of the most intractable class of programming errors, for two reasons:&lt;br /&gt;
+The source of the memory corruption and its manifestation may be far apart, making it hard to correlate the cause and the effect.&lt;br /&gt;
+Symptoms appear under unusual conditions, making it hard to consistently reproduce the error.&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_corruption&#34;&gt;Memory corruption&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory_safety&#34;&gt;Memory safety&lt;/a&gt;&lt;br /&gt;
+uninitialized memory: &lt;a href=&#34;https://en.wikipedia.org/wiki/Dangling_pointer#Cause_of_wild_pointers&#34;&gt;wild pointer&lt;/a&gt;&lt;br /&gt;
+use after free: &lt;a href=&#34;https://en.wikipedia.org/wiki/Dangling_pointer#Cause_of_dangling_pointers&#34;&gt;dangling pointer&lt;/a&gt;&lt;br /&gt;
+buffer overflow:&lt;br /&gt;
+unknown source memory corruption: The generic &amp;ldquo;memory corruption&amp;rdquo;.&lt;br /&gt;
+memory leak:&lt;/p&gt;
+
+&lt;h3 id=&#34;phonomenon&#34;&gt;Phonomenon&lt;/h3&gt;
+
+&lt;p&gt;Invalid page fault(including NULL pointer dereference)&lt;/p&gt;
+
+&lt;h1 id=&#34;debugging&#34;&gt;Debugging&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;&lt;br /&gt;
+Every bug belons to a known type.&lt;/p&gt;
+
+&lt;h2 id=&#34;steps-according-to-observations-narrow-down-hypothses-successive-approximation&#34;&gt;Steps according to observations, narrow down Hypothses, successive approximation&lt;/h2&gt;
+
+&lt;p&gt;Scientific method&lt;/p&gt;
+
+&lt;h2 id=&#34;get-observations-and-analysis-data&#34;&gt;Get observations and analysis data&lt;/h2&gt;
+
+&lt;p&gt;observation.log&lt;br /&gt;
+Data: whole structure, list corruption;life cycle; which part is ok and which part is wrong, Data connections&lt;br /&gt;
+call paths: related&lt;/p&gt;
+
+&lt;h2 id=&#34;think-backward&#34;&gt;Think backward&lt;/h2&gt;
+
+&lt;p&gt;How far from symptom to root cause could we think?&lt;br /&gt;
+Missing cause:&lt;/p&gt;
+
+&lt;h2 id=&#34;known-bug-types-assumptions&#34;&gt;Known bug types assumptions&lt;/h2&gt;
+
+&lt;p&gt;Mix up Bug types, observations and related all paths&lt;/p&gt;
+
+&lt;h2 id=&#34;connect-to-programming-skills&#34;&gt;Connect to programming skills.&lt;/h2&gt;
+
+&lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Syntax checking&lt;br /&gt;
+gcc -Wall&lt;br /&gt;
+bash -n&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;static code analysis&lt;br /&gt;
+smatch&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
 </description>
     </item>
     

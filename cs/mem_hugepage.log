@@ -8,6 +8,7 @@ https://www.kernel.org/doc/Documentation/vm/transhuge.txt
 [Transparent Hugepages: measuring the performance impact](https://alexandrnikitin.github.io/blog/transparent-hugepages-measuring-the-performance-impact/)
 
 # History
+git log v2.6.38-rc1 --oneline # search thp
 git log --graph --oneline 22e5c47ee238
 commit 3f04f62f90d46a82dd73027c5fd7a15daed5c33d
 Author: Andrea Arcangeli <aarcange@redhat.com>
@@ -50,6 +51,94 @@ Date:   Wed Feb 5 16:57:54 2003 -0800
 libfc, fcoe: fixes for highmem skb linearize panics:18fa11efc279c20af5eefff2bbe814ca067e51ae
 [what is "compound_page()" all about?](https://www.spinics.net/lists/newbies/msg41159.html)
 [Compound page overhaul](https://lwn.net/Articles/112311/)
+
+See details in prep_compound_page()
+commit c761471b58e6138938ebc6eafec20b2f60cb3397
+Author: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Date:   Wed Jun 24 16:56:33 2015 -0700
+    mm: avoid tail page refcounting on non-THP compound pages
+    Reintroduce 8d63d99a5dfb ("mm: avoid tail page refcounting on non-THP
+    compound pages") after removing bogus VM_BUG_ON_PAGE() in
+    put_unrefcounted_compound_page().
+    THP uses tail page refcounting to be able to split huge pages at any time.
+     Tail page refcounting is not needed for other users of compound pages and
+    it's harmful because of overhead.
+    We try to exclude non-THP pages from tail page refcounting using
+    __compound_tail_refcounted() check.  It excludes most common non-THP
+    compound pages: SL*B and hugetlb, but it doesn't catch rest of __GFP_COMP
+    users -- drivers.
+[...]
+ static inline bool __compound_tail_refcounted(struct page *page)
+ {
+-       return !PageSlab(page) && !PageHeadHuge(page);
++       return PageAnon(page) && !PageSlab(page) && !PageHeadHuge(page);
+
+# Tail page refcounting
+[Transparent huge page reference counting](https://lwn.net/Articles/619738/)
+## Original edition
+See below
+## tail page's_count for splitting under gup
+> In current kernels, a specific 4KB page can be treated as an individual page, or it can be part of a huge page, but not both. If a huge page must be split into individual pages, it is split completely for all users, the compound page structure is torn down, and the huge page no longer exists. --above link
+
+918070634448 2011-01-13 thp: alter compound get_page/put_page
+    Alter compound get_page/put_page to keep references on subpages too, in
+    order to allow __split_huge_page_refcount to split an hugepage even while
+    subpages have been pinned by one of the get_user_pages() variants.
+
+71e3aac0724f 2011-01-13 thp: transparent hugepage core
+
+## tail page's _count kpet zero all times
+[Firo the problem mentioned below: mm: make sure tail page counts are stable before splitting THP pages](https://lkml.org/lkml/2011/8/19/41)
+> As described in the page_cache_get_speculative() comment
+> in pagemap.h, the count of all pages coming out of the allocator
+> must be considered unstable unless an RCU grace period has passed
+> since the pages were allocated.
+> This is an issue for THP because __split_huge_page_refcount()
+> depends on tail page counts being stable.
+commit 70b50f94f1644e2aa7cb374819cfd93f3c28d725
+Author: Andrea Arcangeli <aarcange@redhat.com>
+Date:   Wed Nov 2 13:36:59 2011 -0700
+    mm: thp: tail page refcounting fix
+    Michel while working on the working set estimation code, noticed that
+    calling get_page_unless_zero() on a random pfn_to_page(random_pfn)
+    wasn't safe, if the pfn ended up being a tail page of a transparent
+    hugepage under splitting by __split_huge_page_refcount().
+    He then found the problem could also theoretically materialize with
+    page_cache_get_speculative() during the speculative radix tree lookups
+    that uses get_page_unless_zero() in SMP if the radix tree page is freed
+    and reallocated and get_user_pages is called on it before
+    page_cache_get_speculative has a chance to call get_page_unless_zero().
+    So the best way to fix the problem is to keep page_tail->_count zero at
+    all times.  This will guarantee that get_page_unless_zero() can never
+    succeed on any tail page.  page_tail->_mapcount is guaranteed zero and
+    is unused for all tail pages of a compound page, so we can simply
+    account the tail page references there and transfer them to
+    tail_page->_count in __split_huge_page_refcount() (in addition to the
+    head_page->_mapcount).
+related code:
+                /* tail_page->_count cannot change */
+		# Firo: if page_tail->_count changed, page->_count become much less than expected.
+                atomic_sub(atomic_read(&page_tail->_count), &page->_count); 
+                BUG_ON(page_count(page) <= 0);
+                atomic_add(page_mapcount(page) + 1, &page_tail->_count);
+                BUG_ON(atomic_read(&page_tail->_count) <= 0);
+## Latest edition
+commit ddc58f27f9eee9117219936f77e90ad5b2e00e96
+Author: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Date:   Fri Jan 15 16:52:56 2016 -0800
+    mm: drop tail page refcounting
+    Tail page refcounting is utterly complicated and painful to support.
+    It uses ->_mapcount on tail pages to store how many times this page is
+    pinned.  get_page() bumps ->_mapcount on tail page in addition to
+    ->_count on head.  This information is required by split_huge_page() to
+    be able to distribute pins from head of compound page to tails during
+    the split.
+    We will need ->_mapcount to account PTE mappings of subpages of the
+    compound page.  We eliminate need in current meaning of ->_mapcount in
+    tail pages by forbidding split entirely if the page is pinned.
+    The only user of tail page refcounting is THP which is marked BROKEN for
+    now.
+
 
 # Hugetlb page
 https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt

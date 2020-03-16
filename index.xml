@@ -11,11 +11,42 @@
     
     <item>
       <title>Linux kernel page allocation</title>
-      <link>http://firoyang.org/cs/page_alloc/</link>
+      <link>http://firoyang.org/cs/page_allocator/</link>
       <pubDate>Sat, 08 Jun 2019 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_alloc/</guid>
+      <guid>http://firoyang.org/cs/page_allocator/</guid>
       <description>
+
+&lt;h1 id=&#34;track-buddy-memory-system-1963-1965&#34;&gt;track: buddy memory system 1963 ~ 1965&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
+The following cited from above 1965 paper.&lt;br /&gt;
+The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
+storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
+situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
+mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+
+&lt;p&gt;OSIDP&lt;br /&gt;
+Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
+scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
+a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
+ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
+interesting compromise is the buddy system&lt;/p&gt;
+
+&lt;h2 id=&#34;related-code&#34;&gt;Related code&lt;/h2&gt;
+
+&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
+setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
+        sparse_init &amp;hellip;-&amp;gt; vmemmap_populate      # vmemmap&lt;br /&gt;
+        zone_sizes_init-&amp;gt;free_area_init_nodes -&amp;gt; free_area_init_node-&amp;gt; free_area_init_core&lt;br /&gt;
+                zone_pcp_init # init percpu pageset with boot_pageset&lt;br /&gt;
+                init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list&lt;br /&gt;
+                memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
+
+&lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
+        mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -33,7 +64,9 @@
 &lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d - Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
 __GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
 
-&lt;h1 id=&#34;free-page-state&#34;&gt;Free page state&lt;/h1&gt;
+&lt;h1 id=&#34;free&#34;&gt;Free&lt;/h1&gt;
+
+&lt;h2 id=&#34;page-state&#34;&gt;page state&lt;/h2&gt;
 
 &lt;p&gt;page_expected_state and check_new_page, page_mapcount_reset&lt;/p&gt;
 
@@ -695,6 +728,13 @@ CommitDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
 
+&lt;h2 id=&#34;fast-path&#34;&gt;Fast path&lt;/h2&gt;
+
+&lt;p&gt;commit 21d375b6b34ff511a507de27bf316b3dde6938d9&lt;br /&gt;
+Author: Andy Lutomirski &lt;a href=&#34;mailto:luto@kernel.org&#34;&gt;luto@kernel.org&lt;/a&gt;&lt;br /&gt;
+Date:   Sun Jan 28 10:38:49 2018 -0800&lt;br /&gt;
+    x86/entry/64: Remove the SYSCALL64 fast path&lt;/p&gt;
+
 &lt;h2 id=&#34;sysenter-vs-syscall&#34;&gt;sysenter vs syscall&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
@@ -734,6 +774,10 @@ According to do_syscall_64, regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs
 &lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
 However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
 
+&lt;h2 id=&#34;hacking&#34;&gt;Hacking&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.exploit-db.com/papers/13146&#34;&gt;Obtain sys_call_table on amd64(x86_64)&lt;/a&gt;&lt;/p&gt;
+
 &lt;h2 id=&#34;vdso&#34;&gt;vDSO&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0&#34;&gt;Creating a vDSO: the Colonel&amp;rsquo;s Other Chicken&lt;/a&gt;&lt;br /&gt;
@@ -743,136 +787,6 @@ just for vDSO syscalls&lt;br /&gt;
 glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Page fault</title>
-      <link>http://firoyang.org/cs/page_fault/</link>
-      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_fault/</guid>
-      <description>
-
-&lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;page-fault exceptions error code&lt;br /&gt;
-v3a: 4.7 - Figure 4-12. Page-Fault Error Code&lt;br /&gt;
-P, W/R, U/S, I/D, RSVD&lt;br /&gt;
-user/kernel mode, kerne space/userspace address, good/bad area&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;kernel-address&#34;&gt;Kernel address&lt;/h1&gt;
-
-&lt;p&gt;vmalloc,spurious_fault, kprobes_fault&lt;/p&gt;
-
-&lt;h2 id=&#34;bad-area&#34;&gt;Bad area&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;fixup_exception&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.linuxjournal.com/article/2135&#34;&gt;Kernel-Level Exception Handling&lt;/a&gt;&lt;br /&gt;
-SIGSEGV&lt;br /&gt;
-kernel oops&lt;/p&gt;
-
-&lt;h1 id=&#34;userspace-address&#34;&gt;Userspace address&lt;/h1&gt;
-
-&lt;h2 id=&#34;bad-area-1&#34;&gt;Bad area&lt;/h2&gt;
-
-&lt;p&gt;PF_USER ? SIGSEGV&lt;/p&gt;
-
-&lt;h2 id=&#34;stack&#34;&gt;Stack&lt;/h2&gt;
-
-&lt;p&gt;premise: grows down: address &amp;gt; 65536 + 32 * sizeof(unsigned long) + rsp&lt;br /&gt;
-expand_stack(): expand vma of stack; + good area workflow.&lt;/p&gt;
-
-&lt;h2 id=&#34;private-anonymous-page&#34;&gt;Private anonymous page&lt;/h2&gt;
-
-&lt;p&gt;Check &amp;lsquo;man madvise&amp;rsquo; for private anonymous page.&lt;br /&gt;
-Stack and Heap - mmap, brk: do_anonymous_page&lt;br /&gt;
-Library Private read &amp;amp; write: do_wp_page,&lt;br /&gt;
-Library Private write: cow page, do_cow_page&lt;/p&gt;
-
-&lt;h3 id=&#34;do-cow-page&#34;&gt;do_cow_page&lt;/h3&gt;
-
-&lt;ol&gt;
-&lt;li&gt;get page and cow:  __do_fault-&amp;gt; vma-&amp;gt;vm_ops-&amp;gt;fault = filemap_fault -&amp;gt; page cache ? page_cache_read add to lru&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;add page to anon lru list: finish_fault-&amp;gt;alloc_set_pte-&amp;gt; page_add_new_anon_rmap -&amp;gt; __SetPageSwapBacked&lt;/p&gt;
-
-&lt;h3 id=&#34;page-rmap-pte&#34;&gt;Page, rmap, pte&lt;/h3&gt;
-
-&lt;p&gt;page: alloc_zeroed_user_highpage_movable&lt;br /&gt;
-page_add_new_anon_rmap&lt;br /&gt;
-set_pte_at&lt;/p&gt;
-
-&lt;h2 id=&#34;private-file-page&#34;&gt;Private file page&lt;/h2&gt;
-
-&lt;p&gt;Libray Private  read: do_read_page, pte prot is PAGE_COPY check protection_map.&lt;br /&gt;
-map_region         vma-&amp;gt;vm_page_prot = vm_get_page_prot(vm_flags);&lt;br /&gt;
-do_set_pte(vma, address, fault_page, pte, false, false); vm_page_prot&lt;/p&gt;
-
-&lt;h2 id=&#34;shared-file-page&#34;&gt;Shared file page&lt;/h2&gt;
-
-&lt;p&gt;do_shared_page&lt;/p&gt;
-
-&lt;h2 id=&#34;shared-anonymous-page&#34;&gt;Shared anonymous page&lt;/h2&gt;
-
-&lt;p&gt;do_shared_page&lt;/p&gt;
-
-&lt;h2 id=&#34;swap-page&#34;&gt;Swap page&lt;/h2&gt;
-
-&lt;p&gt;do_swap_page&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;read-and-write-pages-copy-on-write-technique&#34;&gt;Read and write pages - Copy-on-write technique.&lt;/h1&gt;
-
-&lt;h2 id=&#34;do-read-page&#34;&gt;do_read_page&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/588802/&#34;&gt;map_pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;synchronization&#34;&gt;Synchronization&lt;/h1&gt;
-
-&lt;h2 id=&#34;down-read-mm-mmap-sem&#34;&gt;down_read(&amp;amp;mm-&amp;gt;mmap_sem)?&lt;/h2&gt;
-
-&lt;p&gt;linux-tglx&lt;br /&gt;
-commit b50661029222940e24d2fba7c982ac0774a38c78&lt;br /&gt;
-Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Thu Sep 16 22:00:12 2004 -0700&lt;br /&gt;
-    [PATCH] x86-64: avoid deadlock in page fault handler&lt;br /&gt;
-    Avoid deadlock when kernel fault happens inside mmap sem.&lt;br /&gt;
-Check ULKv3 Page 380.&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2004/5/19/108&#34;&gt;https://lkml.org/lkml/2004/5/19/108&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/5/13/418&#34;&gt;https://lkml.org/lkml/2013/5/13/418&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;irq&#34;&gt;IRQ&lt;/h2&gt;
-
-&lt;p&gt;commit 891cffbd6bcba26409869c19c07ecd4bfc0c2460&lt;br /&gt;
-Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-Date:   Sun Oct 12 13:16:12 2008 -0700&lt;br /&gt;
-    x86/mm: do not trigger a kernel warning if user-space disables interrupts and generates a page fault&lt;/p&gt;
-
-&lt;h1 id=&#34;propection&#34;&gt;Propection&lt;/h1&gt;
-
-&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
-Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
-    [PATCH] x86_64 merge: arch + asm&lt;br /&gt;
-    This adds the x86_64 arch and asm directories and a Documentation/x86_64.&lt;br /&gt;
-+/*&lt;br /&gt;
-+ * The i386 can&amp;rsquo;t do page protection for execute, and considers that&lt;br /&gt;
-+ * the same are read. Also, write permissions imply read permissions.&lt;br /&gt;
-+ * This is the closest we can get..&lt;br /&gt;
-+ */&lt;br /&gt;
-+#define __P000 PAGE_NONE&lt;br /&gt;
-+#define __P001 PAGE_READONLY&lt;br /&gt;
-+#define __P010 PAGE_COPY&lt;br /&gt;
-+#define __P011 PAGE_COPY&lt;br /&gt;
-+#define __P100 PAGE_READONLY&lt;br /&gt;
-+#define __P101 PAGE_READONLY&lt;br /&gt;
-+#define __P110 PAGE_COPY&lt;br /&gt;
-+#define __P111 PAGE_COPY&lt;br /&gt;
-+#define __S000 PAGE_NONE&lt;/p&gt;
 </description>
     </item>
     
@@ -1079,6 +993,38 @@ x86: Don&amp;rsquo;t use frame pointer to save old stack on irq entry&lt;br /&gt
 &lt;p&gt;local_irq_disable() used in the code path that never disabled interrupts.&lt;br /&gt;
 local_irq_save(flags) used in the code path that already disabled interrupts.&lt;/p&gt;
 
+&lt;h2 id=&#34;in-interrupt&#34;&gt;in_interrupt&lt;/h2&gt;
+
+&lt;p&gt;383 static inline void tick_irq_exit(void)&lt;br /&gt;
+384 {&lt;br /&gt;
+385 #ifdef CONFIG_NO_HZ_COMMON&lt;br /&gt;
+386         int cpu = smp_processor_id();&lt;br /&gt;
+387&lt;br /&gt;
+388         /* Make sure that timer wheel updates are propagated &lt;em&gt;/&lt;br /&gt;
+389         if ((idle_cpu(cpu) &amp;amp;&amp;amp; !need_resched()) || tick_nohz_full_cpu(cpu)) {&lt;br /&gt;
+390                 if (!in_interrupt())&lt;br /&gt;
+391                         tick_nohz_irq_exit();&lt;br /&gt;
+392         }&lt;br /&gt;
+393 #endif&lt;br /&gt;
+394 }&lt;br /&gt;
+395&lt;br /&gt;
+396 /&lt;/em&gt;&lt;br /&gt;
+397  * Exit an interrupt context. Process softirqs if needed and possible:&lt;br /&gt;
+398  */&lt;br /&gt;
+399 void irq_exit(void)&lt;br /&gt;
+400 {&lt;br /&gt;
+401 #ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED&lt;br /&gt;
+402         local_irq_disable();&lt;br /&gt;
+403 #else&lt;br /&gt;
+404         lockdep_assert_irqs_disabled();&lt;br /&gt;
+405 #endif&lt;br /&gt;
+406         account_irq_exit_time(current);&lt;br /&gt;
+407         preempt_count_sub(HARDIRQ_OFFSET);&lt;br /&gt;
+408         if (!in_interrupt() &amp;amp;&amp;amp; local_softirq_pending())&lt;br /&gt;
+409                 invoke_softirq();&lt;br /&gt;
+410&lt;br /&gt;
+411         tick_irq_exit();&lt;/p&gt;
+
 &lt;h1 id=&#34;exceptions&#34;&gt;Exceptions&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://wiki.osdev.org/Exceptions&#34;&gt;Exceptions&lt;/a&gt;&lt;br /&gt;
@@ -1187,12 +1133,11 @@ REBOOT_VECTOR                   0xf8&lt;/p&gt;
 &lt;h1 id=&#34;context-switch&#34;&gt;Context switch&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html&#34;&gt;Evolution of the x86 context switch in Linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&#34;&gt;call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;/h2&gt;
-
-&lt;p&gt;((last) = __switch_to_asm((prev), (next)));                             #=====&amp;gt; call&lt;br /&gt;
-jmp     __switch_to                                                     #=====&amp;gt; jmp + ret&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/520227/&#34;&gt;Al Viro&amp;rsquo;s new execve/kernel_thread design&lt;/a&gt;&lt;br /&gt;
+commit 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd&lt;br /&gt;
+Author: Brian Gerst &lt;a href=&#34;mailto:brgerst@gmail.com&#34;&gt;brgerst@gmail.com&lt;/a&gt;&lt;br /&gt;
+Date:   Sat Aug 13 12:38:19 2016 -0400&lt;br /&gt;
+    sched/x86: Rewrite the switch_to() code&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;preemption&#34;&gt;Preemption&lt;/h1&gt;
@@ -1222,22 +1167,19 @@ Firo: spin_unlock_mutex&lt;/p&gt;
 
 &lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
 
-&lt;ul&gt;
-&lt;li&gt;When returning to user-space from a system call.&lt;br /&gt;
-syscall_return_slowpath&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;When returning to user-space from an interrupt hander.&lt;br /&gt;
-retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
+&lt;p&gt;system call returns mode . syscall_return_slowpath&lt;br /&gt;
+interrupt hander returns user mode .retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
 
 &lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
 
 &lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
 If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
 
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;
 
-&lt;li&gt;&lt;p&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;/p&gt;&lt;/li&gt;
+&lt;ul&gt;
+&lt;li&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
+retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;br /&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
 
@@ -1268,7 +1210,6 @@ wakeup: check_preempt_wakeup&lt;br /&gt;
 
 &lt;ul&gt;
 &lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
-if preempt is true; it should mean PREEMPT_VOLUNTARY.&lt;br /&gt;
 prev-&amp;gt;state means deactivate.&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
@@ -1824,6 +1765,577 @@ Date:   Thu Jul 21 09:43:33 2011 -0700&lt;br /&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/linguistics/ccl/</guid>
       <description>&lt;p&gt;What&amp;rsquo;s the orgnaiszations of knowledge?&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Console and TTY</title>
+      <link>http://firoyang.org/dark_ages/console/</link>
+      <pubDate>Sat, 05 Dec 2015 14:06:29 CST</pubDate>
+      <author>Firo Yang</author>
+      <guid>http://firoyang.org/dark_ages/console/</guid>
+      <description>
+
+&lt;p&gt;343 line&lt;br /&gt;
+1. /dev/console 指向正在运行的tty 和tty0 一样ttyN not pts, console 佬变.&lt;br /&gt;
+2. /dev/tty 一直指向所在的那个不变.&lt;/p&gt;
+
+&lt;h1 id=&#34;about-the-design&#34;&gt;About the design&lt;/h1&gt;
+
+&lt;p&gt;Why dose we use /dev/xxx to represent the &amp;ldquo;tty&amp;rdquo; device?&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;The whole point with &amp;ldquo;everything is a file&amp;rdquo; is not that you have some random filename (indeed, sockets and pipes show that &amp;ldquo;file&amp;rdquo; and &amp;ldquo;filename&amp;rdquo;&lt;br /&gt;
+have nothing to do with each other), but the fact that you can use common tools to operate on different things. &amp;ndash; Linus&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;So we got the key point!&lt;br /&gt;
+In order to use the common tools, file ops and vfs layer, the tty device is &amp;ldquo;abstructed&amp;rdquo; to&lt;br /&gt;
+files by us. Addnationaly, we must assurance that is the files is &lt;em&gt;different&lt;/em&gt;. What does&lt;br /&gt;
+the word &amp;ldquo;dirrerent&amp;rdquo; means is not that you have some random different filename, but the&lt;br /&gt;
+fact that you can access the real device through the different.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Wikipedia:&lt;br /&gt;
+In mathematics, injections, surjections and bijections are classes of functions distinguished by the manner in which arguments (input expression&amp;gt; s from the domain) and images (output expressions from the codomain) are related or mapped to each other.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I got an insight that abstruction is a non-injective, right?&lt;br /&gt;
+But non-injective may not be a anstruction.&lt;br /&gt;
+An asbstruction should come from manipulating different objects.&lt;br /&gt;
+Non-injective, 多对一; Multiplex, 一对多.&lt;br /&gt;
+So we can use mathematical language to describe the linux subsystem.&lt;br /&gt;
+From real life device to a filesystem file.&lt;br /&gt;
+* Abstruction: Non-injective, Multiplex(not partial function).&lt;br /&gt;
+* Jection num: injective, or non-jective, or multiplex; Jection level: domain set and codoain set!&lt;br /&gt;
+Abstruction -&amp;gt; Control abstruction and data abstruction -&amp;gt; Abstruction layer&lt;/p&gt;
+
+&lt;p&gt;软件设计的两个主要目的.&lt;br /&gt;
+1. 简化, 易用,易操作, 如computer architecture, tty subsystem. 抽象.&lt;br /&gt;
+2. Separation of concerns, modular(abstruciton in layer), 笛卡尔划分的思想&lt;/p&gt;
+
+&lt;h1 id=&#34;tty-struct-disc-data&#34;&gt;tty_struct-&amp;gt;disc_data&lt;/h1&gt;
+
+&lt;p&gt;tty_init_dev-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    initialize_tty_struct-&amp;gt;tty_ldisc_init&lt;br /&gt;
+    tty_ldisc_setup-&amp;gt;tty_ldisc_open-&amp;gt;n_tty_open-&amp;gt; tty-&amp;gt;disc_data = ldata;&lt;br /&gt;
+}&lt;br /&gt;
+sys_vhangup-&amp;gt;tty_vhangup_self-&amp;gt;__tty_hangup-&amp;gt;tty_ldisc_hangup-&amp;gt;tty_ldisc_reinit&lt;br /&gt;
+vfs_write-&amp;gt;redirected_tty_write-&amp;gt;tty_write-&amp;gt;n_tty_write-&amp;gt;process_output&lt;/p&gt;
+
+&lt;h1 id=&#34;early-con&#34;&gt;early_con&lt;/h1&gt;
+
+&lt;p&gt;EARLYCON_DECLARE(uart8250, early_serial8250_setup); EARLYCON_DECLARE(uart, early_serial8250_setup);&lt;br /&gt;
+setup_earlycon-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    parse_options-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        parse earlycon_device-&amp;gt;port-&amp;gt;uartclk and&lt;br /&gt;
+        earlycon_device-&amp;gt;baud&lt;br /&gt;
+    }&lt;br /&gt;
+    setup = early_serial8250_setup-&amp;gt; init_port(device);&lt;br /&gt;
+    register_console(early_console_dev.con)&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;earlyprintk&#34;&gt;earlyprintk&lt;/h1&gt;
+
+&lt;p&gt;early_param(&amp;ldquo;earlyprintk&amp;rdquo;, setup_early_printk)-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    early_serial_init-&amp;gt;&lt;br /&gt;
+    {&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;}
+early_console_register(&amp;amp;early_serial_console, keep);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h1 id=&#34;cpu-hotplug&#34;&gt;cpu hotplug&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;onset&lt;br /&gt;
+static struct smp_hotplug_thread softirq_threads {&lt;br /&gt;
+.thread_fn              = run_ksoftirqd&lt;br /&gt;
+};&lt;br /&gt;
+early_initcall(spawn_ksoftirqd)-&amp;gt;mpboot_register_percpu_thread(&amp;amp;softirq_threads)&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;nucles onset&lt;br /&gt;
+suspend_enter-&amp;gt;enable_nonboot_cpus-&amp;gt;_cpu_up-&amp;gt;smpboot_create_threads-&amp;gt;&lt;strong&gt;smpboot_create_thread(&amp;amp;hotplug_threads)-&amp;gt;&lt;br /&gt;
+kthread_create_on_cpu(smpboot_thread_fn-&amp;gt; ht-&amp;gt;thread_fn(td-&amp;gt;cpu)= run_ksoftirqd-&amp;gt;&lt;/strong&gt;do_softirq-&amp;gt;h-&amp;gt;action(h) = run_timer_softirq-&amp;gt;&lt;br /&gt;
+__run_timers-&amp;gt;call_timer_fn)&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;vt 就是个tty也有tty_driver 叫console_driver.&lt;/p&gt;
+
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;h1 id=&#34;contents&#34;&gt;Contents&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://superuser.com/questions/144666/what-is-the-difference-between-shell-console-and-terminal&#34;&gt;What is the difference between shell, console, and terminal?&lt;/a&gt;&lt;br /&gt;
+What does console do in kernel or u-boot?&lt;br /&gt;
+Linux console?&lt;br /&gt;
+Computer terminal: keyboard + dispaly&lt;br /&gt;
+Terminal emulator:&lt;/p&gt;
+
+&lt;h1 id=&#34;get-a-glance-on-u-boot&#34;&gt;get a glance on u-boot&lt;/h1&gt;
+
+&lt;p&gt;start.S:board_init_r&lt;br /&gt;
+init_sequence_f: -&amp;gt;init_baud_rate; serial_init; console_init_f&lt;br /&gt;
+serial_init -&amp;gt;&amp;amp;eserial1_device-&amp;gt;start=eserial##port##_init-&amp;gt;NS16550_init: UART divisor init.&lt;br /&gt;
+Firstly, the struct of serial define some input and output funtion.&lt;br /&gt;
+It&amp;rsquo;s basic function of serial, put or get!&lt;br /&gt;
+console_init_f: just gd-&amp;gt;have_console = 1;&lt;br /&gt;
+init_sequence_r: stdio_init_tables,initr_serial, stdio_add_devices, console_init_r,&lt;br /&gt;
+initr_serial: just register &amp;amp;eserial1_device to serial_devices&lt;br /&gt;
+stdio_add_devices: drv_system_init, serial_stdio_init&lt;br /&gt;
+drv_system_init: register default serial dev to devs.list.&lt;br /&gt;
+serial_stdio_init: register &amp;amp;eserial1_device to devs.list. Duplicate, but serial dev &amp;ldquo;eserial0&amp;rdquo;  and system &amp;ldquo;serial&amp;rdquo;.&lt;br /&gt;
+console_init_r: console_doenv -&amp;gt;console_setfile:stdio_devices[file(0/1/2)] = dev; actually, dev is &amp;ldquo;serial&amp;rdquo;, but they may be KBD!&lt;br /&gt;
+看来console的真正作用就是在serial和kbd中选择一个, 可能多选iomux?&lt;br /&gt;
+main_loop:cli_loop: getc!&lt;/p&gt;
+
+&lt;h1 id=&#34;what-is-platform-device-or-driver&#34;&gt;what is platform device or driver?&lt;/h1&gt;
+
+&lt;h1 id=&#34;a-reallife-serial8250&#34;&gt;A reallife serial8250&lt;/h1&gt;
+
+&lt;p&gt;drivers/tty/serial/8250/8250_boca.c:plat_serial8250_port&lt;br /&gt;
+module_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    serial8250_init-&amp;gt;serial8250_isa_init_ports-&amp;gt;serial8250_ports[i].port.ops = &amp;amp;serial8250_pops; //insidious&lt;br /&gt;
+    boca_init-&amp;gt;platform_device_register(&amp;amp;boca_device); //register platform device and data.&lt;br /&gt;
+}&lt;br /&gt;
+* uart_port-&amp;gt;tty_port&lt;/p&gt;
+
+&lt;p&gt;serial8250_probe(plat_serial8250_port)-&amp;gt;serial8250_register_8250_port(uart_8250_port)-&amp;gt;&lt;br /&gt;
+uart_add_one_port(&amp;amp;serial8250_reg, &amp;amp;uart-&amp;gt;port=uart_port)-&amp;gt;&lt;br /&gt;
+{&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;uart_configure_port-&amp;gt;
+{
+    port-&amp;gt;ops-&amp;gt;config_port(port, flags)=serial8250_config_port
+    if post is console and not registered; register!
+    we know that uport-&amp;gt;cons = drv-&amp;gt;cons; what is the relation to registering about up-&amp;gt;cons.
+    why we register it? where does drv-&amp;gt;cons come from?
+    //这个uart_driver drv就是serial8250_reg, 我们也就知道了
+    // console是设备的一种天生能力. 能否使用, 只关乎你是否想用, 就是配置相关的config SERIAL8250_CONSOLE
+    // con_driver is the backends, vga, dummy/serial?, fb. 
+}
+tty_port_register_device_attr-&amp;gt;
+{
+    //tty_driver  tty_port
+    tty_port_link_device
+    tty_register_device_attr
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h1 id=&#34;simple-conceptions&#34;&gt;Simple conceptions&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.linusakesson.net/programming/tty/&#34;&gt;You must read this -&amp;gt; The TTY demystified&lt;/a&gt;&lt;br /&gt;
+System consoles are generalized to computer terminals, which are abstracted respectively by virtual consoles and terminal emulators.&lt;br /&gt;
+        UART&lt;br /&gt;
+        Line displine + TTY(pts, dummy/serial, kbd+vga/fb)&lt;br /&gt;
+* System console&lt;br /&gt;
+Virtual termial, Terminal emulator/telnet/ssh -&amp;gt; pts ,Physical terminal&lt;br /&gt;
+You need at least one virtual terminal device in order to make use of your keyboard and monitor.&lt;br /&gt;
+VT combine keyboard and display see con_init&lt;br /&gt;
+con_init init a virtual terminal like gnome-terminal but in kernel.&lt;br /&gt;
+con_init mainly init display.&lt;br /&gt;
+vty_init mainly init kbd&lt;br /&gt;
+They all can be system console.(Exception pts??), if you enable it.&lt;br /&gt;
+Console is the entry of linux system.&lt;br /&gt;
+* Console driver &amp;ndash; banckends of  console&lt;br /&gt;
+struct console 指定了console的结构.&lt;br /&gt;
+* Console config&lt;br /&gt;
+If I disable CONFIG_SERIAL8250_CONSOLE(enable vt console), then no booting log and I can not login system.&lt;br /&gt;
+If I disable CONFIG_VT_CONSOLE(enable serail console, /dev/console point to ttyS0 see show_cons_active), no booting log but I can lgin system.&lt;br /&gt;
+How to explain this phenomena?&lt;br /&gt;
+From show_cons_active, we know /dev/console should come from console_drivers.&lt;br /&gt;
+/dev/console is really the pointer.&lt;br /&gt;
+Now, let&amp;rsquo;s inspect open /dev/console.&lt;br /&gt;
+* Open /dev/console&lt;br /&gt;
+Fisrt, it&amp;rsquo;s the very last place of booting kernel.&lt;br /&gt;
+start_kernel-&amp;gt;rest_init-&amp;gt;kernel_init-&amp;gt;kernel_init_freeable-&amp;gt;sys_open((const char __user *) &amp;ldquo;/dev/console&amp;rdquo;, O_RDWR, 0)-&amp;gt;&amp;hellip;-&amp;gt;&lt;br /&gt;
+console_fops-&amp;gt;tty_open-&amp;gt;&lt;br /&gt;
+{&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;// Sitiuations: disbale VT CONSOLE byt enable SERIAL8250_CONSOLE.
+// This function work only for /dev/tty
+// ls -l /dev/tty
+// crw-rw-rw- 1 root tty 5, 0 Dec 10 10:24 /dev/tty
+tty_open_current_tty-&amp;gt;
+{
+    /dev/console is 5:1, just return NULL
+}
+//This index should be Ctrl + Alt + Fn??
+// tty_struct is corresponding virtual console, or just console??
+// lookup tty_driver. It looks like lookup a inode, right?
+tty_lookup_driver-&amp;gt;
+{
+    // Find a tty_driver by device() in console_drivers.
+    // So we know, got a console, then got a tty_driver, right?
+    // Where do the components of console_drivers come form?
+    // At present, we should have only serial8250_console because 
+    // console vt_console_driver is disabled by us! But tty_driver console_driver
+    // still do exist!So console and tty is really separated!
+    // When we init vt, we get the tty_driver console_driver with con_ops type of tty_operations.
+    // tty_drivers have the same major with /dev/tty0!
+    // char_dev -&amp;gt; tty_driver int vty_init, not disable.
+    // vt console---^
+    console_device-&amp;gt;c-&amp;gt;device(c, index)
+    // What about serial8250_console?
+    // Where is the tty_driver of serial8250_console?
+    // console-&amp;gt;data = uart_driver-&amp;gt;tty_driver.
+    // We got another scene : uart-&amp;gt;tty
+    // serial8250 console-&amp;gt;data-^
+    // serial&#39;s tty_driver alloced in serial8250_init with uart_ops.
+    // vt&#39;s tty_driver alloced in vty_init.
+    // We summarize these:
+    // uart_driver serial8250_reg &amp;lt;-&amp;gt;  vc dev or /dev/tty*
+    // serial tty driver &amp;lt;-&amp;gt; vt tty driver 
+    // fs:vty_init &amp;lt;-&amp;gt; module:serial8250_init
+    // tty driver ops con_ops &amp;lt;-&amp;gt; uart_ops
+    // vt use major to connect tty and  vc dev
+    // serial use major and -&amp;gt; to connect tty and uart_driver
+    // It seems that uart and tty has a strong relationship, yet vt.
+    // Ok... we got tty driver.
+    // If we disable vt console, then here is the serial8250 tty_driver.
+}
+// Lookup for tty_struct
+tty_driver_lookup_tty -&amp;gt;
+{
+    //tty_struct is alloced in init function alloc_tty_driver.
+    // ttys, termios, ports, cdevs.
+    // ttys was used by tty_standard_install then tty_driver_install_tty 
+    // then tty_init_dev then ok we return to tty open. So this is the start place.
+
+    So we know tty_driver-&amp;gt;ttys[*] must be NULL.
+}
+tty_init_dev-&amp;gt;
+{
+    // tty_driver likes a process, ttys like the files, tty_struct like a file!
+    // So we know a tty_struct is a tty file.
+    // tty_driver much like a inode
+    //So tty_struct-&amp;gt;ops = tty_driver-&amp;gt;ops = &amp;amp; uart_ops
+    alloc_tty_struct-&amp;gt;tty-&amp;gt;ops = driver-&amp;gt;ops;
+    tty_driver_install_tty(driver, tty_struct)-&amp;gt; tty_standard_install-&amp;gt;driver-&amp;gt;ttys[tty-&amp;gt;index] = tty;
+}
+// Ok... We got a tty_struct.
+// Add /dev/console to tty_struct-&amp;gt;tty_files
+tty_add_file
+// At present, what have we done?
+// open(/dev/console)-&amp;gt;console_drivers-&amp;gt;console-&amp;gt;tty_driver-&amp;gt;tty_struct, right?
+
+tty-&amp;gt;ops-&amp;gt;open(tty, filp)-&amp;gt;//ops = &amp;amp;uart_ops
+{
+    uart_ops-&amp;gt;open = uart_open-&amp;gt;
+    {
+        uart-&amp;gt; tty struct
+        struct uart_driver *drv = (struct uart_driver *)tty-&amp;gt;driver-&amp;gt;driver_state;
+        struct uart_state *state = drv-&amp;gt;state + line; //uart_state
+        tty-&amp;gt;driver_data = state;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;br /&gt;
+// At present, we understand the flow of open /dev/console to serial console&lt;/p&gt;
+
+&lt;h1 id=&#34;what-about-opening-dev-console-to-vt-console&#34;&gt;What about opening /dev/console to vt console&lt;/h1&gt;
+
+&lt;p&gt;sys_open(/dev/console)-&amp;gt; &amp;hellip; tty_open -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    tty_lookup_driver-&amp;gt; get tty_driver=console_driver,&lt;br /&gt;
+    Through the name console_driver, we know, vt tty_driver is the defaut driver of console!&lt;br /&gt;
+    // 同时, 我们也应该知道所谓的kernel的system console 是你只要enable了先关的config CONFIG_VT_CONSOLE and CONFIG_SERIAL_8250_CONSOLE.&lt;br /&gt;
+    // system console就有了, printk也就有了归处. In other words, you registered, you got printed&lt;br /&gt;
+    // In theory, you should be able to input something, like sysrq, I maybe test tomorrow.&lt;br /&gt;
+    // 那么在kernel_init中sys_open又是什么鬼呢?&lt;br /&gt;
+    // dev/tty 是专门真对进程的, 就是进程之前打开了一个tty就存在singnal里, 这个dev/tty就是取出来的.&lt;/p&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h1 id=&#34;总结下-打开-dev-console-会从console-drivers-最终到达tty-driver&#34;&gt;总结下, 打开/dev/console, 会从console_drivers, 最终到达tty_driver.&lt;/h1&gt;
+
+&lt;h1 id=&#34;这和-dev-tty-dev-ttys-从tty-drivers-差不多&#34;&gt;这和/dev/tty* /dev/ttyS* 从tty_drivers, 差不多.&lt;/h1&gt;
+
+&lt;p&gt;// 这么输出为什么不会打窜了?&lt;br /&gt;
+// How ctrl alt Fn work?&lt;br /&gt;
+// echo xxx /dev/tty in serial tty_lookup_driver&lt;br /&gt;
+// 另一个问题, serial 的terminal?&lt;/p&gt;
+
+&lt;h1 id=&#34;the-perspective&#34;&gt;The perspective&lt;/h1&gt;
+
+&lt;p&gt;/dev/*&lt;br /&gt;
+vfs&lt;br /&gt;
+chrdev&lt;br /&gt;
+tty_fops&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;gt;tty core&lt;br /&gt;
+    ld_ops &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty line discipline(for read, write)&lt;br /&gt;
+tty_driver con_ops/uart_ops&amp;mdash;&amp;mdash;&amp;ndash;&amp;gt; tty driver and tty_operations&lt;br /&gt;
+HW&lt;br /&gt;
+There are three different types of tty drivers: console, serial port, and pty.&lt;br /&gt;
+serial8250_default_handle_irq&lt;br /&gt;
+UART console&lt;br /&gt;
+              |&amp;mdash;- Virtual terminal &amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;mdash;&amp;ndash; VT console&lt;br /&gt;
+              |                 | &amp;ndash; VT console&lt;br /&gt;
+              |&amp;mdash;-&lt;br /&gt;
+        Terminal&amp;ndash;|&lt;br /&gt;
+              |&amp;mdash;-&lt;/p&gt;
+
+&lt;h1 id=&#34;what-about-console&#34;&gt;What about console?&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;early_con&lt;br /&gt;
+start_kernel or setup_arch(arm)-&amp;gt;parse_early_param-&amp;gt;do_early_param-&amp;gt;p-&amp;gt;setup_func()= setup_early_printk-&amp;gt;register_console&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;vga_con&lt;br /&gt;
+start_kerenl-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+// All about vga console&lt;br /&gt;
+set_arch-&amp;gt; conswitchp = &amp;amp;vga_con; or conswitchp = &amp;amp;dummy_con;&lt;br /&gt;
+console_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+        tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
+    console_initcall(con_init);&lt;br /&gt;
+console_initcall(serial8250_console_init)&lt;br /&gt;
+    con_init-&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        // vc-&amp;gt;vc_sw-&amp;gt;con_putcs is DUMMY&lt;br /&gt;
+        //内存映射64KB or 32KB的VGA区域. 启动VGA&lt;br /&gt;
+        conswitchp-&amp;gt;con_startup = vgacon_startup -&amp;gt;vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);&lt;br /&gt;
+        con_driver_map[0~MAX_NR_CONSOLES] = conswitchp; //空间换时间&lt;br /&gt;
+        // 核心内容!&lt;br /&gt;
+        for (currcons = 0; currcons &amp;lt; MIN_NR_CONSOLES; currcons++) {&lt;br /&gt;
+            // 给vc_cons[currcons].d分配内存&lt;br /&gt;
+            vc_cons[currcons].d = vc = kzalloc(sizeof(struct vc_data), GFP_NOWAIT);&lt;br /&gt;
+            INIT_WORK(&amp;amp;vc_cons[currcons].SAK_work, vc_SAK);&lt;br /&gt;
+            //初始化vc_cons[currcons].d&lt;br /&gt;
+            tty_port_init(&amp;amp;vc-&amp;gt;port);&lt;br /&gt;
+            // 继续初始化, 主要是确定screenbuf size&lt;br /&gt;
+            visual_init(vc, currcons, 1);&lt;br /&gt;
+            // 给vc_screenbuf分配内存&lt;br /&gt;
+            vc-&amp;gt;vc_screenbuf = kzalloc(vc-&amp;gt;vc_screenbuf_size, GFP_NOWAIT);&lt;br /&gt;
+            vc_init(vc, vc-&amp;gt;vc_rows, vc-&amp;gt;vc_cols,&lt;br /&gt;
+                currcons || !vc-&amp;gt;vc_sw-&amp;gt;con_save_screen);&lt;br /&gt;
+        }&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    [    0.000000] Console: colour VGA+ 80x25
+    register_console(&amp;amp;vt_console_driver);//vt_console can use vgacon writing.
+}
+serial8250_console_init-&amp;gt;register_console(&amp;amp;serial8250_console) to console_drivers; exclusive_console.
+[    0.000000] console [tty0] enabled
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;br /&gt;
+module_init(serial8250_init);??&lt;br /&gt;
+}&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;fbcon&lt;br /&gt;
+register_framebuffer-&amp;gt; do_take_over_console -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+do_register_con_driver-&amp;gt;csw-&amp;gt;con_startup();registered_con_driver&lt;br /&gt;
+do_bind_con_driver -&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    [    3.882220] Console: switching to colour dummy device 80x25&lt;br /&gt;
+    [    4.720732] Console: switching to colour frame buffer device 170x48&lt;br /&gt;
+}&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h2 id=&#34;vga-text-console-printk-write&#34;&gt;VGA text console printk &amp;amp; write&lt;/h2&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kernel space&lt;br /&gt;
+printk-&amp;gt; &amp;hellip;-&amp;gt;log_buf&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;userspace for ttyN&lt;br /&gt;
+tty_fops-&amp;gt;write=tty_write-&amp;gt; tty_ldisc_N_TTY-&amp;gt;write=n_tty_write-&amp;gt; tty_driver-&amp;gt;ops=con_ops-&amp;gt;write=con_write-&amp;gt;do_con_write&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;agent&lt;br /&gt;
+console_drivers-&amp;gt;vt_console_driver-&amp;gt;serial8250_console-&amp;gt;NULL&lt;br /&gt;
+console_unlock-&amp;gt;..-&amp;gt;__call_console_drivers-&amp;gt; console_drivers-&amp;gt;write = vt_console_print&lt;br /&gt;
+{&lt;br /&gt;
+//保存到screen buf, vga_con也什么不做啊.&lt;br /&gt;
+scr_writew((vc-&amp;gt;vc_attr &amp;lt;&amp;lt; 8) + c, (unsigned short *)vc-&amp;gt;vc_pos);&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;}&lt;/p&gt;
+
+&lt;h1 id=&#34;what-about-tty&#34;&gt;What about tty&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;onset&lt;br /&gt;
+console_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+tty_ldisc_begin-&amp;gt;tty_register_ldisc(N_TTY, &amp;amp;tty_ldisc_N_TTY);&lt;br /&gt;
+console_initcall(con_init);&lt;br /&gt;
+console_initcall(serial8250_console_init)&lt;br /&gt;
+}&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;N_TTY:&lt;a href=&#34;http://www.linux.it/~rubini/docs/serial/serial.html&#34;&gt;Serial Drivers by Alessandro Rubini&lt;/a&gt;&lt;br /&gt;
+fs_initcall:chr_dev_init-&amp;gt;drivers/tty/tty_io.c: tty_init-&amp;gt;&lt;br /&gt;
+{&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;/* /dev/tty0 = /dev/console console_ops */
+/* /dev/tty = the /dev/ttyN whererun echo /dev/tty tty_ops */
+
+//&amp;quot;/dev/tty&amp;quot;,
+cdev_init(&amp;amp;tty_cdev, &amp;amp;tty_fops);
+&amp;quot;/dev/console&amp;quot;
+cdev_init(&amp;amp;console_cdev, &amp;amp;console_fops);
+vty_init-&amp;gt;
+{
+    //&amp;quot;dev/tty0&amp;quot;    
+    cdev_init(&amp;amp;vc0_cdev, console_fops); 
+    //&amp;quot;/dev/ttyN&amp;quot;
+    tty_register_driver-&amp;gt;
+    {
+        // What does tty_register_driver do ?
+        // Alloc and register chr dev region.
+        // Add cdev with tty_ops and above region.
+        // Register tty device
+        // Why do we register tty devices?
+        // These devices must be used in some place.
+        // After registering itself, the driver registers the devices it controls through the tty_register_device function. 
+        // 原来是把major 和minor做成dev_t放到driver-&amp;gt;cdevs[index].dev里面了.
+        // 也就是说driver-&amp;gt;cdevs[index]就是tty driver控制的device啊, 怪不得cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
+        // 那么看来用到的时候就是open了, 竟然没有不过有个tty_get_device用了tty_class
+        // tty_register_device_attr-&amp;gt;device_register-&amp;gt;device_add-&amp;gt;klist_add_tail(&amp;amp;dev-&amp;gt;knode_class,&amp;amp;dev-&amp;gt;class-&amp;gt;p-&amp;gt;klist_devices)
+        // 果然是在open tty-&amp;gt;dev = tty_get_device(tty);在alloc_tty_struct
+        // 不知道这个tty-&amp;gt;dev在哪里用, 不管他了.
+        tty_register_device(_attr) -&amp;gt;tty_cdev_add-&amp;gt; cdev_init(&amp;amp;driver-&amp;gt;cdevs[index], &amp;amp;tty_fops);
+    }
+    kbd_init
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;br /&gt;
+device_init:serial8250_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    // In this function we decide &amp;ldquo;/dev/ttyS*&amp;rdquo;&lt;br /&gt;
+    // dmesg |grep Serial&lt;br /&gt;
+    // [    0.696341] Serial: &lt;sup&gt;8250&lt;/sup&gt;&amp;frasl;&lt;sub&gt;16550&lt;/sub&gt; driver, 32 ports, IRQ sharing enabled&lt;br /&gt;
+    // serial8250.c -&amp;gt; tty_io.c&lt;br /&gt;
+    serial8250_reg.nr = UART_NR;&lt;br /&gt;
+    ret = uart_register_driver(&amp;amp;serial8250_reg);&lt;br /&gt;
+    tty_driver set to uart_driver by uart_register_driver -&amp;gt;&lt;br /&gt;
+    {&lt;br /&gt;
+        drv-&amp;gt;state = kzalloc        //uart_state&lt;br /&gt;
+        normal-&amp;gt;driver_state    = drv; //args struct uart_driver *drv = &amp;amp;serial8250_reg&lt;br /&gt;
+        tty_set_operations(normal, &amp;amp;uart_ops);&lt;br /&gt;
+        struct tty_port &lt;em&gt;port = &amp;amp;state-&amp;gt;port&lt;br /&gt;
+        tty_port_init(port);&lt;br /&gt;
+        port-&amp;gt;ops = &amp;amp;uart_port_ops; //tty_port&lt;br /&gt;
+        // We register &amp;ldquo;/dev/ttyS&lt;/em&gt;&amp;rdquo; files here.&lt;br /&gt;
+        static struct uart_driver serial8250_reg = {&lt;br /&gt;
+            .owner                  = THIS_MODULE,&lt;br /&gt;
+            .driver_name            = &amp;ldquo;serial&amp;rdquo;,&lt;br /&gt;
+            .dev_name               = &amp;ldquo;ttyS&amp;rdquo;,&lt;br /&gt;
+            .major                  = TTY_MAJOR,&lt;br /&gt;
+            .minor                  = 64,&lt;br /&gt;
+            .cons                   = SERIAL8250_CONSOLE,&lt;br /&gt;
+        };&lt;br /&gt;
+        retval = tty_register_driver(normal); -&amp;gt; register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name) //32, ttyS?*? should be tty_ops&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;}
+serial8250_register_ports(&amp;amp;serial8250_reg, &amp;amp;serial8250_isa_devs-&amp;gt;dev);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;}&lt;br /&gt;
+* nucleus&lt;br /&gt;
+tty_write-&amp;gt;ld-&amp;gt;ops-&amp;gt;write=n_tty_write-&amp;gt;(tty_struct tty-&amp;gt;ops-&amp;gt;write)=uart_write-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    struct uart_state *state = tty-&amp;gt;driver_data;&lt;br /&gt;
+    port = state-&amp;gt;uart_port;&lt;br /&gt;
+    circ = &amp;amp;state-&amp;gt;xmit;&lt;br /&gt;
+    memcpy(circ-&amp;gt;buf + circ-&amp;gt;head, buf, c);&lt;br /&gt;
+    uart_start-&amp;gt;__uart_start-&amp;gt;(uart_port-&amp;gt;ops-&amp;gt;start_tx(port)); //&amp;amp;uart_port_ops ?? uart_ops??&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;h1 id=&#34;what-about-pseudoterminal&#34;&gt;What about Pseudoterminal&lt;/h1&gt;
+
+&lt;p&gt;/dev/ptmx is the &amp;ldquo;pseudo-terminal master multiplexer&amp;rdquo;. from wikipedia&lt;br /&gt;
+static struct tty_driver *ptm_driver;&lt;br /&gt;
+static struct tty_driver *pts_driver;&lt;br /&gt;
+module_init(pty_init)-&amp;gt;unix98_pty_init-&amp;gt;&lt;br /&gt;
+{&lt;br /&gt;
+    tty_set_operations(ptm_driver, &amp;amp;ptm_unix98_ops);&lt;br /&gt;
+    tty_register_driver(ptm_driver)&lt;br /&gt;
+    tty_set_operations(pts_driver, &amp;amp;pty_unix98_ops);&lt;br /&gt;
+    tty_register_driver(pts_driver)&lt;br /&gt;
+    ptmx_fops = tty_fops;&lt;br /&gt;
+    ptmx_fops.open = ptmx_open;&lt;br /&gt;
+    cdev_init(&amp;amp;ptmx_cdev, &amp;amp;ptmx_fops);&lt;br /&gt;
+}&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;How to use ptmx?&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;tty-drivers&#34;&gt;tty drivers&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;cat /proc/tty/drivers&lt;br /&gt;
+/dev/tty             /dev/tty        5       0 system:/dev/tty&lt;br /&gt;
+/dev/console         /dev/console    5       1 system:console&lt;br /&gt;
+/dev/ptmx            /dev/ptmx       5       2 system&lt;br /&gt;
+/dev/vc/0            /dev/vc/0       4       0 system:vtmaster&lt;br /&gt;
+usbserial            /dev/ttyUSB   188 0-511 serial&lt;br /&gt;
+serial               /dev/ttyS       4 64-95 serial&lt;br /&gt;
+pty_slave            /dev/pts      136 0-1048575 pty:slave&lt;br /&gt;
+pty_master           /dev/ptm      128 0-1048575 pty:master&lt;br /&gt;
+unknown              /dev/tty        4 1-63 console&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;question&#34;&gt;Question?&lt;/h1&gt;
+
+&lt;p&gt;what is /dev/vcs?&lt;/p&gt;
+
+&lt;h1 id=&#34;backup&#34;&gt;Backup&lt;/h1&gt;
+
+&lt;p&gt;./drivers//tty/vt/vt.c:3042:        register_chrdev_region(MKDEV(TTY_MAJOR, 0), 1, &amp;ldquo;/dev/vc/0&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
+./drivers//tty/vt/vc_screen.c:644:  if (register_chrdev(VCS_MAJOR, &amp;ldquo;vcs&amp;rdquo;, &amp;amp;vcs_fops))&lt;br /&gt;
+./drivers//tty/tty_io.c:3377:       error = register_chrdev_region(dev, driver-&amp;gt;num, driver-&amp;gt;name);&lt;br /&gt;
+./drivers//tty/tty_io.c:3414:   unregister_chrdev_region(dev, driver-&amp;gt;num);&lt;br /&gt;
+./drivers//tty/tty_io.c:3430:   unregister_chrdev_region(MKDEV(driver-&amp;gt;major, driver-&amp;gt;minor_start),&lt;br /&gt;
+./drivers//tty/tty_io.c:3607:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, &amp;ldquo;/dev/tty&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
+./drivers//tty/tty_io.c:3613:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 1), 1, &amp;ldquo;/dev/console&amp;rdquo;) &amp;lt; 0)&lt;br /&gt;
+./drivers//tty/pty.c:841:       register_chrdev_region(MKDEV(TTYAUX_MAJOR, 2), 1, &amp;ldquo;/dev/ptmx&amp;rdquo;) &amp;lt; 0)&lt;/p&gt;
+
+&lt;h1 id=&#34;hugh-in-n-tty-write&#34;&gt;hugh in n_tty_write&lt;/h1&gt;
+
+&lt;p&gt;uart_flush_buffer-&amp;gt; tty_wakeup&lt;br /&gt;
+serial8250_handle_port-&amp;gt; transmit_chars&lt;br /&gt;
+n_tty_read/poll-&amp;gt;input_available_p-&amp;gt;flush_to_ldisc-&amp;gt;n_tty_receive_buf-&amp;gt;uart_flush_chars&lt;br /&gt;
+n_tty_write-&amp;gt;uart_flush_chars-&amp;gt;uart_start&lt;br /&gt;
+n_tty_write-&amp;gt;uart_write-&amp;gt; uart_start-&amp;gt;start_tx -&amp;gt; serial8250_start_tx -&amp;gt; transmit_chars-&amp;gt;uart_write_wakeup -&amp;gt;uart_tasklet_action-&amp;gt;tty_wakeup&lt;/p&gt;
+
+&lt;h1 id=&#34;echo-char&#34;&gt;Echo char&lt;/h1&gt;
+
+&lt;p&gt;===serial chipset&lt;br /&gt;
+serial8250_interrupt&lt;br /&gt;
+seirial8250_handle_port&lt;br /&gt;
+receive_chars&lt;/p&gt;
+
+&lt;p&gt;===serial abstruction&lt;br /&gt;
+uart_insert_char&lt;/p&gt;
+
+&lt;p&gt;===terminal device&lt;br /&gt;
+tty_insert_flip_char&lt;/p&gt;
+
+&lt;p&gt;receive_chars-&amp;gt;tty_flip_buffer_push -&amp;gt;flush_to_ldisc-&amp;gt;&lt;br /&gt;
+=== Line discipline&lt;br /&gt;
+disc-&amp;gt;receive_buf=n_tty_receive_buf-&amp;gt;n_tty_receive_char-&amp;gt;echo_char&lt;/p&gt;
+
+&lt;h1 id=&#34;uart-port&#34;&gt;uart_port&lt;/h1&gt;
+
+&lt;p&gt;serial8250_register_ports&lt;br /&gt;
+struct uart_8250_port *up = &amp;amp;serial8250_ports[i];&lt;br /&gt;
+uart_add_one_port(drv, &amp;amp;up-&amp;gt;port);&lt;/p&gt;
 </description>
     </item>
     

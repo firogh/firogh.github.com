@@ -11,11 +11,42 @@
     
     <item>
       <title>Linux kernel page allocation</title>
-      <link>http://firoyang.org/cs/page_alloc/</link>
+      <link>http://firoyang.org/cs/page_allocator/</link>
       <pubDate>Sat, 08 Jun 2019 00:00:00 UTC</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_alloc/</guid>
+      <guid>http://firoyang.org/cs/page_allocator/</guid>
       <description>
+
+&lt;h1 id=&#34;track-buddy-memory-system-1963-1965&#34;&gt;track: buddy memory system 1963 ~ 1965&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
+The following cited from above 1965 paper.&lt;br /&gt;
+The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
+storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
+situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
+mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+
+&lt;p&gt;OSIDP&lt;br /&gt;
+Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
+scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
+a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
+ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
+interesting compromise is the buddy system&lt;/p&gt;
+
+&lt;h2 id=&#34;related-code&#34;&gt;Related code&lt;/h2&gt;
+
+&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
+setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
+        sparse_init &amp;hellip;-&amp;gt; vmemmap_populate      # vmemmap&lt;br /&gt;
+        zone_sizes_init-&amp;gt;free_area_init_nodes -&amp;gt; free_area_init_node-&amp;gt; free_area_init_core&lt;br /&gt;
+                zone_pcp_init # init percpu pageset with boot_pageset&lt;br /&gt;
+                init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list&lt;br /&gt;
+                memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
+
+&lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
+        mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
@@ -33,7 +64,9 @@
 &lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d - Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
 __GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
 
-&lt;h1 id=&#34;free-page-state&#34;&gt;Free page state&lt;/h1&gt;
+&lt;h1 id=&#34;free&#34;&gt;Free&lt;/h1&gt;
+
+&lt;h2 id=&#34;page-state&#34;&gt;page state&lt;/h2&gt;
 
 &lt;p&gt;page_expected_state and check_new_page, page_mapcount_reset&lt;/p&gt;
 
@@ -384,6 +417,13 @@ CommitDate: Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/&#34;&gt;The Definitive Guide to Linux System Calls&lt;/a&gt;&lt;/p&gt;
 
+&lt;h2 id=&#34;fast-path&#34;&gt;Fast path&lt;/h2&gt;
+
+&lt;p&gt;commit 21d375b6b34ff511a507de27bf316b3dde6938d9&lt;br /&gt;
+Author: Andy Lutomirski &lt;a href=&#34;mailto:luto@kernel.org&#34;&gt;luto@kernel.org&lt;/a&gt;&lt;br /&gt;
+Date:   Sun Jan 28 10:38:49 2018 -0800&lt;br /&gt;
+    x86/entry/64: Remove the SYSCALL64 fast path&lt;/p&gt;
+
 &lt;h2 id=&#34;sysenter-vs-syscall&#34;&gt;sysenter vs syscall&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://groups.google.com/forum/#!topic/comp.arch/CjDs4MJCBow%5B1-25%5D&#34;&gt;SYSENTER/SYSEXIT vs.SYSCALL/SYSRET&lt;/a&gt;&lt;br /&gt;
@@ -423,6 +463,10 @@ According to do_syscall_64, regs-&amp;gt;ax = sys_call_table&lt;a href=&#34;regs
 &lt;a href=&#34;https://kernelnewbies.org/FAQ/asmlinkage&#34;&gt;What is asmlinkage?&lt;/a&gt;&lt;br /&gt;
 However, for C functions invoked from assembly code, we should explicitly declare the function&amp;rsquo;s calling convention, because the parameter passing code in assembly side has been fixed. Show all predefined macros for your compiler&lt;/p&gt;
 
+&lt;h2 id=&#34;hacking&#34;&gt;Hacking&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.exploit-db.com/papers/13146&#34;&gt;Obtain sys_call_table on amd64(x86_64)&lt;/a&gt;&lt;/p&gt;
+
 &lt;h2 id=&#34;vdso&#34;&gt;vDSO&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken?page=0,0&#34;&gt;Creating a vDSO: the Colonel&amp;rsquo;s Other Chicken&lt;/a&gt;&lt;br /&gt;
@@ -432,136 +476,6 @@ just for vDSO syscalls&lt;br /&gt;
 glibc -&amp;gt; AT_SYSINFO_EHDR-&amp;gt; vDSO elf&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/446528/&#34;&gt;On vsyscalls and the vDSO&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://blog.tinola.com/?e=5&#34;&gt;linux syscalls on x86 64&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Page fault</title>
-      <link>http://firoyang.org/cs/page_fault/</link>
-      <pubDate>Thu, 06 Apr 2017 00:00:00 UTC</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/page_fault/</guid>
-      <description>
-
-&lt;h1 id=&#34;page-fault&#34;&gt;Page Fault&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;page-fault exceptions error code&lt;br /&gt;
-v3a: 4.7 - Figure 4-12. Page-Fault Error Code&lt;br /&gt;
-P, W/R, U/S, I/D, RSVD&lt;br /&gt;
-user/kernel mode, kerne space/userspace address, good/bad area&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h1 id=&#34;kernel-address&#34;&gt;Kernel address&lt;/h1&gt;
-
-&lt;p&gt;vmalloc,spurious_fault, kprobes_fault&lt;/p&gt;
-
-&lt;h2 id=&#34;bad-area&#34;&gt;Bad area&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/x86/exception-tables.txt&#34;&gt;fixup_exception&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.linuxjournal.com/article/2135&#34;&gt;Kernel-Level Exception Handling&lt;/a&gt;&lt;br /&gt;
-SIGSEGV&lt;br /&gt;
-kernel oops&lt;/p&gt;
-
-&lt;h1 id=&#34;userspace-address&#34;&gt;Userspace address&lt;/h1&gt;
-
-&lt;h2 id=&#34;bad-area-1&#34;&gt;Bad area&lt;/h2&gt;
-
-&lt;p&gt;PF_USER ? SIGSEGV&lt;/p&gt;
-
-&lt;h2 id=&#34;stack&#34;&gt;Stack&lt;/h2&gt;
-
-&lt;p&gt;premise: grows down: address &amp;gt; 65536 + 32 * sizeof(unsigned long) + rsp&lt;br /&gt;
-expand_stack(): expand vma of stack; + good area workflow.&lt;/p&gt;
-
-&lt;h2 id=&#34;private-anonymous-page&#34;&gt;Private anonymous page&lt;/h2&gt;
-
-&lt;p&gt;Check &amp;lsquo;man madvise&amp;rsquo; for private anonymous page.&lt;br /&gt;
-Stack and Heap - mmap, brk: do_anonymous_page&lt;br /&gt;
-Library Private read &amp;amp; write: do_wp_page,&lt;br /&gt;
-Library Private write: cow page, do_cow_page&lt;/p&gt;
-
-&lt;h3 id=&#34;do-cow-page&#34;&gt;do_cow_page&lt;/h3&gt;
-
-&lt;ol&gt;
-&lt;li&gt;get page and cow:  __do_fault-&amp;gt; vma-&amp;gt;vm_ops-&amp;gt;fault = filemap_fault -&amp;gt; page cache ? page_cache_read add to lru&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;add page to anon lru list: finish_fault-&amp;gt;alloc_set_pte-&amp;gt; page_add_new_anon_rmap -&amp;gt; __SetPageSwapBacked&lt;/p&gt;
-
-&lt;h3 id=&#34;page-rmap-pte&#34;&gt;Page, rmap, pte&lt;/h3&gt;
-
-&lt;p&gt;page: alloc_zeroed_user_highpage_movable&lt;br /&gt;
-page_add_new_anon_rmap&lt;br /&gt;
-set_pte_at&lt;/p&gt;
-
-&lt;h2 id=&#34;private-file-page&#34;&gt;Private file page&lt;/h2&gt;
-
-&lt;p&gt;Libray Private  read: do_read_page, pte prot is PAGE_COPY check protection_map.&lt;br /&gt;
-map_region         vma-&amp;gt;vm_page_prot = vm_get_page_prot(vm_flags);&lt;br /&gt;
-do_set_pte(vma, address, fault_page, pte, false, false); vm_page_prot&lt;/p&gt;
-
-&lt;h2 id=&#34;shared-file-page&#34;&gt;Shared file page&lt;/h2&gt;
-
-&lt;p&gt;do_shared_page&lt;/p&gt;
-
-&lt;h2 id=&#34;shared-anonymous-page&#34;&gt;Shared anonymous page&lt;/h2&gt;
-
-&lt;p&gt;do_shared_page&lt;/p&gt;
-
-&lt;h2 id=&#34;swap-page&#34;&gt;Swap page&lt;/h2&gt;
-
-&lt;p&gt;do_swap_page&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;read-and-write-pages-copy-on-write-technique&#34;&gt;Read and write pages - Copy-on-write technique.&lt;/h1&gt;
-
-&lt;h2 id=&#34;do-read-page&#34;&gt;do_read_page&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/588802/&#34;&gt;map_pages&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;synchronization&#34;&gt;Synchronization&lt;/h1&gt;
-
-&lt;h2 id=&#34;down-read-mm-mmap-sem&#34;&gt;down_read(&amp;amp;mm-&amp;gt;mmap_sem)?&lt;/h2&gt;
-
-&lt;p&gt;linux-tglx&lt;br /&gt;
-commit b50661029222940e24d2fba7c982ac0774a38c78&lt;br /&gt;
-Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Thu Sep 16 22:00:12 2004 -0700&lt;br /&gt;
-    [PATCH] x86-64: avoid deadlock in page fault handler&lt;br /&gt;
-    Avoid deadlock when kernel fault happens inside mmap sem.&lt;br /&gt;
-Check ULKv3 Page 380.&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2004/5/19/108&#34;&gt;https://lkml.org/lkml/2004/5/19/108&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/2013/5/13/418&#34;&gt;https://lkml.org/lkml/2013/5/13/418&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;irq&#34;&gt;IRQ&lt;/h2&gt;
-
-&lt;p&gt;commit 891cffbd6bcba26409869c19c07ecd4bfc0c2460&lt;br /&gt;
-Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-Date:   Sun Oct 12 13:16:12 2008 -0700&lt;br /&gt;
-    x86/mm: do not trigger a kernel warning if user-space disables interrupts and generates a page fault&lt;/p&gt;
-
-&lt;h1 id=&#34;propection&#34;&gt;Propection&lt;/h1&gt;
-
-&lt;p&gt;tglx: commit 0457d99a336be658cea1a5bdb689de5adb3b382d&lt;br /&gt;
-Author: Andi Kleen &lt;a href=&#34;mailto:ak@muc.de&#34;&gt;ak@muc.de&lt;/a&gt;&lt;br /&gt;
-Date:   Tue Feb 12 20:17:35 2002 -0800&lt;br /&gt;
-    [PATCH] x86_64 merge: arch + asm&lt;br /&gt;
-    This adds the x86_64 arch and asm directories and a Documentation/x86_64.&lt;br /&gt;
-+/*&lt;br /&gt;
-+ * The i386 can&amp;rsquo;t do page protection for execute, and considers that&lt;br /&gt;
-+ * the same are read. Also, write permissions imply read permissions.&lt;br /&gt;
-+ * This is the closest we can get..&lt;br /&gt;
-+ */&lt;br /&gt;
-+#define __P000 PAGE_NONE&lt;br /&gt;
-+#define __P001 PAGE_READONLY&lt;br /&gt;
-+#define __P010 PAGE_COPY&lt;br /&gt;
-+#define __P011 PAGE_COPY&lt;br /&gt;
-+#define __P100 PAGE_READONLY&lt;br /&gt;
-+#define __P101 PAGE_READONLY&lt;br /&gt;
-+#define __P110 PAGE_COPY&lt;br /&gt;
-+#define __P111 PAGE_COPY&lt;br /&gt;
-+#define __S000 PAGE_NONE&lt;/p&gt;
 </description>
     </item>
     
@@ -1100,7 +1014,14 @@ and marc.info&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://blacks3pt3mb3r.wordpress.com/linux-stuffz/264-2/&#34;&gt;Building a KVM host machine.&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/660404/&#34;&gt;Speeding up kernel development with QEMU&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;How to Build A Custom Linux Kernel For Qemu&lt;/a&gt;&lt;/p&gt;
+&lt;a href=&#34;http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html&#34;&gt;How to Build A Custom Linux Kernel For Qemu&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://morbidrsa.github.io/2017/04/19/rapid-kernel-development-with-dracut-and-qemu.html&#34;&gt;Rapid kernel development with dracut and Qemu&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;suse&#34;&gt;SUSE&lt;/h2&gt;
+
+&lt;p&gt;zypper &amp;ndash;root /home/firo/ws/suse addrepo &lt;a href=&#34;http://download.opensuse.org/distribution/leap/15.0/repo/oss/&#34;&gt;http://download.opensuse.org/distribution/leap/15.0/repo/oss/&lt;/a&gt; foss&lt;br /&gt;
+&lt;a href=&#34;https://en.opensuse.org/Package_repositories&#34;&gt;https://en.opensuse.org/Package_repositories&lt;/a&gt;&lt;br /&gt;
+zypper &amp;ndash;root /home/firo/ws/suse install kernel-default-devel&lt;/p&gt;
 
 &lt;h2 id=&#34;build-minimal-bootable-rootfs-fedora&#34;&gt;Build minimal bootable rootfs - fedora&lt;/h2&gt;
 
@@ -1125,6 +1046,11 @@ CONFIG_SLUB&lt;br /&gt;
 CONFIG_KASAN&lt;/p&gt;
 
 &lt;h2 id=&#34;kernel-org-build-a-tiny-kernel-https-tiny-wiki-kernel-org&#34;&gt;&lt;a href=&#34;https://tiny.wiki.kernel.org/&#34;&gt;Kernel.org: Build a tiny kernel&lt;/a&gt;&lt;/h2&gt;
+
+&lt;h2 id=&#34;make-initrd-for-nfs&#34;&gt;make initrd for NFS&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://migueleonardortiz.com.ar/linux/upgrade-kernel-and-initrd-in-linux/2067&#34;&gt;Upgrade kernel and initrd in Linux&lt;/a&gt;&lt;br /&gt;
+sudo chroot suse mkinitrd -m &amp;lsquo;nfs nfsv3 nfsv4 iwlwifi&amp;rsquo; -A -D wlp4s0&lt;/p&gt;
 
 &lt;h2 id=&#34;kvm-and-nfs&#34;&gt;KVM and NFS&lt;/h2&gt;
 
@@ -1210,6 +1136,14 @@ Don&amp;rsquo;t include this line.  We can get it from you email address.&lt;br 
 Include everyone from the ./scripts/get_maintainer.pl output except&lt;br /&gt;
 don&amp;rsquo;t include linux-kernel@vger.kernel.org if there is another mailing&lt;br /&gt;
 list there already.&lt;/p&gt;
+
+&lt;h2 id=&#34;kubecek&#34;&gt;Kubecek&lt;/h2&gt;
+
+&lt;p&gt;│17:31:57 mkubecek | For the record, once the commit is in net or net-next tree, there is no chance to tweak its commit message. │ vtsironis_ho&lt;br /&gt;
+│17:32:26   alesak | mkubecek: ok, thanks for the clarification                                                                  │ wpreston&lt;br /&gt;
+│17:33:19 mkubecek | These trees do not rebase and some people (like me) would appreciate if other subsystem trees didn&amp;rsquo;t        │ Zara&lt;br /&gt;
+│                  | either.                                                                                                     │ zuzka&lt;br /&gt;
+│17:34:20 mkubecek | We could avoid spurious git_sort failures and commits like kernel-source 174731527683&lt;/p&gt;
 
 &lt;h1 id=&#34;git-mutt-patch&#34;&gt;git mutt patch&lt;/h1&gt;
 
@@ -1577,25 +1511,6 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
 &lt;a href=&#34;https://linux-mm.org/&#34;&gt;https://linux-mm.org/&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/1.1/800-1108-01E_System_Interface_Manual_for_the_Sun_Workstation_Jan84.pdf&#34;&gt;2. Memory management&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
-
-&lt;h2 id=&#34;1959-paging&#34;&gt;1959 paging&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Paging&#34;&gt;Paging&lt;/a&gt; according to &lt;a href=&#34;https://en.wikipedia.org/wiki/Virtual_memory&#34;&gt;History of VM&lt;/a&gt; is developed at 1959.&lt;/p&gt;
-
-&lt;h2 id=&#34;1961-segmentation&#34;&gt;1961 segmentation&lt;/h2&gt;
-
-&lt;p&gt;Fist appears in Burroughs B5500&lt;/p&gt;
-
-&lt;h2 id=&#34;1963-1965-buddy-system&#34;&gt;1963 ~ 1965  buddy system&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;1956-1962-vm&#34;&gt;1956 ~ 1962 VM&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://denninginstitute.com/pjd/PUBS/bvm.pdf&#34;&gt;BEFORE MEMORY WAS VIRTUAL&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/253361/&#34;&gt;Memory part 3: Virtual Memory&lt;/a&gt;&lt;/p&gt;
-
 &lt;h1 id=&#34;memory-partitioning&#34;&gt;Memory partitioning&lt;/h1&gt;
 
 &lt;p&gt;Check OSIDP 7.2&lt;/p&gt;
@@ -1605,9 +1520,10 @@ cpu_idle -&amp;gt; cpuidle_idle_call&lt;/p&gt;
 &lt;p&gt;By variable-sized, we are not taking historical segementation.&lt;br /&gt;
 Placement algorithm: Best-fit, first-fit. Within variable-szied memory allocations, it&amp;rsquo;s very difficult to track free memories compared with page-sized.&lt;/p&gt;
 
-&lt;h2 id=&#34;segmentation&#34;&gt;Segmentation&lt;/h2&gt;
+&lt;h2 id=&#34;1961-segmentation&#34;&gt;1961 segmentation&lt;/h2&gt;
 
-&lt;p&gt;OSIDP&lt;br /&gt;
+&lt;p&gt;Fist appears in Burroughs B5500&lt;br /&gt;
+OSIDP&lt;br /&gt;
 The difference, compared to dynamic partitioning, is that with seg-&lt;br /&gt;
 mentation a program may occupy more than one partition, and these partitions&lt;br /&gt;
 need not be contiguous. Segmentation eliminates internal fragmentation but, like&lt;br /&gt;
@@ -1667,44 +1583,10 @@ Date:   Fri Nov 23 15:28:33 2007 -0500&lt;br /&gt;
 
 &lt;h1 id=&#34;memory-allocation&#34;&gt;Memory allocation&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://compas.cs.stonybrook.edu/~nhonarmand/courses/sp17/cse506/papers/dsa.pdf&#34;&gt;Dynamic Storage Allocation: A Survey and Critical Review&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://compas.cs.stonybrook.edu/~nhonarmand/courses/sp17/cse506/papers/dsa.pdf&#34;&gt;Dynamic Storage Allocation: A Survey and Critical Review&lt;/a&gt;&lt;br /&gt;
+Page allocator.&lt;/p&gt;
 
-&lt;h2 id=&#34;track-buddy-memory-system&#34;&gt;track: buddy memory system&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
-The following cited from above 1965 paper.&lt;br /&gt;
-The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
-storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
-situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
-mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
-
-&lt;p&gt;OSIDP&lt;br /&gt;
-Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
-scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
-a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
-ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
-interesting compromise is the buddy system&lt;/p&gt;
-
-&lt;h3 id=&#34;related-code&#34;&gt;Related code&lt;/h3&gt;
-
-&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
-setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
-        sparse_init &amp;hellip;-&amp;gt; vmemmap_populate      # vmemmap&lt;br /&gt;
-        zone_sizes_init-&amp;gt;free_area_init_nodes -&amp;gt; free_area_init_node-&amp;gt; free_area_init_core&lt;br /&gt;
-                zone_pcp_init # init percpu pageset with boot_pageset&lt;br /&gt;
-                init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list&lt;br /&gt;
-                memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
-
-&lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
-        mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
-
-&lt;h2 id=&#34;obtain-alloc-and-return-free-memory&#34;&gt;obtain/alloc and return/free memory&lt;/h2&gt;
-
-&lt;p&gt;page allocator, page reclamation, memory compaction&lt;/p&gt;
-
-&lt;h3 id=&#34;memory-allocation-overcommit&#34;&gt;Memory allocation overcommit&lt;/h3&gt;
+&lt;h2 id=&#34;memory-allocation-overcommit&#34;&gt;Memory allocation overcommit&lt;/h2&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/vm/overcommit-accounting&#34;&gt;https://www.kernel.org/doc/Documentation/vm/overcommit-accounting&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://linuxperf.com/?p=102&#34;&gt;理解LINUX的MEMORY OVERCOMMIT&lt;/a&gt;&lt;br /&gt;
@@ -1723,13 +1605,15 @@ Book: Japanese GC book.&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/565734/&#34;&gt;Introducing lockrefs&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lift-the-burden-of-loading-program-from-application&#34;&gt;Lift the burden of loading program from application&lt;/h1&gt;
+&lt;h1 id=&#34;memory-i-o&#34;&gt;Memory I/O&lt;/h1&gt;
 
-&lt;p&gt;paging&lt;/p&gt;
+&lt;h2 id=&#34;paging&#34;&gt;Paging&lt;/h2&gt;
 
-&lt;h1 id=&#34;decopule-addresses-and-memory-locations&#34;&gt;Decopule addresses and memory locations&lt;/h1&gt;
+&lt;p&gt;Lift the burden of loading program from application&lt;/p&gt;
 
-&lt;p&gt;VM, memory mapping.&lt;/p&gt;
+&lt;h1 id=&#34;vm&#34;&gt;VM&lt;/h1&gt;
+
+&lt;p&gt;Decopule addresses and memory locations&lt;/p&gt;
 
 &lt;h1 id=&#34;fragmentations&#34;&gt;Fragmentations&lt;/h1&gt;
 

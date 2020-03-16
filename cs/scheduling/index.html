@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1986">
+<meta itemprop="wordCount" content="1975">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -194,12 +194,11 @@
 <h1 id="context-switch">Context switch</h1>
 
 <p><a href="https://www.maizure.org/projects/evolution_x86_context_switch_linux/index.html">Evolution of the x86 context switch in Linux</a><br />
-<a href="https://lwn.net/Articles/520227/">Al Viro&rsquo;s new execve/kernel_thread design</a></p>
-
-<h2 id="call-jump-ret-0100301bfdf56a2a370c7157b5ab0fbf9313e1cd">call+jump+ret - 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd</h2>
-
-<p>((last) = __switch_to_asm((prev), (next)));                             #=====&gt; call<br />
-jmp     __switch_to                                                     #=====&gt; jmp + ret<br />
+<a href="https://lwn.net/Articles/520227/">Al Viro&rsquo;s new execve/kernel_thread design</a><br />
+commit 0100301bfdf56a2a370c7157b5ab0fbf9313e1cd<br />
+Author: Brian Gerst <a href="mailto:brgerst@gmail.com">brgerst@gmail.com</a><br />
+Date:   Sat Aug 13 12:38:19 2016 -0400<br />
+    sched/x86: Rewrite the switch_to() code<br />
 <a href="https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312">Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?</a></p>
 
 <h1 id="preemption">Preemption</h1>
@@ -229,22 +228,19 @@ Firo: spin_unlock_mutex</p>
 
 <h2 id="user-preemption-linux-kernel-user-mode-is-always-user-preemption">User preemption - Linux kernel user mode is always User preemption.</h2>
 
-<ul>
-<li>When returning to user-space from a system call.<br />
-syscall_return_slowpath<br /></li>
-
-<li><p>When returning to user-space from an interrupt hander.<br />
-retint_user-&gt;prepare_exit_to_usermode</p>
+<p>system call returns mode . syscall_return_slowpath<br />
+interrupt hander returns user mode .retint_user-&gt;prepare_exit_to_usermode</p>
 
 <h2 id="linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set">Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.</h2>
 
 <p>bloked (which results in a call to schedule())<br />
 If a task in the kernel explicitly calls schedule() it&rsquo;s involuntary!!!</p>
 
-<h2 id="linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set">Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.</h2></li>
+<h2 id="linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set">Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.</h2>
 
-<li><p>When an interrupt handler exits, before returning to kernel-space.<br />
-retint_kernel-&gt;preempt_schedule_irq-&gt;cond_resched</p></li>
+<ul>
+<li>When an interrupt handler exits, before returning to kernel-space.<br />
+retint_kernel-&gt;preempt_schedule_irq-&gt;cond_resched<br /></li>
 
 <li><p>__local_bh_enable_ip -&gt; preempt_check_resched</p>
 
@@ -275,7 +271,6 @@ wakeup: check_preempt_wakeup<br />
 
 <ul>
 <li>if (!preempt &amp;&amp; prev-&gt;state)in __schedule; why prev-&gt;state?<br />
-if preempt is true; it should mean PREEMPT_VOLUNTARY.<br />
 prev-&gt;state means deactivate.<br />
 <br /></li>
 </ul>

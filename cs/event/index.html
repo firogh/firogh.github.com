@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="671">
+<meta itemprop="wordCount" content="765">
 <meta itemprop="datePublished" content="2017-04-03">
 <meta itemprop="url" content="http://firoyang.org/cs/event/">
 
@@ -234,6 +234,38 @@ x86: Don&rsquo;t use frame pointer to save old stack on irq entry<br />
 
 <p>local_irq_disable() used in the code path that never disabled interrupts.<br />
 local_irq_save(flags) used in the code path that already disabled interrupts.</p>
+
+<h2 id="in-interrupt">in_interrupt</h2>
+
+<p>383 static inline void tick_irq_exit(void)<br />
+384 {<br />
+385 #ifdef CONFIG_NO_HZ_COMMON<br />
+386         int cpu = smp_processor_id();<br />
+387<br />
+388         /* Make sure that timer wheel updates are propagated <em>/<br />
+389         if ((idle_cpu(cpu) &amp;&amp; !need_resched()) || tick_nohz_full_cpu(cpu)) {<br />
+390                 if (!in_interrupt())<br />
+391                         tick_nohz_irq_exit();<br />
+392         }<br />
+393 #endif<br />
+394 }<br />
+395<br />
+396 /</em><br />
+397  * Exit an interrupt context. Process softirqs if needed and possible:<br />
+398  */<br />
+399 void irq_exit(void)<br />
+400 {<br />
+401 #ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED<br />
+402         local_irq_disable();<br />
+403 #else<br />
+404         lockdep_assert_irqs_disabled();<br />
+405 #endif<br />
+406         account_irq_exit_time(current);<br />
+407         preempt_count_sub(HARDIRQ_OFFSET);<br />
+408         if (!in_interrupt() &amp;&amp; local_softirq_pending())<br />
+409                 invoke_softirq();<br />
+410<br />
+411         tick_irq_exit();</p>
 
 <h1 id="exceptions">Exceptions</h1>
 
