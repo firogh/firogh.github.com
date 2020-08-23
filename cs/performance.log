@@ -1,72 +1,35 @@
 
-# Concepts
+# Performance 
+https://en.wikipedia.org/wiki/Computer_performance
+[Velocity 2015: Linux Performance Tools](http://www.brendangregg.com/Slides/Velocity2015_LinuxPerfTools.pdf)
+[Linux Performance Tools, Brendan Gregg, part 1 of 2](https://www.youtube.com/watch?v=FJW8nGV4jxY)
+## [Mel Gorman on analysis of performance issue I requested](https://bugzilla.suse.com/show_bug.cgi?id=1165925
+Given that there is no differences in software versions, I would suggest focusing on the environment and see where time is being lost. The screenshots indicate that CPU utilisation is low but confirm with mpstat it really is low. The screenshots also suggest that processes are sleeping and this may be a problem with storage. Look at iostat -x for gen1 and gen2 to see if there are differences in IO or time spent blocked waiting on IO. If time is being lost on IO, pay attention to the storage configuration and check with fio if there really are differences in storage performance. Check also for differences in the IO scheduler configuration. Ideally, a supportconfig for gen1 and gen2 deployments would be attached to see if there are any obvious differences.
+## Metrics
 Disk I/O latency: = response time = Service time + Wait time
 Network latency: can refer to the time it takes for a message to make a round trip between endpoints.
 I/O wait: account_idle_time
+## Tuning
+## Program bug error analysis
+For debugging.
 
-# Mel Gorman
-https://bugzilla.suse.com/show_bug.cgi?id=1165925
-I'm out today on FTO but may also be out tomorrow as I've been getting sicker throughout the day. I'm also out part of next week so my availability is impaired. 
+# Resource analysis
+Utilization, Saturation
+Throughput/IOPS, latency
+vmstat, iostat, mpstat
 
-Given that there is no differences in software versions, I would suggest focusing on the environment and see where time is being lost. The screenshots indicate that CPU utilisation is low but confirm with mpstat it really is low. The screenshots also suggest that processes are sleeping and this may be a problem with storage. Look at iostat -x for gen1 and gen2 to see if there are differences in IO or time spent blocked waiting on IO. If time is being lost on IO, pay attention to the storage configuration and check with fio if there really are differences in storage performance. Check also for differences in the IO scheduler configuration. Ideally, a supportconfig for gen1 and gen2 deployments would be attached to see if there are any obvious differences.
+# Workload analysis
+Latency, Throughput
 
-# Instrumentation
-tracepoints
-
-# Backlog
+[Linux Load Averages: Solving the Mystery](http://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html)
 http://oliveryang.net/2017/12/linux-high-loadavg-analysis-1/
-
-Something like this:
-
-  taskset 1 perf stat -a -e '{instructions,cycles}' --repeat 10 perf bench sched pipe
-
-... will give a very good idea about the general impact of these changes on 
-context switch overhead.
-https://lore.kernel.org/lkml/1471106302-10159-5-git-send-email-brgerst@gmail.com/T/#u
-
+## D Process state
 [Off-CPU Analysis](http://www.brendangregg.com/offcpuanalysis.html#Analysis)
+[D stands for Disk wait/sleep 4BSD ps man page](https://www.tuhs.org/cgi-bin/utree.pl?file=4BSD/usr/man/cat1/ps.1)
+[Processes in an Uninterruptible Sleep (D) State](https://support.microfocus.com/kb/doc.php?id=7002725)
 
-# Tools
-[Give me 15 minutes and I'll change your view of Linux tracing](https://www.youtube.com/watch?v=GsMs3n8CB6g)
+# Methodology
+Timeline vs capacity
 
-# PELT - load-avg
-commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9
-Author: Paul Turner <pjt@google.com>
-Date:   Thu Oct 4 13:18:32 2012 +0200
-
-    sched: Make __update_entity_runnable_avg() fast
-
-commit a481db34b9beb7a9647c23f2320dd38a2b1d681f
-Refs: v4.11-rc2-229-ga481db34b9be
-Author:     Yuyang Du <yuyang.du@intel.com>
-AuthorDate: Mon Feb 13 05:44:23 2017 +0800
-Commit:     Ingo Molnar <mingo@kernel.org>
-CommitDate: Thu Mar 30 09:43:41 2017 +0200
-    sched/fair: Optimize ___update_sched_avg()
-+       /*
-+        * Now we know we crossed measurement unit boundaries. The *_avg
-+        * accrues by two steps:
-+        *
-+        * Step 1: accumulate *_sum since last_update_time. If we haven't
-+        * crossed period boundaries, finish.
-+        */
-+       if (!accumulate_sum(delta, cpu, sa, weight, running, cfs_rq))
-+               return 0;
-
--       if (decayed) {
--               sa->load_avg = div_u64(sa->load_sum, LOAD_AVG_MAX);
--               if (cfs_rq) {
--                       cfs_rq->runnable_load_avg =
--                               div_u64(cfs_rq->runnable_load_sum, LOAD_AVG_MAX);
--               }
--               sa->util_avg = sa->util_sum / LOAD_AVG_MAX;
-+       /*
-+        * Step 2: update *_avg.
-+        */
-+       sa->load_avg = div_u64(sa->load_sum, LOAD_AVG_MAX);
-+       if (cfs_rq) {
-+               cfs_rq->runnable_load_avg =
-+                       div_u64(cfs_rq->runnable_load_sum, LOAD_AVG_MAX);
-        }
-+       sa->util_avg = sa->util_sum / LOAD_AVG_MAX;
-
+# FS
+fsperf

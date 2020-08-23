@@ -6,6 +6,8 @@ LD_DEBUG=bindings ./ptem01 2>&1  | grep tcsendbrea
 
 # Resolve
 [Debugging Loadable Modules Using GDB](https://www.freebsd.org/doc/zh_TW/books/developers-handbook/kerneldebug-kld.html)
+
+# Runtime library functions dependency
 [Very smart patch for resolving xen-dependent library in kexec-tools](https://git.kernel.org/pub/scm/utils/kernel/kexec/kexec-tools.git/commit/?h=894bea9335f57b62cbded7b02ab7d58308b647d8)
 
 # Relcation
@@ -20,6 +22,8 @@ unsigned long _text;    x86_64_PC32
 [What are the differences comparing PIE, PIC code and executable on x86 64](https://stackoverflow.com/questions/28119365/what-are-the-differences-comparing-pie-pic-code-and-executable-on-64-bit-x86-pl)
 [-fPIE "position-independent executable on stackoverflow](http://stackoverflow.com/questions/2463150/fpie-position-independent-executable-option-gcc-ld) states PIE use PC relative relocation rather than PLT.
 [OpenBSD's Position Independent](http://www.openbsd.org/papers/nycbsdcon08-pie/mgp00001.html)
+## Randomize layout
+gcc -o inner2 -fpie -pie inner2.c
 
 # Kdump
 Before kernel supported the relocatable, [the kdump users had to compile the capture kernel with different configuration options in order to make it bootable at a different address](https://kernelnewbies.org/Linux_2_6_20#head-3c215483506a27123005168c491eea0f2e5549dd)
@@ -42,6 +46,15 @@ i386: Relocatable kernel support/968de4f02621db35b8ae5239c8cfc6664fb872d8
 States that ' Resulting in a kernel that is relocatable
     with no runtime overhead and no need to modify the source code.'
 Quite smart.
+## 16MB in crash
+commit ed9f007ee68478f6a50ec9971ade25a0129a5c0e
+Refs: v4.7-rc3-15-ged9f007ee684
+Author:     Kees Cook <keescook@chromium.org>
+AuthorDate: Wed May 25 15:45:33 2016 -0700
+Commit:     Ingo Molnar <mingo@kernel.org>
+CommitDate: Sun Jun 26 12:32:05 2016 +0200
+    x86/KASLR: Extend kernel image physical address randomization to addresses larger than 4G
+
 ## kernel organize
 o/arch/x86/boot/compressed/.vmlinux.cmd
 o/arch/x86/boot/.setup.bin.cmd 

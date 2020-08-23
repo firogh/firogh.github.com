@@ -1,0 +1,297 @@
+# Total
+## total number of physical pages
+free_area_init: spaned - absent(hole)
+[    0.035862] Initmem setup node 0 [mem 0x0000000000001000-0x00000003227fffff]
+[    0.035863] On node 0 totalpages: 2999131
+NODE_DATA(nid)->node_present_pages is equal to kernel global variables: memblock.memory or sum of zone[i]->present_pages
+
+## total number of reserved pages
+memblock.reserved, memblock_reserve
+
+## total number of physical pages managed by buddy system
+memblock_free_all: present - reserved
+_totalram_pages is sum of zone[i]->managed_pages or /proc/meminfo
+### warn_alloc
+managed = RAM(present) - reserved.
+[   16.030132] 73213 pages RAM
+[   16.030133] 0 pages HighMem/MovableOnly
+[   16.030133] 26323 pages reserved
+[   16.030134] 0 pages hwpoisoned
+
+## Free memory
+NR_FREE_PAGES
+
+## Summary
+mem_init_print_info:  free(or managed or totalram_pages at that time)/present (reserved = present - managed - cma)
+[    0.120935] Memory: 11644236K/11996524K available (14339K kernel code, 2406K rwdata, 8164K rodata, 2468K init, 5072K bss, 352288K reserved, 0K cma-reserved)
+BTW, above information is useful to compute totalram_pages =  present - cma - reserved.
+MemTotal:       11682024 kB  # managed is increased.
+
+# Pages
+page_to_nid, pfn_to_nid, pfn_to_page, page_zone, virt_to_page, page_pgdat, __virt_addr_valid, _pa(kaddr)
+## Buddy status
+free_pages_prepare, free_pages_check, prep_new_page, page_expected_state and check_new_page, page_mapcount_reset
+new pages: lru: 0xdead; prep_new_page: private =0, _count = 1
+free pages: __free_pages: _count =0;
+crash> page.lru,index,_mapcount,s_mem ffffea0011cf3000 # page on free_area[6].
+    lru = {
+      next = 0xffff88403ffd6050,		# lru is not 0xdead
+      prev = 0xffffea008d5b6020
+    }
+      index = 0x0
+          _mapcount = {
+            counter = 0xffffff80		# _mapcount -128
+          }
+    s_mem = 0x0
+crash> page.lru,index,_mapcount,s_mem ffffea0011cf3040 # Next page of above page.
+    lru = {
+      next = 0xdead000000000100,		# lru 0xdead
+      prev = 0xdead000000000200
+    }
+      index = 0x0
+          _mapcount = {
+            counter = 0xffffffff		# _mapcount -1
+          }
+    s_mem = 0x0
+## Slab status
+cache_grow: PG_slab, active, s_mem, freelist
+__cache_free, slabs_destroy, kmem_freepages: lru 0xdead, 
+Order > 0 pages: freelist are not reset while returing to buddy system.
+
+## Page cache status
+delete_from_page_cache: mapping = NULL,
+
+# NR_FILE_PAGES
+Page cache, buffer cache(kernel global variable: all_bdevs), shared memory, swap cache
+Cached: https://lore.kernel.org/patchwork/patch/648763/
+commit 347ce434d57da80fd5809c0c836f206a50999c26
+Refs: v2.6.17-4184-g347ce434d57d
+Author:     Christoph Lameter <clameter@sgi.com>
+AuthorDate: Fri Jun 30 01:55:35 2006 -0700
+Commit:     Linus Torvalds <torvalds@g5.osdl.org>
+CommitDate: Fri Jun 30 11:25:34 2006 -0700
+    [PATCH] zoned vm counters: conversion of nr_pagecache to per zone counter
+
+# Anonymous pages
+Check page_check_dirty_writeback() for anonymous pages's definition.
+        /*
+         * Anonymous pages are not handled by flushers and must be written	# Firo: reclaim patch see anonymous pages are not handled by
+         * from reclaim context. Do not stall reclaim based on them		# flushers.
+         */
+        if (!page_is_file_cache(page) ||
+            (PageAnon(page) && !PageSwapBacked(page))) {
+
+# Unevictable
+ramfs_get_inode: mapping_set_unevictable(inode->i_mapping);
+ramfs that have been palced on LRU lists when first alloced becuse ramfs use generic_file_vm_ops and filemap_fault; see page_cache_readahead_unbounded
+shmem_lock: mapping_set_unevictable(file->f_mapping); SHM_LOCK (Linux-specific) Prevent  swapping  of the shared memory segment.
+
+# Kernel
+https://lkml.org/lkml/2019/5/22/576
+MemKernel = MemTotal - MemFree - Cached - Buffers  - SwapCached - AnonPages - Hugetlb
+
+# Process address space
+[flexible-mmap-2.6.7-D5](https://lwn.net/Articles/90311/)
+[Reorganizing the address space](https://lwn.net/Articles/91829/)
+[Anatomy of a Program in Memory](http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/)
+[Memory – Part 2: Understanding Process memory](https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/)
+
+# vmalloc
+is_vmalloc_addr: VMALLOC_START VMALLOC_END
+or
+crash> p vmalloc_base
+vmalloc_base = $2 = 0xffffb7d2c0000000
+
+# vmemmap
+/* memmap is virtually contiguous.  */
+__pfn_to_page(pfn)      (vmemmap + (pfn))
+vmemmap ((struct page *)VMEMMAP_START)
+VMEMMAP_START    _AC(0xffffea0000000000, UL)
+or
+crash> p vmemmap_base
+vmemmap_base = $1 = 0xffffe69900000000
+
+# kernel image map
+__START_KERNEL_map
+0xffffffff80000000 ~ 2G
+call early_make_pgtable??
+x86_64_start_kernel ->
+init_level4_pgt[511] = early_level4_pgt[511];
+
+# kernel virtual address space 
+PAGE_OFFSET or __PAGE_OFFSET_BASE      _AC(0xffff880000000000, UL) # default
+0xffff880000000000 ~ "0xffff880000000000 +max_fpn << PAGE_SHIFT" or variable high_memory : direct map memory
+(0x1000000000000 -0x880000000000) /1024.0 /1024.0/1024.0/1024.0; 120.0 TB
+or
+CONFIG_X86_5LEVEL: __PAGE_OFFSET_BASE      _AC(0xff10000000000000, UL)
+
+# physical memory
+extern unsigned long max_low_pfn;
+extern unsigned long min_low_pfn;
+extern unsigned long max_pfn;
+# Kernel virtual address space 1
+Committed_AS and __vm_enough_memory
+p high_memory
+high_memory = $3 = (void *) 0xffff9c0940000000
+arch/x86/include/asm/pgtable_64_types.h
+CONFIG_RANDOMIZE_MEMORY=y: page_offset_base = $4 = 0xffff908900000000 # kaslr
+
+## percpu
+p pcpu_base_addr 
+pcpu_base_addr = $4 = (void *) 0xffff88023fc00000
+
+## Modules text address
+cat /sys/module/wmi/sections/.text
+cat /proc/modules | grep wmi 
+int bss_var;
+static int hello_init(void)
+{printk(KERN_ALERT "Text location .text(Code Segment):%p\n",hello_init);
+static int data_var=0;
+printk(KERN_ALERT "Data Location .data(Data Segment):%p\n",&data_var);
+printk(KERN_ALERT "BSS Location: .bss(BSS Segment):%p\n",&bss_var);}
+
+## 32-bit Highmem and mappings
+https://www.kernel.org/doc/Documentation/vm/highmem.txt
+Persistent Kernel Mappings: How kmap works? Check kmap_init()
+Temporay Mappings(Fixmaps): kmap_atomic()
+
+
+# Process VM stat
+oom_badness
+dump_tasks
+unsigned long total_vm;         /* Total pages mapped */
+task->mm->total_vm, 
+total_vm is increased in mm/mmap.c
+get_mm_rss(task->mm)
+static inline unsigned long get_mm_rss(struct mm_struct *mm)
+{
+        return get_mm_counter(mm, MM_FILEPAGES) +
+                get_mm_counter(mm, MM_ANONPAGES) +
+                get_mm_counter(mm, MM_SHMEMPAGES);
+These three entries are increased in do_page_fault
+atomic_long_t nr_ptes;                  /* PTE page table pages */
+atomic_long_read(&task->mm->nr_ptes),
+mm_nr_pmds(task->mm), 
+get_mm_counter(task->mm, MM_SWAPENTS), # one of usages is in rmap.c unmap
+
+# swap
+total_swap_pages
+nr_swap_pages: available swap slots.
+cat /proc/meminfo  | grep Swap
+SwapCached:            0 kB
+unsigned long total_swapcache_pages(void)
+{
+        for (i = 0; i < MAX_SWAPFILES; i++) {
+                nr = nr_swapper_spaces[i];
+                spaces = rcu_dereference(swapper_spaces[i]);
+                if (!nr || !spaces)
+                        continue;
+                for (j = 0; j < nr; j++)
+                        ret += spaces[j].nrpages;
+SwapTotal:             0 kB
+SwapFree:              0 kB
+void si_swapinfo(struct sysinfo *val)
+{
+        for (type = 0; type < nr_swapfiles; type++) {
+                struct swap_info_struct *si = swap_info[type];
+
+                if ((si->flags & SWP_USED) && !(si->flags & SWP_WRITEOK))
+                        nr_to_be_unused += si->inuse_pages;
+        }
+        val->freeswap = atomic_long_read(&nr_swap_pages) + nr_to_be_unused;
+        val->totalswap = total_swap_pages + nr_to_be_unused;
+
+# VM stat
+vm_stat and vm_event_stats; unit is 4KB; they are same as output of kmem -V in crash-utility.
+totalram_pages
+/proc/meminfo
+[/PROC/MEMINFO之谜](http://linuxperf.com/?p=142)
+meminfo_proc_show
+/proc/zoneinfo
+
+NR_FILE_MAPPED could be larger than NR_ACTIVE_FILE or NR_INACTIVE_FILE because multiple processes map same page to it's process address space. It also includes shmem.
+
+## Process memory usage.
+__show_smap task_mem
+also check tgid_base_stuff
+/proc/self/stat  proc_tgid_stat the corresponding linux kernel function do_task_stat() and child function get_mm_rss() and struct mm_rss_stat rss_stat;
+/proc/self/status task_mem() file = get_mm_counter(mm, MM_FILEPAGES); unit is 4kB.
+/proc/self/statm  proc_pid_statm
+
+## Free area
+show_free_areas
+
+## zonelist
+node_zonelist
+NODE_DATA(nid)->node_zonelists + gfp_zonelist(flags);
+
+## Buffer cache of command 'free'
+"Buffers" represent how much portion of RAM is dedicated to cache disk blocks
+1. Open block device directly open("/dev/sdb"...) -> blkdev_open
+2. Read metadata,including indirect blocks, bitmap,  sb_getblk->... -> grow_dev_page
+## Shared dirty pages
+[PATCH] mm: tracking shared dirty pages - d08b3851da41d0ee60851f2c75b118e1f7a5fc89
+
+## Threshhold
+Check calculate_normal_threshold
+
+# Tracing
+[page owner](https://www.kernel.org/doc/html/v4.18/vm/page_owner.html)
+
+# Slab
+/proc/slabinfo
+
+# Memory available
+[provide estimated available memory in /proc/meminfo](https://lore.kernel.org/patchwork/patch/417981/)
+equation for calculating all available memory 
+freeram + LRU_ACTIVE_FILE + LRU_INACTIVE_FILE + NR_SLAB_RECLAIMABLE 
+
+# NR_WRITEBACK
+FIXME: pages accounted for in NR_WRITEBACK are not on the LRU lists  any more, right?
+Right. Check right.
+
+# Zone based memory states
+commit 2244b95a7bcf8d24196f8a3a44187ba5dfff754c
+Author: Christoph Lameter <clameter@sgi.com>
+Date:   Fri Jun 30 01:55:33 2006 -0700
+    [PATCH] zoned vm counters: basic ZVC (zoned vm counter) implementation
+
+# Node based memory states
+commit 599d0c954f91d0689c9bb421b5bc04ea02437a41
+Author: Mel Gorman <mgorman@techsingularity.net>
+Date:   Thu Jul 28 15:45:31 2016 -0700
+    mm, vmscan: move LRU lists to node
+commit 11fb998986a72aa7e997d96d63d52582a01228c5
+Author: Mel Gorman <mgorman@techsingularity.net>
+Date:   Thu Jul 28 15:46:20 2016 -0700
+
+    mm: move most file-based accounting to the node
+v4.7-5957-gbca6759258db
+commit bca6759258dbef378bcf5b872177bcd2259ceb68
+Author: Mel Gorman <mgorman@techsingularity.net>
+Date:   Thu Jul 28 15:47:05 2016 -0700
+    mm, vmstat: remove zone and node double accounting by approximating retries
+
+## Zone based memory states partially come back
+commit 71c799f4982d340fff86e751898841322f07f235
+Author: Minchan Kim <minchan@kernel.org>
+Date:   Thu Jul 28 15:47:26 2016 -0700
+    mm: add per-zone lru list stat
+Check update_lru_size
+
+# LQO
+ramfs pages first go to (in)active lists, moves to unevictable later, so it's not really true already. ;)
+why mapping_set_unevictable(inode->i_mapping);  in ramfs_get_inode. Check https://serverfault.com/a/590133/143494
+
+# Facts
+LRU_IN/ACTIVE_ANON in cached: error = shmem_add_to_page_cache(page, mapping, index, gfp, NULL); lru_cache_add_anon(page);
+NR_FILE_PAGES includes NR_SHMEM and buffers during add to page cache.
+Cached in meminfo_proc_show() NR_FILE_PAGES includes NR_SHMEM in replace_page_cache_page()
+Shmem: NR_SHMEM
+Mapped: NR_FILE_MAPPED /* pagecache pages mapped into pagetables. do_xx_fault mm/rmap.c:1236:		__inc_zone_page_state(page, NR_FILE_MAPPED);
+AnonPages: NR_ANON_PAGES Mapped anonymous pages do_xx_fault
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+                K(global_page_state(NR_ANON_PAGES)
+                  + global_page_state(NR_ANON_TRANSPARENT_HUGEPAGES) *
+                  HPAGE_PMD_NR)
+

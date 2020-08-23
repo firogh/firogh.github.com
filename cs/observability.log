@@ -1,0 +1,116 @@
+
+# Theory
+[dotScale 2017: Adrian Cole: Observability 3 ways: Logging, Metrics & Tracing](https://www.youtube.com/watch?v=juP9VApKy_I&feature=youtu.be)
+[Monitoring and Observability — What’s the Difference and Why Does It Matter?](https://thenewstack.io/monitoring-and-observability-whats-the-difference-and-why-does-it-matter/)
+
+# Metrics
+[Counters, Gauge, Histogram](https://prometheus.io/docs/concepts/metric_types/)
+Firo: Gauge should be same as usage(being used). Counter represents a single monotonically increasing counter.
+Time vs space
+Bandwidth and latency
+Scalability
+Performance
+Easy to use 
+Security/Protection/isolation
+Reliability
+Energy-efficiency
+
+# Tools
+https://github.com/andikleen/pmu-tools
+How to record a timestamped trace of every memory access? https://stackoverflow.com/questions/52098861/how-to-record-a-timestamped-trace-of-every-memory-access
+https://www.man7.org/linux/man-pages/man1/perf-mem.1.html
+
+# Debuginfo
+[How the Compiler Tells Its Secrets to the Debugger](https://events.static.linuxfound.org/images/stories/pdf/lfcs2012_eager.pdf)
+[Introduction to the DWARF Debugging Format](http://www.dwarfstd.org/doc/Debugging%20using%20DWARF-2012.pdf)
+[LLVM Debug Info Tutorial](https://www.youtube.com/watch?time_continue=19&v=8cIToPOJPFs) [Slide](https://llvm.org/devmtg/2014-10/Slides/Christopher-DebugInfoTutorial.pdf)
+[Debugging Debug Information - Francesco Zappa Nardelli](https://www.youtube.com/watch?v=lBJIrGgEP1A)
+[Exploiting the hard-working DWARF](https://www.youtube.com/watch?v=nLH7ytOTYto)
+## ORC
+The Linux x86 ORC Stack Unwinder](http://www.codeblueprint.co.uk/2017/07/31/the-orc-unwinder.html)
+[The ORCs are coming](https://lwn.net/Articles/728339/)
+## CFI
+https://sourceware.org/binutils/docs/as/CFI-directives.html#CFI-directives
+## Dwarf 4
+DWARF4 is now the default when generating DWARF debug information. When -g is used on a platform that uses DWARF debugging information, GCC will now default to -gdwarf-4 -fno-debug-types-section.
+GDB 7.5, Valgrind 3.8.0 and elfutils 0.154 debug information consumers support DWARF4 by default. Before GCC 4.8 the default version used was DWARF2. To make GCC 4.8 generate an older DWARF version use -g  together with -gdwarf-2 or -gdwarf-3. The default for Darwin and VxWorks is still -gdwarf-2 -gstrict-dwarf.
+[1]: https://gcc.gnu.org/gcc-4.8/changes.html
+readelf --debug-dump  fg  | grep -A 4 .debug_
+
+# Gdb
+[How debuggers work](http://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
+
+# From assembly to C
+addr2line -f -C -a 0xxxx -e ooo.bin
+addr2line -e vmlinux -i ffffffff81f04b7a ffffffff81508daa
+
+# From ELF to C
+pahole -C 'block_device' vmlinux
+
+# Get observations
+## The nulified timer function issue
+我前几天定位了一个Softirq中timer corruption的问题, 现象是timer func是个非法地址.
+首先, 一下子不能确认是由那种Bug type导致的.可能是Improper Restriction of Operations
+within the Bounds of a Memory Buffer 也可能是Use after free. 所以此时debug的关键所在
+就是收集observations,也就是function的名字, 而我遇到的这个问题timer 被完全写坏了.
+可以用ftrace收集所有timer 的地址和function, 再从oops里面得到timer地址,回头找ftrace
+log中记录的function, 从而定位问题. 稍后介绍, 如何通过expect抓屏幕log.
+这个方法没成功, 时候分析知道是因为panic的瞬间出问题的timer的地址和function没来得及
+记录到ftrace.怎么办? 我直接说了, 我想到一个办法, 把timer的空间增大, 增大的空间用来
+保存function,在oops把这块内存打出来. 此法非常有用, timer的function一下子就找到了, 进而
+确认了问题是use after free. 非常开心:-)这里的解释了如何收集observations的技巧.对待use
+after free的问题是够了, 以后用到这类问题基本可以妙解了.
+
+# Library
+Load software: LD_TRACE_LOADED_OBJECTS=1 git
+ldd /usr/bin/git
+
+# software imediately stop
+Use atexit() register a stackdump or a wrapped print
+
+# Hardware debug watchpoints
+https://www.kernel.org/doc/ols/2009/ols2009-pages-149-158.pdf
+https://lwn.net/Articles/353050/
+https://stackoverflow.com/questions/19725900/watch-a-variable-memory-address-change-in-linux-kernel-and-print-stack-trace
+
+# Perf
+perf record -a -e kmem:kmalloc --filter "bytes_alloc==64"
+[Gary Lin: Performance Analysis Tools For Linux Kernel](https://events.opensuse.org/conferences/summitasia17/program/proposal/1610)
+
+# Kprobes 
+
+# BPF and bpftrace
+https://lwn.net/Articles/740157/
+[Kernel analysis with bpftrace](https://lwn.net/Articles/793749/)
+[How to turn any syscall into an event: Introducing eBPF Kernel probes](https://blog.yadutaf.fr/2016/03/30/turn-any-syscall-into-event-introducing-ebpf-kernel-probes/)
+[Velocity 2017: Performance Analysis Superpowers with Linux eBPF](https://www.youtube.com/watch?v=bj3qdEDbCD4)
+[Velocity 2015: Linux Performance Tools, Brendan Gregg, part 2 of 2](https://www.youtube.com/watch?v=zrr2nUln9Kk)
+
+# Print
+define witcher(fmt, args...) do{FILE * fdebug=fopen("/tmp/d.log", "a+"); \
+fprintf(fdebug,"%s,%s,%d:"fmt, __TIME__, __FUNCTION__, __LINE__, ##args);fclose(fdebug);} while(0)
+* make specific
+-s, -n, -p, --warn-undefined-variables
+$(warning ...)
+
+## Early print
+putstr, early_printk, Linux serial-port driver is interrupt driven, if irq-off console will not work!
+## Dynamic print
+How to use it during kernel booting?
+dyndbg="file drivers/usb/host/ehci-hcd.c +p; file
+drivers/usb/host/ehci-ppc-of.c +p" loglevel=8
+loglevel=8 dyndbg="module ehci_pci +p;
+module ehci_hcd +p; module usbcore +p"
+After booting:
+/sys/kernel/debug/dynamic_debug/control
+## Dev print
+drivers/base/core.c
+define_dev_printk_level, pr_func, dev_debug
+
+# Systemtap
+[systemtap脚本分析系统中dentry SLAB占用过高问题](https://yq.aliyun.com/articles/131870)
+https://sourceware.org/systemtap/examples/keyword-index.html
+stap -L 'kernel.statement("__inet_lookup_established@net/ipv4/inet_hashtables.c:*")'
+stap -g -v -e '%{ int foo; %} probe kernel.function("vfs_read"){ %{ foo=1 %}; printf("addr: %x\n", %{ &foo %} );exit()}'
+stap -g -v -e '%{ int foo; %} probe kprobe.function("vfs_read"){ %{ foo=1 %}; printf("addr: %x\n", %{ &foo %} );exit()}'
+sudo stap -g -v -e '%{ int foo; %} probe kprobe.function("vfs_read"){  %{ printk("addr: %p\n",  &foo) %}; exit()}'

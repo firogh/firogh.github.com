@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="description" content="">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="keywords" content="kernel, ">
+
+ 
+<meta property="og:type" content="article"/>
+<meta property="og:description" content=""/>
+<meta property="og:title" content="The Journey to RCU : firoyang.org"/>
+<meta property="og:site_name" content="Firo Website"/>
+<meta property="og:image" content="" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="" />
+<meta property="og:image:height" content="" />
+<meta property="og:url" content="http://firoyang.org/cs/rcu_/">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2015-05-24"/>
+<meta property="article:modified_time" content="2015-05-24"/>
+
+
+<meta property="article:tag" content="kernel">
+
+
+
+
+
+    <base href="http://firoyang.org/">
+    <title> The Journey to RCU</title>
+    <link rel="canonical" href="http://firoyang.org/cs/rcu_/">
+
+    
+<link rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/static/css/style.css">
+
+
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+     
+</head>
+
+<body style="background-color:#FFFFF0;" lang="en" itemscope itemtype="http://schema.org/Article">
+<body lang="en" itemscope itemtype="http://schema.org/Article">
+<header id="header">
+	<link rel="stylesheet" href="static/css/font-awesome.min.css">
+	<nav id="nav">
+	<div id="title"><a href="/" style="color:#B22222;">ƒ(x)</a></div>
+
+
+	
+	</nav>
+	<nav id="nav">
+    	        <ul id="mainnav">
+            <li>
+            <a href="/review/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-thumbs-o-up"></i></span>
+                <span> review</span>
+            </a>
+            </li>
+            <li>
+            <a href="/life/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-male"></i></span>
+                <span> life </span>
+            </a>
+            </li>
+            <li>
+            <a href="/history/" >
+                <span class="icon"> <i aria-hidden="false" style="background-color:#FFFFF0" class="fa fa-institution"></i></span>
+                <span> history </span>
+            </a>
+	    <li>
+                <a href="/linguistics/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-language"></i></span>
+                <span> linguistics </span>
+            </a>
+            </li>
+            </li>
+            <li>
+                <a href="/howto/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-gamepad"></i></span>
+                <span> howto </span>
+            </a>
+            </li>
+            <li>
+            <a href="/cs/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-linux"></i></span>
+                <span> cs </span>
+            </a>
+            </li>
+            <li>
+            <a href="/net/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-globe"></i></span>
+                <span> net </span>
+            </a>
+            </li>
+            <li>
+            <a href="/philosophy/" >
+                <span class="icon"> <i aria-hidden="true" style="background-color:#FFFFF0" class="icon-leaf"></i></span>
+                <span> philosophy </span>
+            </a>
+            </li>
+
+            
+            
+
+            <li>
+            <a href="/" style="color:#B22222" >
+                <span class="icon" > <i aria-hidden="true" style="background-color:#FFFFF0" class="fa fa-rocket"></i></span>
+                
+            </a>
+            </li>
+
+        </ul>
+
+	</nav>
+	<nav id="nav">
+               <ul id="social">
+
+            <li id="follow">
+                
+                
+                <div class="dropdown follow">
+                    <ul class="social">
+                        <li> <a href="http://www.twitter.com/firoyang" target="_blank" class="twitter"><span class="icon icon-twitter"></span>Twitter</a> </li>
+                        <li> <a href="mailto:firogm@gmail.com" style="color:#B22222;"  class="gmail"><span style="color:#B22222;" class="icon icon-mail"></span>Gmail</a> </li-->
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </ul>
+                    
+                </div>
+            </li>
+            
+
+        </ul>
+
+	</nav>
+</header>
+
+
+
+ <link rel="stylesheet" href="highlight.js/styles/monokai-sublime.css">
+    <script src="highlight.js/highlight.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+	<section id="main">
+
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >The Journey to RCU</h1>
+	  
+
+<aside id="meta">
+
+    <div>
+        <section id="datecount">
+          <h4 id="date"> Sun May 24, 2015 </h4>
+          
+        </section>
+        
+        <ul id="tags">
+          
+            <li> <a href="http://firoyang.org//tags/kernel">kernel</a> </li>
+          
+        </ul>
+
+    </div>
+
+
+</aside>
+
+<meta itemprop="wordCount" content="1922">
+<meta itemprop="datePublished" content="2015-05-24">
+<meta itemprop="url" content="http://firoyang.org/cs/rcu_/">
+
+
+	  <div>
+		<article itemprop="articleBody" id="content">
+		   
+
+<h1 id="reference">Reference</h1>
+
+<p>RCU, cond_resched(), and performance regressions <a href="https://lwn.net/Articles/603252/">https://lwn.net/Articles/603252/</a><br />
+<a href="https://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/">Using Quiescent States to Reclaim Memory</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html">A Tour Through RCU&rsquo;s Requirements</a><br />
+<a href="http://www.rdrop.com/~paulmck/RCU/rcu-exploit.2019.05.01a.pdf">A Critical RCU Safety Property is&hellip; Ease of Use!</a><br />
+<a href="http://www.rdrop.com/users/paulmck/RCU/whatisRCU.html">What is RCU?</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt">What is RCU?  &ndash;  &ldquo;Read, Copy, Update&rdquo;</a><br />
+<a href="https://lwn.net/Articles/652156/">Requirements for RCU part 1: the fundamentals</a></p>
+
+<h2 id="history">History</h2>
+
+<p>2001 <a href="https://www.kernel.org/doc/ols/2001/read-copy.pdf">Read-Copy Update on ols</a><br />
+<a href="https://lwn.net/Articles/541037/">As of March 2013: Simplifying RCU</a><br />
+<a href="http://www2.rdrop.com/users/paulmck/RCU/RCUdissertation.2004.07.14e1.pdf">RCU dissertation.2004.07</a><br />
+<a href="https://lwn.net/Articles/264090/">RCU part 3: the RCU API, 2008 edition</a><br />
+<a href="https://lwn.net/Articles/418853/">The RCU API, 2010 Edition</a><br />
+<a href="https://lwn.net/Articles/609904/">The RCU API, 2014 Edition</a><br />
+<a href="https://lwn.net/Articles/777036/">The RCU API, 2019 edition</a></p>
+
+<h2 id="rcu-talk-by-joel-fernandes">RCU Talk by Joel Fernandes</h2>
+
+<p><a href="http://www.joelfernandes.org/joel/slides/RCU_in_2019_KernelRecipes.pdf">RCU in 2019</a><br />
+<a href="https://www.youtube.com/watch?v=bsyXDAouI6E">Kernel Recipes 2019 - RCU in 2019</a><br />
+<a href="https://www.slideshare.net/ennael/kernel-recipes-2019-rcu-in-2019-joel-fernandes">https://www.slideshare.net/ennael/kernel-recipes-2019-rcu-in-2019-joel-fernandes</a></p>
+
+<h2 id="and">And</h2>
+
+<p>Verification of the Tree-Based Hierarchical Read-Copy Update in the Linux Kernel: <a href="https://arxiv.org/pdf/1610.03052.pdf">https://arxiv.org/pdf/1610.03052.pdf</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html#The%20rcu_segcblist%20Structure">https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html#The%20rcu_segcblist%20Structure</a></p>
+
+<h1 id="the-problems-refrence">The problems - refrence</h1>
+
+<p>The fundermental problems underlying RCU is how to make sure if there is a refrence to the data which is going to be reclaim.<br />
+So RCU is essentially used as resource-reclamation mechanism. And we know there are 3 popular ways hazard pointer, reference counting, Quiescent state to do rerouce reclamation. RCU use quiescent state.</p>
+
+<h1 id="quiescent-state-in-linux-kernel">Quiescent state in Linux kernel</h1>
+
+<p><a href="https://lwn.net/Articles/573424/">URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state</a><br />
+<a href="http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html">&hellip; after all the CPUs in the system have gone through at least one &ldquo;quiescent&rdquo; state (such as context switch, idle loop, or user code)</a><br />
+<a href="https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.">The rcu and rcu_bh flavors of RCU have different sets of quiescent states.</a><br />
+rcu_flavor_sched_clock_irq rcu_rs<br />
+rcu_report_qs_rnp</p>
+
+<h2 id="cpu-vs-qs">CPU vs QS</h2>
+
+<p>@冯博群 你好，请教一个问题，对于rcu-preempt， CPU report QS的意义是什么？ 我理解只有task QS 才不block GP。<br />
+冯博群: qs都是CPU的，每个task都要report qs的话，那记录的结构得多复杂; rcu preempt是搞了一个list用来记录block当前qs的task; 当前gp; 过gp的条件就是list为空，且所有的CPU都report过qs;你说得概念上没啥问题，但是实现中不是这样作的.</p>
+
+<h2 id="eqs">EQS</h2>
+
+<dl>
+<dt>RCU implementations that avoid unnecessarily awakening dyntick-idle CPUs will mark those CPUs as being in an extended quiescent state from Hierarchical RCU<br /></dt>
+<dd><p><a href="https://lwn.net/Articles/305782/">https://lwn.net/Articles/305782/</a></p>
+
+<h2 id="eqs-vs-interrupt-vs-read-side-section">EQS vs interrupt vs read-side section</h2></dd>
+</dl>
+
+<dl>
+<dt>Hierarchical RCU<br /></dt>
+<dd><p><a href="https://lwn.net/Articles/305782/">https://lwn.net/Articles/305782/</a></p>
+
+<h2 id="eqs-vs-interrupt-vs-read-side-section-1">EQS vs interrupt vs read-side section</h2></dd>
+</dl>
+
+<h2 id="heavy-and-light">Heavy and light</h2>
+
+<h1 id="grace-period-time-to-reclaim">Grace period - time to reclaim</h1>
+
+<p><a href="https://lwn.net/Articles/573424/">URCU: any period of time during which each reader thread resides in at least one quiescent state is called a grace period.</a><br />
+<a href="https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation">&hellip; after each CPU has passed through at least one quiescent state, the RCU grace period ends.</a></p>
+
+<h2 id="gp-vs-qs-vs-read-vs-updater">GP vs QS vs read vs updater</h2>
+
+<p>GP: rcu_state<br />
+QS: rcu_data<br />
+data: rcu_head<br />
+1. when to start GP<br />
+Updater want to free data if no GP is in-progress.</p>
+
+<h2 id="gp-vs-data-callback">GP vs Data(callback)</h2>
+
+<p>continuos Data on GP. Segmented.</p>
+
+<h2 id="deffered-qs">Deffered QS</h2>
+
+<p>rcu_flavor_sched_clock_irq<br />
+rcu_preempt_deferred_qs<br />
+Reporting of a deferred QS reporting (when rcu_read_unlock() could not help).</p>
+
+<h2 id="memory-ordering">Memory ordering</h2>
+
+<p>A Tour Through TREE_RCU’s Grace-Period Memory Ordering <a href="https://www.kernel.org/doc/html/latest/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html">https://www.kernel.org/doc/html/latest/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html</a></p>
+
+<h1 id="start-a-grapce-period">Start a grapce period</h1>
+
+<p><a href="https://lwn.net/Articles/305782/#Start%20a%20new%20grace%20period.">Start a New Grace Period</a></p>
+
+<h1 id="expedite-grace-period">Expedite grace period</h1>
+
+<p><a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited Grace Period Design</a></p>
+
+<h1 id="process-data">Process data</h1>
+
+<h2 id="callbacks-vs-gp-vs-segments">Callbacks vs GP vs segments</h2>
+
+<p>GP is completed, current, next<br />
+commit 5127bed588a2f8f3a1f732de2a8a190b7df5dce3<br />
+Author: Lai Jiangshan <a href="mailto:laijs@cn.fujitsu.com">laijs@cn.fujitsu.com</a><br />
+Date:   Sun Jul 6 17:23:59 2008 +0800<br />
+    rcu classic: new algorithm for callbacks-processing(v2)</p>
+
+<h3 id="next-segment-list">Next segment list</h3>
+
+<p>Finally, the RCU NEXT TAIL segment contains callbacks that are not yet associated with any grace period. from V..<br />
+RCU_NEXT_TAIL: Callbacks that have not yet been associated with a grace period. from design/data-structure.<br />
+commit 64db4cfff99c04cd5f550357edcc8780f96b54a2<br />
+Refs: v2.6.28-rc8-92-g64db4cfff99c<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Thu Dec 18 21:55:32 2008 +0100<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Thu Dec 18 21:56:04 2008 +0100<br />
+    &ldquo;Tree RCU&rdquo;: scalable classic RCU implementation<br />
++        * [*nxttail[RCU_NEXT_READY_TAIL], NULL = *nxttail[RCU_NEXT_TAIL]):<br />
++        *      Entries that might have arrived after current GP ended<br />
++        * [*nxttail[RCU_WAIT_TAIL], *nxttail[RCU_NEXT_READY_TAIL]):<br />
++        *      Entries known to have arrived before current GP ended<br />
+commit 15fecf89e46a962ccda583d919e25d9da7bf0723<br />
+Refs: v4.11-rc2-13-g15fecf89e46a<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Wed Feb 8 12:36:42 2017 -0800<br />
+Commit:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+CommitDate: Tue Apr 18 11:38:18 2017 -0700<br />
+    srcu: Abstract multi-tail callback list handling<br />
++ * [*tails[RCU_NEXT_READY_TAIL], *tails[RCU_NEXT_TAIL]):<br />
++ *     Callbacks that might have arrived after the next GP started.</p>
+
+<h2 id="adavnce-segments">Adavnce segments</h2>
+
+<p>rcu_advance_cbs<br />
+rcu_segcblist_advance<br />
+note_gp_changes<br />
+If an old grace period has ended,<br />
+rcu advance cbs() is invoked to advance all callbacks,<br />
+otherwise, rcu accelerate cbs() is invoked to assign a<br />
+grace period to any recently arrived callbacks. If a new grace<br />
+period has started, -&gt;passed quiesce is set to zero, and if<br />
+in addition RCU is waiting for a quiescent state from this<br />
+CPU, -&gt;qs pending is set to one, so that a new quiescent<br />
+state will be detected for the new grace period.<br />
+<a href="https://github.com/lihaol/verify-treercu/blob/master/main.c">https://github.com/lihaol/verify-treercu/blob/master/main.c</a></p>
+
+<h2 id="accelerate">Accelerate</h2>
+
+<p>rcu_segcblist_accelerate - the core function</p>
+
+<h2 id="batch-processing">Batch processing</h2>
+
+<h2 id="rcu-callbacks-offload">RCU callbacks offload</h2>
+
+<p><a href="https://lwn.net/Articles/522262/">Relocating RCU callbacks</a><br />
+API 14: <a href="https://lwn.net/Articles/609904/">https://lwn.net/Articles/609904/</a></p>
+
+<h1 id="rcu-cpu-stall">RCU CPU stall</h1>
+
+<p><a href="https://www.kernel.org/doc/Documentation/RCU/stallwarn.txt">https://www.kernel.org/doc/Documentation/RCU/stallwarn.txt</a><br />
+<a href="https://www.youtube.com/watch?v=23_GOr8Sz-E">Decoding Those Inscrutable RCU CPU Stall Warnings</a><br />
+update_process_times rcu_pending print_other_cpu_stall print_cpu_stall_info</p>
+
+<h1 id="rcu-and-dynticks">RCU and dynticks</h1>
+
+<p><a href="http://ertl.jp/~shinpei/conf/ospert13/slides/FredericWeisbecker.pdf">Status of Linux dynticks</a><br />
+<a href="https://www.youtube.com/watch?v=G3jHP9kNjwc">Full dynticks status - Frederic Weisbecker, Red Hat</a><br />
+<a href="http://www.joelfernandes.org/linuxinternals/2018/06/15/rcu-dynticks.html">RCU and dynticks-idle mode</a></p>
+
+<h2 id="upcall">Upcall</h2>
+
+<p>/*<br />
+ * Exit an RCU extended quiescent state, which can be either the<br />
+ * idle loop or adaptive-tickless usermode execution.<br />
+ *<br />
+ * We crowbar the -&gt;dynticks_nmi_nesting field to DYNTICK_IRQ_NONIDLE to<br />
+ * allow for the possibility of usermode upcalls messing up our count of<br />
+ * interrupt nesting level during the busy period that is just now starting.<br />
+ */<br />
+static void noinstr rcu_eqs_exit(bool user)<br />
+See desgin/data-structures<br />
+However, it turns out that when running in non-idle kernel context, the Linux kernel is fully capable of entering interrupt handlers that never exit and perhaps also vice versa. Therefore, whenever the -&gt;dynticks_nesting field is incremented up from zero, the -&gt;dynticks_nmi_nesting field is set to a large positive number, and whenever the -&gt;dynticks_nesting field is decremented down to zero, the the -&gt;dynticks_nmi_nesting field is set to zero. Assuming that the number of misnested interrupts is not sufficient to overflow the counter, this approach corrects the -&gt;dynticks_nmi_nesting field every time the corresponding CPU enters the idle loop from process context.</p>
+
+<h2 id="translation-for-hierarchical-rcu">Translation for Hierarchical RCU</h2>
+
+<p>rcu_enter_nohz -&gt; rcu_idle_enter<br />
+RCU idle includes eqs which includes<br />
+/*<br />
+ * Enter an RCU extended quiescent state, which can be either the<br />
+ * idle loop or adaptive-tickless usermode execution.<br />
+ *<br />
+ * We crowbar the -&gt;dynticks_nmi_nesting field to zero to allow for<br />
+ * the possibility of usermode upcalls having messed up our count<br />
+ * of interrupt nesting level during the prior busy period.<br />
+ */<br />
+static noinstr void rcu_eqs_enter(bool user)<br />
+Firo: so extended quiescent state includes non-extended quiescent state.</p>
+
+<p>rcu_dynticks_in_eqs<br />
+rcu_dynticks_curr_cpu_in_eqs</p>
+
+<h3 id="special-bottom-bit-in-rcu-data-dynticks">Special/bottom bit in rcu_data:: dynticks</h3>
+
+<p>commit b8c17e6664c461e4aed545a943304c3b32dd309c<br />
+Refs: v4.11-rc2-1-gb8c17e6664c4<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Tue Nov 8 14:25:21 2016 -0800<br />
+Commit:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+CommitDate: Tue Apr 18 11:19:22 2017 -0700<br />
+    rcu: Maintain special bits at bottom of -&gt;dynticks counter</p>
+
+<h3 id="rcu-data-dynticks-counter-validate-by-warn-on">rcu_data::dynticks counter? validate by warn on?</h3>
+
+<p>Integrating and Validating dynticks and Preemptable RCU?? <a href="https://lwn.net/Articles/279077/">https://lwn.net/Articles/279077/</a><br />
+输了又怎样？</p>
+
+<h1 id="model">Model</h1>
+
+<p>A GP completed seq A<br />
+CBs to process<br />
+New GP in-progress<br />
+CBs waiting for GP seq B</p>
+
+<h1 id="tree-rcu-hierarchical-rcu">Tree RCU / Hierarchical RCU</h1>
+
+<p><a href="https://lwn.net/Articles/305782">Hierarchical RCU</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Data-Structures/Data-Structures.html">A Tour Through TREE_RCU&rsquo;s Data Structures</a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">A Tour Through TREE_RCU&rsquo;s Expedited Grace Periods</a><br />
+<a href="https://lwn.net/Articles/453002/">Tree preempt RCU: 3.0 and RCU: what went wrong</a><br />
+<a href="http://www.kroening.com/papers/date2018-rcu.pdf">Verification of Tree-Based Hierarchical Read-Copy Update in the Linux Kernel</a></p>
+
+<h1 id="rcu-sched">RCU sched</h1>
+
+<p>commit 9b06e818985d139fd9e82c28297f7744e1b484e1<br />
+Refs: v2.6.12-rc3-362-g9b06e818985d<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@us.ibm.com">paulmck@us.ibm.com</a><br />
+AuthorDate: Sun May 1 08:59:04 2005 -0700<br />
+Commit:     Linus Torvalds <a href="mailto:torvalds@ppc970.osdl.org">torvalds@ppc970.osdl.org</a><br />
+CommitDate: Sun May 1 08:59:04 2005 -0700<br />
+    [PATCH] Deprecate synchronize_kernel, GPL replacement<br />
+    The synchronize_kernel() primitive is used for quite a few different purposes:<br />
+    waiting for RCU readers, waiting for NMIs, waiting for interrupts, and so on.<br />
+    This makes RCU code harder to read, since synchronize_kernel() might or might<br />
+    not have matching rcu_read_lock()s.  This patch creates a new<br />
+    synchronize_rcu() that is to be used for RCU readers and a new<br />
+    synchronize_sched() that is used for the rest.  These two new primitives<br />
+    currently have the same implementation, but this is might well change with<br />
+    additional real-time support.<br />
++ * synchronize_sched - block until all CPUs have exited any non-preemptive<br />
++ * kernel code sequences.<br />
++ * This means that all preempt_disable code sequences, including NMI and<br />
++ * hardware-interrupt handlers, in progress on entry will have completed<br />
++ * before this primitive returns.  However, this does not guarantee that<br />
++ * softirq handlers will have completed, since in some kernels<br />
++ * This primitive provides the guarantees made by the (deprecated)<br />
++ * synchronize_kernel() API.  In contrast, synchronize_rcu() only<br />
++ * guarantees that rcu_read_lock() sections will have completed.</p>
+
+<h2 id="quiescent-states-for-rcu-sched">Quiescent states for RCU-sched</h2>
+
+<p><a href="http://www.kroening.com/papers/date2018-rcu.pdf">Verification of Tree-Based Hierarchical Read-Copy Update in the Linux Kernel</a><br />
+The non-preemptible RCU-sched flavor’s quiescent states apply to CPUs, and are user-space execution, context switch, idle, and offline state. Therefore, RCU-sched only needs to track tasks and interrupt handlers that are actually running because blocked and preempted tasks are always in quiescent states. Thus, RCU-sched needs only track CPU states.</p>
+
+<h1 id="rcu-preempt-preemptiable-rcu">RCU-preempt Preemptiable RCU</h1>
+
+<p><a href="http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html"> RCU-preempt: What happens on a context switch</a><br />
+<a href="http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf">Towards Hard Realtime Response from the Linux Kernel on SMP Hardware</a><br />
+<a href="https://lwn.net/Articles/201195/">The 1st: Read-copy-update for realtime</a> <a href="http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf">Papper</a><br />
+<a href="https://lwn.net/Articles/253651/">The design of preemptible read-copy-update</a><br />
+The RCU implementation for the -rt patchset is unusual in that it permits read-side critical sections to be preempted and to be blocked waiting for locks. However, it does not handle general blocking (for example, via the wait_event() primitive): if you need that, you should instead use SRCU.<br />
+<a href="http://www.rdrop.com/users/paulmck/RCU/realtimeRCU.2005.04.23a.pdf">Realtime RCU</a><br />
+<a href="http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>+#define RCU_READ_UNLOCK_NEED_QS (1 &lt;&lt; 2) /* RCU core needs CPU response. */<br />
+f41d911f8c49a5d65c86504c19e8204bb605c4fd<br />
+need_qs<br />
+1d082fd061884a587c490c4fc8a2056ce1e47624</p>
+
+<h2 id="rcu-preempt-and-sleeping">RCU-preempt and sleeping</h2>
+
+<p><a href="http://www.joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">A recent discussion on LKML clarified to me that “preempted to run something else” not only covers involuntary preemption but also voluntarily sleeping.</a><br />
+<a href="joelfernandes.org/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">The exception is -rt &ldquo;spinlock&rdquo; acquisition.  If the &ldquo;spinlock&rdquo; is held,</a><br />
+the task acquiring it will block, which is legal within an RCU-preempt<br />
+read-side critical section.<br />
+This exception is why I define bad things in terms of lack of<br />
+susceptibility to priority boosting instead of sleeping.</p>
+
+<h2 id="priority-boosting-rcu">Priority-Boosting RCU</h2>
+
+<p><a href="https://lwn.net/Articles/220677/">Priority-Boosting RCU Read-Side Critical Sections</a><br />
+CONFIG_RCU_BOOST</p>
+
+<h1 id="rcu-bh">RCU bh</h1>
+
+<p><a href="https://lore.kernel.org/lkml/CAJWu+oqCun1Ae6GqPxnS+eCDi3jadGPp+MO8TjOWgs+AiAh79A@mail.gmail.com/">rcu-bh design by Joel Fernandes <a href="mailto:joelaf@google.com">joelaf@google.com</a></a><br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/Design/Requirements/Requirements.html#Bottom-Half%20Flavor">From kernel doc rcu design</a></p>
+
+<p>The softirq-disable (AKA “bottom-half”, hence the “_bh” abbreviations) flavor of RCU, or RCU-bh, was developed by Dipankar Sarma to provide a flavor of RCU that could withstand the network-based denial-of-service attacks researched by Robert Olsson. These attacks placed so much networking load on the system that some of the CPUs never exited softirq execution, which in turn prevented those CPUs from ever executing a context switch, which, in the RCU implementation of that time, prevented grace periods from ever ending. The result was an out-of-memory condition and a system hang.<br />
+The solution was the creation of RCU-bh, which does local_bh_disable() across its read-side critical sections, and which uses <em>the transition from one type of softirq processing to another as a quiescent state in addition to context switch, idle, user mode, and offline</em>. This means that RCU-bh grace periods can complete even when some of the CPUs execute in softirq indefinitely, thus allowing algorithms based on RCU-bh to withstand network-based denial-of-service attacks.</p>
+
+<h1 id="srcu">SRCU</h1>
+
+<p><a href="https://lwn.net/Articles/202847/">Sleepable RCU</a></p>
+
+<h1 id="tasks-rcu">Tasks RCU</h1>
+
+<p><a href="https://lwn.net/Articles/607117/">The RCU-tasks subsystem</a></p>
+
+<h1 id="tiny-rcu-rcu-the-bloatwatch-edition">Tiny RCU / RCU: The Bloatwatch Edition</h1>
+
+<p><a href="https://lwn.net/Articles/323929/">RCU: The Bloatwatch Edition</a><br />
+<a href="https://lwn.net/Articles/396767/">rcu: Add a TINY_PREEMPT_RCU</a><br />
+<a href="https://lore.kernel.org/patchwork/patch/373048/">rcu: Remove TINY_PREEMPT_RCU</a></p>
+
+<h1 id="classic-rcu-let-it-die-peacefully">Classic RCU - let it die peacefully</h1>
+
+<p>tags/v2.6.32-rc1~724^2~29<br />
+commit c17ef45342cc033fdf7bdd5b28615e0090f8d2e7<br />
+Author: Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+Date:   Tue Jun 23 17:12:47 2009 -0700<br />
+    rcu: Remove Classic RCU<br />
+    Remove Classic RCU, given that the combination of Tree RCU and<br />
+    the proposed Bloatwatch RCU do everything that Classic RCU can<br />
+    with fewer bugs.<br />
+<a href="https://lwn.net/Articles/305782/#Brief%20Overview%20of%20Classic%20RCU%20Implementation">Brief Overview of Classic RCU Implementation</a><br />
+<a href="http://www.wowotech.net/kernel_synchronization/linux2-6-11-RCU.html">Linux2.6.11版本：classic RCU的实现</a></p>
+
+<h1 id="jargons">Jargons</h1>
+
+<h2 id="rcu-is-mapped-to-either-rcu-sched-or-rcu-preempt-depending-on-configuration">RCU is mapped to either RCU-sched or RCU-preempt depending on configuration.</h2>
+
+<p><a href="https://lore.kernel.org/patchwork/cover/164913/">[RFC,-tip,0/4] RCU cleanups and simplified preemptable RCU</a><br />
+o   Rename variables and functions so that RCU-sched is an<br />
+    underlying definition, along with RCU-bh and (when so<br />
+    configured) RCU-preempt.  RCU then maps to either RCU-sched<br />
+    or RCU-preempt, depending on configuration.<br />
+commit d6714c22b43fbcbead7e7b706ff270e15f04a791<br />
+Refs: v2.6.31-rc6-15-gd6714c22b43f<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@linux.vnet.ibm.com">paulmck@linux.vnet.ibm.com</a><br />
+AuthorDate: Sat Aug 22 13:56:46 2009 -0700<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
+CommitDate: Sun Aug 23 10:32:37 2009 +0200<br />
+    rcu: Renamings to increase RCU clarity<br />
+    Make RCU-sched, RCU-bh, and RCU-preempt be underlying<br />
+    implementations, with &ldquo;RCU&rdquo; defined in terms of one of the<br />
+    three.  Update the outdated rcu_qsctr_inc() names, as these<br />
+    functions no longer increment anything.</p>
+
+		</article>
+	  </div>
+	</section>
+
+<aside id=comments>
+    <div><h2> Comments </h2></div>
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'firoyang';
+    var disqus_identifier = 'http:\/\/firoyang.org\/cs\/rcu_\/';
+    var disqus_title = 'The Journey to RCU';
+    var disqus_url = 'http:\/\/firoyang.org\/cs\/rcu_\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</aside>
+
+<footer>
+  <div>
+    <p>
+    &copy; 2014 ~ 2016 <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Firo Yang </span></span><a href="http://creativecommons.org/licenses/by/4.0/">Some rights reserved</a>. 
+	Powered by <a href="http://gohugo.io">Hugo</a> and <a href="https://fortawesome.github.io/Font-Awesome/">Font Awesome</a>.
+        Theme by <a href="http://spf13.com">Steve Francia <a href="http://firoyang.org">Firo Yang</a>.
+    </p>
+  </div>
+</footer>
+<script type="text/javascript">
+(function(){var j=function(a,b){return window.getComputedStyle?getComputedStyle(a).getPropertyValue(b):a.currentStyle[b]};var k=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,false);else a.attachEvent('on'+b,c)};var l=function(a,b){for(key in b)if(b.hasOwnProperty(key))a[key]=b[key];return a};window.fitText=function(d,e,f){var g=l({'minFontSize':-1/0,'maxFontSize':1/0},f);var h=function(a){var b=e||1;var c=function(){a.style.fontSize=Math.max(Math.min(a.clientWidth/(b*10),parseFloat(g.maxFontSize)),parseFloat(g.minFontSize))+'px'};c();k(window,'resize',c)};if(d.length)for(var i=0;i<d.length;i++)h(d[i]);else h(d);return d}})();
+fitText(document.getElementById('title'), 1)
+</script>
+
+
+
+
+</body>
+</html>
+
+
+<script type="text/javascript"
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[','\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+
+</body>

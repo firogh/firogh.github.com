@@ -17,7 +17,8 @@ i=$base
 rip=0x$(
     while [[ $(($i)) -lt 0 ]]; do
         printf "rd 0x%x 2\n" $(($i));
-        i=$(($i + 0x1000000));
+        i=$(($i + 0x1000000));  # CONFIG_PHYSICAL_ALIGN=0x1000000 ? 
+				# 16MB see RANDOMIZE_BASE
         y=$(printf "%x" $i)
     done | crash --minimal $vmlinux $core | grep "Linux version" | cut -f1 -d:
 )

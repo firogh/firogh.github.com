@@ -1,3 +1,7 @@
+# Kernel
+[Atomic primitives in the kernel](https://lwn.net/Articles/695257/)
+[Atomic usage patterns in the kernel](https://lwn.net/Articles/698315/)
+
 # x86 locked atomic operations:
 v3a chapter 8
 * Guaranteed atomic operations
@@ -35,14 +39,3 @@ taken on an instruction boundary.
 ## Two processor writing to the same address
 [What happens when two CPU cores require write access to the same memory address at the same exact moment?](https://www.quora.com/What-happens-when-two-CPU-cores-require-write-access-to-the-same-memory-address-at-the-same-exact-moment)
 [When an interrupt occurs, what happens to the process that is currently getting executed?](https://www.quora.com/When-an-interrupt-occurs-what-happens-to-the-process-that-is-currently-getting-executed)
-
-# Atomic primitives
-209 #define ATOMIC_FETCH_OP(op, c_op)                                       \
-210 static inline int atomic_fetch_##op(int i, atomic_t *v)                 \
-211 {                                                                       \
-212         int val = atomic_read(v);                                       \
-213         do {                                                            \
-214         } while (!atomic_try_cmpxchg(v, &val, val c_op i));             \
-215         return val;                                                     \
-216 }
-"arch/x86/include/asm/atomic.h

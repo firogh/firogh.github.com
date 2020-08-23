@@ -1,0 +1,70 @@
+# References
+https://richardweiyang.gitbooks.io/kernel-exploring/virtual_mm/01-anon_rmap_history.html
+[What Rik van Riel is up to](http://lwn.net/2002/0124/kernel.php3)
+# rmap
+The key part for understanding rmap is the 'file'; They comform with same rule that pages are mapped to a file. Eventhrough the file is virutalized sometimes.File page: Disk file backed page: page.index is offset of page in that file; vm_pgoff is offset of VMA in that file
+Shmem page: file is in the tmpfs. page.index is offset of page in that shmem file (not in address space! not same as anonymous private page); vm_pgoff is offset of VMA in that shmem file which is 0.
+Anonymous private page: file is the whole memory. page.index is offset of page in address space; vm_pgoff is offset of VMA in address space.
+
+[Paper: Object-based Reverse Mapping](https://landley.net/kdocs/ols/2004/ols2004v2-pages-71-74.pdf)
+[逆向映射的演进 in Chinese](http://www.wowotech.net/memory_management/reverse_mapping.html)
+[The object-based reverse-mapping VM](https://lwn.net/Articles/23732/)
+[Reverse mapping anonymous pages - again](https://lwn.net/Articles/77106/)
+
+## mmap
+Releated code: do_mmap, mmap_region, linear_page_index, rmap_walk_anon, rmap_walk_file
+
+## fork and exec
+exec : exec -> do_execveat_common-> bprm_mm_init setup_arg_pages
+fork workflow:attach to parent; alloc anon_vma for ownself. anon_vma_fork() -> anon_vma_chain_link
+
+## anon vma 
+do_anonymous_page(1 forked but parent don't use vma. 2 exec) -> anon_vma_prepare & page_add_new_anon_rmap
+
+## nonymous(file or shmem) add vma to  rmp's i_mmap
+__vma_link_file; why not dealy to page fault?
+
+# Lock page table
+# Modernise try_to_unmap
+commit 14fa31b89c5ae79e4131da41761378a6df674352
+Refs: v2.6.31-4555-g14fa31b89c5a
+Author:     Andi Kleen <andi@firstfloor.org>
+AuthorDate: Wed Sep 16 11:50:10 2009 +0200
+Commit:     Andi Kleen <ak@linux.intel.com>
+CommitDate: Wed Sep 16 11:50:10 2009 +0200
+    HWPOISON: Use bitmask/action code for try_to_unmap behaviour
+
+# TTU_SPLIT_FREEZE
+commit b5ff8161e37cef3265e186ecded23324e4dc2973
+Refs: v4.13-9222-gb5ff8161e37c
+Author:     Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+AuthorDate: Fri Sep 8 16:10:49 2017 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Fri Sep 8 18:26:45 2017 -0700
+    mm: thp: introduce separate TTU flag for thp freezing
+    TTU_MIGRATION is used to convert pte into migration entry until thp			# Firo: "convert pte into migration entry" means that 
+    split completes.  This behavior conflicts with thp migration added later		# any access to that thp memory will wait in do_swap_page().
+    patches, so let's introduce a new TTU flag specifically for freezing.
+    try_to_unmap() is used both for thp split (via freeze_page()) and page
+    migration (via __unmap_and_move()).  
+[...]
+Firo: Purely, split? No, Freeze means wait in do_swap_page().See unmap_page() and remap_page().
+So seems split do the same thing as migration.
+
+# Try to unmap a PageAnon(page) 
+commit eb94a8784427b28479f871b5d4121c547808d0fc
+Refs: v4.11-4538-geb94a8784427
+Author:     Minchan Kim <minchan@kernel.org>
+AuthorDate: Wed May 3 14:52:36 2017 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Wed May 3 15:52:08 2017 -0700
+    mm: fix lazyfree BUG_ON check in try_to_unmap_one()
+    If a page is swapbacked, it means it should be in swapcache in	# Firo: this means this try_to_unmap comes from shrik_page_list()
+    try_to_unmap_one's path.
+    If a page is !swapbacked, it mean it shouldn't be in swapcache in	# This is MAD_FREE page.
+    try_to_unmap_one's path.
++                       if (unlikely(PageSwapBacked(page) != PageSwapCache(page))) {
++                               WARN_ON_ONCE(1);
++                               ret = SWAP_FAIL;
++                               page_vma_mapped_walk_done(&pvmw);
++                               break;

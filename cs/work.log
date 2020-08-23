@@ -189,7 +189,8 @@ Author: Thomas Gleixner <tglx@linutronix.de>
 Date:   Mon Nov 16 01:09:48 2009 +0900
     workqueue: Add debugobjects support
 
-### flush
+### flush a specific workqueue - flush_workqueue in essence, flush is wait.
+From the perspective of flush, works are divided into 3 groups: wq->first_flusher, wq->flusher_queue, and beyond color space flusher_overflow
 #### colored flushing
 commit 73f53c4aa732eced5fcb1844d3d452c30905f20f
 Author: Tejun Heo <tj@kernel.org>
@@ -207,6 +208,13 @@ commit affee4b294a0fc97d67c8a77dc080c4dd262a79e
 Author: Tejun Heo <tj@kernel.org>
 Date:   Tue Jun 29 10:07:12 2010 +0200
     workqueue: reimplement work flushing using linked works
+
+#### first flusher 4.12.14.95
+flush_workqueue
+
+pwq->nr_in_flight[pwq->work_color] in __queue_work ; wq->work_color is current index; increased when flush_workqueue
+flush_workqueue_prep_pwqs
+pwq_dec_nr_in_flight called from cancel or process_one_work.
 
 ### High Priori
 [[PATCHSET] workqueue: reimplement high priority using a separate worker pool](https://lkml.org/lkml/2012/7/9/460)
@@ -333,3 +341,52 @@ freeze_kernel_threads
 		freeze_workqueues_begin->pwq_adjust_max_active # Core
 		freeze_workqueues_busy
 	thaw_kernel_threads->thaw_workqueues
+
+# Debug
+## worker pools
+crash> tree -t radix worker_pool_idr -s worker_pool.id,cpu,nr_workers,node,flags,nr_idle,refcnt,nr_running
+p cpu_worker_pools:
+workqueue_init_early
+### workers
+/suse/fyang/s/1168202/SFSC00192585-Bug
+#### with list -H
+crash> worker_pool.workers 0xffff8951bf8a2740 -o
+struct worker_pool {
+  [ffff8951bf8a2a10] struct list_head workers;
+crash> list -H ffff8951bf8a2a10 -l worker.node -s worker.id,desc,pool,task
+ffff8950ccc1c710	# address of worker.node
+  id = 0x2
+  desc = "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+  pool = 0xffff8951bf8a2740
+ffff8950cc2cddd0
+  id = 0x1
+  desc = "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+  pool = 0xffff8951bf8a2740
+crash> list -H ffff8951bf8a2a10 worker.node  -s worker.id,desc,pool,task
+ffff8950ccc1c6c0	# address of worker
+  id = 0x2
+  desc = "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+  pool = 0xffff8951bf8a2740
+ffff8950cc2cdd80
+  id = 0x1
+  desc = "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
+  pool = 0xffff8951bf8a2740
+
+#### with list -h (don't use this)
+crash> worker_pool.workers 0xffff8951bf8a2740
+  workers = {
+    next = 0xffff8950ccc1c710, 
+    prev = 0xffff8950cc2cddd0
+  }
+crash> list -h 0xffff8950ccc1c710 -l worker.node -s worker.id,desc,pool  # one fake worker in this output, don't use -h use -H
+
+## all workqueues
+list -H workqueues workqueue_struct.list -s workqueue_struct.name,flags
+WQ_HIGHPRI
+
+## pwqs of specific wq
+crash> p cgroup_pidlist_destroy_wq
+cgroup_pidlist_destroy_wq = $6 = (struct workqueue_struct *) 0xffff8950ac2efe00
+lis pool_workqueue.pwqs_node -s pool_workqueue.nr_active,nr_in_flight,work_color,flush_color,refcnt,wq,pool -H 0xffff8950ac2efe00
+
+

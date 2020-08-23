@@ -3,6 +3,10 @@
 [LWN: Shared subtrees](https://lwn.net/Articles/159077/)
 [Mount namespaces and shared subtrees](https://lwn.net/Articles/689856/)
 [Mount namespaces, mount propagation, and unbindable mounts](https://lwn.net/Articles/690679/)
+[A new API for mounting filesystems](https://lwn.net/Articles/753473/)
+VFS: Introduce filesystem context https://patchwork.kernel.org/cover/10610615/
+
+# Observability
 do_new_mount
 	vfs_kern_mount
 		root = mount_fs -> ramfs_mount -> ramfs_fill_super
@@ -17,9 +21,144 @@ do_new_mount
 			get_mountpoint->d_set_mounted
 			mnt_set_mountpoint
 			commit_tree -> child mnt.mnt_hash -> mount_hashtable
+address of rootfs mount
+list mount.mnt_list -h ffff8e1054db43c0 -s mount
+m_next
+
+# Mount problems
+## Mount information
+## override the inode of mount point to root inode of new filesystem
+Mark dentry as mounted.
+Mount information: flags, sb, root dentry of new filesystem.
+Where to put mount information? mnt_hashtable is better since not all direcotries will be mounted.
+Hash function: Parent mount information and mountpoint dentry from parent filesystem.
+##  one filesystem could be mounted multiple times.
+a filesystem has multiple mount information or mountpoint.
+##  multiple filesystems chould be mounted at a same direcotry. directory vs. mountpoint.
+dentry =>  mountpoint => directory
+In below instance, /tmp/firo and /tmp/firo/ are same directory but different mountpoints.
+__attach_mnt and hlist_add_head_rcu
+Firo(worng): Hash function: Same Parent mount information and mountpoint dentry from parent filesystem.
+Kernel(implemention: recursive/fllow-down mount?): Hash function: last mount information and dentry from  last filesystem.
+firo@snow:/tmp$ mkdir firo
+firo@snow:/tmp$ sudo mount -t proc proc firo
+firo@snow:/tmp$ sudo mount -t sysfs sysfs firo
+crash> mount
+ffff8e1054db43c0 ffff8e1054c0a800 rootfs none      / 
+ffff8e1054db5400 ffff8e104c235800 ext4   /dev/sda3 /         
+ffff8e1051477540 ffff8e104fd8f000 tmpfs  tmpfs     /tmp      
+ffff8e102e796280 ffff8e1054c0d800 proc   proc      /tmp/firo 
+ffff8e103eeeda40 ffff8e1051a5a000 sysfs  sysfs     /tmp/firo/
+crash> struct mount ffff8e1054db43c0 | head
+struct mount {
+  mnt_hash = {
+    next = 0x0, 
+    pprev = 0x0
+  }, 
+  mnt_parent = 0xffff8e1054db43c0, 
+  mnt_mountpoint = 0xffff8e1051c08000, 
+  mnt = {
+    mnt_root = 0xffff8e1051c08000, 
+    mnt_sb = 0xffff8e1054c0a800, 
+crash> dentry.d_iname 0xffff8e1051c08000
+  d_iname = "/\0"
+crash> dentry.d_iname 0xffff8e1051c08000
+  d_iname = "/\0"
+crash> struct mount ffff8e1054db5400 | head
+struct mount {
+  mnt_hash = {
+    next = 0x0, 
+    pprev = 0xffff8e1054dfa218
+  }, 
+  mnt_parent = 0xffff8e1054db43c0, 
+  mnt_mountpoint = 0xffff8e1051c08000, 
+  mnt = {
+    mnt_root = 0xffff8e104bd2dd80, 
+    mnt_sb = 0xffff8e104c235800, 
+crash> dentry.d_iname 0xffff8e1051c08000
+  d_iname = "/\0"
+crash> dentry.d_iname 0xffff8e104bd2dd80
+  d_iname = "/\0"
+rash> struct mount  ffff8e1051477540 | head
+struct mount {
+  mnt_hash = {
+    next = 0x0, 
+    pprev = 0xffff8e1054df4020
+  }, 
+  mnt_parent = 0xffff8e1054db5400, 
+  mnt_mountpoint = 0xffff8e10509d6240, 
+  mnt = {
+    mnt_root = 0xffff8e10509d6a80, 
+    mnt_sb = 0xffff8e104fd8f000, 
+crash> dentry.d_iname 0xffff8e10509d6a80
+  d_iname = "/\0"
+crash> dentry.d_iname 0xffff8e10509d6240
+  d_iname = "tmp\0"
+crash> struct mount ffff8e102e796280 | head	# proc FS at /tmp/firo
+struct mount {
+  mnt_hash = {
+    next = 0x0, 
+    pprev = 0xffff8e1054de0de8
+  }, 
+  mnt_parent = 0xffff8e1051477540,		# tmpfs at  /tmp
+  mnt_mountpoint = 0xffff8e0f200a1780, 
+  mnt = {
+    mnt_root = 0xffff8e1051c08a80, 
+    mnt_sb = 0xffff8e1054c0d800, 
+  mnt_mp = 0xffff8e102ec29340, 
+crash> mountpoint 0xffff8e102ec29340
+struct mountpoint {
+  m_hash = {
+    next = 0x0, 
+    pprev = 0xffff8e1051910af0
+  }, 
+  m_dentry = 0xffff8e0f200a1780, 
+  m_list = {
+    first = 0xffff8e102e796370
+  }, 
+  m_count = 19
+}
+crash> dentry.d_iname 0xffff8e0f200a1780
+  d_iname = "firo
+
+crash> dentry.d_iname 0xffff8e0f200a1780
+  d_iname = "firo\0"
+crash> struct mount ffff8e103eeeda40 | head	# sysfs at /tmp/firo/
+struct mount {
+  mnt_hash = {
+    next = 0x0, 
+    pprev = 0xffff8e1054df5da8
+  }, 
+  mnt_parent = 0xffff8e102e796280,		# proc at /tmp/firo
+  mnt_mountpoint = 0xffff8e1051c08a80,		# Important 
+  mnt = {
+    mnt_root = 0xffff8e1051cad3c0,		# sysfs at /tmp/firo/
+    mnt_sb = 0xffff8e1051a5a000, 
+  mnt_mp = 0xffff8e0f46da3700, 
+
+crash> mountpoint 0xffff8e0f46da3700
+struct mountpoint {
+  m_hash = {
+    next = 0x0, 
+    pprev = 0xffff8e10519025c0
+  }, 
+  m_dentry = 0xffff8e1051c08a80, 
+  m_list = {
+    first = 0xffff8e103eeedb30
+  }, 
+  m_count = 19
+}
+crash> dentry.d_iname 0xffff8e1051c08a80
+  d_iname = "/\0"
+
+crash> dentry.d_iname 0xffff8e1051c08a80,	# Important
+  d_iname = "/\0"
+crash> dentry.d_iname  0xffff8e1051cad3c0
+  d_iname = "/\0
 
 # LQO
-mount->mnt_mountpoint  和 mount ->mnt_mp->m_dentry;
+## mountpoint_hashtable - Firo : context should be vfs_rename
+mount->mnt_mountpoint: seems that it is used for lookup mount from dentry.  
 Check follow_managed
 * for DCACHE_MOUNTED in get_mountpoint
 Amnt: Protect the mountpoint hashtable with mount_lock - 3895dbf8985f656675b5bde610723a29cbce3fa7

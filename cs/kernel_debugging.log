@@ -1,15 +1,11 @@
 
-# Boot issues
-debug ignore_loglevel earlyprintk=ttyS0,115200, keep keep_bootcon initcall_debug dyndbg=+plmf
-
-# CONFIG_DEBUG_PAGEALLOC
-check_poison_mem in alloc_pages
-free_pages_prepare posion
-
 # Lockup
 [kernle doc - Softlockup detector and hardlockup detector](https://www.kernel.org/doc/Documentation/lockup-watchdogs.txt)
+watchdog_enabled
+tk_core.timekeeper.tkr_mono.base
+
 ## Softlockup
- ps aux | grep watchdog
+ps aux | grep watchdog
 root        13  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/0]
 root        16  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/1]
 root        22  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/2]
@@ -17,22 +13,13 @@ root        28  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/3]
 NMI watchdog: BUG: soft lockup - CPU#0 stuck for 22s! [test.sh:16464]
 ...
 Kernel panic - not syncing: softlockup: hung tasks
-
+### Crash
+watchdog_thresh
 ## Hardlockup
 watchdog_overflow_callback
 watchdog_nmi_enable ->watchdog_overflow_callback
 
-# Hung tasks bugs
-## think for myself
-A kernel bug casuse task to be stuck in "D" state indefinitely.
-1. A D state task wait list.
-2. Hung task timeout.
-3. Timestamp on adding task to "D" state wait list.
-4. Kernel thread for detecting hung tasks - schedule timeout; why kthread?
-## Problems
-How could I find all the D state tasks?
-1. kernel must use specific functions to put D-task on wait list.
-2. Embeded codes into specific functions to catch 'D' state tasks and put them in the wait list for Hung tasks detecting.
+# Hung tasks
 ## Kernel Implemention
 DETECT_HUNG_TASK, kernel/hung_task.c, check_hung_uninterruptible_tasks
 * diffeneces
@@ -40,10 +27,15 @@ DETECT_HUNG_TASK, kernel/hung_task.c, check_hung_uninterruptible_tasks
 3: t->nvcsw + t->nivcsw, t->last_switch_count and timeout
 cat /proc/self/status | grep ctxt_switches
 
-# Use after free
+# Memory corruption, use-after-free, out-of-bounds
 SLUB Redzone
-KASAN
-
+## KASAN
+setup_arch -> kasan_init
+[KernelAddressSanitizer a fast memory error detector for the Linux kernel](http://events.linuxfoundation.org/sites/events/files/slides/LinuxCon%20North%20America%202015%20KernelAddressSanitizer.pdf)
+[kasan found stack out of bounds](https://github.com/zfsonlinux/zfs/pull/4708/commits/01709937be3c28a89eff83e0e657a72826947506)
+[lwn The kernel address sanitizer](https://lwn.net/Articles/612153/)
+[out of bounds](https://lkml.org/lkml/2014/12/3/128)
+Interceptors of memset/memmove/memcpy 393f203f5fd54421fddb1e2a263f64d3876eeadb
 ## [The object-lifetime debugging infrastructure](https://www.kernel.org/doc/html/latest/core-api/debug-objects.html)
 [LWN: An object debugging infrastructure](https://lwn.net/Articles/271614/)
 commit c6f3a97f86a5c97be0ca255976110bb9c3cfe669
@@ -51,6 +43,10 @@ Author: Thomas Gleixner <tglx@linutronix.de>
 Date:   Wed Apr 30 00:55:03 2008 -0700
     debugobjects: add timer specific object debugging code
 
+# Page corruption
+CONFIG_DEBUG_PAGEALLOC
+check_poison_mem in alloc_pages
+free_pages_prepare posion
 
 # Deadlock
 Lockdep

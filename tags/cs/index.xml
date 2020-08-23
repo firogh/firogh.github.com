@@ -259,6 +259,11 @@ Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
   (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
   (*) MMIO write barrier.&lt;/p&gt;
 
+&lt;h1 id=&#34;compiler-1&#34;&gt;Compiler&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/793253/#Load%20Tearing&#34;&gt;Who&amp;rsquo;s afraid of a big bad optimizing compiler?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/799218/&#34;&gt;Calibrating your fear of big bad optimizing compilers&lt;/a&gt;&lt;/p&gt;
+
 &lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
 
 &lt;ul&gt;
@@ -267,7 +272,8 @@ No, there is no efects on cast a variable to volatile.&lt;br /&gt;
 Because, access variable is before volatile cast! That means you&lt;br /&gt;
 still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
 Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
-&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/508991/&#34;&gt;ACCESS_ONCE()&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -622,80 +628,6 @@ Date:   Sat Aug 13 12:38:19 2016 -0400&lt;br /&gt;
     sched/x86: Rewrite the switch_to() code&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;preemption&#34;&gt;Preemption&lt;/h1&gt;
-
-&lt;h2 id=&#34;voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259&#34;&gt;&lt;a href=&#34;https://lwn.net/Articles/137259/&#34;&gt;Voluntary Kernel Preemption, 2.6.12-rc4-mm2&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;Voluntary preemption works by adding a cond_resched()&lt;br /&gt;
-(reschedule-if-needed) call to every might_sleep() check. It is lighter&lt;br /&gt;
-than CONFIG_PREEMPT - at the cost of not having as tight latencies. It&lt;br /&gt;
-represents a different latency/complexity/overhead tradeoff.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/questions/5174955/what-is-voluntary-preemption&#34;&gt;voluntary preemption&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/563185/&#34;&gt;Optimizing preemption&lt;/a&gt;&lt;br /&gt;
-commit 41719b03091911028116155deddc5eedf8c45e37&lt;br /&gt;
-Refs: v2.6.29-rc1-226-g41719b030919&lt;br /&gt;
-Author:     Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Jan 14 15:36:26 2009 +0100&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Jan 14 18:09:00 2009 +0100&lt;br /&gt;
-    mutex: preemption fixes&lt;br /&gt;
-    The problem is that dropping the spinlock right before schedule is a voluntary&lt;br /&gt;
-    preemption point and can cause a schedule, right after which we schedule again.&lt;br /&gt;
-    Fix this inefficiency by keeping preemption disabled until we schedule, do this&lt;br /&gt;
-    by explicity disabling preemption and providing a schedule() variant that&lt;br /&gt;
-    assumes preemption is already disabled.&lt;br /&gt;
-Firo: spin_unlock_mutex&lt;/p&gt;
-
-&lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
-
-&lt;p&gt;system call returns mode . syscall_return_slowpath&lt;br /&gt;
-interrupt hander returns user mode .retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
-
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
-
-&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
-If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
-
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
-
-&lt;h2 id=&#34;the-following-also-t-relates-to-preemption-it-s-preempt-voluntary&#34;&gt;The following also t relates to preemption; it&amp;rsquo;s PREEMPT_VOLUNTARY.&lt;/h2&gt;
-
-&lt;p&gt;For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.&lt;br /&gt;
-config PREEMPT_VOLUNTARY&lt;br /&gt;
-    bool &amp;ldquo;Voluntary Kernel Preemption (Desktop)&amp;rdquo;&lt;br /&gt;
-    help&lt;br /&gt;
-      This option reduces the latency of the kernel by adding more&lt;br /&gt;
-      &amp;ldquo;explicit preemption points&amp;rdquo; to the kernel code. These new&lt;br /&gt;
-      preemption points have been selected to reduce the maximum&lt;br /&gt;
-      latency of rescheduling, providing faster application reactions,&lt;br /&gt;
-      at the cost of slightly lower throughput.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
-tick: check_preempt_tick or entity_tick&lt;br /&gt;
-fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
-wakeup: check_preempt_wakeup&lt;br /&gt;
-&amp;hellip;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
-prev-&amp;gt;state means deactivate.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
@@ -718,9 +650,7 @@ ttwu_do_activate&lt;/p&gt;
 
 &lt;h1 id=&#34;cfs-runqueues&#34;&gt;CFS runqueues&lt;/h1&gt;
 
-&lt;p&gt;cfa_rq&lt;br /&gt;
-on_list&lt;br /&gt;
-sched_entity-&amp;gt;on_rq, check enqueue_entity&lt;/p&gt;
+&lt;p&gt;cfa_rq, on_list, sched_entity-&amp;gt;on_rq, check enqueue_entity&lt;/p&gt;
 
 &lt;h2 id=&#34;cfs-runqueue-and-sched-entity&#34;&gt;CFS runqueue and sched entity&lt;/h2&gt;
 
@@ -770,9 +700,8 @@ gse_CPUx&amp;rsquo;s load = grq_CPUx&amp;rsquo;s all se&amp;rsquo;s load * task_
         /&lt;/em&gt; rq on which this entity is (to be) queued: */&lt;br /&gt;
         struct cfs_rq           &lt;em&gt;cfs_rq;&lt;br /&gt;
         /&lt;/em&gt; rq &amp;ldquo;owned&amp;rdquo; by this entity/group: */&lt;br /&gt;
-        struct cfs_rq           *my_q;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/240474/&#34;&gt;CFS group scheduling&lt;/a&gt;&lt;br /&gt;
+        struct cfs_rq           *my_q;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/240474/&#34;&gt;CFS group scheduling&lt;/a&gt;&lt;br /&gt;
 commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc&lt;br /&gt;
 Author: Srivatsa Vaddagiri &lt;a href=&#34;mailto:vatsa@linux.vnet.ibm.com&#34;&gt;vatsa@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
 Date:   Mon Oct 15 17:00:07 2007 +0200&lt;br /&gt;
@@ -938,7 +867,7 @@ fs/proc/array.c&lt;br /&gt;
 
 &lt;li&gt;&lt;p&gt;if running process &amp;gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity&lt;/p&gt;
 
-&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??&lt;/p&gt;&lt;/li&gt;
 
@@ -970,7 +899,7 @@ Check External links&lt;br /&gt;
 calc_load_fold_active&lt;br /&gt;
 Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lqo-2&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;
@@ -1171,6 +1100,22 @@ Date:   Thu Jul 21 09:43:33 2011 -0700&lt;br /&gt;
     Now that consumption is tracked (via update_curr()) we add support to throttle&lt;br /&gt;
     group entities (and their corresponding cfs_rqs) in the case where this is no&lt;br /&gt;
     run-time remaining.&lt;/p&gt;
+
+&lt;h1 id=&#34;pelt&#34;&gt;PELT&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/531853/&#34;&gt;Per-entity load tracking&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9&lt;br /&gt;
+Author: Paul Turner &lt;a href=&#34;mailto:pjt@google.com&#34;&gt;pjt@google.com&lt;/a&gt;&lt;br /&gt;
+Date:   Thu Oct 4 13:18:32 2012 +0200&lt;br /&gt;
+    sched: Make __update_entity_runnable_avg() fast&lt;br /&gt;
+commit a481db34b9beb7a9647c23f2320dd38a2b1d681f&lt;br /&gt;
+Refs: v4.11-rc2-229-ga481db34b9be&lt;br /&gt;
+Author:     Yuyang Du &lt;a href=&#34;mailto:yuyang.du@intel.com&#34;&gt;yuyang.du@intel.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Feb 13 05:44:23 2017 +0800&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@kernel.org&#34;&gt;mingo@kernel.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Thu Mar 30 09:43:41 2017 +0200&lt;br /&gt;
+    sched/fair: Optimize ___update_sched_avg()&lt;/p&gt;
 </description>
     </item>
     
@@ -1297,10 +1242,6 @@ Microarchitectural state, such as information stored in TLBs and caches&lt;/p&gt
 
 &lt;p&gt;A Symbolic Analysis of Relay and Switching Circuits&lt;/p&gt;
 
-&lt;h1 id=&#34;memory-hierarchy&#34;&gt;Memory hierarchy&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html&#34;&gt;Latency Numbers Every Programmer Should Know&lt;/a&gt;&lt;/p&gt;
-
 &lt;h1 id=&#34;cpu&#34;&gt;CPU&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://youtu.be/cNN_tTXABUA&#34;&gt;How a CPU Works&lt;/a&gt;&lt;/p&gt;
@@ -1309,11 +1250,6 @@ Microarchitectural state, such as information stored in TLBs and caches&lt;/p&gt
 
 &lt;p&gt;ISA: memory model, registers, data types, instructions, word size(?).&lt;br /&gt;
 Memory model: unit of address resolution, word, aligment, address space, addressing mode, memory barrier/memory order primitive&amp;rsquo;s semantics.&lt;/p&gt;
-
-&lt;h1 id=&#34;i-o&#34;&gt;I/O&lt;/h1&gt;
-
-&lt;p&gt;serial communication: UART(16550) + RS-232&lt;br /&gt;
-parallel communication: SCSI, ISA, ATA, PCI, FSB&lt;/p&gt;
 
 &lt;h2 id=&#34;data-struct-alignment&#34;&gt;Data struct alignment&lt;/h2&gt;
 
@@ -1488,6 +1424,22 @@ direct-mapped cache - if two locations map to the same entry, they may continual
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/510202/&#34;&gt;A generic hash table&lt;/a&gt;&lt;br /&gt;
 hash function&lt;/p&gt;
 
+&lt;h2 id=&#34;hlist-nulls&#34;&gt;hlist-nulls&lt;/h2&gt;
+
+&lt;p&gt;commit bbaffaca4810de1a25e32ecaf836eeaacc7a3d11&lt;br /&gt;
+Refs: v2.6.28-rc4-513-gbbaffaca4810&lt;br /&gt;
+Author:     Eric Dumazet &lt;a href=&#34;mailto:dada1@cosmosbay.com&#34;&gt;dada1@cosmosbay.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Sun Nov 16 19:37:55 2008 -0800&lt;br /&gt;
+Commit:     David S. Miller &lt;a href=&#34;mailto:davem@davemloft.net&#34;&gt;davem@davemloft.net&lt;/a&gt;&lt;br /&gt;
+CommitDate: Sun Nov 16 19:37:55 2008 -0800&lt;br /&gt;
+    rcu: Introduce hlist_nulls variant of hlist&lt;br /&gt;
+    hlist uses NULL value to finish a chain.&lt;br /&gt;
+    hlist_nulls variant use the low order bit set to 1 to signal an end-of-list marker.&lt;br /&gt;
+    This allows to store many different end markers, so that some RCU lockless&lt;br /&gt;
+    algos (used in TCP/UDP stack for example) can save some memory barriers in&lt;br /&gt;
+    fast paths.&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/Documentation/RCU/rculist_nulls.txt&#34;&gt;Usage of hilsit-nulls in kernel doc&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;bst&#34;&gt;BST&lt;/h1&gt;
 
 &lt;p&gt;Pre-order&lt;br /&gt;
@@ -1514,19 +1466,6 @@ Trees only store keys.&lt;br /&gt;
 * terms very confused&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/14708134/what-is-the-difference-between-trie-and-radix-trie-data-structures&#34;&gt;Radix tree vs Trie, check radix meaning&lt;/a&gt;&lt;br /&gt;
 Patricia is compact trie or Patricia is radix = 2 trie?&lt;/p&gt;
-
-&lt;h1 id=&#34;radix-tree-in-kernel-not-wikipedia&#34;&gt;Radix tree in kernel not wikipedia&lt;/h1&gt;
-
-&lt;p&gt;page cache: page_cache_tree_insert&lt;br /&gt;
-Wikipedia: Radix tree looks like a compact trie.&lt;br /&gt;
-Kernel: Radix tree was more like a Multi-level index associative arrya or judy array.&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/175432/&#34;&gt;Trees I: Radix trees&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events17.linuxfoundation.org/sites/events/files/slides/LinuxConNA2016%20-%20Radix%20Tree.pdf&#34;&gt;Enhancing the Linux Radix Tree&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=v0C9_Fp-co4&#34;&gt;The design and implementation of the XArray&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/688130/&#34;&gt;A multi-order radix tree&lt;/a&gt;&lt;br /&gt;
-radix_tree_init_maxnodes(): height is 11 in kernel?&lt;br /&gt;
-&lt;strong&gt;radix_tree_create() add one page&lt;/strong&gt;&lt;br /&gt;
-radix_tree_lookup_slot: find one page&lt;/p&gt;
 
 &lt;h1 id=&#34;search&#34;&gt;Search&lt;/h1&gt;
 
@@ -1569,7 +1508,8 @@ type: Reclaim&lt;/p&gt;
 
 &lt;h1 id=&#34;redblack-tree&#34;&gt;Redblack tree&lt;/h1&gt;
 
-&lt;p&gt;gap between linar node can be optimized by argument rb tree. O(n) -&amp;gt; O(log n)&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;http://tinylab.org/rbtree-part1/&#34;&gt;红黑树 IN Linux part 1, 2, 3&lt;/a&gt;&lt;br /&gt;
+gap between linar node can be optimized by argument rb tree. O(n) -&amp;gt; O(log n)&lt;br /&gt;
 mm: augment vma rbtree with rb_subtree_gap d37371870ceb1d2165397dc36114725b6dca946c&lt;br /&gt;
 &lt;a href=&#34;http://sidsen.azurewebsites.net//papers/rb-trees-talg.pdf&#34;&gt;Rank-Balanced Trees&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&#34;&gt;https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/&lt;/a&gt;&lt;br /&gt;
@@ -1584,123 +1524,6 @@ mm: augment vma rbtree with rb_subtree_gap d37371870ceb1d2165397dc36114725b6dca9
     </item>
     
     <item>
-      <title>Computing Sorcery a sorcerer&#39;s perspective on computer science</title>
-      <link>http://firoyang.org/cs/cs/</link>
-      <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
-      <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/cs/</guid>
-      <description>
-
-&lt;h1 id=&#34;computer-science&#34;&gt;Computer science&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://computersciencewiki.org/index.php/Computational_thinking_%26_problem-solving&#34;&gt;Firo: very good CS website: Computational thinking &amp;amp; problem-solving&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://computersciencewiki.org/index.php/Welcome&#34;&gt;Core topics of computer science&lt;/a&gt;&lt;br /&gt;
-Underlying our approach to this subject is our conviction that “computer science” is not a science and that its significance has little to do with computers. The computer revolution is a revolution in the way we think and in the way we express what we think. The essence of this change is the emergence of what might best be called procedural epistemology —the study of the structure of knowledge from an imperative point of view, as opposed to the more declarative point of view taken by classical mathematical subjects. Mathematics provides a framework for dealing precisely with notions of “what is.” Computation provides a framework for dealing precisely with notions of “how to.”  &amp;ndash; The omnipotent SICP&lt;br /&gt;
-&lt;a href=&#34;https://www.youtube.com/watch?v=lL4wg6ZAFIM&#34;&gt;Richard Feynman on Computer Science — Talk at Bell Labs (1985)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://plato.stanford.edu/entries/computer-science/&#34;&gt;The Philosophy of Computer Science&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;firo&#34;&gt;Firo&lt;/h2&gt;
-
-&lt;p&gt;computation, storage, IO&lt;br /&gt;
-Architecture: Memory hierarchy&lt;br /&gt;
-OS: VM(layered smantic), Concurrency&lt;br /&gt;
-Application:&lt;/p&gt;
-
-&lt;h1 id=&#34;tools&#34;&gt;Tools&lt;/h1&gt;
-
-&lt;p&gt;Parallemism and locality&lt;br /&gt;
-Bandwidth and latency&lt;/p&gt;
-
-&lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
-
-&lt;p&gt;Complexity&lt;br /&gt;
-Resource management&lt;br /&gt;
-Observation&lt;br /&gt;
-Latency&lt;br /&gt;
-Scalibity&lt;br /&gt;
-Performance/efficiency&lt;br /&gt;
-Easy to use&lt;br /&gt;
-Security/Protection/isolation&lt;br /&gt;
-Reliability&lt;br /&gt;
-Energy-efficiency&lt;/p&gt;
-
-&lt;h1 id=&#34;computation&#34;&gt;Computation&lt;/h1&gt;
-
-&lt;h2 id=&#34;function-subroutine-https-en-wikipedia-org-wiki-subroutine-and-call-stack-https-en-wikipedia-org-wiki-call-stack&#34;&gt;Function/&lt;a href=&#34;https://en.wikipedia.org/wiki/Subroutine&#34;&gt;subroutine&lt;/a&gt; and &lt;a href=&#34;https://en.wikipedia.org/wiki/Call_stack&#34;&gt;call stack&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;1945 Turing on subroutines in &lt;a href=&#34;http://www.alanturing.net/turing_archive/archive/p/p01/P01-011.html&#34;&gt;Proposed electronic calculator.&lt;/a&gt;: In Chapter 6. Outline of Logical Control. We also wish to be able to arrange for the splitting up of operations into&amp;hellip; When we wish to start on a subsidiary operation we need only make a note of where we left off the major operation&amp;hellip;&lt;br /&gt;
-&lt;a href=&#34;https://link.springer.com/article/10.1007%2FBF01386232&#34;&gt;Firo-must: Dijkstra, E. W. (1960). &amp;ldquo;Recursive Programming&amp;rdquo;&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;stack&#34;&gt;stack&lt;/h2&gt;
-
-&lt;p&gt;Stack overflow: gurad page&lt;br /&gt;
-Stack based buffer overflow: canary, STACKPROTECTOR, Stack Protector buffer overflow detection&lt;/p&gt;
-
-&lt;p&gt;Related code: boot_init_stack_canary&lt;/p&gt;
-
-&lt;h2 id=&#34;process-vs-event&#34;&gt;process vs event&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf&#34;&gt;thread vs event&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;concurrency&#34;&gt;Concurrency&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Firo: must thinking summary: EW Dijkstra: Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
-CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
-Parallel and Concurrent Programming in Haskell&lt;br /&gt;
-The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
-&lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Firo: good introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://talks.golang.org/2012/concurrency.slide#6&#34;&gt;Rob Pike: Concurrency is the composition of independently executing computations.&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;asynchrony-computer-programming-https-en-wikipedia-org-wiki-asynchrony-computer-programming&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Asynchrony_(computer_programming)&#34;&gt;Asynchrony (computer programming)&lt;/a&gt;&lt;/h2&gt;
-
-&lt;h2 id=&#34;concurrent-vs-parallel&#34;&gt;concurrent vs parallel&lt;/h2&gt;
-
-&lt;p&gt;Programming vs computing: software vs hardware&lt;br /&gt;
-concurrent programming: multi-thread stress on how to create thread to model the outside world.&lt;br /&gt;
-parallel programming: smp, synchronization, lock, lock-free, atomic&lt;br /&gt;
-&lt;a href=&#34;http://highscalability.com/blog/2014/12/31/linus-the-whole-parallel-computing-is-the-future-is-a-bunch.html&#34;&gt;Linus: The Whole &amp;ldquo;Parallel Computing Is The Future&amp;rdquo; Is A Bunch Of Crock.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.realworldtech.com/forum/?threadid=146066&amp;amp;curpostid=146227&#34;&gt;Linus: Avoiding ping pong&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;concurrency-problem-1-with-communications&#34;&gt;Concurrency problem 1 with communications&lt;/h2&gt;
-
-&lt;p&gt;IPC check wait.log&lt;/p&gt;
-
-&lt;h2 id=&#34;problem-2-with-memory-access&#34;&gt;Problem 2 with memory access&lt;/h2&gt;
-
-&lt;p&gt;consistency model&lt;/p&gt;
-
-&lt;h1 id=&#34;resource-management&#34;&gt;Resource management&lt;/h1&gt;
-
-&lt;p&gt;check mm.md&lt;/p&gt;
-
-&lt;h1 id=&#34;history&#34;&gt;History&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.chilton-computing.org.uk/acl/technology/atlas/overview.htm&#34;&gt;Atlas&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;os&#34;&gt;OS&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://pages.cs.wisc.edu/~remzi/OSTEP/&#34;&gt;Operating Systems: Three Easy Pieces&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;unix&#34;&gt;Unix&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://users.soe.ucsc.edu/~sbrandt/221/Papers/History/thompson-bstj78.pdf&#34;&gt;Ken Thompson UNIX Implementation&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cs.grinnell.edu/~curtsinger/teaching/2019S/CSC213/files/unix_evolution.pdf&#34;&gt;The Evolution of the UNIX Time-sharing System&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.oreilly.com/openbook/opensources/book/kirkmck.html&#34;&gt;Twenty Years of Berkeley Unix From AT&amp;amp;T-Owned to Freely Redistributable&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://people.eecs.berkeley.edu/~brewer/cs262/unix.pdf&#34;&gt;The UNIX TimeSharing System Dennis M. Ritchie and Ken Thompson Bell Laboratories&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.bell-labs.com/usr/dmr/www/retro.pdf&#34;&gt;The UNIX Time-sharing SystemA Retrospective&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&#34;&gt;SunOS 1.0 - 4.1.2&lt;/a&gt;&lt;br /&gt;
-Life with Unix&lt;br /&gt;
-&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.107.9119&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Design and Implementation of the Berkeley Virtual Memory Extensions to the UNIX† Operating System‡&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;specifications&#34;&gt;Specifications&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://refspecs.linuxbase.org/&#34;&gt;Linux Foundation Referenced Specifications&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>The art of debugging</title>
       <link>http://firoyang.org/cs/debugging/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:14 CST</pubDate>
@@ -1710,12 +1533,58 @@ Life with Unix&lt;br /&gt;
 
 &lt;h1 id=&#34;quote&#34;&gt;Quote&lt;/h1&gt;
 
-&lt;p&gt;Everyone knows that debugging is twice as hard as writing a program in the first place. So if you&amp;rsquo;re as clever as you can be when you write it, how will you ever debug it?&lt;br /&gt;
-&amp;ldquo;The Elements of Programming Style&amp;rdquo;, 2nd edition, chapter 2. Brian Kernighan&lt;/p&gt;
+&lt;p&gt;Everyone knows that debugging is twice as hard as writing a program in the first place. So if you&amp;rsquo;re as clever as you can be when you write it, how will you ever debug it? &amp;ndash; &amp;ldquo;The Elements of Programming Style&amp;rdquo;, 2nd edition, chapter 2. Brian Kernighan&lt;/p&gt;
 
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
-&lt;p&gt;Debug hacks: a book on how to debug.&lt;/p&gt;
+&lt;p&gt;Debug hacks (a Japanese book)&lt;/p&gt;
+
+&lt;h1 id=&#34;debugging&#34;&gt;Debugging&lt;/h1&gt;
+
+&lt;p&gt;Bug or error analysis.&lt;br /&gt;
+This world is built on causality, cause and effect.&lt;br /&gt;
+Root cause -&amp;gt; series of causes and effects -&amp;gt; bug.&lt;br /&gt;
+What is debugging? It&amp;rsquo;s &lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;.&lt;br /&gt;
+We infer the root cause with observations.&lt;br /&gt;
+Observations -&amp;gt; Infer -&amp;gt; Causes -&amp;gt; Increase obsevability -&amp;gt; more observations -&amp;gt; &amp;hellip; -&amp;gt; Root causes&lt;/p&gt;
+
+&lt;h2 id=&#34;performance-issues-vs-error-issues&#34;&gt;Performance issues vs Error issues&lt;/h2&gt;
+
+&lt;p&gt;Performance issues: bottleneck&lt;br /&gt;
+Error issues: crash, lockup&lt;/p&gt;
+
+&lt;h2 id=&#34;error-issues-analysis-methodology&#34;&gt;Error issues analysis - methodology&lt;/h2&gt;
+
+&lt;h3 id=&#34;execution-id&#34;&gt;Execution ID&lt;/h3&gt;
+
+&lt;p&gt;Stack backtrace&lt;br /&gt;
+PID, TID. Interrupt/execption number or hanlder,&lt;/p&gt;
+
+&lt;h3 id=&#34;structuralism-concurrency-life-cycle-lock&#34;&gt;Structuralism: concurrency, life cycle, lock.&lt;/h3&gt;
+
+&lt;p&gt;Expected/intended behavior vs actual behavior.&lt;/p&gt;
+
+&lt;h3 id=&#34;timeline-put-observations-on-a-timeline&#34;&gt;Timeline - put observations on a timeline&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://bugzilla.suse.com/show_bug.cgi?id=1163735&#34;&gt;IO hang issue at OS layer&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;observations-todo&#34;&gt;Observations #TODO&lt;/h1&gt;
+
+&lt;h1 id=&#34;inference&#34;&gt;Inference&lt;/h1&gt;
+
+&lt;h2 id=&#34;scientific-method-hypothses-narrow-down&#34;&gt;Scientific method: Hypothses, narrow down&lt;/h2&gt;
+
+&lt;h1 id=&#34;causes&#34;&gt;Causes&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.infradead.org/~mchehab/kernel_docs/dev-tools/kcsan.html#data-races&#34;&gt;Data-race from kernel&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/804813/&#34;&gt;Race conditions vs. data races&lt;/a&gt;&lt;br /&gt;
+Instruction fetch fault: exception RIP: unknown or invalid address&lt;/p&gt;
+
+&lt;h1 id=&#34;increase-observability-based-on-causes-more-tools-need-to-be-created&#34;&gt;Increase observability based on causes - more tools need to be created.&lt;/h1&gt;
+
+&lt;p&gt;Data-race detector: &lt;a href=&#34;https://lwn.net/Articles/816850/&#34;&gt;Concurrency bugs should fear the big bad data-race detector (part 1)&lt;/a&gt;&lt;br /&gt;
+Race condition detector: e.g. &lt;a href=&#34;https://www.redhat.com/archives/crash-utility/2007-September/msg00002.html&#34;&gt;the rb-tree race detector used in bsc#1167133&lt;/a&gt;&lt;br /&gt;
+Instruction fetch fault: Prevent page fault handler from overwriting unwound stack frames. See attachment &lt;a href=&#34;http://bugzilla.suse.com/show_bug.cgi?id=1154385&#34;&gt;System crashing daily around midnight with unable to handle kernel paging request&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;bug-classifications&#34;&gt;Bug classifications&lt;/h1&gt;
 
@@ -1743,45 +1612,10 @@ buffer overflow:&lt;br /&gt;
 unknown source memory corruption: The generic &amp;ldquo;memory corruption&amp;rdquo;.&lt;br /&gt;
 memory leak:&lt;/p&gt;
 
-&lt;h3 id=&#34;phonomenon&#34;&gt;Phonomenon&lt;/h3&gt;
-
-&lt;p&gt;Invalid page fault(including NULL pointer dereference)&lt;/p&gt;
-
-&lt;h1 id=&#34;debugging&#34;&gt;Debugging&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Abductive_reasoning#Logic-based_abduction&#34;&gt;Abductive reasoning&lt;/a&gt;&lt;br /&gt;
-Every bug belons to a known type.&lt;/p&gt;
-
-&lt;h2 id=&#34;steps-according-to-observations-narrow-down-hypothses-successive-approximation&#34;&gt;Steps according to observations, narrow down Hypothses, successive approximation&lt;/h2&gt;
-
-&lt;p&gt;Scientific method&lt;/p&gt;
-
-&lt;h2 id=&#34;get-observations-and-analysis-data&#34;&gt;Get observations and analysis data&lt;/h2&gt;
-
-&lt;p&gt;observation.log&lt;br /&gt;
-Data: whole structure, list corruption;life cycle; which part is ok and which part is wrong, Data connections&lt;br /&gt;
-call paths: related&lt;/p&gt;
-
-&lt;h2 id=&#34;think-backward&#34;&gt;Think backward&lt;/h2&gt;
-
-&lt;p&gt;How far from symptom to root cause could we think?&lt;br /&gt;
-Missing cause:&lt;/p&gt;
-
-&lt;h2 id=&#34;known-bug-types-assumptions&#34;&gt;Known bug types assumptions&lt;/h2&gt;
-
-&lt;p&gt;Mix up Bug types, observations and related all paths&lt;/p&gt;
-
-&lt;h2 id=&#34;connect-to-programming-skills&#34;&gt;Connect to programming skills.&lt;/h2&gt;
-
 &lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
 
-&lt;ul&gt;
-&lt;li&gt;Syntax checking&lt;br /&gt;
-gcc -Wall&lt;br /&gt;
-bash -n&lt;br /&gt;&lt;/li&gt;
-&lt;li&gt;static code analysis&lt;br /&gt;
-smatch&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;Syntax checking: gcc -Wall, bash -n&lt;br /&gt;
+static code analysis: smatch&lt;/p&gt;
 </description>
     </item>
     
@@ -1793,24 +1627,40 @@ smatch&lt;br /&gt;&lt;/li&gt;
       <guid>http://firoyang.org/cs/programming/</guid>
       <description>
 
-&lt;h1 id=&#34;assembly-programming&#34;&gt;Assembly programming&lt;/h1&gt;
+&lt;h1 id=&#34;computer-programming&#34;&gt;Computer programming&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://www.bravegnu.org/gnu-eprog/&#34;&gt;Vijay Kumar B&amp;rsquo;s Embedded Programming with the GNU Toolchain&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/questions/38041478/int-10h-not-working-in-qemu&#34;&gt;Bootloader with qemu&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://www.cs.princeton.edu/~bwk/tpop.webpage/&#34;&gt;The practice of programming&lt;/a&gt;, &lt;a href=&#34;http://www.ccs.neu.edu/home/matthias/HtDP2e/&#34;&gt;How to design programs&lt;/a&gt;, &lt;a href=&#34;http://sarabander.github.io/sicp/&#34;&gt;SICP&lt;/a&gt;, and Elements of programming.&lt;br /&gt;
+Reentrancy&lt;/p&gt;
 
-&lt;h1 id=&#34;basic-conceptions&#34;&gt;Basic conceptions&lt;/h1&gt;
+&lt;h1 id=&#34;concurrent-programming&#34;&gt;Concurrent programming&lt;/h1&gt;
 
-&lt;p&gt;Reentrancy&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Firo: must thinking summary: EW Dijkstra: Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
+CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
+Parallel and Concurrent Programming in Haskell&lt;br /&gt;
+The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
+&lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://talks.golang.org/2012/concurrency.slide#6&#34;&gt;Rob Pike: Concurrency is the composition of independently executing computations.&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;cps&#34;&gt;CPS&lt;/h1&gt;
+&lt;h2 id=&#34;asynchrony-computer-programming-https-en-wikipedia-org-wiki-asynchrony-computer-programming&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Asynchrony_(computer_programming)&#34;&gt;Asynchrony (computer programming)&lt;/a&gt;&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://spin.atomicobject.com/2012/11/01/hey-c-is-a-functional-language-too/&#34;&gt;https://spin.atomicobject.com/2012/11/01/hey-c-is-a-functional-language-too/&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Direct_style&#34;&gt;https://en.wikipedia.org/wiki/Direct_style&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;process-vs-event&#34;&gt;process vs event&lt;/h2&gt;
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf&#34;&gt;thread vs event&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;lock-free-programming&#34;&gt;Lock-free programming&lt;/h1&gt;
+
+&lt;p&gt;ring buffer, rcu&lt;/p&gt;
+
+&lt;h1 id=&#34;functional-programming&#34;&gt;Functional programming&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://spin.atomicobject.com/2012/11/01/hey-c-is-a-functional-language-too/&#34;&gt;CPS in C&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Direct_style&#34;&gt;Continuation-passing style&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;programming-principles&#34;&gt;programming principles&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://en.wikipedia.org/wiki/Category:Programming_principles&#34;&gt;Programming principles&lt;/a&gt;&lt;br /&gt;
-programming principles&lt;br /&gt;
 High cohesion low coupling&lt;/p&gt;
 
 &lt;h1 id=&#34;design-pattern&#34;&gt;Design pattern&lt;/h1&gt;
@@ -1822,11 +1672,7 @@ High cohesion low coupling&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.cyberiapc.com/os/ipc_whatisit.htm&#34;&gt;Busy waiting vs blocking&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;computer-programming&#34;&gt;Computer programming&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.cs.princeton.edu/~bwk/tpop.webpage/&#34;&gt;The practice of programming&lt;/a&gt;, &lt;a href=&#34;http://www.ccs.neu.edu/home/matthias/HtDP2e/&#34;&gt;How to design programs&lt;/a&gt;, &lt;a href=&#34;http://sarabander.github.io/sicp/&#34;&gt;SICP&lt;/a&gt;, and Elements of programming.&lt;/p&gt;
-
-&lt;h1 id=&#34;files-sytle&#34;&gt;Files sytle&lt;/h1&gt;
+&lt;h1 id=&#34;project-engineering&#34;&gt;Project engineering&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lists.kernelnewbies.org/pipermail/kernelnewbies/2012-March/004986.html&#34;&gt;kernel asm/asm-generic&lt;/a&gt;&lt;br /&gt;
 asm stands for arch specific macros(FIXME).&lt;/p&gt;
@@ -1838,35 +1684,6 @@ asm stands for arch specific macros(FIXME).&lt;/p&gt;
 * Label&lt;br /&gt;
 It is considered to be safer that the label reflect what happens at the&lt;br /&gt;
 destination, and not the reason for reaching the label. &amp;ndash;Julia&lt;/p&gt;
-
-&lt;h1 id=&#34;verification-and-validation&#34;&gt;Verification and validation&lt;/h1&gt;
-
-&lt;p&gt;抽象的知识来自生活经验的总结, 所以学习抽象知识的重要方向是从实践不断总结抽象.&lt;br /&gt;
-programming is a goal-oriented activity&lt;br /&gt;
-14.4&lt;br /&gt;
-Before attempting to solve a problem, make absolutely sure you  what the problem is.&lt;br /&gt;
-14.5&lt;br /&gt;
-Before developing a program, make precise and refine the pre/postcondition.&lt;br /&gt;
-program -&amp;gt;&lt;br /&gt;
-{Q} S {R}: predicte, formal notation&lt;br /&gt;
-Q: input asseration&lt;br /&gt;
-R: output asseration&lt;br /&gt;
-predictes -&amp;gt; asseration&lt;br /&gt;
-asseration: a predicate placed in a program is called an asseration.&lt;br /&gt;
-Proof outline: a program together with an asseration between each pair of statements&lt;br /&gt;
-Program specification ⊃ excution ∪ speed ∪ size&lt;br /&gt;
-Instances: summation, squre root approximation, sorting&lt;br /&gt;
-command-comment ⊃ all input ∪ output&lt;/p&gt;
-
-&lt;h1 id=&#34;lock-free-programming&#34;&gt;Lock-free programming&lt;/h1&gt;
-
-&lt;p&gt;ring buffer, rcu&lt;/p&gt;
-
-&lt;h1 id=&#34;testing&#34;&gt;Testing&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://googletesting.blogspot.com/&#34;&gt;Google testing blog&lt;/a&gt;&lt;br /&gt;
-1.Black-box testing test software function.&lt;br /&gt;
-2.White-box testing test software internal logic.&lt;/p&gt;
 
 &lt;h1 id=&#34;good-taste&#34;&gt;Good taste&lt;/h1&gt;
 
@@ -1911,11 +1728,16 @@ command-comment ⊃ all input ∪ output&lt;/p&gt;
     
     <item>
       <title>The computing process</title>
-      <link>http://firoyang.org/cs/process/</link>
+      <link>http://firoyang.org/cs/task/</link>
       <pubDate>Fri, 27 Feb 2015 15:46:12 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/process/</guid>
+      <guid>http://firoyang.org/cs/task/</guid>
       <description>
+
+&lt;h1 id=&#34;timestamp&#34;&gt;Timestamp&lt;/h1&gt;
+
+&lt;p&gt;se.sum_exec_runtime                          :             0.036973&lt;br /&gt;
+se.avg.last_update_time                      :           1884199936&lt;/p&gt;
 
 &lt;h1 id=&#34;pid&#34;&gt;Pid&lt;/h1&gt;
 

@@ -16,7 +16,7 @@
  
 <meta property="og:type" content="article"/>
 <meta property="og:description" content=""/>
-<meta property="og:title" content="The computing processes : firoyang.org"/>
+<meta property="og:title" content="The computing process : firoyang.org"/>
 <meta property="og:site_name" content="Firo Website"/>
 <meta property="og:image" content="" />
 <meta property="og:image:type" content="image/jpeg" />
@@ -35,7 +35,7 @@
 
 
     <base href="http://firoyang.org/">
-    <title> The computing processes</title>
+    <title> The computing process</title>
     <link rel="canonical" href="http://firoyang.org/cs/task/">
 
     
@@ -156,7 +156,7 @@
     <script>hljs.initHighlightingOnLoad();</script>
 	<section id="main">
 
-	  <h1 itemprop="name" id="title" style="color:#B22222;" >The computing processes</h1>
+	  <h1 itemprop="name" id="title" style="color:#B22222;" >The computing process</h1>
 	  
 
 <aside id="meta">
@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="186">
+<meta itemprop="wordCount" content="396">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/task/">
 
@@ -187,26 +187,85 @@
 		<article itemprop="articleBody" id="content">
 		   
 
-<h1 id="formal-cause">Formal cause</h1>
+<h1 id="timestamp">Timestamp</h1>
 
-<p><a href="http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf">thread vs event</a></p>
+<p>se.sum_exec_runtime                          :             0.036973<br />
+se.avg.last_update_time                      :           1884199936</p>
 
-<h2 id="pid">PID</h2>
+<h1 id="pid">Pid</h1>
 
-<p><a href="https://lwn.net/Articles/606925/">PIDTYPE_PID</a><br />
+<p><a href="https://lwn.net/Articles/531419/">Namespaces in operation, part 3: PID namespaces</a><br />
+<a href="https://lwn.net/Articles/606925/">PID, PGID, SID, PIDTYPE_PID</a><br />
 task-&gt;pid: thread id: unique<br />
 task-&gt;tgid: task group id: child thread share parent&rsquo;s tgid<br />
 Check copy_process</p>
 
-<h1 id="kthread-kernel-thread">kthread - Kernel thread</h1>
+<h1 id="stack-management">stack management</h1>
+
+<p><a href="https://lwn.net/Articles/600644/">Expanding the kernel stack</a><br />
+<a href="https://lwn.net/Articles/692208/">Virtually mapped kernel stacks</a></p>
+
+<p>Related code:<br />
+task_struct-&gt;stack:task_stack_page<br />
+task_struct-&gt;thread.sp: top of stack<br />
+kernel_stack, cpu_current_top_of_stack</p>
+
+<h2 id="x86-tss-and-sp0">x86 TSS and sp0</h2>
+
+<p><a href="https://lore.kernel.org/patchwork/patch/828764/">x86/entry/64: Remove thread_struct::sp0</a>:d375cf1530595e33961a8844192cddab913650e3<br />
+GDT -&gt; TSS descriptor -&gt; TSS<br />
+tss_struct cpu_tss, ltr, str<br />
+TSS: x86_hw_tss v3a: 7.7</p>
+
+<h3 id="onset">Onset</h3>
+
+<p>arch/x86/include/asm/desc.h<br />
+DECLARE_PER_CPU_PAGE_ALIGNED(struct gdt_page, gdt_page);        #===&gt; GDT<br />
+arch/x86/kernel/process.c<br />
+DEFINE_PER_CPU_SHARED_ALIGNED(struct tss_struct, cpu_tss)       #===&gt; tss_struct<br />
+start_kernel &hellip; -&gt;start_secondary and trap_init-&gt;<br />
+cpu_init<br />
+        t-&gt;x86_tss.io_bitmap_base = offsetof(struct tss_struct, io_bitmap);<br />
+        load_sp0(t, &amp;current-&gt;thread);  #===&gt; tss-&gt;x86_tss.sp0 = thread-&gt;sp0<br />
+        set_tss_desc(cpu, t);           #===&gt; set tss descriptor to GDT; tss descriptor.base = tss_struct<br />
+        load_TR_desc();                 #===&gt; ltr<br />
+_do_fork -&gt; copy_process<br />
+        dup_task_struct<br />
+                stack = alloc_thread_stack_node(tsk, node);             # ===&gt; THREAD_SIZE 2 pages.<br />
+                tsk-&gt;stack = stack;<br />
+        copy_thread_tls<br />
+                # arch/x86/include/asm/processor.h<br />
+                # #define task_pt_regs(tsk)       ((struct pt_regs *)(tsk)-&gt;thread.sp0 - 1)<br />
+                p-&gt;thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;        # task-&gt;stack; THREAD_SIZE 2 pages;<br />
+                childregs = task_pt_regs(p);<br />
+                # struct fork_frame {<br />
+                #       struct inactive_task_frame frame;<br />
+                #       struct pt_regs regs;<br />
+                # };<br />
+                fork_frame = container_of(childregs, struct fork_frame, regs);<br />
+                p-&gt;thread.sp = (unsigned long) fork_frame;<br />
+                *childregs = *current_pt_regs();<br />
+        # Add child task to run_queue. Then scheded.<br />
+__switch_to -&gt; load_sp0(tss, next);</p>
+
+<h3 id="nuclus">nuclus</h3>
+
+<p>entry_SYSCALL_64 -&gt; movq    PER_CPU_VAR(cpu_current_top_of_stack), %rsp</p>
+
+<h2 id="idle-threads-and-their-kernel-stack">idle threads and their kernel stack</h2>
+
+<p>Boot processor&rsquo;s idle thread kernel stack is init/init_task.c:init_thread_union; init_task is pid 0;<br />
+Application processor&rsquo;s idle thread are forked in idle_init; pids are both 0.</p>
+
+<h1 id="kthread">kthread</h1>
 
 <p><a href="https://www.kernel.org/doc/Documentation/vm/active_mm.txt">active_mm</a><br />
 kernel_thead-&gt;kthread-&gt;do_exit<br />
-#define PF_KTHREAD              0x00200000<br />
-#define PF_KSWAPD               0x00020000<br />
-#define PF_IDLE                 0x00000002      /* I am an IDLE thread <em>/<br />
-#define PF_VCPU                 0x00000010      /</em> I&rsquo;m a virtual CPU <em>/<br />
-#define PF_WQ_WORKER            0x00000020      /</em> I&rsquo;m a workqueue worker */<br />
+PF_KTHREAD              0x00200000<br />
+PF_KSWAPD               0x00020000<br />
+PF_IDLE                 0x00000002      /* I am an IDLE thread <em>/<br />
+PF_VCPU                 0x00000010      /</em> I&rsquo;m a virtual CPU <em>/<br />
+PF_WQ_WORKER            0x00000020      /</em> I&rsquo;m a workqueue worker */<br />
 PID: 197    TASK: ffff8bc8dd350480  CPU: 0   COMMAND: &ldquo;kswapd0&rdquo;<br />
   flags = 0xa20840,<br />
 PID: 19     TASK: ffff8bc214160780  CPU: 1   COMMAND: &ldquo;kworker/1:0H&rdquo;<br />
@@ -217,41 +276,36 @@ PID: 0      TASK: ffffffff880134c0  CPU: 0   COMMAND: &ldquo;swapper/0&rdquo;<br
 PID: 0      TASK: ffff8bc21476c500  CPU: 14  COMMAND: &ldquo;swapper/14&rdquo;<br />
   flags = 0x200042,</p>
 
-<h2 id="task-kthread">task =&gt; kthread</h2>
+<h2 id="task-to-kthread">task to kthread</h2>
 
 <p>to_kthread and vfork_done<br />
 commit 63706172f332fd3f6e7458ebfb35fa6de9c21dc5<br />
 Author: Oleg Nesterov <a href="mailto:oleg@redhat.com">oleg@redhat.com</a><br />
-Date:   Wed Jun 17 16:27:45 2009 -0700</p>
+Date:   Wed Jun 17 16:27:45 2009 -0700<br />
+kthreads: rework kthread_stop()</p>
 
-<h2 id="kthread-and-worker">kthread and worker</h2>
+<h1 id="exit">exit</h1>
 
-<p>kthread-&gt;data</p>
+<p>Zombie process <defunct><br />
+forked child not reaped by parent will hooked in process list.<br />
+if parent was killed and exit <defunct> will repaped.</p>
 
-<h2 id="worker-is-rescuer">worker is rescuer?</h2>
+<h1 id="wait">wait</h1>
 
-<p>current_is_workqueue_rescuer and worker-&gt;rescue_wq</p>
+<p>proc_evict_inode at ffffffff812696fd<br />
+evict at ffffffff8121cded<br />
+__dentry_kill at ffffffff812194b6<br />
+shrink_dentry_list at ffffffff8121a0c0<br />
+d_invalidate at ffffffff8121a8c8<br />
+proc_flush_task at ffffffff8126e609<br />
+release_task at ffffffff81081230  # wait_task_zombie<br />
+wait_consider_task at ffffffff81081c19<br />
+do_wait at ffffffff8108226d</p>
 
-<h1 id="insepct-process-status">Insepct process status</h1>
+<h1 id="observation">Observation</h1>
 
 <p>do_task_stat<br />
 Kernel mapping: tgid_base_stuff show_map_vma</p>
-
-<h1 id="protection">Protection</h1>
-
-<p>3A: Chaper 5</p>
-
-<h2 id="idle-kernel-stack">idle kernel stack</h2>
-
-<p>master idle进程的kernel stack在init/init_task.c:init_thread_union<br />
-this_cpu_write(kernel_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);<br />
-this_cpu_write(cpu_current_top_of_stack,(unsigned long)task_stack_page(next_p) +THREAD_SIZE);<br />
-主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0 init_idle.</p>
-
-<h1 id="zombie-process-defunct">Zombie process <defunct></h1>
-
-<p>forked child not reaped by parent will hooked in process list.<br />
-if parent was killed and exit <defunct> will repaped.</p>
 
 		</article>
 	  </div>
@@ -263,7 +317,7 @@ if parent was killed and exit <defunct> will repaped.</p>
 <script type="text/javascript">
     var disqus_shortname = 'firoyang';
     var disqus_identifier = 'http:\/\/firoyang.org\/cs\/task\/';
-    var disqus_title = 'The computing processes';
+    var disqus_title = 'The computing process';
     var disqus_url = 'http:\/\/firoyang.org\/cs\/task\/';
 
     (function() {

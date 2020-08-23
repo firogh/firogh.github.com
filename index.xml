@@ -17,6 +17,12 @@
       <guid>http://firoyang.org/cs/page_allocator/</guid>
       <description>
 
+&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+
+&lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/627419/&#34;&gt;The &amp;ldquo;too small to fail&amp;rdquo; memory-allocation rule&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/723317/&#34;&gt;Revisiting &amp;ldquo;too small to fail&amp;rdquo;&lt;/a&gt;&lt;/p&gt;
+
 &lt;h1 id=&#34;track-buddy-memory-system-1963-1965&#34;&gt;track: buddy memory system 1963 ~ 1965&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
@@ -48,27 +54,70 @@ setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = pagi
 &lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
         mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;cpu-set&#34;&gt;CPU set&lt;/h1&gt;
 
-&lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
-
-&lt;h2 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://patchwork.kernel.org/patch/10013971/&#34;&gt;mm, Remove cold parameter from free_hot_cold_page*&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/717797/&#34;&gt;Cpusets and memory policies&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;gfp-flags&#34;&gt;GFP flags&lt;/h1&gt;
 
-&lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d - Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
+&lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
 __GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
 
-&lt;h1 id=&#34;free&#34;&gt;Free&lt;/h1&gt;
+&lt;h2 id=&#34;gfp-zone-table&#34;&gt;GFP ZONE table&lt;/h2&gt;
 
-&lt;h2 id=&#34;page-state&#34;&gt;page state&lt;/h2&gt;
+&lt;p&gt;commit b70d94ee438b3fd9c15c7691d7a932a135c18101&lt;br /&gt;
+Refs: v2.6.30-5489-gb70d94ee438b&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:cl@linux.com&#34;&gt;cl@linux.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Jun 16 15:32:46 2009 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue Jun 16 19:47:41 2009 -0700&lt;br /&gt;
+    page-allocator: use integer fields lookup for gfp_zone and check for errors in flags passed to the page allocator&lt;br /&gt;
++ * GFP_ZONE_TABLE is a word size bitstring that is used for looking up the&lt;br /&gt;
++ * zone to use given the lowest 4 bits of gfp_t. Entries are ZONE_SHIFT long&lt;br /&gt;
++ * and there are 16 of them to cover all possible combinations of&lt;br /&gt;
++ * __GFP_DMA, __GFP_DMA32, __GFP_MOVABLE and __GFP_HIGHMEM&lt;br /&gt;
++ *&lt;br /&gt;
++ * The zone fallback order is MOVABLE=&amp;gt;HIGHMEM=&amp;gt;NORMAL=&amp;gt;DMA32=&amp;gt;DMA.&lt;br /&gt;
++ * But GFP_MOVABLE is not only a zone specifier but also an allocation&lt;br /&gt;
++ * policy. Therefore __GFP_MOVABLE plus another zone selector is valid.&lt;br /&gt;
++ * Only 1bit of the lowest 3 bit (DMA,DMA32,HIGHMEM) can be set to &amp;ldquo;1&amp;rdquo;.&lt;br /&gt;
++ *&lt;br /&gt;
++ *       bit       result&lt;br /&gt;
++ *       =================&lt;br /&gt;
++ *       0x0    =&amp;gt; NORMAL&lt;br /&gt;
++ *       0x1    =&amp;gt; DMA or NORMAL&lt;br /&gt;
++ *       0x2    =&amp;gt; HIGHMEM or NORMAL&lt;br /&gt;
++ *       0x3    =&amp;gt; BAD (DMA+HIGHMEM)&lt;br /&gt;
++ *       0x4    =&amp;gt; DMA32 or DMA or NORMAL&lt;br /&gt;
++ *       0x5    =&amp;gt; BAD (DMA+DMA32)&lt;br /&gt;
++ *       0x6    =&amp;gt; BAD (HIGHMEM+DMA32)&lt;br /&gt;
++ *       0x7    =&amp;gt; BAD (HIGHMEM+DMA32+DMA)&lt;br /&gt;
++ *       0x8    =&amp;gt; NORMAL (MOVABLE+0)&lt;br /&gt;
++ *       0x9    =&amp;gt; DMA or NORMAL (MOVABLE+DMA)&lt;br /&gt;
++ *       0xa    =&amp;gt; MOVABLE (Movable is valid only if HIGHMEM is set too)&lt;br /&gt;
++ *       0xb    =&amp;gt; BAD (MOVABLE+HIGHMEM+DMA)&lt;br /&gt;
++ *       0xc    =&amp;gt; DMA32 (MOVABLE+HIGHMEM+DMA32)&lt;br /&gt;
++ *       0xd    =&amp;gt; BAD (MOVABLE+DMA32+DMA)&lt;br /&gt;
++ *       0xe    =&amp;gt; BAD (MOVABLE+DMA32+HIGHMEM)&lt;br /&gt;
++ *       0xf    =&amp;gt; BAD (MOVABLE+DMA32+HIGHMEM+DMA)&lt;/p&gt;
 
-&lt;p&gt;page_expected_state and check_new_page, page_mapcount_reset&lt;/p&gt;
+&lt;h1 id=&#34;alloc-flags&#34;&gt;Alloc flags&lt;/h1&gt;
+
+&lt;p&gt;gfp_to_alloc_flags&lt;br /&gt;
+ALLOC_HIGH: __zone_watermark_ok(): if (alloc_flags &amp;amp; ALLOC_HIGH) min -= min / 2;&lt;br /&gt;
+ALLOC_HARDER: rmqueue(): if (alloc_flags &amp;amp; ALLOC_HARDER) { page = __rmqueue_smallest(zone, order, MIGRATE_HIGHATOMIC);&lt;/p&gt;
+
+&lt;h1 id=&#34;high-order-atomic-allocations&#34;&gt;high-order atomic allocations&lt;/h1&gt;
+
+&lt;p&gt;commit 0aaa29a56e4fb0fc9e24edb649e2733a672ca099&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@techsingularity.net&#34;&gt;mgorman@techsingularity.net&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 6 16:28:37 2015 -0800&lt;br /&gt;
+    mm, page_alloc: reserve pageblocks for high-order atomic allocations on demand&lt;/p&gt;
+
+&lt;h1 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://patchwork.kernel.org/patch/10013971/&#34;&gt;mm, Remove cold parameter from free_hot_cold_page*&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;do-anonymous-page-zero-page&#34;&gt;Do anonymous page, zero page&lt;/h1&gt;
 
@@ -111,7 +160,186 @@ core_initcall(init_per_zone_wmark_min) -&amp;gt;&lt;br /&gt;
         WMARK_LOW = 1.25 * min or min + &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;1000&lt;/sub&gt; * zone.managed_pages&lt;br /&gt;
         WMARK_HIGH = 1.5 * min or min + &lt;sup&gt;2&lt;/sup&gt;&amp;frasl;&lt;sub&gt;1000&lt;/sub&gt; * zone.managed_pages&lt;br /&gt;
 }&lt;br /&gt;
-if min_free_kbytes &amp;gt; &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;250&lt;/sub&gt;*total mamanged_pages, we use 1.25 min or 1.5 min&lt;/p&gt;
+if min_free_kbytes &amp;gt; &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;250&lt;/sub&gt;*total mamanged_pages, we use 1.25 min or 1.5 min&lt;br /&gt;
+low for normal path&lt;br /&gt;
+min for slow path&lt;/p&gt;
+
+&lt;p&gt;if low is reached (i.e. slow path) wakeup __GFP_KSWAPD_RECLAIM&lt;/p&gt;
+
+&lt;h1 id=&#34;vm-event-item&#34;&gt;vm_event_item&lt;/h1&gt;
+
+&lt;p&gt;commit e177ea28e7eded3490174487c81e5bef8a2c4d95&lt;br /&gt;
+Author:     Andrew Morton &lt;a href=&#34;mailto:akpm@zip.com.au&#34;&gt;akpm@zip.com.au&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Thu Jul 18 21:09:17 2002 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@home.transmeta.com&#34;&gt;torvalds@home.transmeta.com&lt;/a&gt;&lt;br /&gt;
+CommitDate: Thu Jul 18 21:09:17 2002 -0700&lt;br /&gt;
+    [PATCH] VM instrumentation&lt;br /&gt;
+    A patch from Rik which adds some operational statitics to the VM.&lt;br /&gt;
+    In /proc/meminfo:&lt;br /&gt;
+    PageTables:     Amount of memory used for process pagetables&lt;br /&gt;
+    PteChainTot:    Amount of memory allocated for pte_chain objects&lt;br /&gt;
+    PteChainUsed:   Amount of memory currently in use for pte chains.&lt;br /&gt;
+    In /proc/stat:&lt;br /&gt;
+    pageallocs:     Number of pages allocated in the page allocator&lt;br /&gt;
+    pagefrees:      Number of pages returned to the page allocator&lt;br /&gt;
+                    (These can be used to measure the allocation rate)&lt;br /&gt;
+    pageactiv:      Number of pages activated (moved to the active list)&lt;br /&gt;
+    pagedeact:      Number of pages deactivated (moved to the inactive list)&lt;br /&gt;
+    pagefault:      Total pagefaults&lt;br /&gt;
+    majorfault:     Major pagefaults&lt;br /&gt;
+    pagescan:       Number of pages which shrink_cache looked at&lt;br /&gt;
+    pagesteal:      Number of pages which shrink_cache freed&lt;br /&gt;
+    pageoutrun:     Number of calls to try_to_free_pages()&lt;br /&gt;
+    allocstall:     Number of calls to balance_classzone()      # direct relaim do_try_to_free_pages&lt;/p&gt;
+
+&lt;h1 id=&#34;root-cause-for-reclaim&#34;&gt;Root cause for reclaim&lt;/h1&gt;
+
+&lt;p&gt;Node:&lt;/p&gt;
+
+&lt;h1 id=&#34;priority&#34;&gt;Priority&lt;/h1&gt;
+
+&lt;p&gt;Smantics in PLKA&lt;br /&gt;
+commit 9e3b2f8cd340e13353a44c9a34caef2848131ed7&lt;br /&gt;
+Refs: u3.4-8606-g9e3b2f8cd340&lt;br /&gt;
+Author:     Konstantin Khlebnikov &lt;a href=&#34;mailto:khlebnikov@openvz.org&#34;&gt;khlebnikov@openvz.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue May 29 15:06:57 2012 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Tue May 29 16:22:26 2012 -0700&lt;br /&gt;
+    mm/vmscan: store &amp;ldquo;priority&amp;rdquo; in struct scan_control&lt;br /&gt;
+DEF_PRIORITY vs NODE_RECLAIM_PRIORITY(old ZONE_RECLAIM_PRIORITY)&lt;/p&gt;
+
+&lt;h1 id=&#34;scan-control-may-unmap-vs-may-swap&#34;&gt;Scan control: may_unmap vs may_swap&lt;/h1&gt;
+
+&lt;p&gt;a6dc60f8975a (&amp;ldquo;vmscan: rename sc.may_swap to may_unmap&amp;rdquo;)&lt;br /&gt;
+2e2e42598908 (&amp;ldquo;vmscan,memcg: reintroduce sc-&amp;gt;may_swap&amp;rdquo;) reintroduced .may_swap for memory controller.&lt;br /&gt;
+See RECLAIM_UNMAP for understanding may_unmap&lt;/p&gt;
+
+&lt;h1 id=&#34;node-old-zone-reclaim&#34;&gt;Node(old zone) reclaim&lt;/h1&gt;
+
+&lt;p&gt;See zone_reclaim_mode in Documentation/admin-guide/sysctl/vm.rst&lt;br /&gt;
+commit 9eeff2395e3cfd05c9b2e6074ff943a34b0c5c21&lt;br /&gt;
+Refs: v2.6.16-rc1-169-g9eeff2395e3c&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Jan 18 17:42:31 2006 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Jan 18 19:20:17 2006 -0800&lt;br /&gt;
+    [PATCH] Zone reclaim: Reclaim logic&lt;br /&gt;
+[&amp;hellip;]&lt;br /&gt;
+commit 9eeff2395e3cfd05c9b2e6074ff943a34b0c5c21&lt;br /&gt;
+Refs: v2.6.16-rc1-169-g9eeff2395e3c&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Jan 18 17:42:31 2006 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Jan 18 19:20:17 2006 -0800&lt;br /&gt;
+    [PATCH] Zone reclaim: Reclaim logic&lt;br /&gt;
+    Some bits for zone reclaim exists in 2.6.15 but they are not usable.  This&lt;br /&gt;
+    patch fixes them up, removes unused code and makes zone reclaim usable.&lt;br /&gt;
+    Zone reclaim allows the reclaiming of pages from a zone if the number of&lt;br /&gt;
+    free pages falls below the watermarks even if other zones still have enough&lt;br /&gt;
+    pages available.  Zone reclaim is of particular importance for NUMA&lt;br /&gt;
+    machines.  It can be more beneficial to reclaim a page than taking the&lt;br /&gt;
+    performance penalties that come with allocating a page on a remote zone.&lt;br /&gt;
+    Zone reclaim is enabled if the maximum distance to another node is higher&lt;br /&gt;
+    than RECLAIM_DISTANCE, which may be defined by an arch.  By default&lt;br /&gt;
+    RECLAIM_DISTANCE is 20.  20 is the distance to another node in the same&lt;br /&gt;
+    component (enclosure or motherboard) on IA64.  The meaning of the NUMA&lt;br /&gt;
+    distance information seems to vary by arch.&lt;/p&gt;
+
+&lt;h2 id=&#34;reclaim-write-and-reclaim-swap&#34;&gt;RECLAIM_WRITE and RECLAIM_SWAP&lt;/h2&gt;
+
+&lt;p&gt;caching effect vs data locality&lt;br /&gt;
+commit 1b2ffb7896ad46067f5b9ebf7de1891d74a4cdef&lt;br /&gt;
+Refs: v2.6.16-rc1-635-g1b2ffb7896ad&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@engr.sgi.com&#34;&gt;clameter@engr.sgi.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Feb 1 03:05:34 2006 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Feb 1 08:53:16 2006 -0800&lt;br /&gt;
+    [PATCH] Zone reclaim: Allow modification of zone reclaim behavior&lt;br /&gt;
+    In some situations one may want zone_reclaim to behave differently.  For&lt;br /&gt;
+    example a process writing large amounts of memory will spew unto other nodes&lt;br /&gt;
+    to cache the writes if many pages in a zone become dirty.  This may impact the&lt;br /&gt;
+    performance of processes running on other nodes.&lt;br /&gt;
+    Allowing writes during reclaim puts a stop to that behavior and throttles the&lt;br /&gt;
+    process by restricting the pages to the local zone.&lt;br /&gt;
+    Similarly one may want to contain processes to local memory by enabling&lt;br /&gt;
+    regular swap behavior during zone_reclaim.  Off node memory allocation can&lt;br /&gt;
+    then be controlled through memory policies and cpusets.&lt;/p&gt;
+
+&lt;h2 id=&#34;reclaim-unmap&#34;&gt;RECLAIM_UNMAP&lt;/h2&gt;
+
+&lt;p&gt;commit 95bbc0c7210a7397fec1cd219f896ca95bf29e3e&lt;br /&gt;
+Refs: v4.1-3341-g95bbc0c7210a&lt;br /&gt;
+Author:     Zhihui Zhang &lt;a href=&#34;mailto:zzhsuny@gmail.com&#34;&gt;zzhsuny@gmail.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Jun 24 16:56:42 2015 -0700&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Jun 24 17:49:42 2015 -0700&lt;br /&gt;
+    mm: rename RECLAIM_SWAP to RECLAIM_UNMAP&lt;br /&gt;
+    The name SWAP implies that we are dealing with anonymous pages only.  In&lt;br /&gt;
+    fact, the original patch that introduced the min_unmapped_ratio logic&lt;br /&gt;
+    was to fix an issue related to file pages.  Rename it to RECLAIM_UNMAP&lt;br /&gt;
+    to match what does.&lt;br /&gt;
+    Historically, commit a6dc60f8975a (&amp;ldquo;vmscan: rename sc.may_swap to&lt;br /&gt;
+    may_unmap&amp;rdquo;) renamed .may_swap to .may_unmap, leaving RECLAIM_SWAP&lt;br /&gt;
+    behind.  commit 2e2e42598908 (&amp;ldquo;vmscan,memcg: reintroduce sc-&amp;gt;may_swap&amp;rdquo;)&lt;br /&gt;
+    reintroduced .may_swap for memory controller.&lt;/p&gt;
+
+&lt;h2 id=&#34;reclaim-slab-deleted&#34;&gt;RECLAIM_SLAB(deleted)&lt;/h2&gt;
+
+&lt;p&gt;commit 2a16e3f4b0c408b9e50297d2ec27e295d490267a&lt;br /&gt;
+Refs: v2.6.16-rc1-636-g2a16e3f4b0c4&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@engr.sgi.com&#34;&gt;clameter@engr.sgi.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Wed Feb 1 03:05:35 2006 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Wed Feb 1 08:53:16 2006 -0800&lt;br /&gt;
+    [PATCH] Reclaim slab during zone reclaim&lt;br /&gt;
+    If large amounts of zone memory are used by empty slabs then zone_reclaim&lt;br /&gt;
+    becomes uneffective.  This patch shakes the slab a bit.&lt;br /&gt;
+    The problem with this patch is that the slab reclaim is not containable to a&lt;br /&gt;
+    zone.  Thus slab reclaim may affect the whole system and be extremely slow.&lt;br /&gt;
+    This also means that we cannot determine how many pages were freed in this&lt;br /&gt;
+    zone.  Thus we need to go off node for at least one allocation.&lt;br /&gt;
+    The functionality is disabled by default.&lt;br /&gt;
+    We could modify the shrinkers to take a zone parameter but that would be quite&lt;br /&gt;
+    invasive.  Better ideas are welcome.&lt;/p&gt;
+
+&lt;h2 id=&#34;min-slab-ratio&#34;&gt;min_slab_ratio&lt;/h2&gt;
+
+&lt;p&gt;commit 0ff38490c836dc379ff7ec45b10a15a662f4e5f6&lt;br /&gt;
+Author: Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
+Date:   Mon Sep 25 23:31:52 2006 -0700&lt;br /&gt;
+    [PATCH] zone_reclaim: dynamic slab reclaim&lt;/p&gt;
+
+&lt;h2 id=&#34;reclaim-unmap-1&#34;&gt;RECLAIM_UNMAP&lt;/h2&gt;
+
+&lt;h1 id=&#34;direct-reclaim&#34;&gt;Direct reclaim&lt;/h1&gt;
+
+&lt;p&gt;do_try_to_free_pages&lt;br /&gt;
+vm_event_item ALLOCSTALL&lt;/p&gt;
+
+&lt;h1 id=&#34;kswapd&#34;&gt;Kswapd&lt;/h1&gt;
+
+&lt;p&gt;balance_pgdat PAGEOUTRUN&lt;/p&gt;
+
+&lt;h1 id=&#34;pf-swapwrite-need-a-better-name-reclaimwrite&#34;&gt;PF_SWAPWRITE - Need a better name RECLAIMWRITE?&lt;/h1&gt;
+
+&lt;p&gt;Intend to block, see e386771cbbc2a90b46df2ace02214f94cc23cb50 Give kswapd writeback higher priority than pdflush&lt;br /&gt;
+So what does swap mean? See &lt;a href=&#34;https://lore.kernel.org/linux-mm/20051025193023.6828.89649.sendpatchset@schroedinger.engr.sgi.com/#r&#34;&gt;Swap Migration V4: Overview&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/157936/&#34;&gt;Swap Migration V5: Overview&lt;/a&gt;&lt;br /&gt;
+commit 930d915252edda7042c944ed3c30194a2f9fe163&lt;br /&gt;
+Refs: v2.6.15-1460-g930d915252ed&lt;br /&gt;
+Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Sun Jan 8 01:00:47 2006 -0800&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Sun Jan 8 20:12:41 2006 -0800&lt;br /&gt;
+    [PATCH] Swap Migration V5: PF_SWAPWRITE to allow writing to swap&lt;br /&gt;
+    Add PF_SWAPWRITE to control a processes permission to write to swap.&lt;br /&gt;
+    - Use PF_SWAPWRITE in may_write_to_queue() instead of checking for kswapd&lt;br /&gt;
+      and pdflush&lt;br /&gt;
+    - Set PF_SWAPWRITE flag for kswapd and pdflush&lt;/p&gt;
+
+&lt;h1 id=&#34;memory-cgroup&#34;&gt;memory cgroup&lt;/h1&gt;
+
+&lt;p&gt;set_memcg_congestion&lt;/p&gt;
 
 &lt;h1 id=&#34;zone&#34;&gt;Zone&lt;/h1&gt;
 
@@ -138,7 +366,7 @@ The index of lowmme_reserv is the prefered zoneref.zone_idx&lt;/p&gt;
 start_kernel-&amp;gt;&lt;br /&gt;
         build_all_zonelists&lt;br /&gt;
 or hotpulg or /proc/sys/vm/numa_zonelist_order: numa_zonelist_order_handler&lt;br /&gt;
-  node_zonelists = {{&lt;br /&gt;
+  node_zonelists = {{               # Fallback zones: this zonelist including all zones from all nodes.&lt;br /&gt;
       _zonerefs = {{&lt;br /&gt;
           zone = 0xffff88107ffd5d80, # node 0&lt;br /&gt;
           zone_idx = 2&lt;br /&gt;
@@ -149,27 +377,9 @@ or hotpulg or /proc/sys/vm/numa_zonelist_order: numa_zonelist_order_handler&lt;b
           zone = 0xffff88207ffd2d80, # Node 1; fallback.&lt;br /&gt;
           zone_idx = 2&lt;br /&gt;
           zone = 0x0,&lt;br /&gt;
-          zone_idx = 0&lt;/p&gt;
-
-&lt;h1 id=&#34;oom&#34;&gt;OOM&lt;/h1&gt;
-
-&lt;p&gt;dump_header(), show_mem(), dump_tasks&lt;/p&gt;
-
-&lt;h1 id=&#34;fsm&#34;&gt;FSM&lt;/h1&gt;
-
-&lt;pre&gt;&lt;code&gt;                            |===============================================================================|
-                            v                                                                               |
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Physical memory ===(free)=&amp;gt; buddy pages ==(page allocator)===&amp;gt; slab objects                                     |&lt;br /&gt;
-                        |                                                                                       |&lt;br /&gt;
-                        |===(page fault)======== PAS =========&amp;gt; Private page ====|      |===(OOM Kill)===&amp;gt;|     |&lt;br /&gt;
-                                                |                                |      |                 |     |&lt;br /&gt;
-                                                |                                | ===&amp;gt; |===(PFRA) ======&amp;gt;|     |&lt;br /&gt;
-                                                |===============&amp;gt; Shared page====|      |                 | ====|&lt;br /&gt;
-                                                                                        |===(do_unmap) ==&amp;gt;|&lt;br /&gt;
-                                                                                        |                 |&lt;br /&gt;
-                                                                                        |===(exit_mmap) =&amp;gt;|&lt;/p&gt;
+          zone_idx = 0&lt;br /&gt;
+    &amp;hellip;}}}&lt;br /&gt;
+    node_zonelists[1]           # Nofallback zones&lt;/p&gt;
 
 &lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
 
@@ -179,6 +389,35 @@ or hotpulg or /proc/sys/vm/numa_zonelist_order: numa_zonelist_order_handler&lt;b
 post_alloc_hook: init should be 0.&lt;br /&gt;
 but set_page_refcounted -&amp;gt; set_page_count(page, 1);&lt;br /&gt;
 and Check put_page&lt;/p&gt;
+
+&lt;h1 id=&#34;pfmemalloc&#34;&gt;PFMEMALLOC&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand009.html&#34;&gt;UVM&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/cover/178099/&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;br /&gt;
+ get_page_from_freelist and __ac_get_obj&lt;br /&gt;
+                 * page is set pfmemalloc is when ALLOC_NO_WATERMARKS was&lt;br /&gt;
+                 * necessary to allocate the page. The expectation is&lt;br /&gt;
+                 * that the caller is taking steps that will free more&lt;br /&gt;
+                 * memory. The caller should avoid the page being used&lt;br /&gt;
+                 * for !PFMEMALLOC purposes.&lt;br /&gt;
+                if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)&lt;br /&gt;
+                        set_page_pfmemalloc(page);&lt;br /&gt;
+&lt;a href=&#34;https://stackoverflow.com/a/40899585/1025001&#34;&gt;without being forced to write out dirty pages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;http://bbs.chinaunix.net/thread-4078724-1-1.html&#34;&gt;并不是所有进程都有的。kswapd，direct reclaim的process等在回收的时候会设置这个标志&lt;/a&gt;&lt;br /&gt;
+check __perform_reclaim and memalloc_noreclaim_save&lt;br /&gt;
+kswapd-&amp;gt; PF_MEMALLOC-&amp;gt; try to pageout some pages -&amp;gt;  allocates some page using alloc_page for pageout -&amp;gt; no memory in lowreserve -&amp;gt; goto slowpath&lt;br /&gt;
+        /* Avoid recursion of direct reclaim */&lt;br /&gt;
+        if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)&lt;br /&gt;
+                goto nopage;&lt;br /&gt;
+otherwise&lt;br /&gt;
+        &lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;Set PF_MEMALLOC.&lt;br /&gt;
+__gfp_pfmemalloc_flags&lt;br /&gt;
+                if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)&lt;br /&gt;
+                        return ALLOC_NO_WATERMARKS;&lt;br /&gt;
+commit c93bdd0e03e848555d144eb44a1f275b871a8dd5&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@suse.de&#34;&gt;mgorman@suse.de&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Jul 31 16:44:19 2012 -0700&lt;br /&gt;
+    netvm: allow skb allocation to use PFMEMALLOC reserves&lt;/p&gt;
 </description>
     </item>
     
@@ -373,6 +612,34 @@ More sunos docs: &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/suno
 &lt;a href=&#34;https://en.wikipedia.org/wiki/Memory-mapped_file#History&#34;&gt;SunOS 4[4] introduced Unix&amp;rsquo;s mmap, which permitted programs &amp;ldquo;to map files into memory.&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
 1989&lt;br /&gt;
 One paper found in OSTEP: &lt;a href=&#34;https://courses.cs.washington.edu/courses/cse551/09sp/papers/memory_coherence.pdf&#34;&gt;Memory Coherence in Shared Virtual Memory Systems&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;shared-memory-in-kernel&#34;&gt;Shared memory in kernel&lt;/h2&gt;
+
+&lt;h3 id=&#34;initial-version&#34;&gt;Initial version&lt;/h3&gt;
+
+&lt;p&gt;history: commit 9cb9f18b5d26bf176e13edbc0c248d121217c6b3&lt;br /&gt;
+Refs: &lt;0.99.10&gt;&lt;br /&gt;
+Author:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Fri Nov 23 15:09:11 2007 -0500&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Fri Nov 23 15:09:11 2007 -0500&lt;br /&gt;
+    [PATCH] Linux-0.99.10 (June 7, 1993)&lt;br /&gt;
+Firo: search &amp;lsquo;shm_swap&amp;rsquo;&lt;/p&gt;
+
+&lt;h3 id=&#34;ramfs-based&#34;&gt;Ramfs based&lt;/h3&gt;
+
+&lt;p&gt;history: commit 4d372877c63baaaf4c1c3325cae43f6b9782e59e&lt;br /&gt;
+Refs: &lt;2.4.0-test13pre3&gt;&lt;br /&gt;
+Author:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Fri Nov 23 15:40:55 2007 -0500&lt;br /&gt;
+Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Fri Nov 23 15:40:55 2007 -0500&lt;br /&gt;
+[&amp;hellip;]&lt;br /&gt;
+    The shmfs cleanup should be unnoticeable except to users who use SAP with&lt;br /&gt;
+    huge shared memory segments, where Christoph Rohlands work not only&lt;br /&gt;
+    makes the code much more readable, it should also make it dependable..&lt;br /&gt;
+[&amp;hellip;]&lt;br /&gt;
+    - Christoph Rohland: shmfs for shared memory handling&lt;/p&gt;
 
 &lt;h1 id=&#34;mmap&#34;&gt;mmap&lt;/h1&gt;
 
@@ -671,6 +938,11 @@ Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
   (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
   (*) MMIO write barrier.&lt;/p&gt;
 
+&lt;h1 id=&#34;compiler-1&#34;&gt;Compiler&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/793253/#Load%20Tearing&#34;&gt;Who&amp;rsquo;s afraid of a big bad optimizing compiler?&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/799218/&#34;&gt;Calibrating your fear of big bad optimizing compilers&lt;/a&gt;&lt;/p&gt;
+
 &lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
 
 &lt;ul&gt;
@@ -679,7 +951,8 @@ No, there is no efects on cast a variable to volatile.&lt;br /&gt;
 Because, access variable is before volatile cast! That means you&lt;br /&gt;
 still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
 Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
-&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/508991/&#34;&gt;ACCESS_ONCE()&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
@@ -1140,80 +1413,6 @@ Date:   Sat Aug 13 12:38:19 2016 -0400&lt;br /&gt;
     sched/x86: Rewrite the switch_to() code&lt;br /&gt;
 &lt;a href=&#34;https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312&#34;&gt;Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;preemption&#34;&gt;Preemption&lt;/h1&gt;
-
-&lt;h2 id=&#34;voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259&#34;&gt;&lt;a href=&#34;https://lwn.net/Articles/137259/&#34;&gt;Voluntary Kernel Preemption, 2.6.12-rc4-mm2&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;Voluntary preemption works by adding a cond_resched()&lt;br /&gt;
-(reschedule-if-needed) call to every might_sleep() check. It is lighter&lt;br /&gt;
-than CONFIG_PREEMPT - at the cost of not having as tight latencies. It&lt;br /&gt;
-represents a different latency/complexity/overhead tradeoff.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://stackoverflow.com/questions/5174955/what-is-voluntary-preemption&#34;&gt;voluntary preemption&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/563185/&#34;&gt;Optimizing preemption&lt;/a&gt;&lt;br /&gt;
-commit 41719b03091911028116155deddc5eedf8c45e37&lt;br /&gt;
-Refs: v2.6.29-rc1-226-g41719b030919&lt;br /&gt;
-Author:     Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Jan 14 15:36:26 2009 +0100&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Jan 14 18:09:00 2009 +0100&lt;br /&gt;
-    mutex: preemption fixes&lt;br /&gt;
-    The problem is that dropping the spinlock right before schedule is a voluntary&lt;br /&gt;
-    preemption point and can cause a schedule, right after which we schedule again.&lt;br /&gt;
-    Fix this inefficiency by keeping preemption disabled until we schedule, do this&lt;br /&gt;
-    by explicity disabling preemption and providing a schedule() variant that&lt;br /&gt;
-    assumes preemption is already disabled.&lt;br /&gt;
-Firo: spin_unlock_mutex&lt;/p&gt;
-
-&lt;h2 id=&#34;user-preemption-linux-kernel-user-mode-is-always-user-preemption&#34;&gt;User preemption - Linux kernel user mode is always User preemption.&lt;/h2&gt;
-
-&lt;p&gt;system call returns mode . syscall_return_slowpath&lt;br /&gt;
-interrupt hander returns user mode .retint_user-&amp;gt;prepare_exit_to_usermode&lt;/p&gt;
-
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set&#34;&gt;Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.&lt;/h2&gt;
-
-&lt;p&gt;bloked (which results in a call to schedule())&lt;br /&gt;
-If a task in the kernel explicitly calls schedule() it&amp;rsquo;s involuntary!!!&lt;/p&gt;
-
-&lt;h2 id=&#34;linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set&#34;&gt;Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;When an interrupt handler exits, before returning to kernel-space.&lt;br /&gt;
-retint_kernel-&amp;gt;preempt_schedule_irq-&amp;gt;cond_resched&lt;br /&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;__local_bh_enable_ip -&amp;gt; preempt_check_resched&lt;/p&gt;
-
-&lt;h2 id=&#34;the-following-also-t-relates-to-preemption-it-s-preempt-voluntary&#34;&gt;The following also t relates to preemption; it&amp;rsquo;s PREEMPT_VOLUNTARY.&lt;/h2&gt;
-
-&lt;p&gt;For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.&lt;br /&gt;
-config PREEMPT_VOLUNTARY&lt;br /&gt;
-    bool &amp;ldquo;Voluntary Kernel Preemption (Desktop)&amp;rdquo;&lt;br /&gt;
-    help&lt;br /&gt;
-      This option reduces the latency of the kernel by adding more&lt;br /&gt;
-      &amp;ldquo;explicit preemption points&amp;rdquo; to the kernel code. These new&lt;br /&gt;
-      preemption points have been selected to reduce the maximum&lt;br /&gt;
-      latency of rescheduling, providing faster application reactions,&lt;br /&gt;
-      at the cost of slightly lower throughput.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;need_resched - When kernel code becomes preemptible again.&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;set_tsk_need_resched() in resched_curr&lt;br /&gt;
-tick: check_preempt_tick or entity_tick&lt;br /&gt;
-fork: wake_up_new_task-&amp;gt;check_preempt_curr-&amp;gt;check_preempt_wakeup&lt;br /&gt;
-wakeup: check_preempt_wakeup&lt;br /&gt;
-&amp;hellip;&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;if (need_resched()) cond_resched();&lt;/p&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;if (!preempt &amp;amp;&amp;amp; prev-&amp;gt;state)in __schedule; why prev-&amp;gt;state?&lt;br /&gt;
-prev-&amp;gt;state means deactivate.&lt;br /&gt;
-&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
 &lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
 
 &lt;p&gt;Process scheduling in Linux &amp;ndash; Volker Seeker from University of Edinburgh&lt;br /&gt;
@@ -1236,9 +1435,7 @@ ttwu_do_activate&lt;/p&gt;
 
 &lt;h1 id=&#34;cfs-runqueues&#34;&gt;CFS runqueues&lt;/h1&gt;
 
-&lt;p&gt;cfa_rq&lt;br /&gt;
-on_list&lt;br /&gt;
-sched_entity-&amp;gt;on_rq, check enqueue_entity&lt;/p&gt;
+&lt;p&gt;cfa_rq, on_list, sched_entity-&amp;gt;on_rq, check enqueue_entity&lt;/p&gt;
 
 &lt;h2 id=&#34;cfs-runqueue-and-sched-entity&#34;&gt;CFS runqueue and sched entity&lt;/h2&gt;
 
@@ -1288,9 +1485,8 @@ gse_CPUx&amp;rsquo;s load = grq_CPUx&amp;rsquo;s all se&amp;rsquo;s load * task_
         /&lt;/em&gt; rq on which this entity is (to be) queued: */&lt;br /&gt;
         struct cfs_rq           &lt;em&gt;cfs_rq;&lt;br /&gt;
         /&lt;/em&gt; rq &amp;ldquo;owned&amp;rdquo; by this entity/group: */&lt;br /&gt;
-        struct cfs_rq           *my_q;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/240474/&#34;&gt;CFS group scheduling&lt;/a&gt;&lt;br /&gt;
+        struct cfs_rq           *my_q;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/240474/&#34;&gt;CFS group scheduling&lt;/a&gt;&lt;br /&gt;
 commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc&lt;br /&gt;
 Author: Srivatsa Vaddagiri &lt;a href=&#34;mailto:vatsa@linux.vnet.ibm.com&#34;&gt;vatsa@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
 Date:   Mon Oct 15 17:00:07 2007 +0200&lt;br /&gt;
@@ -1456,7 +1652,7 @@ fs/proc/array.c&lt;br /&gt;
 
 &lt;li&gt;&lt;p&gt;if running process &amp;gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity&lt;/p&gt;
 
-&lt;h2 id=&#34;lqo-1&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
+&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??&lt;/p&gt;&lt;/li&gt;
 
@@ -1488,7 +1684,7 @@ Check External links&lt;br /&gt;
 calc_load_fold_active&lt;br /&gt;
 Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lqo-2&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;
@@ -1689,6 +1885,22 @@ Date:   Thu Jul 21 09:43:33 2011 -0700&lt;br /&gt;
     Now that consumption is tracked (via update_curr()) we add support to throttle&lt;br /&gt;
     group entities (and their corresponding cfs_rqs) in the case where this is no&lt;br /&gt;
     run-time remaining.&lt;/p&gt;
+
+&lt;h1 id=&#34;pelt&#34;&gt;PELT&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/531853/&#34;&gt;Per-entity load tracking&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9&lt;br /&gt;
+Author: Paul Turner &lt;a href=&#34;mailto:pjt@google.com&#34;&gt;pjt@google.com&lt;/a&gt;&lt;br /&gt;
+Date:   Thu Oct 4 13:18:32 2012 +0200&lt;br /&gt;
+    sched: Make __update_entity_runnable_avg() fast&lt;br /&gt;
+commit a481db34b9beb7a9647c23f2320dd38a2b1d681f&lt;br /&gt;
+Refs: v4.11-rc2-229-ga481db34b9be&lt;br /&gt;
+Author:     Yuyang Du &lt;a href=&#34;mailto:yuyang.du@intel.com&#34;&gt;yuyang.du@intel.com&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Feb 13 05:44:23 2017 +0800&lt;br /&gt;
+Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@kernel.org&#34;&gt;mingo@kernel.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Thu Mar 30 09:43:41 2017 +0200&lt;br /&gt;
+    sched/fair: Optimize ___update_sched_avg()&lt;/p&gt;
 </description>
     </item>
     

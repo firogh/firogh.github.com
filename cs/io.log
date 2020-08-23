@@ -1,14 +1,27 @@
 
 # IO
-[Firo A must watch: Kernel Recipes 2015 - Linux kernel IO subsystem - by Jan Kara](https://www.youtube.com/watch?v=2tu__ZHC0mI)
-## Synchronized, Synchronous, and Asynchronous Operations
-Check LSP 3rd Chapter 4.
-Synchronous I/O is a user space notation.
-Synchronous here actually means wait or blocking.
-Execution of process waits for I/O operations. I/O operations can be explained in different level e.g. system call, buffer cache.
-[As Discrete lizard suggests, there is not some precise CS-wide definition for these terms. ... Nevertheless, a vague general statement is that in "synchronous" systems, things "wait" for other things, while in "asynchronous" systems, things don't "wait".](https://cs.stackexchange.com/questions/87195/what-does-synchronous-and-asynchronous-mean-in-computer-science)
+[Linux kernel IO subsystem - by Jan Kara](https://www.youtube.com/watch?v=2tu__ZHC0mI)
+https://www.postgresql.eu/events/fosdem2019/sessions/session/2346/slides/159/fosdem_linux_io.pdf
+## Memory hierarchy
+[Latency Numbers Every Programmer Should Know](http://people.eecs.berkeley.edu/~rcs/research/interactive_latency.html)
+## Asynchronous I/O
+[Non-blocking buffered file read operations](https://lwn.net/Articles/612483/)
+## Buffered I/O 
+[Ensuring data reaches disk](https://lwn.net/Articles/457667/)
+### Buffered write
+[Why buffered writes are sometimes stalled](http://yoshinorimatsunobu.blogspot.com/2014/03/why-buffered-writes-are-sometimes.html)
+[Status of buffered write path (deadlock fixes)](http://lkml.iu.edu/hypermail/linux/kernel/0612.0/1223.html)
+[Some VFS address space operations changes](https://lwn.net/Articles/254856/)
+Buffer-backed address_space
+## Memory-mapped file I/O
+Check LSP chapter 4: Mapping Files into Memory
+## I/O hardware
+serial communication: UART(16550) + RS-232 
+parallel communication: SCSI, ISA, ATA, PCI, FSB 
 
-# io wait
+# Observability 
+[Linux Block I/O Tracing](https://www.linux.com/topic/networking/linux-block-io-tracing/)
+io wait: in_iowait
 commit 8f0dfc34e9b323a028c2ec41abb7e9de477b7a94
 Refs: v2.6.31-rc8-33-g8f0dfc34e9b3
 Author:     Arjan van de Ven <arjan@linux.intel.com>
@@ -16,67 +29,28 @@ AuthorDate: Mon Jul 20 11:26:58 2009 -0700
 Commit:     Ingo Molnar <mingo@elte.hu>
 CommitDate: Wed Sep 2 08:44:08 2009 +0200
     sched: Provide iowait counters
-    For counting how long an application has been waiting for 
-    (disk) IO, there currently is only the HZ sample driven
-    information available, while for all other counters in this
-    class, a high resolution version is available via 
-    CONFIG_SCHEDSTATS.
-    In order to make an improved bootchart tool possible, we also
-    need a higher resolution version of the iowait time.
-    This patch below adds this scheduler statistic to the kernel.
-Firo: p->in_iowait
+crash> dev -d | head
+MAJOR GENDISK            NAME       REQUEST_QUEUE      TOTAL ASYNC  SYNC   DRV 
+request_queue.nr_rqs includes request_queue.in_flight
+## requests queued in request queue
+request_queue.rq or root_rl
+request_queue.nr_rqs: removed in latest kernel.
+get_request and blk_finish_request
+for mq: blk_mq_ctx.rq_dispatched and blk_mq_ctx.rq_completed
+rq counts including following in_flight counts.
+## request_queue.in_flight: requests sent to drv
+blk_dequeue_request & RQF_STARTED both in blk_peek_request
+q->in_flight[rq_is_sync(rq)]++;
+__blk_put_request => elv_completed_request and elv_requeue_request
+q->in_flight[rq_is_sync(rq)]--
+## Timeline
+### RQF_STARTED
+https://bugzilla.suse.com/show_bug.cgi?id=930934
+The warnings from blk_complete_request() about request not having REQ_STARTED which are before the BUG_ON triggering are actually reporting that someone is queueing completion of a request that hasn't been run. So they are warning about problems that are coming.
 
-# Memory-mapped file I/O
-Check LSP chapter 4: Mapping Files into Memory
-
-# Asynchronous I/O
-[Non-blocking buffered file read operations](https://lwn.net/Articles/612483/)
-# Buffered I/O 
-[Ensuring data reaches disk](https://lwn.net/Articles/457667/)
-
-# Buffered write
-[Why buffered writes are sometimes stalled](http://yoshinorimatsunobu.blogspot.com/2014/03/why-buffered-writes-are-sometimes.html)
-[Status of buffered write path (deadlock fixes)](http://lkml.iu.edu/hypermail/linux/kernel/0612.0/1223.html)
-[Some VFS address space operations changes](https://lwn.net/Articles/254856/)
-
-# File mmap
-## page_mkwrite
-commit 9637a5efd4fbe36164c5ce7f6a0ee68b2bf22b7f
-Refs: v2.6.17-1704-g9637a5efd4fb
-Author:     David Howells <dhowells@redhat.com>
-AuthorDate: Fri Jun 23 02:03:43 2006 -0700
-Commit:     Linus Torvalds <torvalds@g5.osdl.org>
-CommitDate: Fri Jun 23 07:42:51 2006 -0700
-    [PATCH] add page_mkwrite() vm_operations method
-
-[File holes, races, and mmap()](https://lwn.net/Articles/357767/)
-[Add notification of page becoming writable to VMA ops](https://lwn.net/Articles/162178/)
-
-# Page cache
-Buffer-backed address_space
-
-# Page writeback
-
-# Mapping page to block on disk
-[Is nobh code still useful?](http://linux-kernel.2935.n7.nabble.com/Is-nobh-code-still-useful-td509649.html)
-[Linus on Buffer head](https://yarchive.net/comp/linux/buffer_heads.html)
-[The buffer_head api that used to give you access to the buffer cache, now gives you access to the page cache for the block device.](https://lwn.net/Articles/712467/)
-[Large pages, large blocks, and large problems](https://lwn.net/Articles/250335/)
-[Large block size support](https://lwn.net/Articles/232757/)
-## Buffer head LQO
-__getblk_slow
-grow_buffers
-grow_dev_page
-alloc_page_buffers
-## BH_delay
-16:53大疆创新李磊 阿克曼
-@杨永明 Firo 延迟分配，可以减少多进程同时写文件造成文件碎片
-设想一个场景，两个进程pa,pb同时追加写文件，如果直接申请块就马上给的话，就会出现pa申请的block在1,3,5……
-pb申请的block在2,4，6…… 
-bh_delayn推迟块的分配时机到回写时候进行。这样pa和pb就能分别获取连续的物理块
-[[RFC] basic delayed allocation in VFS](https://linux-fsdevel.vger.kernel.narkive.com/bGiQumkf/rfc-basic-delayed-allocation-in-vfs)
-
-# Block buffer write
+# User interace
+[KS2008: Filesystem and block layer interaction](https://lwn.net/Articles/298589/)
+## Block buffer write
 commit 090da37209e13c26f3723e847860e9f7ab23e113
 Author:     Andrew Morton <akpm@zip.com.au>
 AuthorDate: Mon Apr 29 23:52:10 2002 -0700
@@ -84,13 +58,154 @@ Commit:     Linus Torvalds <torvalds@home.transmeta.com>
 CommitDate: Mon Apr 29 23:52:10 2002 -0700
     [PATCH] writeback from address spaces
 + * The generic ->writepage function for buffer-backed address_spaces
-+ */
  int block_write_full_page(struct page *page, get_block_t *get_block)
 
-# Bio
-[KS2008: Filesystem and block layer interaction](https://lwn.net/Articles/298589/)
+# Storage allocation
+## BH_delay
+16:53大疆创新李磊 阿克曼: @杨永明 Firo 延迟分配，可以减少多进程同时写文件造成文件碎片
+设想一个场景，两个进程pa,pb同时追加写文件，如果直接申请块就马上给的话，就会出现pa申请的block在1,3,5…… pb申请的block在2,4，6……
+bh_delayn推迟块的分配时机到回写时候进行。这样pa和pb就能分别获取连续的物理块
+[[RFC] basic delayed allocation in VFS](https://linux-fsdevel.vger.kernel.narkive.com/bGiQumkf/rfc-basic-delayed-allocation-in-vfs)
+## Translation
+__getblk_slow, grow_buffers, grow_dev_page, alloc_page_buffers
+__getblk_gfp -> grow_dev_page -> buffer cache
+__bread_gfp -> __getblk_gfp and submit_bh
+__ext4_iget -> __ext4_get_inode_loc -> sb_getblk
+ext4_write_inode
 
-# Request
+# Storage location
+## Block mappings
+page, block, sector
+bio->bi_iter.bi_sector = bh->b_blocknr * (bh->b_size >> 9);	# sector_nr = blocknr * (block_size / 512)
 
-# Block
+# Memory area for IO data
+## Buffer head
+Is BUFFER_FNS BUFFER_FUNCTIONS?
+commit 205f87f6b342444f722e4559d33318686f7df2ca
+Refs: v2.6.16-2980-g205f87f6b342
+Author:     Badari Pulavarty <pbadari@us.ibm.com>
+AuthorDate: Sun Mar 26 01:38:00 2006 -0800
+Commit:     Linus Torvalds <torvalds@g5.osdl.org>
+CommitDate: Sun Mar 26 08:57:01 2006 -0800
+    [PATCH] change buffer_head.b_size to size_t
++ * Historically, a buffer_head was used to map a single block
++ * within a page, and of course as the unit of I/O through the
++ * filesystem and block layers.  Nowadays the basic I/O unit
++ * is the bio, and buffer_heads are used for extracting block			# 1. extracting block mappings (via a get_block_t call)
++ * mappings (via a get_block_t call), for tracking state within		# 2. tracking state within a page (via a page_mapping) 
++ * a page (via a page_mapping) and for wrapping bio submission			# 3. wrapping bio submission for backward compatibility reasons 
++ * for backward compatibility reasons (e.g. submit_bh).
+[LKD3: The Old Versus the New at stackoverflow](https://stackoverflow.com/a/57407020/1025001)
+[Is nobh code still useful?](http://linux-kernel.2935.n7.nabble.com/Is-nobh-code-still-useful-td509649.html)
+[Linus on Buffer head](https://yarchive.net/comp/linux/buffer_heads.html)
+[The buffer_head api that used to give you access to the buffer cache, now gives you access to the page cache for the block device.](https://lwn.net/Articles/712467/)
+[Large pages, large blocks, and large problems](https://lwn.net/Articles/250335/)
+[Large block size support](https://lwn.net/Articles/232757/)
+[History: LDD2: How does buffer_head work with request struct: ](https://www.xml.com/ldd/chapter/book/ch12.html#t4)
 
+## bio
+[A block layer introduction part 1: the bio layer](https://lwn.net/Articles/736534/)
+[Lwn: Driver porting: the BIO structure](https://lwn.net/Articles/26404/)
+[Jens Axobe's papper: Linux Block IO-present and future](https://www.landley.net/kdocs/ols/2004/ols2004v1-pages-51-62.pdf)
+[Jens Axobe: Notes on the Generic Block Layer Rewrite in Linux 2.5](https://www.kernel.org/doc/Documentation/block/biodoc.txt)
+[Notes on 2.5 block i/o layer changes](http://lse.sourceforge.net/io/bionotes.txt)
+Documentation/block/biovecs.txt
+block: Abstract out bvec iterator - 4f024f3797c43cb4b73cd2c50cec728842d0e49e
+### bi_sector
+tglx: commit e1e2cfc3fb42dbe54dd94fe97ba17a62cd7a265b
+Author: Linus Torvalds <torvalds@athlon.transmeta.com>
+Date:   Mon Feb 4 23:58:06 2002 -0800
+    v2.5.0.1 -> v2.5.0.2
+    - Jens Axboe: start of new block IO layer
+### submit_bio
+submit_bio -> generic_make_request -> generic_make_request_checks -> blk_partition_remap
+make_request_fn: blk_queue_bio
+Case 1. Try Merge
+1.1 Plug merge
+1.2 Elevator merge; CFS, deadline, noop
+Case 2. Plug
+2.1 full? blk_flush_plug_list
+2.2 list_add_tail
+Recursion avoidance
+### merge bio
+all bios in same request is contiguous.
+__make_request elv_merge
+/sys/block/sda/queue/max_sectors_kb 1280??
+Front merge, Back merge, Coalesce merge
+
+## Request
+[Block layer introduction part 2: the request layer](https://lwn.net/Articles/738449/)
+[Driver porting: Request Queues I](https://lwn.net/Articles/27055/)
+[Driver porting: Request Queues II](https://lwn.net/Articles/27361/)
+request_queue, blk_init_queue, queue_head: linked list of request
+/sys/block/sda/queue/nr_requests
+make_request_fn: transform bio to request.
+generic_make_request
+convert sector from partition to gendisk
+
+## REQ Barrier
+tglx:   commit 719eb3e1860791195ed7656b800d8bb57b277a75
+Author:     Jens Axboe <axboe@suse.de>
+AuthorDate: Thu Nov 7 21:50:01 2002 -0800
+Commit:     Jens Axboe <axboe@suse.de>
+CommitDate: Thu Nov 7 21:50:01 2002 -0800
+    [PATCH] soft and hard barriers
+    Right now we have one type of barrier in the block layer, and that is
+    used mainly for making sure that the io scheduler doesn't reorder
+    requests when we don't want it to.  We also need a flag to tell the io
+    scheduler and low level queue that this is a barrier.  So basically two needs:
+    o software barrier, prevents the io scheduler from reordering
+    o hardware barrier, driver must prevent drive from reordering
+    So this patch gets rid of REQ_BARRIER and instead adds REQ_SOFTBARRIER
+    and REQ_HARDBARRIER.
+
+# Blk flush
+generic_file_fsync blkdev_issue_flush
+kblockd_workqueue -> blk_delay_work
+
+# Queue
+## Blk-mq
+[The multiqueue block layer](https://lwn.net/Articles/552904/)
+[Kernel Recipes 2015 - Solving the Linux storage scalability bottlenecks - by Jens Axboe](https://www.youtube.com/watch?v=VIdKBD9-Ozg&t=110s)
+[Linux Block IO: Introducing Multi-queue SSD Access on Multi-core Systems](https://kernel.dk/systor13-final18.pdf)
+commit 320ae51feed5c2f13664aa05a76bec198967e04d
+Refs: v3.12-rc5-9-g320ae51feed5
+Author:     Jens Axboe <axboe@kernel.dk>
+AuthorDate: Thu Oct 24 09:20:05 2013 +0100
+Commit:     Jens Axboe <axboe@kernel.dk>
+CommitDate: Fri Oct 25 11:56:00 2013 +0100
+    blk-mq: new multi-queue block IO queueing mechanism
+## IO scheduler
+elv_iosched_show, elv_register
+/sys/block/sda/queue/scheduler
+## Dispatch 
+__blk_run_queue -> request_fn scsi_request_fn
+request_fn: interfece between block layer and device for read or write
+q->mq_ops->queue_rq, scsi_queue_rq
+
+# Completion, end io callback
+__bread_slow: b_end_io = end_buffer_read_sync
+__bread_slow->submit_bh -> submit_bh_wbc: bio->bi_end_io = end_bio_bh_io_sync
+end_buffer_async_write
+
+scsi_end_request
+blk_finish_request
+__blk_mq_end_request
+
+scsi_end_request+0x116/0x1e0
+scsi_io_completion+0x168/0x6a0
+scsi_finish_command+0xdc/0x140
+scsi_softirq_done+0x132/0x160
+blk_done_softirq+0x96/0xc0
+
+1551 -1875536096) end_bio_bh_io_sync
+ 977 -1874807536) ext4_end_bio
+ 136 -1874805104) mpage_end_io
+  66 -1874069824) submit_bio_wait_endio
+
+ => submit_bio_wait
+ => blkdev_issue_flush
+ => ext4_sync_file
+ => do_fsync
+ => __x64_sys_fdatasync
+ => do_syscall_64

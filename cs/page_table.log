@@ -1,12 +1,20 @@
-
-# Formal cause
-[Memory part 3: Virtual Memory](https:// https://stackoverflow.com/questions/6803762/dump-the-contents-of-tlb-buffer-of-x86-cpu)
+# Page table
 [Chapter 3  Page Table Management](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
-[Page Table Isolation](pti.txthttps://www.kernel.org/doc/Documentation/x86/)
-## Page tbale
-### PTE
-v3a chapter 4.5 4-level paging, p132, Figure 4-11. Formats of CR3 and Paging-Structure Entries with 4-Level Paging
-| G | PAT | D | A | PCD | PWT | U/S | R/W | Present
+[Page Table Isolation](https://www.kernel.org/doc/Documentation/x86/pti.txt)
+Check _PAGE_BIT_ACCESSED
+
+Related code:
+	init_mem_mapping //set page table and cr3.
+So early_level4_pgt(level4, level3, level2) in startup_64() with 
+ENTRY(secondary_startup_64)
+  /* Enable PAE mode and PGE */
+  movl  $(X86_CR4_PAE | X86_CR4_PGE), %ecx
+  movq  %rcx, %cr4
+  /* Setup early boot stage 4 level pagetables. */
+  addq  phys_base(%rip), %rax
+  movq  %rax, %cr3
+## PTE bits
+v3a chapter 4.5 4-level paging
 Check _PAGE_BIT_ACCESSED
 commit 97e3c602ccbdd7db54e92fe05675c664c052a466
 Author: Dave Hansen <dave.hansen@linux.intel.com>
@@ -14,8 +22,14 @@ Date:   Thu Jul 7 17:19:12 2016 -0700
     x86/mm: Ignore A/D bits in pte/pmd/pud_none()
 Firo: _PAGE_KNL_ERRATUM_MASK
 
-## Page directory
-### PDE
+## pud_large
+commit 61e19a347ad4bcdda615ef77ef9c3e656e254f3d
+Refs: u2.6.24-6998-g61e19a347ad4
+Author:     Andi Kleen <ak@suse.de>
+AuthorDate: Mon Feb 4 16:48:09 2008 +0100
+Commit:     Ingo Molnar <mingo@elte.hu>
+CommitDate: Mon Feb 4 16:48:09 2008 +0100
+    x86: add pgtable accessor functions for gbpages
 
 ## Copy ptes
 ### fork's wp page and COW - copy_page_range ... copy_pte_range
@@ -28,22 +42,66 @@ Date:   Mon Sep 25 23:30:57 2006 -0700
 For good understanding, check do_wp_page().
 
 ## Zap ptes - zap_page_range
-exit
-munmap
+exit and munmap
 
 ## Unmap ptes
 PFRA, migation
 
-## MMU notifier
-[Memory management notifiers](https://lwn.net/Articles/266320/)
-commit cddb8a5c14aa89810b40495d94d3d2a0faee6619
-Author: Andrea Arcangeli <andrea@qumranet.com>
-Date:   Mon Jul 28 15:46:29 2008 -0700
-    mmu-notifiers: core
-
-# Material
 ## Walk page tables
 ptdump_walk_pgd_level_core
 [Mannully va to pa](http://edsionte.com/techblog/archives/1966)
 
+# Share PTE pages
+[Sharing Page Tables in the Linux Kernel](https://www.kernel.org/doc/ols/2003/ols2003-pages-315-320.pdf)
 
+# Lock
+[Split page table lock](https://www.kernel.org/doc/html/latest/vm/split_page_table_lock.html)
+[Split PMD locks](https://lwn.net/Articles/568076/)
+pmd_page vs pmd_to_page
+
+# access flags
+commit 87050fae7607166d02c1eaf052f8a55d7eca8e5c
+Author:     Linus Torvalds <torvalds@ppc970.osdl.org>
+AuthorDate: Mon May 24 23:04:59 2004 -0700
+Commit:     Linus Torvalds <torvalds@ppc970.osdl.org>
+CommitDate: Mon May 24 23:04:59 2004 -0700
+
+    Introduce architecture-specific "ptep_update_dirty_accessed()"
+    helper function to write-back the dirty and accessed bits from
+    ptep_establish().
+    Right now this defaults to the same old "set_pte()" that we've
+    always done, except for x86 where we now fix the (unlikely)
+    race in updating accessed bits and dropping a concurrent dirty
+    bit.
++ * Also, we only update the dirty/accessed state if we set
++ * the dirty bit by hand in the kernel, since the hardware
++ * will do the accessed bit for us, and we don't want to
++ * race with other CPU's that might be updating the dirty
++ * bit at the same time.
+  */
+ #define update_mmu_cache(vma,address,pte) do { } while (0)
++#define ptep_update_dirty_accessed(__ptep, __entry, __dirty)   \
++       do {                                                    \
++               if (__dirty) set_pte(__ptep, __entry);          \
++       } while (0)
+
+commit 8dab5241d06bfc9ee141ea78c56cde5070d7460d
+Refs: v2.6.22-rc4-494-g8dab5241d06b
+Author:     Benjamin Herrenschmidt <benh@kernel.crashing.org>
+AuthorDate: Sat Jun 16 10:16:12 2007 -0700
+Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
+CommitDate: Sat Jun 16 13:16:16 2007 -0700
+    Rework ptep_set_access_flags and fix sun4c
+for pte_same
+
+# page_mapped vs page_mapcount
+commit e1534ae95004d6a307839a44eed40389d608c935
+Refs: v4.4-6427-ge1534ae95004
+Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+AuthorDate: Fri Jan 15 16:53:46 2016 -0800
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Fri Jan 15 17:56:32 2016 -0800
+    mm: differentiate page_mapped() from page_mapcount() for compound pages
+
+# Memory mapping
+setup_arch -> init_mem_mapping # set page table and cr3.

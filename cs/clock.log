@@ -1,0 +1,53 @@
+
+# Reference
+/proc/timer_list
+Posix: https://pubs.opengroup.org/onlinepubs/009695399/basedefs/time.h.html
+
+# CPU clocks
+Clock speed (also “clock rate” or “frequency”) and Clock cycle
+Reference clock cycles(TSC cycles? Base frequency?) vs. core clock cycles.
+[what does Clock reference cycles mean?](https://stackoverflow.com/a/43372423/1025001)
+sdm v3b: 18.7 COUNTING CLOCKS
+## TSC - rdtsc
+[Pitfalls of TSC usage](http://oliveryang.net/2015/09/pitfalls-of-TSC-usage/)
+[The trouble with the TSC](https://lwn.net/Articles/388188/)
+sdm v3b: 17.17 TIME-STAMP COUNTER
+TSC base frequency: https://github.com/trailofbits/tsc_freq_khz
+kernel variable: tsc_khz, cpu_khz
+dmesg | grep TSC
+
+# Local APIC timer
+sdm v3a: 10.5.4 APIC Timer
+https://wiki.osdev.org/APIC_timer
+
+# HPET
+https://www.kernel.org/doc/html/latest/timers/hpet.html
+
+# Time subsystem
+https://www.kernel.org/doc/Documentation/timers/
+https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
+https://www.kernel.org/doc/html/latest/timers/highres.html
+[Hrtimers and Beyond: Transforming the Linux Time Subsystems](https://www.kernel.org/doc/ols/2006/ols2006v1-pages-333-346.pdf)
+## Clock sources
+cat /sys/devices/system/clocksource/clocksource0/current_clocksource  tsc
+cat /sys/devices/system/clocksource/clocksource0/available_clocksource tsc hpet acpi_pm
+kernel parameters: clocksource, hpet, notsc
+dmesg | grep clocksource
+## Clock events
+cat /sys/devices/system/clockevents/clockevent*/current_device 
+lapic-deadline
+tick_device
+## Hrtimer
+https://www.kernel.org/doc/Documentation/timers/hrtimers.txt
+## ktime api
+https://www.kernel.org/doc/html/latest/core-api/timekeeping.html
+
+# Scheduling-Clock Ticks
+sched_clock tick_do_update_jiffies64
+
+## dyntick, NO_HZ
+https://www.youtube.com/watch?v=G3jHP9kNjwc
+https://www.kernel.org/doc/Documentation/timers/no_hz.rst
+
+## dyntick and tick broadcast
+https://0xax.gitbooks.io/linux-insides/content/Timers/linux-timers-3.html

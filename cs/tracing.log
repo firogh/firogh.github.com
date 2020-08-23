@@ -1,13 +1,129 @@
-# Definition
-[Tracing (software)](https://en.wikipedia.org/wiki/Tracing_(software))
 
+# References
+[Tracing (software)](https://en.wikipedia.org/wiki/Tracing_(software))
+[Unifying kernel tracing](https://lwn.net/Articles/803347/)
+[Slides: The Unified Tracing Platform - Steven Rostedt, VMware Inc.](https://static.sched.com/hosted_files/osseu19/5f/unified-tracing-platform-oss-eu-2019.pdf)
+[Give me 15 minutes and I'll change your view of Linux tracing](https://www.youtube.com/watch?v=GsMs3n8CB6g)
+
+# Firo
+So what are we tracing on? Function and data.
+
+# Find out the kernel function for a specific sysfs or procfs file.
+ft record -p function_graph --max-graph-depth 5 -g ksys_read -n rw_verify_area -F cat /sys/block/sda/stat ; ft report |less
+ft record -p function_graph --max-graph-depth 5 -g vfs_write -o nofuncgraph-irqs -F echo w > /proc/sysrq-trigger
+# ftrace
+[Linux Tracing Technologies](https://www.kernel.org/doc/html/latest/trace/index.html)
+[Steven Rostedt - Learning the Linux Kernel with tracing](https://www.youtube.com/watch?v=JRyrhsx-L5Y)
+[Nov, 2019 Welcome to ftrace & the Start of Your Journey to Understanding the Linux Kernel!](https://blogs.vmware.com/opensource/2019/11/12/ftrace-linux-kernel/)
+## Function events
+[Fun with Dynamic Kernel Tracing Events - Steven Rostedt, VMware](https://events19.linuxfoundation.org/wp-content/uploads/2017/12/oss-eu-2018-fun-with-dynamic-trace-events_steven-rostedt.pdf)
+## Event triggers
+[Adding Inter-event Capabilities to the Linux Trace Event Subsystem](https://elinux.org/images/b/b4/Inter-event-elc2017-tzanussi.pdf)
+[Triggers for tracing](https://lwn.net/Articles/556186/)
+https://www.kernel.org/doc/html/latest/trace/events.html
+## stack
+ts -l vfs_read
+ft show
+ft reset or ft stop
+
+# User stack
+ft record -q -O userstacktrace -T -e syscalls:sys_enter_write -F ls ;ft report
+https://www.redhat.com/archives/crash-utility/2007-September/msg00002.html
+uprobe -s
+
+Code: trace_user_stack_print
+echo 'p:firo /home/firo/ws/In:0x1146' > uprobe_events
+root@snow:/sys/kernel/debug/tracing # echo 1 > tracing_on
+root@snow:/sys/kernel/debug/tracing # echo 1 > events/uprobes/firo/enable 
+root@snow:/sys/kernel/debug/tracing # ft show
+              In-32672 [001] d... 36114.769558: firo: (0x401146)
+              In-32672 [001] d... 36114.769562: <user stack trace>
+ => /home/firo/ws/In[+0x146]
+ => /home/firo/ws/In[+0x18d]
+ => /home/firo/ws/In[+0x1aa]
+ => /usr/lib64/libc-2.30.so[+0x21a3]
+or if ./In killed
+              In-32672 [002] d... 36126.772098: firo: (0x401146)
+              In-32672 [002] d... 36126.772099: <user stack trace>
+ =>  <0000000000401146>
+ =>  <000000000040118d>
+ =>  <00000000004011aa>
+ =>  <00007ff297efc1a3>
+## perf
+perf probe -x ./foo 'func'
+perf record -e probe_foo:func-aR -g sleep 10
+perf script
+
+# Uprobe
+[Uprobes in 3.5](https://lwn.net/Articles/499190/)
+https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt
+ebpf: perf_event_open, lib.bcc_func_load
+http://www.brendangregg.com/blog/2016-02-08/linux-ebpf-bcc-uprobes.html
+http://www.brendangregg.com/blog/2015-06-28/linux-ftrace-uprobe.html
+https://github.com/brendangregg/perf-tools/blob/master/examples/uprobe_example.txt
+
+# Event filter
+https://www.kernel.org/doc/html/latest/trace/events.html
+trace_find_event_field ftrace_generic_fields ftrace_common_fields
+crash> list -H ftrace_common_fields -s ftrace_event_field.name,type
+ffff94f613c704e0
+  name = 0xffffffffa33865a8 "common_pid"
+  type = 0xffffffffa335b200 "int"
+ffff94f613c700c0
+  name = 0xffffffffa3386593 "common_preempt_count"
+  type = 0xffffffffa337e44e "unsigned char"
+ffff94f613c70600
+  name = 0xffffffffa3386586 "common_flags"
+  type = 0xffffffffa337e44e "unsigned char"
+ffff94f613c707b0
+  name = 0xffffffffa338656b "common_type"
+  type = 0xffffffffa3386577 "unsigned short"
+
+crash> list -H ftrace_generic_fields -s ftrace_event_field.name,type
+ffff94f613c70c60
+  name = 0xffffffffa3388906 "comm"
+  type = 0xffffffffa3392d5a "char *"
+ffff94f613c70780
+  name = 0xffffffffa33cc084 "COMM"
+  type = 0xffffffffa3392d5a "char *"
+ffff94f613c70870
+  name = 0xffffffffa3385fd6 "cpu"
+  type = 0xffffffffa335b200 "int"
+ffff94f613c70960
+  name = 0xffffffffa3385f2f "CPU"
+  type = 0xffffffffa335b200 "int"
+
+# Static event tacing
+Tracepoints and ftrace.
+
+# Dynamic event tracing
+[Lwn: Dynamic probes with ftrace](https://lwn.net/Articles/343766/)
+
+## kprobetrace at ftrace
+[Patch-set: tracing: kprobe-based event tracer and x86 instruction](https://lore.kernel.org/patchwork/cover/167260/)
+Also here parse_probe_arg()@kernel/trace/trace_probe.c
+[Doc: Kprobe-based Event Tracing](https://www.kernel.org/doc/Documentation/trace/kprobetrace.txt)
+echo 'p:myprobe do_sys_open jiffies=@jiffies dfd=%ax filename=%dx flags=%cx mode=+4($stack)' > /sys/kernel/debug/tracing/kprobe_events
+
+echo 'p:firo submit_bio name=%di +0xc(+8(%di)):string ' > kprobe_events
+### global symbols
+root@snow:/sys/kernel/debug/tracing # echo 'p:firo submit_bio @bio' > kprobe_events 
+bash: echo: write error: No such file or directory
+root@snow:/sys/kernel/debug/tracing # echo 'p:firo submit_bio @jiffies' > kprobe_events 
+root@snow:/sys/kernel/debug/tracing # 
+## perf
+perf probe -d 'submit_bio'; perf probe -a 'submit_bio bio->bi_end_io:x64 bio->bi_disk->disk_name'
+perf probe -d 'submit_bio'; perf probe -a 'submit_bio bio->bi_end_io:u64';
+perf trace -e probe:submit_bio
+
+# bpftrace
+[Brendan at lwn: Kernel analysis with bpftrace](https://lwn.net/Articles/793749/)
+
+# Top
+https://github.com/iovisor/bcc/blob/master/tools/opensnoop.py
+https://github.com/brendangregg/perf-tools/blob/master/kernel/funcslower
 
 # User mode tracing
 ltrace, strace, bash -x
-[How does strace work?][1]
-[1]: https://blog.packagecloud.io/eng/2016/02/29/how-does-strace-work/
+[How does strace work?](https://blog.packagecloud.io/eng/2016/02/29/how-does-strace-work/)
 PTRACE_PEEKDATA for showing pointer parameter(e.g. 2nd arg of read)
-
-# ftrace
-[Linux Tracing Technologies](https://www.kernel.org/doc/html/v4.18/trace/index.html)
-

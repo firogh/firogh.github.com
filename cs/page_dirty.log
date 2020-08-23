@@ -1,0 +1,193 @@
+
+# Problems
+IO-less Dirty Throttling Slides
+Dirty throttling — How much dirty memory is too much? Slides
+[No-I/O dirty throttling](https://lwn.net/Articles/456904/)
+commit 9d823e8f6b1b7b39f952d7d1795f29162143a433
+Refs: v3.1-rc8-80-g9d823e8f6b1b
+Author:     Wu Fengguang <fengguang.wu@intel.com>
+AuthorDate: Sat Jun 11 18:10:12 2011 -0600
+    writeback: per task dirty rate limit
+NR_FILE_DIRTY,
+NR_WRITEBACK,
+nr_dirtied, nr_dirty, nr_written.
+write -> throttle-> dirty -> writeback
+
+# Writeback rate
+commit e98be2d599207c6b31e9bb340d52a231b2f3662d
+Refs: v3.0-rc2-19-ge98be2d59920
+Author:     Wu Fengguang <fengguang.wu@intel.com>
+AuthorDate: Sun Aug 29 11:22:30 2010 -0600
+Commit:     Wu Fengguang <fengguang.wu@intel.com>
+CommitDate: Sat Jul 9 22:09:01 2011 -0700
+    writeback: bdi write bandwidth estimation
+wb_update_write_bandwidth
+
+# Model
+dirty, rate limit/ratio, writeback
+dirty -> writeback 
+dirty -> throttle
+writeback: BDI writeback ratelimit
+
+# Cgroup vs. writeback
+[Writeback and control groups](https://lwn.net/Articles/648292/)
+## Cgroup writeback support
+git log 97c9341f727105c29478da19f1687b0e0a917256 --oneline 
+97c9341f7271 mm: vmscan: disable memcg direct reclaim stalling if cgroup writeback support is in use 
+c2aa723a6093 writeback: implement memcg writeback domain based throttling
+2529bb3aadc4 writeback: reset wb_domain->dirty_limit[_tstmp] when memcg domain size changes
+841710aa6e4a writeback: implement memcg wb_domain
+
+
+# History
+tglx: writeback_index
+commit 9672a337305358ecc81dc17700e58ce3f42c11f6
+Author: Andrew Morton <akpm@osdl.org>
+Date:   Sun Apr 11 23:15:07 2004 -0700
+    [PATCH] writeback efficiency and QoS improvements
+tglx: overload start==0 && end == 0
+commit f07812ca2925f6dc6027883ab15891781dba4827
+Author: Andrew Morton <akpm@osdl.org>
+Date:   Sun Aug 22 22:59:27 2004 -0700
+    [PATCH] Writeback page range hint
+    Modify mpage_writepages to optionally only write back dirty pages within a
+    specified range in a file (as in the case of O_SYNC).  Cheat a little to avoid
+    changes to prototypes of aops - just put the <start, end> hint into the
+    writeback_control struct instead.  If <start, end> are not set, then default
+    to writing back all the mapping's dirty pages.
+commit 111ebb6e6f7bd7de6d722c5848e95621f43700d9
+Author: OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
+Date:   Fri Jun 23 02:03:26 2006 -0700
+    [PATCH] writeback: fix range handling
+## PG_writeback
+PG_writeback and set_page_writeback
+commit a2bcb3a084f4312844639e18cbe7eb7256c7c23c
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Mon Apr 29 23:54:18 2002 -0700
+Commit:     Linus Torvalds <torvalds@home.transmeta.com>
+CommitDate: Mon Apr 29 23:54:18 2002 -0700
+    [PATCH] page writeback locking update
++ * If a page is already under I/O, generic_writeback_mapping() skips it, even
++ * if it's dirty.  This is desirable behaviour for memory-cleaning writeback,
++ * but it is INCORRECT for data-integrity system calls such as fsync().  fsync()
++ * and msync() need to guarentee that all the data which was dirty at the time
++ * the call was made get new I/O started against them.  The way to do this is
++ * to run filemap_fdatawait() before calling filemap_fdatawrite().
+
+# Stable page writeback
+[Stable pages](https://lwn.net/Articles/442355/)
+[The trouble with stable pages](https://lwn.net/Articles/486311/)
+[Optimizing stable pages](https://lwn.net/Articles/528031/)
+commit 7d311cdab663f4f7ab3a4c0d5d484234406f8268
+Refs: v3.8-3241-g7d311cdab663
+Author:     Darrick J. Wong <darrick.wong@oracle.com>
+AuthorDate: Thu Feb 21 16:42:48 2013 -0800
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Thu Feb 21 17:22:19 2013 -0800
+    bdi: allow block devices to say that they require stable page writes
+commit 1d1d1a767206fbe5d4c69493b7e6d2a8d08cc0a0
+Refs: v3.8-3242-g1d1d1a767206
+Author:     Darrick J. Wong <darrick.wong@oracle.com>
+AuthorDate: Thu Feb 21 16:42:51 2013 -0800
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Thu Feb 21 17:22:19 2013 -0800
+    mm: only enforce stable page writes if the backing device requires it
+
+### what about Memory-mapped I/O?
+
+## memory-cleaning writeback
+
+## data-integrity
+
+# Page frame reclamation related stuff (Obseleted)
+WB_REASON_VMSCAN: shrink_inactive_list->wakeup_flusher_threads(WB_REASON_VMSCAN)
+WB_REASON_FREE_MORE_MEM: [buffer: eliminate the need to call free_more_memory() in __getblk_slow](https://patchwork.kernel.org/patch/9974719)
+
+# Dirty pages throttling, write throttling
+[Predictive per-task write throttling](https://lwn.net/Articles/152635/)
+[Dynamic writeback throttling](https://lwn.net/Articles/405076/)
+balance_dirty_pages
+# Per-device write throttling
+[Smarter write throttling](https://lwn.net/Articles/245600/)
+# LQO
+## Leagcy memcg description from Tejun 
+commit 97c9341f727105c29478da19f1687b0e0a917256
+Refs: v4.1-rc2-104-g97c9341f7271
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Fri May 22 18:23:36 2015 -0400
+    mm: vmscan: disable memcg direct reclaim stalling if cgroup writeback support is in use 
+    Because writeback wasn't cgroup aware before, the usual dirty
+    throttling mechanism in balance_dirty_pages() didn't work for 
+    processes under memcg limit.  The writeback path didn't know how much
+    memory is available or how fast the dirty pages are being written out 
+    for a given memcg and balance_dirty_pages() didn't have any measure of
+    IO back pressure for the memcg.
+
+    To work around the issue, memcg implemented an ad-hoc dirty throttling
+    mechanism in the direct reclaim path by stalling on pages under
+    writeback which are encountered during direct reclaim scan.  This is
+    rather ugly and crude - none of the configurability, fairness, or
+    bandwidth-proportional distribution of the normal path.
+# Block writeback throttling - blk-wbt
+[Writeout throttling](https://lwn.net/Articles/261626/) and [patch: A clean approach to writeout throttling](https://lwn.net/Articles/261271/)
+[Buffered writeback throttling](https://lwn.net/Articles/704739/)
+[Toward less-annoying background writeback](https://lwn.net/Articles/682582/)
+[Background writeback](https://lwn.net/Articles/685894/)
+commit 87760e5eef359788047d6fd54fc12eec74ce0d27
+Author: Jens Axboe <axboe@fb.com>
+Date:   Wed Nov 9 12:38:14 2016 -0700
+    block: hook up writeback throttling
+commit e34cbd307477ae07c5d8a8d0bd15e65a9ddaba5c
+Author: Jens Axboe <axboe@fb.com>
+Date:   Wed Nov 9 12:36:15 2016 -0700
+    blk-wbt: add general throttling mechanism
+
+# IO completetion hanlder
+__blk_mq_end_io(obsoleted)
+__blk_mq_end_request
+blk_update_request
+blk_mq_end_request
+scsi_end_request
+blk_mq_complete_request
+scsi_mq_done
+nvme_end_request
+
+=> end_page_writeback
+=> __block_write_full_page
+=> __writepage
+=> write_cache_pages
+=> generic_writepages
+=> do_writepages
+=> __writeback_single_inode
+=> writeback_sb_inodes
+=> __writeback_inodes_wb
+=> wb_writeback
+=> wb_workfn
+
+=> end_page_writeback	# Parent should be end_buffer_async_write
+=> end_bio_bh_io_sync	# submit_bh_wbc
+=> blk_update_request
+=> scsi_end_request
+=> scsi_io_completion
+=> blk_done_softirq
+
+=> end_page_writeback
+=> ext4_finish_bio
+=> ext4_end_bio		# io_submit_init_bio
+=> blk_update_request
+=> scsi_end_request
+=> scsi_io_completion
+=> blk_done_softirq
+
+=> end_page_writeback
+=> end_buffer_async_write
+=> end_bio_bh_io_sync
+=> blk_update_request
+=> scsi_end_request
+=> scsi_io_completion
+=> blk_done_softirq
+
+# ETC
+/sys/kernel/debug/bdi/0\:80/stats 
+bdi_debug_stats_show
+write_begin and write_end

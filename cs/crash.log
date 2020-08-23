@@ -13,6 +13,10 @@ zlib-devel-32bit
 # debuginfo
 objcopy --only-keep-debug vmlinux vmlinux.debug
 
+# Cross-compiling
+https://developer.ibm.com/linuxonpower/2017/07/06/analyzing-openpower-kernel-dump-information-laptop/
+make target=PPC64 lzo snappy
+
 # list
 crash> p file_lock_list
 PER-CPU DATA TYPE:
@@ -23,6 +27,14 @@ PER-CPU ADDRESSES:
   [16]: ffff880c6fa17d20
 ....
 list -o file_lock.fl_link -s file_lock.fl_file -H ffff880c6fa17d20
+## -o
+1. all nodes are same. Undwer this condition, -o can be used with -h
+2. -H: head can be distinguish
+## best practise
+Head: -H -o will show every struct's address; -H -l will show every embedded list node address;
+All nodes are same:  -l; or -h -l;-h -o.
+for others: -o ?
+
 
 # Tree
 tree -t rbtree -ls vm_area_struct.vm_start -r mm_struct.mm_rb  0xffff91f2cd94a240  -o vm_area_struct.vm_rb

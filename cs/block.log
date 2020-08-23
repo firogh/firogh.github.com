@@ -2,6 +2,7 @@
 [book_linuxkernel_blockdrv](https://github.com/gurugio/book_linuxkernel_blockdrv)
 [Linux Block Device Architecture](https://yannik520.github.io/blkdevarch.html)
 [Notes on the Generic Block Layer Rewrite in Linux 2.5](https://www.kernel.org/doc/Documentation/block/biodoc.txt)
+[Improvements in the block layer](https://lwn.net/Articles/735275/)
 
 # bdev
 bi_dev is initialized from supber_block
@@ -12,16 +13,14 @@ __extent_writepage_io
 em = epd->get_extent = btrfs_get_extent -> em->bdev = root->fs_info->fs_devices->latest_bdev;
 bdev = em->bdev;
 submit_extent_page
-
 bdev_get_queue(bio->bi_bdev)
-
 ## bdevfs
 def_blk_fops
 blkdev_open
 inode major minor
 
-
 # gendisk and hd_struct and disk_part_tbl
+[Driver porting: the gendisk interface](https://lwn.net/Articles/25711/)
 bdev_get_queue(bio->bi_bdev)
 [Partition and gendisk](https://groups.google.com/forum/#!msg/zh-kernel/sg6BvXTJSUk/-fnTfL9_VXYJ)
 and
@@ -31,20 +30,6 @@ Date:   Mon Aug 25 19:56:15 2008 +0900
     block: make partition array dynamic
 ## disk init
 init_sd
-
-# the request layer
-[Block layer introduction part 2: the request layer](https://lwn.net/Articles/738449/)
- request_queue
-blk_init_queue
-queue_head: linked list of request
-/sys/block/sda/queue/
-/sys/block/sda/queue/nr_requests
-request_fn: interfece between block layer and device for read or write
-make_request_fn: transform bio to request.
-generic_make_request
-convert sector from partition to gendisk
-## IO scheduler
-/sys/block/sda/queue/scheduler
 
 # Plug
 [Explicit block device plugging and comments](https://lwn.net/Articles/438256/)
@@ -76,9 +61,6 @@ root        46  0.0  0.0      0     0 ?        I<   08:15   0:00 [kblockd]
 if schedule:  workqueue
 else synchronize ?? which function?
 
-# LQO
-4. ext2_mount mount_dev
-
 # Block cgroup
 ## request_list
 commit a051661ca6d134c18599498b185b667859d4339b
@@ -89,3 +71,26 @@ Commit:     Jens Axboe <axboe@kernel.dk>
 CommitDate: Tue Jun 26 18:42:49 2012 -0400
     blkcg: implement per-blkg request allocation
 
+# SCSI
+[SCSI Interfaces Guide](https://www.kernel.org/doc/htmldocs/scsi/)
+Documentation/scsi/
+[SCSI Mid-Level Multipath](https://www.landley.net/kdocs/ols/2003/ols2003-pages-23-33.pdf)
+## TCQ
+https://www.oreilly.com/library/view/linux-device-drivers/0596005903/ch16.html
+## Ob
+https://en.opensuse.org/SDB:SCSI_debugging_hints
+scsi_logging_level -s -a 7
+/proc/sys/dev/scsi/logging_level
+sg3_utils
+
+# NVMe
+nvme_alloc_ns: nvme_make_request => blk_mq_make_request
+commit a4aea5623d4a54682b6ff5c18196d7802f3e478f
+Author: Matias Bjørling <m@bjorling.me>
+Date:   Tue Nov 4 08:20:14 2014 -0700
+    NVMe: Convert to blk-mq
+    This converts the NVMe driver to a blk-mq request-based driver.
+Also see nvme_end_request().
+nvme_submit_cmd
+nvme_complete_rq
+## Doorbell

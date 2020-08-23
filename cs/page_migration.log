@@ -1,0 +1,112 @@
+# page migration
+[lwn: Page migration](https://lwn.net/Articles/157066/)
+[Kernel doc: Page migration](https://www.kernel.org/doc/html/latest/vm/page_migration.html)
+Core function: migrate_page
+[Swap Migration V5: Overview](https://lwn.net/Articles/157936/)
+
+# MIGRATE_ASYNC
+commit 77f1fe6b08b13a87391549c8a820ddc817b6f50e
+Refs: v2.6.37-6941-g77f1fe6b08b1
+Author:     Mel Gorman <mel@csn.ul.ie>
+AuthorDate: Thu Jan 13 15:45:57 2011 -0800
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Thu Jan 13 17:32:34 2011 -0800
+    mm: migration: allow migration to operate asynchronously and avoid synchronous compaction in the faster path
+Also see below commit for MIGRATE_SYNC_LIGHT
+
+# MIGRATE_SYNC_LIGHT
+commit a6bc32b899223a877f595ef9ddc1e89ead5072b8
+Refs: u3.2-7180-ga6bc32b89922
+Author:     Mel Gorman <mgorman@suse.de>
+AuthorDate: Thu Jan 12 17:19:43 2012 -0800
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Thu Jan 12 20:13:09 2012 -0800
+    mm: compaction: introduce sync-light migration for use by compaction
+    This patch adds a lightweight sync migrate operation MIGRATE_SYNC_LIGHT
+    mode that avoids writing back pages to backing storage.  Async compaction
+    maps to MIGRATE_ASYNC while sync compaction maps to MIGRATE_SYNC_LIGHT.
+    For other migrate_pages users such as memory hotplug, MIGRATE_SYNC is
+    used
+# MIGRATE_SYNC_NO_COPY
+commit 2916ecc0f9d435d849c98f4da50e453124c87531
+Refs: v4.13-9242-g2916ecc0f9d4
+Author:     Jérôme Glisse <jglisse@redhat.com>
+AuthorDate: Fri Sep 8 16:12:06 2017 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Fri Sep 8 18:26:46 2017 -0700
+    mm/migrate: new migrate mode MIGRATE_SYNC_NO_COPY
+    For each page {
+     1 - lock page
+     2 - call migratepage() callback
+     3 - (extra locking in some migratepage() callback)
+     4 - migrate page state (freeze refcount, update page cache, buffer
+         head, ...)
+     5 - copy page
+     6 - (unlock any extra lock of migratepage() callback)
+     7 - return from migratepage() callback
+     8 - unlock page
+    }
+
+    The new mode MIGRATE_SYNC_NO_COPY:
+     1 - lock multiple pages
+    For each page {
+     2 - call migratepage() callback
+     3 - abort in all problematic migratepage() callback
+     4 - migrate page state (freeze refcount, update page cache, buffer
+         head, ...)
+    } // finished all calls to migratepage() callback
+     5 - DMA copy multiple pages
+     6 - unlock all the pages
+
+# Normal page migration
+migrate_page: move data to new page.
+## Page fault -wait for finishing
+do_swap_page and __migration_entry_wait
+
+# Zone device migration - MIGRATE_SYNC_NO_COPY
+[[HMM-v25 00/19] HMM (Heterogeneous Memory Management) v25](https://lore.kernel.org/linux-mm/20170817000548.32038-1-jglisse@redhat.com/)
+
+## Collect zone device pages for migration
+commit a5430dda8a3a1cdd532e37270e6f36436241b6e7
+Refs: v4.13-9245-ga5430dda8a3a
+Author:     Jérôme Glisse <jglisse@redhat.com>
+AuthorDate: Fri Sep 8 16:12:17 2017 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Fri Sep 8 18:26:46 2017 -0700
+    mm/migrate: support un-addressable ZONE_DEVICE page in migration
+    Allow to unmap and restore special swap entry of un-addressable
+    ZONE_DEVICE memory.
+[...]
+@@ -2205,17 +2212,40 @@ static int migrate_vma_collect_pmd(pmd_t *pmdp,			# Firo: collect
+[...]
++               if (!pte_present(pte)) {
++                       mpfn = pfn = 0;
++                        * Only care about unaddressable device page special
++                        * page table entry. Other special swap entries are not
++                        * migratable, and we ignore regular swapped page.
++                       entry = pte_to_swp_entry(pte);
++                       if (!is_device_private_entry(entry))
++                               goto next;
++                       page = device_private_entry_to_page(entry);
++                       mpfn = migrate_pfn(page_to_pfn(page))|
++                               MIGRATE_PFN_DEVICE | MIGRATE_PFN_MIGRATE;
++                       if (is_write_device_private_entry(entry))
++                               mpfn |= MIGRATE_PFN_WRITE;
++               } else {
++                       page = vm_normal_page(migrate->vma, addr, pte);
++                       mpfn = migrate_pfn(pfn) | MIGRATE_PFN_MIGRATE;
++                       mpfn |= pte_write(pte) ? MIGRATE_PFN_WRITE : 0;
++               }
+[...]
+## migration - do_swap_page
+Migrate page by DMA.
+commit 5042db43cc26f51eed51c56192e2c2317e44315f
+Refs: v4.13-9236-g5042db43cc26
+Author:     Jérôme Glisse <jglisse@redhat.com>
+AuthorDate: Fri Sep 8 16:11:43 2017 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Fri Sep 8 18:26:46 2017 -0700
+    mm/ZONE_DEVICE: new type of ZONE_DEVICE for unaddressable memory
+Search do_swap_page.
+
+

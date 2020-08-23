@@ -1,0 +1,19 @@
+
+# Boot
+debug ignore_loglevel earlyprintk=ttyS0,115200, keep keep_bootcon initcall_debug dyndbg=+plmf
+
+# Crash
+search -t 
+Sometimes, the backtrace showd by bt commnad is not correct. You have to take a look at out put of log command.
+
+# Gdb
+gdb -q /proc/kcore -ex 'p/s (char *)0xffffffffad0001c0' -ex q # Address of linux_banner from /proc/kallsyms
+
+# Debuginfo
+make kernel/sched.s V=1
+./scripts/decodecode < Oops.txt
+## kernel module
+gdb vmlinux /proc/kcore
+text_addr=/sys/module/char-read-write/sections/.text
+add-symbol-file /home/nkhare/char-read-write.ko $text_addr
+print &((struct kmem_cache *)0)->offset

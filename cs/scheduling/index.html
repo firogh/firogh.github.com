@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1975">
+<meta itemprop="wordCount" content="1710">
 <meta itemprop="datePublished" content="2017-03-29">
 <meta itemprop="url" content="http://firoyang.org/cs/scheduling/">
 
@@ -200,80 +200,6 @@ Author: Brian Gerst <a href="mailto:brgerst@gmail.com">brgerst@gmail.com</a><br 
 Date:   Sat Aug 13 12:38:19 2016 -0400<br />
     sched/x86: Rewrite the switch_to() code<br />
 <a href="https://stackoverflow.com/questions/15019986/why-does-switch-to-use-pushjmpret-to-change-eip-instead-of-jmp-directly/15024312">Why does switch_to use push+jmp+ret to change EIP, instead of jmp directly?</a></p>
-
-<h1 id="preemption">Preemption</h1>
-
-<h2 id="voluntary-kernel-preemption-2-6-12-rc4-mm2-https-lwn-net-articles-137259"><a href="https://lwn.net/Articles/137259/">Voluntary Kernel Preemption, 2.6.12-rc4-mm2</a></h2>
-
-<p>Voluntary preemption works by adding a cond_resched()<br />
-(reschedule-if-needed) call to every might_sleep() check. It is lighter<br />
-than CONFIG_PREEMPT - at the cost of not having as tight latencies. It<br />
-represents a different latency/complexity/overhead tradeoff.</p>
-
-<p><a href="https://stackoverflow.com/questions/5174955/what-is-voluntary-preemption">voluntary preemption</a><br />
-<a href="https://lwn.net/Articles/563185/">Optimizing preemption</a><br />
-commit 41719b03091911028116155deddc5eedf8c45e37<br />
-Refs: v2.6.29-rc1-226-g41719b030919<br />
-Author:     Peter Zijlstra <a href="mailto:a.p.zijlstra@chello.nl">a.p.zijlstra@chello.nl</a><br />
-AuthorDate: Wed Jan 14 15:36:26 2009 +0100<br />
-Commit:     Ingo Molnar <a href="mailto:mingo@elte.hu">mingo@elte.hu</a><br />
-CommitDate: Wed Jan 14 18:09:00 2009 +0100<br />
-    mutex: preemption fixes<br />
-    The problem is that dropping the spinlock right before schedule is a voluntary<br />
-    preemption point and can cause a schedule, right after which we schedule again.<br />
-    Fix this inefficiency by keeping preemption disabled until we schedule, do this<br />
-    by explicity disabling preemption and providing a schedule() variant that<br />
-    assumes preemption is already disabled.<br />
-Firo: spin_unlock_mutex</p>
-
-<h2 id="user-preemption-linux-kernel-user-mode-is-always-user-preemption">User preemption - Linux kernel user mode is always User preemption.</h2>
-
-<p>system call returns mode . syscall_return_slowpath<br />
-interrupt hander returns user mode .retint_user-&gt;prepare_exit_to_usermode</p>
-
-<h2 id="linux-kernel-kernel-mode-is-coppertive-when-config-preempt-is-not-set">Linux kernel kernel mode is coppertive when CONFIG_PREEMPT is not set.</h2>
-
-<p>bloked (which results in a call to schedule())<br />
-If a task in the kernel explicitly calls schedule() it&rsquo;s involuntary!!!</p>
-
-<h2 id="linux-kernel-kernel-mode-is-coppertive-preemptive-when-config-preempt-is-set">Linux kernel kernel mode is coppertive + preemptive when CONFIG_PREEMPT is set.</h2>
-
-<ul>
-<li>When an interrupt handler exits, before returning to kernel-space.<br />
-retint_kernel-&gt;preempt_schedule_irq-&gt;cond_resched<br /></li>
-
-<li><p>__local_bh_enable_ip -&gt; preempt_check_resched</p>
-
-<h2 id="the-following-also-t-relates-to-preemption-it-s-preempt-voluntary">The following also t relates to preemption; it&rsquo;s PREEMPT_VOLUNTARY.</h2>
-
-<p>For example, in might_resched(). The task willingly yeilds the CPU, but it should stay on rq.<br />
-config PREEMPT_VOLUNTARY<br />
-    bool &ldquo;Voluntary Kernel Preemption (Desktop)&rdquo;<br />
-    help<br />
-      This option reduces the latency of the kernel by adding more<br />
-      &ldquo;explicit preemption points&rdquo; to the kernel code. These new<br />
-      preemption points have been selected to reduce the maximum<br />
-      latency of rescheduling, providing faster application reactions,<br />
-      at the cost of slightly lower throughput.</p></li>
-
-<li><p>need_resched - When kernel code becomes preemptible again.</p></li>
-
-<li><p>set_tsk_need_resched() in resched_curr<br />
-tick: check_preempt_tick or entity_tick<br />
-fork: wake_up_new_task-&gt;check_preempt_curr-&gt;check_preempt_wakeup<br />
-wakeup: check_preempt_wakeup<br />
-&hellip;</p></li>
-
-<li><p>if (need_resched()) cond_resched();</p></li>
-</ul>
-
-<h2 id="lqo">LQO</h2>
-
-<ul>
-<li>if (!preempt &amp;&amp; prev-&gt;state)in __schedule; why prev-&gt;state?<br />
-prev-&gt;state means deactivate.<br />
-<br /></li>
-</ul>
 
 <h1 id="reference">Reference</h1>
 
@@ -297,9 +223,7 @@ ttwu_do_activate</p>
 
 <h1 id="cfs-runqueues">CFS runqueues</h1>
 
-<p>cfa_rq<br />
-on_list<br />
-sched_entity-&gt;on_rq, check enqueue_entity</p>
+<p>cfa_rq, on_list, sched_entity-&gt;on_rq, check enqueue_entity</p>
 
 <h2 id="cfs-runqueue-and-sched-entity">CFS runqueue and sched entity</h2>
 
@@ -349,9 +273,8 @@ gse_CPUx&rsquo;s load = grq_CPUx&rsquo;s all se&rsquo;s load * task_group-&gt;sh
         /</em> rq on which this entity is (to be) queued: */<br />
         struct cfs_rq           <em>cfs_rq;<br />
         /</em> rq &ldquo;owned&rdquo; by this entity/group: */<br />
-        struct cfs_rq           *my_q;</p>
-
-<p><a href="https://lwn.net/Articles/240474/">CFS group scheduling</a><br />
+        struct cfs_rq           *my_q;<br />
+<a href="https://lwn.net/Articles/240474/">CFS group scheduling</a><br />
 commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc<br />
 Author: Srivatsa Vaddagiri <a href="mailto:vatsa@linux.vnet.ibm.com">vatsa@linux.vnet.ibm.com</a><br />
 Date:   Mon Oct 15 17:00:07 2007 +0200<br />
@@ -517,7 +440,7 @@ fs/proc/array.c<br />
 
 <li><p>if running process &gt; sched_nr_latency, latency cannot be ensured. just focus on min granularity</p>
 
-<h2 id="lqo-1">LQO</h2></li>
+<h2 id="lqo">LQO</h2></li>
 
 <li><p>is the difference of leftmost and rightmost smaller than sched_min_granularity_ns??</p></li>
 
@@ -549,7 +472,7 @@ Check External links<br />
 calc_load_fold_active<br />
 Etymology of avenrun: <a href="https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c">average nr. of running processes during</a></p>
 
-<h1 id="lqo-2">LQO</h1></li>
+<h1 id="lqo-1">LQO</h1></li>
 
 <li><p>h_nr_running and throttled<br />
 sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1<br />
@@ -750,6 +673,22 @@ Date:   Thu Jul 21 09:43:33 2011 -0700<br />
     Now that consumption is tracked (via update_curr()) we add support to throttle<br />
     group entities (and their corresponding cfs_rqs) in the case where this is no<br />
     run-time remaining.</p>
+
+<h1 id="pelt">PELT</h1>
+
+<p><a href="https://lwn.net/Articles/531853/">Per-entity load tracking</a></p>
+
+<p>commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9<br />
+Author: Paul Turner <a href="mailto:pjt@google.com">pjt@google.com</a><br />
+Date:   Thu Oct 4 13:18:32 2012 +0200<br />
+    sched: Make __update_entity_runnable_avg() fast<br />
+commit a481db34b9beb7a9647c23f2320dd38a2b1d681f<br />
+Refs: v4.11-rc2-229-ga481db34b9be<br />
+Author:     Yuyang Du <a href="mailto:yuyang.du@intel.com">yuyang.du@intel.com</a><br />
+AuthorDate: Mon Feb 13 05:44:23 2017 +0800<br />
+Commit:     Ingo Molnar <a href="mailto:mingo@kernel.org">mingo@kernel.org</a><br />
+CommitDate: Thu Mar 30 09:43:41 2017 +0200<br />
+    sched/fair: Optimize ___update_sched_avg()</p>
 
 		</article>
 	  </div>

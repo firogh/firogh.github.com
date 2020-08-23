@@ -1,16 +1,27 @@
-# Hotplug
-add_memory
-|-add_memory_resource
- |-add_memory_resource
-  |-arch_add_memory
-   |-__add_pages
-    |-__add_section
-     |-sparse_add_one_section
-      |-kmalloc_section_memmap
-       |-sparse_mem_map_populate
-        |-vmemmap_populate
+# Lock
+arg_lock and mmap_sem: [mm: get_cmdline use arg_lock instead of mmap_sem](https://lore.kernel.org/lkml/20190417120347.15397-1-mkoutny@suse.com/)
 
-...->arch_add_memory->init_memory_mapping
+## MMU notifier
+Documentation/vm/mmu_notifier.rst
+[Memory management notifiers](https://lwn.net/Articles/266320/)
+[A last-minute MMU notifier change](https://lwn.net/Articles/732952/)
+[Heterogeneous memory management and MMU notifiers](https://lwn.net/Articles/752964/)
+commit cddb8a5c14aa89810b40495d94d3d2a0faee6619
+Author: Andrea Arcangeli <andrea@qumranet.com>
+Date:   Mon Jul 28 15:46:29 2008 -0700
+    mmu-notifiers: core
+
+# KSM and huge page
+https://bugzilla.suse.com/show_bug.cgi?id=1119962#c16
+[mm: put_and_wait_on_page_locked() while page is migrated](https://marc.info/?l=linux-mm&m=154711241119699&w=2#1)
+[Bug 1144338 - L3: ksm_max_page_sharing feature in the SLES kernel, was BMW is experiencing peaks of VM stalls ranging from 15 to 30 minutes](https://bugzilla.suse.com/show_bug.cgi?id=1144338)
+
+# Hugetlb page
+https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+[Huge pages part 1 (Introduction)](https://lwn.net/Articles/374424/)
+[hugepage 分析](https://ggaaooppeenngg.github.io/zh-CN/2017/04/30/hugepage-%E5%88%86%E6%9E%90/)
+## status
+p hstates
 
 # memmap
 /*
@@ -27,7 +38,6 @@ add_memory
  */
 void __init zero_resv_unavail(void)
 
-
 # Vmalloc
 map_vm_area 页表映射
 ## Vmalloc coherence with vfree() after vmalloc_sync_one
@@ -35,11 +45,6 @@ map_vm_area 页表映射
 当重新vmalloc()时，仍旧使用原来的页表。 
 page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
 deatils in vmalloc_sync_one() and vunmap_pte_range()
-
-# KSM and huge page
-https://bugzilla.suse.com/show_bug.cgi?id=1119962#c16
-[mm: put_and_wait_on_page_locked() while page is migrated](https://marc.info/?l=linux-mm&m=154711241119699&w=2#1)
-[Bug 1144338 - L3: ksm_max_page_sharing feature in the SLES kernel, was BMW is experiencing peaks of VM stalls ranging from 15 to 30 minutes](https://bugzilla.suse.com/show_bug.cgi?id=1144338)
 
 # Memory pool
 [Memory pools on lwn](https://lwn.net/Articles/22909/)
@@ -59,59 +64,15 @@ Date:   Mon Feb 4 23:58:50 2002 -0800
 Check mempool_create_node for detailsi
 mempool_alloc_slab
 
-# page migration
-[lwn: Page migration](https://lwn.net/Articles/157066/)
-[Kernel doc: Page migration](https://www.kernel.org/doc/html/latest/vm/page_migration.html)
-## Modes
-commit a6bc32b899223a877f595ef9ddc1e89ead5072b8
-Refs: u3.2-7180-ga6bc32b89922
-Author:     Mel Gorman <mgorman@suse.de>
-AuthorDate: Thu Jan 12 17:19:43 2012 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Jan 12 20:13:09 2012 -0800
-
-    mm: compaction: introduce sync-light migration for use by compaction
-
-    This patch adds a lightweight sync migrate operation MIGRATE_SYNC_LIGHT
-    mode that avoids writing back pages to backing storage.  Async compaction
-    maps to MIGRATE_ASYNC while sync compaction maps to MIGRATE_SYNC_LIGHT.
-    For other migrate_pages users such as memory hotplug, MIGRATE_SYNC is
-    used
-## MIGRATE_SYNC_NO_COPY
-commit 2916ecc0f9d435d849c98f4da50e453124c87531
-Refs: v4.13-9242-g2916ecc0f9d4
-Author:     Jérôme Glisse <jglisse@redhat.com>
-AuthorDate: Fri Sep 8 16:12:06 2017 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Sep 8 18:26:46 2017 -0700
-    mm/migrate: new migrate mode MIGRATE_SYNC_NO_COPY
-    For each page {
-     1 - lock page
-     2 - call migratepage() callback
-     3 - (extra locking in some migratepage() callback)
-     4 - migrate page state (freeze refcount, update page cache, buffer
-         head, ...)
-     5 - copy page
-     6 - (unlock any extra lock of migratepage() callback)
-     7 - return from migratepage() callback
-     8 - unlock page
-    }
-
-    The new mode MIGRATE_SYNC_NO_COPY:
-     1 - lock multiple pages
-    For each page {
-     2 - call migratepage() callback
-     3 - abort in all problematic migratepage() callback
-     4 - migrate page state (freeze refcount, update page cache, buffer
-         head, ...)
-    } // finished all calls to migratepage() callback
-     5 - DMA copy multiple pages
-     6 - unlock all the pages
-
-## Fault
-do_swap_page and __migration_entry_wait
-
-
-# Lock
-arg_lock and mmap_sem: [mm: get_cmdline use arg_lock instead of mmap_sem](https://lore.kernel.org/lkml/20190417120347.15397-1-mkoutny@suse.com/)
-
+# Hotplug
+add_memory
+|-add_memory_resource
+ |-add_memory_resource
+  |-arch_add_memory
+   |-__add_pages
+    |-__add_section
+     |-sparse_add_one_section
+      |-kmalloc_section_memmap
+       |-sparse_mem_map_populate
+        |-vmemmap_populate
+...->arch_add_memory->init_memory_mapping

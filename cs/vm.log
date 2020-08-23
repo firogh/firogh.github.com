@@ -20,8 +20,12 @@ Logical Design of a Digital Computer with Multiple Asynchronous Rotating Drums a
 [Virtual Memory Architecture in SunOS](http://kos.enix.org/pub/gingell8.pdf)
 [SunOS Virtual Memory Implementation](http://kos.enix.org/pub/sunos-vi.pdf)
 
-# 1956 ~ 1962 VM
-[BEFORE MEMORY WAS VIRTUAL](http://denninginstitute.com/pjd/PUBS/bvm.pdf)
+# References
+[PJD BEFORE MEMORY WAS VIRTUAL](http://denninginstitute.com/pjd/PUBS/bvm.pdf)
+[PJD Virtual Memory 1970](http://denninginstitute.com/pjd/PUBS/VirtMem_1970.pdf)
+[PJD VIRTUAL MEMORY II](http://denninginstitute.com/pjd/PUBS/vm.pdf)
+[PJD Thrashing: Its causes and prevention](http://denninginstitute.com/pjd/PUBS/thrashing-1968.pdf)
+[PJD The Locality Principle](http://denninginstitute.com/pjd/PUBS/CACMcols/cacmJul05.pdf)
 [Memory part 3: Virtual Memory](https://lwn.net/Articles/253361/)
 [Virtual Memory Architecture in SunOS](http://kos.enix.org/pub/gingell8.pdf)
 [Virtual memory from Atlas](http://curation.cs.manchester.ac.uk/computer50/www.computer50.org/kgill/atlas/atdef.html):
@@ -29,101 +33,18 @@ Logical Design of a Digital Computer with Multiple Asynchronous Rotating Drums a
 [SunOS Virtual Memory Implementation](https://pdfs.semanticscholar.org/c035/746e00023aa421b75bb2c8b2137f60bccd65.pdf)
 [Design and Implementation of the Berkeley Virtual Memory Extensions to the UNIX† Operating System‡](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.107.9119&rep=rep1&type=pdf)
 [Memory part 3: Virtual Memory](https://lwn.net/Articles/253361/)
+[Machine-Independent Virtual Memory Management for Paged Uniprocessor and Multiprocessor Architectures](https://research.cs.wisc.edu/areas/os/Qual/papers/mach-memory.pdf)
 
 > A system in which a process' workspace is held partly in high speed memory and partly on some slower and cheaper backing store. When the process refers to a memory location the system hardware detects whether or not the required location is physically present in memory and generates an interrupt if it is not, this allows, the system supervisor to transfer the required data area from backing store into memory.
 Firo: seems not accurate, consider the kernel space.
 
-## Address space
+# Address space
 LDD 3rd: Address Types
 [Virtual Memory I: the problem](https://lwn.net/Articles/75174/) 
 vma, mm_rb: address space area
-mm_struct
+## mm_struct
 History: commit b7c2deb6ea38080e7f6254b2d779b0bfce71eecb (tag: 1.1.11)
 Author: Linus Torvalds <torvalds@linuxfoundation.org>
 Date:   Fri Nov 23 15:09:29 2007 -0500
     Import 1.1.11
 Firo: Isolate mm_struct from task_struct; no helpful comment.
-
-# Page table
-[Chapter 3  Page Table Management](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
-[Page Table Isolation](https://www.kernel.org/doc/Documentation/x86/pti.txt)
-Check _PAGE_BIT_ACCESSED
-
-Related code:
-	init_mem_mapping //set page table and cr3.
-So early_level4_pgt(level4, level3, level2) in startup_64() with 
-ENTRY(secondary_startup_64)
-  /* Enable PAE mode and PGE */
-  movl  $(X86_CR4_PAE | X86_CR4_PGE), %ecx
-  movq  %rcx, %cr4
-  /* Setup early boot stage 4 level pagetables. */
-  addq  phys_base(%rip), %rax
-  movq  %rax, %cr3
-## PTE bits
-v3a chapter 4.5 4-level paging
-Check _PAGE_BIT_ACCESSED
-commit 97e3c602ccbdd7db54e92fe05675c664c052a466
-Author: Dave Hansen <dave.hansen@linux.intel.com>
-Date:   Thu Jul 7 17:19:12 2016 -0700
-    x86/mm: Ignore A/D bits in pte/pmd/pud_none()
-Firo: _PAGE_KNL_ERRATUM_MASK
-
-## pud_large
-commit 61e19a347ad4bcdda615ef77ef9c3e656e254f3d
-Refs: u2.6.24-6998-g61e19a347ad4
-Author:     Andi Kleen <ak@suse.de>
-AuthorDate: Mon Feb 4 16:48:09 2008 +0100
-Commit:     Ingo Molnar <mingo@elte.hu>
-CommitDate: Mon Feb 4 16:48:09 2008 +0100
-    x86: add pgtable accessor functions for gbpages
-
-## Copy ptes
-### fork's wp page and COW - copy_page_range ... copy_pte_range
-is_cow_mapping(vm_flags_t flags) => return (flags & (VM_SHARED | VM_MAYWRITE)) == VM_MAYWRITE;
-What about Shared & Write? Check the following commit:
-commit d08b3851da41d0ee60851f2c75b118e1f7a5fc89
-Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Date:   Mon Sep 25 23:30:57 2006 -0700
-    [PATCH] mm: tracking shared dirty pages
-For good understanding, check do_wp_page().
-
-## Zap ptes - zap_page_range
-exit and munmap
-
-## Unmap ptes
-PFRA, migation
-
-## MMU notifier
-[Memory management notifiers](https://lwn.net/Articles/266320/)
-commit cddb8a5c14aa89810b40495d94d3d2a0faee6619
-Author: Andrea Arcangeli <andrea@qumranet.com>
-Date:   Mon Jul 28 15:46:29 2008 -0700
-    mmu-notifiers: core
-## Walk page tables
-ptdump_walk_pgd_level_core
-[Mannully va to pa](http://edsionte.com/techblog/archives/1966)
-
-# Memory mapping
-setup_arch -> init_mem_mapping # set page table and cr3.
-## rmap
-The key part for understanding rmap is the 'file'; They comform with same rule that pages are mapped to a file. Eventhrough the file is virutalized sometimes.
-File page: Disk file backed page: page.index is offset of page in that file; vm_pgoff is offset of VMA in that file
-Shmem page: file is in the shmem fs. page.index is offset of page in that shmem file (not in address space! not same as anonymous private page); vm_pgoff is offset of VMA in that shmem file which is 0.
-Anonymous private page: file is the whole memory. page.index is offset of page in address space; vm_pgoff is offset of VMA in address space.
-
-anon vma: 1. fork or 2. do_anonymous_page(2.1 forked but parent don't use vma. 2.2 exec)
-exec : exec -> do_execveat_common-> bprm_mm_init setup_arg_pages
-do_anonymous_page -> anon_vma_prepare & page_add_new_anon_rmap
-fork workflow:attach to parent; alloc anon_vma for ownself. anon_vma_fork() -> anon_vma_chain_link
-
-shmem vma: shmem_add_to_page_cache
-file vma: __vma_adjust -> __vma_link_file
-
-Releated code: do_mmap, mmap_region, linear_page_index, rmap_walk_anon, rmap_walk_file
-History: 
-[Paper: Object-based Reverse Mapping](https://landley.net/kdocs/ols/2004/ols2004v2-pages-71-74.pdf)
-[逆向映射的演进 in Chinese](http://www.wowotech.net/memory_management/reverse_mapping.html)
-[The object-based reverse-mapping VM](https://lwn.net/Articles/23732/)
-[Reverse mapping anonymous pages - again](https://lwn.net/Articles/77106/)
-
-LQO VMA: vma_link_file vs pault hanlder

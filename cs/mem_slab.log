@@ -35,10 +35,8 @@ Author: Linus Torvalds <torvalds@linuxfoundation.org>
 Date:   Fri Nov 23 15:36:16 2007 -0500
     Import 2.4.0-test3pre6
 + * kmem_bufctl_t:
-+ *
 + * Bufctl's are used for linking objs within a slab
 + * linked offsets.
-+ *
 + * This implementaion relies on "struct page" for locating the cache &
 + * slab an object belongs to.
 + * This allows the bufctl structure to be small (one int), but limits
@@ -50,17 +48,14 @@ Date:   Fri Nov 23 15:36:16 2007 -0500
   * to have too many per slab.
   * Note: This limit can be raised by introducing a general cache whose size
   * is less than 512 (PAGE_SIZE<<3), but greater than 256.
-  */
 +#define BUFCTL_END 0xffffFFFF
 +#define        SLAB_LIMIT 0xffffFFFE
 +typedef unsigned int kmem_bufctl_t;
-
 
 ## page->freelist and page->active
 commit 8456a648cf44f14365f1f44de90a3da2526a4776
 Author: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 Date:   Thu Oct 24 10:07:49 2013 +0900
-
     slab: use struct page for slab management
 check get_slabinfo
 
@@ -73,6 +68,15 @@ Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
 CommitDate: Tue Oct 16 09:43:00 2007 -0700
     Group short-lived and reclaimable kernel allocations
 
+commit dd56b046426760aa0c852ad6e4b6b07891222d65
+Refs: v4.3-8063-gdd56b0464267
+Author:     Mel Gorman <mgorman@techsingularity.net>
+AuthorDate: Fri Nov 6 16:28:43 2015 -0800
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Fri Nov 6 17:50:42 2015 -0800
+    mm: page_alloc: hide some GFP internals and document the bits and flag combinations
++ * __GFP_RECLAIMABLE is used for slab allocations that specify
++ *   SLAB_RECLAIM_ACCOUNT and whose pages can be freed via shrinkers.
 
 # alias
 __kmem_cache_alias()

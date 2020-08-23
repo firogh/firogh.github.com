@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="569">
+<meta itemprop="wordCount" content="602">
 <meta itemprop="datePublished" content="2015-05-27">
 <meta itemprop="url" content="http://firoyang.org/cs/algorithm/">
 
@@ -299,6 +299,22 @@ direct-mapped cache - if two locations map to the same entry, they may continual
 <p><a href="https://lwn.net/Articles/510202/">A generic hash table</a><br />
 hash function</p>
 
+<h2 id="hlist-nulls">hlist-nulls</h2>
+
+<p>commit bbaffaca4810de1a25e32ecaf836eeaacc7a3d11<br />
+Refs: v2.6.28-rc4-513-gbbaffaca4810<br />
+Author:     Eric Dumazet <a href="mailto:dada1@cosmosbay.com">dada1@cosmosbay.com</a><br />
+AuthorDate: Sun Nov 16 19:37:55 2008 -0800<br />
+Commit:     David S. Miller <a href="mailto:davem@davemloft.net">davem@davemloft.net</a><br />
+CommitDate: Sun Nov 16 19:37:55 2008 -0800<br />
+    rcu: Introduce hlist_nulls variant of hlist<br />
+    hlist uses NULL value to finish a chain.<br />
+    hlist_nulls variant use the low order bit set to 1 to signal an end-of-list marker.<br />
+    This allows to store many different end markers, so that some RCU lockless<br />
+    algos (used in TCP/UDP stack for example) can save some memory barriers in<br />
+    fast paths.<br />
+<a href="https://www.kernel.org/doc/Documentation/RCU/rculist_nulls.txt">Usage of hilsit-nulls in kernel doc</a></p>
+
 <h1 id="bst">BST</h1>
 
 <p>Pre-order<br />
@@ -325,19 +341,6 @@ Trees only store keys.<br />
 * terms very confused<br />
 <a href="https://stackoverflow.com/questions/14708134/what-is-the-difference-between-trie-and-radix-trie-data-structures">Radix tree vs Trie, check radix meaning</a><br />
 Patricia is compact trie or Patricia is radix = 2 trie?</p>
-
-<h1 id="radix-tree-in-kernel-not-wikipedia">Radix tree in kernel not wikipedia</h1>
-
-<p>page cache: page_cache_tree_insert<br />
-Wikipedia: Radix tree looks like a compact trie.<br />
-Kernel: Radix tree was more like a Multi-level index associative arrya or judy array.<br />
-<a href="https://lwn.net/Articles/175432/">Trees I: Radix trees</a><br />
-<a href="http://events17.linuxfoundation.org/sites/events/files/slides/LinuxConNA2016%20-%20Radix%20Tree.pdf">Enhancing the Linux Radix Tree</a><br />
-<a href="https://www.youtube.com/watch?v=v0C9_Fp-co4">The design and implementation of the XArray</a><br />
-<a href="https://lwn.net/Articles/688130/">A multi-order radix tree</a><br />
-radix_tree_init_maxnodes(): height is 11 in kernel?<br />
-<strong>radix_tree_create() add one page</strong><br />
-radix_tree_lookup_slot: find one page</p>
 
 <h1 id="search">Search</h1>
 
@@ -380,7 +383,8 @@ type: Reclaim</p>
 
 <h1 id="redblack-tree">Redblack tree</h1>
 
-<p>gap between linar node can be optimized by argument rb tree. O(n) -&gt; O(log n)<br />
+<p><a href="http://tinylab.org/rbtree-part1/">红黑树 IN Linux part 1, 2, 3</a><br />
+gap between linar node can be optimized by argument rb tree. O(n) -&gt; O(log n)<br />
 mm: augment vma rbtree with rb_subtree_gap d37371870ceb1d2165397dc36114725b6dca946c<br />
 <a href="http://sidsen.azurewebsites.net//papers/rb-trees-talg.pdf">Rank-Balanced Trees</a><br />
 <a href="https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/">https://leetcode.com/problems/count-of-smaller-numbers-after-self/description/</a><br />

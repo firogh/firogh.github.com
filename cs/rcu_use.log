@@ -1,0 +1,98 @@
+# kernel configurations
+Kernel configuration parameters for RCU: https://lwn.net/Articles/777214/
+
+# list and rcu
+[Using RCU for linked lists — a case study](https://lwn.net/Articles/610972/)
+[Using RCU to Protect Read-Mostly Linked Lists](https://www.kernel.org/doc/Documentation/RCU/listRCU.rst)
+
+# slab and rcu
+tglx: commit 77631565ae40a44f23eac2e9c440cbceed8962a7
+Author:     Hugh Dickins <hugh@veritas.com>
+AuthorDate: Mon Aug 23 21:24:22 2004 -0700
+Commit:     Linus Torvalds <torvalds@ppc970.osdl.org>
+CommitDate: Mon Aug 23 21:24:22 2004 -0700
+    [PATCH] rmaplock: SLAB_DESTROY_BY_RCU
+commit d7de4c1dc3a2faca0bf05d9e342f885cb2696766
+Refs: v2.6.28-rc4-307-gd7de4c1dc3a2
+Author:     Peter Zijlstra <a.p.zijlstra@chello.nl>
+AuthorDate: Thu Nov 13 20:40:12 2008 +0200
+Commit:     Pekka Enberg <penberg@cs.helsinki.fi>
+CommitDate: Thu Nov 13 20:49:02 2008 +0200
+    slab: document SLAB_DESTROY_BY_RCU
+    Explain this SLAB_DESTROY_BY_RCU thing..
+
+## SLAB_TYPESAFE_BY_RCU
+commit 5f0d5a3ae7cff0d7fa943c199c3a2e44f23e1fac
+Refs: v4.11-rc2-1-g5f0d5a3ae7cf
+Author:     Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+AuthorDate: Wed Jan 18 02:53:44 2017 -0800
+Commit:     Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+CommitDate: Tue Apr 18 11:42:36 2017 -0700
+    mm: Rename SLAB_DESTROY_BY_RCU to SLAB_TYPESAFE_BY_RCU
+    A group of Linux kernel hackers reported chasing a bug that resulted
+    from their assumption that SLAB_DESTROY_BY_RCU provided an existence
+    guarantee, that is, that no block from such a slab would be reallocated
+    during an RCU read-side critical section.  Of course, that is not the
+    case.  Instead, SLAB_DESTROY_BY_RCU only prevents freeing of an entire
+    slab of blocks.
+
+# Network RX  path
+commit 2d331915a04144dad738e725769d8fac06ef6155
+Author: Eric Dumazet <edumazet@google.com>
+Date:   Fri Apr 1 08:52:15 2016 -0700
+    tcp/dccp: use rcu locking in inet_diag_find_one_icsk()
+    RX packet processing holds rcu_read_lock(), so we can remove
+    pairs of rcu_read_lock()/rcu_read_unlock() in lookup functions
+    if inet_diag also holds rcu before calling them.
+    This is needed anyway as __inet_lookup_listener() and
+    inet6_lookup_listener() will soon no longer increment
+    refcount on the found listener.
+    Signed-off-by: Eric Dumazet <edumazet@google.com>
+    Signed-off-by: David S. Miller <davem@davemloft.net>
+
+5142 static int process_backlog(struct napi_struct *napi, int quota)
+...
+5160                 while ((skb = __skb_dequeue(&sd->process_queue))) {
+5161                         rcu_read_lock();
+5162                         __netif_receive_skb(skb);
+5163                         rcu_read_unlock();
+Refs: v4.1-12249-g2c17d27c36dc
+Author:     Julian Anastasov <ja@ssi.bg>
+AuthorDate: Thu Jul 9 09:59:10 2015 +0300
+Commit:     David S. Miller <davem@davemloft.net>
+CommitDate: Fri Jul 10 18:16:36 2015 -0700
+
+    net: call rcu_read_lock early in process_backlog
+
+    Incoming packet should be either in backlog queue or
+    in RCU read-side section. Otherwise, the final sequence of
+    flush_backlog() and synchronize_net() may miss packets
+    that can run without device reference:
+
+    CPU 1                  CPU 2
+                           skb->dev: no reference
+                           process_backlog:__skb_dequeue
+                           process_backlog:local_irq_enable
+
+    on_each_cpu for
+    flush_backlog =>       IPI(hardirq): flush_backlog
+                           - packet not found in backlog
+
+                           CPU delayed ...
+    synchronize_net
+    - no ongoing RCU
+    read-side sections
+
+    netdev_run_todo,
+    rcu_barrier: no
+    ongoing callbacks
+                           __netif_receive_skb_core:rcu_read_lock
+                           - too late
+    free dev
+                           process packet for freed dev
+
+    Fixes: 6e583ce5242f ("net: eliminate refcounting in backlog queue")
+    Cc: Eric W. Biederman <ebiederm@xmission.com>
+    Cc: Stephen Hemminger <stephen@networkplumber.org>
+    Signed-off-by: Julian Anastasov <ja@ssi.bg>
+    Signed-off-by: David S. Miller <davem@davemloft.net>
