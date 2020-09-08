@@ -27,3 +27,30 @@ context switch overhead.
 [A survey of scheduler benchmarks](https://lwn.net/Articles/725238/)
 
 2.5.18 Micro-Benchmarking
+
+# kernel buddy
+commit 6dda9d55bf545013597724bf0cd79d01bd2bd944
+Refs: v2.6.34-7312-g6dda9d55bf54
+Author:     Corrado Zoccolo <czoccolo@gmail.com>
+AuthorDate: Mon May 24 14:31:54 2010 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Tue May 25 08:06:56 2010 -0700
+
+    page allocator: reduce fragmentation in buddy allocator by adding buddies that are merging to the tail of the free lists
+
+    In order to reduce fragmentation, this patch classifies freed pages in two
+    groups according to their probability of being part of a high order merge.
+     Pages belonging to a compound whose next-highest buddy is free are more
+    likely to be part of a high order merge in the near future, so they will
+    be added at the tail of the freelist.  The remaining pages are put at the
+    front of the freelist.
+
+    In this way, the pages that are more likely to cause a big merge are kept
+    free longer.  Consequently there is a tendency to aggregate the
+    long-living allocations on a subset of the compounds, reducing the
+    fragmentation.
+
+    This heuristic was tested on three machines, x86, x86-64 and ppc64 with
+    3GB of RAM in each machine.  The tests were kernbench, netperf, sysbench
+    and STREAM for performance and a high-order stress test for huge page
+    allocations.

@@ -27,6 +27,16 @@ mem_init_print_info:  free(or managed or totalram_pages at that time)/present (r
 BTW, above information is useful to compute totalram_pages =  present - cma - reserved.
 MemTotal:       11682024 kB  # managed is increased.
 
+# Mapped
+         * It's possible for there to be more file mapped pages than
+         * accounted for by the pages on the file LRU lists because
+         * tmpfs pages accounted for as ANON can also be FILE_MAPPED
+node_unmapped_file_pages
+
+# FILE_PAGES
+replace_page_cache_page
+ /* hugetlb pages do not participate in page cache accounting. *
+
 # Pages
 page_to_nid, pfn_to_nid, pfn_to_page, page_zone, virt_to_page, page_pgdat, __virt_addr_valid, _pa(kaddr)
 ## Buddy status
@@ -57,6 +67,26 @@ crash> page.lru,index,_mapcount,s_mem ffffea0011cf3040 # Next page of above page
 cache_grow: PG_slab, active, s_mem, freelist
 __cache_free, slabs_destroy, kmem_freepages: lru 0xdead, 
 Order > 0 pages: freelist are not reset while returing to buddy system.
+
+## Compound page status
+ * Higher-order pages are called "compound pages".  They are structured thusly:
+ * The first PAGE_SIZE page is called the "head page" and have PG_head set.
+ * The remaining PAGE_SIZE pages are called "tail pages". PageTail() is encoded
+ * in bit 0 of page->compound_head. The rest of bits is pointer to head page.
+ * The first tail page's ->compound_dtor holds the offset in array of compound
+ * page destructors. See compound_page_dtors.
+ * The first tail page's ->compound_order holds the order of allocation.
+ * This usage means that zero-order pages may not be compound. 
+see free_compound_page()
+commit eefb08ee7da81e1548ffd5b664682dc5b229ddc2
+Author:     Andrew Morton <akpm@digeo.com>
+AuthorDate: Wed Feb 5 16:57:54 2003 -0800
+Commit:     Linus Torvalds <torvalds@home.transmeta.com>
+CommitDate: Wed Feb 5 16:57:54 2003 -0800
+    [PATCH] Infrastructure for correct hugepage refcounting
+head page: flags PG_head
+first tail page: compound_head, compound_order, compound_dtor = COMPOUND_PAGE_DTOR or HUGETLB_PAGE_DTOR;
+second to last tail pages: compound_head
 
 ## Page cache status
 delete_from_page_cache: mapping = NULL,
