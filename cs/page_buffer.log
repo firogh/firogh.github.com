@@ -1,0 +1,161 @@
+# User interace
+[KS2008: Filesystem and block layer interaction](https://lwn.net/Articles/298589/)
+## Block buffer write
+commit 090da37209e13c26f3723e847860e9f7ab23e113
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Mon Apr 29 23:52:10 2002 -0700
+    [PATCH] writeback from address spaces
++ * The generic ->writepage function for buffer-backed address_spaces
+ int block_write_full_page(struct page *page, get_block_t *get_block)
+
+# Translation
+__getblk_slow, grow_buffers, grow_dev_page, alloc_page_buffers
+__getblk_gfp -> grow_dev_page -> buffer cache
+__bread_gfp -> __getblk_gfp and submit_bh
+__ext4_iget -> __ext4_get_inode_loc -> sb_getblk
+ext4_write_inode
+## Block mappings
+page, block, sector
+bio->bi_iter.bi_sector = bh->b_blocknr * (bh->b_size >> 9);	# sector_nr = blocknr * (block_size / 512)
+
+# Delay allocation, BH_delay, man ext4 delalloc
+16:53大疆创新李磊 阿克曼: @杨永明 Firo 延迟分配，可以减少多进程同时写文件造成文件碎片
+设想一个场景，两个进程pa,pb同时追加写文件，如果直接申请块就马上给的话，就会出现pa申请的block在1,3,5…… pb申请的block在2,4，6……
+bh_delay推迟块的分配时机到回写时候进行。这样pa和pb就能分别获取连续的物理块
+[[RFC] basic delayed allocation in VFS](https://linux-fsdevel.vger.kernel.narkive.com/bGiQumkf/rfc-basic-delayed-allocation-in-vfs)
+[State of the Art: Where we are with the Ext3 filesystem](https://www.kernel.org/doc/ols/2005/ols2005v1-pages-77-104.pdf)
+[Ext4 block and inode allocator improvements](https://landley.net/kdocs/ols/2008/ols2008v1-pages-263-274.pdf)
+## how and benifits
+https://xfs.org/docs/xfsdocs-xml-dev/XFS_User_Guide/tmp/en-US/html/ch02s08.html
+
+# Buffer head and block
+Is BUFFER_FNS BUFFER_FUNCTIONS?
+## Buffer head usage
+commit 205f87f6b342444f722e4559d33318686f7df2ca
+Refs: v2.6.16-2980-g205f87f6b342
+Author:     Badari Pulavarty <pbadari@us.ibm.com>
+AuthorDate: Sun Mar 26 01:38:00 2006 -0800
+    [PATCH] change buffer_head.b_size to size_t
++ * Historically, a buffer_head was used to map a single block
++ * within a page, and of course as the unit of I/O through the
++ * filesystem and block layers.  Nowadays the basic I/O unit
++ * is the bio, and buffer_heads are used for extracting block			# 1. extracting block mappings (via a get_block_t call)
++ * mappings (via a get_block_t call), for tracking state within		# 2. tracking state within a page (via a page_mapping) 
++ * a page (via a page_mapping) and for wrapping bio submission		# 3. wrapping bio submission for backward compatibility reasons 
++ * for backward compatibility reasons (e.g. submit_bh).
+[LKD3: The Old Versus the New at stackoverflow](https://stackoverflow.com/a/57407020/1025001)
+[Linus on Buffer head](https://yarchive.net/comp/linux/buffer_heads.html)
+[The buffer_head api that used to give you access to the buffer cache, now gives you access to the page cache for the block device.](https://lwn.net/Articles/712467/)
+[Large pages, large blocks, and large problems](https://lwn.net/Articles/250335/)
+[Large block size support](https://lwn.net/Articles/232757/)
+[History: LDD2: How does buffer_head work with request struct: ](https://www.xml.com/ldd/chapter/book/ch12.html#t4)
+## NOT MERGERED: BH_Delay, current usage of buffer_head by Jan Kara
+[ext4: Deprecate nobh mount option](https://lore.kernel.org/patchwork/patch/171199/)
+	This option doesn't do anything interesting for ext4 anymore since we attach
+	buffers to the page in page_mkwrite and in write_begin to support delayed
+	allocation and properly handle ENOSPC caused by mmaped writes.
+	Signed-off-by: Jan Kara <jack@suse.cz>
+
+#  a partially uptodate page with blocksize <   PAGE_CACHE_SIZE.
+tglx: commit d58e41eec6859e9590f8f70ccdc1d58f4f6a1b84
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Sun May 5 01:10:37 2002 -0700
+    [PATCH] Fix concurrent writepage and readpage
+    Pages under writeback are not locked.  So it is possible (and quite
+    legal) for a page to be under readpage() while it is still under
+    writeback.  For a partially uptodate page with blocksize <
+    PAGE_CACHE_SIZE.
+
+# Buffer new and mapped
+commit 697b710337c6f365b367c1cb6f3a9dd48724441e
+Refs: <2.3.9pre5>
+Author:     Linus Torvalds <torvalds@linuxfoundation.org>
+AuthorDate: Fri Nov 23 15:25:50 2007 -0500
+    Import 2.3.9pre5
+BH_New means newly created block has no data on block, which is different to !BH_Uptodate.
+
+see tglx fs/buffer.c
+ * NOTE! All mapped/uptodate combinations are valid:
+ *      Mapped  Uptodate        Meaning
+ *      No      No              "unknown" - must do get_block()
+ *      No      Yes             "hole" - zero-filled
+ *      Yes     No              "allocated" - allocated on disk, not read in
+ *      Yes     Yes             "valid" - allocated and up-to-date in memory.
+ * "Dirty" is valid only with the last case (mapped+uptodate).
+
+# Buffer vs page dirty
+
+# Locking for BH
+## page locking and BH locking
+comment  of buffer_busy()
+ * Exclusion against try_to_free_buffers may be obtained by either
+ * locking the page or by holding its mapping's private_lock.
+
+## PG_wirteback vs get_bh and try_to_relase_page
+See __block_write_full_page
+commit a2bcb3a084f4312844639e18cbe7eb7256c7c23c
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Mon Apr 29 23:54:18 2002 -0700
+    [PATCH] page writeback locking update
+@@ -1168,6 +1185,8 @@ int try_to_release_page(struct page *page, int gfp_mask)
++       if (PageWriteback(page))
++               return 0;
+@@ -1385,6 +1403,10 @@ static int __block_write_full_page(struct inode *inode,
++       BUG_ON(PageWriteback(page));
++       SetPageWriteback(page);         /* Keeps try_to_free_buffers() away */
++       unlock_page(page)
+
+commit c5da10acea4d6478ee90ca23f85a24763a860c4a
+Author:     Andrea Arcangeli <andrea@suse.de>
+AuthorDate: Sat Jul 10 19:38:08 2004 -0700
+    [PATCH] __block_write_full_page() comment fixups
++        * The page and its buffers are protected by PageWriteback(), so we can
++        * drop the bh refcounts early.
+        BUG_ON(PageWriteback(page));
+-       set_page_writeback(page);       /* Keeps try_to_free_buffers() away */
++       set_page_writeback(page);
+        unlock_page(page);
+-        * The page may come unlocked any time after the *first* submit_bh()
+-        * call.  Be careful with its buffers.
+
+# Buffer head necessary?
+ext4_mpage_readpages seems not.
+block_read_full_page but generic 'read page' needs it; using the block device logic? seems not.
+
+# Nobh
+Compared to ext2_prepare_write(in turn __block_prepare_write), nobh_prepare_write doesn't has following code.
+        if (!page_has_buffers(page))
+                create_empty_buffers(page, blocksize, 0);
+        head = page_buffers(page);
+tglx: commit b1ad1f4efce23ad0801492c0d5ffa8c0aa6a8cdb
+Author:     Andrew Morton <akpm@digeo.com>
+AuthorDate: Thu Nov 21 19:32:45 2002 -0800
+    [PATCH] no-buffer-head ext2 option				# Initial
+commit 206f7ab4f49a2021fcb8687f25395be77711ddee
+Author: Christoph Hellwig <hch@lst.de>
+Date:   Mon Jun 14 14:42:49 2010 -0400
+    ext4: remove vestiges of nobh support
+    The nobh option was only supported for writeback mode, but given that all
+    write paths actually create buffer heads it effectively was a no-op already.
+## Why nobh
+[Is nobh code still useful?](http://linux-kernel.2935.n7.nabble.com/Is-nobh-code-still-useful-td509649.html)
+	Originally it was supported on ext2. I added support nobh support for
+	ext3. At that time, the main
+	issue/complaint was that, these bufferheads consume memory from
+	ZONE_NORMAL causing
+	memory pressure on 32-bit (i386) configurations.
+	Thanks,
+	Badari
+	---------------------------------
+	Specifically, it matters on very large configuration systems (i.e.,
+	32GB-64GB using PAE-36) that today we'd probably just say, "use
+	x86_64, you moron".  It would probably matter if someone were to want
+	to upgrade a non-64-bit capable machine to a newer kernel.  
+	Dropping nobh from ext3 at this point might prevent some of these
+	older systems from upgrading, I'm not sure how much we would care; on
+	the one hand, these machines tended to be pretty expensive, so people
+	would probably want to use them for a while.  On the other hand, it
+	has been over five years now since x86_64 machines have been
+	available, and many of these customers are highly unlikely to want to
+	upgrade anyway.
+							- Ted

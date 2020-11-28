@@ -17,73 +17,32 @@
       <guid>http://firoyang.org/cs/page_allocator/</guid>
       <description>
 
-&lt;h1 id=&#34;reference&#34;&gt;Reference&lt;/h1&gt;
+&lt;h1 id=&#34;gfp&#34;&gt;GFP&lt;/h1&gt;
 
-&lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/627419/&#34;&gt;The &amp;ldquo;too small to fail&amp;rdquo; memory-allocation rule&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/723317/&#34;&gt;Revisiting &amp;ldquo;too small to fail&amp;rdquo;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/html/latest/core-api/memory-allocation.html&#34;&gt;Memory Allocation Guide&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://www.kernel.org/doc/html/latest/core-api/mm-api.html#memory-allocation-controls&#34;&gt;Memory Allocation Controls&lt;/a&gt;&lt;br /&gt;
+Also see include/linux/gfp.h&lt;/p&gt;
 
-&lt;h1 id=&#34;track-buddy-memory-system-1963-1965&#34;&gt;track: buddy memory system 1963 ~ 1965&lt;/h1&gt;
+&lt;h2 id=&#34;removed-gfp-flags&#34;&gt;Removed GFP flags&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
-The following cited from above 1965 paper.&lt;br /&gt;
-The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
-storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
-situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
-mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+&lt;p&gt;__GFP_WAIT: mm, page_alloc: Rename __GFP_WAIT to __GFP_RECLAIM&lt;/p&gt;
 
-&lt;p&gt;OSIDP&lt;br /&gt;
-Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
-scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
-a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
-ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
-interesting compromise is the buddy system&lt;/p&gt;
-
-&lt;h2 id=&#34;related-code&#34;&gt;Related code&lt;/h2&gt;
-
-&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
-setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init = paging_init -&amp;gt;&lt;br /&gt;
-        sparse_init &amp;hellip;-&amp;gt; vmemmap_populate      # vmemmap&lt;br /&gt;
-        zone_sizes_init-&amp;gt;free_area_init_nodes -&amp;gt; free_area_init_node-&amp;gt; free_area_init_core&lt;br /&gt;
-                zone_pcp_init # init percpu pageset with boot_pageset&lt;br /&gt;
-                init_currently_empty_zone(zone, zone_start_pfn, size); # free_area.free_list&lt;br /&gt;
-                memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
-
-&lt;p&gt;start_kernel-&amp;gt;mm_init&lt;br /&gt;
-        mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
-
-&lt;h1 id=&#34;cpu-set&#34;&gt;CPU set&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/717797/&#34;&gt;Cpusets and memory policies&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;gfp-flags&#34;&gt;GFP flags&lt;/h1&gt;
-
-&lt;p&gt;__GFP_THISNODE: 9b819d204cf602eab1a53a9ec4b8d2ca51e02a1d Add __GFP_THISNODE to avoid fallback to other nodes and ignore cpuset/memory policy restrictions&lt;br /&gt;
-__GFP_HIGHMEM in __alloc_zeroed_user_highpage??&lt;/p&gt;
-
-&lt;h2 id=&#34;gfp-zone-table&#34;&gt;GFP ZONE table&lt;/h2&gt;
+&lt;h2 id=&#34;gfp-zone-table-and-gfp-zone-bad&#34;&gt;GFP_ZONE_TABLE and GFP_ZONE_BAD&lt;/h2&gt;
 
 &lt;p&gt;commit b70d94ee438b3fd9c15c7691d7a932a135c18101&lt;br /&gt;
 Refs: v2.6.30-5489-gb70d94ee438b&lt;br /&gt;
 Author:     Christoph Lameter &lt;a href=&#34;mailto:cl@linux.com&#34;&gt;cl@linux.com&lt;/a&gt;&lt;br /&gt;
 AuthorDate: Tue Jun 16 15:32:46 2009 -0700&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Tue Jun 16 19:47:41 2009 -0700&lt;br /&gt;
     page-allocator: use integer fields lookup for gfp_zone and check for errors in flags passed to the page allocator&lt;br /&gt;
 + * GFP_ZONE_TABLE is a word size bitstring that is used for looking up the&lt;br /&gt;
 + * zone to use given the lowest 4 bits of gfp_t. Entries are ZONE_SHIFT long&lt;br /&gt;
 + * and there are 16 of them to cover all possible combinations of&lt;br /&gt;
 + * __GFP_DMA, __GFP_DMA32, __GFP_MOVABLE and __GFP_HIGHMEM&lt;br /&gt;
-+ *&lt;br /&gt;
 + * The zone fallback order is MOVABLE=&amp;gt;HIGHMEM=&amp;gt;NORMAL=&amp;gt;DMA32=&amp;gt;DMA.&lt;br /&gt;
 + * But GFP_MOVABLE is not only a zone specifier but also an allocation&lt;br /&gt;
 + * policy. Therefore __GFP_MOVABLE plus another zone selector is valid.&lt;br /&gt;
 + * Only 1bit of the lowest 3 bit (DMA,DMA32,HIGHMEM) can be set to &amp;ldquo;1&amp;rdquo;.&lt;br /&gt;
-+ *&lt;br /&gt;
 + *       bit       result&lt;br /&gt;
-+ *       =================&lt;br /&gt;
 + *       0x0    =&amp;gt; NORMAL&lt;br /&gt;
 + *       0x1    =&amp;gt; DMA or NORMAL&lt;br /&gt;
 + *       0x2    =&amp;gt; HIGHMEM or NORMAL&lt;br /&gt;
@@ -107,264 +66,52 @@ CommitDate: Tue Jun 16 19:47:41 2009 -0700&lt;br /&gt;
 ALLOC_HIGH: __zone_watermark_ok(): if (alloc_flags &amp;amp; ALLOC_HIGH) min -= min / 2;&lt;br /&gt;
 ALLOC_HARDER: rmqueue(): if (alloc_flags &amp;amp; ALLOC_HARDER) { page = __rmqueue_smallest(zone, order, MIGRATE_HIGHATOMIC);&lt;/p&gt;
 
-&lt;h1 id=&#34;high-order-atomic-allocations&#34;&gt;high-order atomic allocations&lt;/h1&gt;
+&lt;h1 id=&#34;pf-memalloc&#34;&gt;PF_MEMALLOC&lt;/h1&gt;
 
-&lt;p&gt;commit 0aaa29a56e4fb0fc9e24edb649e2733a672ca099&lt;br /&gt;
-Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@techsingularity.net&#34;&gt;mgorman@techsingularity.net&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Nov 6 16:28:37 2015 -0800&lt;br /&gt;
-    mm, page_alloc: reserve pageblocks for high-order atomic allocations on demand&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand009.html&#34;&gt;Mel&amp;rsquo;s book on PF_MEMALLOC&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lore.kernel.org/patchwork/cover/178099/&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;br /&gt;
+ get_page_from_freelist and __ac_get_obj&lt;br /&gt;
+                 * page is set pfmemalloc is when ALLOC_NO_WATERMARKS was&lt;br /&gt;
+                 * necessary to allocate the page. The expectation is&lt;br /&gt;
+                 * that the caller is taking steps that will free more&lt;br /&gt;
+                 * memory. The caller should avoid the page being used&lt;br /&gt;
+                 * for !PFMEMALLOC purposes.&lt;br /&gt;
+                if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)&lt;br /&gt;
+                        set_page_pfmemalloc(page);&lt;/p&gt;
 
-&lt;h1 id=&#34;hot-and-cold-pages&#34;&gt;Hot and cold pages&lt;/h1&gt;
+&lt;h2 id=&#34;users-of-pf-memalloc&#34;&gt;Users of PF_MEMALLOC&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://patchwork.kernel.org/patch/10013971/&#34;&gt;mm, Remove cold parameter from free_hot_cold_page*&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;kswapd and &lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;Set PF_MEMALLOC.&lt;br /&gt;
+commit c93bdd0e03e848555d144eb44a1f275b871a8dd5&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@suse.de&#34;&gt;mgorman@suse.de&lt;/a&gt;&lt;br /&gt;
+Date:   Tue Jul 31 16:44:19 2012 -0700&lt;br /&gt;
+    netvm: allow skb allocation to use PFMEMALLOC reserves&lt;/p&gt;
 
-&lt;h1 id=&#34;do-anonymous-page-zero-page&#34;&gt;Do anonymous page, zero page&lt;/h1&gt;
+&lt;h1 id=&#34;pf-swapwrite-swapwrite-originally-means-swap-space-but-now-stands-for-kswapd-or-zone-reclaim-and-migration&#34;&gt;PF_SWAPWRITE - swapwrite originally means swap space but now stands for kswapd or zone reclaim and migration?&lt;/h1&gt;
 
-&lt;p&gt;tglx: commit 382a7dec462a90ad6ae01227f1e8758ae721f6ed&lt;br /&gt;
-Author: Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
-Date:   Tue Feb 1 16:34:17 2005 -0800&lt;br /&gt;
-    [PATCH] alloc_zeroed_user_highpage() to fix the clear_user_highpage issue&lt;br /&gt;
-Lost tracks&lt;br /&gt;
-commit 6fbaac38b85e4bd3936b882392e3a9b45e8acb46&lt;br /&gt;
-Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@athlon.transmeta.com&#34;&gt;torvalds@athlon.transmeta.com&lt;/a&gt;&lt;br /&gt;
-Date:   Mon Feb 4 19:14:54 2002 -0800&lt;br /&gt;
-    v2.4.7 -&amp;gt; v2.4.7.1&lt;/p&gt;
-
-&lt;h1 id=&#34;obselete-feature-fair-zone-allocation&#34;&gt;Obselete feature - Fair-zone allocation&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/691300/&#34;&gt;mm, page_alloc: Remove fair zone allocation policy&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/576778/&#34;&gt;Configurable fair allocation zone policy&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;watermarks&#34;&gt;Watermarks&lt;/h1&gt;
-
-&lt;p&gt;totalreserve_pages is wmark high; check calculate_totalreserve_pages and Documentation/sysctl/vm.txt&lt;/p&gt;
-
-&lt;p&gt;Check Documentation/sysctl/vm.txt for min_free_kbytes&lt;br /&gt;
-min_free_kbytes_sysctl_handler or watermark_scale_factor_sysctl_handler or&lt;br /&gt;
-core_initcall(init_per_zone_wmark_min) -&amp;gt;&lt;br /&gt;
-        setup_per_zone_wmarks-&amp;gt; __setup_per_zone_wmarks&lt;br /&gt;
-{&lt;br /&gt;
-        firo@linux-6qg8:~&amp;gt; grep managed /proc/zoneinfo&lt;br /&gt;
-                managed  3973&lt;br /&gt;
-                managed  464142&lt;br /&gt;
-                managed  7726451&lt;br /&gt;
-        &amp;gt;&amp;gt;&amp;gt; 3973 + 464142 + 7726451&lt;br /&gt;
-        8194566&lt;br /&gt;
-        firo@linux-6qg8:~&amp;gt; cat /proc/sys/vm/min_free_kbytes&lt;br /&gt;
-        67584&lt;br /&gt;
-        &amp;gt;&amp;gt;&amp;gt; 67584 / 4 * 3973 / 8194566&lt;br /&gt;
-        8&lt;br /&gt;
-        # Unit of watermark is Page.&lt;br /&gt;
-        WMARK_MIN = page_no(min_free_kbytes) * (zone.managed_pages / \Sum of zone.managed_pages)&lt;br /&gt;
-        WMARK_LOW = 1.25 * min or min + &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;1000&lt;/sub&gt; * zone.managed_pages&lt;br /&gt;
-        WMARK_HIGH = 1.5 * min or min + &lt;sup&gt;2&lt;/sup&gt;&amp;frasl;&lt;sub&gt;1000&lt;/sub&gt; * zone.managed_pages&lt;br /&gt;
-}&lt;br /&gt;
-if min_free_kbytes &amp;gt; &lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;250&lt;/sub&gt;*total mamanged_pages, we use 1.25 min or 1.5 min&lt;br /&gt;
-low for normal path&lt;br /&gt;
-min for slow path&lt;/p&gt;
-
-&lt;p&gt;if low is reached (i.e. slow path) wakeup __GFP_KSWAPD_RECLAIM&lt;/p&gt;
-
-&lt;h1 id=&#34;vm-event-item&#34;&gt;vm_event_item&lt;/h1&gt;
-
-&lt;p&gt;commit e177ea28e7eded3490174487c81e5bef8a2c4d95&lt;br /&gt;
-Author:     Andrew Morton &lt;a href=&#34;mailto:akpm@zip.com.au&#34;&gt;akpm@zip.com.au&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Thu Jul 18 21:09:17 2002 -0700&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@home.transmeta.com&#34;&gt;torvalds@home.transmeta.com&lt;/a&gt;&lt;br /&gt;
-CommitDate: Thu Jul 18 21:09:17 2002 -0700&lt;br /&gt;
-    [PATCH] VM instrumentation&lt;br /&gt;
-    A patch from Rik which adds some operational statitics to the VM.&lt;br /&gt;
-    In /proc/meminfo:&lt;br /&gt;
-    PageTables:     Amount of memory used for process pagetables&lt;br /&gt;
-    PteChainTot:    Amount of memory allocated for pte_chain objects&lt;br /&gt;
-    PteChainUsed:   Amount of memory currently in use for pte chains.&lt;br /&gt;
-    In /proc/stat:&lt;br /&gt;
-    pageallocs:     Number of pages allocated in the page allocator&lt;br /&gt;
-    pagefrees:      Number of pages returned to the page allocator&lt;br /&gt;
-                    (These can be used to measure the allocation rate)&lt;br /&gt;
-    pageactiv:      Number of pages activated (moved to the active list)&lt;br /&gt;
-    pagedeact:      Number of pages deactivated (moved to the inactive list)&lt;br /&gt;
-    pagefault:      Total pagefaults&lt;br /&gt;
-    majorfault:     Major pagefaults&lt;br /&gt;
-    pagescan:       Number of pages which shrink_cache looked at&lt;br /&gt;
-    pagesteal:      Number of pages which shrink_cache freed&lt;br /&gt;
-    pageoutrun:     Number of calls to try_to_free_pages()&lt;br /&gt;
-    allocstall:     Number of calls to balance_classzone()      # direct relaim do_try_to_free_pages&lt;/p&gt;
-
-&lt;h1 id=&#34;root-cause-for-reclaim&#34;&gt;Root cause for reclaim&lt;/h1&gt;
-
-&lt;p&gt;Node:&lt;/p&gt;
-
-&lt;h1 id=&#34;priority&#34;&gt;Priority&lt;/h1&gt;
-
-&lt;p&gt;Smantics in PLKA&lt;br /&gt;
-commit 9e3b2f8cd340e13353a44c9a34caef2848131ed7&lt;br /&gt;
-Refs: u3.4-8606-g9e3b2f8cd340&lt;br /&gt;
-Author:     Konstantin Khlebnikov &lt;a href=&#34;mailto:khlebnikov@openvz.org&#34;&gt;khlebnikov@openvz.org&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Tue May 29 15:06:57 2012 -0700&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Tue May 29 16:22:26 2012 -0700&lt;br /&gt;
-    mm/vmscan: store &amp;ldquo;priority&amp;rdquo; in struct scan_control&lt;br /&gt;
-DEF_PRIORITY vs NODE_RECLAIM_PRIORITY(old ZONE_RECLAIM_PRIORITY)&lt;/p&gt;
-
-&lt;h1 id=&#34;scan-control-may-unmap-vs-may-swap&#34;&gt;Scan control: may_unmap vs may_swap&lt;/h1&gt;
-
-&lt;p&gt;a6dc60f8975a (&amp;ldquo;vmscan: rename sc.may_swap to may_unmap&amp;rdquo;)&lt;br /&gt;
-2e2e42598908 (&amp;ldquo;vmscan,memcg: reintroduce sc-&amp;gt;may_swap&amp;rdquo;) reintroduced .may_swap for memory controller.&lt;br /&gt;
-See RECLAIM_UNMAP for understanding may_unmap&lt;/p&gt;
-
-&lt;h1 id=&#34;node-old-zone-reclaim&#34;&gt;Node(old zone) reclaim&lt;/h1&gt;
-
-&lt;p&gt;See zone_reclaim_mode in Documentation/admin-guide/sysctl/vm.rst&lt;br /&gt;
-commit 9eeff2395e3cfd05c9b2e6074ff943a34b0c5c21&lt;br /&gt;
-Refs: v2.6.16-rc1-169-g9eeff2395e3c&lt;br /&gt;
-Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Jan 18 17:42:31 2006 -0800&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Jan 18 19:20:17 2006 -0800&lt;br /&gt;
-    [PATCH] Zone reclaim: Reclaim logic&lt;br /&gt;
-[&amp;hellip;]&lt;br /&gt;
-commit 9eeff2395e3cfd05c9b2e6074ff943a34b0c5c21&lt;br /&gt;
-Refs: v2.6.16-rc1-169-g9eeff2395e3c&lt;br /&gt;
-Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Jan 18 17:42:31 2006 -0800&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Jan 18 19:20:17 2006 -0800&lt;br /&gt;
-    [PATCH] Zone reclaim: Reclaim logic&lt;br /&gt;
-    Some bits for zone reclaim exists in 2.6.15 but they are not usable.  This&lt;br /&gt;
-    patch fixes them up, removes unused code and makes zone reclaim usable.&lt;br /&gt;
-    Zone reclaim allows the reclaiming of pages from a zone if the number of&lt;br /&gt;
-    free pages falls below the watermarks even if other zones still have enough&lt;br /&gt;
-    pages available.  Zone reclaim is of particular importance for NUMA&lt;br /&gt;
-    machines.  It can be more beneficial to reclaim a page than taking the&lt;br /&gt;
-    performance penalties that come with allocating a page on a remote zone.&lt;br /&gt;
-    Zone reclaim is enabled if the maximum distance to another node is higher&lt;br /&gt;
-    than RECLAIM_DISTANCE, which may be defined by an arch.  By default&lt;br /&gt;
-    RECLAIM_DISTANCE is 20.  20 is the distance to another node in the same&lt;br /&gt;
-    component (enclosure or motherboard) on IA64.  The meaning of the NUMA&lt;br /&gt;
-    distance information seems to vary by arch.&lt;/p&gt;
-
-&lt;h2 id=&#34;reclaim-write-and-reclaim-swap&#34;&gt;RECLAIM_WRITE and RECLAIM_SWAP&lt;/h2&gt;
-
-&lt;p&gt;caching effect vs data locality&lt;br /&gt;
-commit 1b2ffb7896ad46067f5b9ebf7de1891d74a4cdef&lt;br /&gt;
-Refs: v2.6.16-rc1-635-g1b2ffb7896ad&lt;br /&gt;
-Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@engr.sgi.com&#34;&gt;clameter@engr.sgi.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Feb 1 03:05:34 2006 -0800&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Feb 1 08:53:16 2006 -0800&lt;br /&gt;
-    [PATCH] Zone reclaim: Allow modification of zone reclaim behavior&lt;br /&gt;
-    In some situations one may want zone_reclaim to behave differently.  For&lt;br /&gt;
-    example a process writing large amounts of memory will spew unto other nodes&lt;br /&gt;
-    to cache the writes if many pages in a zone become dirty.  This may impact the&lt;br /&gt;
-    performance of processes running on other nodes.&lt;br /&gt;
-    Allowing writes during reclaim puts a stop to that behavior and throttles the&lt;br /&gt;
-    process by restricting the pages to the local zone.&lt;br /&gt;
-    Similarly one may want to contain processes to local memory by enabling&lt;br /&gt;
-    regular swap behavior during zone_reclaim.  Off node memory allocation can&lt;br /&gt;
-    then be controlled through memory policies and cpusets.&lt;/p&gt;
-
-&lt;h2 id=&#34;reclaim-unmap&#34;&gt;RECLAIM_UNMAP&lt;/h2&gt;
-
-&lt;p&gt;commit 95bbc0c7210a7397fec1cd219f896ca95bf29e3e&lt;br /&gt;
-Refs: v4.1-3341-g95bbc0c7210a&lt;br /&gt;
-Author:     Zhihui Zhang &lt;a href=&#34;mailto:zzhsuny@gmail.com&#34;&gt;zzhsuny@gmail.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Jun 24 16:56:42 2015 -0700&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linux-foundation.org&#34;&gt;torvalds@linux-foundation.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Jun 24 17:49:42 2015 -0700&lt;br /&gt;
-    mm: rename RECLAIM_SWAP to RECLAIM_UNMAP&lt;br /&gt;
-    The name SWAP implies that we are dealing with anonymous pages only.  In&lt;br /&gt;
-    fact, the original patch that introduced the min_unmapped_ratio logic&lt;br /&gt;
-    was to fix an issue related to file pages.  Rename it to RECLAIM_UNMAP&lt;br /&gt;
-    to match what does.&lt;br /&gt;
-    Historically, commit a6dc60f8975a (&amp;ldquo;vmscan: rename sc.may_swap to&lt;br /&gt;
-    may_unmap&amp;rdquo;) renamed .may_swap to .may_unmap, leaving RECLAIM_SWAP&lt;br /&gt;
-    behind.  commit 2e2e42598908 (&amp;ldquo;vmscan,memcg: reintroduce sc-&amp;gt;may_swap&amp;rdquo;)&lt;br /&gt;
-    reintroduced .may_swap for memory controller.&lt;/p&gt;
-
-&lt;h2 id=&#34;reclaim-slab-deleted&#34;&gt;RECLAIM_SLAB(deleted)&lt;/h2&gt;
-
-&lt;p&gt;commit 2a16e3f4b0c408b9e50297d2ec27e295d490267a&lt;br /&gt;
-Refs: v2.6.16-rc1-636-g2a16e3f4b0c4&lt;br /&gt;
-Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@engr.sgi.com&#34;&gt;clameter@engr.sgi.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Feb 1 03:05:35 2006 -0800&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Feb 1 08:53:16 2006 -0800&lt;br /&gt;
-    [PATCH] Reclaim slab during zone reclaim&lt;br /&gt;
-    If large amounts of zone memory are used by empty slabs then zone_reclaim&lt;br /&gt;
-    becomes uneffective.  This patch shakes the slab a bit.&lt;br /&gt;
-    The problem with this patch is that the slab reclaim is not containable to a&lt;br /&gt;
-    zone.  Thus slab reclaim may affect the whole system and be extremely slow.&lt;br /&gt;
-    This also means that we cannot determine how many pages were freed in this&lt;br /&gt;
-    zone.  Thus we need to go off node for at least one allocation.&lt;br /&gt;
-    The functionality is disabled by default.&lt;br /&gt;
-    We could modify the shrinkers to take a zone parameter but that would be quite&lt;br /&gt;
-    invasive.  Better ideas are welcome.&lt;/p&gt;
-
-&lt;h2 id=&#34;min-slab-ratio&#34;&gt;min_slab_ratio&lt;/h2&gt;
-
-&lt;p&gt;commit 0ff38490c836dc379ff7ec45b10a15a662f4e5f6&lt;br /&gt;
-Author: Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
-Date:   Mon Sep 25 23:31:52 2006 -0700&lt;br /&gt;
-    [PATCH] zone_reclaim: dynamic slab reclaim&lt;/p&gt;
-
-&lt;h2 id=&#34;reclaim-unmap-1&#34;&gt;RECLAIM_UNMAP&lt;/h2&gt;
-
-&lt;h1 id=&#34;direct-reclaim&#34;&gt;Direct reclaim&lt;/h1&gt;
-
-&lt;p&gt;do_try_to_free_pages&lt;br /&gt;
-vm_event_item ALLOCSTALL&lt;/p&gt;
-
-&lt;h1 id=&#34;kswapd&#34;&gt;Kswapd&lt;/h1&gt;
-
-&lt;p&gt;balance_pgdat PAGEOUTRUN&lt;/p&gt;
-
-&lt;h1 id=&#34;pf-swapwrite-need-a-better-name-reclaimwrite&#34;&gt;PF_SWAPWRITE - Need a better name RECLAIMWRITE?&lt;/h1&gt;
-
-&lt;p&gt;Intend to block, see e386771cbbc2a90b46df2ace02214f94cc23cb50 Give kswapd writeback higher priority than pdflush&lt;br /&gt;
-So what does swap mean? See &lt;a href=&#34;https://lore.kernel.org/linux-mm/20051025193023.6828.89649.sendpatchset@schroedinger.engr.sgi.com/#r&#34;&gt;Swap Migration V4: Overview&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/linux-mm/20051025193023.6828.89649.sendpatchset@schroedinger.engr.sgi.com/#r&#34;&gt;Swap Migration V4: Overview&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/157936/&#34;&gt;Swap Migration V5: Overview&lt;/a&gt;&lt;br /&gt;
 commit 930d915252edda7042c944ed3c30194a2f9fe163&lt;br /&gt;
 Refs: v2.6.15-1460-g930d915252ed&lt;br /&gt;
 Author:     Christoph Lameter &lt;a href=&#34;mailto:clameter@sgi.com&#34;&gt;clameter@sgi.com&lt;/a&gt;&lt;br /&gt;
 AuthorDate: Sun Jan 8 01:00:47 2006 -0800&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@g5.osdl.org&#34;&gt;torvalds@g5.osdl.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Sun Jan 8 20:12:41 2006 -0800&lt;br /&gt;
     [PATCH] Swap Migration V5: PF_SWAPWRITE to allow writing to swap&lt;br /&gt;
     Add PF_SWAPWRITE to control a processes permission to write to swap.&lt;br /&gt;
-    - Use PF_SWAPWRITE in may_write_to_queue() instead of checking for kswapd&lt;br /&gt;
-      and pdflush&lt;br /&gt;
+    - Use PF_SWAPWRITE in may_write_to_queue() instead of checking for kswapd and pdflush&lt;br /&gt;
     - Set PF_SWAPWRITE flag for kswapd and pdflush&lt;/p&gt;
 
-&lt;h1 id=&#34;memory-cgroup&#34;&gt;memory cgroup&lt;/h1&gt;
+&lt;h2 id=&#34;firo&#34;&gt;Firo&lt;/h2&gt;
 
-&lt;p&gt;set_memcg_congestion&lt;/p&gt;
+&lt;p&gt;The origianl migrations code &lt;a href=&#34;https://lore.kernel.org/linux-mm/20051025193039.6828.74991.sendpatchset@schroedinger.engr.sgi.com/&#34;&gt;swap_pages&lt;/a&gt;&lt;br /&gt;
+seems I can remove it from migration code since it&amp;rsquo;s not used during migrating pages.&lt;br /&gt;
+Could I remove it completely.&lt;/p&gt;
 
-&lt;h1 id=&#34;zone&#34;&gt;Zone&lt;/h1&gt;
-
-&lt;h2 id=&#34;low-memory-reserved&#34;&gt;Low memory reserved&lt;/h2&gt;
-
-&lt;p&gt;Check Documentation/sysctl/vm.txt for lowmem_reserve_ratio&lt;br /&gt;
-lowmem_reserve_ratio_sysctl_handler or core_initcall(init_per_zone_wmark_min) -&amp;gt;&lt;br /&gt;
-        setup_per_zone_lowmem_reserve&lt;br /&gt;
-firo@linux-6qg8:~&amp;gt; cat /proc/zoneinfo | grep protection&lt;br /&gt;
-        protection: (0, 1813, 31994, 31994, 31994)&lt;br /&gt;
-        protection: (0, 0, 30181, 30181, 30181)&lt;br /&gt;
-        protection: (0, 0, 0, 0, 0)&lt;br /&gt;
-        protection: (0, 0, 0, 0, 0)&lt;br /&gt;
-        protection: (0, 0, 0, 0, 0)&lt;br /&gt;
-Check __alloc_pages_nodemask(), lowmem_reserve is used for checking if there is enough pages in current zone to which allcation fallbacks from a prefered zone.&lt;br /&gt;
-lowmem_reserv is used for fallback allcations from a perfered zone in the zonelist.&lt;br /&gt;
-The index of lowmme_reserv is the prefered zoneref.zone_idx&lt;/p&gt;
-
-&lt;h2 id=&#34;zone-lists&#34;&gt;Zone lists&lt;/h2&gt;
+&lt;h1 id=&#34;zone-lists&#34;&gt;Zone lists&lt;/h1&gt;
 
 &lt;p&gt;struct zonelist node_zonelists[MAX_ZONELISTS];&lt;br /&gt;
  * [0]  : Zonelist with fallback&lt;br /&gt;
  * [1]  : No fallback (__GFP_THISNODE)&lt;br /&gt;
-start_kernel-&amp;gt;&lt;br /&gt;
-        build_all_zonelists&lt;br /&gt;
+start_kernel -&amp;gt; build_all_zonelists&lt;br /&gt;
 or hotpulg or /proc/sys/vm/numa_zonelist_order: numa_zonelist_order_handler&lt;br /&gt;
   node_zonelists = {{               # Fallback zones: this zonelist including all zones from all nodes.&lt;br /&gt;
       _zonerefs = {{&lt;br /&gt;
@@ -381,43 +128,64 @@ or hotpulg or /proc/sys/vm/numa_zonelist_order: numa_zonelist_order_handler&lt;b
     &amp;hellip;}}}&lt;br /&gt;
     node_zonelists[1]           # Nofallback zones&lt;/p&gt;
 
-&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
+&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
 
-&lt;h2 id=&#34;refcount&#34;&gt;_refcount&lt;/h2&gt;
+&lt;p&gt;[Driver porting: low-level memory allocation]&lt;a href=&#34;https://lwn.net/Articles/22909/)&#34;&gt;https://lwn.net/Articles/22909/)&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/627419/&#34;&gt;The &amp;ldquo;too small to fail&amp;rdquo; memory-allocation rule&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/723317/&#34;&gt;Revisiting &amp;ldquo;too small to fail&amp;rdquo;&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;after __alloc_pages_nodemask _refcount=0,&lt;br /&gt;
-post_alloc_hook: init should be 0.&lt;br /&gt;
-but set_page_refcounted -&amp;gt; set_page_count(page, 1);&lt;br /&gt;
-and Check put_page&lt;/p&gt;
+&lt;h1 id=&#34;high-order-atomic-allocations&#34;&gt;High-order atomic allocations&lt;/h1&gt;
 
-&lt;h1 id=&#34;pfmemalloc&#34;&gt;PFMEMALLOC&lt;/h1&gt;
+&lt;p&gt;commit 0aaa29a56e4fb0fc9e24edb649e2733a672ca099&lt;br /&gt;
+Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@techsingularity.net&#34;&gt;mgorman@techsingularity.net&lt;/a&gt;&lt;br /&gt;
+Date:   Fri Nov 6 16:28:37 2015 -0800&lt;br /&gt;
+    mm, page_alloc: reserve pageblocks for high-order atomic allocations on demand&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand009.html&#34;&gt;UVM&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lore.kernel.org/patchwork/cover/178099/&#34;&gt;Kill PF_MEMALLOC abuse&lt;/a&gt;&lt;br /&gt;
- get_page_from_freelist and __ac_get_obj&lt;br /&gt;
-                 * page is set pfmemalloc is when ALLOC_NO_WATERMARKS was&lt;br /&gt;
-                 * necessary to allocate the page. The expectation is&lt;br /&gt;
-                 * that the caller is taking steps that will free more&lt;br /&gt;
-                 * memory. The caller should avoid the page being used&lt;br /&gt;
-                 * for !PFMEMALLOC purposes.&lt;br /&gt;
-                if (alloc_flags &amp;amp; ALLOC_NO_WATERMARKS)&lt;br /&gt;
-                        set_page_pfmemalloc(page);&lt;br /&gt;
-&lt;a href=&#34;https://stackoverflow.com/a/40899585/1025001&#34;&gt;without being forced to write out dirty pages&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://bbs.chinaunix.net/thread-4078724-1-1.html&#34;&gt;并不是所有进程都有的。kswapd，direct reclaim的process等在回收的时候会设置这个标志&lt;/a&gt;&lt;br /&gt;
-check __perform_reclaim and memalloc_noreclaim_save&lt;br /&gt;
-kswapd-&amp;gt; PF_MEMALLOC-&amp;gt; try to pageout some pages -&amp;gt;  allocates some page using alloc_page for pageout -&amp;gt; no memory in lowreserve -&amp;gt; goto slowpath&lt;br /&gt;
-        /* Avoid recursion of direct reclaim */&lt;br /&gt;
-        if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)&lt;br /&gt;
-                goto nopage;&lt;br /&gt;
-otherwise&lt;br /&gt;
-        &lt;strong&gt;alloc_pages_direct_reclaim-&amp;gt;&lt;/strong&gt;perform_reclaim-&amp;gt;Set PF_MEMALLOC.&lt;br /&gt;
-__gfp_pfmemalloc_flags&lt;br /&gt;
-                if (current-&amp;gt;flags &amp;amp; PF_MEMALLOC)&lt;br /&gt;
-                        return ALLOC_NO_WATERMARKS;&lt;br /&gt;
-commit c93bdd0e03e848555d144eb44a1f275b871a8dd5&lt;br /&gt;
-Author: Mel Gorman &lt;a href=&#34;mailto:mgorman@suse.de&#34;&gt;mgorman@suse.de&lt;/a&gt;&lt;br /&gt;
-Date:   Tue Jul 31 16:44:19 2012 -0700&lt;br /&gt;
-    netvm: allow skb allocation to use PFMEMALLOC reserves&lt;/p&gt;
+&lt;h1 id=&#34;hot-and-cold-pages-pcp-list&#34;&gt;Hot and cold pages, pcp list&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/14768/&#34;&gt;Hot and cold pages&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://patchwork.kernel.org/patch/10013971/&#34;&gt;mm, Remove cold parameter from free_hot_cold_page*&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;fair-zone-allocation-obsoleted-but-see-gfp-write&#34;&gt;Fair-zone allocation - obsoleted but see __GFP_WRITE&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lore.kernel.org/patchwork/patch/691300/&#34;&gt;mm, page_alloc: Remove fair zone allocation policy&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/576778/&#34;&gt;Configurable fair allocation zone policy&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;compaction-and-reclamation&#34;&gt;Compaction and reclamation&lt;/h1&gt;
+
+&lt;p&gt;Direct reclaim: do_try_to_free_pages vm_event_item ALLOCSTALL&lt;br /&gt;
+Kswapd: balance_pgdat PAGEOUTRUN&lt;/p&gt;
+
+&lt;h1 id=&#34;buddy-memory-system-1963-1965&#34;&gt;Buddy memory system 1963 ~ 1965&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://sci-hub.tw/https://dl.acm.org/citation.cfm?doid=365628.365655&#34;&gt;buddy system 1965 a fast storage allocator.&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Buddy_memory_allocation&#34;&gt;Buddy memory allocation&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=359626&#34;&gt;buddy system variants 1977&lt;/a&gt;&lt;br /&gt;
+The following cited from above 1965 paper.&lt;br /&gt;
+The oporations involved in obtaining blocks from and retm&amp;rsquo;ning thom to the free&lt;br /&gt;
+storage lists aro vory fast, making this scheme particularly appropriate for list structure operations and for other&lt;br /&gt;
+situations involving many sizes of blocks which are fixed in size and location. This is in fact tho storago bookkeeping&lt;br /&gt;
+mothod used in tho Boll Telephone Laboratories Low-Level List Language&amp;rsquo;&lt;/p&gt;
+
+&lt;h2 id=&#34;osidp&#34;&gt;OSIDP&lt;/h2&gt;
+
+&lt;p&gt;Both fixed and dynamic partitioning schemes have drawbacks. A fixed partitioning&lt;br /&gt;
+scheme limits the number of active processes and may use space inefficiently if there is&lt;br /&gt;
+a poor match between available partition sizes and process sizes. A dynamic partition-&lt;br /&gt;
+ing scheme is more complex to maintain and includes the overhead of compaction. An&lt;br /&gt;
+interesting compromise is the buddy system&lt;/p&gt;
+
+&lt;h2 id=&#34;translations&#34;&gt;Translations&lt;/h2&gt;
+
+&lt;p&gt;free_area; page_is_buddy; PageBuddy(buddy) &amp;amp;&amp;amp; page_order(buddy)&lt;br /&gt;
+setup_arch-&amp;gt;x86_init.paging.pagetable_init = native_pagetable_init&lt;br /&gt;
+        sparse_init vmemmap_populate      # vmemmap&lt;br /&gt;
+        zone_sizes_init free_area_init_core zone_pcp_init&lt;br /&gt;
+        memmap_init_zone # Memory map a) Set all page to reserved. MIGRATE_MOVABLE? b) Set node, zone to page-&amp;gt;flags; set_page_links&lt;/p&gt;
+
+&lt;h3 id=&#34;buddy-init&#34;&gt;Buddy init&lt;/h3&gt;
+
+&lt;p&gt;mem_init-&amp;gt; memblock_free_all or free_all_bootmem # /* this will put all low memory onto the freelists */&lt;/p&gt;
 </description>
     </item>
     
@@ -506,7 +274,7 @@ TLPI:chapter 49 and LSP: Chapter 8&lt;/p&gt;
 1990 SunOS 4.1&lt;br /&gt;
 &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/4.1/800-3846-10A_System_Services_Overview_199003.pdf&#34;&gt;A Must-read: The applications programmer gains access to the facilities of the VM system through several sets of system calls.&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;formal-causes&#34;&gt;Formal causes&lt;/h1&gt;
+&lt;h1 id=&#34;memory-mappings&#34;&gt;Memory mappings&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://landley.net/writing/memory-faq.txt&#34;&gt;What are memory mappings? - Landley&lt;/a&gt;&lt;/p&gt;
 
@@ -515,13 +283,12 @@ TLPI:chapter 49 and LSP: Chapter 8&lt;/p&gt;
 of a consecutive virtual address range.  Each memory mapping has a&lt;br /&gt;
 start address and length, permissions (such as whether the program can&lt;br /&gt;
 read, write, or execute from that memory), and associated resources (such&lt;br /&gt;
-as physical pages, swap pages, file contents, and so on).&lt;br /&gt;
-Firo:  mmap, page fault, PFRA.&lt;/p&gt;
+as physical pages, swap pages, file contents, and so on).&lt;/p&gt;
 &lt;/blockquote&gt;
 
 &lt;h1 id=&#34;vma&#34;&gt;VMA&lt;/h1&gt;
 
-&lt;p&gt;vma&amp;rsquo;s unit is PAGE_SIZE; (vm_end - vm_start) % 0x1000 == 0 is True.&lt;/p&gt;
+&lt;p&gt;vma&amp;rsquo;s unit is PAGE_SIZE;&lt;/p&gt;
 
 &lt;h2 id=&#34;split-vma&#34;&gt;split_vma&lt;/h2&gt;
 
@@ -533,38 +300,9 @@ Date:   Tue Sep 17 06:35:47 2002 -0700&lt;br /&gt;
 new_below means the place where the old vma go to! Bad naming!&lt;br /&gt;
 0 means the old will save the head part. 1 means tail part.&lt;/p&gt;
 
-&lt;h2 id=&#34;file&#34;&gt;File&lt;/h2&gt;
+&lt;h1 id=&#34;release-memory-resources&#34;&gt;Release memory resources&lt;/h1&gt;
 
-&lt;h3 id=&#34;pas&#34;&gt;PAS&lt;/h3&gt;
-
-&lt;p&gt;Protection, Shared, Private.&lt;br /&gt;
-vm_page_prot, vm_flags&lt;br /&gt;
-remove_mapping&lt;/p&gt;
-
-&lt;h3 id=&#34;backing-dev&#34;&gt;Backing dev&lt;/h3&gt;
-
-&lt;p&gt;vm_file, vm_pgoff&lt;/p&gt;
-
-&lt;h2 id=&#34;private-anonymouse-mappings&#34;&gt;Private anonymouse mappings&lt;/h2&gt;
-
-&lt;p&gt;Heap - malloc mmap&lt;br /&gt;
-Anonymous Memory Mappings, LSP chapter 9&lt;/p&gt;
-
-&lt;h2 id=&#34;file-private-mappings&#34;&gt;File private mappings&lt;/h2&gt;
-
-&lt;p&gt;Program: execve text,data,bss&lt;br /&gt;
-Libraries&lt;br /&gt;
-openat(AT_FDCWD, &amp;ldquo;/lib64/libc.so.6&amp;rdquo;, O_RDONLY|O_CLOEXEC) = 3&lt;br /&gt;
-mmap(NULL, 1857568, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f27cbb02000&lt;br /&gt;
-* onset - mmap&lt;br /&gt;
-do_mmap -&amp;gt; mmap_region&lt;br /&gt;
-ext2: generic_file_mmap -&amp;gt; vma-&amp;gt;vm_ops = generic_file_vm_ops&lt;br /&gt;
-ext4: ext4_file_mmap -&amp;gt; vma-&amp;gt;vm_ops = ext4_file_vm_ops&lt;br /&gt;
-both: filemap_fault&lt;br /&gt;
-* nuclus&lt;br /&gt;
-Write - do_cow_page&lt;br /&gt;
-Read - do_read_page&lt;br /&gt;
-Read &amp;amp; write - do_wp_page&lt;/p&gt;
+&lt;p&gt;exit_mm exit_mmap&lt;/p&gt;
 
 &lt;h1 id=&#34;shared-memory-mapping&#34;&gt;Shared memory mapping&lt;/h1&gt;
 
@@ -591,8 +329,6 @@ Write: do_shared_fault -&amp;gt; shmem_getpage_gfp shmem_add_to_page_cache&lt;br
 WP: do_wp_page -&amp;gt; wp_page_shared or wp_page_reuse&lt;br /&gt;
 b)IPC using a shared file mapping&lt;/p&gt;
 
-&lt;h2 id=&#34;file-shared-mappings-a-memory-mapped-i-o&#34;&gt;File shared mappings - a) Memory-mapped I/O&lt;/h2&gt;
-
 &lt;h2 id=&#34;history-1&#34;&gt;History&lt;/h2&gt;
 
 &lt;p&gt;late 70s - IPC: see TLPI: Chapter 45 INTRODUCTION TO SYSTEM V IPC&lt;br /&gt;
@@ -609,7 +345,7 @@ N.B. This call is not completely implemented In 4.2(BSD).&lt;br /&gt;
 More sunos docs: &lt;a href=&#34;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&#34;&gt;http://bitsavers.trailing-edge.com/pdf/sun/sunos/&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;1988&lt;br /&gt;
-&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory-mapped_file#History&#34;&gt;SunOS 4[4] introduced Unix&amp;rsquo;s mmap, which permitted programs &amp;ldquo;to map files into memory.&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://en.wikipedia.org/wiki/Memory-mapped_file#History&#34;&gt;SunOS 4 introduced Unix&amp;rsquo;s mmap, which permitted programs &amp;ldquo;to map files into memory.&amp;rdquo;&lt;/a&gt;&lt;br /&gt;
 1989&lt;br /&gt;
 One paper found in OSTEP: &lt;a href=&#34;https://courses.cs.washington.edu/courses/cse551/09sp/papers/memory_coherence.pdf&#34;&gt;Memory Coherence in Shared Virtual Memory Systems&lt;/a&gt;&lt;/p&gt;
 
@@ -621,8 +357,6 @@ One paper found in OSTEP: &lt;a href=&#34;https://courses.cs.washington.edu/cour
 Refs: &lt;0.99.10&gt;&lt;br /&gt;
 Author:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
 AuthorDate: Fri Nov 23 15:09:11 2007 -0500&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Fri Nov 23 15:09:11 2007 -0500&lt;br /&gt;
     [PATCH] Linux-0.99.10 (June 7, 1993)&lt;br /&gt;
 Firo: search &amp;lsquo;shm_swap&amp;rsquo;&lt;/p&gt;
 
@@ -632,78 +366,12 @@ Firo: search &amp;lsquo;shm_swap&amp;rsquo;&lt;/p&gt;
 Refs: &lt;2.4.0-test13pre3&gt;&lt;br /&gt;
 Author:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
 AuthorDate: Fri Nov 23 15:40:55 2007 -0500&lt;br /&gt;
-Commit:     Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Fri Nov 23 15:40:55 2007 -0500&lt;br /&gt;
 [&amp;hellip;]&lt;br /&gt;
     The shmfs cleanup should be unnoticeable except to users who use SAP with&lt;br /&gt;
     huge shared memory segments, where Christoph Rohlands work not only&lt;br /&gt;
     makes the code much more readable, it should also make it dependable..&lt;br /&gt;
 [&amp;hellip;]&lt;br /&gt;
     - Christoph Rohland: shmfs for shared memory handling&lt;/p&gt;
-
-&lt;h1 id=&#34;mmap&#34;&gt;mmap&lt;/h1&gt;
-
-&lt;h2 id=&#34;map-sync&#34;&gt;MAP_SYNC&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/731706/&#34;&gt;Two more approaches to persistent-memory writes&lt;/a&gt;&lt;br /&gt;
-dax_iomap_pte_fault&lt;/p&gt;
-
-&lt;h1 id=&#34;madvise&#34;&gt;madvise&lt;/h1&gt;
-
-&lt;h2 id=&#34;madv-sequential-and-reclaim&#34;&gt;MADV_SEQUENTIAL and reclaim&lt;/h2&gt;
-
-&lt;p&gt;mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c&lt;/p&gt;
-
-&lt;h2 id=&#34;madv-free&#34;&gt;MADV_FREE&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/590991/&#34;&gt;Volatile ranges and MADV_FREE&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://bugs.python.org/issue26601&#34;&gt;Use new madvise()&amp;rsquo;s MADV_FREE on the private heap&lt;/a&gt;&lt;br /&gt;
-commit 854e9ed09dedf0c19ac8640e91bcc74bc3f9e5c9&lt;br /&gt;
-Author: Minchan Kim &lt;a href=&#34;mailto:minchan@kernel.org&#34;&gt;minchan@kernel.org&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Jan 15 16:54:53 2016 -0800&lt;br /&gt;
-    mm: support madvise(MADV_FREE)&lt;br /&gt;
-commit 10853a039208c4afaa322a7d802456c8dca222f4&lt;br /&gt;
-Author: Minchan Kim &lt;a href=&#34;mailto:minchan@kernel.org&#34;&gt;minchan@kernel.org&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Jan 15 16:55:11 2016 -0800&lt;br /&gt;
-    mm: move lazily freed pages to inactive list&lt;/p&gt;
-
-&lt;p&gt;commit f7ad2a6cb9f7c4040004bedee84a70a9b985583e&lt;br /&gt;
-Author: Shaohua Li &lt;a href=&#34;mailto:shli@fb.com&#34;&gt;shli@fb.com&lt;/a&gt;&lt;br /&gt;
-Date:   Wed May 3 14:52:29 2017 -0700&lt;br /&gt;
-    mm: move MADV_FREE pages into LRU_INACTIVE_FILE list&lt;/p&gt;
-
-&lt;h1 id=&#34;mprotect&#34;&gt;mprotect&lt;/h1&gt;
-
-&lt;h2 id=&#34;prot-none&#34;&gt;PROT_NONE&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.greenend.org.uk/rjk/tech/dataseg.html#summary&#34;&gt;&amp;mdash;p PROT_NOME mapping&lt;/a&gt;&lt;br /&gt;
-show_vma_header_prefix&lt;br /&gt;
-cat /proc/self/maps&lt;br /&gt;
-7ffff7a17000-7ffff7bcc000 r-xp 00000000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; text&lt;br /&gt;
-7ffff7bcc000-7ffff7dcc000 &amp;mdash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; PROT_NONE&lt;br /&gt;
-7ffff7dcc000-7ffff7dd0000 r&amp;ndash;p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; read only data&lt;br /&gt;
-7ffff7dd0000-7ffff7dd2000 rw-p 001b9000 08:03 1188168                    /usr/lib64/libc-2.27.so ============&amp;gt; initialized&lt;br /&gt;
-7ffff7dd2000-7ffff7dd6000 rw-p 00000000 00:00 0&lt;br /&gt;
-strace -e mmap,mprotect cat /dev/null&lt;br /&gt;
-mmap(NULL, 3926752, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7a17000       ===&amp;gt; text&lt;br /&gt;
-mprotect(0x7ffff7bcc000, 2097152, PROT_NONE) = 0                                ======================&amp;gt; PROT_NONE&lt;br /&gt;
-mmap(0x7ffff7dcc000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b5000) = 0x7ffff7dcc000&lt;br /&gt;
-mmap(0x7ffff7dd2000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7dd2000&lt;br /&gt;
-mprotect(0x7ffff7dcc000, 16384, PROT_READ) = 0                                          ========&amp;gt; read only data&lt;br /&gt;
-/* If _PAGE_BIT_PRESENT is clear, we use these: &lt;em&gt;/&lt;br /&gt;
-/&lt;/em&gt; - if the user mapped it with PROT_NONE; pte_present gives true */&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/gorman/html/understand/understand006.html&#34;&gt;A MUST READ: Mel on PAGE_PROTNONE&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://volatility-labs.blogspot.com/2015/05/using-mprotect-protnone-on-linux.html&#34;&gt;Using mprotect(.., .., PROT_NONE) on Linux&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lkml.org/lkml/1998/9/21/55&#34;&gt;Linus on _PAGE_PROTNONE&lt;/a&gt;&lt;br /&gt;
- define _PAGE_BIT_PROTNONE      _PAGE_BIT_GLOBAL&lt;br /&gt;
-tglx: commit 06d9f6ff137579551a2ee18661847915fe2bb812 (tag: 0.97.5)&lt;br /&gt;
-Author: Linus Torvalds &lt;a href=&#34;mailto:torvalds@linuxfoundation.org&#34;&gt;torvalds@linuxfoundation.org&lt;/a&gt;&lt;br /&gt;
-Date:   Fri Nov 23 15:09:05 2007 -0500&lt;br /&gt;
-    [PATCH] Linux-0.97.5 (September 12, 1992)&lt;br /&gt;
-There isn&amp;rsquo;t too much useful information.&lt;br /&gt;
-&lt;a href=&#34;https://www.spinics.net/lists/newbies/msg08579.html&#34;&gt;https://www.spinics.net/lists/newbies/msg08579.html&lt;/a&gt;&lt;br /&gt;
-man mprotect, PROT_NONE&lt;br /&gt;
-userspace addr is associated with non-GLOBAL pte, so the 8th G is reused by PROT_NONE.&lt;/p&gt;
 </description>
     </item>
     
@@ -859,101 +527,6 @@ respect to any other processor, all previous ordinary&lt;br /&gt;
 load and store accesses must be performed, and&lt;br /&gt;
 &amp;copy; special accesses are processor consistent with respect to one another.&lt;br /&gt;
 &lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://marc.info/?l=linux-kernel&amp;amp;m=151844394031510&amp;amp;w=2&#34;&gt;mm/page_ref: use atomic_set_release in page_ref_unfreeze&lt;/a&gt;&lt;br /&gt;
-commit 7088efa9137a15d7d21e3abce73e40c9c8a18d68&lt;br /&gt;
-Refs: v4.15-rc1-4-g7088efa9137a&lt;br /&gt;
-Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Mon Oct 9 10:04:27 2017 -0700&lt;br /&gt;
-Commit:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
-CommitDate: Mon Dec 4 10:52:52 2017 -0800&lt;br /&gt;
-    fs/dcache: Use release-acquire for name/length update&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel&#34;&gt;Kernel&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;Why do we need mb for SLEEP AND WAKE-UP FUNCTIONS?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/718628/&#34;&gt;A formal kernel memory-ordering model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/720550/&#34;&gt;A formal kernel memory-ordering model (part 2)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0124r4.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0124r6.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf&#34;&gt;Linux-Kernel Memory Ordering: Help Arrives At Last!&lt;/a&gt; and &lt;a href=&#34;https://www.youtube.com/watch?v=ULFytshTvIY&#34;&gt;Talk on youtube on this!&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;compiler&#34;&gt;Compiler&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://preshing.com/20120625/memory-ordering-at-compile-time/&#34;&gt;Memory Ordering at Compile Time&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.regehr.org/archives/232&#34;&gt;A Guide to Undefined Behavior in C and C++, Part 3&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;other-architectures&#34;&gt;Other architectures&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.cl.cam.ac.uk/~pes20/weakmemory/&#34;&gt;Relaxed-Memory Concurrency&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;c11-library-memory-model&#34;&gt;C11(library) memory model&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://en.cppreference.com/w/c/atomic/memory_order&#34;&gt;C memory order&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cl.cam.ac.uk/~pes20/cpp/notes42.html&#34;&gt;Don&amp;rsquo;t read: The Thin-air Problem&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf&#34;&gt;Outlawing Ghosts: Avoiding Out-of-Thin-Air Results&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html&#34;&gt;Out-of-Thin-Air Execution is Vacuous&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
-
-&lt;h2 id=&#34;practices&#34;&gt;Practices&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://preshing.com/20120515/memory-reordering-caught-in-the-act/&#34;&gt;Memory Reordering Caught in the Act&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;p&gt;134 static void sysrq_handle_crash(int key)&lt;br /&gt;
- 135 {&lt;br /&gt;
- 136         char &lt;em&gt;killer = NULL;&lt;br /&gt;
- 137&lt;br /&gt;
- 138         /&lt;/em&gt; we need to release the RCU read lock here,&lt;br /&gt;
- 139          * otherwise we get an annoying&lt;br /&gt;
- 140          * &amp;lsquo;BUG: sleeping function called from invalid context&amp;rsquo;&lt;br /&gt;
- 141          * complaint from the kernel before the panic.&lt;br /&gt;
- 142          &lt;em&gt;/&lt;br /&gt;
- 143         rcu_read_unlock();&lt;br /&gt;
- 144         panic_on_oops = 1;      /&lt;/em&gt; force panic */&lt;br /&gt;
- 145         wmb();&lt;br /&gt;
- 146         *killer = 1;&lt;br /&gt;
- 147 }&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-barrier&#34;&gt;Memory barrier&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://yarchive.net/comp/linux/compiler_barriers.html&#34;&gt;http://yarchive.net/comp/linux/compiler_barriers.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/&#34;&gt;Memory Barriers Are Like Source Control Operations&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html&#34;&gt;Are All Linux Kernel Memory Barriers Transitive?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf&#34;&gt;Memory Barriers in the Linux Kernel Semantics and Practices&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;
-Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
-
-&lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different-levels&#34;&gt;The Linux kernel has a variety of different barriers that act at different levels:&lt;/h2&gt;
-
-&lt;p&gt;(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
-  (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
-  (*) MMIO write barrier.&lt;/p&gt;
-
-&lt;h1 id=&#34;compiler-1&#34;&gt;Compiler&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/793253/#Load%20Tearing&#34;&gt;Who&amp;rsquo;s afraid of a big bad optimizing compiler?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/799218/&#34;&gt;Calibrating your fear of big bad optimizing compilers&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Does it work cast a variable to volatile?&lt;br /&gt;
-No, there is no efects on cast a variable to volatile.&lt;br /&gt;
-Because, access variable is before volatile cast! That means you&lt;br /&gt;
-still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
-Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
-&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/508991/&#34;&gt;ACCESS_ONCE()&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
@@ -1144,21 +717,6 @@ Date:   Fri Nov 23 15:30:52 2007 -0500&lt;br /&gt;
 +   * Tasklet is strictly serialized wrt itself, but not&lt;br /&gt;
 +     wrt another tasklets. If client needs some intertask synchronization,&lt;br /&gt;
 +     he makes it with spinlocks.&lt;/p&gt;
-
-&lt;h1 id=&#34;timer&#34;&gt;Timer&lt;/h1&gt;
-
-&lt;h2 id=&#34;irqsafe-timer&#34;&gt;irqsafe timer&lt;/h2&gt;
-
-&lt;p&gt;__run_timers&lt;br /&gt;
-irqsafe = timer-&amp;gt;flags &amp;amp; TIMER_IRQSAFE&lt;br /&gt;
-check del_timer_sync&lt;br /&gt;
-and definition of TIMER_IRQSAFE&lt;br /&gt;
-&lt;a href=&#34;https://patchwork.kernel.org/patch/10811995/&#34;&gt;https://patchwork.kernel.org/patch/10811995/&lt;/a&gt;&lt;br /&gt;
-Is timer pending&lt;/p&gt;
-
-&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1369,6 +927,37 @@ The 0 for Divide error is a interrupt vector.&lt;/p&gt;
 init_IRQ()-&amp;gt;x86_init.irqs.intr_init=native_init_IRQ     #===&amp;gt; external interrupt init;&lt;br /&gt;
     pre_vector_init = init_ISA_irqs #===&amp;gt; 1) legacy_pic-&amp;gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.&lt;br /&gt;
     idt_setup_apic_and_irq_gates    #===&amp;gt; apic normal(from 32) and system interrupts;&lt;/p&gt;
+
+&lt;h2 id=&#34;affinity&#34;&gt;affinity&lt;/h2&gt;
+
+&lt;p&gt;root@snow:/tmp# cat x.sh&lt;br /&gt;
+echo 1 &amp;gt; /proc/irq/129/smp_affinity&lt;br /&gt;
+sudo trace-cmd record -p function_graph &amp;ndash;max-graph-depth 70 -g __irq_set_affinity -c -F  ./x.sh&lt;br /&gt;
+cpus=4&lt;br /&gt;
+              sh-26457 [000] 19135.281818: funcgraph_entry:                   |  __irq_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281819: funcgraph_entry:        0.306 us   |    irq_to_desc();&lt;br /&gt;
+              sh-26457 [000] 19135.281819: funcgraph_entry:        0.149 us   |    _raw_spin_lock_irqsave();&lt;br /&gt;
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |    irq_set_affinity_locked() {&lt;br /&gt;
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |      irq_do_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |        msi_domain_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281821: funcgraph_entry:                   |          intel_ir_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281821: funcgraph_entry:        0.220 us   |            irqd_cfg();&lt;br /&gt;
+              sh-26457 [000] 19135.281822: funcgraph_entry:                   |            apic_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281822: funcgraph_entry:        0.248 us   |              _raw_spin_lock();&lt;br /&gt;
+              sh-26457 [000] 19135.281822: funcgraph_entry:        0.245 us   |              assign_vector_locked();&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_exit:         1.276 us   |            }&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_entry:        0.148 us   |            irqd_cfg();&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_entry:                   |            modify_irte.isra.0() {&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_entry:        0.272 us   |              _raw_spin_lock_irqsave();&lt;br /&gt;
+              sh-26457 [000] 19135.281824: funcgraph_entry:        0.492 us   |              clflush_cache_range();&lt;br /&gt;
+              sh-26457 [000] 19135.281824: funcgraph_entry:                   |              qi_submit_sync() {&lt;br /&gt;
+              sh-26457 [000] 19135.281825: funcgraph_entry:        0.272 us   |                _raw_spin_lock_irqsave();&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.135 us   |                _raw_spin_lock();&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.144 us   |                _raw_spin_unlock_irqrestore();&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_exit:         3.647 us   |              }&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.195 us   |              _raw_spin_unlock_irqrestore();&lt;br /&gt;
+              sh-26457 [000] 19135.281829: funcgraph_exit:         5.290 us   |            }&lt;br /&gt;
+              sh-26457 [000] 19135.281829: funcgraph_entry:        0.129 us   |            send_cleanup_vector();&lt;/p&gt;
 
 &lt;h1 id=&#34;ipi&#34;&gt;IPI&lt;/h1&gt;
 

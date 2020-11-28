@@ -5,12 +5,11 @@
 [Slides: The Unified Tracing Platform - Steven Rostedt, VMware Inc.](https://static.sched.com/hosted_files/osseu19/5f/unified-tracing-platform-oss-eu-2019.pdf)
 [Give me 15 minutes and I'll change your view of Linux tracing](https://www.youtube.com/watch?v=GsMs3n8CB6g)
 
-# Firo
-So what are we tracing on? Function and data.
-
 # Find out the kernel function for a specific sysfs or procfs file.
 ft record -p function_graph --max-graph-depth 5 -g ksys_read -n rw_verify_area -F cat /sys/block/sda/stat ; ft report |less
 ft record -p function_graph --max-graph-depth 5 -g vfs_write -o nofuncgraph-irqs -F echo w > /proc/sysrq-trigger
+
+ft record -p function_graph --max-graph-depth 70 -g ksys_read -n rw_verify_area -n hrtimer_interrupt -n irq_exit -F cat /sys/fs/cgroup/user.slice/memory.swap.current ; ft report |less
 # ftrace
 [Linux Tracing Technologies](https://www.kernel.org/doc/html/latest/trace/index.html)
 [Steven Rostedt - Learning the Linux Kernel with tracing](https://www.youtube.com/watch?v=JRyrhsx-L5Y)

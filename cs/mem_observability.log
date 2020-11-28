@@ -27,6 +27,9 @@ mem_init_print_info:  free(or managed or totalram_pages at that time)/present (r
 BTW, above information is useful to compute totalram_pages =  present - cma - reserved.
 MemTotal:       11682024 kB  # managed is increased.
 
+# Address space
+PAGE_OFFSET, TASK_SIZE
+
 # Mapped
          * It's possible for there to be more file mapped pages than
          * accounted for by the pages on the file LRU lists because
@@ -39,6 +42,7 @@ replace_page_cache_page
 
 # Pages
 page_to_nid, pfn_to_nid, pfn_to_page, page_zone, virt_to_page, page_pgdat, __virt_addr_valid, _pa(kaddr)
+## page_type, e.g. PageBuddy
 ## Buddy status
 free_pages_prepare, free_pages_check, prep_new_page, page_expected_state and check_new_page, page_mapcount_reset
 new pages: lru: 0xdead; prep_new_page: private =0, _count = 1
@@ -240,6 +244,30 @@ meminfo_proc_show
 /proc/zoneinfo
 
 NR_FILE_MAPPED could be larger than NR_ACTIVE_FILE or NR_INACTIVE_FILE because multiple processes map same page to it's process address space. It also includes shmem.
+## vmstat
+Search pgsteal from Documentation/admin-guide/cgroup-v2.rst
+[System Analysis and Tuning Guide](documentation.suse.com/sles/15-SP2/html/SLES-all/cha-tuning-memory.html#cha-tuning-memory-monitoring)
+commit e177ea28e7eded3490174487c81e5bef8a2c4d95
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Thu Jul 18 21:09:17 2002 -0700
+    [PATCH] VM instrumentation
+    A patch from Rik which adds some operational statitics to the VM.
+    In /proc/meminfo:
+    PageTables:     Amount of memory used for process pagetables
+    PteChainTot:    Amount of memory allocated for pte_chain objects
+    PteChainUsed:   Amount of memory currently in use for pte chains.
+    In /proc/stat:
+    pageallocs:     Number of pages allocated in the page allocator
+    pagefrees:      Number of pages returned to the page allocator
+                    (These can be used to measure the allocation rate)
+    pageactiv:      Number of pages activated (moved to the active list)
+    pagedeact:      Number of pages deactivated (moved to the inactive list)
+    pagefault:      Total pagefaults
+    majorfault:     Major pagefaults
+    pagescan:       Number of pages which shrink_cache looked at
+    pagesteal:      Number of pages which shrink_cache freed
+    pageoutrun:     Number of calls to try_to_free_pages()
+    allocstall:     Number of calls to balance_classzone()              # direct relaim do_try_to_free_pages
 
 ## Process memory usage.
 __show_smap task_mem

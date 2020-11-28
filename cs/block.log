@@ -31,36 +31,6 @@ Date:   Mon Aug 25 19:56:15 2008 +0900
 ## disk init
 init_sd
 
-# Plug
-[Explicit block device plugging and comments](https://lwn.net/Articles/438256/)
-[block: initial patch for on-stack per-task plugging](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=73c101011926c58)
-Reduce the lock contection of request_queue lock. 
- * blk_plug permits building a queue of related requests by holding the I/O
- * fragments for a short period. This allows merging of sequential requests
- * into single larger request. As the requests are moved from a per-task list to
- * the device's request_queue in a batch, this results in improved scalability
- * as the lock contention for request_queue lock is reduced.
-## Unplug
-1. synchronized method
-__blk_run_queue
-2. asynchronized way
-kblockd_workqueue
-kworker/%u:%d%s (cpu, id, priority)
-[workqueue: drop 'H' from kworker names of unbound worker pools](https://lkml.org/lkml/2013/3/19/661)
-ps aux | grep kblockd
-root         6  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/0:0H-kblockd]
-root       435  0.0  0.0      0     0 ?        I<   08:15   0:00 [kworker/0:1H-kblockd]
-root        46  0.0  0.0      0     0 ?        I<   08:15   0:00 [kblockd]
-1. blk_finish_plug
-2. blk_schedule_flush_list
-3. in pluged state: more then BLK_MAX_REQUEST_COUNT
-3.1 ??deadlock avoidance: if memory is low and waiting for IO complete and reclaiming pages.??
-3.2 Short period queuing each bio just for baching. If Sleep, when flush the queued bio?
-3.3 schedule->sched_submit_work
-## all result in blk_flush_plug_list
-if schedule:  workqueue
-else synchronize ?? which function?
-
 # Block cgroup
 ## request_list
 commit a051661ca6d134c18599498b185b667859d4339b

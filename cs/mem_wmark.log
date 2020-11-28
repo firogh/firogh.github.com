@@ -1,0 +1,46 @@
+
+
+# lowmem(resp. highmem) reserve
+Documentation/admin-guide/sysctl/vm.rst  
+## Calculation
+sysctl_lowmem_reserve_ratio setup_per_zone_lowmem_reserve() lowmem_reserve_ratio_sysctl_handler() init_per_zone_wmark_min()
+protect[DMA from DMA32] = managed[DMA32] / ratio[DMA]
+protect[DMA from Normal] = managed[DMA32 + Normal] / ratio[DMA]
+protect[DMA32 from Normal] = managed[Normal] / ratio[DMA32]
+zoneinfo_show_print "protection:" /proc/zoneinfo
+## Protect
+zone->lowmem_reserve zone_watermark_fast __zone_watermark_ok
+
+# Watermark
+totalreserve_pages is wmark high; check calculate_totalreserve_pages and Documentation/sysctl/vm.txt
+Check Documentation/sysctl/vm.txt for min_free_kbytes
+min_free_kbytes_sysctl_handler or watermark_scale_factor_sysctl_handler or
+core_initcall(init_per_zone_wmark_min) ->
+        setup_per_zone_wmarks-> __setup_per_zone_wmarks
+{
+        firo@linux-6qg8:~> grep managed /proc/zoneinfo
+                managed  3973
+                managed  464142
+                managed  7726451
+        >>> 3973 + 464142 + 7726451
+        8194566
+        firo@linux-6qg8:~> cat /proc/sys/vm/min_free_kbytes
+        67584
+        >>> 67584 / 4 * 3973 / 8194566
+        8
+        # Unit of watermark is Page.    
+        WMARK_MIN = page_no(min_free_kbytes) * (zone.managed_pages / \Sum of zone.managed_pages)
+        WMARK_LOW = 1.25 * min or min + 1/1000 * zone.managed_pages
+        WMARK_HIGH = 1.5 * min or min + 2/1000 * zone.managed_pages
+}
+if min_free_kbytes > 1/250*total mamanged_pages, we use 1.25 min or 1.5 min
+low for normal path
+min for slow path
+if low is reached (i.e. slow path) wakeup __GFP_KSWAPD_RECLAIM
+
+# ZONE_BOOSTED_WATERMARK
+get_page_from_freelist->rmqueue->wakeup_kswapd
+
+# extra free kbytes
+[add extra free kbytes tunable](https://marc.info/?l=linux-mm&m=131605773321672&w=2)
+[mapped-file-stream](https://lkml.org/lkml/2010/8/30/226)

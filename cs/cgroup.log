@@ -1,8 +1,6 @@
-# References
-[Fixing control groups](https://lwn.net/Articles/484251/)
-[The unified control group hierarchy in 3.16](https://lwn.net/Articles/601840/)
-
-# History
+# cgroup
+[Resource control at Facebook](https://lwn.net/Articles/764761/)
+## conceptions
 commit ddbcc7e8e50aefe467c01cac3dec71f118cd8ac2
 Author: Paul Menage <menage@google.com>
 Date:   Thu Oct 18 23:39:30 2007 -0700
@@ -19,17 +17,55 @@ Date:   Thu Oct 18 23:39:30 2007 -0700
 +schedules a resource or applies per-cgroup limits, but it may be
 +anything that wants to act on a group of processes, e.g. a
 +virtualization subsystem.
-+
 +A *hierarchy* is a set of cgroups arranged in a tree, such that
 +every task in the system is in exactly one of the cgroups in the
 +hierarchy, and a set of subsystems; each subsystem has system-specific
 +state attached to each cgroup in the hierarchy.  Each hierarchy has
 +an instance of the cgroup virtual filesystem associated with it.
-+At any one time there may be multiple active hierachies of task
-+cgroups. Each hierarchy is a [partition](https://en.wikipedia.org/wiki/Partition_of_a_set) of all tasks in the system.
++At any one time there may be multiple active hierachies of task cgroups.
+## firo on building cgroup
+cgroups, controller, hierarchy
 
-# Purposes
-## Why Multiple hierarchy?
+# cgroup v2
+## Why mutiple hierarchy failed?
+[Fixing control groups](https://lwn.net/Articles/484251/)
+[[RFD] cgroup: about multiple hierarchies](https://lkml.org/lkml/2012/2/21/379)
+## Unifiyed hierarchy
+[The unified control group hierarchy in 3.16](https://lwn.net/Articles/601840/)
+[What's new in control groups (cgroups) version 2](https://www.youtube.com/watch?v=yZpNsDe4Qzg) comparing to v1
+[cgroupv2: Linux's new unified control group hierarchy](https://chrisdown.name/2017/03/01/cgroupv2-linux-new-cgroup-hierarchy.html)
+[Control groups, part 7: To unity and beyond](https://lwn.net/Articles/608425/)
+ 
+# Translations
+find cgroup by task: task->css_set, find task by cgroup: cgroup->css_sets
+/proc/cgroups: proc_cgroupstats_show; /proc/self/cgroup: proc_cgroup_show and for_each_active_root
+before renameing, see cg_cgroup_link
+## init_task and cgroup init
+cgroup_init_early or cgroup_init for init_css_set
+## Add task to cgroup
+attach_task_by_pid -> cgroup_attach_task -> ...-> find_existing_css_set
+## cgroup_mount 
+sb->s_root->d_fsdata = root_cgrp;
+## create cgroup
+cgroup_create, cpu_cgroup_create, sched_create_group
+## Unified Hierarchy - cgrp_dfl_root
+[cgroup: prepare for the default unified hierarchy](https://lore.kernel.org/lkml/1394740213-17626-1-git-send-email-tj@kernel.org/)
+[cgroup: implement unified hierarchy](https://lore.kernel.org/lkml/1395974461-12735-1-git-send-email-tj@kernel.org/)
+commit 3dd06ffa9df99aa88f4e01eaa0c9d3cb362430b0
+Refs: v3.14-rc1-104-g3dd06ffa9df9
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Wed Mar 19 10:23:54 2014 -0400
+    cgroup: rename cgroup_dummy_root and related names
+    The dummy root will be repurposed to serve as the default unified
+    hierarchy.  Let's rename things in preparation.
+    * s/cgroup_dummy_root/cgrp_dfl_root/
+    * s/cgroupfs_root/cgroup_root/ as we don't do fs part directly anymore
+    * s/cgroup_root->top_cgroup/cgroup_root->cgrp/ for brevity
+
+# cgroup v1
+[Control groups series by Neil Brown](https://lwn.net/Articles/604609/)
+[Documentation/cgroups/cgroups.txt](https://lwn.net/Articles/524935/) or Documentation/cgroup-v1/cgroups.txt
+## Why Multiple hierarchy is adopted in cgroup v1?
 https://www.kernel.org/doc/Documentation/admin-guide/cgroup-v1/cgroups.rst
 +Multiple hierarchy support is provided to allow for situations where
 +the division of tasks into cgroups is distinctly different for
@@ -38,128 +74,10 @@ https://www.kernel.org/doc/Documentation/admin-guide/cgroup-v1/cgroups.rst
 +complex combinations of tasks that would be present if several
 +unrelated subsystems needed to be forced into the same tree of
 +cgroups.
-
-## Why mutiple hierarchy failed?
-[[RFD] cgroup: about multiple hierarchies](https://lkml.org/lkml/2012/2/21/379)
-
-# V1
-[Control groups series by Neil Brown](https://lwn.net/Articles/604609/)
-[Documentation/cgroups/cgroups.txt](https://lwn.net/Articles/524935/) or Documentation/cgroup-v1/cgroups.txt
-man 7 cgroups
-
-# Hierarchy
+# Hierarchy in cgroup v1
 [Thus it is possible to have 12 different hierarchies, one for each subsystem, or a single hierarchy with all 12 subsystems attached, or any other combination in between.](https://lwn.net/Articles/606699/)
 ## Dummy hierarchy
-rootnode.subsys_list
-check cgroup_init_subsys for dummytop group inilialization
-cgroup_init_early and cgroup_init
-static struct cgroupfs_root rootnode;
-
+rootnode.subsys_list, cgroup_init_subsys() for dummytop group inilialization
+cgroup_init_early and cgroup_init, static struct cgroupfs_root rootnode;
 ## Active hierarchy
-struct cgroupfs_root stands for a hierarchy; all hierarchies are liked in the roots as shown in proc_cgroup_show. They are called active root or hierarchy.
-Check cgroup_mount
-/sys/fs/cgroup> wc -l blkio/tasks perf_event/tasks cpu,cpuacct/tasks  | xargs -n6
-888 blkio/tasks 888 perf_event/tasks 888 cpu,cpuacct/tasks
-### Top group
-dummytop's parent is null check rootnode definition and cgroup_init_early
-        /* cannot set to root cgroup */ in mem_cgroup_oom_control_write 
-        if (!cgrp->parent) return -EINVAL;
-and in sched_group_set_shares
-        /*
-         * We can't change the weight of the root cgroup.
-         */
-        if (!tg->se[0])
-                return -EINVAL;
-In rebind_subsystems(), we learned that the top group of active hierarchy are bound to Dummy hierarchy and in above to write handler we learned that all writes are not permitted to the top group.
-
-# Cgroup
-d_fsdata = cgroup and cgroup.dentry
-struct cgroup
-
-# Cgroup subsys 
-crash> p subsys
- {0xffffffff81a2af20 <cpuset_subsys>, 0xffffffff81a21540 <cpu_cgroup_subsys>, 0xffffffff81a21640 <cpuacct_subsys>, 0xffffffff81bdb4c0 <mem_cgroup_subsys>, 0xffffffff81a4f9e0 <devices_subsys>, 0xffffffff81a2ad60 
-<freezer_subsys>, 0xffffffff81a7ab60 <net_cls_subsys>, 0xffffffff81a5c380 <blkio_subsys>, 0xffffffff81a36a20 <perf_subsys>, 0x0,
-## Cgroup subsys - ss
-struct cgroup_subsys
-## Cgroup subsys state - CSS
-struct cgroup_subsys_state
-css_create
-css->flags: CSS_ROOT, CSS_REMOVED,
-
-# Linkage: struct cgrp_cset_link
-From task to cgroup in a specic hierarchy: task->css_set->cset_links -> cgrp_cset_link.cgrp; check proc_cgroup_show
-From cgroump to task: cgroup->css_sets-> cgrp_cset_link.cset = css_set.hacks.
-## Older version check struct cg_cgroup_link
-
-# Task
-System bootup: Init task's init CSS set, Check cgroup_init_early or cgroup_init for init_css_set
-Running: Move a task to a cgroup: attach_task_by_pid -> cgroup_attach_task -> ...-> find_existing_css_set
-
-# Cgroup fs
-## cgroup_mount: 
-sb->s_root->d_fsdata = root_cgrp;
-We can mount a mouted hierarchy to other directoryes.
-mount | grep cgroup | grep memory
-cgroup on /sys/fs/cgroup/memory type cgroup (rw,relatime,memory)
-cgroup on /tmp/x type cgroup (rw,relatime,memory)
-cgroup on /tmp/b type cgroup (rw,relatime,memory)
-mount | grep cgroup2
-cgroup on /sys/fs/cgroup/unified type cgroup2 (rw,nosuid,nodev,noexec,relatime)
-cgroup on /tmp/a type cgroup2 (rw,relatime)
-rebind to top group
-## cgroup_mkdir
-
-## cgroup_file_write
-
-# Procfs cgroup data
-/proc/cgroups: proc_cgroupstats_show
-/proc/self/cgroup: proc_cgroup_show and for_each_active_root
-
-# CPU cgroup
-## System booting up
-crash> p cpu_cgroup_subsys.early_init
-$5 = 0x1
-Check cgroup_init_early; 
-## Mount
-## mkdir
-cgroup_mkdir 
-cgroup_create
-cpu_cgroup_create
-sched_create_group
-
-## Move a task to cpu_cgroup
-cgroup_tasks_write -> cgroup_attach_task->
-	cgroup_task_migrate
-	cpu_cgroup_attach_task
-		task_subsys_state_check(tsk, cpu_cgroup_subsys_id: 
-		enum cgroup_subsys_id = 1
-			task->cgroups->subsys[subsys_id]
-		struct task_group *sched_task_group; // task_struct
-		task_move_group_fair -> set_task_rq
-
-# Task counter and pid subsystem
-[add nproc cgroup subsystem](https://lkml.org/lkml/2015/2/22/204)
-[The dark fate of cgroups: Task counter subsystem v8](https://lkml.org/lkml/2013/4/1/508)
-
-# Cgroup v2 unified hierarchy
-Utility controller
-[[RFD] cgroup: about multiple hierarchies](https://lkml.org/lkml/2012/2/21/379)
-[Control groups, part 7: To unity and beyond](https://lwn.net/Articles/608425/)
-cooperate
-
-# cgrp_dfl_root
-[cgroup: prepare for the default unified hierarchy](https://lore.kernel.org/lkml/1394740213-17626-1-git-send-email-tj@kernel.org/)
-[cgroup: implement unified hierarchy](https://lore.kernel.org/lkml/1395974461-12735-1-git-send-email-tj@kernel.org/)
-commit 3dd06ffa9df99aa88f4e01eaa0c9d3cb362430b0
-Refs: v3.14-rc1-104-g3dd06ffa9df9
-Author:     Tejun Heo <tj@kernel.org>
-AuthorDate: Wed Mar 19 10:23:54 2014 -0400
-Commit:     Tejun Heo <tj@kernel.org>
-CommitDate: Wed Mar 19 10:23:54 2014 -0400
-    cgroup: rename cgroup_dummy_root and related names
-    The dummy root will be repurposed to serve as the default unified
-    hierarchy.  Let's rename things in preparation.
-    * s/cgroup_dummy_root/cgrp_dfl_root/
-    * s/cgroupfs_root/cgroup_root/ as we don't do fs part directly anymore
-    * s/cgroup_root->top_cgroup/cgroup_root->cgrp/ for brevity
+cgroup_mount; struct cgroupfs_root stands for a hierarchy; all hierarchies are liked in the roots as shown in proc_cgroup_show. They are called active root or hierarchy.

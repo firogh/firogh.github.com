@@ -1,0 +1,47 @@
+# Write to a page
+[Filesystem crashes due to pages without buffers](https://lore.kernel.org/linux-fsdevel/20180103100430.GE4911@quack2.suse.cz/)
+	The problem here is that filesystems fundamentally assume that a page can
+	be written to only between ->write_begin - ->write_end (in this interval
+	the page is locked), or between ->page_mkwrite - ->writepage and above is
+	an example where this does not hold because when a page reference is
+	acquired through get_user_pages(), page can get written to by the holder of
+	the reference and dirtied even after it has been unmapped from page tables
+	and ->writepage has been called. This is not only a cosmetic issue leading
+	to assertion failure but it can also lead to data loss, data corruption, or
+	other unpleasant surprises as filesystems assume page contents cannot be
+	modified until either ->write_begin() or ->page_mkwrite gets called and
+	those calls are serialized by proper locking with problematic operations
+	such as hole punching etc.
+
+File IO: write_begin and write_end
+Memory-mapped File IO: page_mkwrite and writepage
+commit d08b3851da41d0ee60851f2c75b118e1f7a5fc89
+Refs: v2.6.18-1552-gd08b3851da41
+Author:     Peter Zijlstra <a.p.zijlstra@chello.nl>
+AuthorDate: Mon Sep 25 23:30:57 2006 -0700
+    [PATCH] mm: tracking shared dirty pages				# Important to trick ditry pages of memory-mapped files
+    Tracking of dirty pages in shared writeable mmap()s.
+
+# Buffered I/O 
+[Ensuring data reaches disk](https://lwn.net/Articles/457667/)
+## Buffered write
+[Why buffered writes are sometimes stalled](http://yoshinorimatsunobu.blogspot.com/2014/03/why-buffered-writes-are-sometimes.html)
+[Status of buffered write path (deadlock fixes)](http://lkml.iu.edu/hypermail/linux/kernel/0612.0/1223.html)
+### Why does write_begin() replace prepare_write()
+[Some VFS address space operations changes](https://lwn.net/Articles/254856/)
+
+# Uptodate and ditry
+They can be set simultaneously - 'uptodate' means page has at least as new 
+data as is on disk, 'dirty' means page has strictly newer data than on
+disk.  - Jan Kara
+https://www.spinics.net/lists/linux-ext4/msg54452.html
+
+# Hole
+[File holes, races, and mmap()](https://lwn.net/Articles/357767/)
+
+# DAX
+Search "DAX" in [THP-enabled tmpfs/shmem using compound pages](https://lore.kernel.org/linux-fsdevel/1465222029-45942-1-git-send-email-kirill.shutemov@linux.intel.com/)
+As with DAX, split_huge_pmd() is implemented by unmapping the PMD: we can 
+re-fault the page with PTEs later.
+[Direct Access for files](https://www.kernel.org/doc/Documentation/filesystems/dax.txt)
+[DAX, mmap(), and a "go faster" flag](https://lwn.net/Articles/684828/)

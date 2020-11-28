@@ -6,7 +6,6 @@
 1978 Swapping in [UNIX Implementation K. Thompson](https://users.soe.ucsc.edu/~sbrandt/221/Papers/History/thompson-bstj78.pdf)
 
 # PTE Encode and de-code a swap entry
-
 |     ...            | 11| 10|  9|8|7|6|5| 4| 3|2| 1|0| <- bit number
 |     ...            |SW3|SW2|SW1|G|L|D|A|CD|WT|U| W|P| <- bit names
 | OFFSET (14->63)    | TYPE(9-13)|0|0|X|X| X| X|X|SD|0| <- swp entry
@@ -17,11 +16,33 @@ _PAGE_SWP_SOFT_DIRTY and Documentation/vm/soft-dirty.txt
 # Swappiness
 https://www.kernel.org/doc/Documentation/sysctl/vm.txt
 
-# page
-private: store swap type and offset/slot in private
-Check page_swapcount and __add_to_swap_cache -> set_page_private
-_refcount
-flags: PG_swapcache
+# swap address space
+swapper_spaces[]
+
+# ->private & PG_swapcache vs ->mapping & index
+tglx: commit 4875a6018bcc53201ddbf745bff35ed723b468eb
+Author:     Andrew Morton <akpm@osdl.org>
+AuthorDate: Mon Apr 12 00:54:03 2004 -0700
+    [PATCH] rmap 2 anon and swapcache
+    From: Hugh Dickins <hugh@veritas.com>
+    Tracking anonymous pages by anon_vma,pgoff or mm,address needs a
+    pointer,offset pair in struct page: mapping,index the natural choice.  But
+    swapcache uses those for &swapper_space,swp_entry_t.
+    It's trivial to separate swapcache from pagecache with radix tree; most of
+    swapper_space is actually unused, just a fiction to pretend swap like file;
+    and page->private is a good place to keep swp_entry_t, now that swap never
+    uses bufferheads
+[...]
++ * On an anonymous page mapped into a user virtual memory area,
++ * page->mapping points to its anon_vma, not to a struct address_space.
++ *
++ * Please note that, confusingly, "page_mapping" refers to the inode
++ * address_space which maps the page from disk; whereas "page_mapped"
++ * refers to user virtual address space into which the page is mapped.
++ */
++static inline struct address_space *page_mapping(struct page *page)
++{
++       return PageAnon(page)? NULL: page->mapping;
 
 # Enable Swap
 systemd->swapon->sys_swapon
@@ -37,7 +58,25 @@ swap_readpage
 swap_page_sector
 
 # Swapbacked pages
-Private file maps & write page fault 
+Private file maps & write page fault
+
+# Try to unmap a PageAnon(page)  - swap code path
+commit eb94a8784427b28479f871b5d4121c547808d0fc
+Refs: v4.11-4538-geb94a8784427
+Author:     Minchan Kim <minchan@kernel.org>
+AuthorDate: Wed May 3 14:52:36 2017 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Wed May 3 15:52:08 2017 -0700
+    mm: fix lazyfree BUG_ON check in try_to_unmap_one()
+    If a page is swapbacked, it means it should be in swapcache in      # Firo: this means this try_to_unmap comes from shrik_page_list()
+    try_to_unmap_one's path.
+    If a page is !swapbacked, it mean it shouldn't be in swapcache in   # This is MAD_FREE page.
+    try_to_unmap_one's path.
++                       if (unlikely(PageSwapBacked(page) != PageSwapCache(page))) {
++                               WARN_ON_ONCE(1);
++                               ret = SWAP_FAIL;
++                               page_vma_mapped_walk_done(&pvmw);
++                               break;
 
 # Swapping out pages
 lru -> swap cache -> updating pte with try to unmap -> write page into swap area -> delete_from_swap_cache()

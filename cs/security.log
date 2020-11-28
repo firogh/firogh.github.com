@@ -1,3 +1,4 @@
+# security
 ---
 tags: [ cs ] 
 title: Security
@@ -5,20 +6,20 @@ date: 2015-02-27T15:46:14+08:00
 category: cs
 ---
 
-[1]: http://www.kroah.com/linux/talks/ols_2002_lsm_paper/lsm.pdf
-[2]: https://www.computernetworkingnotes.com/rhce-study-guide/selinux-explained-with-examples-in-easy-language.html
+# Vulnerability
+## Spectre
+99-line POC: https://github.com/berestovskyy/spectre-meltdow
 
 # Glossary
 [ASN.1 vs DER vs PEM vs x509 vs PKCS#7 vs ....](https://www.cryptologie.net/article/260/asn1-vs-der-vs-pem-vs-x509-vs-pkcs7-vs/)
-[What are the differences between PEM, DER, P7B/PKCS#7, PFX/PKCS#12 certificates](https://myonlineusb.wordpress.com/2011/06/19/what-are-the-differences-between-pem-der-p7bpkcs7-pfxpkcs12-certificates/)kk
-PEM
+[What are the differences between PEM, DER, P7B/PKCS#7, PFX/PKCS#12 certificates](https://myonlineusb.wordpress.com/2011/06/19/what-are-the-differences-between-pem-der-p7bpkcs7-pfxpkcs12-certificates/)
 
-# uid
+# Uid
 https://skednet.wordpress.com/2010/07/07/uid-euid-suid-fsuid/
 
 # LSM
 include/linux/lsm_hooks.h
-[Linux Security Module Framework][1]
+[Linux Security Module Framework](http://www.kroah.com/linux/talks/ols_2002_lsm_paper/lsm.pdf)
 # x509 
 Unique Identifiers should be the fingerprint
 
@@ -29,17 +30,13 @@ https://www.ietf.org/rfc/rfc3447.txt
 commit ad3043fda39db0361d9601685356db4512e914be
 Author: David Howells <dhowells@redhat.com>
 Date:   Wed Apr 6 16:13:34 2016 +0100
-
     X.509: Fix self-signed determination
-    
     There's a bug in the code determining whether a certificate is self-signed
     or not: if they have neither AKID nor SKID then we just assume that the
     cert is self-signed, which may not be true.
-    
     Fix this by checking that the raw subject name matches the raw issuer name
     and that the public key algorithm for the key and signature are both the
     same in addition to requiring that the AKID bits match.
-    
     Signed-off-by: David Howells <dhowells@redhat.com>
 
 # IMA
@@ -49,10 +46,8 @@ __fput ->ima_file_free ->ima_check_last_writer
 Doc =>hasing()=>Message digest=>Encrypt with Private Key()=>Signature=>Decrypt with Public Key()=>Message digest=>Compare with hashing Doc()=>OK?
 ## Hook point
 include/linux/ima.h
-
 ## IMA behaviors
-1. if no kernel cmdline parameters + apply policy + default enabled appraise, wont work dmesg shows miss-hash. Need ima_tcb and ima_appraise_tcb
-# Capabilities
+1. If no cmdline parameters + apply policy + default enabled appraise, wont work dmesg shows miss-hash. Need ima_tcb and ima_appraise_tcb
 ## Multikey
 1. SYSTEM_EXTRA_CERTIFICATE c4c361059585
 [KEYS: Support for inserting a certificate into x86 bzImage](https://patchwork.kernel.org/patch/9193883/)
@@ -60,41 +55,27 @@ certs/Kconfig
 system_certificate_list
 Porting certs patches from 4.3
 2. [ IMA: Use the the system trusted keyrings instead of .ima_mok](https://patchwork.kernel.org/patch/8504271/)
-
-# IMA
-KEYS: Separate the kernel signature checking keyring from module signing
-v3.13-rc1~18^2~61;-)
-b56e5a17
-
-7d2ce2320e8efdc4a6dcbae7b329ed3f0d1cd778
+## IMA key
+KEYS: Separate the kernel signature checking keyring from module signing v3.13-rc1~18^2~61
 ima: define '.ima' as a builtin 'trusted' keyring
 commit 7d2ce2320e8efdc4a6dcbae7b329ed3f0d1cd778
 Author:     Mimi Zohar <zohar@linux.vnet.ibm.com>
 AuthorDate: Tue Aug 13 08:47:43 2013 -0400
-Commit:     Mimi Zohar <zohar@linux.vnet.ibm.com>
-CommitDate: Thu Jul 17 09:35:17 2014 -0400
-
 KEY_FLAG_TRUSTED_ONLY 008643b86c5f33c115c84ccdda1725cac3ad50ad v3.13-rc1~18^2~60
-## Add singed x509
+### Add singed x509
 key_create_or_update-> asymmetric_key_preparse->x509_key_preparse -> ret = x509_validate_trust(cert, get_system_trusted_keyring());
 3be4beaf7c91ec9c6fefa5f11173af37113d10ae
 v3.17-rc1~108^2~10^2~2^2~4
 Author:     Mimi Zohar <zohar@linux.vnet.ibm.com>
 AuthorDate: Tue Aug 20 14:36:27 2013 -0400
-Commit:     Mimi Zohar <zohar@linux.vnet.ibm.com>
-CommitDate: Thu Jul 17 09:35:15 2014 -0400
-
     KEYS: verify a certificate is signed by a 'trusted' key 
-    
     Only public keys, with certificates signed by an existing
     'trusted' key on the system trusted keyring, should be added
     to a trusted keyring.  This patch adds support for verifying
     a certificate's signature.
-    
     This is derived from David Howells pkcs7_request_asymmetric_key() patch.
 ### Tree 
 64724cf Merge remote-tracking branch 'integrity/next-with-keys' into keys-next
-
 
 # Cryptograhy
 * Side-channel attack Timing attack: 
@@ -133,8 +114,7 @@ bash-4.3# ls /sys/fs/selinux/
 bash-4.3# cat /proc/filesystems  | grep selinux
 nodev   selinuxfs
 bash-4.3# mount -t selinuxfs selinuxfs /sys/fs/selinux/
-
-# Neverallow
+## Neverallow
 [neverallow statements are allowed in modules, however to detect these the semanage.conf file must have the expand-check=1 entry present.](https://selinuxproject.org/page/AVCRules#neverallow)
 cat brk.cil 
 (allow xdm_t shadow_t(file (read)))

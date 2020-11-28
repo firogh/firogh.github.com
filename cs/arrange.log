@@ -1,0 +1,103 @@
+# What is arrange?
+It's programming technique.
+[什么才算是真正的编程能力？](https://www.zhihu.com/question/31034164/answer/50423838)
+
+# Goal
+Shared memory concurrency
+Functionality(correctness)
+Performance
+Security
+Maintainable
+
+# Concurrency
+1. creations
+2. creation vs destruction
+
+# Reference counting
+[Linus on refrence counting](https://yarchive.net/comp/linux/reference_counting.html)
+vs double-free: https://kernsec.org/wiki/index.php/Kernel_Protections/refcount_t
+Overview of Linux-Kernel Reference Counting: https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.145.3800&rep=rep1&type=pdf
+## Firo
+users: asynchrous execution
+share object  between different concurrencies.
+don't make presumptions on sequencecies of concurrencies.
+get_page vs get_page_unless_zero
+## Atomic refcount vs lock protected refcount
+commit edcc56dc6a7c758c4862321fc2c3a9d5a1f4dc5e
+Author:     Hugh Dickins <hugh@veritas.com>
+AuthorDate: Mon Aug 23 21:24:11 2004 -0700
+Commit:     Linus Torvalds <torvalds@ppc970.osdl.org>
+CommitDate: Mon Aug 23 21:24:11 2004 -0700
+    [PATCH] rmaplock: kill page_map_lock
+    anon_vma->lock: so isn't the page_map_lock superfluous?
+    Pretty much, yes.  The mapcount was protected by it, and needs to become an
+    atomic:
+so refcount could be non atomic variable but must be change atomically
+## Atomic and check
+get_user_pages vs fget and get_page_unless_zero see perfbook.
+[get_page in GUP](https://lore.kernel.org/linux-mm/20110325164847.GD431@random.random/) : 5.8 kernel follow_page_pte() : page tabl lock plus pte_none as a check
+        if (flags & FOLL_SPLIT && PageTransCompound(page)) {
+                get_page(page);			# first get_page becuase if unlock, page may probably go.
+                pte_unmap_unlock(ptep, ptl);
+                lock_page(page);
+                ret = split_huge_page(page);
+                unlock_page(page);
+                put_page(page);
+                if (ret)
+                        return ERR_PTR(ret);
+                goto retry;
+        }
+        /* try_grab_page() does nothing unless FOLL_GET or FOLL_PIN is set. */
+        if (unlikely(!try_grab_page(page, flags))) {
+                page = ERR_PTR(-ENOMEM);
+                goto out; 
+        }
+
+# Lock, Exclusive access
+http://kos.enix.org/pub/linux-vmm.html
+Documentation/filesystems/locking.rst
+## Coarse-grained and fine-grained locking
+http://fileadmin.cs.lth.se/cs/Education/EDA015F/2013/Herlihy4-5-presentation.pdf
+https://lwn.net/Articles/720373/ Replace mmap_sem by a range lock
+## PG_locked, lock_page()
+Refs: <2.3.7pre1>
+Author:     Linus Torvalds <torvalds@linuxfoundation.org>
+AuthorDate: Fri Nov 23 15:25:25 2007 -0500
+    Linux 2.3.7pre1
+    I'd like to point out that the current pre-2.3.7 series is fairly
+    experimental. As amply demonstrated by the filename (the "dangerous" part
+    in the filename hopefully made some people go "Hmm..").
+### Instance: No eclsusive, so race
+commit 278df9f451dc71dcd002246be48358a473504ad0
+Refs: v2.6.38-6839-g278df9f451dc
+Author:     Minchan Kim <minchan.kim@gmail.com>
+AuthorDate: Tue Mar 22 16:32:54 2011 -0700
+    mm: reclaim invalidated page ASAP
+
+## Lockless programming
+ring buffer, rcu
+a "lock-free" CAS loop and a mutex or spin-lock: https://stackoverflow.com/a/37092888/1025001
+[Lockless Programming Considerations for Xbox 360 and Microsoft Windows](https://docs.microsoft.com/en-us/windows/win32/dxtecharts/lockless-programming?redirectedfrom=MSDN)
+Lock-Free Reference Counting: https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.92.8221&rep=rep1&type=pdf
+
+# Concurrent programming
+[Firo: must thinking summary: EW Dijkstra: Cooperating sequential processes](https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html)
+CSAPP3e: Chapter 12 concurrent programming
+Parallel and Concurrent Programming in Haskell
+The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen
+[Introduction on history of concurrency: Shared-Memory Concurrency](https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf)
+[Turing lecture: The computer science of concurrency: the early years](https://dl.acm.org/citation.cfm?id=2771951)
+[Firo: example: Concurrency-managed workqueues](https://lwn.net/Articles/355700/)
+[Rob Pike: Concurrency is the composition of independently executing computations.](https://talks.golang.org/2012/concurrency.slide#6)
+What every systems programmer should know about concurrency https://assets.bitbashing.io/papers/concurrency-primer.pdf
+## process vs event
+[thread vs event](http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf)
+## [Asynchrony (computer programming)](https://en.wikipedia.org/wiki/Asynchrony_(computer_programming))
+
+# deferred and batched
+commit 44260240ce0d1e19e84138ac775811574a9e1326
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Wed Aug 14 21:21:15 2002 -0700
+Commit:     Linus Torvalds <torvalds@home.transmeta.com>
+CommitDate: Wed Aug 14 21:21:15 2002 -0700
+    [PATCH] deferred and batched addition of pages to the LRU

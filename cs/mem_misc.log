@@ -1,20 +1,30 @@
-# Lock
-arg_lock and mmap_sem: [mm: get_cmdline use arg_lock instead of mmap_sem](https://lore.kernel.org/lkml/20190417120347.15397-1-mkoutny@suse.com/)
+# E820 memory map
+Kerenl setup header?: detect_memory() Load BIOS memory map into boot_params.e820_map
+setup_arch->
+        setup_memory_map -> default_machine_specific_memory_setup // Save e820 memory map into struct vriable e820 from boot_params.e820_map.
+        max_pfn = e820_end_of_ram_pfn(); // max_pfn  BIOS-e820: mem 0x0000000100000000-0x00000003227fffff usable 
+					// and last_pfn = 0x322800(12840MB), so last_pfn is invalid address, use it with <. 
+        mtrr update max_pfn, see [Processor supplementary capability](https://en.wikipedia.org/wiki/Processor_supplementary_capability)
+        trim_low_memory_range // reserve 64k 
+        max_low_pfn = e820_end_of_low_ram_pfn(); //end of block below 4GB 
 
-## MMU notifier
-Documentation/vm/mmu_notifier.rst
-[Memory management notifiers](https://lwn.net/Articles/266320/)
-[A last-minute MMU notifier change](https://lwn.net/Articles/732952/)
-[Heterogeneous memory management and MMU notifiers](https://lwn.net/Articles/752964/)
-commit cddb8a5c14aa89810b40495d94d3d2a0faee6619
-Author: Andrea Arcangeli <andrea@qumranet.com>
-Date:   Mon Jul 28 15:46:29 2008 -0700
-    mmu-notifiers: core
-
-# KSM and huge page
+# KSM
 https://bugzilla.suse.com/show_bug.cgi?id=1119962#c16
 [mm: put_and_wait_on_page_locked() while page is migrated](https://marc.info/?l=linux-mm&m=154711241119699&w=2#1)
 [Bug 1144338 - L3: ksm_max_page_sharing feature in the SLES kernel, was BMW is experiencing peaks of VM stalls ranging from 15 to 30 minutes](https://bugzilla.suse.com/show_bug.cgi?id=1144338)
+
+# Hotplug
+add_memory
+|-add_memory_resource
+ |-add_memory_resource
+  |-arch_add_memory
+   |-__add_pages
+    |-__add_section
+     |-sparse_add_one_section
+      |-kmalloc_section_memmap
+       |-sparse_mem_map_populate
+        |-vmemmap_populate
+...->arch_add_memory->init_memory_mapping
 
 # Hugetlb page
 https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
@@ -24,27 +34,36 @@ https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
 p hstates
 
 # memmap
-/*
  * Only struct pages that are backed by physical memory are zeroed and
  * initialized by going through __init_single_page(). But, there are some
  * struct pages which are reserved in memblock allocator and their fields
  * may be accessed (for example page_to_pfn() on some configuration accesses
  * flags). We must explicitly zero those struct pages.
- *
  * This function also addresses a similar issue where struct pages are left
  * uninitialized because the physical address range is not covered by
  * memblock.memory or memblock.reserved. That could happen when memblock
  * layout is manually configured via memmap=.
- */
 void __init zero_resv_unavail(void)
 
-# Vmalloc
-map_vm_area 页表映射
-## Vmalloc coherence with vfree() after vmalloc_sync_one
-在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，
-当重新vmalloc()时，仍旧使用原来的页表。 
-page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
-deatils in vmalloc_sync_one() and vunmap_pte_range()
+# Memblock and bootmem
+// copy e820 to memblock, reconstructs direct memory mapping and setups the direct mapping of the physical memory at PAGE_OFFSET
+setup_arch-> memblock_x86_fill
+memblock the [implementations](https://0xax.gitbooks.io/linux-insides/content/mm/linux-mm-1.html) of memblock is quite simple. static initialization with variable memblock.
+bootmem is discarded by [ARM](https://lkml.org/lkml/2015/12/21/333) and x86 
+a little history in e820_register_active_region about memblock [replaced by lmb](https://lkml.org/lkml/2010/7/13/68)
+## What is the meaning of the following notes?
+### memblock (constantly Y for x86)
+memblock_free_late->__memblock_free_late->__free_pages_bootmem
+### bootmem (discarded by x86)
+memblock_free_late->free_bootmem_late->__free_pages_bootmem
+free_all_bootmem->free_all_bootmem_core->__free_pages_bootmem
+### nobootmem
+free_bootmem_late->__free_pages_bootmem
+free_all_bootmem->free_low_memory_core_early->__free_memory_core->*__free_pages_memory*->__free_pages_bootmem->__free_pages_boot_core
+### free bootmem core/earyly
+mm_init->mem_init->free_all_bootmem
+### free bootmem late
+start_kernel->efi_free_boot_services->free_bootmem_late->__free_pages_bootmem
 
 # Memory pool
 [Memory pools on lwn](https://lwn.net/Articles/22909/)
@@ -61,18 +80,4 @@ Date:   Mon Feb 4 23:58:50 2002 -0800
 + *  guarantee deadlock-free IO operations even during extreme
 + *  VM load.
 + *  started by Ingo Molnar, Copyright (C) 2001
-Check mempool_create_node for detailsi
-mempool_alloc_slab
-
-# Hotplug
-add_memory
-|-add_memory_resource
- |-add_memory_resource
-  |-arch_add_memory
-   |-__add_pages
-    |-__add_section
-     |-sparse_add_one_section
-      |-kmalloc_section_memmap
-       |-sparse_mem_map_populate
-        |-vmemmap_populate
-...->arch_add_memory->init_memory_mapping
+Check mempool_create_node and mempool_alloc_slab for details

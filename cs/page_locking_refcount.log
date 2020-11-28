@@ -1,0 +1,126 @@
+
+# Refcount
+1. ptes; 2. address space; 3. pagevec; 4. buffer heads.
+tglx: commit 3aa1dc772547672e6ff453117d169c47a5a7cbc5
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Wed Aug 14 21:20:48 2002 -0700
+    [PATCH] multithread page reclaim
++                * The non-racy check for busy page.  It is critical to check
++                * PageDirty _after_ making sure that the page is freeable and
++                * not in use by anybody.       (pagecache + us == 2)           # Firo: pagecache + us
+-               if (mapping) {
+-                       write_lock(&mapping->page_lock);
+-                       if (is_page_cache_freeable(page))
+-                               goto page_freeable;
++               if (page_count(page) != 2 || PageDirty(page)) {
+                        write_unlock(&mapping->page_lock);
+## set_page_refcounted
+
+# Page table lock
+
+# Pin
+[Memory Pinning](https://2wisebit.wordpress.com/2018/06/05/memory-pinning/)
+
+# Pin(get_page, refcount, get_user_page*) vs mlock()ed
+[论Linux的页迁移（Page Migration）完整版](https://www.ershicimi.com/p/484172f9441c686def73d485f5c005ce)
+migrate_page_move_mapping
+[Locking and pinning](https://lwn.net/Articles/600502/)
+## mlock
+https://www.kernel.org/doc/html/v4.18/vm/unevictable-lru.html#filtering-special-vmas
+__mm_populate mlock_vma_page: If page on LRU, isolate and putback to move to unevictable list.
+[Deferred memory locking](https://lwn.net/Articles/650538/)
+VM_LOCKED: pending
+## Pages for ramdisk
+Ramfs and Ram Disk pages are unevictable:https://gitlab-beta.engr.illinois.edu/ejclark2/linux/commit/ba9ddf49391645e6bb93219131a40446538a5e76
+
+
+# Page - Pinned vs locked
+[Re: Filesystem crashes due to pages without buffers](https://lore.kernel.org/linux-fsdevel/20180104085244.GA29010@quack2.suse.cz/)
+> My first question is why is kswapd trying to reclaim a page with an
+> elevated active reference count? i.e. there are active references
+> the VM *doesn't own* to the page, which means that there may well
+> a user that expects the state on the page (e.g. the page private
+> data that the active reference instantiated!) to remain intact until
+> it drops it's active reference.
+
+Page private data (and most of page state) is protected by a page lock, not
+by a page reference. So reclaim (which is holding the page lock) is free to
+try to reclaim page private data by calling ->releasepage callback.
+
+That being said you are right that the attempt to reclaim a page with
+active references is futile. But the problem is that we don't know how many
+page references are actually left before we unmap the page from page tables
+(each page table entry holds a page reference) and free page private data
+(as that may hold page reference as well - e.g. attach_page_buffers()
+acquires page reference). So checking page references in advance is
+difficult.
+
+Furthermore the core of the problem is not in the fact that page buffers
+are reclaimed. That just makes it visible. The real problem is that page can
+be written to by a GUP user while it is neither writeably mapped in page
+tables nor prepared with ->write_begin. So a similar race violating
+filesystem's assumptions can be like:
+
+CPU1					CPU2
+addr = mmap(file1, MAP_SHARED, ...);
+fd2 = open(file2, O_DIRECT | O_RDONLY);
+read(fd2, addr, len)
+  do_direct_IO()
+    ...
+    page = get_user_pages_fast()
+      - page fault handled
+    submit_page_section(page)
+      - submits bio with 'page' as a buffer
+					ordinary writeback:
+					writepages(file1)
+					  clear_page_dirty_for_io(page)
+					    - page gets writeprotected in
+					      page tables
+...
+eventually read completes
+  dio_bio_complete(bio)
+    set_page_dirty_lock(page)
+And a race like this is enough to cause data corruption if we are unlucky.
+								Honza
+# pending %FGP_FOR_MMAP
+commit a75d4c33377277b6034dd1e2663bce444f952c14
+Refs: v5.0-11058-ga75d4c333772
+Author:     Josef Bacik <josef@toxicpanda.com>
+AuthorDate: Wed Mar 13 11:44:14 2019 -0700
+    filemap: kill page_cache_read usage in filemap_fault
+    Patch series "drop the mmap_sem when doing IO in the fault path", v6.
+    Now that we have proper isolation in place with cgroups2 we have started
+    going through and fixing the various priority inversions.  Most are all
+    gone now, but this one is sort of weird since it's not necessarily a
+    priority inversion that happens within the kernel, but rather because of
+    something userspace does.
+    We have giant applications that we want to protect, and parts of these
+    giant applications do things like watch the system state to determine how
+    healthy the box is for load balancing and such.  This involves running
+    'ps' or other such utilities.  These utilities will often walk
+    /proc/<pid>/whatever, and these files can sometimes need to
+    down_read(&task->mmap_sem).  Not usually a big deal, but we noticed when
+    we are stress testing that sometimes our protected application has latency
+    spikes trying to get the mmap_sem for tasks that are in lower priority
+    cgroups.
+
+    This is because any down_write() on a semaphore essentially turns it into
+    a mutex, so even if we currently have it held for reading, any new readers
+    will not be allowed on to keep from starving the writer.  This is fine,
+    except a lower priority task could be stuck doing IO because it has been
+    throttled to the point that its IO is taking much longer than normal.  But
+    because a higher priority group depends on this completing it is now stuck
+    behind lower priority work.
+
+# Mem Lock
+arg_lock, mmap_sem: [mm: get_cmdline use arg_lock instead of mmap_sem](https://lore.kernel.org/lkml/20190417120347.15397-1-mkoutny@suse.com/)
+## down_read(&mm->mmap_sem)?
+linux-tglx
+commit b50661029222940e24d2fba7c982ac0774a38c78
+Author: Andi Kleen <ak@muc.de>
+Date:   Thu Sep 16 22:00:12 2004 -0700
+    [PATCH] x86-64: avoid deadlock in page fault handler
+    Avoid deadlock when kernel fault happens inside mmap sem.
+Check ULKv3 Page 380.
+https://lkml.org/lkml/2004/5/19/108
+https://lkml.org/lkml/2013/5/13/418

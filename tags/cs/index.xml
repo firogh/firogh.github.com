@@ -180,101 +180,6 @@ respect to any other processor, all previous ordinary&lt;br /&gt;
 load and store accesses must be performed, and&lt;br /&gt;
 &amp;copy; special accesses are processor consistent with respect to one another.&lt;br /&gt;
 &lt;a href=&#34;https://preshing.com/20120913/acquire-and-release-semantics/&#34;&gt;Acquire and Release Semantics&lt;/a&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://marc.info/?l=linux-kernel&amp;amp;m=151844394031510&amp;amp;w=2&#34;&gt;mm/page_ref: use atomic_set_release in page_ref_unfreeze&lt;/a&gt;&lt;br /&gt;
-commit 7088efa9137a15d7d21e3abce73e40c9c8a18d68&lt;br /&gt;
-Refs: v4.15-rc1-4-g7088efa9137a&lt;br /&gt;
-Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Mon Oct 9 10:04:27 2017 -0700&lt;br /&gt;
-Commit:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@linux.vnet.ibm.com&#34;&gt;paulmck@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
-CommitDate: Mon Dec 4 10:52:52 2017 -0800&lt;br /&gt;
-    fs/dcache: Use release-acquire for name/length update&lt;/p&gt;
-
-&lt;h2 id=&#34;kernel&#34;&gt;Kernel&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;Why do we need mb for SLEEP AND WAKE-UP FUNCTIONS?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/718628/&#34;&gt;A formal kernel memory-ordering model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/720550/&#34;&gt;A formal kernel memory-ordering model (part 2)&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0124r4.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0124r6.html&#34;&gt;Linux-Kernel Memory Model&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf&#34;&gt;Linux-Kernel Memory Ordering: Help Arrives At Last!&lt;/a&gt; and &lt;a href=&#34;https://www.youtube.com/watch?v=ULFytshTvIY&#34;&gt;Talk on youtube on this!&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;compiler&#34;&gt;Compiler&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://preshing.com/20120625/memory-ordering-at-compile-time/&#34;&gt;Memory Ordering at Compile Time&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://blog.regehr.org/archives/232&#34;&gt;A Guide to Undefined Behavior in C and C++, Part 3&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;other-architectures&#34;&gt;Other architectures&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://www.cl.cam.ac.uk/~pes20/weakmemory/&#34;&gt;Relaxed-Memory Concurrency&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;c11-library-memory-model&#34;&gt;C11(library) memory model&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://en.cppreference.com/w/c/atomic/memory_order&#34;&gt;C memory order&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.cl.cam.ac.uk/~pes20/cpp/notes42.html&#34;&gt;Don&amp;rsquo;t read: The Thin-air Problem&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf&#34;&gt;Outlawing Ghosts: Avoiding Out-of-Thin-Air Results&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html&#34;&gt;Out-of-Thin-Air Execution is Vacuous&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;material&#34;&gt;Material&lt;/h1&gt;
-
-&lt;h2 id=&#34;practices&#34;&gt;Practices&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://preshing.com/20120515/memory-reordering-caught-in-the-act/&#34;&gt;Memory Reordering Caught in the Act&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;lqo&#34;&gt;LQO&lt;/h2&gt;
-
-&lt;p&gt;134 static void sysrq_handle_crash(int key)&lt;br /&gt;
- 135 {&lt;br /&gt;
- 136         char &lt;em&gt;killer = NULL;&lt;br /&gt;
- 137&lt;br /&gt;
- 138         /&lt;/em&gt; we need to release the RCU read lock here,&lt;br /&gt;
- 139          * otherwise we get an annoying&lt;br /&gt;
- 140          * &amp;lsquo;BUG: sleeping function called from invalid context&amp;rsquo;&lt;br /&gt;
- 141          * complaint from the kernel before the panic.&lt;br /&gt;
- 142          &lt;em&gt;/&lt;br /&gt;
- 143         rcu_read_unlock();&lt;br /&gt;
- 144         panic_on_oops = 1;      /&lt;/em&gt; force panic */&lt;br /&gt;
- 145         wmb();&lt;br /&gt;
- 146         *killer = 1;&lt;br /&gt;
- 147 }&lt;/p&gt;
-
-&lt;h1 id=&#34;memory-barrier&#34;&gt;Memory barrier&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/memory-barriers.txt&#34;&gt;https://www.kernel.org/doc/Documentation/memory-barriers.txt&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://en.wikipedia.org/wiki/Memory_barrier&#34;&gt;http://en.wikipedia.org/wiki/Memory_barrier&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://yarchive.net/comp/linux/compiler_barriers.html&#34;&gt;http://yarchive.net/comp/linux/compiler_barriers.html&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/&#34;&gt;Memory Barriers Are Like Source Control Operations&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html&#34;&gt;Are All Linux Kernel Memory Barriers Transitive?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf&#34;&gt;Memory Barriers in the Linux Kernel Semantics and Practices&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.&lt;br /&gt;
-Compiler and cpu do the same optimization: reorder of instructions&lt;/p&gt;
-
-&lt;h2 id=&#34;the-linux-kernel-has-a-variety-of-different-barriers-that-act-at-different-levels&#34;&gt;The Linux kernel has a variety of different barriers that act at different levels:&lt;/h2&gt;
-
-&lt;p&gt;(&lt;em&gt;) Compiler barrier.&lt;br /&gt;
-  (&lt;/em&gt;) CPU memory barriers.&lt;br /&gt;
-  (*) MMIO write barrier.&lt;/p&gt;
-
-&lt;h1 id=&#34;compiler-1&#34;&gt;Compiler&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/793253/#Load%20Tearing&#34;&gt;Who&amp;rsquo;s afraid of a big bad optimizing compiler?&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/799218/&#34;&gt;Calibrating your fear of big bad optimizing compilers&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;access-once&#34;&gt;ACCESS_ONCE&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Does it work cast a variable to volatile?&lt;br /&gt;
-No, there is no efects on cast a variable to volatile.&lt;br /&gt;
-Because, access variable is before volatile cast! That means you&lt;br /&gt;
-still get a register value. What you do is just conversion a temporary variable&lt;br /&gt;
-Rationale for International Standard&amp;ndash;Programming Languages&amp;ndash;C&lt;br /&gt;
-&lt;a href=&#34;http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/&#34;&gt;Understanding “volatile” qualifier in C&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/508991/&#34;&gt;ACCESS_ONCE()&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
@@ -359,21 +264,6 @@ Date:   Fri Nov 23 15:30:52 2007 -0500&lt;br /&gt;
 +   * Tasklet is strictly serialized wrt itself, but not&lt;br /&gt;
 +     wrt another tasklets. If client needs some intertask synchronization,&lt;br /&gt;
 +     he makes it with spinlocks.&lt;/p&gt;
-
-&lt;h1 id=&#34;timer&#34;&gt;Timer&lt;/h1&gt;
-
-&lt;h2 id=&#34;irqsafe-timer&#34;&gt;irqsafe timer&lt;/h2&gt;
-
-&lt;p&gt;__run_timers&lt;br /&gt;
-irqsafe = timer-&amp;gt;flags &amp;amp; TIMER_IRQSAFE&lt;br /&gt;
-check del_timer_sync&lt;br /&gt;
-and definition of TIMER_IRQSAFE&lt;br /&gt;
-&lt;a href=&#34;https://patchwork.kernel.org/patch/10811995/&#34;&gt;https://patchwork.kernel.org/patch/10811995/&lt;/a&gt;&lt;br /&gt;
-Is timer pending&lt;/p&gt;
-
-&lt;h1 id=&#34;lqo&#34;&gt;LQO&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://thread.gmane.org/gmane.linux.kernel/1152658&#34;&gt;Deal PF_MEMALLOC in softirq&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -584,6 +474,37 @@ The 0 for Divide error is a interrupt vector.&lt;/p&gt;
 init_IRQ()-&amp;gt;x86_init.irqs.intr_init=native_init_IRQ     #===&amp;gt; external interrupt init;&lt;br /&gt;
     pre_vector_init = init_ISA_irqs #===&amp;gt; 1) legacy_pic-&amp;gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.&lt;br /&gt;
     idt_setup_apic_and_irq_gates    #===&amp;gt; apic normal(from 32) and system interrupts;&lt;/p&gt;
+
+&lt;h2 id=&#34;affinity&#34;&gt;affinity&lt;/h2&gt;
+
+&lt;p&gt;root@snow:/tmp# cat x.sh&lt;br /&gt;
+echo 1 &amp;gt; /proc/irq/129/smp_affinity&lt;br /&gt;
+sudo trace-cmd record -p function_graph &amp;ndash;max-graph-depth 70 -g __irq_set_affinity -c -F  ./x.sh&lt;br /&gt;
+cpus=4&lt;br /&gt;
+              sh-26457 [000] 19135.281818: funcgraph_entry:                   |  __irq_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281819: funcgraph_entry:        0.306 us   |    irq_to_desc();&lt;br /&gt;
+              sh-26457 [000] 19135.281819: funcgraph_entry:        0.149 us   |    _raw_spin_lock_irqsave();&lt;br /&gt;
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |    irq_set_affinity_locked() {&lt;br /&gt;
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |      irq_do_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |        msi_domain_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281821: funcgraph_entry:                   |          intel_ir_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281821: funcgraph_entry:        0.220 us   |            irqd_cfg();&lt;br /&gt;
+              sh-26457 [000] 19135.281822: funcgraph_entry:                   |            apic_set_affinity() {&lt;br /&gt;
+              sh-26457 [000] 19135.281822: funcgraph_entry:        0.248 us   |              _raw_spin_lock();&lt;br /&gt;
+              sh-26457 [000] 19135.281822: funcgraph_entry:        0.245 us   |              assign_vector_locked();&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_exit:         1.276 us   |            }&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_entry:        0.148 us   |            irqd_cfg();&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_entry:                   |            modify_irte.isra.0() {&lt;br /&gt;
+              sh-26457 [000] 19135.281823: funcgraph_entry:        0.272 us   |              _raw_spin_lock_irqsave();&lt;br /&gt;
+              sh-26457 [000] 19135.281824: funcgraph_entry:        0.492 us   |              clflush_cache_range();&lt;br /&gt;
+              sh-26457 [000] 19135.281824: funcgraph_entry:                   |              qi_submit_sync() {&lt;br /&gt;
+              sh-26457 [000] 19135.281825: funcgraph_entry:        0.272 us   |                _raw_spin_lock_irqsave();&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.135 us   |                _raw_spin_lock();&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.144 us   |                _raw_spin_unlock_irqrestore();&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_exit:         3.647 us   |              }&lt;br /&gt;
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.195 us   |              _raw_spin_unlock_irqrestore();&lt;br /&gt;
+              sh-26457 [000] 19135.281829: funcgraph_exit:         5.290 us   |            }&lt;br /&gt;
+              sh-26457 [000] 19135.281829: funcgraph_entry:        0.129 us   |            send_cleanup_vector();&lt;/p&gt;
 
 &lt;h1 id=&#34;ipi&#34;&gt;IPI&lt;/h1&gt;
 
@@ -1631,27 +1552,6 @@ static code analysis: smatch&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.cs.princeton.edu/~bwk/tpop.webpage/&#34;&gt;The practice of programming&lt;/a&gt;, &lt;a href=&#34;http://www.ccs.neu.edu/home/matthias/HtDP2e/&#34;&gt;How to design programs&lt;/a&gt;, &lt;a href=&#34;http://sarabander.github.io/sicp/&#34;&gt;SICP&lt;/a&gt;, and Elements of programming.&lt;br /&gt;
 Reentrancy&lt;/p&gt;
-
-&lt;h1 id=&#34;concurrent-programming&#34;&gt;Concurrent programming&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.cs.utexas.edu/users/EWD/transcriptions/EWD01xx/EWD123.html&#34;&gt;Firo: must thinking summary: EW Dijkstra: Cooperating sequential processes&lt;/a&gt;&lt;br /&gt;
-CSAPP3e: Chapter 12 concurrent programming&lt;br /&gt;
-Parallel and Concurrent Programming in Haskell&lt;br /&gt;
-The origin of concurrent programming: from semaphores to remote procedure calls - Per Brinch Hansen&lt;br /&gt;
-&lt;a href=&#34;https://www.dcl.hpi.uni-potsdam.de/teaching/pvprog/Slides/C1_concurrency.pdf&#34;&gt;Introduction on history of concurrency: Shared-Memory Concurrency&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://dl.acm.org/citation.cfm?id=2771951&#34;&gt;Turing lecture: The computer science of concurrency: the early years&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/355700/&#34;&gt;Firo: example: Concurrency-managed workqueues&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://talks.golang.org/2012/concurrency.slide#6&#34;&gt;Rob Pike: Concurrency is the composition of independently executing computations.&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;asynchrony-computer-programming-https-en-wikipedia-org-wiki-asynchrony-computer-programming&#34;&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Asynchrony_(computer_programming)&#34;&gt;Asynchrony (computer programming)&lt;/a&gt;&lt;/h2&gt;
-
-&lt;h2 id=&#34;process-vs-event&#34;&gt;process vs event&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://courses.cs.vt.edu/cs5204/fall09-kafura/Presentations/Threads-VS-Events.pdf&#34;&gt;thread vs event&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;lock-free-programming&#34;&gt;Lock-free programming&lt;/h1&gt;
-
-&lt;p&gt;ring buffer, rcu&lt;/p&gt;
 
 &lt;h1 id=&#34;functional-programming&#34;&gt;Functional programming&lt;/h1&gt;
 

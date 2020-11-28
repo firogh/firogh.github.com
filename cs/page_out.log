@@ -1,0 +1,279 @@
+#---
+tags: [ kernel ] 
+layout: post
+date: 2014-12-28
+title:  Page reclaim writeback policy and throttling
+category: cs
+---
+
+# activate pages under writeback
+commit c55e8d035b28b2867e68b0e2d0eee2c0f1016b43
+Author: Johannes Weiner <hannes@cmpxchg.org>
+Date:   Fri Feb 24 14:56:23 2017 -0800
+    mm: vmscan: move dirty pages out of the way until they're flushed
+
+# Deadlock - __GFP_IO, __GFP_FS and may_enter_fs
+[Avoiding memory-allocation deadlocks](https://lwn.net/Articles/594725/)
+[Understanding __GFP_FS](https://lwn.net/Articles/596618/)
+[GFP masks used from FS/IO context](https://www.kernel.org/doc/html/latest/core-api/gfp_mask-from-fs-io.html)
+commit 63eb6b93ce725e4c5f38fc85dd703d49465b03cb
+Refs: v2.6.28-rc5-142-g63eb6b93ce72
+Author:     Hugh Dickins <hugh@veritas.com>
+AuthorDate: Wed Nov 19 15:36:37 2008 -0800
+    vmscan: let GFP_NOFS go to swap again
+## __GFP_IO  and __GFP_NOFS (for anonymous memory)
+commit 63eb6b93ce725e4c5f38fc85dd703d49465b03cb
+Refs: v2.6.28-rc5-142-g63eb6b93ce72
+Author:     Hugh Dickins <hugh@veritas.com>
+AuthorDate: Wed Nov 19 15:36:37 2008 -0800
+    vmscan: let GFP_NOFS go to swap again
+## Example of __GFP_IO avoiding deadlock
+The [loop driver issue](https://lore.kernel.org/linux-mm/alpine.LSU.2.00.1207111818380.1299@eggly.anvils/)
+Below notes from above link by Hugh Dickins:
+Part of my load builds kernels on extN over loop over tmpfs: loop does mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS))
+because it knows it will deadlock, if the loop thread enters reclaim, and reclaim tries to write back a dirty page, one which needs the loop
+thread to perform the write.
+## Example of __GFP_FS: fs writepage and  PG_writeback and reclaim and may_enter_fs, i.e. Case 2
+commit ecf5fc6e9654cd7a268c782a523f072b2f1959f9
+Refs: v4.2-rc5-34-gecf5fc6e9654
+Author:     Michal Hocko <mhocko@suse.cz>
+AuthorDate: Tue Aug 4 14:36:58 2015 -0700
+    mm, vmscan: Do not wait for page writeback for GFP_NOFS allocations
+
+# PageDirty and writeback
+## page_is_file_cache - best effort for clean file page
+[When writeback goes wrong](https://lwn.net/Articles/384093/)
+[Fixing writeback from direct reclaim](https://lwn.net/Articles/396561/)
+### direct reclaim vs kswapd reclaim
+commit ee72886d8ed5d9de3fa0ed3b99a7ca7702576a96
+Refs: u3.1-7237-gee72886d8ed5
+Author:     Mel Gorman <mel@csn.ul.ie>
+AuthorDate: Mon Oct 31 17:07:38 2011 -0700
+    mm: vmscan: do not writeback filesystem pages in direct reclaim
+[...]
++                        * Only kswapd can writeback filesystem pages to
++                        * avoid risk of stack overflow
++                       if (page_is_file_cache(page) && !current_is_kswapd()) {
++                               inc_zone_page_state(page, NR_VMSCAN_WRITE_SKIP);
++                               goto keep_locked;
+### kswapd reclaim: high priority vs low priority; Firo: restrain writing pages at low priority (obseleted by below d43006d503ac921c7df4f94d13c17db6f13c9d26)
+commit f84f6e2b0868f198f97a32ba503d6f9f319a249a
+Refs: u3.1-7241-gf84f6e2b0868
+Author:     Mel Gorman <mgorman@suse.de>
+AuthorDate: Mon Oct 31 17:07:51 2011 -0700
+    mm: vmscan: do not writeback filesystem pages in kswapd except in high priority
+    It is preferable that no dirty pages are dispatched for cleaning from the
+    page reclaim path.  At normal priorities, this patch prevents kswapd			# Firo: Normal prioties means DEF_PRIORITY
+    writing pages.
+    However, page reclaim does have a requirement that pages be freed in a
+    particular zone.  If it is failing to make sufficient progress (reclaiming
+    < SWAP_CLUSTER_MAX at any priority priority), the priority is raised to
+    scan more pages.  A priority of DEF_PRIORITY - 3 is considered to be the
+    point where kswapd is getting into trouble reclaiming pages.  If this
+    priority is reached, kswapd will dispatch pages for writing.
+[...]
+                         * Only kswapd can writeback filesystem pages to
+-                        * avoid risk of stack overflow
++                        * avoid risk of stack overflow but do not writeback
++                        * unless under significant pressure.
+-                       if (page_is_file_cache(page) && !current_is_kswapd()) {
++                       if (page_is_file_cache(page) &&
++                                       (!current_is_kswapd() || priority >= DEF_PRIORITY - 2)) { # the smaller, the higher priority.
+                                inc_zone_page_state(page, NR_VMSCAN_WRITE_SKIP);
+                                goto keep_locked;
+### kswapd reclaim: write pages if kswapd encoutered too many dirty pages.
+commit d43006d503ac921c7df4f94d13c17db6f13c9d26
+Refs: u3.10-3573-gd43006d503ac
+Author:     Mel Gorman <mgorman@suse.de>
+AuthorDate: Wed Jul 3 15:01:50 2013 -0700
+    mm: vmscan: have kswapd writeback pages based on dirty pages encountered, not priority
+    Currently kswapd queues dirty pages for writeback if scanning at an
+    elevated priority but the priority kswapd scans at is not related to the
+    number of unqueued dirty encountered.  Since commit "mm: vmscan: Flatten
+    kswapd priority loop", the priority is related to the size of the LRU
+    and the zone watermark which is no indication as to whether kswapd
+    should write pages or not.
+    This patch tracks if an excessive number of unqueued dirty pages are
+    being encountered at the end of the LRU.  If so, it indicates that dirty
+    pages are being recycled before flusher threads can clean them and flags
+    the zone so that kswapd will start writing pages until the zone is
+    balanced.
+[...]
+                if (PageDirty(page)) {
+                        nr_dirty++;
++                       if (!PageWriteback(page))
++                               nr_unqueued_dirty++;		# Firo: so unqueued means yet to writeback, this page is ignored before.
+                         * Only kswapd can writeback filesystem pages to
+-                        * avoid risk of stack overflow but do not writeback
+-                        * unless under significant pressure.
++                        * avoid risk of stack overflow but only writeback
++                        * if many dirty pages have been encountered.
+                        if (page_is_file_cache(page) &&
+                                        (!current_is_kswapd() ||
+-                                        sc->priority >= DEF_PRIORITY - 2)) {
++                                        !zone_is_reclaim_dirty(zone))) {
+                                 * Immediately reclaim when written back.
+                                 * Similar in principal to deactivate_page(
+[...]
+-       *ret_nr_dirty += nr_dirty;
++       *ret_nr_unqueued_dirty += nr_unqueued_dirty;
+        *ret_nr_writeback += nr_writeback;
+        return nr_reclaimed;
+@@ -1373,6 +1377,15 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
+                        (nr_taken >> (DEF_PRIORITY - sc->priority)))
+                wait_iff_congested(zone, BLK_RW_ASYNC, HZ/10);
++        * Similarly, if many dirty pages are encountered that are not
++        * currently being written then flag that kswapd should start
++        * writing back pages.
++       if (global_reclaim(sc) && nr_dirty &&
++                       nr_dirty >= (nr_taken >> (DEF_PRIORITY - sc->priority)))
++               zone_set_flag(zone, ZONE_TAIL_LRU_DIRTY);
+### direct reclaim and kswapd reclaim: prioritised reclaim for dirty page to avoid reclaiming young clean page
+commit 49ea7eb65e7c5060807fb9312b1ad4c3eab82e2c
+Refs: u3.1-7243-g49ea7eb65e7c
+Author:     Mel Gorman <mgorman@suse.de>
+AuthorDate: Mon Oct 31 17:07:59 2011 -0700
+    mm: vmscan: immediately reclaim end-of-LRU dirty pages when writeback completes
+    When direct reclaim encounters a dirty page, it gets recycled around the
+    LRU for another cycle.  This patch marks the page PageReclaim similar to
+    deactivate_page() so that the page gets reclaimed almost immediately after
+    the page gets cleaned.  This is to avoid reclaiming clean pages that are
+    younger than a dirty page encountered at the end of the LRU that might
+    have been something like a use-once page.
+                        if (page_is_file_cache(page) &&
+                                        (!current_is_kswapd() || priority >= DEF_PRIORITY - 2)) {
+-                               inc_zone_page_state(page, NR_VMSCAN_WRITE_SKIP);
++                                * Immediately reclaim when written back.
++                                * Similar in principal to deactivate_page()		# Firo: so deactivate_page()?
++                                * except we already have the page isolated
++                                * and know it's dirty
++                               inc_zone_page_state(page, NR_VMSCAN_IMMEDIATE);
++                               SetPageReclaim(page);
+
+### kswapd reclaim: restrain even more; only write page we hace seen before(PG_reclaim) for avoiding inefficient single-page IO.
+commit 4eda48235011d6965f5229f8955ddcd355311570
+Refs: v4.10-9595-g4eda48235011
+Author:     Johannes Weiner <hannes@cmpxchg.org>
+AuthorDate: Fri Feb 24 14:56:20 2017 -0800
+    mm: vmscan: only write dirty pages that the scanner has seen twice
+
+    Dirty pages can easily reach the end of the LRU while there are still
+    clean pages to reclaim around.  Don't let kswapd write them back just
+    because there are a lot of them.  It costs more CPU to find the clean
+    pages, but that's almost certainly better than to disrupt writeback from
+    the flushers with LRU-order single-page writes from reclaim.  And the
+    flushers have been woken up by that point, so we spend IO capacity on
+    flushing and CPU capacity on finding the clean cache.
+    Only start writing dirty pages if they have cycled around the LRU twice
+    now and STILL haven't been queued on the IO device.  It's possible that
+    the dirty pages are so sparsely distributed across different bdis,
+    inodes, memory cgroups, that the flushers take forever to get to the
+    ones we want reclaimed.  Once we see them twice on the LRU, we know
+    that's the quicker way to find them, so do LRU writeback.
+[...]
+-                        * Only kswapd can writeback filesystem pages to
+-                        * avoid risk of stack overflow but only writeback
+-                        * if many dirty pages have been encountered.
++                        * Only kswapd can writeback filesystem pages
++                        * to avoid risk of stack overflow. But avoid
++                        * injecting inefficient single-page IO into
++                        * flusher writeback as much as possible: only
++                        * write pages when we've encountered many
++                        * dirty pages, and when we've already scanned
++                        * the rest of the LRU for clean pages and see
++                        * the same dirty pages again (PageReclaim).
+                        if (page_is_file_cache(page) &&
+-                                       (!current_is_kswapd() ||
+-                                        !test_bit(PGDAT_DIRTY, &pgdat->flags))) {
++                           (!current_is_kswapd() || !PageReclaim(page) ||
++                            !test_bit(PGDAT_DIRTY, &pgdat->flags))) {
+# Pageout
+[Pageout and kswapd](https://linux-mm.org/PageOutKswapd)
+
+# Congestion
+nr_congested, PGDAT_CONGESTED, pgdat_memcg_congested, set_wb_congested
+
+# synchronous writepage()
+tglx: commit 961caf47918340aea55aa2ca9b68e7f1c8d91ca6
+Author:     Andrew Morton <akpm@osdl.org>
+AuthorDate: Sat Jun 12 16:39:11 2004 -0700
+    [PATCH] vmscan: handle synchronous writepage()
+    Teach page reclaim to understand synchronous ->writepage implementations.
+    If ->writepage completed I/O prior to returning we can proceed to reclaim the
+    page without giving it another trip around the LRU.
+    This is beneficial for ramdisk-backed S_ISREG files: we can reclaim the file's	# Firo Ramdisk is completely rewritten
+    pages as fast as the ramdisk driver needs to allocate them and this prevents	# See 9db5579be4bb5320c3248f6acf807aedf05ae143
+    I/O errors due to OOM in rd_blkdev_pagecache_IO().
+[...]
++                               if (PageWriteback(page) || PageDirty(page))
++                                       goto keep;
++                                * A synchronous write - probably a ramdisk.  Go
++                                * ahead and try to reclaim the page.
++                               if (TestSetPageLocked(page))
++                                       goto keep;
++                               if (PageDirty(page) || PageWriteback(page))
++                                       goto keep_locked;
++                               mapping = page_mapping(page);
+
+## Kswapd: blocked encountering many writeback pages avoids reclaim clean young pages
+commit 283aba9f9e0e4882bf09bd37a2983379a6fae805
+Refs: u3.10-3574-g283aba9f9e0e
+Author:     Mel Gorman <mgorman@suse.de>
+AuthorDate: Wed Jul 3 15:01:51 2013 -0700
+    mm: vmscan: block kswapd if it is encountering pages under writeback
+    Historically, kswapd used to congestion_wait() at higher priorities if
+    it was not making forward progress.  This made no sense as the failure
+    to make progress could be completely independent of IO.  It was later
+    replaced by wait_iff_congested() and removed entirely by commit 258401a6
+    (mm: don't wait on congested zones in balance_pgdat()) as it was
+    duplicating logic in shrink_inactive_list().
+    This is problematic.  If kswapd encounters many pages under writeback
+    and it continues to scan until it reaches the high watermark then it
+    will quickly skip over the pages under writeback and reclaim clean young
+    pages or push applications out to swap.
+
+## cgroup writeback support - sane_reclaim
+commit 97c9341f727105c29478da19f1687b0e0a917256
+Refs: v4.1-rc2-104-g97c9341f7271
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Fri May 22 18:23:36 2015 -0400
+    mm: vmscan: disable memcg direct reclaim stalling if cgroup writeback support is in use
+
+# may_write_to_inode or _queue						# Firo should we remove this function completely?
+tglx: commit e386771cbbc2a90b46df2ace02214f94cc23cb50
+Author:     Andrew Morton <akpm@digeo.com>
+AuthorDate: Sat Dec 21 01:07:33 2002 -0800
+    [PATCH] Give kswapd writeback higher priority than pdflush	# Firo: pdflush and normal process
++static int may_write_to_queue(struct backing_dev_info *bdi)
++       if (current_is_kswapd())
++               return 1;
++       if (current_is_pdflush())       /* This is unlikely, but why not... */
++               return 1;
++       if (!bdi_write_congested(bdi))
++               return 1;
++       if (bdi == current->backing_dev_info)	# Current process is write-intensive; at least it's writing.
++               return 1;
++       return 0;
+[...]
+@@ -313,9 +324,7 @@ shrink_list(struct list_head *page_list, unsigned int gfp_mask,
+                                goto activate_locked;
+                        if (!may_enter_fs)
+                                goto keep_locked;
+-                       bdi = mapping->backing_dev_info;
+-                       if (bdi != current->backing_dev_info &&
+-                                       bdi_write_congested(bdi))
++                       if (!may_write_to_queue(mapping->backing_dev_info))
+## current->backing_dev_info - vfs wirte throttling			# is this possible? We don't do writepage if we are not kswapd.	
+tglx: commit 407ee6c87e477434e3cb8be96885ed27b5539b6f
+Author:     Andrew Morton <akpm@digeo.com>
+AuthorDate: Sun Sep 22 08:17:02 2002 -0700
+    [PATCH] low-latency page reclaim
+    Convert the VM to not wait on other people's dirty data.
+       generic_file_write(), record their backing queue in ->current.
+       Within page reclaim, if this tasks encounters a page which is dirty
+       or under writeback onthis queue, block on it.  This gives some more
+       writer throttling and reduces the page refiling frequency.
+[...]
++                * If this process is currently in generic_file_write() against
++                * this page's queue, we can perform writeback even if that
++                * will block.

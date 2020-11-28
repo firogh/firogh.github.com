@@ -1,262 +1,154 @@
-# History
-[Control Group v2](https://www.kernel.org/doc/Documentation/cgroup-v2.txt)
-[Resource control at Facebook](https://lwn.net/Articles/764761/)
-[cgroupv2: Linux's new unified control group hierarchy](https://chrisdown.name/2017/03/01/cgroupv2-linux-new-cgroup-hierarchy.html)
-[What's new in control groups (cgroups) version 2](https://www.youtube.com/watch?v=yZpNsDe4Qzg) comparing to v1. 
-[The unified control group hierarchy in 3.16](https://lwn.net/Articles/601840/)
-[LSFMM: Soft reclaim](https://lwn.net/Articles/548189/)
-
-# History
-[Cgroup-v1 Memory Resource Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt)
-[Cgroup-v2 Memory Controller](https://facebookmicrosites.github.io/cgroup2/docs/memory-controller.html)
-commit 8a9f3ccd24741b50200c3f33d62534c7271f3dfc
-Refs: u2.6.24-8075-g8a9f3ccd2474
-Author:     Balbir Singh <balbir@linux.vnet.ibm.com>
-AuthorDate: Thu Feb 7 00:13:53 2008 -0800
-Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
-CommitDate: Thu Feb 7 08:42:18 2008 -0800
-    Memory controller: memory accounting
-git log -p  v3.8-rc1
-## Page allocator kmem controller
-commit 510fc4e11b772fd60f2c545c64d4c55abd07ce36
-Author: Glauber Costa <glommer@parallels.com>
-Date:   Tue Dec 18 14:21:47 2012 -0800
-    memcg: kmem accounting basic infrastructure
-    Add the basic infrastructure for the accounting of kernel memory.  To
-    control that, the following files are created:
-     * memory.kmem.usage_in_bytes
-     * memory.kmem.limit_in_bytes
-     * memory.kmem.failcnt
-     * memory.kmem.max_usage_in_bytes
-commit 7ae1e1d0f8ac2927ed7e3ca6d15e42d485903459
-Author: Glauber Costa <glommer@parallels.com>
-Date:   Tue Dec 18 14:21:56 2012 -0800
-    memcg: kmem controller infrastructure
-commit 6a1a0d3b625a4091e7a0eb249aefc6a644385149
-Author: Glauber Costa <glommer@parallels.com>
-Date:   Tue Dec 18 14:22:00 2012 -0800
-    mm: allocate kernel pages to the right memcg
-commit 7de37682bec35bbe0cd69b8112ef257bc5fb1c3e
-Author: Glauber Costa <glommer@parallels.com>
-Date:   Tue Dec 18 14:22:07 2012 -0800
-    memcg: kmem accounting lifecycle management
-
-## Slab controller
-commit ba6c496ed834a37a26fc6fc87fc9aecb0fa0014d
-Author: Glauber Costa <glommer@parallels.com>
-Date:   Tue Dec 18 14:22:27 2012 -0800
-    slab/slub: struct memcg_params
-    For the kmem slab controller, we need to record some extra information in
-    the kmem_cache structure.
-commit 2633d7a028239a738b793be5ca8fa6ac312f5793
-Author: Glauber Costa <glommer@parallels.com>
-Date:   Tue Dec 18 14:22:34 2012 -0800
-    slab/slub: consider a memcg parameter in kmem_create_cache
-
-commit 241994ed8649f7300667be8b13a9e04ae04e05a1
-Author: Johannes Weiner <hannes@cmpxchg.org>
-Date:   Wed Feb 11 15:26:06 2015 -0800
-    mm: memcontrol: default hierarchy interface for memory
--static struct cftype mem_cgroup_files[] = {
-+static struct cftype mem_cgroup_legacy_files[] = {
-
-# Purposes
-Why Cgroup v2?[Fixing control groups](https://lwn.net/Articles/484251/)
-
-# Cgroup v1
-the *only* reason to support multiple
-hierarchies is if you want to apply resource limits based on different
-orthogonal categorizations.
-
-## Force empty
-commit cc8475822f8a4b17e9b76e7fadb6b9a341860422
-Refs: v2.6.24-8096-gcc8475822f8a
-Author:     KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-AuthorDate: Thu Feb 7 00:14:16 2008 -0800
-Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
-CommitDate: Thu Feb 7 08:42:20 2008 -0800
-    memory cgroup enhancements: force_empty interface for dropping all account in empty cgroup
-commit c1e862c1f5ad34771b6d0a528cf681e0dcad7c86
-Refs: v2.6.28-7526-gc1e862c1f5ad
-Author:     KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-AuthorDate: Wed Jan 7 18:07:55 2009 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Jan 8 08:31:04 2009 -0800
-    memcg: new force_empty to free pages under group
-### Targeted reclaim
-commit a394cb8ee632ec5edce20309901ec66767497a43
-Refs: v3.8-6489-ga394cb8ee632
-Author:     Michal Hocko <mhocko@suse.cz>
-AuthorDate: Fri Feb 22 16:32:30 2013 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Sat Feb 23 17:50:10 2013 -0800
-    memcg,vmscan: do not break out targeted reclaim without reclaimed pages
-    Targeted (hard resp soft) reclaim has traditionally tried to scan one
-    group with decreasing priority until nr_to_reclaim (SWAP_CLUSTER_MAX
-    pages) is reclaimed or all priorities are exhausted.  The reclaim is
-    then retried until the limit is met.
-### Hierarchy reclaim - shrink_zone?
-commit 5660048ccac8735d9bc0a46325a02e6a6518b5b2
-Refs: v3.2-7141-g5660048ccac8
-Author:     Johannes Weiner <jweiner@redhat.com>
-AuthorDate: Thu Jan 12 17:17:59 2012 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Jan 12 20:13:05 2012 -0800
-
-    mm: move memcg hierarchy reclaim to generic reclaim code
-    Memory cgroup limit reclaim and traditional global pressure reclaim will
-    soon share the same code to reclaim from a hierarchical tree of memory
-    cgroups.
-    In preparation of this, move the two right next to each other in
-    shrink_zone().
-    The mem_cgroup_hierarchical_reclaim() polymath is split into a soft
-    limit reclaim function, which still does hierarchy walking on its own,
-    and a limit (shrinking) reclaim function, which relies on generic
-    reclaim code to walk the hierarchy.
-
-
-
-## Shrink mem cgroup
-commit cb731d6c62bbc2f890b08ea3d0386d5dad887326
-Refs: v3.19-4744-gcb731d6c62bb
-Author:     Vladimir Davydov <vdavydov@parallels.com>
-AuthorDate: Thu Feb 12 14:58:54 2015 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Feb 12 18:54:09 2015 -0800
-    vmscan: per memory cgroup slab shrinkers
-
+# memory cgroup, memcg 
+aggreating/partitioning, tracking/accounting, limiting, reclaim, oom
 ## Per cgroup LRU and reclaim
 commit 66e1707bc34609f626e2e7b4fe7e454c9748bad5
 Refs: v2.6.24-8077-g66e1707bc346
 Author:     Balbir Singh <balbir@linux.vnet.ibm.com>
 AuthorDate: Thu Feb 7 00:13:56 2008 -0800
-Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
-CommitDate: Thu Feb 7 08:42:18 2008 -0800
     Memory controller: add per cgroup LRU and reclaim
-
-isolate pages: 
-active list: if page !acive -> inactive list
-inactive list: if page active -> active list
-
-
-## Soft limit tree
-[KS2012: memcg/mm: Hierarchical reclaim for memory cgroups](https://lwn.net/Articles/516535/)
-commit f64c3f54940d6929a2b6dcffaab942bd62be2e66
-Refs: v2.6.31-8385-gf64c3f54940d
-Author:     Balbir Singh <balbir@linux.vnet.ibm.com>
-AuthorDate: Wed Sep 23 15:56:37 2009 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Sep 24 07:20:59 2009 -0700
-    memory controller: soft limit organize cgroups
-    Organize cgroups over soft limit in a RB-Tree
-
+## Hierarchical reclaim
 commit 6d61ef409d6ba168972f7c2f8c35baaade636a58
 Refs: v2.6.28-7535-g6d61ef409d6b
 Author:     Balbir Singh <balbir@linux.vnet.ibm.com>
 AuthorDate: Wed Jan 7 18:08:06 2009 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Jan 8 08:31:06 2009 -0800
     memcg: memory cgroup hierarchical reclaim
-
-
-commit 9f3a0d0933de079665ec1b498947ffbf805b0018
-Refs: v3.2-7137-g9f3a0d0933de
-Author:     Johannes Weiner <jweiner@redhat.com>
-AuthorDate: Thu Jan 12 17:17:48 2012 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Jan 12 20:13:04 2012 -0800
-    mm: memcg: consolidate hierarchy iteration primitives
-
+### Obsoleted 1. split out soft reclaim; 2. consolidate limit reclaim with generic reclaim
+[[05/11] mm: move memcg hierarchy reclaim to generic reclaim code](https://lore.kernel.org/patchwork/patch/266557/)
 commit 5660048ccac8735d9bc0a46325a02e6a6518b5b2
 Refs: v3.2-7141-g5660048ccac8
 Author:     Johannes Weiner <jweiner@redhat.com>
 AuthorDate: Thu Jan 12 17:17:59 2012 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Jan 12 20:13:05 2012 -0800
-    mm: move memcg hierarchy reclaim to generic reclaim code
+    mm: move memcg hierarchy reclaim to generic reclaim code				# This is important for understanding
+    Memory cgroup limit reclaim and traditional global pressure reclaim will		# target reclaim and memcg iter
+    soon share the same code to reclaim from a hierarchical tree of memory
+    cgroups. In preparation of this, move the two right next to each other in
+    shrink_zone().
+    The mem_cgroup_hierarchical_reclaim() polymath is split into a soft
+    limit reclaim function, which still does hierarchy walking on its own,
+    and a limit (shrinking) reclaim function, which relies on generic
+    reclaim code to walk the hierarchy.
+## Soft reclaim - get invoked during global reclaim.
+[Soft limits in Documentation/admin-guide/cgroup-v1/memory.rst](https://lwn.net/Articles/516022/)
+[LSFMM: Soft reclaim](https://lwn.net/Articles/548189/)
+[KS2012: memcg/mm: Hierarchical reclaim for memory cgroups](https://lwn.net/Articles/516535/)
+mem_cgroup_soft_reclaim mem_cgroup_soft_limit_reclaim
+### soft_limit 
+mem_cgroup_legacy_files which is activated in cgroup_init().
+memcg->soft_limit = PAGE_COUNTER_MAX in mem_cgroup_css_alloc()
+memcg->soft_limit = nr_pages in mem_cgroup_write()
+## Targeted reclaim or limit reclaim - targeted reclaim use same logic as global reclaim but they are exclusive.
+commit a394cb8ee632ec5edce20309901ec66767497a43
+Refs: v3.8-6489-ga394cb8ee632
+Author:     Michal Hocko <mhocko@suse.cz>
+AuthorDate: Fri Feb 22 16:32:30 2013 -0800
+    memcg,vmscan: do not break out targeted reclaim without reclaimed pages # targeted reclaim until get some reclaimed pages.
+    Targeted (hard resp soft) reclaim has traditionally tried to scan one
+    group with decreasing priority until nr_to_reclaim (SWAP_CLUSTER_MAX
+    pages) is reclaimed or all priorities are exhausted.  The reclaim is
+    then retried until the limit is met.
+### target reclaim
+see callsites of try_to_free_mem_cgroup_pages
+## Memory reclaim protection
+[SUSE Labs Conference 2020 - Memory reclaim protection](https://www.youtube.com/watch?v=NrZropsBhjY)
+mem_cgroup_protection
 
-## LRU 
+# Slab memory controller - slab reclaim
+commit ba6c496ed834a37a26fc6fc87fc9aecb0fa0014d
+Author: Glauber Costa <glommer@parallels.com>
+Date:   Tue Dec 18 14:22:27 2012 -0800
+    slab/slub: struct memcg_params
+shrink_slab_memcg
+[NOT-ACCEPTED: The new slab memory controller](https://lkml.org/lkml/2019/9/5/1132)
+## memcg awared shrinker
+commit cb731d6c62bbc2f890b08ea3d0386d5dad887326
+Refs: v3.19-4744-gcb731d6c62bb
+Author:     Vladimir Davydov <vdavydov@parallels.com>
+AuthorDate: Thu Feb 12 14:58:54 2015 -0800
+    vmscan: per memory cgroup slab shrinkers
+
+# Tracking, charing, accounting
 https://lkml.org/lkml/2014/6/18/631
 commit 00501b531c4723972aa11d6d4ebcf8d6552007c8
 Refs: Firo: 3.17
 Author:     Johannes Weiner <hannes@cmpxchg.org>
 AuthorDate: Fri Aug 8 14:19:20 2014 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Aug 8 15:57:17 2014 -0700
     mm: memcontrol: rewrite charge API
+## Charge
+mem_cgroup_try_charge mem_cgroup_try_charge_delay mem_cgroup_commit_charge
+page -> mm -> memcg page_counter_charge
 
+# Memory cgroup translations
+root_mem_cgroup; cgroup_on_dfl() ? v2 : v1; cgroup_base_files in css_populate_dir()
+## use_hiearchy
+crash> p *root_mem_cgroup |grep use_hier
+  use_hierarchy = true, 
+for v1, mem_cgroup_hierarchy_write
+[Hierarchy support](https://lwn.net/Articles/516022/)
+commit 18f59ea7de08db2449ba99185e8d8cc30e7acac5
+Refs: v2.6.28-7536-g18f59ea7de08
+Author:     Balbir Singh <balbir@linux.vnet.ibm.com>
+AuthorDate: Wed Jan 7 18:08:07 2009 -0800
+    memcg: memory cgroup hierarchy feature selector
+also see try_charge().
+## cgroup->self
+commit 9d800df12d31734a6853915e9d2deb5d6747985f
+Refs: v3.15-rc2-68-g9d800df12d31
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Wed May 14 09:15:00 2014 -0400
+    cgroup: rename cgroup->dummy_css to ->self and move it to the top
+    cgroup->dummy_css is used as the placeholder css when performing css
+    oriended operations on the cgroup.  We're gonna shift more cgroup
+    management to this css.  Let's rename it to ->self and move it to the
+    top.
+commit 67f4c36f83455b253445b2cb28ac9a2c4f85d99a
+Refs: v3.10-9324-g67f4c36f8345
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Thu Aug 8 20:11:24 2013 -0400
+    cgroup: add cgroup->dummy_css
+    cgroup subsystem API is being converted to use css
+    (cgroup_subsys_state) as the main handle, which makes things a bit
+    awkward for subsystem agnostic core features - the "cgroup.*"
+    interface files and various iterations - a bit awkward as they don't
+    have a css to use.
+    This patch adds cgroup->dummy_css which has NULL ->ss and whose only
+    role is pointing back to the cgroup.  This will be used to support
+    subsystem agnostic features on the coming css based API.
 
+# cgroup v2 memcg
+[Control Group v2](https://www.kernel.org/doc/Documentation/cgroup-v2.txt)
+[Cgroup-v2 Memory Controller](https://facebookmicrosites.github.io/cgroup2/docs/memory-controller.html)
+## Init
+mem_cgroup_css_alloc
+## memory.swap
+mem_cgroup_swap_init, swap_current_read
+[NOT-ACCPETED: mm: memcontrol: memory+swap accounting for cgroup-v2](https://lkml.org/lkml/2017/12/19/694)
+
+# Translations 
 ## page_cgroup => mem_cgroup
 commit 1306a85aed3ec3db98945aafb7dfbe5648a1203c
 Refs:  Firo: 3.19
 Author:     Johannes Weiner <hannes@cmpxchg.org>
 AuthorDate: Wed Dec 10 15:44:52 2014 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Dec 10 17:41:09 2014 -0800
     mm: embed the memcg pointer directly into struct page
 
-
-## Per zone LRU and reclaim
-commit 1ecaab2bd221251a3fd148abb08e8b877f1e93c8
-Refs: rpm-4.12.14-95.29
-Author:     KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-AuthorDate: Thu Feb 7 00:14:38 2008 -0800
-Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
-CommitDate: Thu Feb 7 08:42:22 2008 -0800
-    pr-zone and reclaim enhancements for memory controller: per zone lru for cgroup
-Firo: Pages were added to the per zone cgroup by __mem_cgroup_add_list in mem_cgroup_charge_common()
-
-# Formal
-Accounting
-Unite: page
-type: swap, page cache, RSS
-Process: memcg
-Allocate and free: charge or uncharge
-## Memcg
-Onset
-mem_cgroup_css_alloc
-### mm => memcg
-commit 78fb74669e80883323391090e4d26d17fe29488f
-Refs: u2.6.24-8074-g78fb74669e80
-Author:     Pavel Emelianov <xemul@openvz.org>
-AuthorDate: Thu Feb 7 00:13:51 2008 -0800
-Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
-CommitDate: Thu Feb 7 08:42:18 2008 -0800
-    Memory controller: accounting setup
-@@ -219,6 +222,9 @@ struct mm_struct {
-        /* aio bits */
-        rwlock_t                ioctx_list_lock;
-        struct kioctx           *ioctx_list;
-+#ifdef CONFIG_CGROUP_MEM_CONT
-+       struct mem_cgroup *mem_cgroup;
-+#endif
-commit cf475ad28ac35cc9ba612d67158f29b73b38b05d
-Refs: v2.6.25-6172-gcf475ad28ac3
+# cgroupv1 memcg
+[Cgroup-v1 Memory Resource Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt)
+commit 8a9f3ccd24741b50200c3f33d62534c7271f3dfc
+Refs: u2.6.24-8075-g8a9f3ccd2474
 Author:     Balbir Singh <balbir@linux.vnet.ibm.com>
-AuthorDate: Tue Apr 29 01:00:16 2008 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Tue Apr 29 08:06:10 2008 -0700
-    cgroups: add an owner to the mm_struct
-mm_update_next_owner
-### shadow entry and swap
-mem_cgroup_idr
-commit 73f576c04b9410ed19660f74f97521bee6e1c546
-Refs: v4.7-rc7-93-g73f576c04b94
-Author:     Johannes Weiner <hannes@cmpxchg.org>
-AuthorDate: Wed Jul 20 15:44:57 2016 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Sat Jul 23 10:25:54 2016 +0900
-    mm: memcontrol: fix cgroup creation failure after many small jobs
-### normal
-get_mem_cgroup_from_mm => mem_cgroup_from_task(rcu_dereference(mm->owner)
-## Charge
-mem_cgroup_try_charge
-mem_cgroup_try_charge_delay
-mem_cgroup_commit_charge
-page -> mm -> memcg
-page_counter_charge
-
-## Memory+swap for v2
-[mm: memcontrol: memory+swap accounting for cgroup-v2](https://lkml.org/lkml/2017/12/19/694)
-
-#Limiting
+AuthorDate: Thu Feb 7 00:13:53 2008 -0800
+    Memory controller: memory accounting
+## kmemcg
+commit 510fc4e11b772fd60f2c545c64d4c55abd07ce36
+Author: Glauber Costa <glommer@parallels.com>
+Date:   Tue Dec 18 14:21:47 2012 -0800
+    memcg: kmem accounting basic infrastructure
+    Add the basic infrastructure for the accounting of kernel memory.  To control that, the following files are created:
+     * memory.kmem.usage_in_bytes
+     * memory.kmem.limit_in_bytes
+     * memory.kmem.failcnt
+     * memory.kmem.max_usage_in_bytes
+## kmem.slabinfo
+memcg_slab_show
+## memory.force_empty
+mem_cgroup_force_empty_write

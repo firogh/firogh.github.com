@@ -1,0 +1,79 @@
+## Kernel
+[Why do we need mb for SLEEP AND WAKE-UP FUNCTIONS?](https://www.kernel.org/doc/Documentation/memory-barriers.txt)
+[A formal kernel memory-ordering model (part 1)](https://lwn.net/Articles/718628/)
+[A formal kernel memory-ordering model (part 2)](https://lwn.net/Articles/720550/)
+[Linux-Kernel Memory Model](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4374.html)
+[Linux-Kernel Memory Model](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0124r4.html)
+[Linux-Kernel Memory Model](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0124r6.html)
+[Linux-Kernel Memory Ordering: Help Arrives At Last!](http://events.linuxfoundation.org/sites/events/files/slides/LinuxMM.2016.09.19a.LCE_.pdf) and [Talk on youtube on this!](https://www.youtube.com/watch?v=ULFytshTvIY)
+### smp_load_acquire or smp_store_relase
+commit 47933ad41a86a4a9b50bed7c9b9bd2ba242aac63
+Author: Peter Zijlstra <peterz@infradead.org>
+Date:   Wed Nov 6 14:57:36 2013 +0100
+    arch: Introduce smp_load_acquire(), smp_store_release()
+### Examples
+[mm/page_ref: use atomic_set_release in page_ref_unfreeze](https://marc.info/?l=linux-kernel&m=151844394031510&w=2)
+commit 7088efa9137a15d7d21e3abce73e40c9c8a18d68
+Refs: v4.15-rc1-4-g7088efa9137a
+Author:     Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+AuthorDate: Mon Oct 9 10:04:27 2017 -0700
+    fs/dcache: Use release-acquire for name/length update
+[Acquire and Release Semantics](https://preshing.com/20120913/acquire-and-release-semantics/)
+
+## Other architectures
+[Relaxed-Memory Concurrency](http://www.cl.cam.ac.uk/~pes20/weakmemory/)
+
+## C11(library) memory model
+[C memory order](http://en.cppreference.com/w/c/atomic/memory_order)
+[Don't read: The Thin-air Problem](https://www.cl.cam.ac.uk/~pes20/cpp/notes42.html)
+[Outlawing Ghosts:Avoiding Out-of-Thin-Air Results](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42967.pdf)
+[Out-of-Thin-Air Execution is Vacuous](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4375.html)
+
+# Material
+## Practices
+[Memory Reordering Caught in the Act](http://preshing.com/20120515/memory-reordering-caught-in-the-act/)
+
+## LQO
+ 134 static void sysrq_handle_crash(int key)
+ 135 {
+ 136         char *killer = NULL;
+ 137
+ 138         /* we need to release the RCU read lock here,
+ 139          * otherwise we get an annoying
+ 140          * 'BUG: sleeping function called from invalid context'
+ 141          * complaint from the kernel before the panic.
+ 142          */
+ 143         rcu_read_unlock();
+ 144         panic_on_oops = 1;      /* force panic */
+ 145         wmb();
+ 146         *killer = 1;
+ 147 }
+
+# Memory barrier
+https://www.kernel.org/doc/Documentation/memory-barriers.txt
+http://en.wikipedia.org/wiki/Memory_barrier
+http://yarchive.net/comp/linux/compiler_barriers.html
+[Memory Barriers Are Like Source Control Operations](http://preshing.com/20120710/memory-barriers-are-like-source-control-operations/)
+[Are All Linux Kernel Memory Barriers Transitive?](https://www.kernel.org/pub/linux/kernel/people/paulmck/Answers/SMP/lwsync.html)
+[Memory Barriers in the Linux Kernel Semantics and Practices](http://events.linuxfoundation.org/sites/events/files/slides/dbueso-elc2016-membarriers-final.pdf)
+
+When a program runs on a single-CPU machine, the hardware performs the necessary bookkeeping to ensure that the program executes as if all memory operations were performed in the order specified by the programmer (program order), so memory barriers are not necessary. However, when the memory is shared with multiple devices, such as other CPUs in a multiprocessor system, or memory mapped peripherals, out-of-order access may affect program behavior. For example, a second CPU may see memory changes made by the first CPU in a sequence which differs from program order.
+Compiler and cpu do the same optimization: reorder of instructions
+## The Linux kernel has a variety of different barriers that act at different levels:
+  (*) Compiler barrier.
+  (*) CPU memory barriers.
+  (*) MMIO write barrier.
+
+# Compiler
+[Memory Ordering at Compile Time](http://preshing.com/20120625/memory-ordering-at-compile-time/)
+[A Guide to Undefined Behavior in C and C++, Part 3](https://blog.regehr.org/archives/232)
+[Who's afraid of a big bad optimizing compiler?](https://lwn.net/Articles/793253/#Load%20Tearing)
+[Calibrating your fear of big bad optimizing compilers](https://lwn.net/Articles/799218/)
+## ACCESS_ONCE
+* Does it work cast a variable to volatile?
+No, there is no efects on cast a variable to volatile.
+Because, access variable is before volatile cast! That means you
+still get a register value. What you do is just conversion a temporary variable
+Rationale for International Standard--Programming Languages--C 
+[Understanding “volatile” qualifier in C](http://www.geeksforgeeks.org/understanding-volatile-qualifier-in-c/)
+[ACCESS_ONCE()](https://lwn.net/Articles/508991/)

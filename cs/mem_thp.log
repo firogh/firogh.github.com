@@ -1,3 +1,34 @@
+# Problems
+atomic operations overhead
+mapcount for rmap
+refcount for reclaim
+reclaim huge page
+4K and 2M mapping THPs
+Unstable refcount due to 1. page cache speculative (seems not a problem currently) 2. physical memory scaner idle track
+split pmd: when to split pmd
+split huge page: when to split huge page
+
+# __split_huge_page_tail
+
+commit 605ca5ede7643a01f4c4a15913f9714ac297f8a6
+Refs: v4.16-7327-g605ca5ede764
+Author:     Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+AuthorDate: Thu Apr 5 16:23:28 2018 -0700
+    mm/huge_memory.c: reorder operations in __split_huge_page_tail()
+# _count
+lru_cache_add and get_page and page_cache_get
+tglx: commit 44260240ce0d1e19e84138ac775811574a9e1326
+Author:     Andrew Morton <akpm@zip.com.au>
+AuthorDate: Wed Aug 14 21:21:15 2002 -0700
+    [PATCH] deferred and batched addition of pages to the LRU
+# not split 
+commit 12e967fd8e4e6c3d275b4c69c890adc838891300
+Refs: v5.6-rc6-124-g12e967fd8e4e
+Author:     Michal Hocko <mhocko@suse.com>
+AuthorDate: Sat Mar 21 18:22:26 2020 -0700
+    mm: do not allow MADV_PAGEOUT for CoW pages
+# copy_huge_pmd
+
 # Reference
 https://richardweiyang.gitbooks.io/kernel-exploring/virtual_mm/02-thp_mapcount.html
 [Transparent hugepages](https://lwn.net/Articles/359158/)
@@ -98,24 +129,17 @@ CommitDate: Fri Nov 6 17:50:42 2015 -0800
 -static inline struct page *compound_head_by_tail(struct page *tail)
 -{
 -       struct page *head = tail->first_page;
--
--       /*
 -        * page->first_page may be a dangling pointer to an old
 -        * compound page, so recheck that it is still a tail
 -        * page before returning.
--        */
 -       smp_rmb();
 -       if (likely(PageTail(tail)))
 -               return head;
 -       return tail;
--}
--
--/*
 - * Since either compound page could be dismantled asynchronously in THP
 - * or we access asynchronously arbitrary positioned struct page, there
 - * would be tail flag race. To handle this race, we should call
 - * smp_rmb() before checking tail flag. compound_head_by_tail() did it.
-- */
 -static inline struct page *compound_head(struct page *page)
 -{
 -       if (unlikely(PageTail(page)))
@@ -202,14 +226,14 @@ CommitDate: Wed Feb 5 16:57:54 2003 -0800
 +       }
         if (!PageReserved(page) && put_page_testzero(page))
                 __page_cache_release(page);			# Firo: doesn't dec page count.
- }
 
-## THP first edition
+# 2MB THP
+## subpage reference count
 commit 9180706344487700b40da9eca5dedd3d11cb33b4
 Author: Andrea Arcangeli <aarcange@redhat.com>
 Date:   Thu Jan 13 15:46:32 2011 -0800
 
-    thp: alter compound get_page/put_page					# Firo: BUG: Splitting could be subject with the unstalbe page count.
+    thp: alter compound get_page/put_page			# Firo: BUG: Splitting could be subject with the unstalbe page count.
     Alter compound get_page/put_page to keep references on subpages too, in
     order to allow __split_huge_page_refcount to split an hugepage even while	# Firo: Split is the root cause for complicating page count.
     subpages have been pinned by one of the get_user_pages() variants.		# Firo: So what is split?
@@ -251,9 +275,13 @@ Date:   Thu Jan 13 15:46:32 2011 -0800
 +               atomic_inc(&page->first_page->_count);				# Firo: inc also page count if tail page.
 +       }
  }
-## _mapcount for tail page's count version - splitting THP pages requires a stable page count, however page_cache_get_speculative makes it unstable.
+### Problems
 [The original problem posted by Michel Lespinasse <walken@google.com>: get_page() vs __split_huge_page_refcount()](https://lore.kernel.org/linux-mm/AANLkTinHBouEU2pAVOfuakxYqA_QFVLz=qY-f8ZW6fTG@mail.gmail.com/)
-[Firo the problem mentioned below: mm: make sure tail page counts are stable before splitting THP pages](https://lkml.org/lkml/2011/8/19/41)
+The materialized problem caused by page cache is described by [mm: make sure tail page counts are stable before splitting THP pages](https://lkml.org/lkml/2011/8/19/41)
+
+## _mapcount version - splitting THP pages requires a stable page count, however page_cache_get_speculative makes it unstable.
+The following patches are not merged by upstream; but we can see a follow-up patch from Andrea Arcangeli; in this follow-up lkml patch, Andrea put a few worlds on the details of his fix [thp: tail page refcounting fix](https://lkml.org/lkml/2011/8/22/369)
+[Not accepted: Use RCU to stabilize page counts](https://lkml.org/lkml/2011/8/19/35)
 
 > As described in the page_cache_get_speculative() comment
 > in pagemap.h, the count of all pages coming out of the allocator
@@ -265,10 +293,9 @@ Date:   Thu Jan 13 15:46:32 2011 -0800
 commit 70b50f94f1644e2aa7cb374819cfd93f3c28d725
 Author: Andrea Arcangeli <aarcange@redhat.com>
 Date:   Wed Nov 2 13:36:59 2011 -0700
-
     mm: thp: tail page refcounting fix
-    Michel while working on the working set estimation code, noticed that
-    calling get_page_unless_zero() on a random pfn_to_page(random_pfn)
+    Michel while working on the working set estimation code, noticed that	# idle page tracking: https://lwn.net/Articles/459269/
+    calling get_page_unless_zero() on a random pfn_to_page(random_pfn)		# page_idle_get_page?
     wasn't safe, if the pfn ended up being a tail page of a transparent
     hugepage under splitting by __split_huge_page_refcount().
     He then found the problem could also theoretically materialize with
@@ -283,14 +310,38 @@ Date:   Wed Nov 2 13:36:59 2011 -0700
     account the tail page references there and transfer them to
     tail_page->_count in __split_huge_page_refcount() (in addition to the
     head_page->_mapcount).
-+extern bool __get_page_tail(struct page *page);
-+
  static inline void get_page(struct page *page)
  {
 +       if (unlikely(PageTail(page)))
 +               if (likely(__get_page_tail(page)))
 +                       return;
-[...]
+        /*
+         * Getting a normal page or the head of a compound page
+-        * requires to already have an elevated page->_count. Only if
+-        * we're getting a tail page, the elevated page->_count is
+-        * required only in the head page, so for tail pages the
+-        * bugcheck only verifies that the page->_count isn't
+-        * negative.
++        * requires to already have an elevated page->_count.
+         */
+-       VM_BUG_ON(atomic_read(&page->_count) < !PageTail(page));
++       VM_BUG_ON(atomic_read(&page->_count) <= 0);
+        atomic_inc(&page->_count);
+-       /*
+-        * Getting a tail page will elevate both the head and tail
+-        * page->_count(s).
+-        */
+-       if (unlikely(PageTail(page))) {
+-               /*
+-                * This is safe only because
+-                * __split_huge_page_refcount can't run under
+-                * get_page().
+-                */
+-               VM_BUG_ON(atomic_read(&page->first_page->_count) <= 0);
+-               atomic_inc(&page->first_page->_count);				# The problem: two refcounts for head and tail's updating is
+-       }									# not atomic.
+ }
+__split_huge_page_refcount()
 -               /* tail_page->_count cannot change */
 		# Firo: if page_tail->_count changed, page->_count become much less than expected?
 -               atomic_sub(atomic_read(&page_tail->_count), &page->_count);
@@ -304,7 +355,7 @@ Date:   Wed Nov 2 13:36:59 2011 -0700
 +               BUG_ON(tail_count < 0);
 +               BUG_ON(atomic_read(&page_tail->_count) != 0);
 
-## compound_mapcount 
+## Disable tail page refcounting
 commit ddc58f27f9eee9117219936f77e90ad5b2e00e96
 Author: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Date:   Fri Jan 15 16:52:56 2016 -0800
@@ -320,12 +371,11 @@ Date:   Fri Jan 15 16:52:56 2016 -0800
     tail pages by forbidding split entirely if the page is pinned.
     The only user of tail page refcounting is THP which is marked BROKEN for
     now.
+## compound_mapcount for 4k and 2MB mapping for THPs
 commit 53f9263baba69fc1630e3c780c4d11b72643f962
 Refs: v4.4-6426-g53f9263baba6
 Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 AuthorDate: Fri Jan 15 16:53:42 2016 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Jan 15 17:56:32 2016 -0800
     mm: rework mapcount accounting to enable 4k mapping of THPs
     We're going to allow mapping of individual 4k pages of THP compound.  It
     means we need to track mapcount on per small page basis.
@@ -343,9 +393,7 @@ CommitDate: Fri Jan 15 17:56:32 2016 -0800
     Any time we map/unmap whole compound page (THP or hugetlb) -- we
     increment/decrement compound_mapcount.  When we map part of compound
     page with PTE we operate on ->_mapcount of the subpage.
-
     page_mapcount() counts both: PTE and PMD mappings of the page.
-
     Basically, we have mapcount for a subpage spread over two counters.  It	# Firo: See whole patch.
     makes tricky to detect when last mapcount for a page goes away.
     We introduced PageDoubleMap() for this.  When we split THP PMD for the
@@ -363,7 +411,6 @@ Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 AuthorDate: Fri Jan 15 16:53:53 2016 -0800
 Commit:     Linus Torvalds <torvalds@linux-foundation.org>
 CommitDate: Fri Jan 15 17:56:32 2016 -0800
-
     thp: implement split_huge_pmd()
     Original split_huge_page() combined two operations: splitting PMDs into
     tables of PTEs and splitting underlying compound page.  This patch
@@ -371,15 +418,12 @@ CommitDate: Fri Jan 15 17:56:32 2016 -0800
     other PMDs this page mapped with or underlying compound page.
     Without tail page refcounting, implementation of split_huge_pmd() is
     pretty straight-forward.
-+       /*
 +        * Set PG_double_map before dropping compound_mapcount to avoid
 +        * false-negative page_mapped().					# See below commit.
-+        */
 +       if (compound_mapcount(page) > 1 && !TestSetPageDoubleMap(page)) {	# compound_mapcount(page) > 1 
 +               for (i = 0; i < HPAGE_PMD_NR; i++)
 +                       atomic_inc(&page[i]._mapcount);				# Race ?
 +       }
-+
 +       if (atomic_add_negative(-1, compound_mapcount_ptr(page))) {
 +               /* Last compound_mapcount is gone. */
 +               __dec_zone_page_state(page, NR_ANON_TRANSPARENT_HUGEPAGES);
@@ -393,9 +437,6 @@ commit e1534ae95004d6a307839a44eed40389d608c935
 Refs: v4.4-6427-ge1534ae95004
 Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 AuthorDate: Fri Jan 15 16:53:46 2016 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Jan 15 17:56:32 2016 -0800
-
     mm: differentiate page_mapped() from page_mapcount() for compound pages
     Let's define page_mapped() to be true for compound pages if any
     sub-pages of the compound page is mapped (with PMD or PTE).
@@ -410,7 +451,7 @@ CommitDate: Fri Jan 15 17:56:32 2016 -0800
 + * For compound page it returns true if any subpage of compound page is mapped.
   */
 -static inline int page_mapped(struct page *page)
-+static inline bool page_mapped(struct page *page)				# Search this patch for the callsite of page_mapped() to understand
++static inline bool page_mapped(struct page *page)			# Search this patch for the callsite of page_mapped() to understand
  {										# above TestSetPageDoubleMap. This is the race? No?
 -       return atomic_read(&(page)->_mapcount) + compound_mapcount(page) >= 0;
 +       int i;
@@ -427,6 +468,21 @@ CommitDate: Fri Jan 15 17:56:32 2016 -0800
  }
 
 ## PageDoubleMap: anon thp vs file thp
+commit dd78fedde4b99b322f2dc849d467d365a82e23ca
+Refs: v4.7-1695-gdd78fedde4b9
+Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+AuthorDate: Tue Jul 26 15:25:26 2016 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Tue Jul 26 16:19:19 2016 -0700
+    rmap: support file thp
+    Naive approach: on mapping/unmapping the page as compound we update
+    ->_mapcount on each 4k page.  That's not efficient, but it's not obvious
+    how we can optimize this.  We can look into optimization later.
+    PG_double_map optimization doesn't work for file pages since lifecycle
+    of file pages is different comparing to anon pages: file page can be
+    mapped again at any time.
+    Link: http://lkml.kernel.org/r/1466021202-61880-11-git-send-email-kirill.shutemov@linux.intel.com
+
 [rmap: support file thp](https://patchwork.kernel.org/patch/8570371/)
 > Can you explain this more ?. We added PG_double_map so that we can keep
 > page_remove_rmap simpler. So if it isn't a compound page we still can do
@@ -447,12 +503,44 @@ anonymous THP page:
   - anon-THPs always mapped with PMD first;
   - new mapping of THP can only be created via fork();
   - the page only can get mapped with PTEs via split_huge_pmd();
-For file-THP the situation is different. Once we allocated a huge page and	# Firo: So why don't we stop increating compound_mapcount for file thp?
+For file-THP the situation is different. Once we allocated a huge page and # Firo: So why don't we stop increating compound_mapcount for file thp?
 put it on radix tree, the page can be mapped with PTEs or PMDs at any		# Firo: Could we eliminate that inc?
 time. It makes the same optimization inapplicable there.
 I think there *can* be some room for optimization, but I don't want to
 invest more time here, until it's identified as bottleneck. It can lead to
 more complex code on rmap side.
+### Why Doublemap and mapcount offset up by 1 are necessary
+if no, in page_remove_rmap 
+        /* page still mapped by someone else? */
+        if (!atomic_add_negative(-1, &page->_mapcount))
+                goto out;
+### Doublemap for file THPs
+Also see: Documentation/vm/transhuge.rst
+commit 9a73f61bdb8acdc01bbaf72a3fe0a8854f2463ad
+Refs: v4.7-1705-g9a73f61bdb8a
+Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+AuthorDate: Tue Jul 26 15:25:53 2016 -0700
+    thp, mlock: do not mlock PTE-mapped file huge pages
+    As with anon THP, we only mlock file huge pages if we can prove that the
+    page is not mapped with PTE.  This way we can avoid mlock leak into
+    non-mlocked vma on split.
+    We rely on PageDoubleMap() under lock_page() to check if the the page
+    may be PTE mapped.  PG_double_map is set by page_add_file_rmap() when
+    the page mapped with PTEs.
+[...]
+@@ -1458,8 +1464,14 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+         */
+        if (!(flags & TTU_IGNORE_MLOCK)) {
+                if (vma->vm_flags & VM_LOCKED) {
+-                       /* Holding pte lock, we do *not* need mmap_sem here */
+-                       mlock_vma_page(page);
++                       /* PTE-mapped THP are never mlocked */
++                       if (!PageTransCompound(page)) {
++                               /*
++                                * Holding pte lock, we do *not* need
++                                * mmap_sem here
++                                */
++                               mlock_vma_page(page);
 
 # History
 git log v2.6.38-rc1 --oneline # search thp
@@ -526,15 +614,12 @@ Date:   Tue Jul 26 15:26:18 2016 -0700
     shmem: add huge pages support
 
 # Split
-split_huge_page vs  split_huge_pmd
-
-# split_huge_pmd
+split_huge_page including split_huge_pmd
+## split_huge_pmd
 commit eef1b3ba053aa68967d294c80a50c4a26db30f52
 Refs: v4.4-6429-geef1b3ba053a
 Author:     Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 AuthorDate: Fri Jan 15 16:53:53 2016 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Jan 15 17:56:32 2016 -0800
     thp: implement split_huge_pmd()
     Original split_huge_page() combined two operations: splitting PMDs into
     tables of PTEs and splitting underlying compound page.  This patch
@@ -542,10 +627,23 @@ CommitDate: Fri Jan 15 17:56:32 2016 -0800
     other PMDs this page mapped with or underlying compound page.
     Without tail page refcounting, implementation of split_huge_pmd() is
     pretty straight-forward.
-## DAX
-Search "DAX" in [THP-enabled tmpfs/shmem using compound pages](https://lore.kernel.org/linux-fsdevel/1465222029-45942-1-git-send-email-kirill.shutemov@linux.intel.com/)
-As with DAX, split_huge_pmd() is implemented by unmapping the PMD: we can
-re-fault the page with PTEs later.
+## TTU_SPLIT_FREEZE added for diverting THP split from THP migration
+commit b5ff8161e37cef3265e186ecded23324e4dc2973
+Refs: v4.13-9222-gb5ff8161e37c
+Author:     Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
+AuthorDate: Fri Sep 8 16:10:49 2017 -0700
+    mm: thp: introduce separate TTU flag for thp freezing
+    TTU_MIGRATION is used to convert pte into migration entry until thp         # Firo: "convert pte into migration entry" means that 
+    split completes.  This behavior conflicts with thp migration added later    # any access to that thp memory will wait in do_swap_page().
+    patches, so let's introduce a new TTU flag specifically for freezing.
+    try_to_unmap() is used both for thp split (via freeze_page()) and page
+    migration (via __unmap_and_move()).  
+[...]
+    so try_to_unmap() for tail pages called by thp split can go into thp
+    migration code path (which converts *pmd* into migration entry), while
+    the expectation is to freeze thp (which converts *pte* into migration
+    entry.)
+Firo: Purely split? No, Freeze means wait in do_swap_page().See unmap_page() and remap_page().
 
 # File THP
 [Two transparent huge page cache implementations](https://lwn.net/Articles/684300/)

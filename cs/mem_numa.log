@@ -1,9 +1,9 @@
 
 # References
+[NUMA (Non-Uniform Memory Access): An Overview](https://queue.acm.org/detail.cfm?id=2513149)
 [firo-must: Local and Remote Memory: Memory in a Linux/NUMA System](https://pdfs.semanticscholar.org/41b1/74a97c812c281387803902a3d99afa4ca454.pdf)
 [Memory part 4: NUMA support](https://lwn.net/Articles/254445/)
 [What is Linux Memory Policy?](https://www.kernel.org/doc/Documentation/vm/numa_memory_policy.txt)
-[NUMA (Non-Uniform Memory Access): An Overview](https://queue.acm.org/detail.cfm?id=2513149)
 [The MySQL “swap insanity” problem and the effects of the NUMA architecture](https://blog.jcole.us/2010/09/28/mysql-swap-insanity-and-the-numa-architecture/)
 [NUMA架构的CPU -- 你真的用好了么？](http://cenalulu.github.io/linux/numa/)
 [Red Hat Enterprise Linux NUMA support for HPE ProLiant servers](https://h50146.www5.hpe.com/products/software/oe/linux/mainstream/support/whitepaper/pdfs/a00039147enw.pdf)
@@ -17,19 +17,94 @@ ACPI 2.0 SLIT distance definitions
 #define REMOTE_DISTANCE         20
 numa_distance
 
+# Policy
+[Kernel: NUMA Memory Policy](https://www.kernel.org/doc/html/latest/admin-guide/mm/numa_memory_policy.html)
+
+# Cpuset
+[Cpusets and memory policies](https://lwn.net/Articles/717797/)
+
 # Automatic NUMA Balancing
+[LWN: AutoNUMA: the other approach to NUMA scheduling](https://lwn.net/Articles/488709/)
+[SUSE:  Automatic Non-Uniform Memory Access (NUMA) Balancing](https://doc.opensuse.org/documentation/leap/archive/42.1/tuning/html/book.sle.tuning/cha.tuning.numactl.html)
 [Automatic NUMA Balancing v10](https://lore.kernel.org/lkml/1354875832-9700-1-git-send-email-mgorman@suse.de/)
 [[GIT PULL] Automatic NUMA Balancing V11](https://lkml.org/lkml/2012/12/12/96)
 [AutoNUMA alpha10](https://lwn.net/Articles/488686/)
 
-# Material
+# Observability
+task_numa_work, do_numa_page
+## Onset
 setup_arch->initmem_init->numa_init -> numa_register_memblks -> alloc_node_data
-
-# High-level description
+## High-level description
 node_states
 nr_node_ids: num of pssible nodes
 nr_online_nodes: num of online nodes
 
-# Page migration
-[lwn: Page migration](https://lwn.net/Articles/157066/)
-[Kernel doc: Page migration](https://www.kernel.org/doc/html/latest/vm/page_migration.html)
+# Node reclaim, original zone reclaim, caching effect vs data locality
+/proc/sys/vm/zone_reclaim_mode
+zone_reclaim_mode in Documentation/admin-guide/sysctl/vm.rst
+commit 9eeff2395e3cfd05c9b2e6074ff943a34b0c5c21
+Refs: v2.6.16-rc1-169-g9eeff2395e3c
+Author:     Christoph Lameter <clameter@sgi.com>
+AuthorDate: Wed Jan 18 17:42:31 2006 -0800
+    [PATCH] Zone reclaim: Reclaim logic
+    Some bits for zone reclaim exists in 2.6.15 but they are not usable.  This
+    patch fixes them up, removes unused code and makes zone reclaim usable.
+    Zone reclaim allows the reclaiming of pages from a zone if the number of
+    free pages falls below the watermarks even if other zones still have enough
+    pages available.  Zone reclaim is of particular importance for NUMA
+    machines.  It can be more beneficial to reclaim a page than taking the
+    performance penalties that come with allocating a page on a remote zone.
+    Zone reclaim is enabled if the maximum distance to another node is higher
+    than RECLAIM_DISTANCE, which may be defined by an arch.  By default
+    RECLAIM_DISTANCE is 20.  20 is the distance to another node in the same
+    component (enclosure or motherboard) on IA64.  The meaning of the NUMA
+    distance information seems to vary by arch
+## RECLAIM_WRITE
+commit 1b2ffb7896ad46067f5b9ebf7de1891d74a4cdef
+Refs: v2.6.16-rc1-635-g1b2ffb7896ad
+Author:     Christoph Lameter <clameter@engr.sgi.com>
+AuthorDate: Wed Feb 1 03:05:34 2006 -0800
+    [PATCH] Zone reclaim: Allow modification of zone reclaim behavior
+    In some situations one may want zone_reclaim to behave differently.  For
+    example a process writing large amounts of memory will spew unto other nodes
+    to cache the writes if many pages in a zone become dirty.  This may impact the
+    performance of processes running on other nodes.
+    Allowing writes during reclaim puts a stop to that behavior and throttles the
+    process by restricting the pages to the local zone.
+    Similarly one may want to contain processes to local memory by enabling
+    regular swap behavior during zone_reclaim.  Off node memory allocation can
+    then be controlled through memory policies and cpusets.
+## RECLAIM_UNMAP and RECLAIM_SWAP
+commit 95bbc0c7210a7397fec1cd219f896ca95bf29e3e
+Refs: v4.1-3341-g95bbc0c7210a
+Author:     Zhihui Zhang <zzhsuny@gmail.com>
+AuthorDate: Wed Jun 24 16:56:42 2015 -0700
+    mm: rename RECLAIM_SWAP to RECLAIM_UNMAP
+    The name SWAP implies that we are dealing with anonymous pages only.  In
+    fact, the original patch that introduced the min_unmapped_ratio logic
+    was to fix an issue related to file pages.  Rename it to RECLAIM_UNMAP
+    to match what does.
+    Historically, commit a6dc60f8975a ("vmscan: rename sc.may_swap to
+    may_unmap") renamed .may_swap to .may_unmap, leaving RECLAIM_SWAP
+    behind.  commit 2e2e42598908 ("vmscan,memcg: reintroduce sc->may_swap")
+    reintroduced .may_swap for memory controller.
+## RECLAIM_SLAB(deleted)
+commit 2a16e3f4b0c408b9e50297d2ec27e295d490267a
+Refs: v2.6.16-rc1-636-g2a16e3f4b0c4
+Author:     Christoph Lameter <clameter@engr.sgi.com>
+AuthorDate: Wed Feb 1 03:05:35 2006 -0800
+    [PATCH] Reclaim slab during zone reclaim
+    If large amounts of zone memory are used by empty slabs then zone_reclaim
+    becomes uneffective.  This patch shakes the slab a bit.
+    The problem with this patch is that the slab reclaim is not containable to a
+    zone.  Thus slab reclaim may affect the whole system and be extremely slow.
+    This also means that we cannot determine how many pages were freed in this
+    zone.  Thus we need to go off node for at least one allocation.
+    The functionality is disabled by default.
+    We could modify the shrinkers to take a zone parameter but that would be quite
+    invasive.  Better ideas are welcome.
+## min_slab_ratio
+commit 0ff38490c836dc379ff7ec45b10a15a662f4e5f6
+Author: Christoph Lameter <clameter@sgi.com>
+Date:   Mon Sep 25 23:31:52 2006 -0700
+    [PATCH] zone_reclaim: dynamic slab reclaim

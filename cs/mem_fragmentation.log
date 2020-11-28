@@ -1,0 +1,76 @@
+# Fragmentation
+[Memory fragmentation: the silent performance killer](https://savvinov.com/2019/10/14/memory-fragmentation-the-silent-performance-killer/)
+
+# Observability
+/proc/buddyinfo frag_show_print()
+
+# Memory compaction
+[Yet another approach to memory fragmentation](https://lwn.net/Articles/121618/)
+[The hard work behind large physical memory allocations in the kernel](https://www.youtube.com/watch?v=mzT4QnCpef8)
+[Memory compaction issues](https://lwn.net/Articles/591998/)
+[Memory compaction](https://lwn.net/Articles/368869/)
+https://kernelnewbies.org/Linux_2_6_35#Memory_compaction
+[Proactive compaction](https://lwn.net/Articles/717656/)
+sysctl -w vm.compact_memory=1
+
+## Migrating movable pages out of non-movable pageblocks.
+commit 282722b0d258ec23fc79d80165418fee83f01736
+Refs: v4.11-10610-g282722b0d258
+Author:     Vlastimil Babka <vbabka@suse.cz>
+AuthorDate: Mon May 8 15:54:49 2017 -0700
+    mm, compaction: restrict async compaction to pageblocks of same migratetype
+[...]
+    However, with the exception of THP's, most high-order allocations are
+    not movable.  Should the async compaction succeed, this increases the
+    chance that the non-MOVABLE allocations will fallback to a MOVABLE
+    pageblock, making the long-term fragmentation worse.
+
+# When do compaction?
+Direct compact allocation: __alloc_pages_direct_compact
+
+## Mobility
+PLKA - 3.5.2
+[Making kernel pages movable](https://lwn.net/Articles/650917/)
+Split the free lists for movable and unmovable allocations - b2a0ac8875a0a3b9f0739b60526f8c5977d2200f
+Related code:
+gfpflags_to_migratetype
+set_pageblock_migratetype
+find_suitable_fallback
+        [MIGRATE_UNMOVABLE]   = { MIGRATE_RECLAIMABLE, MIGRATE_MOVABLE,   MIGRATE_TYPES },
+        [MIGRATE_RECLAIMABLE] = { MIGRATE_UNMOVABLE,   MIGRATE_MOVABLE,   MIGRATE_TYPES },
+        [MIGRATE_MOVABLE]     = { MIGRATE_RECLAIMABLE, MIGRATE_UNMOVABLE, MIGRATE_TYPES },
+
+MIGRATE_RECLAIMABLE? 
+commit e12ba74d8ff3e2f73a583500d7095e406df4d093
+Refs: v2.6.23-4359-ge12ba74d8ff3
+Author:     Mel Gorman <mel@csn.ul.ie>
+AuthorDate: Tue Oct 16 01:25:52 2007 -0700
+Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
+CommitDate: Tue Oct 16 09:43:00 2007 -0700
+    Group short-lived and reclaimable kernel allocations
+[treewide: remove GFP_TEMPORARY allocation flag](https://lore.kernel.org/patchwork/patch/814997/)
+
+MIGRATE_HIGHATOMIC
+
+# CMA, contig allocator
+[Improving support for large, contiguous allocations](https://lwn.net/Articles/753167/)
+[A deep dive into CMA](https://lwn.net/Articles/486301/)
+alloc_contig_range
+
+# Lumpy Reclaim
+## Infficient for high-order allocations
+When we are out of memory of a suitable size we enter reclaim.
+The current reclaim algorithm targets pages in LRU order, which
+is great for fairness but highly unsuitable if you desire pages at
+higher orders.  To get pages of higher order we must shoot down a
+very high proportion of memory; >95% in a lot of cases. -- [Lumpy Reclaim V3](https://lwn.net/Articles/211199/)
+[mm: vmscan: Remove lumpy reclaim](https://lkml.org/lkml/2012/3/28/325)
+[mm: vmscan: Remove dead code related to lumpy reclaim waiting on pages under writeback](https://lore.kernel.org/patchwork/patch/262301/)
+
+# Vmalloc
+map_vm_area 页表映射
+## Vmalloc coherence with vfree() after vmalloc_sync_one
+在进程的内核页目录中补上的是只是页目录项，而页表对所有进程来说是共用的，不管vfree()多大的内存块，在vmalloc()时新分配的页表不会被释放，
+当重新vmalloc()时，仍旧使用原来的页表。  
+page_fault使得进程的内核页目录项与swapper_pg_dir保持同步，swapper_pg_dir的内核页目录项一旦建立就不再被改变，需要改变的只是共享的页表而已。
+deatils in vmalloc_sync_one() and vunmap_pte_range()

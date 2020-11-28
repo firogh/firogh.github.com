@@ -1,117 +1,54 @@
-# History
-[mustread: When writeback goes wrong](https://lwn.net/Articles/384093/)
-[mustread: Fixing writeback from direct reclaim]
-tglx: writeback_index
-commit 9672a337305358ecc81dc17700e58ce3f42c11f6
-Author: Andrew Morton <akpm@osdl.org>
-Date:   Sun Apr 11 23:15:07 2004 -0700
-    [PATCH] writeback efficiency and QoS improvements
-tglx: overload start==0 && end == 0
-commit f07812ca2925f6dc6027883ab15891781dba4827
-Author: Andrew Morton <akpm@osdl.org>
-Date:   Sun Aug 22 22:59:27 2004 -0700
-    [PATCH] Writeback page range hint
-    Modify mpage_writepages to optionally only write back dirty pages within a
-    specified range in a file (as in the case of O_SYNC).  Cheat a little to avoid
-    changes to prototypes of aops - just put the <start, end> hint into the
-    writeback_control struct instead.  If <start, end> are not set, then default
-    to writing back all the mapping's dirty pages.
-commit 111ebb6e6f7bd7de6d722c5848e95621f43700d9
-Author: OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
-Date:   Fri Jun 23 02:03:26 2006 -0700
-    [PATCH] writeback: fix range handling
 
-## Doc
-Documentation/filesystems/Locking
+# Page flags
+## PageWriteback
+__swap_writepage()
+        set_page_writeback(page);
+        unlock_page(page);              # In isolate page and shrink_page_list(), we have get_paged
+        submit_bio(bio);
 
 
-# Page writeback
-[Toward less-annoying background writeback](https://lwn.net/Articles/682582/)
-default_bdi_init->alloc_workqueue("writeback", WQ_MEM_RECLAIM...)
-bdi_wq = alloc_workqueue("writeback", WQ_MEM_RECLAIM | WQ_FREEZABLE
-root        40  0.0  0.0      0     0 ?        I<   10:08   0:00 [writeback]
-mm/backing-dev.c
-mm/page-writeback.c
-bdi->wb_list
 
-## Stable page writeback
-commit 7d311cdab663f4f7ab3a4c0d5d484234406f8268
-Refs: v3.8-3241-g7d311cdab663
-Author:     Darrick J. Wong <darrick.wong@oracle.com>
-AuthorDate: Thu Feb 21 16:42:48 2013 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Feb 21 17:22:19 2013 -0800
-    bdi: allow block devices to say that they require stable page writes
-commit 1d1d1a767206fbe5d4c69493b7e6d2a8d08cc0a0
-Refs: v3.8-3242-g1d1d1a767206
-Author:     Darrick J. Wong <darrick.wong@oracle.com>
-AuthorDate: Thu Feb 21 16:42:51 2013 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Feb 21 17:22:19 2013 -0800
-    mm: only enforce stable page writes if the backing device requires it
-[Stable pages](https://lwn.net/Articles/442355/)
-[The trouble with stable pages](https://lwn.net/Articles/486311/)
-[Optimizing stable pages](https://lwn.net/Articles/528031/)
-### what about Memory-mapped I/O?
+# End writeback - translations
+__blk_mq_end_io(obsoleted)
+__blk_mq_end_request
+blk_update_request
+blk_mq_end_request
+scsi_end_request
+blk_mq_complete_request
+scsi_mq_done
+nvme_end_request
 
-## memory-cleaning writeback
+=> end_page_writeback
+=> __block_write_full_page
+=> __writepage
+=> write_cache_pages
+=> generic_writepages
+=> do_writepages
+=> __writeback_single_inode
+=> writeback_sb_inodes
+=> __writeback_inodes_wb
+=> wb_writeback
+=> wb_workfn
 
-## data-integrity
+=> end_page_writeback   # Parent should be end_buffer_async_write
+=> end_bio_bh_io_sync   # submit_bh_wbc
+=> blk_update_request
+=> scsi_end_request
+=> scsi_io_completion
+=> blk_done_softirq
 
-## PG_writeback
-PG_writeback and set_page_writeback
-commit a2bcb3a084f4312844639e18cbe7eb7256c7c23c
-Author:     Andrew Morton <akpm@zip.com.au>
-AuthorDate: Mon Apr 29 23:54:18 2002 -0700
-Commit:     Linus Torvalds <torvalds@home.transmeta.com>
-CommitDate: Mon Apr 29 23:54:18 2002 -0700
-    [PATCH] page writeback locking update
-+ * If a page is already under I/O, generic_writeback_mapping() skips it, even
-+ * if it's dirty.  This is desirable behaviour for memory-cleaning writeback,
-+ * but it is INCORRECT for data-integrity system calls such as fsync().  fsync()
-+ * and msync() need to guarentee that all the data which was dirty at the time
-+ * the call was made get new I/O started against them.  The way to do this is
-+ * to run filemap_fdatawait() before calling filemap_fdatawrite().
+=> end_page_writeback
+=> ext4_finish_bio
+=> ext4_end_bio         # io_submit_init_bio
+=> blk_update_request
+=> scsi_end_request
+=> scsi_io_completion
+=> blk_done_softirq
 
-# Page frame reclamation
-shrink_inactive_list->wakeup_flusher_threads(WB_REASON_VMSCAN) ?
-WB_REASON_FREE_MORE_MEM: no use it; [buffer: eliminate the need to call free_more_memory() in __getblk_slow()](https://patchwork.kernel.org/patch/9974719/)
-
-# IO completetion hanlder
-10474  => end_page_writeback
-10475  => __block_write_full_page
-10476  => __writepage
-10477  => write_cache_pages
-10478  => generic_writepages
-10479  => do_writepages
-10480  => __writeback_single_inode
-10481  => writeback_sb_inodes
-10482  => __writeback_inodes_wb
-10483  => wb_writeback
-10484  => wb_workfn
-
-10720  => end_page_writeback	# Parent should be end_buffer_async_write
-10721  => end_bio_bh_io_sync	# submit_bh_wbc
-10722  => blk_update_request
-10723  => scsi_end_request
-10724  => scsi_io_completion
-10725  => blk_done_softirq
-
-  793  => end_page_writeback
-  794  => ext4_finish_bio
-  795  => ext4_end_bio		# io_submit_init_bio
-  796  => blk_update_request
-  797  => scsi_end_request
-  798  => scsi_io_completion
-  799  => blk_done_softirq
-
- => end_buffer_async_write
- => end_bio_bh_io_sync
- => blk_update_request
- => scsi_end_request
- => scsi_io_completion
- => blk_done_softirq
-# ETC
-/sys/kernel/debug/bdi/0\:80/stats 
-bdi_debug_stats_show
-write_begin and write_end
+=> end_page_writeback
+=> end_buffer_async_write
+=> end_bio_bh_io_sync
+=> blk_update_request
+=> scsi_end_request
+=> scsi_io_completion
+=> blk_done_softirq

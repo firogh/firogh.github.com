@@ -1,0 +1,57 @@
+# Tuning
+https://doc.opensuse.org/documentation/leap/archive/15.1/tuning/html/book.sle.tuning/cha-tuning-memory.html#cha-tuning-memory-optimize
+[System Analysis and Tuning Guide](https://documentation.suse.com/sles/15-SP2/html/SLES-all/book-sle-tuning.html)
+
+# mlock, mincore
+
+# madvise
+## MADV_SEQUENTIAL and reclaim
+mm: more likely reclaim MADV_SEQUENTIAL mappings - 4917e5d0499b5ae7b26b56fccaefddf9aec9369c
+
+## MADV_FREE
+[Volatile ranges and MADV_FREE](https://lwn.net/Articles/590991/)
+[Use new madvise()'s MADV_FREE on the private heap](https://bugs.python.org/issue26601)
+commit 854e9ed09dedf0c19ac8640e91bcc74bc3f9e5c9
+Author: Minchan Kim <minchan@kernel.org>
+Date:   Fri Jan 15 16:54:53 2016 -0800
+    mm: support madvise(MADV_FREE)
+commit 10853a039208c4afaa322a7d802456c8dca222f4
+Author: Minchan Kim <minchan@kernel.org>
+Date:   Fri Jan 15 16:55:11 2016 -0800
+    mm: move lazily freed pages to inactive list
+
+commit f7ad2a6cb9f7c4040004bedee84a70a9b985583e
+Author: Shaohua Li <shli@fb.com>
+Date:   Wed May 3 14:52:29 2017 -0700
+    mm: move MADV_FREE pages into LRU_INACTIVE_FILE list
+
+# mprotect
+## PROT_NONE
+[---p PROT_NOME mapping](http://www.greenend.org.uk/rjk/tech/dataseg.html#summary)
+show_vma_header_prefix
+cat /proc/self/maps 
+7ffff7a17000-7ffff7bcc000 r-xp 00000000 08:03 1188168                    /usr/lib64/libc-2.27.so ============> text
+7ffff7bcc000-7ffff7dcc000 ---p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============> PROT_NONE
+7ffff7dcc000-7ffff7dd0000 r--p 001b5000 08:03 1188168                    /usr/lib64/libc-2.27.so ============> read only data
+7ffff7dd0000-7ffff7dd2000 rw-p 001b9000 08:03 1188168                    /usr/lib64/libc-2.27.so ============> initialized
+7ffff7dd2000-7ffff7dd6000 rw-p 00000000 00:00 0 
+strace -e mmap,mprotect cat /dev/null 
+mmap(NULL, 3926752, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffff7a17000       ===> text
+mprotect(0x7ffff7bcc000, 2097152, PROT_NONE) = 0                                ======================> PROT_NONE
+mmap(0x7ffff7dcc000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b5000) = 0x7ffff7dcc000
+mmap(0x7ffff7dd2000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffff7dd2000
+mprotect(0x7ffff7dcc000, 16384, PROT_READ) = 0                                          ========> read only data
+/* If _PAGE_BIT_PRESENT is clear, we use these: */
+/* - if the user mapped it with PROT_NONE; pte_present gives true */
+[A MUST READ: Mel on PAGE_PROTNONE](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
+[Using mprotect(.., .., PROT_NONE) on Linux](https://volatility-labs.blogspot.com/2015/05/using-mprotect-protnone-on-linux.html)
+[Linus on _PAGE_PROTNONE](https://lkml.org/lkml/1998/9/21/55)
+ define _PAGE_BIT_PROTNONE      _PAGE_BIT_GLOBAL
+tglx: commit 06d9f6ff137579551a2ee18661847915fe2bb812 (tag: 0.97.5)
+Author: Linus Torvalds <torvalds@linuxfoundation.org>
+Date:   Fri Nov 23 15:09:05 2007 -0500
+    [PATCH] Linux-0.97.5 (September 12, 1992)
+There isn't too much useful information.
+https://www.spinics.net/lists/newbies/msg08579.html
+man mprotect, PROT_NONE
+userspace addr is associated with non-GLOBAL pte, so the 8th G is reused by PROT_NONE.

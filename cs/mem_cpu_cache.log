@@ -1,0 +1,68 @@
+# LQO
+## [Footprints in cache](https://dl.acm.org/citation.cfm?doid=317531.317533)
+[how to charaterize cache footprint?](https://software.intel.com/en-us/forums/intel-moderncode-for-parallel-architectures/topic/290309)
+
+# History
+Check bvm
+1965 Wilkes, M. V. 1965. “Slave memories and dynamic storage allocation.
+
+# References
+[Cache and TLB Flushing Under Linux](https://www.kernel.org/doc/html/latest/core-api/cachetlb.html)
+ULK 3rd: Handling the hardware cache
+PLKA: 3.7 Processor Cache and TLB Control
+[Getting a handle on caching](https://lwn.net/Articles/282250/)
+## Associativity
+* trade-off
+a) Checking more places takes more power and chip area,
+b) and potentially more time. On the other hand, caches with more associativity suffer fewer misses
+fully associative - the best miss rates, but practical only for a small number of entries
+N-way set associative cache: 8 is a common choice for later implementations
+direct-mapped cache - if two locations map to the same entry, they may continually knock each other out. anti-fragmantion worsens this case.
+## Cache addressing
+Unix systems for modern architectures
+Cache entry structure
+* Why isn't set index in the MSB
+[The vast majority of accesses are close together...](http://danluu.com/3c-conflict/#fn:L)
+### Cache aliasing
+[VIPT Cache Aliasing - Georgia Tech - HPCA: Part 4](https://www.youtube.com/watch?v=mMHkIa6Lkek)
+## Write policies
+[background on ioremap, cacheing, cache coherency on x86](https://lkml.org/lkml/2008/4/29/480)
+• write-through cache implementation;
+• write-back cache implementation.
+• write-combining; and
+• uncacheable.
+### PAT
+[PAT (Page Attribute Table) in Linux Kernel](https://www.kernel.org/doc/Documentation/x86/pat.txt)
+[PATting Linux](https://www.kernel.org/doc/ols/2008/ols2008v2-pages-135-144.pdf)
+tglx: commit c8712aebdb2455a095d596c1a5a6af358b3efde3
+Author: Andi Kleen <ak@suse.de>
+Date:   Mon Jun 17 19:43:55 2002 -0700
+    [PATCH] change_page_attr and AGP update
++ * Change the page attributes of an page in the linear mapping.
++ * This should be used when a page is mapped with a different caching policy
++ * than write-back somewhere - some CPUs do not like it when mappings with
++ * different caching policies exist. This changes the page attributes of the
++ * in kernel linear mapping too.
+
+## Cache coherence
+[MESI in Javascript](https://www.scss.tcd.ie/~jones/vivio/caches/MESI.htm)
+## Replacement polices
+Pseudo-LRU
+
+## Store buffers
+[Stores Result in Unnecessary Stalls](http://www.rdrop.com/users/paulmck/scalability/paper/whymb.2010.06.07c.pdf)
+
+# Material
+Why is transposing a matrix of 512x512 much slower than transposing a matrix of 513x513?
+https://github.com/sysprog21/phonebook
+## Example
+dmidecode -t cache
+cd /sys/devices/system/cpu/cpu0/cache/index0/
+cat number_of_sets ways_of_associativity size coherency_line_size  |xargs -n 4
+64 8 32K 64
+## Location in CPU
+[Where exactly L1, L2 and L3 Caches located in computer?](https://superuser.com/questions/196143/where-exactly-l1-l2-and-l3-caches-located-in-computer)
+![cpu cache locations](https://i.stack.imgur.com/4Z1nU.png)
+## Cache over context switch
+[cache contents on a context switch](https://cs.stackexchange.com/questions/1088/what-happens-to-the-cache-contents-on-a-context-switch)
+https://mechanical-sympathy.blogspot.com/2013/02/cpu-cache-flushing-fallacy.html

@@ -6,517 +6,34 @@ title:  Page frame reclaimation
 category: cs
 ---
 
-# mm hacking
-current->backing_dev_info: doest it really work as expected? block?
-PF_SWAPWRITE: meaning is unclear. swap is limited resource, so limit access from normal process?
-Seems only normal processes with PF_SWAPWRITE could write to swap area. migration and node reclaim and kswapd.
-No. In may_write_to_inode(), normal processes still get chances to do that.
-static int may_write_to_inode(struct inode *inode, struct scan_control *sc) 
-{
-        if (current->flags & PF_SWAPWRITE)
-                return 1;
-        if (!inode_write_congested(inode))
-                return 1;
-        if (inode_to_bdi(inode) == current->backing_dev_info)	# normal process? it's impossible. Dead code. Remove it. No, shmem pages.
-                return 1;
-        return 0;
-}
-
-# Memory testing tools
-commit e2be15f6c3eecedfbe1550cca8d72c5057abbbd2
-Refs: u3.10-3577-ge2be15f6c3ee
-Author:     Mel Gorman <mgorman@suse.de>
-AuthorDate: Wed Jul 3 15:01:57 2013 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Jul 3 16:07:28 2013 -0700
-    mm: vmscan: stall page reclaim and writeback pages based on dirty/writepage pages encountered
-
-## debugfs a convenient place for kernel hackers to play with VM variables.
-[mm: create /debug/vm for page reclaim stalls](https://lore.kernel.org/linux-mm/20120531151816.GA32252@localhost/2-mm-debugfs-vmscan-stalls-0.patch)
-
-# LQO
-PGSTEAL_KSWAPD
-activate writeback pages: mm: vmscan: move dirty pages out of the way until they're flushed - c55e8d035b28b2867e68b0e2d0eee2c0f1016b43
-
-# TODO
-page_is_file_cache: what about setting PG_reclaim to anon page for prioritising for reclaimation.
-
 # References
-[linux-mm: PageReplacementDesign](https://linux-mm.org/PageReplacementDesign)
-[Chapter 10  Page Frame Reclamation](https://www.kernel.org/doc/gorman/html/understand/understand013.html)
+[Chapter 10 Page Frame Reclamation](https://www.kernel.org/doc/gorman/html/understand/understand013.html)
 [Low_On_Memory](https://linux-mm.org/Low_On_Memory)
 [Add predictive memory reclamation and compaction](https://lkml.org/lkml/2019/8/12/1302)
-## Clock-pro
-[ClockProApproximation](https://linux-mm.org/ClockProApproximation)
-[A CLOCK-Pro page replacement implementation](https://lwn.net/Articles/147879/)
-[CLOCK-Pro: An Effective Improvement of the CLOCK Replacement](https://www.usenix.org/legacy/publications/library/proceedings/usenix05/tech/general/full_papers/jiang/jiang_html/html.html)
-
-# Reclaimable pages
-all pages of a User Mode process are reclaimable except locked.
-Lokced userspace pages: 
-1. Temporarily locked pages: PG_locked, 
-2. Memory locked pages: VM_LOCKED, [Misunderstanding mlock](https://eklitzke.org/mlock-and-mlockall)
-## Swapbacked pages
-1. Private
-1.1 malloc memory map
-1.2 Dirty file private mapping - data, bbs segments
-2. Shared - tmpfs: 
-2.1 Anonymous shared mapping memory between P&C; 
-2.2 System v IPC shared memory.
-## Filebacked pages
-1. Private: Clean file private mapping - text segment
-2. Shared: Shared file mapping memory.
-
-# mlock
-[Deferred memory locking](https://lwn.net/Articles/650538/)
-
-# LRU-2Q
-page.lru and struct lruvec 
-New page is inserted to head, PG_reclaim page is rotated to the tail.
-## Move LRU page reclaim from zones to node
-[1st RFC](https://lkml.org/lkml/2015/6/8/298)
-## shrink_active_list
-lru_to_page(head) (list_entry((head)->prev, struct page, lru))
-## active list and inactive list
-active list: working set; Am of LRU 2Q; how often
-[Better active/inactive list balancing](https://lwn.net/Articles/495543/)
-mark_page_accessed and called sub-functions.
-active -> inactive head - list_add(&page->lru, &l_inactive); in shrink_active_list
-inactive -> active head - __activate_page <- mark_page_accessed <- pagecache_get_page or generic_file_buffered_read
-inactive -> inactive tail - rotate_reclaimable_page
-
-# Second chance
-commit dfc8d636cdb95f7b792d5ba8c9f3b295809c125d
-Author: Johannes Weiner <hannes@cmpxchg.org>
-Date:   Fri Mar 5 13:42:19 2010 -0800
-    vmscan: factor out page reference checks
-commit 645747462435d84c6c6a64269ed49cc3015f753d
-Author: Johannes Weiner <hannes@cmpxchg.org>
-Date:   Fri Mar 5 13:42:22 2010 -0800
-    vmscan: detect mapped file pages used only once
-
-[Second Chance Page Replacement Algorithm](https://www.youtube.com/watch?v=eHK749r5RGs)
-[Second Chance Page Replacement Algorithms and Clock Page Replacement Algorithms](https://www.youtube.com/watch?v=DFmsm0J8joY)
-core: page_check_references() in shrink_page_list().
-shrink_active_list for VM_EXEC page.
-core: page_referenced in shrink_active_list
-mark_page_accessed
-{
-        inactive,referenced          ->      active,unreferenced
-        {
-                if !PageLRU - on the pagevec
-                        mm: activate !PageLRU pages on mark_page_accessed if page is on local pagevec - 059285a25f30c13ed4f5d91cecd6094b9b20bb7b
-                        SetPageActive
-                else
-                        activate_page
-        }
-        {in,}active,unreferenced        ->      {in,}active,referenced
-        {
-                SetPageReferenced
-        }
-}
-#### active list -> 
-if pte with PAGE_ACCESSED - referenced in page_referenced() && VM_EXEC -> keep it in active list - tail -> head - rotated
-else
-de-activate it to inactive list head
-#### inactive list
-page from tail page_check_references
-{
-        3 passes: 
-        1. hardware pte; use and clear pte; might get reference; second chance.
-        2. software flag: -> RECLAIM Clean page and clear, since dirty page is a good signal that the page was used recently because the flusher threads
-                                clean pages periodically.
-        3. reclaim
-        hardware accessed - if accessed, won't reclaim
-        {
-                PAGEREF_ACTIVATE: incline to activate swapbacked page
-                        PageSwapBacked
-                        referenced_page 
-                        referenced_ptes > 1
-                        vm_flags & VM_EXEC
-                PAGEREF_KEEP
-        } 
-        else if ?? software accessed - && dirty won't reclaim
-        {
-                vmscan: detect mapped file pages used only once - 645747462435d84c6c6a64269ed49cc3015f753d
-                vmscan,tmpfs: treat used once pages on tmpfs as used once - 2e30244a7cc1ff09013a1238d415b4076406388e
-                # From above commits: When a page has PG_referenced, shrink_page_list() discards it only if it
-                # is not dirty. ... PG_dirty is a good signal that the page was used recently because
-                # the flusher threads clean pages periodically.  In addition, page writeback
-                # is costlier than simple page discard.
-                #  Firo: not incline to reclaim dirty page.
-                #  Firo: PG_referenced -> PAGEREF_RECLAIM_CLEAN
-                file-backed -> PAGEREF_RECLAIM_CLEAN
-                swapbacked -> PAGEREF_RECLAIM
-        } else
-                PAGEREF_RECLAIM
-}
-
- 
-# workingset
-Memory pressure is high wich is the reason that the refaulted page was evicted before.
-Time is transformed to space metric, distance.
-If a page is refaulted, it means that page is a protential active pages. What is the obstacle to prevent from putting it into active list.
-Under high memory pressure, #active means max capacity for workingset. Also because we cannot compare refaulted page and pages in active. Assuming that #distance pages are all promoted to active list, #distance < #active means #active still has room for the refaulted page. Else, it means #workingset is large then are memory capacity for #active. Thrashing is unavoidable.
-Prvent workingset page from being evicted by PFRA again; in turn, avoid memory thrashing.
-[WSS](https://github.com/brendangregg/wss)
-[Better active/inactive list balancing](https://lwn.net/Articles/495543/)
-## First version(not accepted)
-[mm: refault distance-based file cache sizing](https://lore.kernel.org/linux-mm/1335861713-4573-6-git-send-email-hannes@cmpxchg.org/)
-
-## 2nd version (merged by upstream)
-commit a528910e12ec7ee203095eb1711468a66b9b60b0
-Refs: v3.14-7406-ga528910e12ec
-Author:     Johannes Weiner <hannes@cmpxchg.org>
-AuthorDate: Thu Apr 3 14:47:51 2014 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Apr 3 16:21:01 2014 -0700
-    mm: thrash detection-based file cache sizing
 
 # Page flags
-PG_reclaim:
-tglx:commit 3b0db538ef6782a1e2a549c68f1605ca8d35dd7e
+PG_reclaim             18      /* To be recalimed asap */ Also see end_page_writeback().
+tglx: commit 3b0db538ef6782a1e2a549c68f1605ca8d35dd7e
 Author: Andrew Morton <akpm@digeo.com>
 Date:   Mon Dec 2 21:31:09 2002 -0800
     [PATCH] Move reclaimable pages to the tail ofthe inactive list on
-Also see end_page_writeback().
-PG_swapcace means page is in the swap cache.
-PG_swapbacked: stack, heap, data segment, anoymous mmap, shmem, it means page is backed by RAM or Swap. It means this page is no real file related(pagecache), reclaim this page should use swap.
-PG_active: active page
-PG_referenced: accessed recently
-PG_lru: page is on the lru linked list
-PG_mlocked: mlock()
-PG_locked in generic_file_buffered_read add_to_page_cache_lru and __SetPageLocked
-check mark_buffer_async_read
+PG_writeback
 tglx commit d58e41eec6859e9590f8f70ccdc1d58f4f6a1b84
 Author: Andrew Morton <akpm@zip.com.au>
 Date:   Sun May 5 01:10:37 2002 -0700
     [PATCH] Fix concurrent writepage and readpage
 
-# Page reference results
-enum page_references {
-        PAGEREF_RECLAIM, 	# Try reclaim this page.
-        PAGEREF_RECLAIM_CLEAN,	# Try relcaim this page, if clean.
-[But you were thinking right, it is exactly what it means!  If the state is PAGEREF_RECLAIM_CLEAN, reclaim the page if it is clean:](https://lore.kernel.org/patchwork/patch/189879/)
-        PAGEREF_KEEP,		# Keep this page on inactive list.
-        PAGEREF_ACTIVATE,	# Move this page to active list or inevicatble.
+# Scan control: may_unmap vs may_swap
+a6dc60f8975a ("vmscan: rename sc.may_swap to may_unmap")
+2e2e42598908 ("vmscan,memcg: reintroduce sc->may_swap") reintroduced .may_swap for memory controller.
 
 # Kswapd background reclaim
-kswapd->balance_pgdat
-pgdat->kswapd_wait
-It's not peoridic. Check kswapd_try_to_sleep: premature sleep and full sleep.[Historically, kswapd used to wake up every 10 seconds but now it is only woken by the physical page allocator when the pages_low number of free pages in a zone is reached](https://www.kernel.org/doc/gorman/html/understand/understand013.html#toc71)
-## Fastpath boosted  watermark
-ZONE_BOOSTED_WATERMARK: get_page_from_freelist->rmqueue->wakeup_kswapd
-## Slowpath: __GFP_KSWAPD_RECLAIM
-wake_all_kswapds(order, gfp_mask, ac)
-
-# Node reclaim
-Documentation/sysctl/vm.txt
-/proc/sys/vm/zone_reclaim_mode
-get_page_from_freelist->node_reclaim->__node_reclaim->shrink_node
-
-# Direct compact allocation
-__alloc_pages_direct_compact
+kswapd->balance_pgdat; pgdat->kswapd_wait __GFP_KSWAPD_RECLAIM wake_all_kswapds()
+Check kswapd_try_to_sleep: premature sleep and full sleep.[Historically, kswapd used to wake up every 10 seconds but now it is only woken by the physical page allocator when the pages_low number of free pages in a zone is reached](https://www.kernel.org/doc/gorman/html/understand/understand013.html#toc71)
 
 # Direct reclaim 
-__alloc_pages_direct_reclaim->__perform_reclaim->try_to_free_pages
-	throttle_direct_reclaim
-	do_try_to_free_pages
+__alloc_pages_direct_reclaim->__perform_reclaim->try_to_free_pages: throttle_direct_reclaim, do_try_to_free_pages
 
-# GFP 
-__GFP_WAIT: mm, page_alloc: Rename __GFP_WAIT to __GFP_RECLAIM
-
-# Deadlock - __GFP_IO, __GFP_FS and may_enter_fs
-[Avoiding memory-allocation deadlocks](https://lwn.net/Articles/594725/)
-[Understanding __GFP_FS](https://lwn.net/Articles/596618/)
-[GFP masks used from FS/IO context](https://www.kernel.org/doc/html/latest/core-api/gfp_mask-from-fs-io.html)
-commit 63eb6b93ce725e4c5f38fc85dd703d49465b03cb
-Refs: v2.6.28-rc5-142-g63eb6b93ce72
-Author:     Hugh Dickins <hugh@veritas.com>
-AuthorDate: Wed Nov 19 15:36:37 2008 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Nov 19 18:49:59 2008 -0800
-    vmscan: let GFP_NOFS go to swap again
-    In the past, GFP_NOFS (but of course not GFP_NOIO) was allowed to reclaim
-    by writing to swap.  That got partially broken in 2.6.23, when may_enter_fs
-    initialization was moved up before the allocation of swap, so its
-    PageSwapCache test was failing the first time around,
-    Fix it by setting may_enter_fs when add_to_swap() succeeds with
-    __GFP_IO.  In fact, check __GFP_IO before calling add_to_swap():
-    allocating swap we're not ready to use just increases disk seeking.
-
-__GFP_MEMALLOC allows access to all memory. This should only be used when
-the caller guarantees the allocation will allow more memory to be freed
-very shortly e.g. process exiting or swapping. Users either should
-be the MM or co-ordinating closely with the VM (e.g. swap over NFS).
-Check sk_set_memalloc
-
-## __GFP_IO  and __GFP_NOFS (for anonymous memory)
-commit 63eb6b93ce725e4c5f38fc85dd703d49465b03cb
-Refs: v2.6.28-rc5-142-g63eb6b93ce72
-Author:     Hugh Dickins <hugh@veritas.com>
-AuthorDate: Wed Nov 19 15:36:37 2008 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Nov 19 18:49:59 2008 -0800
-    vmscan: let GFP_NOFS go to swap again
-    In the past, GFP_NOFS (but of course not GFP_NOIO) was allowed to reclaim
-    by writing to swap.  That got partially broken in 2.6.23, when may_enter_fs
-    initialization was moved up before the allocation of swap, so its
-    PageSwapCache test was failing the first time around,
-    Fix it by setting may_enter_fs when add_to_swap() succeeds with
-    __GFP_IO.  In fact, check __GFP_IO before calling add_to_swap():
-    allocating swap we're not ready to use just increases disk seeking.
-
-## Example of __GFP_IO avoiding deadlock
-Search 'loop driver' in this article.
-
-## Example of __GFP_FS: fs writepage and  PG_writeback and reclaim and may_enter_fs, i.e. Case 2
-commit ecf5fc6e9654cd7a268c782a523f072b2f1959f9
-Refs: v4.2-rc5-34-gecf5fc6e9654
-Author:     Michal Hocko <mhocko@suse.cz>
-AuthorDate: Tue Aug 4 14:36:58 2015 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Aug 5 10:49:38 2015 +0200
-    mm, vmscan: Do not wait for page writeback for GFP_NOFS allocations
-    Nikolay has reported a hang when a memcg reclaim got stuck with the
-    following backtrace:
-    PID: 18308  TASK: ffff883d7c9b0a30  CPU: 1   COMMAND: "rsync"
-      #0 __schedule at ffffffff815ab152
-      #1 schedule at ffffffff815ab76e
-      #2 schedule_timeout at ffffffff815ae5e5
-      #3 io_schedule_timeout at ffffffff815aad6a
-      #4 bit_wait_io at ffffffff815abfc6
-      #5 __wait_on_bit at ffffffff815abda5
-      #6 wait_on_page_bit at ffffffff8111fd4f			# i.e. Case 3
-      #7 shrink_page_list at ffffffff81135445
-[...]
-    Dave Chinner has properly pointed out that this is a deadlock in the
-    reclaim code because ext4 doesn't submit pages which are marked by
-    PG_writeback right away.
-
-    The heuristic was introduced by commit e62e384e9da8 ("memcg: prevent OOM
-    with too many dirty pages") and it was applied only when may_enter_fs
-    was specified.  The code has been changed by c3b94f44fcb0 ("memcg:
-    further prevent OOM with too many dirty pages") which has removed the
-    __GFP_FS restriction with a reasoning that we do not get into the fs
-    code.  But this is not sufficient apparently because the fs doesn't
-    necessarily submit pages marked PG_writeback for IO right away.
-
-    ext4_bio_write_page calls io_submit_add_bh but that doesn't necessarily
-    submit the bio.  Instead it tries to map more pages into the bio and
-    mpage_map_one_extent might trigger memcg charge which might end up
-    waiting on a page which is marked PG_writeback but hasn't been submitted
-    yet so we would end up waiting for something that never finishes.
-
-# PageDirty and writeback
-## page_is_file_cache - best effort for clean file page
-[When writeback goes wrong](https://lwn.net/Articles/384093/)
-[Fixing writeback from direct reclaim](https://lwn.net/Articles/396561/)
-### direct reclaim vs kswapd reclaim
-commit ee72886d8ed5d9de3fa0ed3b99a7ca7702576a96
-Refs: u3.1-7237-gee72886d8ed5
-Author:     Mel Gorman <mel@csn.ul.ie>
-AuthorDate: Mon Oct 31 17:07:38 2011 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Mon Oct 31 17:30:46 2011 -0700
-    mm: vmscan: do not writeback filesystem pages in direct reclaim
-[...]
-+                       /*
-+                        * Only kswapd can writeback filesystem pages to
-+                        * avoid risk of stack overflow
-+                        */
-+                       if (page_is_file_cache(page) && !current_is_kswapd()) {
-+                               inc_zone_page_state(page, NR_VMSCAN_WRITE_SKIP);
-+                               goto keep_locked;
-### kswapd reclaim: high priority vs low priority; Firo: restrain writing pages at low priority (obseleted by below d43006d503ac921c7df4f94d13c17db6f13c9d26)
-commit f84f6e2b0868f198f97a32ba503d6f9f319a249a
-Refs: u3.1-7241-gf84f6e2b0868
-Author:     Mel Gorman <mgorman@suse.de>
-AuthorDate: Mon Oct 31 17:07:51 2011 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Mon Oct 31 17:30:46 2011 -0700
-    mm: vmscan: do not writeback filesystem pages in kswapd except in high priority
-
-    It is preferable that no dirty pages are dispatched for cleaning from the
-    page reclaim path.  At normal priorities, this patch prevents kswapd			# Firo: Normal prioties means DEF_PRIORITY
-    writing pages.
-    However, page reclaim does have a requirement that pages be freed in a
-    particular zone.  If it is failing to make sufficient progress (reclaiming
-    < SWAP_CLUSTER_MAX at any priority priority), the priority is raised to
-    scan more pages.  A priority of DEF_PRIORITY - 3 is considered to be the
-    point where kswapd is getting into trouble reclaiming pages.  If this
-    priority is reached, kswapd will dispatch pages for writing.
-[...]
-                         * Only kswapd can writeback filesystem pages to
--                        * avoid risk of stack overflow
-+                        * avoid risk of stack overflow but do not writeback
-+                        * unless under significant pressure.
-                         */
--                       if (page_is_file_cache(page) && !current_is_kswapd()) {
-+                       if (page_is_file_cache(page) &&
-+                                       (!current_is_kswapd() || priority >= DEF_PRIORITY - 2)) { # Firo: the smaller number, the higher priority.
-                                inc_zone_page_state(page, NR_VMSCAN_WRITE_SKIP);
-                                goto keep_locked;
-### kswapd reclaim: write pages if kswapd encoutered too many dirty pages.
-commit d43006d503ac921c7df4f94d13c17db6f13c9d26
-Refs: u3.10-3573-gd43006d503ac
-Author:     Mel Gorman <mgorman@suse.de>
-AuthorDate: Wed Jul 3 15:01:50 2013 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Jul 3 16:07:28 2013 -0700
-
-    mm: vmscan: have kswapd writeback pages based on dirty pages encountered, not priority
-
-    Currently kswapd queues dirty pages for writeback if scanning at an
-    elevated priority but the priority kswapd scans at is not related to the
-    number of unqueued dirty encountered.  Since commit "mm: vmscan: Flatten
-    kswapd priority loop", the priority is related to the size of the LRU
-    and the zone watermark which is no indication as to whether kswapd
-    should write pages or not.
-
-    This patch tracks if an excessive number of unqueued dirty pages are
-    being encountered at the end of the LRU.  If so, it indicates that dirty
-    pages are being recycled before flusher threads can clean them and flags
-    the zone so that kswapd will start writing pages until the zone is
-    balanced.
-[...]
-                if (PageDirty(page)) {
-                        nr_dirty++;
-
-+                       if (!PageWriteback(page))
-+                               nr_unqueued_dirty++;				# Firo: so unqueued means no writeback, this page is ignored before.
-+
-                        /*
-                         * Only kswapd can writeback filesystem pages to
--                        * avoid risk of stack overflow but do not writeback
--                        * unless under significant pressure.
-+                        * avoid risk of stack overflow but only writeback
-+                        * if many dirty pages have been encountered.
-                         */
-                        if (page_is_file_cache(page) &&
-                                        (!current_is_kswapd() ||
--                                        sc->priority >= DEF_PRIORITY - 2)) {
-+                                        !zone_is_reclaim_dirty(zone))) {
-                                /*
-                                 * Immediately reclaim when written back.
-                                 * Similar in principal to deactivate_page(
-[...]
--       *ret_nr_dirty += nr_dirty;
-+       *ret_nr_unqueued_dirty += nr_unqueued_dirty;
-        *ret_nr_writeback += nr_writeback;
-        return nr_reclaimed;
- }
-@@ -1373,6 +1377,15 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
-                        (nr_taken >> (DEF_PRIORITY - sc->priority)))
-                wait_iff_congested(zone, BLK_RW_ASYNC, HZ/10);
-
-+       /*
-+        * Similarly, if many dirty pages are encountered that are not
-+        * currently being written then flag that kswapd should start
-+        * writing back pages.
-+        */
-+       if (global_reclaim(sc) && nr_dirty &&
-+                       nr_dirty >= (nr_taken >> (DEF_PRIORITY - sc->priority)))
-+               zone_set_flag(zone, ZONE_TAIL_LRU_DIRTY);
-### direct reclaim and kswapd reclaim: prioritised reclaim for dirty page to avoid reclaiming young clean page
-commit 49ea7eb65e7c5060807fb9312b1ad4c3eab82e2c
-Refs: u3.1-7243-g49ea7eb65e7c
-Author:     Mel Gorman <mgorman@suse.de>
-AuthorDate: Mon Oct 31 17:07:59 2011 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Mon Oct 31 17:30:47 2011 -0700
-    mm: vmscan: immediately reclaim end-of-LRU dirty pages when writeback completes
-    When direct reclaim encounters a dirty page, it gets recycled around the
-    LRU for another cycle.  This patch marks the page PageReclaim similar to
-    deactivate_page() so that the page gets reclaimed almost immediately after
-    the page gets cleaned.  This is to avoid reclaiming clean pages that are
-    younger than a dirty page encountered at the end of the LRU that might
-    have been something like a use-once page.
-                        if (page_is_file_cache(page) &&
-                                        (!current_is_kswapd() || priority >= DEF_PRIORITY - 2)) {
--                               inc_zone_page_state(page, NR_VMSCAN_WRITE_SKIP);
-+                               /*
-+                                * Immediately reclaim when written back.
-+                                * Similar in principal to deactivate_page()		# Firo: so deactivate_page()?
-+                                * except we already have the page isolated
-+                                * and know it's dirty
-+                                */
-+                               inc_zone_page_state(page, NR_VMSCAN_IMMEDIATE);
-+                               SetPageReclaim(page);
-
-### kswapd reclaim: restrain even more; only write page we hace seen before(PG_reclaim) for avoiding inefficient single-page IO.
-commit 4eda48235011d6965f5229f8955ddcd355311570
-Refs: v4.10-9595-g4eda48235011
-Author:     Johannes Weiner <hannes@cmpxchg.org>
-AuthorDate: Fri Feb 24 14:56:20 2017 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Feb 24 17:46:54 2017 -0800
-    mm: vmscan: only write dirty pages that the scanner has seen twice
-
-    Dirty pages can easily reach the end of the LRU while there are still
-    clean pages to reclaim around.  Don't let kswapd write them back just
-    because there are a lot of them.  It costs more CPU to find the clean
-    pages, but that's almost certainly better than to disrupt writeback from
-    the flushers with LRU-order single-page writes from reclaim.  And the
-    flushers have been woken up by that point, so we spend IO capacity on
-    flushing and CPU capacity on finding the clean cache.
-    Only start writing dirty pages if they have cycled around the LRU twice
-    now and STILL haven't been queued on the IO device.  It's possible that
-    the dirty pages are so sparsely distributed across different bdis,
-    inodes, memory cgroups, that the flushers take forever to get to the
-    ones we want reclaimed.  Once we see them twice on the LRU, we know
-    that's the quicker way to find them, so do LRU writeback.
-[...]
--                        * Only kswapd can writeback filesystem pages to
--                        * avoid risk of stack overflow but only writeback
--                        * if many dirty pages have been encountered.
-+                        * Only kswapd can writeback filesystem pages
-+                        * to avoid risk of stack overflow. But avoid
-+                        * injecting inefficient single-page IO into
-+                        * flusher writeback as much as possible: only
-+                        * write pages when we've encountered many
-+                        * dirty pages, and when we've already scanned
-+                        * the rest of the LRU for clean pages and see
-+                        * the same dirty pages again (PageReclaim).
-                         */
-                        if (page_is_file_cache(page) &&
--                                       (!current_is_kswapd() ||
--                                        !test_bit(PGDAT_DIRTY, &pgdat->flags))) {
-+                           (!current_is_kswapd() || !PageReclaim(page) ||
-+                            !test_bit(PGDAT_DIRTY, &pgdat->flags))) {
-
-# Pageout
-[Pageout and kswapd](https://linux-mm.org/PageOutKswapd)
-## PageWriteback
-__swap_writepage()
-        set_page_writeback(page);
-        unlock_page(page);		# In isolate page and shrink_page_list(), we have get_paged
-        submit_bio(bio);
-## synchronous writepage()
-tglx: commit 961caf47918340aea55aa2ca9b68e7f1c8d91ca6
-Author:     Andrew Morton <akpm@osdl.org>
-AuthorDate: Sat Jun 12 16:39:11 2004 -0700
-Commit:     Linus Torvalds <torvalds@evo.osdl.org>
-CommitDate: Sat Jun 12 16:39:11 2004 -0700
-    [PATCH] vmscan: handle synchronous writepage()
-    Teach page reclaim to understand synchronous ->writepage implementations.
-    If ->writepage completed I/O prior to returning we can proceed to reclaim the
-    page without giving it another trip around the LRU.
-    This is beneficial for ramdisk-backed S_ISREG files: we can reclaim the file's	# Firo Ramdisk is completely rewritten
-    pages as fast as the ramdisk driver needs to allocate them and this prevents	# See 9db5579be4bb5320c3248f6acf807aedf05ae143
-    I/O errors due to OOM in rd_blkdev_pagecache_IO().
-[...]
-+                               if (PageWriteback(page) || PageDirty(page))
-+                                       goto keep;
-+                               /*
-+                                * A synchronous write - probably a ramdisk.  Go
-+                                * ahead and try to reclaim the page.
-+                                */
-+                               if (TestSetPageLocked(page))
-+                                       goto keep;
-+                               if (PageDirty(page) || PageWriteback(page))
-+                                       goto keep_locked;
-+                               mapping = page_mapping(page);
 
 # Remove from page cache or swap cache
 ## !mapping for truncate (see call sites of __delete_from_page_cache)
@@ -524,8 +41,6 @@ Firo: page->mapping set to NULL, but left on the LRU list due to page->_count > 
 commit 3aa1dc772547672e6ff453117d169c47a5a7cbc5
 Author:     Andrew Morton <akpm@zip.com.au>
 AuthorDate: Wed Aug 14 21:20:48 2002 -0700
-Commit:     Linus Torvalds <torvalds@home.transmeta.com>
-CommitDate: Wed Aug 14 21:20:48 2002 -0700
     [PATCH] multithread page reclaim
 [...]
 +                * Rarely, pages can have buffers and no ->mapping.  These are
@@ -539,8 +54,6 @@ commit 28e4d965e6131ace1e813e93aebca89ac6b82dc1
 Refs: v2.6.18-1583-g28e4d965e613
 Author:     Nick Piggin <npiggin@suse.de>
 AuthorDate: Mon Sep 25 23:31:23 2006 -0700
-Commit:     Linus Torvalds <torvalds@g5.osdl.org>
-CommitDate: Tue Sep 26 08:48:48 2006 -0700
     [PATCH] mm: remove_mapping() safeness
     Some users of remove_mapping had been unsafe.
     Modify the remove_mapping precondition to ensure the caller has locked the
@@ -551,77 +64,13 @@ commit 49d2e9cc4544369635cd6f4ef6d5bb0f757079a7
 Refs: v2.6.15-1461-g49d2e9cc4544
 Author:     Christoph Lameter <clameter@sgi.com>
 AuthorDate: Sun Jan 8 01:00:48 2006 -0800
-Commit:     Linus Torvalds <torvalds@g5.osdl.org>
-CommitDate: Sun Jan 8 20:12:41 2006 -0800
     [PATCH] Swap Migration V5: migrate_pages() function
-
-# Lumpy reclaim (Obsoleted)
-[mm: vmscan: Remove lumpy reclaim](https://lkml.org/lkml/2012/3/28/325)
-[mm: vmscan: Remove dead code related to lumpy reclaim waiting on pages under writeback](https://lore.kernel.org/patchwork/patch/262301/)
-
-# Page count
-alloc -> 1:  
-anonymous fualt: -> 1 
-shared fault: read ahead: 1) add to page cache +1 -> 2; 2) put_page -1 -> 1; 
-why put_page uncoditionally? No user acutally, sodecrement 1 which set by alloc.
-1. ptes; 2. address space; 3. pagevec; 4. buffer heads. 
-5?. mlock with FOLL_GET, seems not.
-tglx: commit 3aa1dc772547672e6ff453117d169c47a5a7cbc5
-Author:     Andrew Morton <akpm@zip.com.au>
-AuthorDate: Wed Aug 14 21:20:48 2002 -0700
-Commit:     Linus Torvalds <torvalds@home.transmeta.com>
-CommitDate: Wed Aug 14 21:20:48 2002 -0700
-    [PATCH] multithread page reclaim
-
-+                * The non-racy check for busy page.  It is critical to check
-+                * PageDirty _after_ making sure that the page is freeable and
-+                * not in use by anybody.       (pagecache + us == 2)		# Firo: pagecache + us
-                 */
--               if (mapping) {
--                       write_lock(&mapping->page_lock);
--                       if (is_page_cache_freeable(page))
--                               goto page_freeable;
-+               if (page_count(page) != 2 || PageDirty(page)) {
-                        write_unlock(&mapping->page_lock);
-
-
-# Shrink slab caches
-## double slab pressure
-tglx: commit b65bbded3935b896d55cb6b3e420a085d3089368
-Author: Andrew Morton <akpm@digeo.com>
-Date:   Wed Sep 25 07:20:18 2002 -0700
-    [PATCH] slab reclaim balancing
-
-# Congestion
-nr_congested, PGDAT_CONGESTED, pgdat_memcg_congested, set_wb_congested
-
-# PG_writeback
-## Kswapd: blocked encountering many writeback pages avoids reclaim clean young pages
-commit 283aba9f9e0e4882bf09bd37a2983379a6fae805
-Refs: u3.10-3574-g283aba9f9e0e
-Author:     Mel Gorman <mgorman@suse.de>
-AuthorDate: Wed Jul 3 15:01:51 2013 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed Jul 3 16:07:28 2013 -0700
-    mm: vmscan: block kswapd if it is encountering pages under writeback
-    Historically, kswapd used to congestion_wait() at higher priorities if
-    it was not making forward progress.  This made no sense as the failure
-    to make progress could be completely independent of IO.  It was later
-    replaced by wait_iff_congested() and removed entirely by commit 258401a6
-    (mm: don't wait on congested zones in balance_pgdat()) as it was
-    duplicating logic in shrink_inactive_list().
-    This is problematic.  If kswapd encounters many pages under writeback
-    and it continues to scan until it reaches the high watermark then it
-    will quickly skip over the pages under writeback and reclaim clean young
-    pages or push applications out to swap.
 
 ## Legacy memcg dirty page throttling
 commit e62e384e9da8d9a0c599795464a7e76fd490931c
 Refs: u3.5-8304-ge62e384e9da8
 Author:     Michal Hocko <mhocko@suse.cz>
 AuthorDate: Tue Jul 31 16:45:55 2012 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Tue Jul 31 18:42:49 2012 -0700
     memcg: prevent OOM with too many dirty pages
     The current implementation of dirty pages throttling is not memcg aware
     which makes it easy to have memcg LRUs full of dirty pages.  Without
@@ -633,18 +82,15 @@ CommitDate: Tue Jul 31 18:42:49 2012 -0700
     those are the pages that made one full round over LRU and that means that
     the writeback is much slower than scanning.
 [...]
-+                       /*
 +                        * memcg doesn't have any dirty pages throttling so we
 +                        * could easily OOM just because too many pages are in
 +                        * writeback from reclaim and there is nothing else to
 +                        * reclaim.
-+                        *
 +                        * Check may_enter_fs, certainly because a loop driver
 +                        * thread might enter reclaim, and deadlock if it waits
 +                        * on a page for which it is needed to do the write
 +                        * (loop masks off __GFP_IO|__GFP_FS for this reason);
 +                        * but more thought would probably show more reasons.
-+                        */
 +                       if (!global_reclaim(sc) && PageReclaim(page) &&
 +                                       may_enter_fs)
 +                               wait_on_page_writeback(page);
@@ -653,33 +99,23 @@ CommitDate: Tue Jul 31 18:42:49 2012 -0700
 +                               unlock_page(page);
 +                               goto keep;
 [...]
-The [loop driver issue](https://lore.kernel.org/linux-mm/alpine.LSU.2.00.1207111818380.1299@eggly.anvils/)
-Below notes from above link by Hugh Dickins:
-Part of my load builds kernels on extN over loop over tmpfs: loop does
-mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS))
-because it knows it will deadlock, if the loop thread enters reclaim,
-and reclaim tries to write back a dirty page, one which needs the loop
-thread to perform the write.
 
-## Non? legacy memcg writeback page which should be set to PG_reclaim
+
+## legacy memcg writeback page which should be set to PG_reclaim
 commit c3b94f44fcb0725471ecebb701c077a0ed67bd07
 Refs: u3.5-8305-gc3b94f44fcb0
 Author:     Hugh Dickins <hughd@google.com>
 AuthorDate: Tue Jul 31 16:45:59 2012 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Tue Jul 31 18:42:49 2012 -0700
     memcg: further prevent OOM with too many dirty pages
 [...]
     This residual problem comes from an accumulation of pages under ordinary
     writeback, not marked PageReclaim, so rightly not causing the memcg check
     to wait on their writeback: these too can prevent shrink_page_list() from
     freeing any pages, so many times that memcg reclaim fails and OOMs.
-
     Deal with these in the same way as direct reclaim now deals with dirty FS
     pages: mark them PageReclaim.  It is appropriate to rotate these to tail
     of list when writepage completes, but more importantly, the PageReclaim
     flag makes memcg reclaim wait on them if encountered again.  Increment
-
     NR_VMSCAN_IMMEDIATE?  That's arguable: I chose not.
     Setting PageReclaim here may occasionally race with end_page_writeback()
     clearing it: lru_deactivate_fn() already faced the same race, and
@@ -687,75 +123,11 @@ CommitDate: Tue Jul 31 18:42:49 2012 -0700
 [...]
     Trivia: invert conditions for a clearer block without an else, and goto		# Firo: unclearer
     keep_locked to do the unlock_page.
-
-## cgroup writeback support - sane_reclaim
-commit 97c9341f727105c29478da19f1687b0e0a917256
-Refs: v4.1-rc2-104-g97c9341f7271
-Author:     Tejun Heo <tj@kernel.org>
-AuthorDate: Fri May 22 18:23:36 2015 -0400
-Commit:     Jens Axboe <axboe@fb.com>
-CommitDate: Tue Jun 2 08:38:13 2015 -0600
-    mm: vmscan: disable memcg direct reclaim stalling if cgroup writeback support is in use
-
-# may_write_to_inode or _queue
-tglx: commit e386771cbbc2a90b46df2ace02214f94cc23cb50
-Author:     Andrew Morton <akpm@digeo.com>
-AuthorDate: Sat Dec 21 01:07:33 2002 -0800
-Commit:     Linus Torvalds <torvalds@home.transmeta.com>
-CommitDate: Sat Dec 21 01:07:33 2002 -0800
-    [PATCH] Give kswapd writeback higher priority than pdflush	# Firo: pdflush and normal process
-+static int may_write_to_queue(struct backing_dev_info *bdi)
-+{
-+       if (current_is_kswapd())
-+               return 1;
-+       if (current_is_pdflush())       /* This is unlikely, but why not... */
-+               return 1;
-+       if (!bdi_write_congested(bdi))
-+               return 1;
-+       if (bdi == current->backing_dev_info)	# Current process is write-intensive; at least it's writing.
-+               return 1;
-+       return 0;
-+}
-[...]
-@@ -313,9 +324,7 @@ shrink_list(struct list_head *page_list, unsigned int gfp_mask,
-                                goto activate_locked;
-                        if (!may_enter_fs)
-                                goto keep_locked;
--                       bdi = mapping->backing_dev_info;
--                       if (bdi != current->backing_dev_info &&
--                                       bdi_write_congested(bdi))
-+                       if (!may_write_to_queue(mapping->backing_dev_info))
-## current->backing_dev_info
-tglx: commit 407ee6c87e477434e3cb8be96885ed27b5539b6f
-Author:     Andrew Morton <akpm@digeo.com>
-AuthorDate: Sun Sep 22 08:17:02 2002 -0700
-Commit:     Linus Torvalds <torvalds@home.transmeta.com>
-CommitDate: Sun Sep 22 08:17:02 2002 -0700
-    [PATCH] low-latency page reclaim
-    Convert the VM to not wait on other people's dirty data.
-     - If we find a dirty page and its queue is not congested, do some writeback.
-     - If we find a dirty page and its queue _is_ congested then just
-       refile the page.
-     - If we find a PageWriteback page then just refile the page.
-     - There is additional throttling for write(2) callers.  Within		# write throttling
-       generic_file_write(), record their backing queue in ->current.
-       Within page reclaim, if this tasks encounters a page which is dirty
-       or under writeback onthis queue, block on it.  This gives some more
-       writer throttling and reduces the page refiling frequency.
-[...]
-+                * If this process is currently in generic_file_write() against
-+                * this page's queue, we can perform writeback even if that
-+                * will block.
-[...]
-
-
 # pagevec and rotate
 commit 902aaed0d983dfd459fcb2b678608d4584782200
 Refs: v2.6.23-4285-g902aaed0d983
 Author:     Hisashi Hifumi <hifumi.hisashi@oss.ntt.co.jp>
 AuthorDate: Tue Oct 16 01:24:52 2007 -0700
-Commit:     Linus Torvalds <torvalds@woody.linux-foundation.org>
-CommitDate: Tue Oct 16 09:42:54 2007 -0700
     mm: use pagevec to rotate reclaimable page
 See lru_rotate_pvecs; Firo: seems all pages on lru_rotate_pvecs are get_page(). 
 Also see rotate_reclaimable_page().

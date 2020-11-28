@@ -11,6 +11,16 @@ Anonymous private page: file is the whole memory. page.index is offset of page i
 [The object-based reverse-mapping VM](https://lwn.net/Articles/23732/)
 [Reverse mapping anonymous pages - again](https://lwn.net/Articles/77106/)
 
+# interval tree 
+## Also use interval tree for anon pages
+commit bf181b9f9d8dfbba58b23441ad60d0bc33806d64
+Refs: v3.6-9015-gbf181b9f9d8d
+Author:     Michel Lespinasse <walken@google.com>
+AuthorDate: Mon Oct 8 16:31:39 2012 -0700
+Commit:     Linus Torvalds <torvalds@linux-foundation.org>
+CommitDate: Tue Oct 9 16:22:41 2012 +0900
+    mm anon rmap: replace same_anon_vma linked list with an interval tree.
+
 ## mmap
 Releated code: do_mmap, mmap_region, linear_page_index, rmap_walk_anon, rmap_walk_file
 
@@ -18,14 +28,66 @@ Releated code: do_mmap, mmap_region, linear_page_index, rmap_walk_anon, rmap_wal
 exec : exec -> do_execveat_common-> bprm_mm_init setup_arg_pages
 fork workflow:attach to parent; alloc anon_vma for ownself. anon_vma_fork() -> anon_vma_chain_link
 
-## anon vma 
+# anon vma managing same VMAs
 do_anonymous_page(1 forked but parent don't use vma. 2 exec) -> anon_vma_prepare & page_add_new_anon_rmap
+## Pending page_get_anon_vma
+
+## objrmap v1 -- check tlgx anon_vma_prepare for deep understanding; shared private page set; add do_<private>_fault
+tglx: commit 8aa3448cabdfca146aa3fd36e852d0209fb2276a
+Author:     Andrew Morton <akpm@osdl.org>
+AuthorDate: Sat May 22 08:10:11 2004 -0700
+    [PATCH] rmap 39 add anon_vma rmap							# introduced anon_vma
+    From: Hugh Dickins <hugh@veritas.com>						# m:1:1(including child VMA), 
+    Andrea Arcangeli's anon_vma object-based reverse mapping scheme for anonymous	# anon_vma is alloced by #PF(Private) and
+    pages.  Instead of tracking anonymous pages by pte_chains or by mm, this		#  is shared by all child processes. See v2.
+    tracks them by vma.  But because vmas are frequently split and merged		# 1 anon_vma manages all desecendent child VMAs.
+    (particularly by mprotect), a page cannot point directly to its vma(s), but
+    instead to an anon_vma list of those vmas likely to contain the page - a list
+    on which vmas can easily be linked and unlinked as they come and go.  The vmas
+    on one list are all related, either by forking or by splitting.
+
+## objrmap v2 add avc and anon_vma_fork 
+commit 5beb49305251e5669852ed541e8e2f2f7696c53e
+Refs: v2.6.33-5437-g5beb49305251
+Author:     Rik van Riel <riel@redhat.com>
+AuthorDate: Fri Mar 5 13:42:07 2010 -0800
+    mm: change anon_vma linking to fix multi-process server scalability issue
+    The old anon_vma code can lead to scalability issues with heavily forking
+    workloads.  Specifically, each anon_vma will be shared between the parent
+    process and all its child processes.
+[...]
+    This patch changes the way anon_vmas and VMAs are linked, which allows us		# Some description on objrmap v1.
+    to associate multiple anon_vmas with a VMA.  At fork time, each child
+    process gets its own anon_vmas, in which its COWed pages will be
+    instantiated.  The parents' anon_vma is also linked to the VMA, because
+    non-COWed pages could be present in any of the children.
+[...]
+
+commit 7a3ef208e662f4b63d43a23f61a64a129c525bbc
+Refs: v3.19-rc3-41-g7a3ef208e662
+Author:     Konstantin Khlebnikov <koct9i@gmail.com>
+AuthorDate: Thu Jan 8 14:32:15 2015 -0800
+    mm: prevent endless growth of anon_vma hierarchy
+[...]
+    This heuristic reuses anon_vmas as few as possible because each reuse
+    adds false aliasing among vmas and rmap walker ought to scan more ptes
+    when it searches where page is might be mapped.
+[...]
++                * Reuse existing anon_vma if its degree lower than two,
++                * that means it has no vma and only one anon_vma child.
++                *
++                * Do not chose parent anon_vma, otherwise first child
++                * will always reuse it. Root anon_vma is never reused:
++                * it has self-parent reference and at least one child.
++                */
++               if (!dst->anon_vma && anon_vma != src->anon_vma &&
++                               anon_vma->degree < 2)
++                       dst->anon_vma = anon_vma;
 
 ## nonymous(file or shmem) add vma to  rmp's i_mmap
 __vma_link_file; why not dealy to page fault?
 
-# Lock page table
-# Modernise try_to_unmap
+# Modernise try_to_unmap - named flags
 commit 14fa31b89c5ae79e4131da41761378a6df674352
 Refs: v2.6.31-4555-g14fa31b89c5a
 Author:     Andi Kleen <andi@firstfloor.org>
@@ -33,38 +95,3 @@ AuthorDate: Wed Sep 16 11:50:10 2009 +0200
 Commit:     Andi Kleen <ak@linux.intel.com>
 CommitDate: Wed Sep 16 11:50:10 2009 +0200
     HWPOISON: Use bitmask/action code for try_to_unmap behaviour
-
-# TTU_SPLIT_FREEZE
-commit b5ff8161e37cef3265e186ecded23324e4dc2973
-Refs: v4.13-9222-gb5ff8161e37c
-Author:     Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-AuthorDate: Fri Sep 8 16:10:49 2017 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Fri Sep 8 18:26:45 2017 -0700
-    mm: thp: introduce separate TTU flag for thp freezing
-    TTU_MIGRATION is used to convert pte into migration entry until thp			# Firo: "convert pte into migration entry" means that 
-    split completes.  This behavior conflicts with thp migration added later		# any access to that thp memory will wait in do_swap_page().
-    patches, so let's introduce a new TTU flag specifically for freezing.
-    try_to_unmap() is used both for thp split (via freeze_page()) and page
-    migration (via __unmap_and_move()).  
-[...]
-Firo: Purely, split? No, Freeze means wait in do_swap_page().See unmap_page() and remap_page().
-So seems split do the same thing as migration.
-
-# Try to unmap a PageAnon(page) 
-commit eb94a8784427b28479f871b5d4121c547808d0fc
-Refs: v4.11-4538-geb94a8784427
-Author:     Minchan Kim <minchan@kernel.org>
-AuthorDate: Wed May 3 14:52:36 2017 -0700
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Wed May 3 15:52:08 2017 -0700
-    mm: fix lazyfree BUG_ON check in try_to_unmap_one()
-    If a page is swapbacked, it means it should be in swapcache in	# Firo: this means this try_to_unmap comes from shrik_page_list()
-    try_to_unmap_one's path.
-    If a page is !swapbacked, it mean it shouldn't be in swapcache in	# This is MAD_FREE page.
-    try_to_unmap_one's path.
-+                       if (unlikely(PageSwapBacked(page) != PageSwapCache(page))) {
-+                               WARN_ON_ONCE(1);
-+                               ret = SWAP_FAIL;
-+                               page_vma_mapped_walk_done(&pvmw);
-+                               break;

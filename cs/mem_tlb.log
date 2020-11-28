@@ -8,8 +8,7 @@ https://tldp.org/LDP/khg/HyperNews/get/memory/flush.html
 https://www.kernel.org/doc/html/latest/core-api/cachetlb.html
 
 # Formal causes
-ULK 3rd: Handling the TLB
-PLKA: 3.7 Processor Cache and TLB Control
+ULK 3rd: Handling the TLB, PLKA: 3.7 Processor Cache and TLB Control
 UVM: [3.8  Translation Lookaside Buffer (TLB)](https://www.kernel.org/doc/gorman/html/understand/understand006.html)
 [Memory part 3: Virtual Memory: 4.3 Optimizing Page Table Access](https://lwn.net/Articles/253361/)
 [Understanding TLB from CPUID results on Intel and Firo is Level2 TLB shared?](https://stackoverflow.com/questions/58128776/understanding-tlb-from-cpuid-results-on-intel)
@@ -101,17 +100,13 @@ Commit:     Linus Torvalds <torvalds@penguin.transmeta.com>
 CommitDate: Mon May 20 07:34:26 2002 -0700
     Make generic TLB shootdown friendlier to non-x86 architectures
 [...]
-+/*
 + * x86 doesn't need any special per-pte or
 + * per-vma handling..
-+ */
 +#define tlb_start_vma(tlb, vma) do { } while (0)
 +#define tlb_end_vma(tlb, vma) do { } while (0)
 +#define tlb_remove_tlb_entry(tlb, pte, address) do { } while (0)
-+/*
 + * .. because we flush the whole mm when it
 + * fills up.
-+ */
 +#define tlb_flush(tlb) flush_tlb_mm((tlb)->mm)
 Firo: For x86, tlb_flush become much better.
 

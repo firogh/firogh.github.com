@@ -1,0 +1,119 @@
+#---
+tags: [ kernel ] 
+layout: post
+date: 2014-12-28
+title:  Page replacement algorithm
+category: cs
+---
+
+# Reclaimable pages
+all pages of a User Mode process are reclaimable except locked.
+1. Temporarily locked pages: PG_locked.
+2. Memory locked pages: VM_LOCKED, [Misunderstanding mlock](https://eklitzke.org/mlock-and-mlockall)
+## Swapbacked pages
+Private: anonymous page, cowed anonymous page.
+Shared: tmpfs, anonymous share memory, System v IPC shared memory.
+## Filebacked pages
+Private: Clean private file mapping.
+Shared: Shared file mapping memory.
+
+# Page replacement policy
+[... which does its best to evict pages which, with luck, will not be needed in the near future. --Linus](https://lwn.net/Articles/101230/)
+[Idle Page Tracking](https://www.kernel.org/doc/html/latest/admin-guide/mm/idle_page_tracking.html#user-api)
+[linux-mm: PageReplacementDesign](https://linux-mm.org/PageReplacementDesign)
+## Clock-pro
+[ClockProApproximation](https://linux-mm.org/ClockProApproximation)
+[A CLOCK-Pro page replacement implementation](https://lwn.net/Articles/147879/)
+[CLOCK-Pro: An Effective Improvement of the CLOCK Replacement](https://www.usenix.org/legacy/publications/library/proceedings/usenix05/tech/general/full_papers/jiang/jiang_html/html.html)
+
+# LRU-2Q
+page.lru and struct lruvec 
+New page is inserted to head, PG_reclaim page is rotated to the tail.
+## Move LRU page reclaim from zones to node
+[1st RFC](https://lkml.org/lkml/2015/6/8/298)
+## shrink_active_list
+lru_to_page(head) (list_entry((head)->prev, struct page, lru))
+## active list and inactive list
+mark_page_accessed and called sub-functions.
+active -> inactive head - list_add(&page->lru, &l_inactive); in shrink_active_list
+inactive -> active head - __activate_page <- mark_page_accessed <- pagecache_get_page or generic_file_buffered_read
+inactive -> inactive tail - rotate_reclaimable_page
+
+# Thrashing - workingset
+[WSS](https://github.com/brendangregg/wss) 
+[Better active/inactive list balancing](lwn.net/Articles/495543/)
+## First version(not accepted)
+[mm: refault distance-based file cache sizing](https://lore.kernel.org/linux-mm/1335861713-4573-6-git-send-email-hannes@cmpxchg.org/)
+## 2nd version (merged by upstream)
+commit a528910e12ec7ee203095eb1711468a66b9b60b0
+Refs: v3.14-7406-ga528910e12ec
+Author:     Johannes Weiner <hannes@cmpxchg.org>
+AuthorDate: Thu Apr 3 14:47:51 2014 -0700
+    mm: thrash detection-based file cache sizing
+
+# Second chance
+commit dfc8d636cdb95f7b792d5ba8c9f3b295809c125d
+Author: Johannes Weiner <hannes@cmpxchg.org>
+Date:   Fri Mar 5 13:42:19 2010 -0800
+    vmscan: factor out page reference checks
+commit 645747462435d84c6c6a64269ed49cc3015f753d
+Author: Johannes Weiner <hannes@cmpxchg.org>
+Date:   Fri Mar 5 13:42:22 2010 -0800
+    vmscan: detect mapped file pages used only once
+[Second Chance Page Replacement Algorithm](https://www.youtube.com/watch?v=eHK749r5RGs)
+[Second Chance Page Replacement Algorithms and Clock Page Replacement Algorithms](https://www.youtube.com/watch?v=DFmsm0J8joY)
+page_check_references() in shrink_page_list().
+shrink_active_list for VM_EXEC page.
+core: page_referenced in shrink_active_list
+## mark_page_accessed on pagevec
+commit 059285a25f30c13ed4f5d91cecd6094b9b20bb7b
+Author: Mel Gorman <mgorman@suse.de>
+Date:   Wed Jul 3 15:02:30 2013 -0700
+    mm: activate !PageLRU pages on mark_page_accessed if page is on local pagevec
+## active list 
+if pte with PAGE_ACCESSED - referenced in page_referenced() && VM_EXEC -> keep it in active list - tail -> head - rotated
+else de-activate it to inactive list head
+## inactive list - page_check_references
+        PAGEREF_RECLAIM, 	# Try reclaim this page.
+        PAGEREF_RECLAIM_CLEAN,	# [[...] reclaim the page if it is clean](https://lore.kernel.org/patchwork/patch/189879/)
+        PAGEREF_KEEP,		# Keep this page on inactive list.
+        PAGEREF_ACTIVATE,	# Move this page to active list or inevicatble.
+1. hardware pte; use and clear pte; might get reference; second chance.
+2. software flag: -> RECLAIM Clean page and clear, since dirty page is a good signal that the page was 
+		used recently because the flusher threads clean pages periodically.
+        hardware accessed - if accessed, won't reclaim
+                PAGEREF_ACTIVATE: incline to activate swapbacked page
+                        PageSwapBacked
+                        referenced_page 
+                        referenced_ptes > 1
+                        vm_flags & VM_EXEC
+                PAGEREF_KEEP
+        else if ?? software accessed - && dirty won't reclaim
+                vmscan: detect mapped file pages used only once - 645747462435d84c6c6a64269ed49cc3015f753d
+                vmscan,tmpfs: treat used once pages on tmpfs as used once - 2e30244a7cc1ff09013a1238d415b4076406388e
+                # From above commits: When a page has PG_referenced, shrink_page_list() discards it only if it
+                # is not dirty. ... PG_dirty is a good signal that the page was used recently because
+                # the flusher threads clean pages periodically.  In addition, page writeback
+                # is costlier than simple page discard.
+                #  Firo: not incline to reclaim dirty page.
+                #  Firo: PG_referenced -> PAGEREF_RECLAIM_CLEAN
+                file-backed -> PAGEREF_RECLAIM_CLEAN
+                swapbacked -> PAGEREF_RECLAIM
+        else
+                PAGEREF_RECLAIM
+ 
+# Reclaim priority
+Meaning in PLKA
+commit 9e3b2f8cd340e13353a44c9a34caef2848131ed7
+Refs: u3.4-8606-g9e3b2f8cd340
+Author:     Konstantin Khlebnikov <khlebnikov@openvz.org>
+AuthorDate: Tue May 29 15:06:57 2012 -0700
+    mm/vmscan: store "priority" in struct scan_control
+DEF_PRIORITY vs NODE_RECLAIM_PRIORITY(old ZONE_RECLAIM_PRIORITY)
+
+# Shrink slab caches
+## double slab pressure
+tglx: commit b65bbded3935b896d55cb6b3e420a085d3089368
+Author: Andrew Morton <akpm@digeo.com>
+Date:   Wed Sep 25 07:20:18 2002 -0700
+    [PATCH] slab reclaim balancing

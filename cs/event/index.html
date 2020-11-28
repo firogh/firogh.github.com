@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="765">
+<meta itemprop="wordCount" content="970">
 <meta itemprop="datePublished" content="2017-04-03">
 <meta itemprop="url" content="http://firoyang.org/cs/event/">
 
@@ -338,6 +338,37 @@ The 0 for Divide error is a interrupt vector.</p>
 init_IRQ()-&gt;x86_init.irqs.intr_init=native_init_IRQ     #===&gt; external interrupt init;<br />
     pre_vector_init = init_ISA_irqs #===&gt; 1) legacy_pic-&gt;init(0); init 8259a; 2) link irq_desc in irq_desc_tree with flow handle and chip.<br />
     idt_setup_apic_and_irq_gates    #===&gt; apic normal(from 32) and system interrupts;</p>
+
+<h2 id="affinity">affinity</h2>
+
+<p>root@snow:/tmp# cat x.sh<br />
+echo 1 &gt; /proc/irq/129/smp_affinity<br />
+sudo trace-cmd record -p function_graph &ndash;max-graph-depth 70 -g __irq_set_affinity -c -F  ./x.sh<br />
+cpus=4<br />
+              sh-26457 [000] 19135.281818: funcgraph_entry:                   |  __irq_set_affinity() {<br />
+              sh-26457 [000] 19135.281819: funcgraph_entry:        0.306 us   |    irq_to_desc();<br />
+              sh-26457 [000] 19135.281819: funcgraph_entry:        0.149 us   |    _raw_spin_lock_irqsave();<br />
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |    irq_set_affinity_locked() {<br />
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |      irq_do_set_affinity() {<br />
+              sh-26457 [000] 19135.281820: funcgraph_entry:                   |        msi_domain_set_affinity() {<br />
+              sh-26457 [000] 19135.281821: funcgraph_entry:                   |          intel_ir_set_affinity() {<br />
+              sh-26457 [000] 19135.281821: funcgraph_entry:        0.220 us   |            irqd_cfg();<br />
+              sh-26457 [000] 19135.281822: funcgraph_entry:                   |            apic_set_affinity() {<br />
+              sh-26457 [000] 19135.281822: funcgraph_entry:        0.248 us   |              _raw_spin_lock();<br />
+              sh-26457 [000] 19135.281822: funcgraph_entry:        0.245 us   |              assign_vector_locked();<br />
+              sh-26457 [000] 19135.281823: funcgraph_exit:         1.276 us   |            }<br />
+              sh-26457 [000] 19135.281823: funcgraph_entry:        0.148 us   |            irqd_cfg();<br />
+              sh-26457 [000] 19135.281823: funcgraph_entry:                   |            modify_irte.isra.0() {<br />
+              sh-26457 [000] 19135.281823: funcgraph_entry:        0.272 us   |              _raw_spin_lock_irqsave();<br />
+              sh-26457 [000] 19135.281824: funcgraph_entry:        0.492 us   |              clflush_cache_range();<br />
+              sh-26457 [000] 19135.281824: funcgraph_entry:                   |              qi_submit_sync() {<br />
+              sh-26457 [000] 19135.281825: funcgraph_entry:        0.272 us   |                _raw_spin_lock_irqsave();<br />
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.135 us   |                _raw_spin_lock();<br />
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.144 us   |                _raw_spin_unlock_irqrestore();<br />
+              sh-26457 [000] 19135.281828: funcgraph_exit:         3.647 us   |              }<br />
+              sh-26457 [000] 19135.281828: funcgraph_entry:        0.195 us   |              _raw_spin_unlock_irqrestore();<br />
+              sh-26457 [000] 19135.281829: funcgraph_exit:         5.290 us   |            }<br />
+              sh-26457 [000] 19135.281829: funcgraph_entry:        0.129 us   |            send_cleanup_vector();</p>
 
 <h1 id="ipi">IPI</h1>
 

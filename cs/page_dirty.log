@@ -1,7 +1,8 @@
 
-# Problems
+# Dirty Thorttling
 IO-less Dirty Throttling Slides
 Dirty throttling — How much dirty memory is too much? Slides
+[Dynamic writeback throttling](https://lwn.net/Articles/405076/)
 [No-I/O dirty throttling](https://lwn.net/Articles/456904/)
 commit 9d823e8f6b1b7b39f952d7d1795f29162143a433
 Refs: v3.1-rc8-80-g9d823e8f6b1b
@@ -12,24 +13,38 @@ NR_FILE_DIRTY,
 NR_WRITEBACK,
 nr_dirtied, nr_dirty, nr_written.
 write -> throttle-> dirty -> writeback
+## Strict
+commit 5a53748568f79641eaf40e41081a2f4987f005c2
+Refs: v3.11-9187-g5a53748568f7
+Author:     Maxim Patlasov <mpatlasov@parallels.com>
+AuthorDate: Wed Sep 11 14:22:46 2013 -0700
+    mm/page-writeback.c: add strictlimit feature
 
-# Writeback rate
+## Translations
+git log v3.2-rc1~23^2 --oneline
+balance_dirty_pages_ratelimited
+/sys/kernel/debug/bdi/8\:0/stats bdi_debug_stats_show
+write_begin and write_end
+
+## Dirty rate and sleep
+commit be3ffa276446e1b691a2bf84e7621e5a6fb49db9
+Author: Wu Fengguang <fengguang.wu@intel.com>
+Date:   Sun Jun 12 10:51:31 2011 -0600
+    writeback: dirty rate control
+
+## Pos ratio
+commit 6c14ae1e92c77eabd3e7527cf2e7836cde8b8487
+Author: Wu Fengguang <fengguang.wu@intel.com>
+Date:   Wed Mar 2 16:04:18 2011 -0600
+    writeback: dirty position control
+
+## Bandwidth
 commit e98be2d599207c6b31e9bb340d52a231b2f3662d
 Refs: v3.0-rc2-19-ge98be2d59920
 Author:     Wu Fengguang <fengguang.wu@intel.com>
 AuthorDate: Sun Aug 29 11:22:30 2010 -0600
-Commit:     Wu Fengguang <fengguang.wu@intel.com>
-CommitDate: Sat Jul 9 22:09:01 2011 -0700
     writeback: bdi write bandwidth estimation
-wb_update_write_bandwidth
-
-# Model
-dirty, rate limit/ratio, writeback
-dirty -> writeback 
-dirty -> throttle
-writeback: BDI writeback ratelimit
-
-# Cgroup vs. writeback
+## cgroup
 [Writeback and control groups](https://lwn.net/Articles/648292/)
 ## Cgroup writeback support
 git log 97c9341f727105c29478da19f1687b0e0a917256 --oneline 
@@ -38,6 +53,68 @@ c2aa723a6093 writeback: implement memcg writeback domain based throttling
 2529bb3aadc4 writeback: reset wb_domain->dirty_limit[_tstmp] when memcg domain size changes
 841710aa6e4a writeback: implement memcg wb_domain
 
+# Accounting
+tglx: commit 1f90eedd73cd58923dfeee393adf827c68dade5a
+Author:     Andrew Morton <akpm@digeo.com>
+AuthorDate: Mon Sep 9 21:09:13 2002 -0700
+    [PATCH] exact dirty state accounting
+
+tglx: commit 883108b9b92b3232b114d4466222332f8529235e
+Author:     David Howells <dhowells@redhat.com>
+AuthorDate: Wed Mar 30 16:27:05 2005 -0800
+    [PATCH] BDI: Provide backing device capability information [try #3]
+    The attached patch replaces backing_dev_info::memory_backed with capabilitied
+    bitmap. The capabilities available include:
+      (*) BDI_CAP_NO_ACCT_DIRTY
+
+# Pending
+cancel_dirty_page
+
+# Clear page dirty for IO
+[How the OS knows a page is dirty in mapped memory?](https://stackoverflow.com/questions/41433299/)
+commit 7658cc289288b8ae7dd2c2224549a048431222b3
+Refs: v2.6.20-rc2-1-g7658cc289288
+Author:     Linus Torvalds <torvalds@macmini.osdl.org>
+AuthorDate: Fri Dec 29 10:00:58 2006 -0800
+    VM: Fix nasty and subtle race in shared mmap'ed page writeback
+    The VM layer (on the face of it, fairly reasonably) expected that when
+    it does a ->writepage() call to the filesystem, it would write out the
+    full page at that point in time.  Especially since it had earlier marked
+    the whole page dirty with "set_page_dirty()".
+    But that isn't actually the case: ->writepage() does not actually write
+    a page, it writes the parts of the page that have been explicitly marked
+    dirty before, *and* that had not got written out for other reasons since
+    the last time we told it they were dirty.
+
+## page_mkclean()
+commit d08b3851da41d0ee60851f2c75b118e1f7a5fc89
+Refs: v2.6.18-1552-gd08b3851da41
+Author:     Peter Zijlstra <a.p.zijlstra@chello.nl>
+AuthorDate: Mon Sep 25 23:30:57 2006 -0700
+    [PATCH] mm: tracking shared dirty pages
+    Tracking of dirty pages in shared writeable mmap()s.
+    The idea is simple: write protect clean shared writeable pages, catch the
+    write-fault, make writeable and set dirty.  On page write-back clean all the
+    PTE dirty bits and write protect them once again.
+    The implementation is a tad harder, mainly because the default
+    backing_dev_info capabilities were too loosely maintained.  Hence it is not
+    enough to test the backing_dev_info for cap_account_dirty.
+    The current heuristic is as follows, a VMA is eligible when:
+     - its shared writeable
+        (vm_flags & (VM_WRITE|VM_SHARED)) == (VM_WRITE|VM_SHARED)
+     - it is not a 'special' mapping
+        (vm_flags & (VM_PFNMAP|VM_INSERTPAGE)) == 0
+     - the backing_dev_info is cap_account_dirty
+        mapping_cap_account_dirty(vma->vm_file->f_mapping)
+     - f_op->mmap() didn't change the default page protection
+
+# Writeback rate
+commit e98be2d599207c6b31e9bb340d52a231b2f3662d
+Refs: v3.0-rc2-19-ge98be2d59920
+Author:     Wu Fengguang <fengguang.wu@intel.com>
+AuthorDate: Sun Aug 29 11:22:30 2010 -0600
+    writeback: bdi write bandwidth estimation
+wb_update_write_bandwidth
 
 # History
 tglx: writeback_index
@@ -64,8 +141,6 @@ PG_writeback and set_page_writeback
 commit a2bcb3a084f4312844639e18cbe7eb7256c7c23c
 Author:     Andrew Morton <akpm@zip.com.au>
 AuthorDate: Mon Apr 29 23:54:18 2002 -0700
-Commit:     Linus Torvalds <torvalds@home.transmeta.com>
-CommitDate: Mon Apr 29 23:54:18 2002 -0700
     [PATCH] page writeback locking update
 + * If a page is already under I/O, generic_writeback_mapping() skips it, even
 + * if it's dirty.  This is desirable behaviour for memory-cleaning writeback,
@@ -82,18 +157,12 @@ commit 7d311cdab663f4f7ab3a4c0d5d484234406f8268
 Refs: v3.8-3241-g7d311cdab663
 Author:     Darrick J. Wong <darrick.wong@oracle.com>
 AuthorDate: Thu Feb 21 16:42:48 2013 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Feb 21 17:22:19 2013 -0800
     bdi: allow block devices to say that they require stable page writes
 commit 1d1d1a767206fbe5d4c69493b7e6d2a8d08cc0a0
 Refs: v3.8-3242-g1d1d1a767206
 Author:     Darrick J. Wong <darrick.wong@oracle.com>
 AuthorDate: Thu Feb 21 16:42:51 2013 -0800
-Commit:     Linus Torvalds <torvalds@linux-foundation.org>
-CommitDate: Thu Feb 21 17:22:19 2013 -0800
     mm: only enforce stable page writes if the backing device requires it
-
-### what about Memory-mapped I/O?
 
 ## memory-cleaning writeback
 
@@ -105,7 +174,6 @@ WB_REASON_FREE_MORE_MEM: [buffer: eliminate the need to call free_more_memory() 
 
 # Dirty pages throttling, write throttling
 [Predictive per-task write throttling](https://lwn.net/Articles/152635/)
-[Dynamic writeback throttling](https://lwn.net/Articles/405076/)
 balance_dirty_pages
 # Per-device write throttling
 [Smarter write throttling](https://lwn.net/Articles/245600/)
@@ -141,53 +209,3 @@ commit e34cbd307477ae07c5d8a8d0bd15e65a9ddaba5c
 Author: Jens Axboe <axboe@fb.com>
 Date:   Wed Nov 9 12:36:15 2016 -0700
     blk-wbt: add general throttling mechanism
-
-# IO completetion hanlder
-__blk_mq_end_io(obsoleted)
-__blk_mq_end_request
-blk_update_request
-blk_mq_end_request
-scsi_end_request
-blk_mq_complete_request
-scsi_mq_done
-nvme_end_request
-
-=> end_page_writeback
-=> __block_write_full_page
-=> __writepage
-=> write_cache_pages
-=> generic_writepages
-=> do_writepages
-=> __writeback_single_inode
-=> writeback_sb_inodes
-=> __writeback_inodes_wb
-=> wb_writeback
-=> wb_workfn
-
-=> end_page_writeback	# Parent should be end_buffer_async_write
-=> end_bio_bh_io_sync	# submit_bh_wbc
-=> blk_update_request
-=> scsi_end_request
-=> scsi_io_completion
-=> blk_done_softirq
-
-=> end_page_writeback
-=> ext4_finish_bio
-=> ext4_end_bio		# io_submit_init_bio
-=> blk_update_request
-=> scsi_end_request
-=> scsi_io_completion
-=> blk_done_softirq
-
-=> end_page_writeback
-=> end_buffer_async_write
-=> end_bio_bh_io_sync
-=> blk_update_request
-=> scsi_end_request
-=> scsi_io_completion
-=> blk_done_softirq
-
-# ETC
-/sys/kernel/debug/bdi/0\:80/stats 
-bdi_debug_stats_show
-write_begin and write_end

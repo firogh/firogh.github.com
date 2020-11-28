@@ -12,7 +12,85 @@ https://wiki.xenproject.org/wiki/XenParavirtOps
 KEXEC_CMD_kexec_load in xen repo
 
 # kdump Xen 
+xl info for command line; systemctl start kdump;
+/sys/kernel/kexec_* for PV kernel is meaningless.
+## Xen reserve kdump code
+kexec_reserve_area
+./xen/arch/x86/setup.c
+## kdump xen and /proc/iomem
+Crash kernel for PV kernel, is meaningless. Some old kernel (older than Petr's obslete patch), will show this. But it's just waste of memory.
+### Native x86
+fyang@l3mule:~$ sudo  cat /proc/iomem | grep -i crash
+  d5000000-d97fffff : Crash kernel
+  4014000000-401fafffff : Crash kernel
+## Configure kdump for dom-0
+reserve memory for PV(include dom-0)
+http://xenbits.xenproject.org/docs/4.2-testing/misc/kexec_and_kdump.txt
+Also see here https://www.suse.com/support/kb/doc/?id=000016171: Note 4: For Xen installations, this parameter needs to be passed to the GRUB line for the Xen hypervisor, not the module line for the Dom0 kernel.
+/*
+ * Return 1 if its a PV guest.
+ * This includes dom0, which is the only PV guest where kexec/kdump works.
+ * HVM guests have to be handled as native hardware.
+ */
+int xen_present(void)
+{
+        if (!is_dom0) {
+                if (access("/proc/xen", F_OK) == 0)
+                        is_dom0 = xen_detect_pv_guest();
+                else
+                        is_dom0 = -1; 
+        }
+        return is_dom0 > 0;
+}
+
+## kdump dom0 pv  sles12-sp3
+virt93:~ # cat /etc/os-release 
+NAME="SLES"
+VERSION="12-SP3"
+virt93:~ # systemctl status kdump
+● kdump.service - Load kdump kernel and initrd
+   Loaded: loaded (/usr/lib/systemd/system/kdump.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Thu 2020-10-15 00:13:47 MDT; 4min 4s ago
+  Process: 2422 ExecStart=/lib/kdump/load.sh --update (code=exited, status=0/SUCCESS)
+ Main PID: 2422 (code=exited, status=0/SUCCESS)
+    Tasks: 0 (limit: 512)
+   CGroup: /system.slice/kdump.service
+Oct 15 00:13:46 virt93 systemd[1]: Starting Load kdump kernel and initrd...
+Oct 15 00:13:47 virt93 systemd[1]: Started Load kdump kernel and initrd.
+virt93:~ # cat /sys/kernel/kexec_crash_loaded 
+0
+virt93:~ # cat /sys/kernel/kexec_crash_size 
+136314880
+virt93:~ # cat /sys/kernel/kexec_loaded 
+0
+virt93:~ # /lib/kdump/load.sh --update 
+virt93:~ # echo $?
+0
+virt93:~ # grep crash /proc/iomem 
+virt93:~ # grep -i crash /proc/iomem 
+  6f000000-771fffff : Crash kernel
+virt93:~ # systemctl status kdump
+● kdump.service - Load kdump kernel and initrd
+   Loaded: loaded (/usr/lib/systemd/system/kdump.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Thu 2020-10-15 00:13:47 MDT; 1min 39s ago
+  Process: 2422 ExecStart=/lib/kdump/load.sh --update (code=exited, status=0/SUCCESS)
+ Main PID: 2422 (code=exited, status=0/SUCCESS)
+    Tasks: 0 (limit: 512)
+   CGroup: /system.slice/kdump.service
+
+Oct 15 00:13:46 virt93 systemd[1]: Starting Load kdump kernel and initrd...
+Oct 15 00:13:47 virt93 systemd[1]: Started Load kdump kernel and initrd.
+virt93:~ # cat /proc/xen/capabilities 
+control_d
+
+
 ## PV domains
+[    0.000000] Hypervisor detected: Xen PV
+[    7.943267] Ignoring crashkernel for a Xen PV domain
+How do I tell if I'm running in a dom0 or a domU?
+Domain 0 will have a pseudo-file called /proc/xen/capabilities which will contain the string control_d. Some domUs will have the file and some will not; so a reliable shell test for running in Domain 0 would be:
+   -e /proc/xen/capabilities && grep -q control_d /proc/xen/capabilities
+
 According to [Kexec and Kdump for Xen](http://xenbits.xenproject.org/docs/4.3-testing/misc/kexec_and_kdump.txt), kdump only works on hypervisor and dom0 kernel. So there is nothig realtead to PV domU. But I
 find a [kdump support for PV domU kexec/kdump implementation for Xen PV domU](https://lkml.org/lkml/2013/7/29/469); it seems not merged to upstream(FIXME). The commit from Petr Tesarik also states that PV domains didn't works with kdump since reserving a crashkernel memory region is not possible due to this commit.
 commit 3db3eb285259ac129f7aec6b814b3e9f6c1b372b
@@ -81,6 +159,14 @@ kvm_detect -> __kvm_cpuid_base
 hypervisor_cpuid_base("KVMKVMKVM\0\0\0", 0);
 ## Is Dom0 HVM?
 [Is Dom0 HVM? Firo: No, Dom0 is PV](https://stackoverflow.com/questions/19147398/is-xen-dom0-a-guest-or-a-host)
+## Is Dom0 Guest?
+Is xen dom0 a guest or a host?: https://stackoverflow.com/questions/19147398/is-xen-dom0-a-guest-or-a-host/19159728#19159728
+/*
+ * Return 1 if its a PV guest.
+ * This includes dom0, which is the only PV guest where kexec/kdump works.
+ * HVM guests have to be handled as native hardware.
+ */
+int xen_present(void) from kexec-tools
 # Terminology
 https://wiki.xenproject.org/wiki/XenTerminology
 [Use bfn (Bus Frame Number) rather than dfn to match the](https://lists.xen.org/archives/html/xen-devel/2015-08/msg00270.html)
