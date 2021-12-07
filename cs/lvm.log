@@ -1,0 +1,69 @@
+https://bugzilla.suse.com/show_bug.cgi?id=1183738
+Bug 1183738 - Inconsistent iostats results volume vs data devices
+
+
+Hi, this issue can be reproduced with attached script in following steps:
+
+lvmtst-setup.sh build loop 8 20
+vgcreate -v vg2 -s 32k /dev/mapper/loop_pv[5-8]
+lvcreate -i 4 -L 20M -n lv2  vg2 
+iostat 1 > /tmp/i.log
+fio --name=16M --filename=/dev/vg2/lv2 --rw=write --bs=64k --size=16M --iodepth=1 --ioengine=libaio --direct=1 --refill_buffers
+
+Then check result in /tmp/i.log.
+=============================
+
+lvmtst-setup.sh build loop 8 20
+vgcreate -v vg2 -s 32k /dev/mapper/loop_pv[5-8]
+lvcreate -i 4 -L 20M -n lv2  vg2 
+iostat 1 > /tmp/i.log
+fio --name=16M --filename=/dev/vg2/lv2 --rw=write --bs=64k --size=16M --iodepth=1 --ioengine=libaio --direct=1 --refill_buffers
+
+#dmsetup create 1gb-zero --table "0 1953125 zero"
+
+## 例子3
+
+这个例子是用zero设备构建lvm lv, 实现上面dmsetup 10TB的功能. 注意实现方式不完全相同, 上面只用了snapshot. 下
+面lvcreate会使用snapshot, snapshot-origin.
+
+Another extension of this concept is create LVM snapshot over fake disk and use snapshot volume – then you can even write into arbitrary part of device (but not to overfill maximal snapshot size).
+
+```
+# lvs
+  LV          VG     Attr       LSize  Pool Origin    Data%  Meta%  Move Log Cpy%Sync Convert
+  lv_fake_8tb vg_8tb owi-a-s--- <8.00t
+  lv_real_8tb vg_8tb swi-a-s--- 32.00m      lv_fake_8tb 0.00
+```
+
+过程如下:
+
+创建8tb zero设备
+```
+dmsetup create pv_8tb <<EOF    //fake disk, linear类型, 前512K为真实设备. 之后为zero设备
+0 1024 linear /dev/sdb1 0      //这512KB 应该是用于保存lvm的metadata. (会执行[pv|vg|lv]create)
+1024 17179868160 zero
+EOF
+```
+
+要加filter(Note: filter /dev/sdb1 in lvm.conf to not scan for PV directly !)
+```
+pvcreate /dev/mapper/pv_8tb  #use as LVM physical volume
+pvcreate /dev/sdh1           #physical volume for snapshot
+
+vgcreate vg_8tb /dev/mapper/pv_8tb
+lvcreate -n lv_fake_8tb -l 100%FREE vg_8tb /dev/mapper/pv_8tb
+
+vgextend vg_8tb /dev/sdh1
+lvcreate -n lv_real_8tb -s -l 100%FREE vg_8tb/lv_fake_8tb /dev/sdh1
+
+   # here you can use /dev/mapper/lv_real_8tb  <=== 之后就可以使用这个lv_real_8tb做IO
+
+vgchange -a n vg_8tb        # clean everything. 下面为clean操作
+lvremove vg_8tb/lv_real_8tb
+lvremove vg_8tb/lv_fake_8tb
+vgremove vg_8tb
+pvremove /dev/mapper/pv_8tb /dev/sdh1
+
+dmsetup remove pv_8tb
+```
+这个例子过程: 先有一个8tb的 fake_disk. 在其上建立lv. 然后, 在这个8tb上建立一个snapshot.

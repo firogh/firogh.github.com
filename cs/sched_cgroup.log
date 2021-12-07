@@ -1,0 +1,127 @@
+# Group scheduling
+[GROUP SCHEDULER EXTENSIONS TO CFS](https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt)
+[CFS调度器（3）-组调度](http://www.wowotech.net/process_management/449.html)
+[Linux进程组调度机制分析](http://oenhan.com/task-group-sched)
+## Two trees
+task_group->parent; task_group->css.cgroup
+cgroup->parent and cgroup_tg: container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id), struct task_group, css);
+## System bootup
+struct task_group root_task_group; and cpu_cgroup_create;
+## Creating task_group
+sched_create_group
+task_group 1 : cpu 'group sched_entity'
+group sched_entity 1 : 1 greoup cfs_rq
+gse_CPUx's load = grq_CPUx's all se's load * task_group->shares / grq_CPU*'s all se's load
+        /* rq on which this entity is (to be) queued: */
+        struct cfs_rq           *cfs_rq;
+        /* rq "owned" by this entity/group: */
+        struct cfs_rq           *my_q;
+[CFS group scheduling](https://lwn.net/Articles/240474/)
+commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc
+Author: Srivatsa Vaddagiri <vatsa@linux.vnet.ibm.com>
+Date:   Mon Oct 15 17:00:07 2007 +0200
+    sched: group-scheduler core
+
+# shares, weight, load, reweight
+https://josefbacik.github.io/kernel/scheduler/2017/07/14/scheduler-basics.html
+https://josefbacik.github.io/kernel/scheduler/cgroup/2017/07/24/scheduler-imbalance.html
+## For group sched_entity
+cfs_rq: load, se:weight
+## sched_avg PELT
+___update_load_sum(u64 now, struct sched_avg *sa,
+                  unsigned long load, unsigned long runnable, int running)
+see accumulate_sum
+        if (load) # contrib is decayed time period; so load_sum is sum of decayed loads.
+                sa->load_sum += load * contrib;
+        if (runnable) # runnable decayed time period.
+                sa->runnable_sum += runnable * contrib << SCHED_CAPACITY_SHIFT;
+        if (running) # running decayed time period
+                sa->util_sum += contrib << SCHED_CAPACITY_SHIFT;
+### Blocked
+        if (___update_load_sum(now, &se->avg, 0, 0, 0)) {
+                ___update_load_avg(&se->avg, se_weight(se));
+### cfs_rq
+        if (___update_load_sum(now, &cfs_rq->avg,
+                                scale_load_down(cfs_rq->load.weight),
+                                cfs_rq->h_nr_running,
+                                cfs_rq->curr != NULL)) 
+### se: task vs cfs rq entity
+        if (___update_load_sum(now, &se->avg, !!se->on_rq, se_runnable(se),
+                                cfs_rq->curr == se)) {
+
+# Load-tracking PELT
+[Load tracking in the scheduler](https://lwn.net/Articles/639543/)
+[Per-entity load tracking](https://lwn.net/Articles/531853/)
+commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9
+Author: Paul Turner <pjt@google.com>
+    sched: Make __update_entity_runnable_avg() fast
+>>> n=0
+>>> for i in range(0, 345):
+...  n = 1024 + n*0.9785720620877001
+... 
+>>> print(n)
+47760.925095044084
++#define LOAD_AVG_PERIOD 32
++#define LOAD_AVG_MAX 47742 /* maximum possible load avg */
++#define LOAD_AVG_MAX_N 345 /* number of full periods to produce LOAD_MAX_AVG */
+
+commit a481db34b9beb7a9647c23f2320dd38a2b1d681f
+Refs: v4.11-rc2-229-ga481db34b9be
+Author:     Yuyang Du <yuyang.du@intel.com>
+    sched/fair: Optimize ___update_sched_avg()
+commit 9d89c257dfb9c51a532d69397f6eed75e5168c35
+Author: Yuyang Du <yuyang.du@intel.com>
+Date:   Wed Jul 15 08:04:37 2015 +0800
+    sched/fair: Rewrite runnable load and utilization average tracking
+
+# on_rq
+/* task_struct::on_rq states: */
+#define TASK_ON_RQ_QUEUED       1
+#define TASK_ON_RQ_MIGRATING    2
+p->on_rq
+0: deactivated. pick_next and dequeue_task will not change it. Only can deactivate_task change it.
+se->on_rq
+0: deactivated or throttled(see unthrottle_cfs_rq and throttle_cfs_rq)
+pick_next will not change; it seems only dequeue_entity can change se->on_rq.
+
+# CPU bandwidth
+[CFS bandwidth control](https://lwn.net/Articles/428230/)
+[Unthrottled: Fixing CPU Limits in the Cloud](https://engineering.indeedblog.com/blog/2019/12/unthrottled-fixing-cpu-limits-in-the-cloud/)
+https://www.kernel.org/doc/html/latest/scheduler/sched-bwc.html
+slack:宽松些由于sleep: http://www.wowotech.net/process_management/451.html
+ * This is done with a timer (instead of inline with bandwidth return) since #return_cfs_rq_runtime
+ * it's necessary to juggle rq->locks to unthrottle their respective cfs_rqs.
+ */
+static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
+period: 1) if throttled, then start perioidic distributing timer: throttle_cfs_rq -> __assign_cfs_rq_runtime-> start_cfs_bandwidth
+	2) /* Restart the period timer (if active) to handle new period expiry; see caller of start_cfs_bandwidth().
+
+
+# shell script
+https://www.spinics.net/lists/cgroups/msg28747.html
+
+# Load-balancing with cgroup cfs rq
+Leaf cfs_rq
+commit 6aa645ea5f7a246702e07f29edc7075d487ae4a3
+Refs: v2.6.22-14-g6aa645ea5f7a
+Author:     Ingo Molnar <mingo@elte.hu>
+AuthorDate: Mon Jul 9 18:51:58 2007 +0200
+    sched: cfs rq data types
+ * leaf cfs_rqs are those that hold tasks (lowest schedulable entity in
+ * a hierarchy). Non-leaf lrqs hold other higher schedulable entities
+ * (like users, containers etc.)
+ * leaf_cfs_rq_list ties together list of leaf cfs_rq's in a cpu. This
+ * list is used during load balance.
+Head of list: rq->leaf_cfs_rq_list
+
+## hierarchal order on shares update list
+commit 67e86250f8ea7b8f7da53ac25ea73c6bd71f5cd9
+Author: Paul Turner <pjt@google.com>
+Date:   Mon Nov 15 15:47:05 2010 -0800
+    sched: Introduce hierarchal order on shares update list
+## tmp_alone_branch
+commit 9c2791f936ef5fd04a118b5c284f2c9a95f4a647
+Refs: v4.9-rc5-195-g9c2791f936ef
+Author:     Vincent Guittot <vincent.guittot@linaro.org>
+AuthorDate: Tue Nov 8 10:53:43 2016 +0100
+    sched/fair: Fix hierarchical order in rq->leaf_cfs_rq_list

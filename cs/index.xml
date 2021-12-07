@@ -770,31 +770,11 @@ init_IRQ()-&amp;gt;x86_init.irqs.intr_init=native_init_IRQ     #===&amp;gt; exte
 &lt;p&gt;root@snow:/tmp# cat x.sh&lt;br /&gt;
 echo 1 &amp;gt; /proc/irq/129/smp_affinity&lt;br /&gt;
 sudo trace-cmd record -p function_graph &amp;ndash;max-graph-depth 70 -g __irq_set_affinity -c -F  ./x.sh&lt;br /&gt;
-cpus=4&lt;br /&gt;
-              sh-26457 [000] 19135.281818: funcgraph_entry:                   |  __irq_set_affinity() {&lt;br /&gt;
-              sh-26457 [000] 19135.281819: funcgraph_entry:        0.306 us   |    irq_to_desc();&lt;br /&gt;
-              sh-26457 [000] 19135.281819: funcgraph_entry:        0.149 us   |    _raw_spin_lock_irqsave();&lt;br /&gt;
-              sh-26457 [000] 19135.281820: funcgraph_entry:                   |    irq_set_affinity_locked() {&lt;br /&gt;
-              sh-26457 [000] 19135.281820: funcgraph_entry:                   |      irq_do_set_affinity() {&lt;br /&gt;
-              sh-26457 [000] 19135.281820: funcgraph_entry:                   |        msi_domain_set_affinity() {&lt;br /&gt;
-              sh-26457 [000] 19135.281821: funcgraph_entry:                   |          intel_ir_set_affinity() {&lt;br /&gt;
-              sh-26457 [000] 19135.281821: funcgraph_entry:        0.220 us   |            irqd_cfg();&lt;br /&gt;
-              sh-26457 [000] 19135.281822: funcgraph_entry:                   |            apic_set_affinity() {&lt;br /&gt;
-              sh-26457 [000] 19135.281822: funcgraph_entry:        0.248 us   |              _raw_spin_lock();&lt;br /&gt;
-              sh-26457 [000] 19135.281822: funcgraph_entry:        0.245 us   |              assign_vector_locked();&lt;br /&gt;
-              sh-26457 [000] 19135.281823: funcgraph_exit:         1.276 us   |            }&lt;br /&gt;
-              sh-26457 [000] 19135.281823: funcgraph_entry:        0.148 us   |            irqd_cfg();&lt;br /&gt;
-              sh-26457 [000] 19135.281823: funcgraph_entry:                   |            modify_irte.isra.0() {&lt;br /&gt;
-              sh-26457 [000] 19135.281823: funcgraph_entry:        0.272 us   |              _raw_spin_lock_irqsave();&lt;br /&gt;
-              sh-26457 [000] 19135.281824: funcgraph_entry:        0.492 us   |              clflush_cache_range();&lt;br /&gt;
-              sh-26457 [000] 19135.281824: funcgraph_entry:                   |              qi_submit_sync() {&lt;br /&gt;
-              sh-26457 [000] 19135.281825: funcgraph_entry:        0.272 us   |                _raw_spin_lock_irqsave();&lt;br /&gt;
-              sh-26457 [000] 19135.281828: funcgraph_entry:        0.135 us   |                _raw_spin_lock();&lt;br /&gt;
-              sh-26457 [000] 19135.281828: funcgraph_entry:        0.144 us   |                _raw_spin_unlock_irqrestore();&lt;br /&gt;
-              sh-26457 [000] 19135.281828: funcgraph_exit:         3.647 us   |              }&lt;br /&gt;
-              sh-26457 [000] 19135.281828: funcgraph_entry:        0.195 us   |              _raw_spin_unlock_irqrestore();&lt;br /&gt;
-              sh-26457 [000] 19135.281829: funcgraph_exit:         5.290 us   |            }&lt;br /&gt;
-              sh-26457 [000] 19135.281829: funcgraph_entry:        0.129 us   |            send_cleanup_vector();&lt;/p&gt;
+__irq_set_affinity msi_domain_set_affinity intel_ir_set_affinity apic_set_affinity&lt;/p&gt;
+
+&lt;p&gt;interrupt balancing&lt;br /&gt;
+Interrupts not distributed as specified in smp_affinity: &lt;a href=&#34;https://www.suse.com/support/kb/doc/?id=000018837&#34;&gt;https://www.suse.com/support/kb/doc/?id=000018837&lt;/a&gt;&lt;br /&gt;
+De-mystifying interrupt balancing: irqbalance: &lt;a href=&#34;https://www.youtube.com/watch?v=hjMWVrqrt2U&#34;&gt;https://www.youtube.com/watch?v=hjMWVrqrt2U&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;ipi&#34;&gt;IPI&lt;/h1&gt;
 
@@ -819,10 +799,10 @@ REBOOT_VECTOR                   0xf8&lt;/p&gt;
     
     <item>
       <title>Scheduling in operating system</title>
-      <link>http://firoyang.org/cs/scheduling/</link>
+      <link>http://firoyang.org/cs/sched_/</link>
       <pubDate>Wed, 29 Mar 2017 10:49:04 CST</pubDate>
       <author>Firo Yang</author>
-      <guid>http://firoyang.org/cs/scheduling/</guid>
+      <guid>http://firoyang.org/cs/sched_/</guid>
       <description>
 
 &lt;h1 id=&#34;scheduling&#34;&gt;scheduling&lt;/h1&gt;
@@ -848,97 +828,27 @@ Date:   Sat Aug 13 12:38:19 2016 -0400&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://www.joelfernandes.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html&#34;&gt;TIF_NEED_RESCHED: why is it needed&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;general-runqueues&#34;&gt;General runqueues&lt;/h1&gt;
-
-&lt;p&gt;static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);&lt;br /&gt;
-activate_task - move a task to the runqueue.&lt;br /&gt;
-wake_up_new_task&lt;br /&gt;
-ttwu_do_activate&lt;/p&gt;
-
 &lt;h1 id=&#34;latency&#34;&gt;Latency&lt;/h1&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/404993/&#34;&gt;Improving scheduler latency&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;cfs-runqueues&#34;&gt;CFS runqueues&lt;/h1&gt;
+&lt;h1 id=&#34;general-runqueues&#34;&gt;General runqueues&lt;/h1&gt;
 
-&lt;p&gt;cfa_rq, on_list, sched_entity-&amp;gt;on_rq, check enqueue_entity&lt;/p&gt;
-
-&lt;h2 id=&#34;cfs-runqueue-and-sched-entity&#34;&gt;CFS runqueue and sched entity&lt;/h2&gt;
-
-&lt;p&gt;set_task_rq&lt;/p&gt;
+&lt;p&gt;static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);&lt;br /&gt;
+activate_task - move a task to the runqueue.&lt;br /&gt;
+wake_up_new_task ttwu_do_activate&lt;/p&gt;
 
 &lt;h2 id=&#34;on-rq&#34;&gt;on_rq&lt;/h2&gt;
 
-&lt;p&gt;on_rq should be same as task-&amp;gt;on_rq. It doesn&amp;rsquo;t mean sched_entity is on cfs_rq, but rq.&lt;br /&gt;
-commit fd2f4419b4cbe8fe90796df9617c355762afd6a4&lt;br /&gt;
+&lt;p&gt;commit fd2f4419b4cbe8fe90796df9617c355762afd6a4&lt;br /&gt;
 Author: Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
 Date:   Tue Apr 5 17:23:44 2011 +0200&lt;br /&gt;
-    sched: Provide p-&amp;gt;on_rq&lt;br /&gt;
-p-&amp;gt;on_rq on any rq.&lt;br /&gt;
-se-&amp;gt;on_rq on specific rq.&lt;/p&gt;
-
-&lt;h2 id=&#34;cfs-runqueue-and-task-group&#34;&gt;CFS runqueue and task group&lt;/h2&gt;
-
-&lt;p&gt;sched_create_group -&amp;gt; alloc_fair_sched_group -&amp;gt; init_tg_cfs_entry&lt;/p&gt;
+    sched: Provide p-&amp;gt;on_rq&lt;/p&gt;
 
 &lt;h1 id=&#34;cfs-core-codes&#34;&gt;CFS core codes&lt;/h1&gt;
 
-&lt;p&gt;git log 20b8a59f2461e&lt;/p&gt;
-
-&lt;h1 id=&#34;group-scheduling&#34;&gt;Group scheduling&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-design-CFS.txt&#34;&gt;GROUP SCHEDULER EXTENSIONS TO CFS&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://www.wowotech.net/process_management/449.html&#34;&gt;CFS调度器（3）-组调度&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;http://oenhan.com/task-group-sched&#34;&gt;Linux进程组调度机制分析&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;two-trees&#34;&gt;Two trees&lt;/h2&gt;
-
-&lt;p&gt;task_group-&amp;gt;parent; task_group-&amp;gt;css.cgroup&lt;br /&gt;
-cgroup-&amp;gt;parent and cgroup_tg: container_of(cgroup_subsys_state(cgrp, cpu_cgroup_subsys_id), struct task_group, css);&lt;/p&gt;
-
-&lt;h2 id=&#34;task-group-and-cgroup-is-1-1&#34;&gt;Task group and cgroup is 1:1&lt;/h2&gt;
-
-&lt;h2 id=&#34;system-bootup&#34;&gt;System bootup&lt;/h2&gt;
-
-&lt;p&gt;struct task_group root_task_group; and cpu_cgroup_create;&lt;/p&gt;
-
-&lt;h2 id=&#34;creating-task-group&#34;&gt;Creating task_group&lt;/h2&gt;
-
-&lt;p&gt;sched_create_group&lt;br /&gt;
-task_group 1 : cpu &amp;lsquo;group sched_entity&amp;rsquo;&lt;br /&gt;
-group sched_entity 1 : 1 greoup cfs_rq&lt;br /&gt;
-gse_CPUx&amp;rsquo;s load = grq_CPUx&amp;rsquo;s all se&amp;rsquo;s load * task_group-&amp;gt;shares / grq_CPU&lt;em&gt;&amp;rsquo;s all se&amp;rsquo;s load&lt;br /&gt;
-        /&lt;/em&gt; rq on which this entity is (to be) queued: */&lt;br /&gt;
-        struct cfs_rq           &lt;em&gt;cfs_rq;&lt;br /&gt;
-        /&lt;/em&gt; rq &amp;ldquo;owned&amp;rdquo; by this entity/group: */&lt;br /&gt;
-        struct cfs_rq           *my_q;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/240474/&#34;&gt;CFS group scheduling&lt;/a&gt;&lt;br /&gt;
-commit 29f59db3a74b0bdf78a1f5b53ef773caa82692dc&lt;br /&gt;
-Author: Srivatsa Vaddagiri &lt;a href=&#34;mailto:vatsa@linux.vnet.ibm.com&#34;&gt;vatsa@linux.vnet.ibm.com&lt;/a&gt;&lt;br /&gt;
-Date:   Mon Oct 15 17:00:07 2007 +0200&lt;br /&gt;
-    sched: group-scheduler core&lt;/p&gt;
-
-&lt;h2 id=&#34;why-double-for-each-sched-entity&#34;&gt;Why double for_each_sched_entity&lt;/h2&gt;
-
-&lt;p&gt;commit 2069dd75c7d0f49355939e5586daf5a9ab216db7&lt;br /&gt;
-Author: Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
-Date:   Mon Nov 15 15:47:00 2010 -0800&lt;br /&gt;
-    sched: Rewrite tg_shares_up)&lt;/p&gt;
-
-&lt;p&gt;371fd7e7a56a5 (Peter Zijlstra       2010-03-24 16:38:48 +0100 1129) enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)&lt;br /&gt;
-bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1134)     for_each_sched_entity(se) {&lt;br /&gt;
-62fb185130e4d (Peter Zijlstra       2008-02-25 17:34:02 +0100 1135)             if (se-&amp;gt;on_rq)&lt;br /&gt;
-bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1136)                     break;&lt;br /&gt;
-bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1137)             cfs_rq = cfs_rq_of(se);&lt;br /&gt;
-88ec22d3edb72 (Peter Zijlstra       2009-12-16 18:04:41 +0100 1138)             enqueue_entity(cfs_rq, se, flags);&lt;br /&gt;
-88ec22d3edb72 (Peter Zijlstra       2009-12-16 18:04:41 +0100 1139)             flags = ENQUEUE_WAKEUP;&lt;br /&gt;
-bf0f6f24a1ece (Ingo Molnar          2007-07-09 18:51:58 +0200 1140)     }&lt;br /&gt;
-8f4d37ec073c1 (Peter Zijlstra       2008-01-25 21:08:29 +0100 1141)&lt;br /&gt;
-2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1142)     for_each_sched_entity(se) {&lt;br /&gt;
-2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1143)             struct cfs_rq *cfs_rq = cfs_rq_of(se);&lt;br /&gt;
-2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1144)&lt;br /&gt;
-2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1145)             update_cfs_load(cfs_rq);&lt;br /&gt;
-2069dd75c7d0f (Peter Zijlstra       2010-11-15 15:47:00 -0800 1146)             update_cfs_shares(cfs_rq);&lt;/p&gt;
+&lt;p&gt;git log 20b8a59f2461e&lt;br /&gt;
+sched_create_group -&amp;gt; alloc_fair_sched_group -&amp;gt; init_tg_cfs_entry&lt;/p&gt;
 
 &lt;h1 id=&#34;wake-up&#34;&gt;Wake up&lt;/h1&gt;
 
@@ -973,25 +883,6 @@ Date:   Fri Jul 14 00:24:27 2006 -0700&lt;br /&gt;
     [PATCH] lockdep: core, fix rq-lock handling on __ARCH_WANT_UNLOCKED_CTXSW&lt;br /&gt;
 +        * Since the runqueue lock will be released by the next&lt;br /&gt;
 +        * task&lt;/p&gt;
-
-&lt;h1 id=&#34;running-time&#34;&gt;Running time&lt;/h1&gt;
-
-&lt;p&gt;proc_sched_show_task&lt;/p&gt;
-
-&lt;h1 id=&#34;problems&#34;&gt;Problems&lt;/h1&gt;
-
-&lt;h2 id=&#34;why-scheduling&#34;&gt;Why scheduling?&lt;/h2&gt;
-
-&lt;p&gt;Customers demand multitasking/concurrent&lt;br /&gt;
-Processes are blocked&lt;/p&gt;
-
-&lt;h2 id=&#34;fairness&#34;&gt;Fairness&lt;/h2&gt;
-
-&lt;p&gt;Unit: /proc/sys/kernel/sched_min_granularity_ns&lt;/p&gt;
-
-&lt;h1 id=&#34;conceptions&#34;&gt;Conceptions&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://android.googlesource.com/kernel/msm/+/android-msm-bullhead-3.10-marshmallow-dr/Documentation/scheduler/sched-hmp.txt&#34;&gt;Cpu capacity&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;running-compensator-records-the-running-process&#34;&gt;Running Compensator records the running process&lt;/h1&gt;
 
@@ -1110,23 +1001,9 @@ Check External links&lt;br /&gt;
 calc_load_fold_active&lt;br /&gt;
 Etymology of avenrun: &lt;a href=&#34;https://elixir.bootlin.com/linux/v4.1/source/arch/s390/appldata/appldata_os.c&#34;&gt;average nr. of running processes during&lt;/a&gt;&lt;/p&gt;
 
-&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;&lt;/li&gt;
+&lt;h1 id=&#34;lqo-1&#34;&gt;LQO&lt;/h1&gt;
 
-&lt;li&gt;&lt;p&gt;h_nr_running and throttled&lt;br /&gt;
-sched: Implement hierarchical task accounting for SCHED_OTHER - 953bfcd10e6f3697233e8e5128c611d275da39c1&lt;br /&gt;
-&lt;a href=&#34;https://groups.google.com/forum/#!topic/linux.kernel/gRzxHclMy50&#34;&gt;https://groups.google.com/forum/#!topic/linux.kernel/gRzxHclMy50&lt;/a&gt;&lt;br /&gt;
-&amp;lsquo;root&amp;rsquo;&lt;br /&gt;
-\&lt;br /&gt;
-&amp;lsquo;A&amp;rsquo;&lt;br /&gt;
-/ \&lt;br /&gt;
-t1 t2&lt;br /&gt;
-root.nr_running := 2&lt;br /&gt;
-root.h_nr_running := 2&lt;br /&gt;
-Check enqueue_task_fair()&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;idle&lt;br /&gt;
-&lt;a href=&#34;https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt&#34;&gt;https://www.kernel.org/doc/Documentation/scheduler/sched-arch.txt&lt;/a&gt;&lt;br /&gt;
-&lt;a href=&#34;https://lwn.net/Articles/136065/&#34;&gt;improve SMP reschedule and idle routines&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/136065/&#34;&gt;improve SMP reschedule and idle routines&lt;/a&gt;&lt;br /&gt;
 TIF_POLLING_NRFLAG -&amp;gt; Need-Resched-Flag?&lt;/p&gt;&lt;/li&gt;
 
 &lt;li&gt;&lt;p&gt;process migration&lt;br /&gt;
@@ -1158,29 +1035,15 @@ bf0f6f24a1ece8988b243aefe84ee613099a9245&lt;br /&gt;&lt;/li&gt;
 the tree is named timeline&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://lwn.net/Articles/404993/&#34;&gt;Improving scheduler latency &lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
 &lt;li&gt;skip next last buddy&lt;br /&gt;
-&lt;br /&gt;
 &lt;br /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h1 id=&#34;git-log&#34;&gt;Git log&lt;/h1&gt;
-
-&lt;p&gt;e9c8431185d6c406887190519f6dbdd112641686&lt;br /&gt;
-TASK_WAKING; see migrate_task_rq_fair and try_to_wake_up&lt;br /&gt;
-88ec22d3edb72b261f8628226cd543589a6d5e1b&lt;br /&gt;
-In order to remove the cfs_rq dependency from set_task_cpu() we need to ensure the task is cfs_rq invariant for all callsites.&lt;br /&gt;
-2f950354e6d535b892f133d20bd6a8b09430424c&lt;br /&gt;
-sched/fair: Fix fairness issue on migration&lt;br /&gt;
-&lt;a href=&#34;http://linux.kernel.narkive.com/p15Wmn0i/migrated-cfs-task-getting-an-unfair-advantage&#34;&gt;Migrated CFS task getting an unfair advantage&lt;/a&gt;&lt;br /&gt;
-30cfdcfc5f180fc21a3dad6ae3b7b2a9ee112186&lt;br /&gt;
-curr was not kept in rb-tree&lt;/p&gt;
-
 &lt;h1 id=&#34;load-balancing&#34;&gt;Load balancing&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/80911/&#34;&gt;Scheduling domains&lt;/a&gt;&lt;br /&gt;
-set sd&lt;br /&gt;
-kernel_init_freeable-&amp;gt;&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.kernel.org/doc/html/latest/_sources/scheduler/sched-domains.rst.txt&#34;&gt;https://www.kernel.org/doc/html/latest/_sources/scheduler/sched-domains.rst.txt&lt;/a&gt;&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/80911/&#34;&gt;Scheduling domains&lt;/a&gt;&lt;br /&gt;
 sched_init_smp-&amp;gt;&lt;br /&gt;
-init_sched_domains-&amp;gt;build_sched_domains:-&amp;gt;&lt;br /&gt;
+sched_init_domains or init_sched_domains build_sched_domains&lt;br /&gt;
 &lt;strong&gt;visit_domain_allocation_hell()-&amp;gt;&lt;/strong&gt;sdt_alloc() alloc the sdd-&amp;gt;sg which is used by build groups&lt;br /&gt;
 and sg = kzalloc_node(sizeof(struct sched_group) + cpumask_size(); it covered the size of cpumask&lt;br /&gt;
 /* Build the groups for the domains */&lt;br /&gt;
@@ -1197,110 +1060,7 @@ sd&lt;em&gt;init&lt;/em&gt;##type(struct sched_domain_topology_level *tl, int cp
         sd-&amp;gt;private = &amp;amp;tl-&amp;gt;data;                                        &lt;br /&gt;
         return sd;                                                      &lt;br /&gt;
 }&lt;br /&gt;
-tl-&amp;gt;mask(cpu)&lt;br /&gt;
-static struct sched_domain_topology_level default_topology[] = {&lt;br /&gt;
-#ifdef CONFIG_SCHED_SMT&lt;br /&gt;
-        { sd_init_SIBLING, cpu_smt_mask, },&lt;br /&gt;
-#endif&lt;br /&gt;
-#ifdef CONFIG_SCHED_MC&lt;br /&gt;
-        { sd_init_MC, cpu_coregroup_mask, },&lt;br /&gt;
-#endif&lt;br /&gt;
-#ifdef CONFIG_SCHED_BOOK&lt;br /&gt;
-        { sd_init_BOOK, cpu_book_mask, },&lt;br /&gt;
-#endif&lt;br /&gt;
-        { sd_init_CPU, cpu_cpu_mask, },&lt;br /&gt;
-        { NULL, },&lt;br /&gt;
-};&lt;/p&gt;
-
-&lt;h2 id=&#34;leaf-cfs-runqueues-leaf-cfs-rq&#34;&gt;Leaf CFS runqueues leaf_cfs_rq&lt;/h2&gt;
-
-&lt;h3 id=&#34;first&#34;&gt;First&lt;/h3&gt;
-
-&lt;p&gt;commit 6aa645ea5f7a246702e07f29edc7075d487ae4a3&lt;br /&gt;
-Refs: v2.6.22-14-g6aa645ea5f7a&lt;br /&gt;
-Author:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-CommitDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
-    sched: cfs rq data types&lt;br /&gt;
- * leaf cfs_rqs are those that hold tasks (lowest schedulable entity in&lt;br /&gt;
- * a hierarchy). Non-leaf lrqs hold other higher schedulable entities&lt;br /&gt;
- * (like users, containers etc.)&lt;br /&gt;
- * leaf_cfs_rq_list ties together list of leaf cfs_rq&amp;rsquo;s in a cpu. This&lt;br /&gt;
- * list is used during load balance.&lt;br /&gt;
-Head of list: rq-&amp;gt;leaf_cfs_rq_list&lt;/p&gt;
-
-&lt;h3 id=&#34;core-load-balance-fair&#34;&gt;Core load_balance_fair&lt;/h3&gt;
-
-&lt;p&gt;commit bf0f6f24a1ece8988b243aefe84ee613099a9245&lt;br /&gt;
-Refs: v2.6.22-10-gbf0f6f24a1ec&lt;br /&gt;
-Author:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-CommitDate: Mon Jul 9 18:51:58 2007 +0200&lt;br /&gt;
-    sched: cfs core, kernel/sched_fair.c&lt;br /&gt;
-    add kernel/sched_fair.c - which implements the bulk of CFS&amp;rsquo;s&lt;br /&gt;
-    behavioral changes for SCHED_OTHER tasks.&lt;br /&gt;
-+load_balance_fair(struct rq *this_rq, int this_cpu, struct rq *busiest,&lt;br /&gt;
-+       for_each_leaf_cfs_rq(busiest, busy_cfs_rq) {&lt;/p&gt;
-
-&lt;h3 id=&#34;make-parent-appear-after-us&#34;&gt;make parent appear after us.&lt;/h3&gt;
-
-&lt;p&gt;commit 67e86250f8ea7b8f7da53ac25ea73c6bd71f5cd9&lt;br /&gt;
-Author: Paul Turner &lt;a href=&#34;mailto:pjt@google.com&#34;&gt;pjt@google.com&lt;/a&gt;&lt;br /&gt;
-Date:   Mon Nov 15 15:47:05 2010 -0800&lt;br /&gt;
-    sched: Introduce hierarchal order on shares update list&lt;br /&gt;
-    Avoid duplicate shares update calls by ensuring children always appear before                 # leaf&amp;rsquo;s meaning is changed&lt;br /&gt;
-    parents in rq-&amp;gt;leaf_cfs_rq_list.&lt;br /&gt;
-    This allows us to do a single in-order traversal for update_shares().&lt;br /&gt;
-    Since we always enqueue in bottom-up order this reduces to 2 cases:&lt;br /&gt;
-    1) Our parent is already in the list, e.g.&lt;br /&gt;
-       root&lt;br /&gt;
-         &lt;br /&gt;
-          b&lt;br /&gt;
-          /&lt;br /&gt;
-          c d* (root-&amp;gt;b-&amp;gt;c already enqueued)&lt;br /&gt;
-    Since d&amp;rsquo;s parent is enqueued we push it to the head of the list, implicitly ahead of b.&lt;br /&gt;
-    2) Our parent does not appear in the list (or we have no parent)&lt;br /&gt;
-    In this case we enqueue to the tail of the list, if our parent is subsequently enqueued&lt;br /&gt;
-    (bottom-up) it will appear to our right by the same rule.&lt;/p&gt;
-
-&lt;h3 id=&#34;tmp-alone-branch&#34;&gt;tmp_alone_branch&lt;/h3&gt;
-
-&lt;p&gt;commit 9c2791f936ef5fd04a118b5c284f2c9a95f4a647&lt;br /&gt;
-Refs: v4.9-rc5-195-g9c2791f936ef&lt;br /&gt;
-Author:     Vincent Guittot &lt;a href=&#34;mailto:vincent.guittot@linaro.org&#34;&gt;vincent.guittot@linaro.org&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Tue Nov 8 10:53:43 2016 +0100&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@kernel.org&#34;&gt;mingo@kernel.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Wed Nov 16 10:29:08 2016 +0100&lt;br /&gt;
-    sched/fair: Fix hierarchical order in rq-&amp;gt;leaf_cfs_rq_list&lt;br /&gt;
-    Fix the insertion of cfs_rq in rq-&amp;gt;leaf_cfs_rq_list to ensure that a&lt;br /&gt;
-    child will always be called before its parent.&lt;br /&gt;
-    The hierarchical order in shares update list has been introduced by&lt;br /&gt;
-    commit:&lt;br /&gt;
-      67e86250f8ea (&amp;ldquo;sched: Introduce hierarchal order on shares update list&amp;rdquo;)&lt;/p&gt;
-
-&lt;p&gt;commit 5d299eabea5a251fbf66e8277704b874bbba92dc&lt;br /&gt;
-Author: Peter Zijlstra &lt;a href=&#34;mailto:peterz@infradead.org&#34;&gt;peterz@infradead.org&lt;/a&gt;&lt;br /&gt;
-Date:   Wed Jan 30 14:41:04 2019 +0100&lt;br /&gt;
-    sched/fair: Add tmp_alone_branch assertion&lt;br /&gt;
-    The magic in list_add_leaf_cfs_rq() requires that at the end of&lt;br /&gt;
-    enqueue_task_fair():&lt;br /&gt;
-      rq-&amp;gt;tmp_alone_branch == &amp;amp;rq-&amp;gt;lead_cfs_rq_list&lt;/p&gt;
-
-&lt;h3 id=&#34;load-balance-fair-removed&#34;&gt;load_balance_fair - removed&lt;/h3&gt;
-
-&lt;p&gt;commit 9763b67fb9f3050c6da739105888327587c30c4d&lt;br /&gt;
-Refs: v3.0-rc7-197-g9763b67fb9f3&lt;br /&gt;
-Author:     Peter Zijlstra &lt;a href=&#34;mailto:a.p.zijlstra@chello.nl&#34;&gt;a.p.zijlstra@chello.nl&lt;/a&gt;&lt;br /&gt;
-AuthorDate: Wed Jul 13 13:09:25 2011 +0200&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@elte.hu&#34;&gt;mingo@elte.hu&lt;/a&gt;&lt;br /&gt;
-CommitDate: Thu Jul 21 18:01:46 2011 +0200&lt;br /&gt;
-    sched, cgroup: Optimize load_balance_fair()&lt;br /&gt;
-    Use for_each_leaf_cfs_rq() instead of list_for_each_entry_rcu(), this&lt;br /&gt;
-    achieves that load_balance_fair() only iterates those task_groups that&lt;br /&gt;
-    actually have tasks on busiest, and that we iterate bottom-up, trying to&lt;br /&gt;
-    move light groups before the heavier ones.&lt;/p&gt;
+sched_domain_topology_level default_topology&lt;/p&gt;
 
 &lt;h1 id=&#34;throttling-entities&#34;&gt;Throttling entities&lt;/h1&gt;
 
@@ -1312,11 +1072,10 @@ Date:   Thu Jul 21 09:43:33 2011 -0700&lt;br /&gt;
     group entities (and their corresponding cfs_rqs) in the case where this is no&lt;br /&gt;
     run-time remaining.&lt;/p&gt;
 
-&lt;h1 id=&#34;pelt&#34;&gt;PELT&lt;/h1&gt;
+&lt;h1 id=&#34;load-tracking-pelt&#34;&gt;Load tracking - PELT&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/531853/&#34;&gt;Per-entity load tracking&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9&lt;br /&gt;
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/531853/&#34;&gt;Per-entity load tracking&lt;/a&gt;&lt;br /&gt;
+commit 5b51f2f80b3b906ce59bd4dce6eca3c7f34cb1b9&lt;br /&gt;
 Author: Paul Turner &lt;a href=&#34;mailto:pjt@google.com&#34;&gt;pjt@google.com&lt;/a&gt;&lt;br /&gt;
 Date:   Thu Oct 4 13:18:32 2012 +0200&lt;br /&gt;
     sched: Make __update_entity_runnable_avg() fast&lt;br /&gt;
@@ -1324,8 +1083,6 @@ commit a481db34b9beb7a9647c23f2320dd38a2b1d681f&lt;br /&gt;
 Refs: v4.11-rc2-229-ga481db34b9be&lt;br /&gt;
 Author:     Yuyang Du &lt;a href=&#34;mailto:yuyang.du@intel.com&#34;&gt;yuyang.du@intel.com&lt;/a&gt;&lt;br /&gt;
 AuthorDate: Mon Feb 13 05:44:23 2017 +0800&lt;br /&gt;
-Commit:     Ingo Molnar &lt;a href=&#34;mailto:mingo@kernel.org&#34;&gt;mingo@kernel.org&lt;/a&gt;&lt;br /&gt;
-CommitDate: Thu Mar 30 09:43:41 2017 +0200&lt;br /&gt;
     sched/fair: Optimize ___update_sched_avg()&lt;/p&gt;
 </description>
     </item>
@@ -1337,6 +1094,11 @@ CommitDate: Thu Mar 30 09:43:41 2017 +0200&lt;br /&gt;
       <author>Firo Yang</author>
       <guid>http://firoyang.org/cs/boot/</guid>
       <description>
+
+&lt;h1 id=&#34;debug&#34;&gt;Debug&lt;/h1&gt;
+
+&lt;p&gt;efi=debug earlyprintk=efi,keep earlycon=efifb keep_bootcon&amp;rdquo; and no &amp;ldquo;quiet&amp;rdquo;&lt;br /&gt;
+Boot-time tracing: kernel.org/doc/html/latest/trace/boottime-trace.html&lt;/p&gt;
 
 &lt;h1 id=&#34;smp-boot&#34;&gt;SMP boot&lt;/h1&gt;
 
@@ -1377,6 +1139,30 @@ ap hp threadfn -&amp;gt; bringup_cpu -&amp;gt; __cpu_up -&amp;gt; smp_ops.cpu_up
 
 &lt;p&gt;trampoline_start -&amp;gt; &amp;hellip; -&amp;gt; startup_64 -&amp;gt; tr_start(%rip) is secondary_startup_64 -&amp;gt; initial_code(%rip) is start_secondary&lt;br /&gt;
 -&amp;gt; cpu_init&lt;/p&gt;
+
+&lt;h1 id=&#34;memory&#34;&gt;Memory&lt;/h1&gt;
+
+&lt;p&gt;arch/x86/kernel/head_64.S init_top_pgt&lt;/p&gt;
+
+&lt;p&gt;break buffer see alloc_low_buffer&lt;br /&gt;
+static void __init memory_map_top_down(unsigned long map_start,&lt;br /&gt;
+                                       unsigned long map_end)&lt;br /&gt;
+{&lt;br /&gt;
+        unsigned long real_end, start, last_start;&lt;br /&gt;
+        unsigned long step_size;&lt;br /&gt;
+        unsigned long addr;&lt;br /&gt;
+        unsigned long mapped_ram_size = 0;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    /* xen has big range in reserved near end of ram, skip it at first.*/
+    addr = memblock_find_in_range(map_start, map_end, PMD_SIZE, PMD_SIZE);
+    real_end = addr + PMD_SIZE;
+
+    /* step_size need to be small so pgt_buf from BRK could cover it */
+    step_size = PMD_SIZE;
+    max_pfn_mapped = 0; /* will get exact value next */
+    min_pfn_mapped = real_end &amp;gt;&amp;gt; PAGE_SHIFT;
+    last_start = start = real_end;
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;h1 id=&#34;initrd&#34;&gt;initrd&lt;/h1&gt;
 
@@ -1783,7 +1569,7 @@ So RCU is essentially used as resource-reclamation mechanism. And we know there 
 &lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/573424/&#34;&gt;URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html&#34;&gt;&amp;hellip; after all the CPUs in the system have gone through at least one &amp;ldquo;quiescent&amp;rdquo; state (such as context switch, idle loop, or user code)&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.&#34;&gt;The rcu and rcu_bh flavors of RCU have different sets of quiescent states.&lt;/a&gt;&lt;br /&gt;
-rcu_flavor_sched_clock_irq rcu_rs&lt;br /&gt;
+rcu_flavor_sched_clock_irq rcu_qs&lt;br /&gt;
 rcu_report_qs_rnp&lt;/p&gt;
 
 &lt;h2 id=&#34;cpu-vs-qs&#34;&gt;CPU vs QS&lt;/h2&gt;
@@ -1807,7 +1593,9 @@ rcu_report_qs_rnp&lt;/p&gt;
 &lt;h2 id=&#34;eqs-vs-interrupt-vs-read-side-section-1&#34;&gt;EQS vs interrupt vs read-side section&lt;/h2&gt;&lt;/dd&gt;
 &lt;/dl&gt;
 
-&lt;h2 id=&#34;heavy-and-light&#34;&gt;Heavy and light&lt;/h2&gt;
+&lt;h2 id=&#34;heavy-qs&#34;&gt;heavy_qs&lt;/h2&gt;
+
+&lt;p&gt;rcu_momentary_dyntick_idle&lt;/p&gt;
 
 &lt;h1 id=&#34;grace-period-time-to-reclaim&#34;&gt;Grace period - time to reclaim&lt;/h1&gt;
 
@@ -1826,13 +1614,63 @@ Updater want to free data if no GP is in-progress.&lt;/p&gt;
 
 &lt;p&gt;continuos Data on GP. Segmented.&lt;/p&gt;
 
-&lt;h2 id=&#34;deffered-qs&#34;&gt;Deffered QS&lt;/h2&gt;
+&lt;h2 id=&#34;kernel-move-gp-handling-to-kthread&#34;&gt;Kernel move GP handling to kthread&lt;/h2&gt;
+
+&lt;p&gt;&amp;ldquo;The reason for moving RCU grace-period handling to a kernel thread was to improve real-time latency&lt;br /&gt;
+&lt;a href=&#34;https://lwn.net/Articles/518953/&#34;&gt;The new visibility of RCU processing&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;gp-seq&#34;&gt;gp_seq&lt;/h2&gt;
+
+&lt;p&gt;struct rcu_data.gp_seq rcu_data:a&lt;br /&gt;
+commit e3663b1024d1f94688e5233440ad67a9bc10b94e&lt;br /&gt;
+Refs: v3.19-rc1-6-ge3663b1024d1&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@kernel.org&#34;&gt;paulmck@kernel.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Mon Dec 8 20:26:55 2014 -0800&lt;br /&gt;
+    rcu: Handle gpnum/completed wrap while dyntick idle&lt;/p&gt;
+
+&lt;h1 id=&#34;nocb&#34;&gt;nocb&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://lwn.net/Articles/522262/&#34;&gt;Relocating RCU callbacks&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;rcuog&#34;&gt;rcuog&lt;/h2&gt;
+
+&lt;p&gt;commit 12f54c3a8410102afb96ed437aebe7f1d87f399f&lt;br /&gt;
+Refs: v5.3-rc2-35-g12f54c3a8410&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@kernel.org&#34;&gt;paulmck@kernel.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Fri Mar 29 16:43:51 2019 -0700&lt;br /&gt;
+    rcu/nocb: Provide separate no-CBs grace-period kthreads&lt;/p&gt;
+
+&lt;h2 id=&#34;nocb-group-leader&#34;&gt;nocb group leader&lt;/h2&gt;
+
+&lt;p&gt;commit fbce7497ee5af800a1c350c73f3c3f103cb27a15&lt;br /&gt;
+Refs: v3.16-rc1-3-gfbce7497ee5a&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@kernel.org&#34;&gt;paulmck@kernel.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Jun 24 09:26:11 2014 -0700&lt;br /&gt;
+    rcu: Parallelize and economize NOCB kthread wakeups&lt;br /&gt;
+__call_rcu_nocb_enqueue replaced by __call_rcu_nocb_wake&lt;br /&gt;
+do_nocb_deferred_wakeup&lt;/p&gt;
+
+&lt;p&gt;rcu_gp_kthread_wake&lt;/p&gt;
+
+&lt;h1 id=&#34;non-context-switch-quiescent&#34;&gt;non-context-switch quiescent&lt;/h1&gt;
+
+&lt;p&gt;/*&lt;br /&gt;
+ * This function is invoked from each scheduling-clock interrupt,&lt;br /&gt;
+ * and checks to see if this CPU is in a non-context-switch quiescent&lt;br /&gt;
+ * state, for example, user mode or idle loop.  It also schedules RCU&lt;br /&gt;
+ * core processing.  If the current grace period has gone on too long,&lt;br /&gt;
+ * it will ask the scheduler to manufacture a context switch for the sole&lt;br /&gt;
+ * purpose of providing a providing the needed quiescent state.&lt;br /&gt;
+ */&lt;br /&gt;
+void rcu_sched_clock_irq(int user)&lt;/p&gt;
+
+&lt;h1 id=&#34;deffered-qs&#34;&gt;Deffered QS&lt;/h1&gt;
 
 &lt;p&gt;rcu_flavor_sched_clock_irq&lt;br /&gt;
 rcu_preempt_deferred_qs&lt;br /&gt;
 Reporting of a deferred QS reporting (when rcu_read_unlock() could not help).&lt;/p&gt;
 
-&lt;h2 id=&#34;memory-ordering&#34;&gt;Memory ordering&lt;/h2&gt;
+&lt;h1 id=&#34;memory-ordering&#34;&gt;Memory ordering&lt;/h1&gt;
 
 &lt;p&gt;A Tour Through TREE_RCU’s Grace-Period Memory Ordering &lt;a href=&#34;https://www.kernel.org/doc/html/latest/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html&#34;&gt;https://www.kernel.org/doc/html/latest/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html&lt;/a&gt;&lt;/p&gt;
 
@@ -2096,7 +1934,24 @@ CommitDate: Sun Aug 23 10:32:37 2009 +0200&lt;br /&gt;
     Make RCU-sched, RCU-bh, and RCU-preempt be underlying&lt;br /&gt;
     implementations, with &amp;ldquo;RCU&amp;rdquo; defined in terms of one of the&lt;br /&gt;
     three.  Update the outdated rcu_qsctr_inc() names, as these&lt;br /&gt;
-    functions no longer increment anything.&lt;/p&gt;
+    functions no loner increment anything.&lt;/p&gt;
+
+&lt;h1 id=&#34;rcu-and-preempt&#34;&gt;RCU and preempt&lt;/h1&gt;
+
+&lt;p&gt;commit 95f0c1de3e6ed4383cc4b5f52ce4ecfb21026b49&lt;br /&gt;
+Refs: v3.5-rc5-17-g95f0c1de3e6e&lt;br /&gt;
+Author:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@kernel.org&#34;&gt;paulmck@kernel.org&lt;/a&gt;&lt;br /&gt;
+AuthorDate: Tue Jun 19 11:58:27 2012 -0700&lt;br /&gt;
+Commit:     Paul E. McKenney &lt;a href=&#34;mailto:paulmck@kernel.org&#34;&gt;paulmck@kernel.org&lt;/a&gt;&lt;br /&gt;
+CommitDate: Mon Jul 2 12:34:25 2012 -0700&lt;br /&gt;
+    rcu: Disable preemption in rcu_blocking_is_gp()&lt;br /&gt;
+    It is time to optimize CONFIG_TREE_PREEMPT_RCU&amp;rsquo;s synchronize_rcu()&lt;br /&gt;
+    for uniprocessor optimization, which means that rcu_blocking_is_gp()&lt;br /&gt;
+    can no longer rely on RCU read-side critical sections having disabled&lt;br /&gt;
+    preemption.  This commit therefore disables preemption across&lt;br /&gt;
+    rcu_blocking_is_gp()&amp;rsquo;s scan of the cpu_online_mask.&lt;br /&gt;
+    (Updated from previous version to fix embarrassing bug spotted by&lt;br /&gt;
+    Wu Fengguang.)&lt;/p&gt;
 </description>
     </item>
     
@@ -2126,8 +1981,9 @@ CommitDate: Sun Aug 23 10:32:37 2009 +0200&lt;br /&gt;
 
 &lt;h1 id=&#34;hacking-area&#34;&gt;Hacking area&lt;/h1&gt;
 
-&lt;p&gt;mm&lt;br /&gt;
-&lt;a href=&#34;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&#34;&gt;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&lt;/a&gt;&lt;br /&gt;
+&lt;p&gt;hugetlb memcg other mm areas&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&#34;&gt;https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://lwn.net/Articles/749064/&#34;&gt;Variable-length arrays and the max() mess&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;https://www.youtube.com/watch?v=wlqjQe3vDx8&amp;amp;list=PLbzoR-pLrL6rOT6m50HdJFYUHyvA9lurI&amp;amp;index=11&amp;amp;t=0s&#34;&gt;Sub-system Update: Kernel Self-Protection Project - Kees Cook, Google&lt;/a&gt;&lt;/p&gt;
 
@@ -2144,6 +2000,10 @@ CommitDate: Sun Aug 23 10:32:37 2009 +0200&lt;br /&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://os.phil-opp.com/&#34;&gt;Writing an OS in Rust&lt;/a&gt;&lt;br /&gt;
 &lt;a href=&#34;http://www.brokenthorn.com/Resources/OSDevIndex.html&#34;&gt;BrokenThorn Entertainment Operating System Development Series&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;format-and-send-patches&#34;&gt;Format and send patches&lt;/h1&gt;
+
+&lt;p&gt;git format-patch -n2 &amp;ndash;subject-prefix=&amp;lsquo;PATCH v2&amp;rsquo; &amp;ndash;cover-letter&lt;/p&gt;
 
 &lt;h1 id=&#34;learning-kernel&#34;&gt;Learning kernel&lt;/h1&gt;
 
@@ -2459,8 +2319,11 @@ Symptoms appear under unusual conditions, making it hard to consistently reprodu
 uninitialized memory: &lt;a href=&#34;https://en.wikipedia.org/wiki/Dangling_pointer#Cause_of_wild_pointers&#34;&gt;wild pointer&lt;/a&gt;&lt;br /&gt;
 use after free: &lt;a href=&#34;https://en.wikipedia.org/wiki/Dangling_pointer#Cause_of_dangling_pointers&#34;&gt;dangling pointer&lt;/a&gt;&lt;br /&gt;
 buffer overflow:&lt;br /&gt;
-unknown source memory corruption: The generic &amp;ldquo;memory corruption&amp;rdquo;.&lt;br /&gt;
-memory leak:&lt;/p&gt;
+unknown source memory corruption: The generic &amp;ldquo;memory corruption&amp;rdquo;.&lt;/p&gt;
+
+&lt;h2 id=&#34;memory-leak&#34;&gt;memory leak:&lt;/h2&gt;
+
+&lt;p&gt;memleax &lt;a href=&#34;https://github.com/WuBingzheng/memleax&#34;&gt;https://github.com/WuBingzheng/memleax&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;anti-debugging&#34;&gt;Anti-debugging&lt;/h1&gt;
 

@@ -13,6 +13,17 @@ root        28  0.0  0.0      0     0 ?        S    08:23   0:00 [watchdog/3]
 NMI watchdog: BUG: soft lockup - CPU#0 stuck for 22s! [test.sh:16464]
 ...
 Kernel panic - not syncing: softlockup: hung tasks
+/*
+ * common function for watchdog, nmi_watchdog and soft_watchdog parameter
+ *
+ * caller             | table->data points to      | 'which'
+ * -------------------|----------------------------|--------------------------
+ * proc_watchdog      | watchdog_user_enabled      | NMI_WATCHDOG_ENABLED |
+ *                    |                            | SOFT_WATCHDOG_ENABLED
+ * -------------------|----------------------------|--------------------------
+ * proc_nmi_watchdog  | nmi_watchdog_user_enabled  | NMI_WATCHDOG_ENABLED
+ * -------------------|----------------------------|--------------------------
+ * proc_soft_watchdog | soft_watchdog_user_enabled | SOFT_WATCHDOG_ENABLED
 ### Crash
 watchdog_thresh
 ## Hardlockup

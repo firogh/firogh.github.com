@@ -11,6 +11,53 @@ Check LSP chapter 4: Mapping Files into Memory
 serial communication: UART(16550) + RS-232 
 parallel communication: SCSI, ISA, ATA, PCI, FSB 
 
+# Io perproties
+Different bandwiths: queue
+Throghput
+Latency
+per task iodelay proc/self/stat do_task_stat
+include/linux/delayacct.h task_delay_info
+delayacct_blkio_ticks
+
+Disk io latency
+proc/diskstats diskstats_show
+sar -d: read_diskstats_disk
+
+sys/block/*/stat part_stat_show 
+iostat: read_sysfs_file_stat_work
+
+# Queue
+find /sys/block/vda/queue/ -type f -print -exec cat {} \;
+
+# stat
+blk_account_io_done part_stat_inc part_stat_add 
+blk_account_io_start
+
+if aqu-sz > 1 ; queue satuartion; it's handle time; if average is > 1; then high load for disk
+https://www.xaprb.com/blog/2010/01/09/how-linux-iostat-computes-its-results/
+
+little's law for iostat
+Little’s Law as Viewed on Its 50th Anniversary https://people.cs.umass.edu/~emery/classes/cmpsci691st/readings/OS/Littles-Law-50-Years-Later.pdf
+https://sandjoshi.wordpress.com/2017/07/23/littles-law-in-action/
+https://sandjoshi.wordpress.com/2013/09/07/iostat-and-queueing-theory/
+
+# blktrace
+BLKTRACESETUP BLKTRACESTART 
+include/trace/events/block.h
+kernel/trace/blktrace.c
+grep -nr trace_block_ block/
+blk_register_tracepoints
+blk_account_io_start see biosnoop.py
+
+# blk utils
+blkparse -i sdc -d bb.sdc.bin
+btt -p sdc.bttp -i bb.sdc.bin
+
+# btt
+Couple of notes here:
+Regarding how to get the IO operation dumps: btt -p is one possibility as already noted in comment 14. Another possibility how to dump all the IOs as they happen is using blkparse(1) tool - I've just made it to work today. There's just a catch that it expects the file with the name <something>.blktrace.<number> - number can be 0 for our purposes. So I've renamed blktrace.bin1 to sda.blktrace.0 and then run "blkparse -i sda".
+https://bugzilla.suse.com/show_bug.cgi?id=1179495
+
 # Observability 
 [Linux Block I/O Tracing](https://www.linux.com/topic/networking/linux-block-io-tracing/)
 io wait: in_iowait
@@ -38,9 +85,32 @@ q->in_flight[rq_is_sync(rq)]--
 https://bugzilla.suse.com/show_bug.cgi?id=930934
 The warnings from blk_complete_request() about request not having REQ_STARTED which are before the BUG_ON triggering are actually reporting that someone is queueing completion of a request that hasn't been run. So they are warning about problems that are coming.
 
+# Timeline
+commit 5680d8094ffa9e5cfc81afdd865027ee6417c263
+Refs: v4.10-rc3-260-g5680d8094ffa
+Author:     Peter Zijlstra <peterz@infradead.org>
+AuthorDate: Thu Dec 15 13:36:17 2016 +0100
+Commit:     Ingo Molnar <mingo@kernel.org>
+CommitDate: Sat Jan 14 11:30:00 2017 +0100
+
+    sched/clock: Provide better clock continuity
+ * We want: ktime_get_ns() + __gtod_offset == sched_clock() + __sched_clock_offset
+
+## creation blk_mq_get_request
+        rq->start_time = jiffies;
+        rq->rl = NULL;
+        set_start_time_ns(rq);
+## dispatch to hardware: blk_mq_start_request
+        if (test_bit(QUEUE_FLAG_STATS, &q->queue_flags)) {
+                blk_stat_set_issue(&rq->issue_stat, blk_rq_sectors(rq));
+                rq->rq_flags |= RQF_STATS;
+
+
+
 ## bio
 [A block layer introduction part 1: the bio layer](https://lwn.net/Articles/736534/)
-[Lwn: Driver porting: the BIO structure](https://lwn.net/Articles/26404/)
+For Recursion avoidance, see dm.c __split_and_process_bio()
+[Must: Lwn: Driver porting: the BIO structure](https://lwn.net/Articles/26404/)
 [Jens Axobe's papper: Linux Block IO-present and future](https://www.landley.net/kdocs/ols/2004/ols2004v1-pages-51-62.pdf)
 [Jens Axobe: Notes on the Generic Block Layer Rewrite in Linux 2.5](https://www.kernel.org/doc/Documentation/block/biodoc.txt)
 [Notes on 2.5 block i/o layer changes](http://lse.sourceforge.net/io/bionotes.txt)
@@ -77,6 +147,11 @@ request_queue, blk_init_queue, queue_head: linked list of request
 make_request_fn: transform bio to request.
 generic_make_request
 convert sector from partition to gendisk
+## max_segment_size
+__scsi_init_queue
+scsi_queue_rq
+https://patchwork.kernel.org/project/linux-scsi/patch/20190116161215.23656-1-hch@lst.de/
+https://www.kernel.org/doc/html/latest/block/queue-sysfs.html#max-segment-size-ro
 
 ## REQ Barrier
 tglx:   commit 719eb3e1860791195ed7656b800d8bb57b277a75
@@ -129,7 +204,10 @@ else synchronize ?? which function?
 
 
 # Queue
+blk_mq_sched_insert_request: three queues
+mrege: __blk_mq_sched_bio_merge
 ## Blk-mq
+https://www.cnblogs.com/Linux-tech/p/12961279.html Multi-queue 架构分析
 [The multiqueue block layer](https://lwn.net/Articles/552904/)
 [Kernel Recipes 2015 - Solving the Linux storage scalability bottlenecks - by Jens Axboe](https://www.youtube.com/watch?v=VIdKBD9-Ozg&t=110s)
 [Linux Block IO: Introducing Multi-queue SSD Access on Multi-core Systems](https://kernel.dk/systor13-final18.pdf)

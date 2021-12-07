@@ -114,6 +114,9 @@ root@snow:/sys/kernel/debug/tracing #
 perf probe -d 'submit_bio'; perf probe -a 'submit_bio bio->bi_end_io:x64 bio->bi_disk->disk_name'
 perf probe -d 'submit_bio'; perf probe -a 'submit_bio bio->bi_end_io:u64';
 perf trace -e probe:submit_bio
+perf probe -f -a 'elf_map addr:x64 prot:x32 type:x32 total_size:x32 filep->f_inode:x64'
+	perf record -e probe:elf_map_1 -aR sleep 1
+
 
 # bpftrace
 [Brendan at lwn: Kernel analysis with bpftrace](https://lwn.net/Articles/793749/)

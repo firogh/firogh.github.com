@@ -16,6 +16,33 @@ Advisory lock vs mandatory lock
 [Waiman Long: Recent Locking Improvements in the Linux Kernel](https://www.youtube.com/watch?v=8DdawGCvFBU)
 [I would hate user space locking if it weren’t that sexy](https://pdfs.semanticscholar.org/de01/4ce9cc57c7e3f55efa5185cd7aad3a13b9c5.pdf)
 
+# lock_sock
+The design of lock_sock() in Linux kernel: https://medium.com/@c0ngwang/the-design-of-lock-sock-in-linux-kernel-69c3406e504b
+## CVE-2021-3573
+https://bugzilla.suse.com/show_bug.cgi?id=1186666
+commit e305509e678b3a4af2b3cfd410f409f7cdaabb52
+Author: Lin Ma <linma@zju.edu.cn>
+Date:   Sun May 30 21:37:43 2021 +0800
+    Bluetooth: use correct lock to prevent UAF of hdev object
+My understanding: lock_sock_nested seems one-way permeable to bh_lock_sock_nested because if lock_sock_nested goes first it only set a bit(owned), then release the lock; on the other way, if bh_lock_sock_nested gets the lock, then lock_sock_nested has to wait to ensure serialization. 
+
+## bh_lock_sock_nested
+commit 4ce61d1c7a8ef4c1337fa983a3036d4010e3c19e
+Author: Satyam Sharma <ssatyam@cse.iitk.ac.in>
+Date:   Wed May 16 23:50:16 2007 -0700
+
+    [BLUETOOTH]: Fix locking in hci_sock_dev_event().
+[...]
+    However, hci_sock_dev_event() is called from user context and
+    hence using simply bh_lock_sock() will deadlock against a
+    concurrent softirq that tries to acquire a lock on the same
+    socket. Hence, disabling BH's before acquiring the socket lock
+    and enable them afterwards, is the proper solution to fix
+    socket locking in hci_sock_dev_event().
+-                       lock_sock(sk);
++                       local_bh_disable();
++                       bh_lock_sock_nested(sk);
+
 # File locking
 [Mandatory File Locking For The Linux Operating System](https://www.kernel.org/doc/Documentation/filesystems/mandatory-locking.txt)
 [Linux 2.6 中的文件锁](https://www.ibm.com/developerworks/cn/linux/l-cn-filelock/index.html)

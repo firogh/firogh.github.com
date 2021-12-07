@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="1922">
+<meta itemprop="wordCount" content="2199">
 <meta itemprop="datePublished" content="2015-05-24">
 <meta itemprop="url" content="http://firoyang.org/cs/rcu_/">
 
@@ -228,7 +228,7 @@ So RCU is essentially used as resource-reclamation mechanism. And we know there 
 <p><a href="https://lwn.net/Articles/573424/">URCU: Any line of code not in an RCU read-side critical section is termed a quiescent state</a><br />
 <a href="http://lse.sourceforge.net/locking/rcu/HOWTO/descrip.html">&hellip; after all the CPUs in the system have gone through at least one &ldquo;quiescent&rdquo; state (such as context switch, idle loop, or user code)</a><br />
 <a href="https://lwn.net/Articles/305782/#Pass%20through%20a%20quiescent%20state.">The rcu and rcu_bh flavors of RCU have different sets of quiescent states.</a><br />
-rcu_flavor_sched_clock_irq rcu_rs<br />
+rcu_flavor_sched_clock_irq rcu_qs<br />
 rcu_report_qs_rnp</p>
 
 <h2 id="cpu-vs-qs">CPU vs QS</h2>
@@ -252,7 +252,9 @@ rcu_report_qs_rnp</p>
 <h2 id="eqs-vs-interrupt-vs-read-side-section-1">EQS vs interrupt vs read-side section</h2></dd>
 </dl>
 
-<h2 id="heavy-and-light">Heavy and light</h2>
+<h2 id="heavy-qs">heavy_qs</h2>
+
+<p>rcu_momentary_dyntick_idle</p>
 
 <h1 id="grace-period-time-to-reclaim">Grace period - time to reclaim</h1>
 
@@ -271,13 +273,63 @@ Updater want to free data if no GP is in-progress.</p>
 
 <p>continuos Data on GP. Segmented.</p>
 
-<h2 id="deffered-qs">Deffered QS</h2>
+<h2 id="kernel-move-gp-handling-to-kthread">Kernel move GP handling to kthread</h2>
+
+<p>&ldquo;The reason for moving RCU grace-period handling to a kernel thread was to improve real-time latency<br />
+<a href="https://lwn.net/Articles/518953/">The new visibility of RCU processing</a></p>
+
+<h2 id="gp-seq">gp_seq</h2>
+
+<p>struct rcu_data.gp_seq rcu_data:a<br />
+commit e3663b1024d1f94688e5233440ad67a9bc10b94e<br />
+Refs: v3.19-rc1-6-ge3663b1024d1<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Mon Dec 8 20:26:55 2014 -0800<br />
+    rcu: Handle gpnum/completed wrap while dyntick idle</p>
+
+<h1 id="nocb">nocb</h1>
+
+<p><a href="https://lwn.net/Articles/522262/">Relocating RCU callbacks</a></p>
+
+<h2 id="rcuog">rcuog</h2>
+
+<p>commit 12f54c3a8410102afb96ed437aebe7f1d87f399f<br />
+Refs: v5.3-rc2-35-g12f54c3a8410<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Fri Mar 29 16:43:51 2019 -0700<br />
+    rcu/nocb: Provide separate no-CBs grace-period kthreads</p>
+
+<h2 id="nocb-group-leader">nocb group leader</h2>
+
+<p>commit fbce7497ee5af800a1c350c73f3c3f103cb27a15<br />
+Refs: v3.16-rc1-3-gfbce7497ee5a<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Tue Jun 24 09:26:11 2014 -0700<br />
+    rcu: Parallelize and economize NOCB kthread wakeups<br />
+__call_rcu_nocb_enqueue replaced by __call_rcu_nocb_wake<br />
+do_nocb_deferred_wakeup</p>
+
+<p>rcu_gp_kthread_wake</p>
+
+<h1 id="non-context-switch-quiescent">non-context-switch quiescent</h1>
+
+<p>/*<br />
+ * This function is invoked from each scheduling-clock interrupt,<br />
+ * and checks to see if this CPU is in a non-context-switch quiescent<br />
+ * state, for example, user mode or idle loop.  It also schedules RCU<br />
+ * core processing.  If the current grace period has gone on too long,<br />
+ * it will ask the scheduler to manufacture a context switch for the sole<br />
+ * purpose of providing a providing the needed quiescent state.<br />
+ */<br />
+void rcu_sched_clock_irq(int user)</p>
+
+<h1 id="deffered-qs">Deffered QS</h1>
 
 <p>rcu_flavor_sched_clock_irq<br />
 rcu_preempt_deferred_qs<br />
 Reporting of a deferred QS reporting (when rcu_read_unlock() could not help).</p>
 
-<h2 id="memory-ordering">Memory ordering</h2>
+<h1 id="memory-ordering">Memory ordering</h1>
 
 <p>A Tour Through TREE_RCU’s Grace-Period Memory Ordering <a href="https://www.kernel.org/doc/html/latest/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html">https://www.kernel.org/doc/html/latest/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html</a></p>
 
@@ -541,7 +593,24 @@ CommitDate: Sun Aug 23 10:32:37 2009 +0200<br />
     Make RCU-sched, RCU-bh, and RCU-preempt be underlying<br />
     implementations, with &ldquo;RCU&rdquo; defined in terms of one of the<br />
     three.  Update the outdated rcu_qsctr_inc() names, as these<br />
-    functions no longer increment anything.</p>
+    functions no loner increment anything.</p>
+
+<h1 id="rcu-and-preempt">RCU and preempt</h1>
+
+<p>commit 95f0c1de3e6ed4383cc4b5f52ce4ecfb21026b49<br />
+Refs: v3.5-rc5-17-g95f0c1de3e6e<br />
+Author:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+AuthorDate: Tue Jun 19 11:58:27 2012 -0700<br />
+Commit:     Paul E. McKenney <a href="mailto:paulmck@kernel.org">paulmck@kernel.org</a><br />
+CommitDate: Mon Jul 2 12:34:25 2012 -0700<br />
+    rcu: Disable preemption in rcu_blocking_is_gp()<br />
+    It is time to optimize CONFIG_TREE_PREEMPT_RCU&rsquo;s synchronize_rcu()<br />
+    for uniprocessor optimization, which means that rcu_blocking_is_gp()<br />
+    can no longer rely on RCU read-side critical sections having disabled<br />
+    preemption.  This commit therefore disables preemption across<br />
+    rcu_blocking_is_gp()&rsquo;s scan of the cpu_online_mask.<br />
+    (Updated from previous version to fix embarrassing bug spotted by<br />
+    Wu Fengguang.)</p>
 
 		</article>
 	  </div>

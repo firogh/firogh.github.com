@@ -1,0 +1,21 @@
+# kk
+Just to clarify, was there an even older version (than 4.12.14-95.48.1) that has worked fine? Or was that a fresh install on a new system with 4.12.14-95.48.1? 
+
+# https://bugzilla.suse.com/show_bug.cgi?id=1189734
+But at this point se has already been dereferenced by the is_same_group check and the task_of and given that se is declared on the stack. That implies that the on-stack variable (se) got set to NULL by a parallel task indicating a general source of memory corruption as opposed to a race. Earlier in the boot, futex was triggered a warning as did flush_smp_call_function_queue which are both very unusual so I think there is a more general problem going on and the scheduler was simply the place where everything fell apart.
+
+The general corruption could be software or hardware related although given that this is a virtual machine, it would have to be the host that was suffering hardware problems. It would be better if you could point at evidence of corruption in the dump although an on-stack variable going NULL is good evidence in itself.
+As this is SLE 15 SP1 which is no longer under general support, it implies that this is an old installation. I would suggest asking them what has changed recently? Is this a new deployment (which it shouldn't be because LTSS)? Is this a new virtual machine configuration? Does the same software stack work on similarly configured virtual machines etc? Basically questions to help narrow down what the source of corruption could be.
+
+
+# https://bugzilla.suse.com/show_bug.cgi?id=1190490
+However, perhaps this will dissuade the customer from contacting you so much in the mean time.
+
+# https://bugzilla.suse.com/show_bug.cgi?id=1191674 
+> I completely agree here. It is not really clear what the expectations are.
+> What kind of data they base their observations from?
+
+# https://bugzilla.suse.com/show_bug.cgi?id=1191674
+Regis, I believe it would be much better to close this bug and start from scratch with some more useful information. E.g. high level metrics and expectations. It is also very important to define the reproducebility of numbers as well as isolation of a single event into userspace and kernel parts. E.g. these are systemcalls/kernel events involved in the measured unit (the SQL statement in this case). It would be ideal to isolate those and provide us with timings so that we can conclude major contributors.
+
+If the primary source of the performance difference was a HW change then we definitely need to know what has been changed.

@@ -1,0 +1,78 @@
+
+# aperf and mperf
+[aperf and mperf:Frequency-invariant utilization tracking for x86](https://lwn.net/Articles/816388/)
+
+#Free running counters
+https://lore.kernel.org/patchwork/patch/844471/
+[two free running MSR counters (IA32_APERF and SMI_COUNT)](https://lore.kernel.org/lkml/1495825538-5230-1-git-send-email-kan.liang@intel.com/t/#m0c0a8c358e8822b2c4f4697259ae98eb3bceb4af)
+
+# SMI cost
+https://lore.kernel.org/lkml/1495825538-5230-1-git-send-email-kan.liang@intel.com/t/#m0c0a8c358e8822b2c4f4697259ae98eb3bceb4af
+freeze on smi: 18.8.1 Filtering of SMM Handler Overhead; 17.4.1 IA32_DEBUGCTL MSR
+
+# UnHalted Core Cycles
+18.2.1.2 Pre-defined Architectural Performance Events
++During the measurement, the /sys/device/cpu/freeze_on_smi will be set to
++freeze core counters on SMI.
++The aperf counter will not be effected by the setting.
++The cost of SMI can be measured by (aperf - unhalted core cycles).
+
+# MSR
+__rdmsr_safe_on_cpu
+
+## rdmsr
+sudo rdmsr 0xe7 ; sudo rdmsr 0xe8; sudo rdmsr 0x30a; # mperf,aperf, cycles
+
+
+# Intel
+SDM v3c
+
+# rdmpc
+https://github.com/travisdowns/turbo-cycles-mystery
+https://github.com/jdmccalpin/low-overhead-timers
+
+# rdpmc vs msr
+https://community.intel.com/t5/Software-Tuning-Performance/Confusion-about-RDPMC-RDMSR-and-addresses/td-p/1142072
+[PATCH] perf_event use rdpmc rather than rdmsr when possible in kernel: https://fa.linux.kernel.narkive.com/L6cqnr3i/patch-perf-event-use-rdpmc-rather-than-rdmsr-when-possible-in-kernel
+- rdmsrl(hwc->event_base, new_raw_count);
++ rdpmc(hwc->event_base_rdpmc, low, high);
++ new_raw_count=((u64)high<<32 | (u64)low);
+x86_assign_hw_event
+
+# x86 PMU implementations
+
+
+event_sched_out:  *
+ * We disable the event on the hardware level first. After that we
+ * remove it from the context list.
+ */
+
+core: x86_pmu_add
+
+core: x86_pmu_disable_event
+perf_event_task_tick
+x86_pmu_start
+intel_pmu_enable_event
+
+
+core: sample_period sample hardware events in x86_setup_perfctr
+ARCH_PERFMON_EVENTSEL_INT in x86_pmu_hw_config
+core: x86_perf_event_set_period
+wrmsrl(hwc->event_base, (u64)(-left) & x86_pmu.cntval_mask);
+
+event_base
+  hw = {
+    {
+      {
+        config = 0x13003c, 
+        last_tag = 0x1, 
+        config_base = 0x38d, 
+        event_base = 0x30a, # MSR_ARCH_PERFMON_FIXED_CTR1 /* CPU_CLK_Unhalted.Core: */ also see SDM3: MSR_PERF_FIXED_CTR1
+        event_base_rdpmc = 0x40000001, 
+        idx = 0x21, 
+        last_cpu = 0x0, 
+        flags = 0x80, 
+
+## sysfs
+events_sysfs_show
+

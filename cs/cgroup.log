@@ -26,20 +26,35 @@ Date:   Thu Oct 18 23:39:30 2007 -0700
 ## firo on building cgroup
 cgroups, controller, hierarchy
 
+# common
+cgroup create subsys during cgroup_mkdir: cgroup_apply_control_enable core:css_populate_dir see callsites for it.
+mount: cgroup_init_fs_context
+subtree control: cgroup_subtree_control_write
+e: find_existing_css_set:https://lists.linuxfoundation.org/pipermail/containers/2014-March/034196.html
+
 # cgroup v2
 ## Why mutiple hierarchy failed?
 [Fixing control groups](https://lwn.net/Articles/484251/)
 [[RFD] cgroup: about multiple hierarchies](https://lkml.org/lkml/2012/2/21/379)
+[Control groups, part 7: To unity and beyond](https://lwn.net/Articles/608425/)
+[Tejun NYLUG Presents: Tejun Heo on cgroups and cgroups v2 (Feb 18th, 2015)](https://www.youtube.com/watch?v=PzpG40WiEfM)
 ## Unifiyed hierarchy
 [The unified control group hierarchy in 3.16](https://lwn.net/Articles/601840/)
 [What's new in control groups (cgroups) version 2](https://www.youtube.com/watch?v=yZpNsDe4Qzg) comparing to v1
 [cgroupv2: Linux's new unified control group hierarchy](https://chrisdown.name/2017/03/01/cgroupv2-linux-new-cgroup-hierarchy.html)
-[Control groups, part 7: To unity and beyond](https://lwn.net/Articles/608425/)
  
 # Translations
 find cgroup by task: task->css_set, find task by cgroup: cgroup->css_sets
 /proc/cgroups: proc_cgroupstats_show; /proc/self/cgroup: proc_cgroup_show and for_each_active_root
 before renameing, see cg_cgroup_link
+## dfl_cgrp
+Author:     Tejun Heo <tj@kernel.org>
+AuthorDate: Wed Apr 23 11:13:16 2014 -0400
+    cgroup: add css_set->dfl_cgrp
+    To implement the unified hierarchy behavior, we'll need to be able to
+    determine the associated cgroup on the default hierarchy from css_set.
+    Let's add css_set->dfl_cgrp so that it can be accessed conveniently
+    and efficiently.
 ## init_task and cgroup init
 cgroup_init_early or cgroup_init for init_css_set
 ## Add task to cgroup
@@ -65,6 +80,71 @@ AuthorDate: Wed Mar 19 10:23:54 2014 -0400
 # cgroup v1
 [Control groups series by Neil Brown](https://lwn.net/Articles/604609/)
 [Documentation/cgroups/cgroups.txt](https://lwn.net/Articles/524935/) or Documentation/cgroup-v1/cgroups.txt
+## hierarchy without controller; 
+cat /proc/7443/cgroup 
+12:rdma:/
+11:blkio:/
+10:devices:/user.slice
+9:perf_event:/
+8:cpu,cpuacct:/
+7:freezer:/
+6:cpuset:/
+5:net_cls,net_prio:/
+4:hugetlb:/
+3:memory:/
+2:pids:/user.slice/user-0.slice/session-3.scope
+1:name=systemd:/user.slice/user-0.slice/session-3.scope  # No controller
+0::/user.slice/user-0.slice/session-3.scope		# no controller
+germ107:~ # cat /proc/cgroups  | column -t
+#subsys_name  hierarchy  num_cgroups  enabled
+cpuset        6          1            1
+cpu           8          1            1
+cpuacct       8          1            1
+blkio         11         1            1
+memory        3          1            1
+devices       10         29           1
+freezer       7          1            1
+net_cls       5          1            1
+perf_event    9          1            1
+net_prio      5          1            1
+hugetlb       4          1            1
+pids          2          117          1
+rdma          12         1            1
+and no 2 hierarchies with same controller
+germ107:~ # mount | grep cgroup
+tmpfs on /sys/fs/cgroup type tmpfs (ro,nosuid,nodev,noexec,mode=755)
+cgroup on /sys/fs/cgroup/unified type cgroup2 (rw,nosuid,nodev,noexec,relatime)
+cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,xattr,name=systemd)
+cgroup on /sys/fs/cgroup/pids type cgroup (rw,nosuid,nodev,noexec,relatime,pids)
+cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,memory)
+cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,hugetlb)
+cgroup on /sys/fs/cgroup/net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,net_cls,net_prio)
+cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,cpuset)
+cgroup on /sys/fs/cgroup/freezer type cgroup (rw,nosuid,nodev,noexec,relatime,freezer)
+cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,cpu,cpuacct)
+cgroup on /sys/fs/cgroup/perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,perf_event)
+cgroup on /sys/fs/cgroup/devices type cgroup (rw,nosuid,nodev,noexec,relatime,devices)
+cgroup on /sys/fs/cgroup/blkio type cgroup (rw,nosuid,nodev,noexec,relatime,blkio)
+cgroup on /sys/fs/cgroup/rdma type cgroup (rw,nosuid,nodev,noexec,relatime,rdma)
+none on /mnt type cgroup (rw,nosuid,nodev,noexec,relatime,memory)
+cdev on /root/mnt type cgroup (rw,nosuid,nodev,noexec,relatime,memory)
+crash> mount | grep cgroup
+ffff9dfcbc97a8c0 ffff9dfcbc901800 tmpfs  tmpfs     /@/.snapshots/1/snapshot/sys/fs/cgroup
+ffff9dfcbc97a3c0 ffff9dfcbc900800 cgroup2 cgroup   /@/.snapshots/1/snapshot/sys/fs/cgroup/unified
+ffff9dfcbc97ac80 ffff9dfcbc902000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/systemd
+ffff9dfcbc97a500 ffff9dfcbc849000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/pids
+ffff9dfcbc97adc0 ffff9dfcbc84c000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/memory	# same
+ffff9dfcbc97aa00 ffff9dfcbc84d800 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/hugetlb
+ffff9dfcbc97a280 ffff9dfcbc84d000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/net_cls,net_prio
+ffff9dfcbc97a140 ffff9dfcbc84a800 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/cpuset
+ffff9dfcbc97a640 ffff9dfcbc84b000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/freezer
+ffff9dfcc2dbf3c0 ffff9dfcbc84e000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/cpu,cpuacct
+ffff9dfcc2dbfc80 ffff9dfcbc849800 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/perf_event
+ffff9dfcc2dbf780 ffff9dfcbc848800 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/devices
+ffff9dfcc2dbf000 ffff9dfcbc84a000 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/blkio
+ffff9dfcc2dbfb40 ffff9dfcbc84b800 cgroup cgroup    /@/.snapshots/1/snapshot/sys/fs/cgroup/rdma
+ffff9dfc886abdc0 ffff9dfcbc84c000 cgroup none      /@/.snapshots/1/snapshot/mnt				# same supber block
+ffff9dfcecb0e640 ffff9dfcbc84c000 cgroup cdev      /@/.snapshots/1/snapshot/root/@/root/mnt		# same
 ## Why Multiple hierarchy is adopted in cgroup v1?
 https://www.kernel.org/doc/Documentation/admin-guide/cgroup-v1/cgroups.rst
 +Multiple hierarchy support is provided to allow for situations where

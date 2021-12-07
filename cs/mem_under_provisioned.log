@@ -1,0 +1,83 @@
+# https://bugzilla.suse.com/show_bug.cgi?id=1179587
+I have looked at the kernel crash dump at https://ziu.nue.suse.com/SFSC00267273/lpdb0161vm/lpdb0161vm.18329
+
+First of all the system was heavily loaded
+LOAD AVERAGE: 297.08, 212.85, 226.93
+
+Only 4% of the memory is free at the moment
+
+crash> kmem -V
+         NR_FREE_PAGES: 771757
+[...]
+   NR_SLAB_RECLAIMABLE: 26451
+ NR_SLAB_UNRECLAIMABLE: 65816
+          NR_PAGETABLE: 1996753
+[...]
+      NR_INACTIVE_ANON: 490484
+        NR_ACTIVE_ANON: 8824995
+      NR_INACTIVE_FILE: 32867
+        NR_ACTIVE_FILE:  
+        NR_UNEVICTABLE: 4092237
+[...]
+    WORKINGSET_REFAULT: 21390998
+   WORKINGSET_ACTIVATE: 5729072
+
+Anonymous memory is consuming 35G (~56%). File cache is effectively non-existent (175MB) and as we can see the system has been trashing quite heavily (see WORKINGSET_* counters). Another considerable memory consumer is unevictable memory ~16GB (24%). This can be mlock or ramdisk.
+
+The printk ringbuffer has overflown by allocation stall warnings. THere are quite a lot of them and I assume many more which are not visible in dmesg at the moment.
+crash> dmesg | grep "page allocation stalls" | sed 's@.*, \(order.*\), nodemask@\1@' | sort | uniq -c              
+      5 order:0, mode:0x14000c0(GFP_KERNEL)=(null)
+     26 order:0, mode:0x14200ca(GFP_HIGHUSER_MOVABLE)=(null)
+     31 order:0, mode:0x14280ca(GFP_HIGHUSER_MOVABLE|__GFP_ZERO)=(null)
+     14 order:0, mode:0x17080c0(GFP_KERNEL_ACCOUNT|__GFP_ZERO|__GFP_NOTRACK)=(null)
+      4 order:0, mode:0x1c2004a(GFP_NOFS|__GFP_HIGHMEM|__GFP_HARDWALL|__GFP_MOVABLE|__GFP_WRITE)=(null)
+      3 order:1, mode:0x17080c0(GFP_KERNEL_ACCOUNT|__GFP_ZERO|__GFP_NOTRACK)=(null)
+
+This shows that the vast majority of those allocations were regular order-0 (single page) requests for userspace.
+
+crash> dmesg | grep -A2 "page allocation stalls" | grep PID | sed 's@.*\(PID:.*\) Comm.*@\1@' | sort | uniq -c | sort -k1 -n
+[...]
+      1 PID: 7557
+      1 PID: 947
+      2 PID: 13184
+      2 PID: 14152
+      2 PID: 16212
+      2 PID: 16782
+      2 PID: 16798
+      2 PID: 29319
+      2 PID: 30853
+      2 PID: 3693
+      2 PID: 7693
+      2 PID: 7780
+
+this tells us that only few instances were for the same task so it is quite likely that the process got stuck in a direct reclaim for some time and then managed to move on.
+
+Let's have a look at the last memory info
+[160179.993293] Node 0 active_anon:38226160kB inactive_anon:2012100kB active_file:26784kB inactive_file:25752kB unevictable:16366392kB isolated(anon):21040kB isolated(file):608kB mapped:14617532kB dirty:2448kB w
+riteback:8kB shmem:16339376kB shmem_thp: 0kB shmem_pmdmapped: 0kB anon_thp: 0kB writeback_tmp:0kB unstable:0kB all_unreclaimable? no
+
+40G of anonymous memory, 16G of unevictable, barely any page cache. This is 90% of RAM.
+
+[...]
+[160179.993300] Node 0 DMA32 free:242408kB min:2036kB low:6164kB high:10292kB active_anon:3619912kB inactive_anon:20668kB active_file:480kB inactive_file:632kB unevictable:5596kB writepending:0kB present:4177920
+kB managed:4147944kB mlocked:0kB slab_reclaimable:708kB slab_unreclaimable:3988kB kernel_stack:752kB pagetables:230204kB bounce:0kB free_pcp:4kB local_pcp:0kB free_cma:0kB
+[160179.993304] lowmem_reserve[]: 0 0 60153 60153 60153
+
+This zone quite high above the watermarks but if we reduce the lowmem reserve we are getting below min watermark
+crash> p 242408-(60153<<2)
+$12 = 1796
+
+[160179.993306] Node 0 Normal free:29848kB min:30384kB low:91980kB high:153576kB active_anon:34606116kB inactive_anon:1991956kB active_file:27428kB inactive_file:26292kB unevictable:16360796kB writepending:200kB
+ present:62914560kB managed:61597116kB mlocked:30808kB slab_reclaimable:104504kB slab_unreclaimable:261260kB kernel_stack:39840kB pagetables:7762724kB bounce:0kB free_pcp:316kB local_pcp:0kB free_cma:0kB
+
+This zone is clearly below min watermark. So any userspace allocation request will have to do the direct reclaim to get some memory. There is still some swap space so the anonymous memory can get reclaimed but considering the vast majority of the anonymous memory is active suggest that the working set doesn't really fit into the memory.
+
+               PGSTEAL_KSWAPD: 12610599
+               PGSTEAL_DIRECT: 39862352
+                PGSCAN_KSWAPD: 25834183
+                PGSCAN_DIRECT: 112616712
+
+This tells us that the memory reclaim is struggling to free up any memory. The effectiveness (reclaim/scan) of the kswapd is only 48% and direct reclaim only 35%. So the memory reclaim really has to scan a lot of memory to find anything suitable to drop. That would support the theory that the large part of the anonymous memory is in fact active and a part of working set.
+
+TL;DR
+I suspect the system is under-provisioned wrt memory for the existing setup and workload.

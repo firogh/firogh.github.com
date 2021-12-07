@@ -2,6 +2,9 @@
 # Reference
 /proc/timer_list
 Posix: https://pubs.opengroup.org/onlinepubs/009695399/basedefs/time.h.html
+https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
+https://www.youtube.com/watch?v=Puv4mW55bF8 
+http://events17.linuxfoundation.org/sites/events/files/slides/Timekeeping%20in%20the%20Linux%20Kernel_0.pdf
 
 # CPU clocks
 Clock speed (also “clock rate” or “frequency”) and Clock cycle
@@ -16,6 +19,10 @@ TSC base frequency: https://github.com/trailofbits/tsc_freq_khz
 kernel variable: tsc_khz, cpu_khz
 dmesg | grep TSC
 
+# USER_HZ
+man time
+Regarding USER_HZ and the exposure of kernel jiffies in userspace: https://lkml.org/lkml/2015/8/22/77
+
 # Local APIC timer
 sdm v3a: 10.5.4 APIC Timer
 https://wiki.osdev.org/APIC_timer
@@ -28,6 +35,9 @@ https://www.kernel.org/doc/Documentation/timers/
 https://www.kernel.org/doc/Documentation/timers/timekeeping.txt
 https://www.kernel.org/doc/html/latest/timers/highres.html
 [Hrtimers and Beyond: Transforming the Linux Time Subsystems](https://www.kernel.org/doc/ols/2006/ols2006v1-pages-333-346.pdf)
+## ktime api
+https://www.kernel.org/doc/html/latest/core-api/timekeeping.html
+ktime_get
 ## Clock sources
 cat /sys/devices/system/clocksource/clocksource0/current_clocksource  tsc
 cat /sys/devices/system/clocksource/clocksource0/available_clocksource tsc hpet acpi_pm
@@ -35,30 +45,92 @@ kernel parameters: clocksource, hpet, notsc
 dmesg | grep clocksource
 ## Clock events
 cat /sys/devices/system/clockevents/clockevent*/current_device 
-lapic-deadline
+clockevents_register_device
 tick_device
+lapic_clockevent
+lapic_events
+ *tick_cpu_device* 
+tick_sched_timer tick_setup_device
+hrtimer_interrupt hrtimer_reprogram 
+crash> p lapic_events
+PER-CPU DATA TYPE:
+  struct clock_event_device lapic_events;
+PER-CPU ADDRESSES:
+  [0]: ffff9c3756a18300
+  [1]: ffff9c3756a98300
+  [2]: ffff9c3756b18300
+  [3]: ffff9c3756b98300
+crash> clock_event_device ffff9c3756a18300
+struct clock_event_device {
+  event_handler = 0xffffffffa315fea0, 
+  set_next_event = 0xffffffffa3057320, 
+crash> sym 0xffffffffa315fea0
+ffffffffa315fea0 (T) hrtimer_interrupt  # firo low res tick_nohz_handler
+sleep 17033 [002] 32332.939229: probe:tick_sched_timer: (ffffffffa316fc30)
+        ffffffffa316fc31 tick_sched_timer+0x1 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa315f4c8 __hrtimer_run_queues+0x118 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa315ffae hrtimer_interrupt+0x10e (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa30573b1 __sysvec_apic_timer_interrupt+0x61 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa3c010f2 asm_call_irq_on_stack+0x12 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa3b7f8e2 sysvec_apic_timer_interrupt+0x72 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa3c00cc2 asm_sysvec_apic_timer_interrupt+0x12 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa306fdd1 __virt_addr_valid+0x81 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
+        ffffffffa32ae597 free_pages+0x17 (/usr/lib/debug/lib/modules/5.9.11-200.fc33.x86_64/vmlinux)
 ## Hrtimer
 https://www.kernel.org/doc/Documentation/timers/hrtimers.txt
-## ktime api
-https://www.kernel.org/doc/html/latest/core-api/timekeeping.html
+hrtimer_bases
 
-# Scheduling-Clock Ticks
-sched_clock tick_do_update_jiffies64
+## Range hrtimer _softexpires
+range hrtimers for .28: https://lwn.net/Articles/304089/
+High- (but not too high-) resolution timeouts: https://lwn.net/Articles/296578/
 
-## dyntick, NO_HZ
-https://www.youtube.com/watch?v=G3jHP9kNjwc
-https://www.kernel.org/doc/Documentation/timers/no_hz.rst
-
-## dyntick and tick broadcast
-https://0xax.gitbooks.io/linux-insides/content/Timers/linux-timers-3.html
-
-# Hrtimer vs normal timer 
+### Hrtimer vs normal timer 
 Reinventing the timer wheel: https://lwn.net/Articles/646950/
 rare vs many
 timers vs timeouts
-## Timewheel
-A new approach to kernel timers: https://lwn.net/Articles/152436/
+
+Timewheel: A new approach to kernel timers: https://lwn.net/Articles/152436/
 Insert.
+
+# Scheduling-Clock Ticks and dyntick
+common and core: tick_nohz_stop_sched_tick
+
+sched_clock tick_do_update_jiffies64
+sched_can_stop_tick
+
+tick_nohz_full_update_tick
+## dyntick, NO_HZ, nohz, no hz
+https://www.youtube.com/watch?v=G3jHP9kNjwc
+https://www.kernel.org/doc/Documentation/timers/no_hz.rst
+tick_nohz_enabled tick_nohz_active tick_cpu_sched
+## dyntick and tick broadcast
+https://0xax.gitbooks.io/linux-insides/content/Timers/linux-timers-3.html
+
+
+# kernel time translation
+https://bugzilla.suse.com/show_bug.cgi?id=1177792
+I start to think that the hardlockup in CPU 0 is accurate (or the clock is broken).
+If you substract ktime_now() by the time when we entered the interrupt on CPU 0,
+you get roughly 12 seconds.
+
+To get something close to ktime_now(), you can fetch last_jiffies_update
+
+And you can get the interrupt entry time because we are in dynticks idle mode and
+we update the timestamp on idle interrupt entry in ts->idle_entrytime through tick_nohz_stop_idle():
+> p tick_cpu_sched:0 | grep idle_entrytime
+
+## dyntick idle
+tick_nohz_idle_enter
+tick_nohz_stop_idle()
+crash> p tick_cpu_sched:0 | grep idle_active
+  idle_active = 0x0,
+crash> p tick_cpu_sched:0 | grep idle_entrytime
+  idle_entrytime = 0x3d115ee8194d,
+crash> p tick_cpu_sched:0 | grep tick_stopped
+  tick_stopped = 0x1,
+
+## dyntick usermode
+Full NOHZ mode, CPUs speficified by kernel commandline
 
 # Timerlist
 ## irqsafe timer
@@ -68,3 +140,38 @@ check del_timer_sync
 and definition of TIMER_IRQSAFE
 https://patchwork.kernel.org/patch/10811995/
 Is timer pending
+
+# Timekeeping
+update_wall_time
+
+# ktime_get and sched_clock()
+  mwilck | firo: here's what I noted last time as I needed this:                                        │ alesak
+              │22:36:57    mwilck | ktime_get_ns() = tmono.base + (tmono.xtime_nsec >> tmono.shift), where tmono =               │ ali_afk
+              │                   | tk_core.timekeeper.tkr_mono sched_clock() = ktime_get_ns() + __gtod_offset -                 │ andreas
+              │                   | __sched_clock_offset                                                                         │ cedric
+              │22:37:44    mwilck | hm paste problem                                                                             │ cfconrad
+              │22:37:54    mwilck | ktime_get_ns() = tmono.base + (tmono.xtime_nsec >> tmono.shift)                              │ crazybyte
+              │22:38:01    mwilck | where tmono =  tk_core.timekeeper.tkr_mono                                                   │ danrodriguez
+              │22:38:13    mwilck | sched_clock() = ktime_get_ns() + __gtod_offset - __sched_clock_offset                        │ dfaggioli
+              │22:38:19  fweisbec | mwilck: I trust you on that, I never tried                                                   │ dmulder
+              │22:38:29      firo | mwilck: cool.                                                                                │ dom
+              │22:38:43    mwilck | Thus would be the ns readout at the time when ktime_get_ns() was last updated.               │ dsterba
+              │22:39:01    mwilck | The kernel would add a delta value based on an rdtsc readout                                 │ duwe
+              │22:39:34    mwilck | (which you obviously don't have in crash).                                                   │ egbert
+              │22:40:16    mwilck | s/Thus/This/ above                                                                           │ ematsumiya_away
+              │22:41:01      firo | Yes. that delta isn't necessary for us in crash.                                             │ firo
+              │22:41:07      firo | So perfect!                                                                                  │ Fleedwood
+              │22:42:27    mwilck | better double-check whether the result makes sense :-)                                       │ fweisbec
+              │22:42:43      firo | yes.                                                                                         │ gabrielftg
+              │22:47:57       <-- | lzhong (lzhong@cfontana.openvpn.suse.cz) has quit (Quit: Leaving)                            │ ggherdov
+              │22:52:32       <-- | fvogt (fabian@10.163.25.66) has quit (Quit: Konversation terminated!)                        │ goldwyn
+              │22:56:52  nborisov | so vlastimil went on a holiday and the share price is tanking !                              │ hare
+              │22:57:04  nborisov | vbabka,  come save the company!                                                              │ henrix
+              │23:02:05     metan | can we blame him for the heat wave too?                                                      │ hramrach
+              │23:02:21  nborisov | since he is not here to defend himself i'd say yeah :d                                       │ hsehic
+              │23:03:06    mwilck | firo: the above holds only when the TSC has been marked stable. You'll see the log:          │ iforster
+              │23:03:20    mwilck | sched_clock: Marking stable (466633950, 1057252)->(479924262, -12233060)                     │ jbohac
+              │23:03:37    mwilck | where the 2nd number is __gtod_offset and the 4th number is __sched_clock_offset             │ jcejka
+              │23:08:24      firo | mwilck: Got it.                                                                              │ jeffm
+              │23:08:57      firo | mwilck: still holds when TSC becomes unstable?                                               │ jeyu
+              │23:10:34      firo | Need to look into the implementation.  

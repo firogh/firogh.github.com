@@ -1,0 +1,97 @@
+
+
+# request_sock
+tcp_rcv_state_process
+tcp_conn_request
+inet_csk_reqsk_queue_add
+
+
+tcp_v4_syn_recv_sock
+tcp_create_openreq_child
+
+
+inet_csk_accept
+or
+tcp_close -> inet_csk_listen_stop, inet_sock_destruct
+
+
+
+# Tcp
+listen
+connect
+inet_reqsk_alloc reqsk/i.e. minisock 1) tcp_conn_request 2) cookies?
+crash> kc 0xffff9fabbfc70400 | grep name
+  name = 0xffff9faba7515ec0 "request_sock_TCPv6", 
+
+accpet
+inet_csk_accept -> inet_csk_wait_for_connect
+
+newsk created: 1) fastopen 2) inet_csk_complete_hashdance 2) syncookies
+inet_csk_reqsk_queue_add
+
+__inet6_lookup
+
+inet_unhash
+
+## request sock(step #1, only hashed, not inserted to icsk_accept_queue. step #2 otherwise
+inet_csk_reqsk_queue_hash_add #===> (hashed) inet_ehash_insert
+
+reqsk_alloc(const struct request_sock_ops *ops, struct sock *sk_listener,
+            bool attach_listener)
+{
+        struct request_sock *req;
+
+        req = kmem_cache_alloc(ops->slab, GFP_ATOMIC | __GFP_NOWARN);
+        if (!req)
+                return NULL;
+        req->rsk_listener = NULL;
+        if (attach_listener) {
+                if (unlikely(!atomic_inc_not_zero(&sk_listener->sk_refcnt))) {
+                        kmem_cache_free(ops->slab, req);
+                        return NULL;
+                }
+                req->rsk_listener = sk_listener;
+        }
+        req->rsk_ops = ops;
+        req_to_sk(req)->sk_prot = sk_listener->sk_prot;
+        sk_node_init(&req_to_sk(req)->sk_node);
+        sk_tx_queue_clear(req_to_sk(req));
+        req->saved_syn = NULL;
+        atomic_set(&req->rsk_refcnt, 0);      # Race 1
+
+
+static void reqsk_queue_hash_req(struct request_sock *req,
+                                 unsigned long timeout)
+{
+        req->num_retrans = 0;
+        req->num_timeout = 0;
+        req->sk = NULL;
+
+        setup_pinned_timer(&req->rsk_timer, reqsk_timer_handler,
+                            (unsigned long)req);
+        mod_timer(&req->rsk_timer, jiffies + timeout);
+
+        inet_ehash_insert(req_to_sk(req), NULL);
+        /* before letting lookups find us, make sure all req fields
+         * are committed to memory and refcnt initialized.
+         */
+        smp_wmb();
+        atomic_set(&req->rsk_refcnt, 2 + 1);  # Race 1.1
+
+tcp_check_req
+        /* OK, ACK is valid, create big socket and
+         * feed this segment to it. It will repeat all
+         * the tests. THIS SEGMENT MUST MOVE SOCKET TO
+         * ESTABLISHED STATE. If it will be dropped after
+         * socket is created, wait for troubles.
+         */
+        child = inet_csk(sk)->icsk_af_ops->syn_recv_sock(sk, skb, req, NULL,
+                                                         req, &own_req);
+	inet_csk_complete_hashdance -> 
+			reqsk_queue_unlink # removed from ehash
+			and inet_csk_reqsk_queue_add # ===> (inserted) along with child req->sk = child;
+
+## race
+http://abcdxyzk.github.io/blog/2018/09/28/kernel-sk_lookup/
+[PATCH v2 net-next 06/11] tcp/dccp: do not touch listener sk_refcnt under synflood
+

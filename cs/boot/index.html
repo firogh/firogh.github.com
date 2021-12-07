@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="256">
+<meta itemprop="wordCount" content="363">
 <meta itemprop="datePublished" content="2015-11-12">
 <meta itemprop="url" content="http://firoyang.org/cs/boot/">
 
@@ -186,6 +186,11 @@
 	  <div>
 		<article itemprop="articleBody" id="content">
 		   
+
+<h1 id="debug">Debug</h1>
+
+<p>efi=debug earlyprintk=efi,keep earlycon=efifb keep_bootcon&rdquo; and no &ldquo;quiet&rdquo;<br />
+Boot-time tracing: kernel.org/doc/html/latest/trace/boottime-trace.html</p>
 
 <h1 id="smp-boot">SMP boot</h1>
 
@@ -226,6 +231,30 @@ ap hp threadfn -&gt; bringup_cpu -&gt; __cpu_up -&gt; smp_ops.cpu_up(cpu, tidle)
 
 <p>trampoline_start -&gt; &hellip; -&gt; startup_64 -&gt; tr_start(%rip) is secondary_startup_64 -&gt; initial_code(%rip) is start_secondary<br />
 -&gt; cpu_init</p>
+
+<h1 id="memory">Memory</h1>
+
+<p>arch/x86/kernel/head_64.S init_top_pgt</p>
+
+<p>break buffer see alloc_low_buffer<br />
+static void __init memory_map_top_down(unsigned long map_start,<br />
+                                       unsigned long map_end)<br />
+{<br />
+        unsigned long real_end, start, last_start;<br />
+        unsigned long step_size;<br />
+        unsigned long addr;<br />
+        unsigned long mapped_ram_size = 0;</p>
+
+<pre><code>    /* xen has big range in reserved near end of ram, skip it at first.*/
+    addr = memblock_find_in_range(map_start, map_end, PMD_SIZE, PMD_SIZE);
+    real_end = addr + PMD_SIZE;
+
+    /* step_size need to be small so pgt_buf from BRK could cover it */
+    step_size = PMD_SIZE;
+    max_pfn_mapped = 0; /* will get exact value next */
+    min_pfn_mapped = real_end &gt;&gt; PAGE_SHIFT;
+    last_start = start = real_end;
+</code></pre>
 
 <h1 id="initrd">initrd</h1>
 

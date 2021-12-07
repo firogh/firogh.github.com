@@ -178,7 +178,7 @@
 
 </aside>
 
-<meta itemprop="wordCount" content="327">
+<meta itemprop="wordCount" content="692">
 <meta itemprop="datePublished" content="2015-02-27">
 <meta itemprop="url" content="http://firoyang.org/cs/driver/">
 
@@ -270,6 +270,78 @@ Date:   Sun Nov 10 17:08:07 2002 -0800<br />
     [PATCH] In-kernel Module Loader<br />
 +/* Allocate and load the module */<br />
 +static struct module *load_module(void *umod,</p>
+
+<h1 id="find-drivers">Find drivers</h1>
+
+<p>How to find the driver (module) associated with a device on Linux?:  <a href="https://unix.stackexchange.com/questions/97676/how-to-find-the-driver-module-associated-with-a-device-on-linux">https://unix.stackexchange.com/questions/97676/how-to-find-the-driver-module-associated-with-a-device-on-linux</a></p>
+
+<h1 id="udev">udev</h1>
+
+<p>uevent_net_init<br />
+NETLINK_KOBJECT_UEVENT<br />
+kobject_uevent and broadcast</p>
+
+<p>udevadm: setup_monitor  device_monitor_new_full</p>
+
+<p>systemd-udevd.service: event_queue_insert, worker_main, sd_device_monitor_start, device_monitor_event_handler, device_monitor_receive_device<br />
+#0  0x00007f48ff268680 in device_monitor_event_handler () from target:/usr/lib/systemd/libsystemd-shared-246.so<br />
+#1  0x00007f48ff28d7b7 in source_dispatch () from target:/usr/lib/systemd/libsystemd-shared-246.so<br />
+#2  0x00007f48ff28da9d in sd_event_dispatch () from target:/usr/lib/systemd/libsystemd-shared-246.so<br />
+#3  0x00007f48ff28ed68 in sd_event_run () from target:/usr/lib/systemd/libsystemd-shared-246.so<br />
+#4  0x00007f48ff28ef8f in sd_event_loop () from target:/usr/lib/systemd/libsystemd-shared-246.so<br />
+#5  0x000055eb2a150ff9 in main ()<br />
+core: worker_process_device event_free<br />
+core2: worker_device_monitor_handler can be called via sd_device_monitor_start and device_monitor_event_handler in worker_main<br />
+(gdb) bt<br />
+#0  worker_process_device (dev=0x559b0db11fd0, manager=0x559b0d9fab00) at ../src/udev/udevd.c:447<br />
+#1  worker_device_monitor_handler (monitor=0x559b0db12a20, dev=0x559b0db11fd0, userdata=0x559b0d9fab00) at ../src/udev/udevd.c:500<br />
+#2  0x0000559b0d5f03a6 in worker_main (first_device=0x559b0db11fd0, monitor=0x559b0db12a20, _manager=0x559b0d9fab00) at ../src/udev/udevd.c:562<br />
+#3  worker_spawn (event=<optimized out>, manager=0x559b0d9fab00) at ../src/udev/udevd.c:598<br />
+#4  event_run (event=<optimized out>, manager=0x559b0d9fab00) at ../src/udev/udevd.c:661<br />
+#5  event_queue_start (manager=<optimized out>) at ../src/udev/udevd.c:943<br />
+#6  0x0000559b0d5f0fc0 in on_uevent (monitor=<optimized out>, dev=0x559b0db11fd0, userdata=0x559b0d9fab00) at ../src/udev/udevd.c:1037<br />
+#7  0x00007f9ad18b06d9 in device_monitor_event_handler (s=<optimized out>, fd=<optimized out>, revents=<optimized out>, userdata=0x559b0d9fac60)<br />
+    at ../src/libsystemd/sd-device/device-monitor.c:234<br />
+#8  0x00007f9ad18d57b7 in source_dispatch (s=s@entry=0x559b0d9fc2c0) at ../src/libsystemd/sd-event/sd-event.c:3181<br />
+#9  0x00007f9ad18d5a9d in sd_event_dispatch (e=0x559b0da04b20) at ../src/libsystemd/sd-event/sd-event.c:3620<br />
+#10 0x00007f9ad18d6d68 in sd_event_run (e=e@entry=0x559b0da04b20, timeout=timeout@entry=18446744073709551615)<br />
+    at ../src/libsystemd/sd-event/sd-event.c:3678<br />
+#11 0x00007f9ad18d6f8f in sd_event_loop (e=0x559b0da04b20) at ../src/libsystemd/sd-event/sd-event.c:3700<br />
+#12 0x0000559b0d5e8ff9 in main_loop (manager=<optimized out>) at ../src/udev/udevd.c:1805<br />
+#13 run_udevd (argv=<optimized out>, argc=<optimized out>) at ../src/udev/udevd.c:1919<br />
+#14 run (argv=<optimized out>, argc=<optimized out>) at ../src/udev/udevadm.c:115<br />
+#15 main (argc=<optimized out>, argv=<optimized out>) at ../src/udev/udevadm.c:134</p>
+
+<p>#0  event_free (event=0x559b0db1f820) at ../src/udev/udevd.c:152<br />
+#1  0x0000559b0d5f0c94 in on_worker (s=<optimized out>, revents=<optimized out>, userdata=<optimized out>, fd=<optimized out>)<br />
+    at ../src/udev/udevd.c:1013<br />
+#2  on_worker (s=<optimized out>, fd=6, revents=<optimized out>, userdata=0x559b0d9fab00) at ../src/udev/udevd.c:958<br />
+#3  0x00007f9ad18d57b7 in source_dispatch (s=s@entry=0x559b0d9fc3d0) at ../src/libsystemd/sd-event/sd-event.c:3181<br />
+#4  0x00007f9ad18d5a9d in sd_event_dispatch (e=0x559b0da04b20) at ../src/libsystemd/sd-event/sd-event.c:3620<br />
+#5  0x00007f9ad18d6d68 in sd_event_run (e=e@entry=0x559b0da04b20, timeout=timeout@entry=18446744073709551615)<br />
+    at ../src/libsystemd/sd-event/sd-event.c:3678<br />
+#6  0x00007f9ad18d6f8f in sd_event_loop (e=0x559b0da04b20) at ../src/libsystemd/sd-event/sd-event.c:3700<br />
+#7  0x0000559b0d5e8ff9 in main_loop (manager=<optimized out>) at ../src/udev/udevd.c:1805<br />
+#8  run_udevd (argv=<optimized out>, argc=<optimized out>) at ../src/udev/udevd.c:1919<br />
+#9  run (argv=<optimized out>, argc=<optimized out>) at ../src/udev/udevadm.c:115<br />
+#10 main (argc=<optimized out>, argv=<optimized out>) at ../src/udev/udevadm.c:134</p>
+
+<p>sd_event_add_io(manager-&gt;event, NULL, fd_worker, EPOLLIN, on_worker, manager);</p>
+
+<p>(gdb) bt<br />
+#0  event_free (event=0x0) at ../src/udev/udevd.c:152<br />
+#1  0x0000559b0d5ed000 in worker_free (worker=0x559b0db1cae0) at ../src/udev/udevd.c:184<br />
+#2  0x0000559b0d5f1aa8 in on_sigchld (s=<optimized out>, si=<optimized out>, userdata=<optimized out>) at ../src/udev/udevd.c:1386<br />
+#3  on_sigchld (s=<optimized out>, si=<optimized out>, userdata=0x559b0d9fab00) at ../src/udev/udevd.c:1334<br />
+#4  0x00007f9ad18d5702 in source_dispatch (s=s@entry=0x559b0da04420) at ../src/libsystemd/sd-event/sd-event.c:3193<br />
+#5  0x00007f9ad18d5a9d in sd_event_dispatch (e=0x559b0da04b20) at ../src/libsystemd/sd-event/sd-event.c:3620<br />
+#6  0x00007f9ad18d6d68 in sd_event_run (e=e@entry=0x559b0da04b20, timeout=timeout@entry=18446744073709551615)<br />
+    at ../src/libsystemd/sd-event/sd-event.c:3678<br />
+#7  0x00007f9ad18d6f8f in sd_event_loop (e=0x559b0da04b20) at ../src/libsystemd/sd-event/sd-event.c:3700<br />
+#8  0x0000559b0d5e8ff9 in main_loop (manager=<optimized out>) at ../src/udev/udevd.c:1805<br />
+#9  run_udevd (argv=<optimized out>, argc=<optimized out>) at ../src/udev/udevd.c:1919<br />
+#10 run (argv=<optimized out>, argc=<optimized out>) at ../src/udev/udevadm.c:115<br />
+#11 main (argc=<optimized out>, argv=<optimized out>) at ../src/udev/udevadm.c:134</p>
 
 		</article>
 	  </div>
