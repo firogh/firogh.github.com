@@ -2,6 +2,27 @@
 [Optimizing preemption](https://lwn.net/Articles/563185/)
 https://www.kernel.org/doc/Documentation/preempt-locking.txt
 
+# PREEMPT_NEED_RESCHED
+commit f27dde8deef33c9e58027df11ceab2198601d6a6
+Refs: v3.12-rc1-55-gf27dde8deef3
+Author:     Peter Zijlstra <peterz@infradead.org>
+    sched: Add NEED_RESCHED to the preempt_count
+
+    Since the NEED_RESCHED flag is set across CPUs this needs to be an
+    atomic operation, however we very much want to avoid making
+    preempt_count atomic, therefore we keep the existing TIF_NEED_RESCHED
+    infrastructure in place but at 3 sites test it and fold its value into
+    preempt_count; namely:
+
+     - resched_task() when setting TIF_NEED_RESCHED on the current task
+     - scheduler_ipi() when resched_task() sets TIF_NEED_RESCHED on a
+                       remote task it follows it up with a reschedule IPI
+                       and we can modify the cpu local preempt_count from
+                       there.
+     - cpu_idle_loop() for when resched_task() found tsk_is_polling().
+
+Firo: also see do_idle and TIF_POLLING_NRFLAG
+
 ## Preempt disable vs barrier()
 commit 386afc91144b36b42117b0092893f15bc8798a80
 Refs: v3.9-rc6-22-g386afc91144b
